@@ -18,18 +18,18 @@ interface TrainingConfigStepProps {
 }
 
 const languages = [
-  { value: "english", label: "English" },
-  { value: "portuguese", label: "Portuguese" },
-  { value: "russian", label: "Russian" },
-  { value: "dutch", label: "Dutch" },
+  { value: "english", label: "Inglês" },
+  { value: "portuguese", label: "Português" },
+  { value: "russian", label: "Russo" },
+  { value: "dutch", label: "Holandês" },
 ];
 
 const durations = [
-  { value: "6h", label: "6 hours", price: "150" },
-  { value: "12h", label: "12 hours", price: "300" },
-  { value: "15h", label: "15 hours", price: "375" },
-  { value: "18h", label: "18 hours", price: "450" },
-  { value: "20h", label: "20 hours", price: "500" },
+  { value: "6h", label: "6 horas", price: "150" },
+  { value: "12h", label: "12 horas", price: "300" },
+  { value: "15h", label: "15 horas", price: "375" },
+  { value: "18h", label: "18 horas", price: "450" },
+  { value: "20h", label: "20 horas", price: "500" },
 ];
 
 const locations = [
@@ -49,16 +49,16 @@ export function TrainingConfigStep({ data, onUpdate, onNext }: TrainingConfigSte
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Training Configuration</CardTitle>
+        <CardTitle>Configuração da Formação</CardTitle>
         <CardDescription>
-          Select your training preferences
+          Selecione suas preferências de formação
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Funding Type */}
           <div className="space-y-3">
-            <Label>Funding Method</Label>
+            <Label>Método de Financiamento</Label>
             <RadioGroup
               value={data.fundingType || ""}
               onValueChange={(value) => onUpdate({ fundingType: value })}
@@ -67,19 +67,19 @@ export function TrainingConfigStep({ data, onUpdate, onNext }: TrainingConfigSte
               <div className="flex items-center space-x-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors">
                 <RadioGroupItem value="opco" id="opco" />
                 <Label htmlFor="opco" className="font-normal cursor-pointer flex-1">
-                  OPCO / FIFPL (Funded by organization)
+                  OPCO / FIFPL (Financiado pela organização)
                 </Label>
               </div>
               <div className="flex items-center space-x-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors">
                 <RadioGroupItem value="company" id="company" />
                 <Label htmlFor="company" className="font-normal cursor-pointer flex-1">
-                  Company (Ski school pays)
+                  Empresa (Escola de esqui paga)
                 </Label>
               </div>
               <div className="flex items-center space-x-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors">
                 <RadioGroupItem value="self" id="self" />
                 <Label htmlFor="self" className="font-normal cursor-pointer flex-1">
-                  Self-funded
+                  Autofinanciado
                 </Label>
               </div>
             </RadioGroup>
@@ -87,7 +87,7 @@ export function TrainingConfigStep({ data, onUpdate, onNext }: TrainingConfigSte
 
           {/* Modality */}
           <div className="space-y-3">
-            <Label>Training Modality</Label>
+            <Label>Modalidade de Formação</Label>
             <RadioGroup
               value={data.modality || ""}
               onValueChange={(value) => onUpdate({ modality: value })}
@@ -96,7 +96,7 @@ export function TrainingConfigStep({ data, onUpdate, onNext }: TrainingConfigSte
               <div className="flex items-center space-x-2 rounded-lg border p-3 hover:bg-muted/50 transition-colors">
                 <RadioGroupItem value="in_person" id="in_person" />
                 <Label htmlFor="in_person" className="font-normal cursor-pointer">
-                  In-person
+                  Presencial
                 </Label>
               </div>
               <div className="flex items-center space-x-2 rounded-lg border p-3 hover:bg-muted/50 transition-colors">
@@ -108,7 +108,7 @@ export function TrainingConfigStep({ data, onUpdate, onNext }: TrainingConfigSte
               <div className="flex items-center space-x-2 rounded-lg border p-3 hover:bg-muted/50 transition-colors">
                 <RadioGroupItem value="online_group" id="online_group" />
                 <Label htmlFor="online_group" className="font-normal cursor-pointer">
-                  Online (Group)
+                  Online (Grupo)
                 </Label>
               </div>
             </RadioGroup>
@@ -116,13 +116,13 @@ export function TrainingConfigStep({ data, onUpdate, onNext }: TrainingConfigSte
 
           {/* Language */}
           <div className="space-y-2">
-            <Label>Language to Learn</Label>
+            <Label>Idioma a Aprender</Label>
             <Select
               value={data.language || ""}
               onValueChange={(value) => onUpdate({ language: value })}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select a language" />
+                <SelectValue placeholder="Selecione um idioma" />
               </SelectTrigger>
               <SelectContent>
                 {languages.map((lang) => (
@@ -136,7 +136,7 @@ export function TrainingConfigStep({ data, onUpdate, onNext }: TrainingConfigSte
 
           {/* Duration */}
           <div className="space-y-3">
-            <Label>Training Duration</Label>
+            <Label>Duração da Formação</Label>
             <RadioGroup
               value={data.duration || ""}
               onValueChange={(value) => onUpdate({ duration: value })}
@@ -167,13 +167,13 @@ export function TrainingConfigStep({ data, onUpdate, onNext }: TrainingConfigSte
           {/* Location - Only for in-person */}
           {data.modality === "in_person" && (
             <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-              <Label>Training Location</Label>
+              <Label>Local da Formação</Label>
               <Select
                 value={data.location || ""}
                 onValueChange={(value) => onUpdate({ location: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a location" />
+                  <SelectValue placeholder="Selecione um local" />
                 </SelectTrigger>
                 <SelectContent>
                   {locations.map((loc) => (
@@ -191,7 +191,7 @@ export function TrainingConfigStep({ data, onUpdate, onNext }: TrainingConfigSte
             className="w-full"
             disabled={!data.fundingType || !data.modality || !data.language || !data.duration}
           >
-            Continue to Placement Test
+            Continuar para Teste de Nível
           </Button>
         </form>
       </CardContent>

@@ -33,6 +33,12 @@ const statusStyles = {
   completed: "bg-blue-100 text-blue-800",
 };
 
+const statusLabels = {
+  active: "Ativo",
+  inactive: "Inativo",
+  completed: "Concluído",
+};
+
 const mockStudents: Student[] = [
   {
     id: "STU-001",
@@ -41,8 +47,8 @@ const mockStudents: Student[] = [
     phone: "+33 6 12 34 56 78",
     skiSchool: "ESF Val d'Isère",
     languages: [
-      { name: "English", level: "B1" },
-      { name: "Portuguese", level: "A2" },
+      { name: "Inglês", level: "B1" },
+      { name: "Português", level: "A2" },
     ],
     status: "active",
     coursesCompleted: 3,
@@ -54,7 +60,7 @@ const mockStudents: Student[] = [
     email: "m.laurent@esf.fr",
     phone: "+33 6 98 76 54 32",
     skiSchool: "ESF Courchevel",
-    languages: [{ name: "Portuguese", level: "B2" }],
+    languages: [{ name: "Português", level: "B2" }],
     status: "active",
     coursesCompleted: 5,
     lastActivity: "2026-01-07",
@@ -65,7 +71,7 @@ const mockStudents: Student[] = [
     email: "p.martin@esf.fr",
     phone: "+33 6 11 22 33 44",
     skiSchool: "ESF Méribel",
-    languages: [{ name: "Russian", level: "A1" }],
+    languages: [{ name: "Russo", level: "A1" }],
     status: "active",
     coursesCompleted: 1,
     lastActivity: "2026-01-06",
@@ -77,8 +83,8 @@ const mockStudents: Student[] = [
     phone: "+33 6 55 66 77 88",
     skiSchool: "ESF Les Arcs",
     languages: [
-      { name: "Dutch", level: "C1" },
-      { name: "English", level: "B2" },
+      { name: "Holandês", level: "C1" },
+      { name: "Inglês", level: "B2" },
     ],
     status: "completed",
     coursesCompleted: 8,
@@ -90,7 +96,7 @@ const mockStudents: Student[] = [
     email: "l.moreau@esf.fr",
     phone: "+33 6 22 33 44 55",
     skiSchool: "ESF Chamonix",
-    languages: [{ name: "English", level: "B1" }],
+    languages: [{ name: "Inglês", level: "B1" }],
     status: "inactive",
     coursesCompleted: 2,
     lastActivity: "2025-11-20",
@@ -106,15 +112,15 @@ export default function Students() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Students</h1>
+            <h1 className="text-2xl font-bold">Alunos</h1>
             <p className="text-muted-foreground">
-              Manage your student database and profiles
+              Gerencie seu banco de dados e perfis de alunos
             </p>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm">
               <Download className="mr-2 h-4 w-4" />
-              Export
+              Exportar
             </Button>
           </div>
         </div>
@@ -125,7 +131,7 @@ export default function Students() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search by name, email, or school..."
+                placeholder="Buscar por nome, email ou escola..."
                 className="pl-10"
               />
             </div>
@@ -135,22 +141,22 @@ export default function Students() {
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="all">Todos os Status</SelectItem>
+              <SelectItem value="active">Ativo</SelectItem>
+              <SelectItem value="inactive">Inativo</SelectItem>
+              <SelectItem value="completed">Concluído</SelectItem>
             </SelectContent>
           </Select>
           <Select defaultValue="all">
             <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Language" />
+              <SelectValue placeholder="Idioma" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Languages</SelectItem>
-              <SelectItem value="english">English</SelectItem>
-              <SelectItem value="portuguese">Portuguese</SelectItem>
-              <SelectItem value="russian">Russian</SelectItem>
-              <SelectItem value="dutch">Dutch</SelectItem>
+              <SelectItem value="all">Todos os Idiomas</SelectItem>
+              <SelectItem value="english">Inglês</SelectItem>
+              <SelectItem value="portuguese">Português</SelectItem>
+              <SelectItem value="russian">Russo</SelectItem>
+              <SelectItem value="dutch">Holandês</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" size="icon">
@@ -197,7 +203,7 @@ export default function Students() {
                     </div>
                   </div>
                   <Badge className={cn(statusStyles[student.status], "hover:opacity-80")}>
-                    {student.status.charAt(0).toUpperCase() + student.status.slice(1)}
+                    {statusLabels[student.status]}
                   </Badge>
                 </div>
               </CardHeader>
@@ -211,18 +217,18 @@ export default function Students() {
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-muted-foreground">Courses</p>
-                    <p className="font-medium">{student.coursesCompleted} completed</p>
+                    <p className="text-muted-foreground">Cursos</p>
+                    <p className="font-medium">{student.coursesCompleted} concluídos</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Last Activity</p>
+                    <p className="text-muted-foreground">Última Atividade</p>
                     <p className="font-medium">{student.lastActivity}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 pt-2 border-t">
                   <Button variant="outline" size="sm" className="flex-1">
                     <Eye className="mr-2 h-4 w-4" />
-                    View Profile
+                    Ver Perfil
                   </Button>
                   <Button variant="ghost" size="icon" className="h-8 w-8">
                     <Mail className="h-4 w-4" />
@@ -239,14 +245,14 @@ export default function Students() {
         {/* Pagination */}
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Showing 1-5 of 5 students
+            Mostrando 1-5 de 5 alunos
           </p>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" disabled>
-              Previous
+              Anterior
             </Button>
             <Button variant="outline" size="sm" disabled>
-              Next
+              Próximo
             </Button>
           </div>
         </div>

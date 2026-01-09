@@ -98,27 +98,27 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CheckCircle className="h-6 w-6 text-emerald-600" />
-            Test Completed
+            Teste Concluído
           </CardTitle>
           <CardDescription>
-            Your placement test has been evaluated
+            Seu teste de nível foi avaliado
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="text-center p-6 rounded-lg bg-muted/50">
-            <p className="text-sm text-muted-foreground mb-2">Your Level</p>
+            <p className="text-sm text-muted-foreground mb-2">Seu Nível</p>
             <Badge className="text-2xl px-6 py-2">{data.currentLevel}</Badge>
             <p className="mt-4 text-sm text-muted-foreground">
-              Score: {data.testScore}%
+              Pontuação: {data.testScore}%
             </p>
           </div>
           
           <p className="text-sm text-muted-foreground text-center">
-            Based on your results, you will be placed in a group matching your level.
+            Com base nos seus resultados, você será alocado em um grupo correspondente ao seu nível.
           </p>
 
           <Button onClick={handleSubmit} className="w-full">
-            Continue to Expectations
+            Continuar para Expectativas
           </Button>
         </CardContent>
       </Card>
@@ -133,9 +133,9 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Placement Test</CardTitle>
+            <CardTitle>Teste de Nível</CardTitle>
             <Badge variant="outline">
-              Question {currentQuestion + 1} of {sampleQuestions.length}
+              Pergunta {currentQuestion + 1} de {sampleQuestions.length}
             </Badge>
           </div>
           <Progress value={progress} className="mt-2" />
@@ -169,16 +169,16 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Placement Test</CardTitle>
+        <CardTitle>Teste de Nível</CardTitle>
         <CardDescription>
-          We need to assess your current level to place you in the right group
+          Precisamos avaliar seu nível atual para alocá-lo no grupo correto
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Already evaluated option */}
           <div className="space-y-3">
-            <Label>Have you been evaluated before?</Label>
+            <Label>Você já foi avaliado anteriormente?</Label>
             <RadioGroup
               value={data.hasBeenEvaluated?.toString() || ""}
               onValueChange={(value) => onUpdate({ hasBeenEvaluated: value === "true" })}
@@ -188,10 +188,10 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
                 <RadioGroupItem value="true" id="evaluated-yes" />
                 <div className="flex-1">
                   <Label htmlFor="evaluated-yes" className="font-medium cursor-pointer">
-                    Yes, I know my level
+                    Sim, eu sei meu nível
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    I have been evaluated before and know my CEFR level
+                    Já fui avaliado e conheço meu nível CEFR
                   </p>
                 </div>
               </div>
@@ -199,10 +199,10 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
                 <RadioGroupItem value="false" id="evaluated-no" />
                 <div className="flex-1">
                   <Label htmlFor="evaluated-no" className="font-medium cursor-pointer">
-                    No, I need to take the test
+                    Não, preciso fazer o teste
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    I would like to take the placement test now
+                    Gostaria de fazer o teste de nível agora
                   </p>
                 </div>
               </div>
@@ -212,7 +212,7 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
           {/* Level selection if already evaluated */}
           {data.hasBeenEvaluated === true && (
             <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
-              <Label>What is your current level?</Label>
+              <Label>Qual é o seu nível atual?</Label>
               <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                 {levels.map((level) => (
                   <Button
@@ -234,12 +234,12 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
             <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
               <div className="rounded-lg bg-muted/50 p-4">
                 <p className="text-sm">
-                  The placement test consists of <strong>{sampleQuestions.length} questions</strong> covering 
-                  grammar, vocabulary, and ski-specific terminology. It takes approximately 5-10 minutes.
+                  O teste de nível consiste em <strong>{sampleQuestions.length} perguntas</strong> cobrindo 
+                  gramática, vocabulário e terminologia específica de esqui. Leva aproximadamente 5-10 minutos.
                 </p>
               </div>
               <Button type="button" onClick={startTest} className="w-full">
-                Start Placement Test
+                Iniciar Teste de Nível
               </Button>
             </div>
           )}
@@ -247,7 +247,7 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
           {/* Continue button for those who already know their level */}
           {data.hasBeenEvaluated === true && data.currentLevel && (
             <Button type="submit" className="w-full">
-              Continue to Expectations
+              Continuar para Expectativas
             </Button>
           )}
         </form>

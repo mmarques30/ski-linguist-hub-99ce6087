@@ -15,31 +15,31 @@ interface ClassSession {
 const mockClasses: ClassSession[] = [
   {
     id: "1",
-    language: "English",
+    language: "Inglês",
     level: "A2-B1",
     location: "Val d'Isère",
-    date: "Jan 15, 2026",
-    time: "Morning",
+    date: "15 Jan, 2026",
+    time: "Manhã",
     enrolled: 8,
     capacity: 12,
   },
   {
     id: "2",
-    language: "Portuguese",
+    language: "Português",
     level: "B1-B2",
     location: "Courchevel",
-    date: "Jan 16, 2026",
-    time: "Afternoon",
+    date: "16 Jan, 2026",
+    time: "Tarde",
     enrolled: 6,
     capacity: 10,
   },
   {
     id: "3",
-    language: "Russian",
+    language: "Russo",
     level: "A1-A2",
     location: "Méribel",
-    date: "Jan 18, 2026",
-    time: "Morning",
+    date: "18 Jan, 2026",
+    time: "Manhã",
     enrolled: 10,
     capacity: 10,
   },
@@ -49,8 +49,8 @@ export function UpcomingClasses() {
   return (
     <div className="rounded-xl border bg-card">
       <div className="border-b p-4">
-        <h3 className="font-semibold">Upcoming Classes</h3>
-        <p className="text-sm text-muted-foreground">Next scheduled training sessions</p>
+        <h3 className="font-semibold">Próximas Turmas</h3>
+        <p className="text-sm text-muted-foreground">Próximas sessões de treinamento agendadas</p>
       </div>
       <div className="divide-y">
         {mockClasses.map((session) => (
@@ -58,14 +58,14 @@ export function UpcomingClasses() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="font-medium">{session.language}</p>
-                <p className="text-sm text-muted-foreground">Level {session.level}</p>
+                <p className="text-sm text-muted-foreground">Nível {session.level}</p>
               </div>
               <div className={`px-2 py-1 rounded text-xs font-medium ${
                 session.enrolled >= session.capacity 
                   ? "bg-red-100 text-red-700" 
                   : "bg-emerald-100 text-emerald-700"
               }`}>
-                {session.enrolled >= session.capacity ? "Full" : `${session.capacity - session.enrolled} spots left`}
+                {session.enrolled >= session.capacity ? "Lotado" : `${session.capacity - session.enrolled} vagas disponíveis`}
               </div>
             </div>
             <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground">
@@ -87,7 +87,7 @@ export function UpcomingClasses() {
       </div>
       <div className="border-t p-4">
         <button className="text-sm font-medium text-primary hover:underline">
-          Manage all classes
+          Gerenciar todas as turmas
         </button>
       </div>
     </div>

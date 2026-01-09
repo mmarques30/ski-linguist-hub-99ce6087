@@ -10,39 +10,39 @@ export default function Dashboard() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <h1 className="text-2xl font-bold">Painel</h1>
           <p className="text-muted-foreground">
-            Overview of your language school management
+            Visão geral da gestão da sua escola de idiomas
           </p>
         </div>
 
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
-            title="Total Students"
+            title="Total de Alunos"
             value={156}
-            subtitle="Active this season"
+            subtitle="Ativos nesta temporada"
             icon={Users}
             trend={{ value: 12, isPositive: true }}
           />
           <StatCard
-            title="Pending Inscriptions"
+            title="Inscrições Pendentes"
             value={23}
-            subtitle="Awaiting confirmation"
+            subtitle="Aguardando confirmação"
             icon={ClipboardList}
             variant="warning"
           />
           <StatCard
-            title="Active Classes"
+            title="Turmas Ativas"
             value={8}
-            subtitle="This week"
+            subtitle="Esta semana"
             icon={GraduationCap}
             variant="success"
           />
           <StatCard
-            title="Closing Soon"
+            title="Fechando em Breve"
             value={3}
-            subtitle="Inscriptions close in 10 days"
+            subtitle="Inscrições fecham em 10 dias"
             icon={AlertCircle}
             variant="info"
           />
