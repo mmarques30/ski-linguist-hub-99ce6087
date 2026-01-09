@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { 
   Users, 
@@ -9,10 +9,13 @@ import {
   LayoutDashboard,
   Settings,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  LogOut
 } from "lucide-react";
 import { useState } from "react";
 import fliLogo from "@/assets/fli-logo-white.png";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 const navigation = [
   { name: "Painel", href: "/", icon: LayoutDashboard },
@@ -27,6 +30,22 @@ const navigation = [
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao sair",
+        description: error.message,
+      });
+    } else {
+      navigate("/auth", { replace: true });
+    }
+  };
 
   return (
     <aside
@@ -84,11 +103,24 @@ export function Sidebar() {
           })}
         </nav>
 
-        {/* Footer */}
+        {/* Footer with Logout */}
         <div className={cn(
-          "border-t border-sidebar-border p-4",
+          "border-t border-sidebar-border p-4 space-y-3",
           collapsed && "px-2"
         )}>
+          <button
+            onClick={handleLogout}
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium w-full transition-all duration-200",
+              "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+              collapsed && "justify-center px-2"
+            )}
+            title={collapsed ? "Sair" : undefined}
+          >
+            <LogOut className="h-5 w-5 flex-shrink-0" />
+            {!collapsed && <span>Sair</span>}
+          </button>
+          
           {!collapsed && (
             <p className="text-xs text-sidebar-foreground/50">
               France Langues International
