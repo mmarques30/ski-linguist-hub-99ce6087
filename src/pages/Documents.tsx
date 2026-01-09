@@ -17,23 +17,23 @@ interface Document {
 
 const documentCategories = [
   {
-    name: "FIFPL Funding",
-    description: "Documents related to FIFPL funding criteria and processes",
+    name: "Financiamento FIFPL",
+    description: "Documentos relacionados aos critérios e processos de financiamento FIFPL",
     count: 3,
   },
   {
-    name: "Reimbursement Tutorials",
-    description: "Step-by-step guides for reimbursement requests",
+    name: "Tutoriais de Reembolso",
+    description: "Guias passo a passo para solicitações de reembolso",
     count: 2,
   },
   {
-    name: "Micro-Enterprise Info",
-    description: "Information about micro-enterprise support tranches",
+    name: "Info Microempresa",
+    description: "Informações sobre faixas de suporte para microempresas",
     count: 1,
   },
   {
-    name: "Certificates",
-    description: "CFP attestations and language certificates",
+    name: "Certificados",
+    description: "Atestações CFP e certificados de idiomas",
     count: 4,
   },
 ];
@@ -42,7 +42,7 @@ const mockDocuments: Document[] = [
   {
     id: "DOC-001",
     name: "Critères de prise en charge Moniteurs de ski 2026",
-    category: "FIFPL Funding",
+    category: "Financiamento FIFPL",
     type: "PDF",
     size: "245 KB",
     uploadedAt: "2026-01-05",
@@ -51,7 +51,7 @@ const mockDocuments: Document[] = [
   {
     id: "DOC-002",
     name: "Tutorial de como fazer o pedido de reembolso",
-    category: "Reimbursement Tutorials",
+    category: "Tutoriais de Reembolso",
     type: "DOCX",
     size: "1.2 MB",
     uploadedAt: "2026-01-03",
@@ -60,7 +60,7 @@ const mockDocuments: Document[] = [
   {
     id: "DOC-003",
     name: "Courrier informatif sur les tranches de prise en charge",
-    category: "Micro-Enterprise Info",
+    category: "Info Microempresa",
     type: "PDF",
     size: "178 KB",
     uploadedAt: "2026-01-02",
@@ -69,7 +69,7 @@ const mockDocuments: Document[] = [
   {
     id: "DOC-004",
     name: "Comment télécharger l'attestation CFP",
-    category: "Certificates",
+    category: "Certificados",
     type: "PDF",
     size: "523 KB",
     uploadedAt: "2026-01-01",
@@ -84,21 +84,21 @@ export default function Documents() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Documents</h1>
+            <h1 className="text-2xl font-bold">Documentos</h1>
             <p className="text-muted-foreground">
-              Manage informational documents and resources for students
+              Gerencie documentos informativos e recursos para alunos
             </p>
           </div>
           <Button>
             <Upload className="mr-2 h-4 w-4" />
-            Upload Document
+            Enviar Documento
           </Button>
         </div>
 
         {/* Search */}
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search documents..." className="pl-10" />
+          <Input placeholder="Buscar documentos..." className="pl-10" />
         </div>
 
         {/* Categories */}
@@ -113,7 +113,7 @@ export default function Documents() {
                   <div>
                     <CardTitle className="text-base">{category.name}</CardTitle>
                     <Badge variant="secondary" className="mt-1">
-                      {category.count} files
+                      {category.count} arquivos
                     </Badge>
                   </div>
                 </div>
@@ -128,9 +128,9 @@ export default function Documents() {
         {/* Document List */}
         <Card>
           <CardHeader>
-            <CardTitle>All Documents</CardTitle>
+            <CardTitle>Todos os Documentos</CardTitle>
             <CardDescription>
-              Browse and manage all uploaded documents
+              Navegue e gerencie todos os documentos enviados
             </CardDescription>
           </CardHeader>
           <CardContent>

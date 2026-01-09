@@ -8,33 +8,45 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import fliLogo from "@/assets/fli-logo.png";
 
+const languageLabels: Record<string, string> = {
+  English: "Inglês",
+  Portuguese: "Português",
+  Russian: "Russo",
+  Dutch: "Holandês",
+  Spanish: "Espanhol",
+  Italian: "Italiano",
+  German: "Alemão",
+  Japanese: "Japonês",
+  Chinese: "Chinês",
+};
+
 export default function Settings() {
   return (
     <MainLayout>
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold">Settings</h1>
+          <h1 className="text-2xl font-bold">Configurações</h1>
           <p className="text-muted-foreground">
-            Manage your application preferences and configurations
+            Gerencie suas preferências e configurações do aplicativo
           </p>
         </div>
 
         <Tabs defaultValue="general" className="space-y-6">
           <TabsList>
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger value="integrations">Integrations</TabsTrigger>
-            <TabsTrigger value="languages">Languages</TabsTrigger>
+            <TabsTrigger value="general">Geral</TabsTrigger>
+            <TabsTrigger value="notifications">Notificações</TabsTrigger>
+            <TabsTrigger value="integrations">Integrações</TabsTrigger>
+            <TabsTrigger value="languages">Idiomas</TabsTrigger>
           </TabsList>
 
           <TabsContent value="general" className="space-y-6">
             {/* Organization Info */}
             <Card>
               <CardHeader>
-                <CardTitle>Organization</CardTitle>
+                <CardTitle>Organização</CardTitle>
                 <CardDescription>
-                  Your organization details and branding
+                  Detalhes e identidade visual da sua organização
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -44,19 +56,19 @@ export default function Settings() {
                     alt="FLI Logo"
                     className="h-16 w-auto"
                   />
-                  <Button variant="outline">Change Logo</Button>
+                  <Button variant="outline">Alterar Logo</Button>
                 </div>
                 <Separator />
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="org-name">Organization Name</Label>
+                    <Label htmlFor="org-name">Nome da Organização</Label>
                     <Input
                       id="org-name"
                       defaultValue="France Langues International"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="org-email">Contact Email</Label>
+                    <Label htmlFor="org-email">Email de Contato</Label>
                     <Input
                       id="org-email"
                       type="email"
@@ -64,14 +76,14 @@ export default function Settings() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="org-phone">Phone Number</Label>
+                    <Label htmlFor="org-phone">Telefone</Label>
                     <Input
                       id="org-phone"
                       defaultValue="+33 4 79 00 00 00"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="org-website">Website</Label>
+                    <Label htmlFor="org-website">Site</Label>
                     <Input
                       id="org-website"
                       defaultValue="https://fli-langues.fr"
@@ -84,15 +96,15 @@ export default function Settings() {
             {/* Default Settings */}
             <Card>
               <CardHeader>
-                <CardTitle>Default Settings</CardTitle>
+                <CardTitle>Configurações Padrão</CardTitle>
                 <CardDescription>
-                  Configure default values for new classes and inscriptions
+                  Configure valores padrão para novas turmas e inscrições
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="default-capacity">Default Class Capacity</Label>
+                    <Label htmlFor="default-capacity">Capacidade Padrão de Turma</Label>
                     <Input
                       id="default-capacity"
                       type="number"
@@ -100,7 +112,7 @@ export default function Settings() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="inscription-deadline">Inscription Deadline (days before)</Label>
+                    <Label htmlFor="inscription-deadline">Prazo de Inscrição (dias antes)</Label>
                     <Input
                       id="inscription-deadline"
                       type="number"
@@ -115,17 +127,17 @@ export default function Settings() {
           <TabsContent value="notifications" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Email Notifications</CardTitle>
+                <CardTitle>Notificações por Email</CardTitle>
                 <CardDescription>
-                  Configure when to send automated emails
+                  Configure quando enviar emails automatizados
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">New Inscription</p>
+                    <p className="font-medium">Nova Inscrição</p>
                     <p className="text-sm text-muted-foreground">
-                      Send confirmation email when a new inscription is received
+                      Enviar email de confirmação quando uma nova inscrição for recebida
                     </p>
                   </div>
                   <Switch defaultChecked />
@@ -133,9 +145,9 @@ export default function Settings() {
                 <Separator />
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Class Reminder</p>
+                    <p className="font-medium">Lembrete de Aula</p>
                     <p className="text-sm text-muted-foreground">
-                      Send reminder 24h before class starts
+                      Enviar lembrete 24h antes do início da aula
                     </p>
                   </div>
                   <Switch defaultChecked />
@@ -143,9 +155,9 @@ export default function Settings() {
                 <Separator />
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Inscription Deadline</p>
+                    <p className="font-medium">Prazo de Inscrição</p>
                     <p className="text-sm text-muted-foreground">
-                      Notify admin when inscription deadline approaches
+                      Notificar admin quando o prazo de inscrição se aproximar
                     </p>
                   </div>
                   <Switch defaultChecked />
@@ -153,9 +165,9 @@ export default function Settings() {
                 <Separator />
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Test Results</p>
+                    <p className="font-medium">Resultados de Teste</p>
                     <p className="text-sm text-muted-foreground">
-                      Send placement test results to students
+                      Enviar resultados do teste de nível para alunos
                     </p>
                   </div>
                   <Switch defaultChecked />
@@ -167,9 +179,9 @@ export default function Settings() {
           <TabsContent value="integrations" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Payment Integration</CardTitle>
+                <CardTitle>Integração de Pagamento</CardTitle>
                 <CardDescription>
-                  Configure Stripe for online payments
+                  Configure Stripe para pagamentos online
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -181,20 +193,20 @@ export default function Settings() {
                     <div>
                       <p className="font-medium">Stripe</p>
                       <p className="text-sm text-muted-foreground">
-                        Accept credit card payments
+                        Aceitar pagamentos com cartão de crédito
                       </p>
                     </div>
                   </div>
-                  <Button variant="outline">Configure</Button>
+                  <Button variant="outline">Configurar</Button>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Communication</CardTitle>
+                <CardTitle>Comunicação</CardTitle>
                 <CardDescription>
-                  Configure email and SMS services
+                  Configure serviços de email e SMS
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -206,11 +218,11 @@ export default function Settings() {
                     <div>
                       <p className="font-medium">Resend</p>
                       <p className="text-sm text-muted-foreground">
-                        Transactional email service
+                        Serviço de email transacional
                       </p>
                     </div>
                   </div>
-                  <Button variant="outline">Configure</Button>
+                  <Button variant="outline">Configurar</Button>
                 </div>
               </CardContent>
             </Card>
@@ -219,16 +231,16 @@ export default function Settings() {
           <TabsContent value="languages" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Teaching Languages</CardTitle>
+                <CardTitle>Idiomas de Ensino</CardTitle>
                 <CardDescription>
-                  Configure the languages available for instruction
+                  Configure os idiomas disponíveis para instrução
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {["English", "Portuguese", "Russian", "Dutch", "Spanish", "Italian", "German", "Japanese", "Chinese"].map((lang) => (
-                  <div key={lang} className="flex items-center justify-between py-2">
-                    <span className="font-medium">{lang}</span>
-                    <Switch defaultChecked={["English", "Portuguese", "Russian", "Dutch"].includes(lang)} />
+                {Object.entries(languageLabels).map(([key, label]) => (
+                  <div key={key} className="flex items-center justify-between py-2">
+                    <span className="font-medium">{label}</span>
+                    <Switch defaultChecked={["English", "Portuguese", "Russian", "Dutch"].includes(key)} />
                   </div>
                 ))}
               </CardContent>
@@ -237,8 +249,8 @@ export default function Settings() {
         </Tabs>
 
         <div className="flex justify-end gap-3">
-          <Button variant="outline">Cancel</Button>
-          <Button>Save Changes</Button>
+          <Button variant="outline">Cancelar</Button>
+          <Button>Salvar Alterações</Button>
         </div>
       </div>
     </MainLayout>

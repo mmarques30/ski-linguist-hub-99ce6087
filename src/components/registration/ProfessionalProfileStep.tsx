@@ -20,16 +20,16 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Professional Profile</CardTitle>
+        <CardTitle>Perfil Profissional</CardTitle>
         <CardDescription>
-          Tell us about your professional background
+          Conte-nos sobre sua experiência profissional
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Profession */}
           <div className="space-y-3">
-            <Label>What is your profession?</Label>
+            <Label>Qual é a sua profissão?</Label>
             <RadioGroup
               value={data.profession || ""}
               onValueChange={(value) => onUpdate({ profession: value as "ski_instructor" | "other" })}
@@ -39,10 +39,10 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
                 <RadioGroupItem value="ski_instructor" id="ski_instructor" />
                 <div>
                   <Label htmlFor="ski_instructor" className="font-medium cursor-pointer">
-                    Ski Instructor (Moniteur de ski)
+                    Instrutor de Esqui (Moniteur de ski)
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    I work as a ski instructor at a French ski school
+                    Trabalho como instrutor de esqui em uma escola francesa
                   </p>
                 </div>
               </div>
@@ -50,10 +50,10 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
                 <RadioGroupItem value="other" id="other" />
                 <div>
                   <Label htmlFor="other" className="font-medium cursor-pointer">
-                    Other Profession
+                    Outra Profissão
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    I have a different profession
+                    Tenho outra profissão
                   </p>
                 </div>
               </div>
@@ -63,16 +63,16 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
           {/* Ski School - Only show for ski instructors */}
           {data.profession === "ski_instructor" && (
             <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-              <Label htmlFor="skiSchool">Ski School</Label>
+              <Label htmlFor="skiSchool">Escola de Esqui</Label>
               <Input
                 id="skiSchool"
                 value={data.skiSchool || ""}
                 onChange={(e) => onUpdate({ skiSchool: e.target.value })}
-                placeholder="e.g., ESF Val d'Isère, ESF Courchevel..."
+                placeholder="ex: ESF Val d'Isère, ESF Courchevel..."
                 required
               />
               <p className="text-sm text-muted-foreground">
-                Enter the name of your ski school
+                Digite o nome da sua escola de esqui
               </p>
             </div>
           )}
@@ -80,9 +80,9 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
           {data.profession === "other" && (
             <div className="rounded-lg bg-muted/50 p-4 animate-in fade-in slide-in-from-top-2">
               <p className="text-sm text-muted-foreground">
-                Our training programs are primarily designed for ski instructors. 
-                Please contact us directly at <span className="font-medium text-foreground">contact@fli-langues.fr</span> to 
-                discuss your specific needs.
+                Nossos programas de treinamento são projetados principalmente para instrutores de esqui. 
+                Por favor, entre em contato conosco diretamente em <span className="font-medium text-foreground">contact@fli-langues.fr</span> para 
+                discutir suas necessidades específicas.
               </p>
             </div>
           )}
@@ -92,7 +92,7 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
             className="w-full"
             disabled={!data.profession || (data.profession === "ski_instructor" && !data.skiSchool)}
           >
-            Continue to Training Configuration
+            Continuar para Configuração da Formação
           </Button>
         </form>
       </CardContent>

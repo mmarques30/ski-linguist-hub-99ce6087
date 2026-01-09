@@ -15,13 +15,13 @@ import { useState } from "react";
 import fliLogo from "@/assets/fli-logo-white.png";
 
 const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Inscriptions", href: "/inscriptions", icon: ClipboardList },
-  { name: "Students", href: "/students", icon: Users },
-  { name: "Placement Tests", href: "/tests", icon: GraduationCap },
-  { name: "Classes", href: "/classes", icon: Calendar },
-  { name: "Documents", href: "/documents", icon: FileText },
-  { name: "Settings", href: "/settings", icon: Settings },
+  { name: "Painel", href: "/", icon: LayoutDashboard },
+  { name: "Inscrições", href: "/inscriptions", icon: ClipboardList },
+  { name: "Alunos", href: "/students", icon: Users },
+  { name: "Testes de Nível", href: "/tests", icon: GraduationCap },
+  { name: "Turmas", href: "/classes", icon: Calendar },
+  { name: "Documentos", href: "/documents", icon: FileText },
+  { name: "Configurações", href: "/settings", icon: Settings },
 ];
 
 export function Sidebar() {

@@ -45,12 +45,12 @@ export interface RegistrationData {
 }
 
 const steps = [
-  { id: 1, name: "Personal Information" },
-  { id: 2, name: "Professional Profile" },
-  { id: 3, name: "Training Configuration" },
-  { id: 4, name: "Placement Test" },
-  { id: 5, name: "Expectations" },
-  { id: 6, name: "Confirmation" },
+  { id: 1, name: "Dados Pessoais" },
+  { id: 2, name: "Perfil Profissional" },
+  { id: 3, name: "Configuração da Formação" },
+  { id: 4, name: "Teste de Nível" },
+  { id: 5, name: "Expectativas" },
+  { id: 6, name: "Confirmação" },
 ];
 
 export default function Register() {
@@ -132,8 +132,8 @@ export default function Register() {
           <div className="flex items-center justify-between">
             <img src={fliLogo} alt="FLI" className="h-12 w-auto" />
             <div className="text-right">
-              <p className="text-sm text-muted-foreground">Registration Form</p>
-              <p className="font-semibold">Language Training for Ski Instructors</p>
+              <p className="text-sm text-muted-foreground">Formulário de Inscrição</p>
+              <p className="font-semibold">Formação em Idiomas para Instrutores de Esqui</p>
             </div>
           </div>
         </div>
@@ -144,7 +144,7 @@ export default function Register() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium">
-              Step {currentStep} of {steps.length}
+              Etapa {currentStep} de {steps.length}
             </span>
             <span className="text-sm text-muted-foreground">
               {steps[currentStep - 1].name}
@@ -192,7 +192,7 @@ export default function Register() {
               className="mb-6"
             >
               <ChevronLeft className="mr-2 h-4 w-4" />
-              Back
+              Voltar
             </Button>
           )}
           {renderStep()}
@@ -203,7 +203,7 @@ export default function Register() {
       <footer className="border-t bg-card mt-auto">
         <div className="container mx-auto px-4 py-4">
           <p className="text-center text-sm text-muted-foreground">
-            France Langues International - Language Training for Ski Instructors
+            France Langues International - Formação em Idiomas para Instrutores de Esqui
           </p>
         </div>
       </footer>

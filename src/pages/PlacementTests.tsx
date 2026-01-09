@@ -16,7 +16,7 @@ interface TestStats {
 
 const mockTestStats: TestStats[] = [
   {
-    language: "English",
+    language: "Inglês",
     totalQuestions: 17,
     completedTests: 45,
     averageScore: 68,
@@ -29,7 +29,7 @@ const mockTestStats: TestStats[] = [
     ],
   },
   {
-    language: "Portuguese",
+    language: "Português",
     totalQuestions: 17,
     completedTests: 28,
     averageScore: 72,
@@ -42,7 +42,7 @@ const mockTestStats: TestStats[] = [
     ],
   },
   {
-    language: "Russian",
+    language: "Russo",
     totalQuestions: 17,
     completedTests: 15,
     averageScore: 55,
@@ -55,7 +55,7 @@ const mockTestStats: TestStats[] = [
     ],
   },
   {
-    language: "Dutch",
+    language: "Holandês",
     totalQuestions: 17,
     completedTests: 12,
     averageScore: 65,
@@ -94,23 +94,23 @@ export default function PlacementTests() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Placement Tests</h1>
+            <h1 className="text-2xl font-bold">Testes de Nível</h1>
             <p className="text-muted-foreground">
-              Manage language proficiency tests and view results
+              Gerencie testes de proficiência e visualize resultados
             </p>
           </div>
           <Button>
             <ExternalLink className="mr-2 h-4 w-4" />
-            Preview Test
+            Visualizar Teste
           </Button>
         </div>
 
         {/* Quick Links */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Public Test Links</CardTitle>
+            <CardTitle className="text-lg">Links Públicos de Testes</CardTitle>
             <CardDescription>
-              Share these links with students to take placement tests
+              Compartilhe estes links com alunos para realizar testes de nível
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -147,18 +147,18 @@ export default function PlacementTests() {
             <Card key={test.language}>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>{test.language} Test</CardTitle>
-                  <Badge variant="outline">{test.totalQuestions} questions</Badge>
+                  <CardTitle>Teste de {test.language}</CardTitle>
+                  <Badge variant="outline">{test.totalQuestions} perguntas</Badge>
                 </div>
                 <CardDescription>
-                  {test.completedTests} tests completed
+                  {test.completedTests} testes concluídos
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Average Score */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Average Score</span>
+                    <span className="text-muted-foreground">Pontuação Média</span>
                     <span className="font-medium">{test.averageScore}%</span>
                   </div>
                   <Progress value={test.averageScore} className="h-2" />
@@ -166,7 +166,7 @@ export default function PlacementTests() {
 
                 {/* Level Distribution */}
                 <div className="space-y-3">
-                  <p className="text-sm font-medium">Level Distribution</p>
+                  <p className="text-sm font-medium">Distribuição por Nível</p>
                   <div className="space-y-2">
                     {test.levelDistribution.map((level) => (
                       <div
@@ -188,7 +188,7 @@ export default function PlacementTests() {
                 </div>
 
                 <Button variant="outline" className="w-full">
-                  View Detailed Results
+                  Ver Resultados Detalhados
                 </Button>
               </CardContent>
             </Card>

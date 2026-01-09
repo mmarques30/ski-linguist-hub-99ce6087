@@ -43,6 +43,14 @@ const statusStyles = {
   cancelled: "bg-red-100 text-red-800",
 };
 
+const statusLabels = {
+  pending: "Pendente",
+  confirmed: "Confirmado",
+  active: "Ativo",
+  completed: "Concluído",
+  cancelled: "Cancelado",
+};
+
 const mockInscriptions: Inscription[] = [
   {
     id: "INS-001",
@@ -50,9 +58,9 @@ const mockInscriptions: Inscription[] = [
     email: "jp.dubois@esf.fr",
     phone: "+33 6 12 34 56 78",
     skiSchool: "ESF Val d'Isère",
-    language: "English",
+    language: "Inglês",
     level: "A2",
-    modality: "In-person",
+    modality: "Presencial",
     duration: "20h",
     funding: "OPCO",
     status: "pending",
@@ -64,11 +72,11 @@ const mockInscriptions: Inscription[] = [
     email: "m.laurent@esf.fr",
     phone: "+33 6 98 76 54 32",
     skiSchool: "ESF Courchevel",
-    language: "Portuguese",
+    language: "Português",
     level: "B1",
     modality: "Online",
     duration: "15h",
-    funding: "Self-funded",
+    funding: "Autofinanciado",
     status: "confirmed",
     createdAt: "2026-01-07",
   },
@@ -78,9 +86,9 @@ const mockInscriptions: Inscription[] = [
     email: "p.martin@esf.fr",
     phone: "+33 6 11 22 33 44",
     skiSchool: "ESF Méribel",
-    language: "Russian",
+    language: "Russo",
     level: "A1",
-    modality: "In-person",
+    modality: "Presencial",
     duration: "12h",
     funding: "FIFPL",
     status: "active",
@@ -92,11 +100,11 @@ const mockInscriptions: Inscription[] = [
     email: "s.bernard@esf.fr",
     phone: "+33 6 55 66 77 88",
     skiSchool: "ESF Les Arcs",
-    language: "Dutch",
+    language: "Holandês",
     level: "B2",
-    modality: "In-person",
+    modality: "Presencial",
     duration: "18h",
-    funding: "Company",
+    funding: "Empresa",
     status: "completed",
     createdAt: "2026-01-05",
   },
@@ -109,19 +117,19 @@ export default function Inscriptions() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Inscriptions</h1>
+            <h1 className="text-2xl font-bold">Inscrições</h1>
             <p className="text-muted-foreground">
-              Manage student registrations and applications
+              Gerenciar inscrições e candidaturas de alunos
             </p>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm">
               <Download className="mr-2 h-4 w-4" />
-              Export
+              Exportar
             </Button>
             <Button size="sm">
               <Plus className="mr-2 h-4 w-4" />
-              New Inscription
+              Nova Inscrição
             </Button>
           </div>
         </div>
@@ -132,7 +140,7 @@ export default function Inscriptions() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search by name, email, or school..."
+                placeholder="Buscar por nome, email ou escola..."
                 className="pl-10"
               />
             </div>
@@ -142,36 +150,36 @@ export default function Inscriptions() {
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="confirmed">Confirmed</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
+              <SelectItem value="all">Todos os Status</SelectItem>
+              <SelectItem value="pending">Pendente</SelectItem>
+              <SelectItem value="confirmed">Confirmado</SelectItem>
+              <SelectItem value="active">Ativo</SelectItem>
+              <SelectItem value="completed">Concluído</SelectItem>
+              <SelectItem value="cancelled">Cancelado</SelectItem>
             </SelectContent>
           </Select>
           <Select defaultValue="all">
             <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Language" />
+              <SelectValue placeholder="Idioma" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Languages</SelectItem>
-              <SelectItem value="english">English</SelectItem>
-              <SelectItem value="portuguese">Portuguese</SelectItem>
-              <SelectItem value="russian">Russian</SelectItem>
-              <SelectItem value="dutch">Dutch</SelectItem>
+              <SelectItem value="all">Todos os Idiomas</SelectItem>
+              <SelectItem value="english">Inglês</SelectItem>
+              <SelectItem value="portuguese">Português</SelectItem>
+              <SelectItem value="russian">Russo</SelectItem>
+              <SelectItem value="dutch">Holandês</SelectItem>
             </SelectContent>
           </Select>
           <Select defaultValue="all">
             <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Funding" />
+              <SelectValue placeholder="Financiamento" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Funding</SelectItem>
+              <SelectItem value="all">Todos os Financiamentos</SelectItem>
               <SelectItem value="opco">OPCO</SelectItem>
               <SelectItem value="fifpl">FIFPL</SelectItem>
-              <SelectItem value="company">Company</SelectItem>
-              <SelectItem value="self">Self-funded</SelectItem>
+              <SelectItem value="company">Empresa</SelectItem>
+              <SelectItem value="self">Autofinanciado</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" size="icon">
@@ -185,15 +193,15 @@ export default function Inscriptions() {
             <TableHeader>
               <TableRow>
                 <TableHead>ID</TableHead>
-                <TableHead>Student</TableHead>
-                <TableHead>Ski School</TableHead>
-                <TableHead>Language</TableHead>
-                <TableHead>Level</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Funding</TableHead>
+                <TableHead>Aluno</TableHead>
+                <TableHead>Escola de Esqui</TableHead>
+                <TableHead>Idioma</TableHead>
+                <TableHead>Nível</TableHead>
+                <TableHead>Duração</TableHead>
+                <TableHead>Financiamento</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>Data</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -219,7 +227,7 @@ export default function Inscriptions() {
                   <TableCell>{inscription.funding}</TableCell>
                   <TableCell>
                     <Badge className={cn(statusStyles[inscription.status], "hover:opacity-80")}>
-                      {inscription.status.charAt(0).toUpperCase() + inscription.status.slice(1)}
+                      {statusLabels[inscription.status]}
                     </Badge>
                   </TableCell>
                   <TableCell>{inscription.createdAt}</TableCell>
@@ -245,14 +253,14 @@ export default function Inscriptions() {
         {/* Pagination */}
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Showing 1-4 of 4 inscriptions
+            Mostrando 1-4 de 4 inscrições
           </p>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" disabled>
-              Previous
+              Anterior
             </Button>
             <Button variant="outline" size="sm" disabled>
-              Next
+              Próximo
             </Button>
           </div>
         </div>

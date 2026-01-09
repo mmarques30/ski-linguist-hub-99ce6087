@@ -29,7 +29,7 @@ interface ClassSession {
 const mockClasses: ClassSession[] = [
   {
     id: "CLS-001",
-    language: "English",
+    language: "Inglês",
     level: "A2-B1",
     location: "Val d'Isère",
     startDate: "2026-01-15",
@@ -42,7 +42,7 @@ const mockClasses: ClassSession[] = [
   },
   {
     id: "CLS-002",
-    language: "Portuguese",
+    language: "Português",
     level: "B1-B2",
     location: "Courchevel",
     startDate: "2026-01-16",
@@ -55,7 +55,7 @@ const mockClasses: ClassSession[] = [
   },
   {
     id: "CLS-003",
-    language: "Russian",
+    language: "Russo",
     level: "A1-A2",
     location: "Méribel",
     startDate: "2026-01-10",
@@ -68,7 +68,7 @@ const mockClasses: ClassSession[] = [
   },
   {
     id: "CLS-004",
-    language: "Dutch",
+    language: "Holandês",
     level: "B1-B2",
     location: "Les Arcs",
     startDate: "2026-01-05",
@@ -87,6 +87,12 @@ const statusStyles = {
   completed: "bg-gray-100 text-gray-800",
 };
 
+const statusLabels = {
+  upcoming: "Próxima",
+  active: "Ativa",
+  completed: "Concluída",
+};
+
 const timeLabels = {
   morning: "08:00 - 12:00",
   afternoon: "14:00 - 18:00",
@@ -99,14 +105,14 @@ export default function Classes() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Classes</h1>
+            <h1 className="text-2xl font-bold">Turmas</h1>
             <p className="text-muted-foreground">
-              Manage training sessions and student allocations
+              Gerencie sessões de treinamento e alocação de alunos
             </p>
           </div>
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            New Class
+            Nova Turma
           </Button>
         </div>
 
@@ -116,7 +122,7 @@ export default function Classes() {
             <Button variant="outline" size="icon">
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <h2 className="text-lg font-semibold">January 2026</h2>
+            <h2 className="text-lg font-semibold">Janeiro 2026</h2>
             <Button variant="outline" size="icon">
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -124,22 +130,22 @@ export default function Classes() {
           <div className="flex items-center gap-3">
             <Select defaultValue="all">
               <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Language" />
+                <SelectValue placeholder="Idioma" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Languages</SelectItem>
-                <SelectItem value="english">English</SelectItem>
-                <SelectItem value="portuguese">Portuguese</SelectItem>
-                <SelectItem value="russian">Russian</SelectItem>
-                <SelectItem value="dutch">Dutch</SelectItem>
+                <SelectItem value="all">Todos os Idiomas</SelectItem>
+                <SelectItem value="english">Inglês</SelectItem>
+                <SelectItem value="portuguese">Português</SelectItem>
+                <SelectItem value="russian">Russo</SelectItem>
+                <SelectItem value="dutch">Holandês</SelectItem>
               </SelectContent>
             </Select>
             <Select defaultValue="all">
               <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Location" />
+                <SelectValue placeholder="Local" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Locations</SelectItem>
+                <SelectItem value="all">Todas as Localidades</SelectItem>
                 <SelectItem value="valdisere">Val d'Isère</SelectItem>
                 <SelectItem value="courchevel">Courchevel</SelectItem>
                 <SelectItem value="meribel">Méribel</SelectItem>
@@ -158,11 +164,11 @@ export default function Classes() {
                   <div>
                     <CardTitle className="text-lg">{session.language}</CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      Level {session.level}
+                      Nível {session.level}
                     </p>
                   </div>
                   <Badge className={cn(statusStyles[session.status])}>
-                    {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+                    {statusLabels[session.status]}
                   </Badge>
                 </div>
               </CardHeader>
@@ -182,21 +188,21 @@ export default function Classes() {
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Users className="h-4 w-4" />
-                    <span>{session.enrolled}/{session.capacity} enrolled</span>
+                    <span>{session.enrolled}/{session.capacity} inscrito(s)</span>
                   </div>
                 </div>
 
                 {/* Capacity Bar */}
                 <div className="space-y-1">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Capacity</span>
+                    <span className="text-muted-foreground">Capacidade</span>
                     <span className={cn(
                       "font-medium",
                       session.enrolled >= session.capacity ? "text-red-600" : "text-emerald-600"
                     )}>
                       {session.enrolled >= session.capacity 
-                        ? "Full" 
-                        : `${session.capacity - session.enrolled} spots available`}
+                        ? "Lotada" 
+                        : `${session.capacity - session.enrolled} vagas disponíveis`}
                     </span>
                   </div>
                   <div className="h-2 rounded-full bg-muted overflow-hidden">
@@ -214,10 +220,10 @@ export default function Classes() {
 
                 <div className="flex items-center gap-2 pt-2 border-t">
                   <Button variant="outline" size="sm" className="flex-1">
-                    View Students
+                    Ver Alunos
                   </Button>
                   <Button variant="outline" size="sm" className="flex-1">
-                    Edit Class
+                    Editar Turma
                   </Button>
                 </div>
               </CardContent>

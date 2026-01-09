@@ -15,17 +15,17 @@ const certifications = [
   {
     value: "linguaskill",
     label: "Linguaskill",
-    description: "Cambridge English certification recognized worldwide",
+    description: "Certificação Cambridge English reconhecida mundialmente",
   },
   {
     value: "bright",
     label: "Bright Language",
-    description: "Professional language assessment certification",
+    description: "Certificação de avaliação de idiomas profissional",
   },
   {
     value: "none",
-    label: "No certification",
-    description: "I don't need a certification at this time",
+    label: "Sem certificação",
+    description: "Não preciso de certificação no momento",
   },
 ];
 
@@ -38,31 +38,31 @@ export function ExpectationsStep({ data, onUpdate, onNext }: ExpectationsStepPro
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Expectations and Certification</CardTitle>
+        <CardTitle>Expectativas e Certificação</CardTitle>
         <CardDescription>
-          Tell us about your goals for this training
+          Conte-nos sobre seus objetivos para esta formação
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Expectations */}
           <div className="space-y-2">
-            <Label htmlFor="expectations">What are your expectations for this training?</Label>
+            <Label htmlFor="expectations">Quais são suas expectativas para esta formação?</Label>
             <Textarea
               id="expectations"
               value={data.expectations || ""}
               onChange={(e) => onUpdate({ expectations: e.target.value })}
-              placeholder="Describe what you hope to achieve from this language training..."
+              placeholder="Descreva o que você espera alcançar com esta formação em idiomas..."
               className="min-h-[120px]"
             />
             <p className="text-sm text-muted-foreground">
-              This helps us tailor the training to your specific needs
+              Isso nos ajuda a adaptar a formação às suas necessidades específicas
             </p>
           </div>
 
           {/* Certification */}
           <div className="space-y-3">
-            <Label>Would you like to obtain a certification?</Label>
+            <Label>Gostaria de obter uma certificação?</Label>
             <RadioGroup
               value={data.certification || ""}
               onValueChange={(value) => onUpdate({ certification: value })}
@@ -92,7 +92,7 @@ export function ExpectationsStep({ data, onUpdate, onNext }: ExpectationsStepPro
             className="w-full"
             disabled={!data.certification}
           >
-            Continue to Confirmation
+            Continuar para Confirmação
           </Button>
         </form>
       </CardContent>

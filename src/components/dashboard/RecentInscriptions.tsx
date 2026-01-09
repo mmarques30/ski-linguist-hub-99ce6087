@@ -19,10 +19,10 @@ const statusStyles = {
 };
 
 const statusLabels = {
-  pending: "Pending",
-  confirmed: "Confirmed",
-  active: "Active",
-  completed: "Completed",
+  pending: "Pendente",
+  confirmed: "Confirmado",
+  active: "Ativo",
+  completed: "Concluído",
 };
 
 // Mock data - will be replaced with real data from Supabase
@@ -31,7 +31,7 @@ const mockInscriptions: Inscription[] = [
     id: "1",
     name: "Jean-Pierre Dubois",
     email: "jp.dubois@esf.fr",
-    language: "English",
+    language: "Inglês",
     level: "A2",
     status: "pending",
     date: "2026-01-08",
@@ -40,7 +40,7 @@ const mockInscriptions: Inscription[] = [
     id: "2",
     name: "Marie Laurent",
     email: "m.laurent@esf.fr",
-    language: "Portuguese",
+    language: "Português",
     level: "B1",
     status: "confirmed",
     date: "2026-01-07",
@@ -49,7 +49,7 @@ const mockInscriptions: Inscription[] = [
     id: "3",
     name: "Pierre Martin",
     email: "p.martin@esf.fr",
-    language: "Russian",
+    language: "Russo",
     level: "A1",
     status: "active",
     date: "2026-01-06",
@@ -58,7 +58,7 @@ const mockInscriptions: Inscription[] = [
     id: "4",
     name: "Sophie Bernard",
     email: "s.bernard@esf.fr",
-    language: "Dutch",
+    language: "Holandês",
     level: "B2",
     status: "completed",
     date: "2026-01-05",
@@ -69,8 +69,8 @@ export function RecentInscriptions() {
   return (
     <div className="rounded-xl border bg-card">
       <div className="border-b p-4">
-        <h3 className="font-semibold">Recent Inscriptions</h3>
-        <p className="text-sm text-muted-foreground">Latest student registrations</p>
+        <h3 className="font-semibold">Inscrições Recentes</h3>
+        <p className="text-sm text-muted-foreground">Últimas inscrições de alunos</p>
       </div>
       <div className="divide-y">
         {mockInscriptions.map((inscription) => (
@@ -90,7 +90,7 @@ export function RecentInscriptions() {
             <div className="flex items-center gap-4">
               <div className="text-right">
                 <p className="text-sm font-medium">{inscription.language}</p>
-                <p className="text-sm text-muted-foreground">Level {inscription.level}</p>
+                <p className="text-sm text-muted-foreground">Nível {inscription.level}</p>
               </div>
               <Badge className={cn(statusStyles[inscription.status])}>
                 {statusLabels[inscription.status]}
@@ -101,7 +101,7 @@ export function RecentInscriptions() {
       </div>
       <div className="border-t p-4">
         <button className="text-sm font-medium text-primary hover:underline">
-          View all inscriptions
+          Ver todas as inscrições
         </button>
       </div>
     </div>

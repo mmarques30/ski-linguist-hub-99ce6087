@@ -13,28 +13,28 @@ interface ConfirmationStepProps {
 }
 
 const languageLabels: Record<string, string> = {
-  english: "English",
-  portuguese: "Portuguese",
-  russian: "Russian",
-  dutch: "Dutch",
+  english: "Inglês",
+  portuguese: "Português",
+  russian: "Russo",
+  dutch: "Holandês",
 };
 
 const modalityLabels: Record<string, string> = {
-  in_person: "In-person",
+  in_person: "Presencial",
   online_individual: "Online (Individual)",
-  online_group: "Online (Group)",
+  online_group: "Online (Grupo)",
 };
 
 const fundingLabels: Record<string, string> = {
   opco: "OPCO / FIFPL",
-  company: "Company",
-  self: "Self-funded",
+  company: "Empresa",
+  self: "Autofinanciado",
 };
 
 const certificationLabels: Record<string, string> = {
   linguaskill: "Linguaskill",
   bright: "Bright Language",
-  none: "No certification",
+  none: "Sem certificação",
 };
 
 export function ConfirmationStep({ data }: ConfirmationStepProps) {
@@ -55,14 +55,14 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             <div className="mx-auto w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
               <CheckCircle className="h-10 w-10 text-emerald-600" />
             </div>
-            <h2 className="text-2xl font-bold">Registration Complete</h2>
+            <h2 className="text-2xl font-bold">Inscrição Concluída</h2>
             <p className="text-muted-foreground max-w-md mx-auto">
-              Thank you for registering with France Langues International. 
-              You will receive a confirmation email shortly with further instructions.
+              Obrigado por se inscrever na France Langues International. 
+              Você receberá um email de confirmação em breve com mais instruções.
             </p>
             <div className="pt-4">
               <Badge variant="outline" className="text-lg px-4 py-2">
-                Registration ID: FLI-{Date.now().toString(36).toUpperCase()}
+                ID da Inscrição: FLI-{Date.now().toString(36).toUpperCase()}
               </Badge>
             </div>
           </div>
@@ -74,9 +74,9 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Confirm Your Registration</CardTitle>
+        <CardTitle>Confirme sua Inscrição</CardTitle>
         <CardDescription>
-          Please review your information before submitting
+          Por favor, revise suas informações antes de enviar
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -84,11 +84,11 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium">
             <User className="h-4 w-4" />
-            Personal Information
+            Dados Pessoais
           </div>
           <div className="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Name</span>
+              <span className="text-muted-foreground">Nome</span>
               <span className="font-medium">{data.civility === "madame" ? "Mme" : "M."} {data.firstName} {data.lastName}</span>
             </div>
             <div className="flex justify-between">
@@ -96,11 +96,11 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
               <span className="font-medium">{data.email}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Phone</span>
+              <span className="text-muted-foreground">Telefone</span>
               <span className="font-medium">{data.phone}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Address</span>
+              <span className="text-muted-foreground">Endereço</span>
               <span className="font-medium">{data.address}, {data.postalCode} {data.city}</span>
             </div>
           </div>
@@ -112,18 +112,18 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium">
             <Briefcase className="h-4 w-4" />
-            Professional Profile
+            Perfil Profissional
           </div>
           <div className="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Profession</span>
+              <span className="text-muted-foreground">Profissão</span>
               <span className="font-medium">
-                {data.profession === "ski_instructor" ? "Ski Instructor" : "Other"}
+                {data.profession === "ski_instructor" ? "Instrutor de Esqui" : "Outra"}
               </span>
             </div>
             {data.skiSchool && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Ski School</span>
+                <span className="text-muted-foreground">Escola de Esqui</span>
                 <span className="font-medium">{data.skiSchool}</span>
               </div>
             )}
@@ -136,28 +136,28 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium">
             <BookOpen className="h-4 w-4" />
-            Training Configuration
+            Configuração da Formação
           </div>
           <div className="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Language</span>
+              <span className="text-muted-foreground">Idioma</span>
               <span className="font-medium">{languageLabels[data.language] || data.language}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Duration</span>
+              <span className="text-muted-foreground">Duração</span>
               <span className="font-medium">{data.duration}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Modality</span>
+              <span className="text-muted-foreground">Modalidade</span>
               <span className="font-medium">{modalityLabels[data.modality] || data.modality}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Funding</span>
+              <span className="text-muted-foreground">Financiamento</span>
               <span className="font-medium">{fundingLabels[data.fundingType] || data.fundingType}</span>
             </div>
             {data.location && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Location</span>
+                <span className="text-muted-foreground">Local</span>
                 <span className="font-medium">{data.location}</span>
               </div>
             )}
@@ -170,15 +170,15 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium">
             <Target className="h-4 w-4" />
-            Level and Certification
+            Nível e Certificação
           </div>
           <div className="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Current Level</span>
+              <span className="text-muted-foreground">Nível Atual</span>
               <Badge>{data.currentLevel}</Badge>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Certification</span>
+              <span className="text-muted-foreground">Certificação</span>
               <span className="font-medium">{certificationLabels[data.certification] || data.certification}</span>
             </div>
           </div>
@@ -195,11 +195,11 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
           />
           <div className="space-y-1">
             <Label htmlFor="terms" className="cursor-pointer">
-              I accept the terms and conditions
+              Aceito os termos e condições
             </Label>
             <p className="text-sm text-muted-foreground">
-              By submitting this registration, I confirm that the information provided is accurate 
-              and I agree to the training terms and conditions of France Langues International.
+              Ao enviar esta inscrição, confirmo que as informações fornecidas são precisas 
+              e concordo com os termos e condições de formação da France Langues International.
             </p>
           </div>
         </div>
@@ -209,7 +209,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
           className="w-full"
           disabled={!accepted}
         >
-          Submit Registration
+          Enviar Inscrição
         </Button>
       </CardContent>
     </Card>
