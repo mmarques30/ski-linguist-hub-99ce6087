@@ -20,28 +20,27 @@ export default function Dashboard() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Total de Alunos"
-            value={156}
+            value={0}
             subtitle="Ativos nesta temporada"
             icon={Users}
-            trend={{ value: 12, isPositive: true }}
           />
           <StatCard
             title="Inscrições Pendentes"
-            value={23}
+            value={0}
             subtitle="Aguardando confirmação"
             icon={ClipboardList}
             variant="warning"
           />
           <StatCard
             title="Turmas Ativas"
-            value={8}
+            value={0}
             subtitle="Esta semana"
             icon={GraduationCap}
             variant="success"
           />
           <StatCard
             title="Fechando em Breve"
-            value={3}
+            value={0}
             subtitle="Inscrições fecham em 10 dias"
             icon={AlertCircle}
             variant="info"
