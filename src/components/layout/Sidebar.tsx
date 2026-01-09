@@ -13,7 +13,7 @@ import {
   LogOut
 } from "lucide-react";
 import { useState } from "react";
-import fliLogo from "@/assets/fli-logo-white.png";
+import fliLogo from "@/assets/fli-marca-yellow.png";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -64,7 +64,7 @@ export function Sidebar() {
             <img 
               src={fliLogo} 
               alt="FLI - France Langues International" 
-              className="h-10 w-auto"
+              className="h-8 w-auto max-w-[180px]"
             />
           )}
           <button
