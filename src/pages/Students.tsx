@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Search, Filter, Download, Eye, Mail, Phone, Grid, List } from "lucide-react";
+import { Search, Filter, Download, Eye, Mail, Phone, Grid, List, Users } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -39,69 +39,7 @@ const statusLabels = {
   completed: "Concluído",
 };
 
-const mockStudents: Student[] = [
-  {
-    id: "STU-001",
-    name: "Jean-Pierre Dubois",
-    email: "jp.dubois@esf.fr",
-    phone: "+33 6 12 34 56 78",
-    skiSchool: "ESF Val d'Isère",
-    languages: [
-      { name: "Inglês", level: "B1" },
-      { name: "Português", level: "A2" },
-    ],
-    status: "active",
-    coursesCompleted: 3,
-    lastActivity: "2026-01-08",
-  },
-  {
-    id: "STU-002",
-    name: "Marie Laurent",
-    email: "m.laurent@esf.fr",
-    phone: "+33 6 98 76 54 32",
-    skiSchool: "ESF Courchevel",
-    languages: [{ name: "Português", level: "B2" }],
-    status: "active",
-    coursesCompleted: 5,
-    lastActivity: "2026-01-07",
-  },
-  {
-    id: "STU-003",
-    name: "Pierre Martin",
-    email: "p.martin@esf.fr",
-    phone: "+33 6 11 22 33 44",
-    skiSchool: "ESF Méribel",
-    languages: [{ name: "Russo", level: "A1" }],
-    status: "active",
-    coursesCompleted: 1,
-    lastActivity: "2026-01-06",
-  },
-  {
-    id: "STU-004",
-    name: "Sophie Bernard",
-    email: "s.bernard@esf.fr",
-    phone: "+33 6 55 66 77 88",
-    skiSchool: "ESF Les Arcs",
-    languages: [
-      { name: "Holandês", level: "C1" },
-      { name: "Inglês", level: "B2" },
-    ],
-    status: "completed",
-    coursesCompleted: 8,
-    lastActivity: "2025-12-15",
-  },
-  {
-    id: "STU-005",
-    name: "Lucas Moreau",
-    email: "l.moreau@esf.fr",
-    phone: "+33 6 22 33 44 55",
-    skiSchool: "ESF Chamonix",
-    languages: [{ name: "Inglês", level: "B1" }],
-    status: "inactive",
-    coursesCompleted: 2,
-    lastActivity: "2025-11-20",
-  },
-];
+const students: Student[] = [];
 
 export default function Students() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -182,70 +120,80 @@ export default function Students() {
           </div>
         </div>
 
-        {/* Student Grid */}
-        <div className={cn(
-          "grid gap-4",
-          viewMode === "grid" ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
-        )}>
-          {mockStudents.map((student) => (
-            <Card key={student.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-lg">
-                      {student.name.split(" ").map((n) => n[0]).join("")}
+        {/* Student Grid or Empty State */}
+        {students.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border bg-card">
+            <Users className="h-12 w-12 text-muted-foreground/50 mb-4" />
+            <h3 className="text-lg font-medium">Nenhum aluno cadastrado</h3>
+            <p className="text-muted-foreground mt-1 max-w-sm">
+              Os alunos aparecerão aqui após concluírem suas inscrições.
+            </p>
+          </div>
+        ) : (
+          <div className={cn(
+            "grid gap-4",
+            viewMode === "grid" ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
+          )}>
+            {students.map((student) => (
+              <Card key={student.id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-lg">
+                        {student.name.split(" ").map((n) => n[0]).join("")}
+                      </div>
+                      <div>
+                        <p className="font-semibold">{student.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {student.skiSchool}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge className={cn(statusStyles[student.status], "hover:opacity-80")}>
+                      {statusLabels[student.status]}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex flex-wrap gap-2">
+                    {student.languages.map((lang) => (
+                      <Badge key={lang.name} variant="outline">
+                        {lang.name} - {lang.level}
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Cursos</p>
+                      <p className="font-medium">{student.coursesCompleted} concluídos</p>
                     </div>
                     <div>
-                      <p className="font-semibold">{student.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {student.skiSchool}
-                      </p>
+                      <p className="text-muted-foreground">Última Atividade</p>
+                      <p className="font-medium">{student.lastActivity}</p>
                     </div>
                   </div>
-                  <Badge className={cn(statusStyles[student.status], "hover:opacity-80")}>
-                    {statusLabels[student.status]}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex flex-wrap gap-2">
-                  {student.languages.map((lang) => (
-                    <Badge key={lang.name} variant="outline">
-                      {lang.name} - {lang.level}
-                    </Badge>
-                  ))}
-                </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Cursos</p>
-                    <p className="font-medium">{student.coursesCompleted} concluídos</p>
+                  <div className="flex items-center gap-2 pt-2 border-t">
+                    <Button variant="outline" size="sm" className="flex-1">
+                      <Eye className="mr-2 h-4 w-4" />
+                      Ver Perfil
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Mail className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Phone className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <div>
-                    <p className="text-muted-foreground">Última Atividade</p>
-                    <p className="font-medium">{student.lastActivity}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 pt-2 border-t">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <Eye className="mr-2 h-4 w-4" />
-                    Ver Perfil
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <Mail className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <Phone className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
         {/* Pagination */}
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Mostrando 1-5 de 5 alunos
+            Mostrando 0 alunos
           </p>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" disabled>

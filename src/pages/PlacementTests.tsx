@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Link2, ExternalLink, Copy, Check } from "lucide-react";
+import { Link2, ExternalLink, Copy, Check, FileQuestion } from "lucide-react";
 import { useState } from "react";
 
 interface TestStats {
@@ -14,60 +14,9 @@ interface TestStats {
   levelDistribution: { level: string; count: number; percentage: number }[];
 }
 
-const mockTestStats: TestStats[] = [
-  {
-    language: "Inglês",
-    totalQuestions: 17,
-    completedTests: 45,
-    averageScore: 68,
-    levelDistribution: [
-      { level: "A1", count: 5, percentage: 11 },
-      { level: "A2", count: 12, percentage: 27 },
-      { level: "B1", count: 15, percentage: 33 },
-      { level: "B2", count: 10, percentage: 22 },
-      { level: "C1", count: 3, percentage: 7 },
-    ],
-  },
-  {
-    language: "Português",
-    totalQuestions: 17,
-    completedTests: 28,
-    averageScore: 72,
-    levelDistribution: [
-      { level: "A1", count: 3, percentage: 11 },
-      { level: "A2", count: 8, percentage: 29 },
-      { level: "B1", count: 10, percentage: 36 },
-      { level: "B2", count: 5, percentage: 18 },
-      { level: "C1", count: 2, percentage: 7 },
-    ],
-  },
-  {
-    language: "Russo",
-    totalQuestions: 17,
-    completedTests: 15,
-    averageScore: 55,
-    levelDistribution: [
-      { level: "A1", count: 6, percentage: 40 },
-      { level: "A2", count: 5, percentage: 33 },
-      { level: "B1", count: 3, percentage: 20 },
-      { level: "B2", count: 1, percentage: 7 },
-      { level: "C1", count: 0, percentage: 0 },
-    ],
-  },
-  {
-    language: "Holandês",
-    totalQuestions: 17,
-    completedTests: 12,
-    averageScore: 65,
-    levelDistribution: [
-      { level: "A1", count: 2, percentage: 17 },
-      { level: "A2", count: 4, percentage: 33 },
-      { level: "B1", count: 4, percentage: 33 },
-      { level: "B2", count: 2, percentage: 17 },
-      { level: "C1", count: 0, percentage: 0 },
-    ],
-  },
-];
+const testStats: TestStats[] = [];
+
+const availableLanguages = ["Inglês", "Português", "Russo", "Holandês"];
 
 const levelColors: Record<string, string> = {
   A1: "bg-red-100 text-red-800",
@@ -115,21 +64,21 @@ export default function PlacementTests() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-              {mockTestStats.map((test) => (
+              {availableLanguages.map((language) => (
                 <div
-                  key={test.language}
+                  key={language}
                   className="flex items-center justify-between rounded-lg border p-3"
                 >
                   <div className="flex items-center gap-2">
                     <Link2 className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{test.language}</span>
+                    <span className="font-medium">{language}</span>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => copyTestLink(test.language)}
+                    onClick={() => copyTestLink(language)}
                   >
-                    {copiedLink === test.language ? (
+                    {copiedLink === language ? (
                       <Check className="h-4 w-4 text-emerald-600" />
                     ) : (
                       <Copy className="h-4 w-4" />
@@ -141,59 +90,69 @@ export default function PlacementTests() {
           </CardContent>
         </Card>
 
-        {/* Test Statistics */}
-        <div className="grid gap-6 md:grid-cols-2">
-          {mockTestStats.map((test) => (
-            <Card key={test.language}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Teste de {test.language}</CardTitle>
-                  <Badge variant="outline">{test.totalQuestions} perguntas</Badge>
-                </div>
-                <CardDescription>
-                  {test.completedTests} testes concluídos
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Average Score */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Pontuação Média</span>
-                    <span className="font-medium">{test.averageScore}%</span>
+        {/* Test Statistics or Empty State */}
+        {testStats.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border bg-card">
+            <FileQuestion className="h-12 w-12 text-muted-foreground/50 mb-4" />
+            <h3 className="text-lg font-medium">Nenhum teste concluído ainda</h3>
+            <p className="text-muted-foreground mt-1 max-w-sm">
+              As estatísticas aparecerão aqui quando os alunos completarem os testes de nível.
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2">
+            {testStats.map((test) => (
+              <Card key={test.language}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Teste de {test.language}</CardTitle>
+                    <Badge variant="outline">{test.totalQuestions} perguntas</Badge>
                   </div>
-                  <Progress value={test.averageScore} className="h-2" />
-                </div>
-
-                {/* Level Distribution */}
-                <div className="space-y-3">
-                  <p className="text-sm font-medium">Distribuição por Nível</p>
+                  <CardDescription>
+                    {test.completedTests} testes concluídos
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Average Score */}
                   <div className="space-y-2">
-                    {test.levelDistribution.map((level) => (
-                      <div
-                        key={level.level}
-                        className="flex items-center gap-3"
-                      >
-                        <Badge className={levelColors[level.level]}>
-                          {level.level}
-                        </Badge>
-                        <div className="flex-1">
-                          <Progress value={level.percentage} className="h-2" />
-                        </div>
-                        <span className="text-sm text-muted-foreground w-16 text-right">
-                          {level.count} ({level.percentage}%)
-                        </span>
-                      </div>
-                    ))}
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Pontuação Média</span>
+                      <span className="font-medium">{test.averageScore}%</span>
+                    </div>
+                    <Progress value={test.averageScore} className="h-2" />
                   </div>
-                </div>
 
-                <Button variant="outline" className="w-full">
-                  Ver Resultados Detalhados
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  {/* Level Distribution */}
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium">Distribuição por Nível</p>
+                    <div className="space-y-2">
+                      {test.levelDistribution.map((level) => (
+                        <div
+                          key={level.level}
+                          className="flex items-center gap-3"
+                        >
+                          <Badge className={levelColors[level.level]}>
+                            {level.level}
+                          </Badge>
+                          <div className="flex-1">
+                            <Progress value={level.percentage} className="h-2" />
+                          </div>
+                          <span className="text-sm text-muted-foreground w-16 text-right">
+                            {level.count} ({level.percentage}%)
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Button variant="outline" className="w-full">
+                    Ver Resultados Detalhados
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </MainLayout>
   );

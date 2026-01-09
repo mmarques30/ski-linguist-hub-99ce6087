@@ -19,63 +19,26 @@ const documentCategories = [
   {
     name: "Financiamento FIFPL",
     description: "Documentos relacionados aos critérios e processos de financiamento FIFPL",
-    count: 3,
+    count: 0,
   },
   {
     name: "Tutoriais de Reembolso",
     description: "Guias passo a passo para solicitações de reembolso",
-    count: 2,
+    count: 0,
   },
   {
     name: "Info Microempresa",
     description: "Informações sobre faixas de suporte para microempresas",
-    count: 1,
+    count: 0,
   },
   {
     name: "Certificados",
     description: "Atestações CFP e certificados de idiomas",
-    count: 4,
+    count: 0,
   },
 ];
 
-const mockDocuments: Document[] = [
-  {
-    id: "DOC-001",
-    name: "Critères de prise en charge Moniteurs de ski 2026",
-    category: "Financiamento FIFPL",
-    type: "PDF",
-    size: "245 KB",
-    uploadedAt: "2026-01-05",
-    downloads: 156,
-  },
-  {
-    id: "DOC-002",
-    name: "Tutorial de como fazer o pedido de reembolso",
-    category: "Tutoriais de Reembolso",
-    type: "DOCX",
-    size: "1.2 MB",
-    uploadedAt: "2026-01-03",
-    downloads: 89,
-  },
-  {
-    id: "DOC-003",
-    name: "Courrier informatif sur les tranches de prise en charge",
-    category: "Info Microempresa",
-    type: "PDF",
-    size: "178 KB",
-    uploadedAt: "2026-01-02",
-    downloads: 67,
-  },
-  {
-    id: "DOC-004",
-    name: "Comment télécharger l'attestation CFP",
-    category: "Certificados",
-    type: "PDF",
-    size: "523 KB",
-    uploadedAt: "2026-01-01",
-    downloads: 234,
-  },
-];
+const documents: Document[] = [];
 
 export default function Documents() {
   return (
@@ -134,40 +97,50 @@ export default function Documents() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="divide-y">
-              {mockDocuments.map((doc) => (
-                <div
-                  key={doc.id}
-                  className="flex items-center justify-between py-4 hover:bg-muted/50 -mx-4 px-4 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="rounded-lg bg-muted p-2">
-                      <FileText className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{doc.name}</p>
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <span>{doc.category}</span>
-                        <span>{doc.type}</span>
-                        <span>{doc.size}</span>
-                        <span>{doc.downloads} downloads</span>
+            {documents.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
+                <h3 className="text-lg font-medium">Nenhum documento enviado</h3>
+                <p className="text-muted-foreground mt-1 max-w-sm">
+                  Envie seu primeiro documento para começar a organizar seus recursos.
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y">
+                {documents.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="flex items-center justify-between py-4 hover:bg-muted/50 -mx-4 px-4 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="rounded-lg bg-muted p-2">
+                        <FileText className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{doc.name}</p>
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                          <span>{doc.category}</span>
+                          <span>{doc.type}</span>
+                          <span>{doc.size}</span>
+                          <span>{doc.downloads} downloads</span>
+                        </div>
                       </div>
                     </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Download className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
