@@ -246,6 +246,81 @@ export type Database = {
         }
         Relationships: []
       }
+      invoices: {
+        Row: {
+          amount_ht: number
+          amount_ttc: number | null
+          created_at: string
+          due_date: string | null
+          fiscal_year: string | null
+          id: string
+          inscription_id: string | null
+          invoice_date: string
+          invoice_number: string | null
+          invoice_type: string
+          notes: string | null
+          payment_date: string | null
+          payment_method: string | null
+          sequence_number: number | null
+          status: string
+          tva_rate: number | null
+          updated_at: string
+        }
+        Insert: {
+          amount_ht?: number
+          amount_ttc?: number | null
+          created_at?: string
+          due_date?: string | null
+          fiscal_year?: string | null
+          id?: string
+          inscription_id?: string | null
+          invoice_date?: string
+          invoice_number?: string | null
+          invoice_type?: string
+          notes?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          sequence_number?: number | null
+          status?: string
+          tva_rate?: number | null
+          updated_at?: string
+        }
+        Update: {
+          amount_ht?: number
+          amount_ttc?: number | null
+          created_at?: string
+          due_date?: string | null
+          fiscal_year?: string | null
+          id?: string
+          inscription_id?: string | null
+          invoice_date?: string
+          invoice_number?: string | null
+          invoice_type?: string
+          notes?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          sequence_number?: number | null
+          status?: string
+          tva_rate?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions_complete"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       placement_test_questions: {
         Row: {
           category: string | null
@@ -512,6 +587,7 @@ export type Database = {
     }
     Functions: {
       generate_inscription_code: { Args: never; Returns: string }
+      get_fiscal_year: { Args: { invoice_date: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
