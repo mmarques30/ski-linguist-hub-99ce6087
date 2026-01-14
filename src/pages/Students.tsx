@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function Students() {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [search, setSearch] = useState("");
 
@@ -160,7 +162,12 @@ export default function Students() {
                     <TableCell>{formatDate(student.created_at)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={() => navigate(`/students/${student.id}`)}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -215,7 +222,12 @@ export default function Students() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 pt-2 border-t">
-                    <Button variant="outline" size="sm" className="flex-1">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => navigate(`/students/${student.id}`)}
+                    >
                       <Eye className="mr-2 h-4 w-4" />
                       Ver Perfil
                     </Button>
