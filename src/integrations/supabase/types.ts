@@ -14,71 +14,196 @@ export type Database = {
   }
   public: {
     Tables: {
-      inscriptions: {
+      accommodations: {
         Row: {
-          certification: string | null
+          address: string | null
           created_at: string
-          duration_hours: number | null
-          expectations: string | null
-          fifpl_coverage: number | null
-          funding_type: string | null
+          dates: string | null
           id: string
-          initial_level: string | null
-          inscription_code: string | null
-          language: string | null
-          location: string | null
-          modality: string | null
-          preferred_time: string | null
-          rgpd_consent: boolean | null
-          status: string | null
-          student_id: string
-          student_payment: number | null
-          terms_accepted: boolean | null
-          total_price: number | null
+          inscription_id: string
+          observations: string | null
         }
         Insert: {
-          certification?: string | null
+          address?: string | null
           created_at?: string
-          duration_hours?: number | null
-          expectations?: string | null
-          fifpl_coverage?: number | null
-          funding_type?: string | null
+          dates?: string | null
           id?: string
-          initial_level?: string | null
-          inscription_code?: string | null
-          language?: string | null
-          location?: string | null
-          modality?: string | null
-          preferred_time?: string | null
-          rgpd_consent?: boolean | null
-          status?: string | null
-          student_id: string
-          student_payment?: number | null
-          terms_accepted?: boolean | null
-          total_price?: number | null
+          inscription_id: string
+          observations?: string | null
         }
         Update: {
-          certification?: string | null
+          address?: string | null
           created_at?: string
-          duration_hours?: number | null
-          expectations?: string | null
-          fifpl_coverage?: number | null
-          funding_type?: string | null
+          dates?: string | null
           id?: string
-          initial_level?: string | null
-          inscription_code?: string | null
-          language?: string | null
-          location?: string | null
-          modality?: string | null
-          preferred_time?: string | null
-          rgpd_consent?: boolean | null
-          status?: string | null
-          student_id?: string
-          student_payment?: number | null
-          terms_accepted?: boolean | null
-          total_price?: number | null
+          inscription_id?: string
+          observations?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "accommodations_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accommodations_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions_complete"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inscriptions: {
+        Row: {
+          balance_after_deposit: number | null
+          certification_date: string | null
+          certification_result: string | null
+          certification_type: string | null
+          check_date: string | null
+          check_number: string | null
+          code: string | null
+          course_address: string | null
+          course_location: string | null
+          course_materials: string | null
+          course_type: string | null
+          created_at: string
+          deposit_amount: number | null
+          deposit_date: string | null
+          duration_days: number | null
+          duration_hours: number | null
+          end_date: string
+          entry_level: string | null
+          entry_test_score: string | null
+          expectations: string | null
+          final_general_level: string | null
+          final_specific_level: string | null
+          final_status: string | null
+          group_name: string | null
+          hours_per_day: number | null
+          id: string
+          instructor_id: string | null
+          language: string
+          max_participants: string | null
+          modality: string | null
+          observations: string | null
+          payment_method: string | null
+          pedagogical_cost: number | null
+          price: number | null
+          qualiopi_status: string | null
+          rhythm: string | null
+          schedule: string | null
+          ski_school_id: string | null
+          start_date: string
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          balance_after_deposit?: number | null
+          certification_date?: string | null
+          certification_result?: string | null
+          certification_type?: string | null
+          check_date?: string | null
+          check_number?: string | null
+          code?: string | null
+          course_address?: string | null
+          course_location?: string | null
+          course_materials?: string | null
+          course_type?: string | null
+          created_at?: string
+          deposit_amount?: number | null
+          deposit_date?: string | null
+          duration_days?: number | null
+          duration_hours?: number | null
+          end_date: string
+          entry_level?: string | null
+          entry_test_score?: string | null
+          expectations?: string | null
+          final_general_level?: string | null
+          final_specific_level?: string | null
+          final_status?: string | null
+          group_name?: string | null
+          hours_per_day?: number | null
+          id?: string
+          instructor_id?: string | null
+          language: string
+          max_participants?: string | null
+          modality?: string | null
+          observations?: string | null
+          payment_method?: string | null
+          pedagogical_cost?: number | null
+          price?: number | null
+          qualiopi_status?: string | null
+          rhythm?: string | null
+          schedule?: string | null
+          ski_school_id?: string | null
+          start_date: string
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          balance_after_deposit?: number | null
+          certification_date?: string | null
+          certification_result?: string | null
+          certification_type?: string | null
+          check_date?: string | null
+          check_number?: string | null
+          code?: string | null
+          course_address?: string | null
+          course_location?: string | null
+          course_materials?: string | null
+          course_type?: string | null
+          created_at?: string
+          deposit_amount?: number | null
+          deposit_date?: string | null
+          duration_days?: number | null
+          duration_hours?: number | null
+          end_date?: string
+          entry_level?: string | null
+          entry_test_score?: string | null
+          expectations?: string | null
+          final_general_level?: string | null
+          final_specific_level?: string | null
+          final_status?: string | null
+          group_name?: string | null
+          hours_per_day?: number | null
+          id?: string
+          instructor_id?: string | null
+          language?: string
+          max_participants?: string | null
+          modality?: string | null
+          observations?: string | null
+          payment_method?: string | null
+          pedagogical_cost?: number | null
+          price?: number | null
+          qualiopi_status?: string | null
+          rhythm?: string | null
+          schedule?: string | null
+          ski_school_id?: string | null
+          start_date?: string
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inscriptions_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inscriptions_ski_school_id_fkey"
+            columns: ["ski_school_id"]
+            isOneToOne: false
+            referencedRelation: "ski_schools"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "inscriptions_student_id_fkey"
             columns: ["student_id"]
@@ -87,6 +212,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      instructors: {
+        Row: {
+          created_at: string
+          email: string | null
+          first_name: string | null
+          id: string
+          is_active: boolean | null
+          languages: string[] | null
+          last_name: string
+          phone: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          languages?: string[] | null
+          last_name: string
+          phone?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          languages?: string[] | null
+          last_name?: string
+          phone?: string | null
+        }
+        Relationships: []
       }
       placement_test_questions: {
         Row: {
@@ -182,6 +340,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "placement_tests_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions_complete"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "placement_tests_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
@@ -190,92 +355,160 @@ export type Database = {
           },
         ]
       }
-      professional_profiles: {
+      ski_schools: {
         Row: {
-          cfp_contribution_amount: number | null
           created_at: string
+          director_name: string | null
+          director_phone: string | null
           id: string
-          profession: string | null
-          ski_school: string | null
-          student_id: string
+          name: string
+          observations: string | null
         }
         Insert: {
-          cfp_contribution_amount?: number | null
           created_at?: string
+          director_name?: string | null
+          director_phone?: string | null
           id?: string
-          profession?: string | null
-          ski_school?: string | null
-          student_id: string
+          name: string
+          observations?: string | null
         }
         Update: {
-          cfp_contribution_amount?: number | null
           created_at?: string
+          director_name?: string | null
+          director_phone?: string | null
           id?: string
-          profession?: string | null
-          ski_school?: string | null
-          student_id?: string
+          name?: string
+          observations?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "professional_profiles_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: true
-            referencedRelation: "students"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       students: {
         Row: {
-          address: string | null
           city: string | null
           civility: string | null
+          company: string | null
           created_at: string
           email: string
           first_name: string
-          has_handicap: boolean | null
           id: string
-          identity_document_url: string | null
           last_name: string
-          phone: string
+          phone: string | null
           postal_code: string | null
-          status: string | null
+          street_address: string | null
+          updated_at: string
         }
         Insert: {
-          address?: string | null
           city?: string | null
           civility?: string | null
+          company?: string | null
           created_at?: string
           email: string
           first_name: string
-          has_handicap?: boolean | null
           id?: string
-          identity_document_url?: string | null
           last_name: string
-          phone: string
+          phone?: string | null
           postal_code?: string | null
-          status?: string | null
+          street_address?: string | null
+          updated_at?: string
         }
         Update: {
-          address?: string | null
           city?: string | null
           civility?: string | null
+          company?: string | null
           created_at?: string
           email?: string
           first_name?: string
-          has_handicap?: boolean | null
           id?: string
-          identity_document_url?: string | null
           last_name?: string
-          phone?: string
+          phone?: string | null
           postal_code?: string | null
-          status?: string | null
+          street_address?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
     }
     Views: {
-      [_ in never]: never
+      inscriptions_complete: {
+        Row: {
+          balance_after_deposit: number | null
+          certification_date: string | null
+          certification_result: string | null
+          certification_type: string | null
+          check_date: string | null
+          check_number: string | null
+          code: string | null
+          course_address: string | null
+          course_location: string | null
+          course_materials: string | null
+          course_type: string | null
+          created_at: string | null
+          deposit_amount: number | null
+          deposit_date: string | null
+          duration_days: number | null
+          duration_hours: number | null
+          end_date: string | null
+          entry_level: string | null
+          entry_test_score: string | null
+          expectations: string | null
+          final_general_level: string | null
+          final_specific_level: string | null
+          final_status: string | null
+          group_name: string | null
+          hours_per_day: number | null
+          id: string | null
+          instructor_email: string | null
+          instructor_id: string | null
+          instructor_name: string | null
+          instructor_phone: string | null
+          language: string | null
+          max_participants: string | null
+          modality: string | null
+          observations: string | null
+          payment_method: string | null
+          pedagogical_cost: number | null
+          price: number | null
+          qualiopi_status: string | null
+          rhythm: string | null
+          schedule: string | null
+          ski_school_director: string | null
+          ski_school_director_phone: string | null
+          ski_school_id: string | null
+          ski_school_name: string | null
+          start_date: string | null
+          status: string | null
+          student_city: string | null
+          student_company: string | null
+          student_email: string | null
+          student_id: string | null
+          student_name: string | null
+          student_phone: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inscriptions_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inscriptions_ski_school_id_fkey"
+            columns: ["ski_school_id"]
+            isOneToOne: false
+            referencedRelation: "ski_schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inscriptions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       generate_inscription_code: { Args: never; Returns: string }

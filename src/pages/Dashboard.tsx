@@ -2,9 +2,23 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { RecentInscriptions } from "@/components/dashboard/RecentInscriptions";
 import { UpcomingClasses } from "@/components/dashboard/UpcomingClasses";
-import { Users, ClipboardList, GraduationCap, AlertCircle } from "lucide-react";
+import { Users, ClipboardList, GraduationCap, Euro } from "lucide-react";
+import { useInscriptionStats } from "@/hooks/useInscriptions";
+import { useStudentStats } from "@/hooks/useStudents";
 
 export default function Dashboard() {
+  const { data: inscriptionStats } = useInscriptionStats();
+  const { data: studentStats } = useStudentStats();
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: "EUR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -20,29 +34,29 @@ export default function Dashboard() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Total de Alunos"
-            value={0}
-            subtitle="Ativos nesta temporada"
+            value={studentStats?.total || 0}
+            subtitle="Cadastrados no sistema"
             icon={Users}
           />
           <StatCard
-            title="Inscrições Pendentes"
-            value={0}
-            subtitle="Aguardando confirmação"
+            title="Total de Inscrições"
+            value={inscriptionStats?.total || 0}
+            subtitle={`${inscriptionStats?.active || 0} em curso`}
             icon={ClipboardList}
             variant="warning"
           />
           <StatCard
-            title="Turmas Ativas"
-            value={0}
-            subtitle="Esta semana"
+            title="Faturado"
+            value={inscriptionStats?.billed || 0}
+            subtitle="Inscrições faturadas"
             icon={GraduationCap}
             variant="success"
           />
           <StatCard
-            title="Fechando em Breve"
-            value={0}
-            subtitle="Inscrições fecham em 10 dias"
-            icon={AlertCircle}
+            title="Receita Total"
+            value={formatCurrency(inscriptionStats?.totalRevenue || 0)}
+            subtitle="Valor total das inscrições"
+            icon={Euro}
             variant="info"
           />
         </div>

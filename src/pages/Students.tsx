@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,39 +11,39 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Search, Filter, Download, Eye, Mail, Phone, Grid, List, Users } from "lucide-react";
-import { useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Search, Filter, Download, Eye, Mail, Phone, Grid, List, Users, Loader2, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-interface Student {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  skiSchool: string;
-  languages: { name: string; level: string }[];
-  status: "active" | "inactive" | "completed";
-  coursesCompleted: number;
-  lastActivity: string;
-  avatar?: string;
-}
-
-const statusStyles = {
-  active: "bg-emerald-100 text-emerald-800",
-  inactive: "bg-gray-100 text-gray-800",
-  completed: "bg-blue-100 text-blue-800",
-};
-
-const statusLabels = {
-  active: "Ativo",
-  inactive: "Inativo",
-  completed: "Concluído",
-};
-
-const students: Student[] = [];
+import { useStudents } from "@/hooks/useStudents";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function Students() {
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
+  const [search, setSearch] = useState("");
+
+  const { data: students, isLoading, error } = useStudents({
+    search: search || undefined,
+  });
+
+  const formatDate = (dateStr: string) => {
+    try {
+      return format(new Date(dateStr), "dd/MM/yyyy", { locale: ptBR });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const getInitials = (firstName: string, lastName: string) => {
+    return `${firstName?.charAt(0) || ""}${lastName?.charAt(0) || ""}`.toUpperCase();
+  };
 
   return (
     <MainLayout>
@@ -69,34 +70,13 @@ export default function Students() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nome, email ou escola..."
+                placeholder="Buscar por nome, email ou empresa..."
                 className="pl-10"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
               />
             </div>
           </div>
-          <Select defaultValue="all">
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os Status</SelectItem>
-              <SelectItem value="active">Ativo</SelectItem>
-              <SelectItem value="inactive">Inativo</SelectItem>
-              <SelectItem value="completed">Concluído</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select defaultValue="all">
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Idioma" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os Idiomas</SelectItem>
-              <SelectItem value="english">Inglês</SelectItem>
-              <SelectItem value="portuguese">Português</SelectItem>
-              <SelectItem value="russian">Russo</SelectItem>
-              <SelectItem value="dutch">Holandês</SelectItem>
-            </SelectContent>
-          </Select>
           <Button variant="outline" size="icon">
             <Filter className="h-4 w-4" />
           </Button>
@@ -120,56 +100,118 @@ export default function Students() {
           </div>
         </div>
 
-        {/* Student Grid or Empty State */}
-        {students.length === 0 ? (
+        {/* Content */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border bg-card">
+            <Users className="h-12 w-12 text-destructive/50 mb-4" />
+            <h3 className="text-lg font-medium">Erro ao carregar alunos</h3>
+            <p className="text-muted-foreground mt-1 max-w-sm">{error.message}</p>
+          </div>
+        ) : !students || students.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border bg-card">
             <Users className="h-12 w-12 text-muted-foreground/50 mb-4" />
             <h3 className="text-lg font-medium">Nenhum aluno cadastrado</h3>
             <p className="text-muted-foreground mt-1 max-w-sm">
-              Os alunos aparecerão aqui após concluírem suas inscrições.
+              Os alunos aparecerão aqui após concluírem suas inscrições ou importação.
             </p>
           </div>
+        ) : viewMode === "list" ? (
+          <div className="rounded-lg border bg-card">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Aluno</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Telefone</TableHead>
+                  <TableHead>Cidade</TableHead>
+                  <TableHead>Empresa</TableHead>
+                  <TableHead>Cadastro</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {students.map((student) => (
+                  <TableRow key={student.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
+                          {getInitials(student.first_name, student.last_name)}
+                        </div>
+                        <span className="font-medium">
+                          {student.first_name} {student.last_name}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{student.email}</TableCell>
+                    <TableCell>{student.phone || "-"}</TableCell>
+                    <TableCell>{student.city || "-"}</TableCell>
+                    <TableCell>
+                      {student.company ? (
+                        <Badge variant="outline" className="flex items-center gap-1 w-fit">
+                          <Building2 className="h-3 w-3" />
+                          {student.company}
+                        </Badge>
+                      ) : "-"}
+                    </TableCell>
+                    <TableCell>{formatDate(student.created_at)}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Mail className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Phone className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         ) : (
-          <div className={cn(
-            "grid gap-4",
-            viewMode === "grid" ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"
-          )}>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {students.map((student) => (
               <Card key={student.id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-lg">
-                        {student.name.split(" ").map((n) => n[0]).join("")}
+                        {getInitials(student.first_name, student.last_name)}
                       </div>
                       <div>
-                        <p className="font-semibold">{student.name}</p>
+                        <p className="font-semibold">
+                          {student.first_name} {student.last_name}
+                        </p>
                         <p className="text-sm text-muted-foreground">
-                          {student.skiSchool}
+                          {student.city || "Cidade não informada"}
                         </p>
                       </div>
                     </div>
-                    <Badge className={cn(statusStyles[student.status], "hover:opacity-80")}>
-                      {statusLabels[student.status]}
-                    </Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex flex-wrap gap-2">
-                    {student.languages.map((lang) => (
-                      <Badge key={lang.name} variant="outline">
-                        {lang.name} - {lang.level}
-                      </Badge>
-                    ))}
-                  </div>
+                  {student.company && (
+                    <Badge variant="outline" className="flex items-center gap-1 w-fit">
+                      <Building2 className="h-3 w-3" />
+                      {student.company}
+                    </Badge>
+                  )}
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-muted-foreground">Cursos</p>
-                      <p className="font-medium">{student.coursesCompleted} concluídos</p>
+                      <p className="text-muted-foreground">Email</p>
+                      <p className="font-medium truncate">{student.email}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Última Atividade</p>
-                      <p className="font-medium">{student.lastActivity}</p>
+                      <p className="text-muted-foreground">Telefone</p>
+                      <p className="font-medium">{student.phone || "-"}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 pt-2 border-t">
@@ -193,7 +235,7 @@ export default function Students() {
         {/* Pagination */}
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Mostrando 0 alunos
+            Mostrando {students?.length || 0} alunos
           </p>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" disabled>

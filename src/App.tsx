@@ -11,6 +11,7 @@ import PlacementTests from "./pages/PlacementTests";
 import Classes from "./pages/Classes";
 import Documents from "./pages/Documents";
 import Settings from "./pages/Settings";
+import Import from "./pages/admin/Import";
 import Register from "./pages/register/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/classes" element={<ProtectedRoute><Classes /></ProtectedRoute>} />
           <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/admin/import" element={<ProtectedRoute><Import /></ProtectedRoute>} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
