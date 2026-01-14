@@ -9,7 +9,11 @@ export interface Student {
   phone: string | null;
   city: string | null;
   company: string | null;
+  civility: string | null;
+  street_address: string | null;
+  postal_code: string | null;
   created_at: string;
+  updated_at: string;
   inscription_count?: number;
 }
 
