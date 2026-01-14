@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Inscriptions from "./pages/Inscriptions";
+import Invoices from "./pages/Invoices";
 import Students from "./pages/Students";
 import StudentDetails from "./pages/students/StudentDetails";
 import PlacementTests from "./pages/PlacementTests";
@@ -33,6 +34,7 @@ const App = () => (
           {/* Protected admin routes */}
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/inscriptions" element={<ProtectedRoute><Inscriptions /></ProtectedRoute>} />
+          <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
           <Route path="/students" element={<ProtectedRoute><Students /></ProtectedRoute>} />
           <Route path="/students/:id" element={<ProtectedRoute><StudentDetails /></ProtectedRoute>} />
           <Route path="/tests" element={<ProtectedRoute><PlacementTests /></ProtectedRoute>} />

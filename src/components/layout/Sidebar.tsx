@@ -6,6 +6,7 @@ import {
   GraduationCap, 
   Calendar,
   FileText,
+  Receipt,
   LayoutDashboard,
   Settings,
   ChevronLeft,
@@ -20,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 const navigation = [
   { name: "Painel", href: "/", icon: LayoutDashboard },
   { name: "Inscrições", href: "/inscriptions", icon: ClipboardList },
+  { name: "Faturas", href: "/invoices", icon: Receipt },
   { name: "Alunos", href: "/students", icon: Users },
   { name: "Testes de Nível", href: "/tests", icon: GraduationCap },
   { name: "Turmas", href: "/classes", icon: Calendar },
