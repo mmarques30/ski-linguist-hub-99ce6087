@@ -24,10 +24,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Search, Filter, Download, Plus, Eye, FileText, Loader2, Send, CheckCircle } from "lucide-react";
+import { Search, Filter, Download, Plus, Eye, FileText, Loader2, Send, CheckCircle, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useInvoices, useUpdateInvoice, InvoiceWithInscription } from "@/hooks/useInvoices";
 import { InvoiceTemplate, InvoiceData } from "@/components/invoices/InvoiceTemplate";
+import { InvoiceEditDialog } from "@/components/invoices/InvoiceEditDialog";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
@@ -58,6 +59,7 @@ export default function Invoices() {
   const [search, setSearch] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceWithInscription | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   const { data: invoices, isLoading, error } = useInvoices({
     status: statusFilter,
@@ -277,6 +279,17 @@ export default function Invoices() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            setSelectedInvoice(invoice);
+                            setEditOpen(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                         {invoice.status === "draft" && (
                           <Button
                             variant="ghost"
@@ -327,6 +340,13 @@ export default function Invoices() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Edit Dialog */}
+      <InvoiceEditDialog
+        invoice={selectedInvoice}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
     </MainLayout>
   );
 }
