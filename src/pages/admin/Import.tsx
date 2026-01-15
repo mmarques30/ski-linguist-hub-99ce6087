@@ -89,6 +89,7 @@ const COLUMN_MAPPINGS: Record<TableType, Record<string, string>> = {
     invoice_date: "invoice_date",
     due_date: "due_date",
     invoice_type: "invoice_type",
+    payment_type: "payment_type",
     amount_ht: "amount_ht",
     tva_rate: "tva_rate",
     amount_ttc: "amount_ttc",
@@ -97,6 +98,7 @@ const COLUMN_MAPPINGS: Record<TableType, Record<string, string>> = {
     payment_method: "payment_method",
     notes: "notes",
     inscription_id: "inscription_id",
+    related_invoice_id: "related_invoice_id",
   },
 };
 
@@ -323,11 +325,16 @@ export default function Import() {
         const validStatuses = ['draft', 'sent', 'paid', 'cancelled'];
         const status = validStatuses.includes(statusVal) ? statusVal : 'draft';
         
+        const paymentTypeVal = (row.payment_type || 'integral').toLowerCase();
+        const validPaymentTypes = ['adiantamento', 'saldo', 'integral'];
+        const paymentType = validPaymentTypes.includes(paymentTypeVal) ? paymentTypeVal : 'integral';
+        
         return {
           invoice_number: isEmpty(row.invoice_number) ? null : row.invoice_number,
           invoice_date: isEmpty(row.invoice_date) ? new Date().toISOString().split('T')[0] : row.invoice_date,
           due_date: isEmpty(row.due_date) ? null : row.due_date,
           invoice_type: type,
+          payment_type: paymentType,
           amount_ht: isEmpty(row.amount_ht) ? 0 : parseFloat(row.amount_ht),
           tva_rate: isEmpty(row.tva_rate) ? (type === 'formation' ? 0 : 20) : parseFloat(row.tva_rate),
           amount_ttc: isEmpty(row.amount_ttc) ? null : parseFloat(row.amount_ttc),
@@ -336,6 +343,7 @@ export default function Import() {
           payment_method: isEmpty(row.payment_method) ? null : row.payment_method,
           notes: isEmpty(row.notes) ? null : row.notes,
           inscription_id: isEmpty(row.inscription_id) ? null : row.inscription_id,
+          related_invoice_id: isEmpty(row.related_invoice_id) ? null : row.related_invoice_id,
         };
       }
       
