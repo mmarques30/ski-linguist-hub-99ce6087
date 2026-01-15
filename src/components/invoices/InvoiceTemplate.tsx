@@ -71,12 +71,12 @@ const templateConfig = {
 
 const FLI_INFO = {
   name: "France Langues International",
-  address: "73 chemin de Saint Giniez",
-  city: "13009 Marseille",
+  address: "25 avenue de la gare",
+  city: "73800 Montmélian",
   phone: "+33 (0)6 27 13 45 16",
   email: "contact@france-langues-international.com",
-  siret: "802 426 785 00014",
-  tvaNumber: "FR 44 802426785",
+  siret: "484 772 041 00048",
+  tvaNumber: "FR 44 484772041",
   iban: "FR76 1820 6004 4339 5412 7300 144",
   bic: "AGRIFRPP882",
 };
@@ -144,11 +144,11 @@ export function InvoiceTemplate({ data, className = "" }: InvoiceTemplateProps) 
 
       {/* Client info */}
       <div className="mb-8 p-4 bg-gray-50 rounded-lg">
-        <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Facturé à</p>
+        <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Client</p>
         <p className="font-semibold">{data.clientName}</p>
-        {data.clientCompany && <p>{data.clientCompany}</p>}
-        <p>{data.clientAddress}</p>
-        <p>{data.clientPostalCode} {data.clientCity}</p>
+        {data.clientCompany && <p className="text-gray-700">{data.clientCompany}</p>}
+        {data.clientAddress && <p className="text-gray-700">{data.clientAddress}</p>}
+        <p className="text-gray-700">{data.clientPostalCode} {data.clientCity}</p>
       </div>
 
       {/* Course period (for formation) */}
@@ -283,9 +283,13 @@ export function InvoiceTemplate({ data, className = "" }: InvoiceTemplateProps) 
       </div>
 
       {/* Footer */}
-      <div className="mt-6 pt-4 border-t border-gray-100 text-center text-xs text-gray-400">
-        <p>France Langues International - Organisme de formation certifié Qualiopi</p>
-        <p>En cas de retard de paiement, une pénalité de 3 fois le taux d'intérêt légal sera appliquée.</p>
+      <div className="mt-6 pt-4 border-t border-gray-100 text-center text-[10px] text-gray-500 space-y-0.5">
+        <p className="font-medium">France Langues International - organisme de formation</p>
+        <p>SARL au capital de 5000 euros</p>
+        <p>25 avenue de la gare, 73800 Montmélian</p>
+        <p>Siret : 484 772 041 00048 - RCS Chambéry - NAF : 8559A</p>
+        <p>Organisme de formation n° 82 73 01 366 73</p>
+        <p className="italic">Version 5 du 10 janvier 2026</p>
       </div>
     </div>
   );
