@@ -134,6 +134,30 @@ function isEmpty(value: string): boolean {
   return !value || value === '-' || value === 'N/A' || value.trim() === '';
 }
 
+// Validate UUID format (8-4-4-4-12 hex characters)
+function isValidUUID(id: string): boolean {
+  if (!id) return false;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id);
+}
+
+// Convert invalid UUIDs to valid ones by replacing non-hex first character
+function sanitizeUUID(id: string): string | null {
+  if (!id || isEmpty(id)) return null;
+  
+  // If already valid, return as-is
+  if (isValidUUID(id)) return id;
+  
+  // Try to fix common issues: replace non-hex first character with 'a'
+  let sanitized = id;
+  if (!/^[0-9a-f]/i.test(id[0])) {
+    sanitized = 'a' + id.slice(1);
+  }
+  
+  // If still not valid, return null (let DB generate)
+  return isValidUUID(sanitized) ? sanitized : null;
+}
+
 export default function Import() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<CSVRow[]>([]);
@@ -251,8 +275,9 @@ export default function Import() {
         const firstName = nameParts.slice(0, -1).join(' ') || '';
         const lastName = nameParts[nameParts.length - 1] || row.full_name || 'Inconnu';
         
+        const sanitizedId = sanitizeUUID(row.id);
         return {
-          id: row.id,
+          ...(sanitizedId && { id: sanitizedId }),
           first_name: firstName || null,
           last_name: lastName,
           email: isEmpty(row.email) ? null : row.email,
@@ -263,8 +288,9 @@ export default function Import() {
       }
       
       case "ski_schools": {
+        const sanitizedId = sanitizeUUID(row.id);
         return {
-          id: row.id,
+          ...(sanitizedId && { id: sanitizedId }),
           name: row.name || 'Inconnu',
           director_name: isEmpty(row.director_name) ? null : row.director_name,
           director_phone: isEmpty(row.director_phone) ? null : row.director_phone,
@@ -273,9 +299,10 @@ export default function Import() {
       }
       
       case "students": {
+        const sanitizedId = sanitizeUUID(row.id);
         return {
-          id: row.id,
-          email: row.email || `unknown-${row.id}@placeholder.com`,
+          ...(sanitizedId && { id: sanitizedId }),
+          email: row.email || `unknown-${Date.now()}@placeholder.com`,
           first_name: row.first_name || 'Inconnu',
           last_name: row.last_name || 'Inconnu',
           civility: isEmpty(row.gender) ? null : row.gender,
@@ -288,12 +315,17 @@ export default function Import() {
       }
       
       case "inscriptions": {
+        const sanitizedId = sanitizeUUID(row.id);
+        const sanitizedStudentId = sanitizeUUID(row.student_id);
+        const sanitizedInstructorId = sanitizeUUID(row.instructor_id);
+        const sanitizedSkiSchoolId = sanitizeUUID(row.ski_school_id);
+        
         return {
-          id: row.id,
+          ...(sanitizedId && { id: sanitizedId }),
           code: isEmpty(row.code) ? null : row.code,
-          student_id: row.student_id,
-          instructor_id: isEmpty(row.instructor_id) ? null : row.instructor_id,
-          ski_school_id: isEmpty(row.ski_school_id) ? null : row.ski_school_id,
+          student_id: sanitizedStudentId || row.student_id, // Required field
+          instructor_id: sanitizedInstructorId,
+          ski_school_id: sanitizedSkiSchoolId,
           modality: isEmpty(row.modality) ? null : row.modality,
           course_type: isEmpty(row.type) ? null : row.type,
           language: row.language || 'Non spécifié',
@@ -329,6 +361,9 @@ export default function Import() {
         const validPaymentTypes = ['adiantamento', 'saldo', 'integral'];
         const paymentType = validPaymentTypes.includes(paymentTypeVal) ? paymentTypeVal : 'integral';
         
+        const sanitizedInscriptionId = sanitizeUUID(row.inscription_id);
+        const sanitizedRelatedInvoiceId = sanitizeUUID(row.related_invoice_id);
+        
         return {
           invoice_number: isEmpty(row.invoice_number) ? null : row.invoice_number,
           invoice_date: isEmpty(row.invoice_date) ? new Date().toISOString().split('T')[0] : row.invoice_date,
@@ -342,8 +377,8 @@ export default function Import() {
           payment_date: isEmpty(row.payment_date) ? null : row.payment_date,
           payment_method: isEmpty(row.payment_method) ? null : row.payment_method,
           notes: isEmpty(row.notes) ? null : row.notes,
-          inscription_id: isEmpty(row.inscription_id) ? null : row.inscription_id,
-          related_invoice_id: isEmpty(row.related_invoice_id) ? null : row.related_invoice_id,
+          inscription_id: sanitizedInscriptionId,
+          related_invoice_id: sanitizedRelatedInvoiceId,
         };
       }
       
