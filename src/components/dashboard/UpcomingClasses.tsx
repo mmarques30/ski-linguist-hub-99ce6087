@@ -1,4 +1,48 @@
 import { Calendar, MapPin, Users, GraduationCap } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+
+const translations = {
+  title: {
+    fr: "Prochaines sessions",
+    "pt-BR": "Próximas sessões",
+    en: "Upcoming Sessions",
+  },
+  subtitle: {
+    fr: "Sessions de formation à venir",
+    "pt-BR": "Sessões de treinamento futuras",
+    en: "Upcoming training sessions",
+  },
+  noSessionsTitle: {
+    fr: "Aucune session planifiée",
+    "pt-BR": "Nenhuma sessão planejada",
+    en: "No sessions scheduled",
+  },
+  noSessionsDesc: {
+    fr: "Les sessions apparaîtront ici",
+    "pt-BR": "As sessões aparecerão aqui",
+    en: "Sessions will appear here",
+  },
+  manageAll: {
+    fr: "Gérer toutes les sessions",
+    "pt-BR": "Gerenciar todas as sessões",
+    en: "Manage all sessions",
+  },
+  level: {
+    fr: "Niveau",
+    "pt-BR": "Nível",
+    en: "Level",
+  },
+  full: {
+    fr: "Complet",
+    "pt-BR": "Lotado",
+    en: "Full",
+  },
+  availableSpots: {
+    fr: "places disponibles",
+    "pt-BR": "vagas disponíveis",
+    en: "spots available",
+  },
+};
 
 interface ClassSession {
   id: string;
@@ -14,18 +58,20 @@ interface ClassSession {
 const classes: ClassSession[] = [];
 
 export function UpcomingClasses() {
+  const { t } = useLanguage();
+
   return (
     <div className="rounded-xl border bg-card">
       <div className="border-b p-4">
-        <h3 className="font-semibold">Prochaines sessions</h3>
-        <p className="text-sm text-muted-foreground">Sessions de formation à venir</p>
+        <h3 className="font-semibold">{t(translations.title)}</h3>
+        <p className="text-sm text-muted-foreground">{t(translations.subtitle)}</p>
       </div>
       {classes.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <GraduationCap className="h-10 w-10 text-muted-foreground/50 mb-3" />
-          <p className="text-sm font-medium">Aucune session planifiée</p>
+          <p className="text-sm font-medium">{t(translations.noSessionsTitle)}</p>
           <p className="text-sm text-muted-foreground">
-            Les sessions apparaîtront ici
+            {t(translations.noSessionsDesc)}
           </p>
         </div>
       ) : (
@@ -35,14 +81,16 @@ export function UpcomingClasses() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-medium">{session.language}</p>
-                  <p className="text-sm text-muted-foreground">Niveau {session.level}</p>
+                  <p className="text-sm text-muted-foreground">{t(translations.level)} {session.level}</p>
                 </div>
                 <div className={`px-2 py-1 rounded text-xs font-medium ${
                   session.enrolled >= session.capacity 
                     ? "bg-red-100 text-red-700" 
                     : "bg-emerald-100 text-emerald-700"
                 }`}>
-                  {session.enrolled >= session.capacity ? "Complet" : `${session.capacity - session.enrolled} places disponibles`}
+                  {session.enrolled >= session.capacity 
+                    ? t(translations.full) 
+                    : `${session.capacity - session.enrolled} ${t(translations.availableSpots)}`}
                 </div>
               </div>
               <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground">
@@ -65,7 +113,7 @@ export function UpcomingClasses() {
       )}
       <div className="border-t p-4">
         <button className="text-sm font-medium text-primary hover:underline">
-          Gérer toutes les sessions
+          {t(translations.manageAll)}
         </button>
       </div>
     </div>

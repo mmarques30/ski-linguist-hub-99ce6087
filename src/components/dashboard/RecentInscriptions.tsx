@@ -4,7 +4,56 @@ import { ClipboardList, Loader2 } from "lucide-react";
 import { useInscriptions } from "@/hooks/useInscriptions";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { fr, ptBR, enUS } from "date-fns/locale";
+import { useLanguage } from "@/contexts/LanguageContext";
+
+const translations = {
+  title: {
+    fr: "Inscriptions récentes",
+    "pt-BR": "Inscrições recentes",
+    en: "Recent Enrollments",
+  },
+  subtitle: {
+    fr: "Dernières inscriptions de stagiaires",
+    "pt-BR": "Últimas inscrições de estagiários",
+    en: "Latest student enrollments",
+  },
+  noInscriptionsTitle: {
+    fr: "Aucune inscription récente",
+    "pt-BR": "Nenhuma inscrição recente",
+    en: "No recent enrollments",
+  },
+  noInscriptionsDesc: {
+    fr: "Les inscriptions apparaîtront ici",
+    "pt-BR": "As inscrições aparecerão aqui",
+    en: "Enrollments will appear here",
+  },
+  viewAll: {
+    fr: "Voir toutes les inscriptions",
+    "pt-BR": "Ver todas as inscrições",
+    en: "View all enrollments",
+  },
+  statusInProgress: {
+    fr: "En cours",
+    "pt-BR": "Em andamento",
+    en: "In Progress",
+  },
+  statusBilled: {
+    fr: "Facturée",
+    "pt-BR": "Faturada",
+    en: "Billed",
+  },
+  statusCompleted: {
+    fr: "Terminée",
+    "pt-BR": "Concluída",
+    en: "Completed",
+  },
+  statusCancelled: {
+    fr: "Annulée",
+    "pt-BR": "Cancelada",
+    en: "Cancelled",
+  },
+};
 
 const statusStyles: Record<string, string> = {
   "En cours": "bg-blue-100 text-blue-800 hover:bg-blue-100",
@@ -13,17 +62,19 @@ const statusStyles: Record<string, string> = {
   "Annulé": "bg-red-100 text-red-800 hover:bg-red-100",
 };
 
-const statusLabels: Record<string, string> = {
-  "En cours": "En cours",
-  "Facturé": "Facturée",
-  "Terminé": "Terminée",
-  "Annulé": "Annulée",
-};
-
 export function RecentInscriptions() {
   const { data: inscriptions, isLoading } = useInscriptions();
+  const { language, t } = useLanguage();
   
   const recentInscriptions = inscriptions?.slice(0, 5) || [];
+
+  const getDateLocale = () => {
+    switch (language) {
+      case "pt-BR": return ptBR;
+      case "en": return enUS;
+      default: return fr;
+    }
+  };
 
   const getInitials = (name: string | null) => {
     if (!name) return "?";
@@ -32,17 +83,24 @@ export function RecentInscriptions() {
 
   const formatDate = (dateStr: string) => {
     try {
-      return format(new Date(dateStr), "dd/MM", { locale: fr });
+      return format(new Date(dateStr), "dd/MM", { locale: getDateLocale() });
     } catch {
       return dateStr;
     }
   };
 
+  const statusLabels: Record<string, string> = {
+    "En cours": t(translations.statusInProgress),
+    "Facturé": t(translations.statusBilled),
+    "Terminé": t(translations.statusCompleted),
+    "Annulé": t(translations.statusCancelled),
+  };
+
   return (
     <div className="rounded-xl border bg-card">
       <div className="border-b p-4">
-        <h3 className="font-semibold">Inscriptions récentes</h3>
-        <p className="text-sm text-muted-foreground">Dernières inscriptions de stagiaires</p>
+        <h3 className="font-semibold">{t(translations.title)}</h3>
+        <p className="text-sm text-muted-foreground">{t(translations.subtitle)}</p>
       </div>
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
@@ -51,9 +109,9 @@ export function RecentInscriptions() {
       ) : recentInscriptions.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <ClipboardList className="h-10 w-10 text-muted-foreground/50 mb-3" />
-          <p className="text-sm font-medium">Aucune inscription récente</p>
+          <p className="text-sm font-medium">{t(translations.noInscriptionsTitle)}</p>
           <p className="text-sm text-muted-foreground">
-            Les inscriptions apparaîtront ici
+            {t(translations.noInscriptionsDesc)}
           </p>
         </div>
       ) : (
@@ -87,7 +145,7 @@ export function RecentInscriptions() {
       )}
       <div className="border-t p-4">
         <Link to="/inscriptions" className="text-sm font-medium text-primary hover:underline">
-          Voir toutes les inscriptions
+          {t(translations.viewAll)}
         </Link>
       </div>
     </div>
