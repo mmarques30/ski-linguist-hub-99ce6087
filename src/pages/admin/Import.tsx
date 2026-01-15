@@ -12,7 +12,7 @@ import { Upload, FileSpreadsheet, CheckCircle2, XCircle, AlertTriangle, Loader2,
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-type TableType = "instructors" | "ski_schools" | "students" | "inscriptions";
+type TableType = "instructors" | "ski_schools" | "students" | "inscriptions" | "invoices";
 
 interface CSVRow {
   [key: string]: string;
@@ -83,6 +83,20 @@ const COLUMN_MAPPINGS: Record<TableType, Record<string, string>> = {
     status: "status",
     status_original: "status_original",
     observations: "observations",
+  },
+  invoices: {
+    invoice_number: "invoice_number",
+    invoice_date: "invoice_date",
+    due_date: "due_date",
+    invoice_type: "invoice_type",
+    amount_ht: "amount_ht",
+    tva_rate: "tva_rate",
+    amount_ttc: "amount_ttc",
+    status: "status",
+    payment_date: "payment_date",
+    payment_method: "payment_method",
+    notes: "notes",
+    inscription_id: "inscription_id",
   },
 };
 
@@ -300,6 +314,31 @@ export default function Import() {
         };
       }
       
+      case "invoices": {
+        const invoiceType = (row.invoice_type || 'formation').toLowerCase();
+        const validTypes = ['formation', 'test', 'soustraitance'];
+        const type = validTypes.includes(invoiceType) ? invoiceType : 'formation';
+        
+        const statusVal = (row.status || 'draft').toLowerCase();
+        const validStatuses = ['draft', 'sent', 'paid', 'cancelled'];
+        const status = validStatuses.includes(statusVal) ? statusVal : 'draft';
+        
+        return {
+          invoice_number: isEmpty(row.invoice_number) ? null : row.invoice_number,
+          invoice_date: isEmpty(row.invoice_date) ? new Date().toISOString().split('T')[0] : row.invoice_date,
+          due_date: isEmpty(row.due_date) ? null : row.due_date,
+          invoice_type: type,
+          amount_ht: isEmpty(row.amount_ht) ? 0 : parseFloat(row.amount_ht),
+          tva_rate: isEmpty(row.tva_rate) ? (type === 'formation' ? 0 : 20) : parseFloat(row.tva_rate),
+          amount_ttc: isEmpty(row.amount_ttc) ? null : parseFloat(row.amount_ttc),
+          status: status,
+          payment_date: isEmpty(row.payment_date) ? null : row.payment_date,
+          payment_method: isEmpty(row.payment_method) ? null : row.payment_method,
+          notes: isEmpty(row.notes) ? null : row.notes,
+          inscription_id: isEmpty(row.inscription_id) ? null : row.inscription_id,
+        };
+      }
+      
       default:
         throw new Error(`Table non supportée: ${table}`);
     }
@@ -322,6 +361,7 @@ export default function Import() {
     ski_schools: "2. Écoles de ski (ski_schools)",
     students: "3. Stagiaires (students)",
     inscriptions: "4. Inscriptions (inscriptions)",
+    invoices: "5. Factures (invoices)",
   };
 
   return (
