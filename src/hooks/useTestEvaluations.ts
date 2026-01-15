@@ -23,6 +23,48 @@ export function useTestBookingsToEvaluate() {
   });
 }
 
+export function useCompletedEvaluations() {
+  return useQuery({
+    queryKey: ["completed-evaluations"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("test_bookings_complete")
+        .select("*")
+        .not("evaluation_id", "is", null)
+        .order("datetime", { ascending: false });
+      
+      if (error) throw error;
+      return data as TestBookingComplete[];
+    },
+  });
+}
+
+export function useEvaluationWithBooking(evaluationId: string) {
+  return useQuery({
+    queryKey: ["evaluation-with-booking", evaluationId],
+    queryFn: async () => {
+      const { data: evaluation, error: evalError } = await supabase
+        .from("test_evaluations")
+        .select("*")
+        .eq("id", evaluationId)
+        .single();
+      
+      if (evalError) throw evalError;
+
+      const { data: booking, error: bookingError } = await supabase
+        .from("test_bookings_complete")
+        .select("*")
+        .eq("id", evaluation.booking_id)
+        .single();
+      
+      if (bookingError) throw bookingError;
+
+      return { evaluation: evaluation as TestEvaluation, booking: booking as TestBookingComplete };
+    },
+    enabled: !!evaluationId,
+  });
+}
+
 export function useTestBookingForEvaluation(bookingId: string) {
   return useQuery({
     queryKey: ["test-booking-evaluation", bookingId],
