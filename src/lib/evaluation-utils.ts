@@ -107,11 +107,11 @@ export function generateScoreOptions(system: 'sur_5' | 'sur_20'): number[] {
 }
 
 // Schools that use /20 scoring system
-export const SCHOOLS_SUR_20 = ['alpe', 'villard-reculas', 'villard reculas'];
+export const SCHOOLS_SUR_20 = ["esf alpe d'huez", "esf alpe d'huez", "villard reculas", "villard-reculas"];
 
 export function getScoringSystem(schoolName: string): 'sur_5' | 'sur_20' {
-  const normalized = schoolName.toLowerCase();
-  return SCHOOLS_SUR_20.some(s => normalized.includes(s)) ? 'sur_20' : 'sur_5';
+  const normalized = schoolName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return SCHOOLS_SUR_20.some(s => normalized.includes(s.normalize('NFD').replace(/[\u0300-\u036f]/g, ''))) ? 'sur_20' : 'sur_5';
 }
 
 // Generate phrase code
