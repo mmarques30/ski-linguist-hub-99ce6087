@@ -52,7 +52,7 @@ export function StatCard({
               "text-sm font-medium",
               trend.isPositive ? "text-emerald-600" : "text-red-600"
             )}>
-              {trend.isPositive ? "+" : ""}{trend.value}% vs last month
+              {trend.isPositive ? "+" : ""}{trend.value}% vs mois dernier
             </p>
           )}
         </div>

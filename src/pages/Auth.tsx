@@ -30,7 +30,7 @@ export default function Auth() {
           to="/register" 
           className="text-sm text-muted-foreground hover:text-primary transition-colors"
         >
-          Formulário de inscrição pública
+          Formulaire d'inscription publique
         </Link>
       </div>
       

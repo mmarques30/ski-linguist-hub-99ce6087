@@ -17,15 +17,15 @@ export function UpcomingClasses() {
   return (
     <div className="rounded-xl border bg-card">
       <div className="border-b p-4">
-        <h3 className="font-semibold">Próximas Turmas</h3>
-        <p className="text-sm text-muted-foreground">Próximas sessões de treinamento agendadas</p>
+        <h3 className="font-semibold">Prochaines sessions</h3>
+        <p className="text-sm text-muted-foreground">Sessions de formation à venir</p>
       </div>
       {classes.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <GraduationCap className="h-10 w-10 text-muted-foreground/50 mb-3" />
-          <p className="text-sm font-medium">Nenhuma turma agendada</p>
+          <p className="text-sm font-medium">Aucune session planifiée</p>
           <p className="text-sm text-muted-foreground">
-            As turmas aparecerão aqui
+            Les sessions apparaîtront ici
           </p>
         </div>
       ) : (
@@ -35,14 +35,14 @@ export function UpcomingClasses() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-medium">{session.language}</p>
-                  <p className="text-sm text-muted-foreground">Nível {session.level}</p>
+                  <p className="text-sm text-muted-foreground">Niveau {session.level}</p>
                 </div>
                 <div className={`px-2 py-1 rounded text-xs font-medium ${
                   session.enrolled >= session.capacity 
                     ? "bg-red-100 text-red-700" 
                     : "bg-emerald-100 text-emerald-700"
                 }`}>
-                  {session.enrolled >= session.capacity ? "Lotado" : `${session.capacity - session.enrolled} vagas disponíveis`}
+                  {session.enrolled >= session.capacity ? "Complet" : `${session.capacity - session.enrolled} places disponibles`}
                 </div>
               </div>
               <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground">
@@ -65,7 +65,7 @@ export function UpcomingClasses() {
       )}
       <div className="border-t p-4">
         <button className="text-sm font-medium text-primary hover:underline">
-          Gerenciar todas as turmas
+          Gérer toutes les sessions
         </button>
       </div>
     </div>

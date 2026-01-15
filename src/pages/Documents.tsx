@@ -17,23 +17,23 @@ interface Document {
 
 const documentCategories = [
   {
-    name: "Financiamento FIFPL",
-    description: "Documentos relacionados aos critérios e processos de financiamento FIFPL",
+    name: "Financement FIFPL",
+    description: "Documents relatifs aux critères et processus de financement FIFPL",
     count: 0,
   },
   {
-    name: "Tutoriais de Reembolso",
-    description: "Guias passo a passo para solicitações de reembolso",
+    name: "Tutoriels remboursement",
+    description: "Guides étape par étape pour les demandes de remboursement",
     count: 0,
   },
   {
-    name: "Info Microempresa",
-    description: "Informações sobre faixas de suporte para microempresas",
+    name: "Info Micro-entreprise",
+    description: "Informations sur les plafonds de prise en charge pour micro-entreprises",
     count: 0,
   },
   {
-    name: "Certificados",
-    description: "Atestações CFP e certificados de idiomas",
+    name: "Certificats",
+    description: "Attestations CFP et certificats de langues",
     count: 0,
   },
 ];
@@ -47,21 +47,21 @@ export default function Documents() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Documentos</h1>
+            <h1 className="text-2xl font-bold">Documents</h1>
             <p className="text-muted-foreground">
-              Gerencie documentos informativos e recursos para alunos
+              Gérez les documents informatifs et ressources pour les stagiaires
             </p>
           </div>
           <Button>
             <Upload className="mr-2 h-4 w-4" />
-            Enviar Documento
+            Téléverser un document
           </Button>
         </div>
 
         {/* Search */}
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Buscar documentos..." className="pl-10" />
+          <Input placeholder="Rechercher des documents..." className="pl-10" />
         </div>
 
         {/* Categories */}
@@ -76,7 +76,7 @@ export default function Documents() {
                   <div>
                     <CardTitle className="text-base">{category.name}</CardTitle>
                     <Badge variant="secondary" className="mt-1">
-                      {category.count} arquivos
+                      {category.count} fichiers
                     </Badge>
                   </div>
                 </div>
@@ -91,18 +91,18 @@ export default function Documents() {
         {/* Document List */}
         <Card>
           <CardHeader>
-            <CardTitle>Todos os Documentos</CardTitle>
+            <CardTitle>Tous les documents</CardTitle>
             <CardDescription>
-              Navegue e gerencie todos os documentos enviados
+              Parcourez et gérez tous les documents téléversés
             </CardDescription>
           </CardHeader>
           <CardContent>
             {documents.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                <h3 className="text-lg font-medium">Nenhum documento enviado</h3>
+                <h3 className="text-lg font-medium">Aucun document téléversé</h3>
                 <p className="text-muted-foreground mt-1 max-w-sm">
-                  Envie seu primeiro documento para começar a organizar seus recursos.
+                  Téléversez votre premier document pour commencer à organiser vos ressources.
                 </p>
               </div>
             ) : (
@@ -122,7 +122,7 @@ export default function Documents() {
                           <span>{doc.category}</span>
                           <span>{doc.type}</span>
                           <span>{doc.size}</span>
-                          <span>{doc.downloads} downloads</span>
+                          <span>{doc.downloads} téléchargements</span>
                         </div>
                       </div>
                     </div>
