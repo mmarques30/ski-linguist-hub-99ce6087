@@ -1,11 +1,10 @@
-import { useState, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   ArrowLeft, 
@@ -21,9 +20,10 @@ import {
   useTestBookingForEvaluation, 
   useTestEvaluation,
   useCreateTestEvaluation,
+  useUpdateTestEvaluation,
   type CreateEvaluationData 
 } from "@/hooks/useTestEvaluations";
-import { useTestPhrases, type TestPhrase } from "@/hooks/useTestPhrases";
+import { useTestPhrases } from "@/hooks/useTestPhrases";
 import { ScoreInput } from "@/components/evaluation/ScoreInput";
 import { PhraseSelector } from "@/components/evaluation/PhraseSelector";
 import { AppreciationPreview } from "@/components/evaluation/AppreciationPreview";
@@ -32,8 +32,7 @@ import {
   scoreToLevel,
   LANGUAGE_FLAGS,
   LANGUAGE_LABELS,
-  CATEGORIES,
-  CATEGORY_LABELS
+  CATEGORIES
 } from "@/lib/evaluation-utils";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -48,13 +47,18 @@ type SectionStates = Record<string, SectionState>;
 export default function EvaluationForm() {
   const { bookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  
+  // Check if we're in edit mode
+  const isEditMode = location.pathname.includes('/edit');
 
   // Queries
   const { data: booking, isLoading: bookingLoading } = useTestBookingForEvaluation(bookingId || "");
-  const { data: existingEvaluation } = useTestEvaluation(bookingId || "");
+  const { data: existingEvaluation, isLoading: evalLoading } = useTestEvaluation(bookingId || "");
   const { data: allPhrases } = useTestPhrases({ active: true });
   const createMutation = useCreateTestEvaluation();
+  const updateMutation = useUpdateTestEvaluation();
 
   // Determine scoring system
   const scoringSystem = useMemo(() => {
@@ -84,6 +88,40 @@ export default function EvaluationForm() {
 
   // General comments
   const [generalComments, setGeneralComments] = useState("");
+  
+  // Track if form has been initialized with existing data
+  const [initialized, setInitialized] = useState(false);
+
+  // Load existing evaluation data when in edit mode
+  useEffect(() => {
+    if (existingEvaluation && isEditMode && !initialized) {
+      setScores({
+        comprehension: existingEvaluation.score_comprehension,
+        expression: existingEvaluation.score_expression,
+        structure: existingEvaluation.score_structure,
+        technique: existingEvaluation.score_technique,
+        conversation: existingEvaluation.score_conversation,
+        general: existingEvaluation.score_general,
+      });
+      
+      setGeneralComments(existingEvaluation.comments || "");
+      
+      // Load section comments
+      const newSections: SectionStates = {};
+      CATEGORIES.forEach((cat) => {
+        const commentKey = `comments_${cat === 'grammar' ? 'grammar' : cat}` as keyof typeof existingEvaluation;
+        newSections[cat] = { 
+          selectedIds: existingEvaluation.selected_phrase_ids?.filter(id => {
+            const phrase = allPhrases?.find(p => p.id === id);
+            return phrase?.category === cat;
+          }) || [],
+          comments: (existingEvaluation[commentKey] as string) || ""
+        };
+      });
+      setSections(newSections);
+      setInitialized(true);
+    }
+  }, [existingEvaluation, isEditMode, initialized, allPhrases]);
 
   // Calculate average level based on general score
   const determinedLevel = useMemo(() => {
@@ -139,7 +177,7 @@ export default function EvaluationForm() {
       score_technique: scores.technique,
       score_conversation: scores.conversation,
       scoring_system: scoringSystem,
-      attestation_type: booking.ski_school_name?.toLowerCase().includes("alpe") 
+      attestation_type: booking.ski_school_name?.toLowerCase().includes("alpe d'huez") 
         ? "alpe_huez" 
         : "generique",
       appreciation_intro: buildAppreciation("introduction"),
@@ -158,7 +196,14 @@ export default function EvaluationForm() {
     };
 
     try {
-      await createMutation.mutateAsync(evaluationData);
+      if (isEditMode && existingEvaluation) {
+        await updateMutation.mutateAsync({ 
+          id: existingEvaluation.id, 
+          ...evaluationData 
+        });
+      } else {
+        await createMutation.mutateAsync(evaluationData);
+      }
       
       if (!isDraft) {
         navigate("/formateur/evaluations");
@@ -168,7 +213,10 @@ export default function EvaluationForm() {
     }
   };
 
-  if (bookingLoading) {
+  const isLoading = bookingLoading || (isEditMode && evalLoading);
+  const isSaving = createMutation.isPending || updateMutation.isPending;
+
+  if (isLoading) {
     return (
       <MainLayout>
         <div className="space-y-6">
@@ -198,7 +246,8 @@ export default function EvaluationForm() {
     );
   }
 
-  if (existingEvaluation) {
+  // Only block if there's an existing evaluation AND we're NOT in edit mode
+  if (existingEvaluation && !isEditMode) {
     return (
       <MainLayout>
         <div className="text-center py-12">
@@ -207,13 +256,20 @@ export default function EvaluationForm() {
           <p className="text-muted-foreground mb-4">
             Ce test a déjà été évalué. Score général: {existingEvaluation.score_general}
           </p>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/formateur/evaluations")}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Retour à la liste
-          </Button>
+          <div className="flex gap-2 justify-center">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate("/formateur/evaluations")}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Retour à la liste
+            </Button>
+            <Button 
+              onClick={() => navigate(`/formateur/evaluation/${bookingId}/edit`)}
+            >
+              Modifier l'évaluation
+            </Button>
+          </div>
         </div>
       </MainLayout>
     );
@@ -232,7 +288,9 @@ export default function EvaluationForm() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold">Compte-Rendu d'Évaluation</h1>
+            <h1 className="text-2xl font-bold">
+              {isEditMode ? "Modifier l'évaluation" : "Compte-Rendu d'Évaluation"}
+            </h1>
             <p className="text-muted-foreground">
               Système de notation: {scoringSystem === 'sur_5' ? 'Sur 5' : 'Sur 20'}
             </p>
@@ -324,7 +382,7 @@ export default function EvaluationForm() {
             </Card>
 
             {/* Phrase Sections */}
-            {CATEGORIES.map((category, index) => (
+            {CATEGORIES.map((category) => (
               <div key={category}>
                 <PhraseSelector
                   category={category}
@@ -363,18 +421,18 @@ export default function EvaluationForm() {
               <Button
                 variant="outline"
                 onClick={() => handleSave(true)}
-                disabled={createMutation.isPending}
+                disabled={isSaving}
               >
                 <Save className="h-4 w-4 mr-2" />
                 Enregistrer brouillon
               </Button>
               <Button
                 onClick={() => handleSave(false)}
-                disabled={createMutation.isPending || scores.general === 0}
+                disabled={isSaving || scores.general === 0}
                 className="flex-1"
               >
                 <CheckCircle2 className="h-4 w-4 mr-2" />
-                Valider et Terminer
+                {isEditMode ? "Mettre à jour" : "Valider et Terminer"}
               </Button>
             </div>
           </div>
