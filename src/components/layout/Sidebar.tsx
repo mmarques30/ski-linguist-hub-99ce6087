@@ -19,15 +19,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
 const navigation = [
-  { name: "Painel", href: "/", icon: LayoutDashboard },
-  { name: "Inscrições", href: "/inscriptions", icon: ClipboardList },
-  { name: "Faturas", href: "/invoices", icon: Receipt },
-  { name: "Alunos", href: "/students", icon: Users },
-  { name: "Testes de Nível", href: "/tests", icon: GraduationCap },
+  { name: "Tableau de bord", href: "/", icon: LayoutDashboard },
+  { name: "Inscriptions", href: "/inscriptions", icon: ClipboardList },
+  { name: "Factures", href: "/invoices", icon: Receipt },
+  { name: "Stagiaires", href: "/students", icon: Users },
+  { name: "Tests de niveau", href: "/tests", icon: GraduationCap },
   { name: "Évaluations", href: "/formateur/evaluations", icon: ClipboardList },
-  { name: "Turmas", href: "/classes", icon: Calendar },
-  { name: "Documentos", href: "/documents", icon: FileText },
-  { name: "Configurações", href: "/settings", icon: Settings },
+  { name: "Sessions", href: "/classes", icon: Calendar },
+  { name: "Documents", href: "/documents", icon: FileText },
+  { name: "Paramètres", href: "/settings", icon: Settings },
 ];
 
 export function Sidebar() {
@@ -42,7 +42,7 @@ export function Sidebar() {
     if (error) {
       toast({
         variant: "destructive",
-        title: "Erro ao sair",
+        title: "Erreur de déconnexion",
         description: error.message,
       });
     } else {
@@ -118,10 +118,10 @@ export function Sidebar() {
               "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
               collapsed && "justify-center px-2"
             )}
-            title={collapsed ? "Sair" : undefined}
+            title={collapsed ? "Déconnexion" : undefined}
           >
             <LogOut className="h-5 w-5 flex-shrink-0" />
-            {!collapsed && <span>Sair</span>}
+            {!collapsed && <span>Déconnexion</span>}
           </button>
           
           {!collapsed && (

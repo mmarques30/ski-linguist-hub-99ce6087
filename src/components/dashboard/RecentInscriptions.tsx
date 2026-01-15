@@ -4,7 +4,7 @@ import { ClipboardList, Loader2 } from "lucide-react";
 import { useInscriptions } from "@/hooks/useInscriptions";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { fr } from "date-fns/locale";
 
 const statusStyles: Record<string, string> = {
   "En cours": "bg-blue-100 text-blue-800 hover:bg-blue-100",
@@ -14,10 +14,10 @@ const statusStyles: Record<string, string> = {
 };
 
 const statusLabels: Record<string, string> = {
-  "En cours": "Em Curso",
-  "Facturé": "Faturado",
-  "Terminé": "Concluído",
-  "Annulé": "Cancelado",
+  "En cours": "En cours",
+  "Facturé": "Facturée",
+  "Terminé": "Terminée",
+  "Annulé": "Annulée",
 };
 
 export function RecentInscriptions() {
@@ -32,7 +32,7 @@ export function RecentInscriptions() {
 
   const formatDate = (dateStr: string) => {
     try {
-      return format(new Date(dateStr), "dd/MM", { locale: ptBR });
+      return format(new Date(dateStr), "dd/MM", { locale: fr });
     } catch {
       return dateStr;
     }
@@ -41,8 +41,8 @@ export function RecentInscriptions() {
   return (
     <div className="rounded-xl border bg-card">
       <div className="border-b p-4">
-        <h3 className="font-semibold">Inscrições Recentes</h3>
-        <p className="text-sm text-muted-foreground">Últimas inscrições de alunos</p>
+        <h3 className="font-semibold">Inscriptions récentes</h3>
+        <p className="text-sm text-muted-foreground">Dernières inscriptions de stagiaires</p>
       </div>
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
@@ -51,9 +51,9 @@ export function RecentInscriptions() {
       ) : recentInscriptions.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <ClipboardList className="h-10 w-10 text-muted-foreground/50 mb-3" />
-          <p className="text-sm font-medium">Nenhuma inscrição recente</p>
+          <p className="text-sm font-medium">Aucune inscription récente</p>
           <p className="text-sm text-muted-foreground">
-            As inscrições aparecerão aqui
+            Les inscriptions apparaîtront ici
           </p>
         </div>
       ) : (
@@ -87,7 +87,7 @@ export function RecentInscriptions() {
       )}
       <div className="border-t p-4">
         <Link to="/inscriptions" className="text-sm font-medium text-primary hover:underline">
-          Ver todas as inscrições
+          Voir toutes les inscriptions
         </Link>
       </div>
     </div>

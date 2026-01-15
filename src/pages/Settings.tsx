@@ -9,15 +9,15 @@ import { Separator } from "@/components/ui/separator";
 import fliLogo from "@/assets/fli-logo.png";
 
 const languageLabels: Record<string, string> = {
-  English: "Inglês",
-  Portuguese: "Português",
-  Russian: "Russo",
-  Dutch: "Holandês",
-  Spanish: "Espanhol",
-  Italian: "Italiano",
-  German: "Alemão",
-  Japanese: "Japonês",
-  Chinese: "Chinês",
+  English: "Anglais",
+  Portuguese: "Portugais",
+  Russian: "Russe",
+  Dutch: "Néerlandais",
+  Spanish: "Espagnol",
+  Italian: "Italien",
+  German: "Allemand",
+  Japanese: "Japonais",
+  Chinese: "Chinois",
 };
 
 export default function Settings() {
@@ -26,27 +26,27 @@ export default function Settings() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold">Configurações</h1>
+          <h1 className="text-2xl font-bold">Paramètres</h1>
           <p className="text-muted-foreground">
-            Gerencie suas preferências e configurações do aplicativo
+            Gérez vos préférences et la configuration de l'application
           </p>
         </div>
 
         <Tabs defaultValue="general" className="space-y-6">
           <TabsList>
-            <TabsTrigger value="general">Geral</TabsTrigger>
-            <TabsTrigger value="notifications">Notificações</TabsTrigger>
-            <TabsTrigger value="integrations">Integrações</TabsTrigger>
-            <TabsTrigger value="languages">Idiomas</TabsTrigger>
+            <TabsTrigger value="general">Général</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
+            <TabsTrigger value="integrations">Intégrations</TabsTrigger>
+            <TabsTrigger value="languages">Langues</TabsTrigger>
           </TabsList>
 
           <TabsContent value="general" className="space-y-6">
             {/* Organization Info */}
             <Card>
               <CardHeader>
-                <CardTitle>Organização</CardTitle>
+                <CardTitle>Organisation</CardTitle>
                 <CardDescription>
-                  Detalhes e identidade visual da sua organização
+                  Détails et identité visuelle de votre organisation
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -56,19 +56,19 @@ export default function Settings() {
                     alt="FLI Logo"
                     className="h-16 w-auto"
                   />
-                  <Button variant="outline">Alterar Logo</Button>
+                  <Button variant="outline">Changer le logo</Button>
                 </div>
                 <Separator />
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="org-name">Nome da Organização</Label>
+                    <Label htmlFor="org-name">Nom de l'organisation</Label>
                     <Input
                       id="org-name"
                       defaultValue="France Langues International"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="org-email">Email de Contato</Label>
+                    <Label htmlFor="org-email">Email de contact</Label>
                     <Input
                       id="org-email"
                       type="email"
@@ -76,14 +76,14 @@ export default function Settings() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="org-phone">Telefone</Label>
+                    <Label htmlFor="org-phone">Téléphone</Label>
                     <Input
                       id="org-phone"
                       defaultValue="+33 4 79 00 00 00"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="org-website">Site</Label>
+                    <Label htmlFor="org-website">Site web</Label>
                     <Input
                       id="org-website"
                       defaultValue="https://fli-langues.fr"
@@ -96,15 +96,15 @@ export default function Settings() {
             {/* Default Settings */}
             <Card>
               <CardHeader>
-                <CardTitle>Configurações Padrão</CardTitle>
+                <CardTitle>Paramètres par défaut</CardTitle>
                 <CardDescription>
-                  Configure valores padrão para novas turmas e inscrições
+                  Configurez les valeurs par défaut pour les nouvelles sessions et inscriptions
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="default-capacity">Capacidade Padrão de Turma</Label>
+                    <Label htmlFor="default-capacity">Capacité par défaut des sessions</Label>
                     <Input
                       id="default-capacity"
                       type="number"
@@ -112,7 +112,7 @@ export default function Settings() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="inscription-deadline">Prazo de Inscrição (dias antes)</Label>
+                    <Label htmlFor="inscription-deadline">Délai d'inscription (jours avant)</Label>
                     <Input
                       id="inscription-deadline"
                       type="number"
@@ -127,17 +127,17 @@ export default function Settings() {
           <TabsContent value="notifications" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Notificações por Email</CardTitle>
+                <CardTitle>Notifications par email</CardTitle>
                 <CardDescription>
-                  Configure quando enviar emails automatizados
+                  Configurez l'envoi automatique d'emails
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Nova Inscrição</p>
+                    <p className="font-medium">Nouvelle inscription</p>
                     <p className="text-sm text-muted-foreground">
-                      Enviar email de confirmação quando uma nova inscrição for recebida
+                      Envoyer un email de confirmation lors d'une nouvelle inscription
                     </p>
                   </div>
                   <Switch defaultChecked />
@@ -145,9 +145,9 @@ export default function Settings() {
                 <Separator />
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Lembrete de Aula</p>
+                    <p className="font-medium">Rappel de session</p>
                     <p className="text-sm text-muted-foreground">
-                      Enviar lembrete 24h antes do início da aula
+                      Envoyer un rappel 24h avant le début de la session
                     </p>
                   </div>
                   <Switch defaultChecked />
@@ -155,9 +155,9 @@ export default function Settings() {
                 <Separator />
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Prazo de Inscrição</p>
+                    <p className="font-medium">Délai d'inscription</p>
                     <p className="text-sm text-muted-foreground">
-                      Notificar admin quando o prazo de inscrição se aproximar
+                      Notifier l'admin lorsque le délai d'inscription approche
                     </p>
                   </div>
                   <Switch defaultChecked />
@@ -165,9 +165,9 @@ export default function Settings() {
                 <Separator />
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Resultados de Teste</p>
+                    <p className="font-medium">Résultats de test</p>
                     <p className="text-sm text-muted-foreground">
-                      Enviar resultados do teste de nível para alunos
+                      Envoyer les résultats du test de niveau aux stagiaires
                     </p>
                   </div>
                   <Switch defaultChecked />
@@ -179,9 +179,9 @@ export default function Settings() {
           <TabsContent value="integrations" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Integração de Pagamento</CardTitle>
+                <CardTitle>Intégration de paiement</CardTitle>
                 <CardDescription>
-                  Configure Stripe para pagamentos online
+                  Configurez Stripe pour les paiements en ligne
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -193,20 +193,20 @@ export default function Settings() {
                     <div>
                       <p className="font-medium">Stripe</p>
                       <p className="text-sm text-muted-foreground">
-                        Aceitar pagamentos com cartão de crédito
+                        Accepter les paiements par carte bancaire
                       </p>
                     </div>
                   </div>
-                  <Button variant="outline">Configurar</Button>
+                  <Button variant="outline">Configurer</Button>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Comunicação</CardTitle>
+                <CardTitle>Communication</CardTitle>
                 <CardDescription>
-                  Configure serviços de email e SMS
+                  Configurez les services d'email et SMS
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -218,11 +218,11 @@ export default function Settings() {
                     <div>
                       <p className="font-medium">Resend</p>
                       <p className="text-sm text-muted-foreground">
-                        Serviço de email transacional
+                        Service d'email transactionnel
                       </p>
                     </div>
                   </div>
-                  <Button variant="outline">Configurar</Button>
+                  <Button variant="outline">Configurer</Button>
                 </div>
               </CardContent>
             </Card>
@@ -231,9 +231,9 @@ export default function Settings() {
           <TabsContent value="languages" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Idiomas de Ensino</CardTitle>
+                <CardTitle>Langues enseignées</CardTitle>
                 <CardDescription>
-                  Configure os idiomas disponíveis para instrução
+                  Configurez les langues disponibles pour l'enseignement
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -249,8 +249,8 @@ export default function Settings() {
         </Tabs>
 
         <div className="flex justify-end gap-3">
-          <Button variant="outline">Cancelar</Button>
-          <Button>Salvar Alterações</Button>
+          <Button variant="outline">Annuler</Button>
+          <Button>Enregistrer les modifications</Button>
         </div>
       </div>
     </MainLayout>

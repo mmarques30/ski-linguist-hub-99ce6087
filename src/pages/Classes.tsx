@@ -35,9 +35,9 @@ const statusStyles = {
 };
 
 const statusLabels = {
-  upcoming: "Próxima",
-  active: "Ativa",
-  completed: "Concluída",
+  upcoming: "À venir",
+  active: "En cours",
+  completed: "Terminée",
 };
 
 const timeLabels = {
@@ -52,14 +52,14 @@ export default function Classes() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Turmas</h1>
+            <h1 className="text-2xl font-bold">Sessions</h1>
             <p className="text-muted-foreground">
-              Gerencie sessões de treinamento e alocação de alunos
+              Gérez les sessions de formation et l'affectation des stagiaires
             </p>
           </div>
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Nova Turma
+            Nouvelle session
           </Button>
         </div>
 
@@ -69,7 +69,7 @@ export default function Classes() {
             <Button variant="outline" size="icon">
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <h2 className="text-lg font-semibold">Janeiro 2026</h2>
+            <h2 className="text-lg font-semibold">Janvier 2026</h2>
             <Button variant="outline" size="icon">
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -77,22 +77,22 @@ export default function Classes() {
           <div className="flex items-center gap-3">
             <Select defaultValue="all">
               <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Idioma" />
+                <SelectValue placeholder="Langue" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os Idiomas</SelectItem>
-                <SelectItem value="english">Inglês</SelectItem>
-                <SelectItem value="portuguese">Português</SelectItem>
-                <SelectItem value="russian">Russo</SelectItem>
-                <SelectItem value="dutch">Holandês</SelectItem>
+                <SelectItem value="all">Toutes les langues</SelectItem>
+                <SelectItem value="english">Anglais</SelectItem>
+                <SelectItem value="portuguese">Portugais</SelectItem>
+                <SelectItem value="russian">Russe</SelectItem>
+                <SelectItem value="dutch">Néerlandais</SelectItem>
               </SelectContent>
             </Select>
             <Select defaultValue="all">
               <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Local" />
+                <SelectValue placeholder="Lieu" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas as Localidades</SelectItem>
+                <SelectItem value="all">Tous les lieux</SelectItem>
                 <SelectItem value="valdisere">Val d'Isère</SelectItem>
                 <SelectItem value="courchevel">Courchevel</SelectItem>
                 <SelectItem value="meribel">Méribel</SelectItem>
@@ -106,9 +106,9 @@ export default function Classes() {
         {classes.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border bg-card">
             <GraduationCap className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium">Nenhuma turma criada</h3>
+            <h3 className="text-lg font-medium">Aucune session créée</h3>
             <p className="text-muted-foreground mt-1 max-w-sm">
-              Crie sua primeira turma para começar a organizar os treinamentos.
+              Créez votre première session pour commencer à organiser les formations.
             </p>
           </div>
         ) : (
@@ -120,7 +120,7 @@ export default function Classes() {
                     <div>
                       <CardTitle className="text-lg">{session.language}</CardTitle>
                       <p className="text-sm text-muted-foreground">
-                        Nível {session.level}
+                        Niveau {session.level}
                       </p>
                     </div>
                     <Badge className={cn(statusStyles[session.status])}>
@@ -144,21 +144,21 @@ export default function Classes() {
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Users className="h-4 w-4" />
-                      <span>{session.enrolled}/{session.capacity} inscrito(s)</span>
+                      <span>{session.enrolled}/{session.capacity} inscrit(s)</span>
                     </div>
                   </div>
 
                   {/* Capacity Bar */}
                   <div className="space-y-1">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Capacidade</span>
+                      <span className="text-muted-foreground">Capacité</span>
                       <span className={cn(
                         "font-medium",
                         session.enrolled >= session.capacity ? "text-red-600" : "text-emerald-600"
                       )}>
                         {session.enrolled >= session.capacity 
-                          ? "Lotada" 
-                          : `${session.capacity - session.enrolled} vagas disponíveis`}
+                          ? "Complet" 
+                          : `${session.capacity - session.enrolled} places disponibles`}
                       </span>
                     </div>
                     <div className="h-2 rounded-full bg-muted overflow-hidden">
@@ -176,10 +176,10 @@ export default function Classes() {
 
                   <div className="flex items-center gap-2 pt-2 border-t">
                     <Button variant="outline" size="sm" className="flex-1">
-                      Ver Alunos
+                      Voir stagiaires
                     </Button>
                     <Button variant="outline" size="sm" className="flex-1">
-                      Editar Turma
+                      Modifier session
                     </Button>
                   </div>
                 </CardContent>

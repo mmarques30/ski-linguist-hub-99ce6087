@@ -24,7 +24,7 @@ import { Search, Filter, Download, Eye, Mail, Phone, Grid, List, Users, Loader2,
 import { cn } from "@/lib/utils";
 import { useStudents } from "@/hooks/useStudents";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { fr } from "date-fns/locale";
 
 export default function Students() {
   const navigate = useNavigate();
@@ -37,7 +37,7 @@ export default function Students() {
 
   const formatDate = (dateStr: string) => {
     try {
-      return format(new Date(dateStr), "dd/MM/yyyy", { locale: ptBR });
+      return format(new Date(dateStr), "dd/MM/yyyy", { locale: fr });
     } catch {
       return dateStr;
     }
@@ -53,15 +53,15 @@ export default function Students() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Alunos</h1>
+            <h1 className="text-2xl font-bold">Stagiaires</h1>
             <p className="text-muted-foreground">
-              Gerencie seu banco de dados e perfis de alunos
+              Gérez votre base de données et profils de stagiaires
             </p>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm">
               <Download className="mr-2 h-4 w-4" />
-              Exportar
+              Exporter
             </Button>
           </div>
         </div>
@@ -72,7 +72,7 @@ export default function Students() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nome, email ou empresa..."
+                placeholder="Rechercher par nom, email ou entreprise..."
                 className="pl-10"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -110,15 +110,15 @@ export default function Students() {
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border bg-card">
             <Users className="h-12 w-12 text-destructive/50 mb-4" />
-            <h3 className="text-lg font-medium">Erro ao carregar alunos</h3>
+            <h3 className="text-lg font-medium">Erreur de chargement</h3>
             <p className="text-muted-foreground mt-1 max-w-sm">{error.message}</p>
           </div>
         ) : !students || students.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border bg-card">
             <Users className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium">Nenhum aluno cadastrado</h3>
+            <h3 className="text-lg font-medium">Aucun stagiaire inscrit</h3>
             <p className="text-muted-foreground mt-1 max-w-sm">
-              Os alunos aparecerão aqui após concluírem suas inscrições ou importação.
+              Les stagiaires apparaîtront ici après avoir complété leurs inscriptions ou après importation.
             </p>
           </div>
         ) : viewMode === "list" ? (
@@ -126,13 +126,13 @@ export default function Students() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Aluno</TableHead>
+                  <TableHead>Stagiaire</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Telefone</TableHead>
-                  <TableHead>Cidade</TableHead>
-                  <TableHead>Empresa</TableHead>
-                  <TableHead>Cadastro</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead>Téléphone</TableHead>
+                  <TableHead>Ville</TableHead>
+                  <TableHead>Entreprise</TableHead>
+                  <TableHead>Inscription</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -198,7 +198,7 @@ export default function Students() {
                           {student.first_name} {student.last_name}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {student.city || "Cidade não informada"}
+                          {student.city || "Ville non renseignée"}
                         </p>
                       </div>
                     </div>
@@ -217,7 +217,7 @@ export default function Students() {
                       <p className="font-medium truncate">{student.email}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Telefone</p>
+                      <p className="text-muted-foreground">Téléphone</p>
                       <p className="font-medium">{student.phone || "-"}</p>
                     </div>
                   </div>
@@ -229,7 +229,7 @@ export default function Students() {
                       onClick={() => navigate(`/students/${student.id}`)}
                     >
                       <Eye className="mr-2 h-4 w-4" />
-                      Ver Perfil
+                      Voir le profil
                     </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
                       <Mail className="h-4 w-4" />
@@ -247,14 +247,14 @@ export default function Students() {
         {/* Pagination */}
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Mostrando {students?.length || 0} alunos
+            Affichage de {students?.length || 0} stagiaires
           </p>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" disabled>
-              Anterior
+              Précédent
             </Button>
             <Button variant="outline" size="sm" disabled>
-              Próximo
+              Suivant
             </Button>
           </div>
         </div>

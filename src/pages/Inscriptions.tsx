@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { useInscriptions } from "@/hooks/useInscriptions";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { fr } from "date-fns/locale";
 
 const statusStyles: Record<string, string> = {
   "En cours": "bg-blue-100 text-blue-800",
@@ -33,10 +33,10 @@ const statusStyles: Record<string, string> = {
 };
 
 const statusLabels: Record<string, string> = {
-  "En cours": "Em Curso",
-  "Facturé": "Faturado",
-  "Terminé": "Concluído",
-  "Annulé": "Cancelado",
+  "En cours": "En cours",
+  "Facturé": "Facturée",
+  "Terminé": "Terminée",
+  "Annulé": "Annulée",
 };
 
 export default function Inscriptions() {
@@ -52,7 +52,7 @@ export default function Inscriptions() {
 
   const formatDate = (dateStr: string) => {
     try {
-      return format(new Date(dateStr), "dd/MM/yyyy", { locale: ptBR });
+      return format(new Date(dateStr), "dd/MM/yyyy", { locale: fr });
     } catch {
       return dateStr;
     }
@@ -72,25 +72,25 @@ export default function Inscriptions() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Inscrições</h1>
+            <h1 className="text-2xl font-bold">Inscriptions</h1>
             <p className="text-muted-foreground">
-              Gerenciar inscrições e candidaturas de alunos
+              Gérer les inscriptions et candidatures des stagiaires
             </p>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm" asChild>
               <Link to="/admin/import">
                 <Upload className="mr-2 h-4 w-4" />
-                Importar CSV
+                Importer CSV
               </Link>
             </Button>
             <Button variant="outline" size="sm">
               <Download className="mr-2 h-4 w-4" />
-              Exportar
+              Exporter
             </Button>
             <Button size="sm">
               <Plus className="mr-2 h-4 w-4" />
-              Nova Inscrição
+              Nouvelle inscription
             </Button>
           </div>
         </div>
@@ -101,7 +101,7 @@ export default function Inscriptions() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nome, email ou código..."
+                placeholder="Rechercher par nom, email ou code..."
                 className="pl-10"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -110,26 +110,26 @@ export default function Inscriptions() {
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder="Statut" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos os Status</SelectItem>
-              <SelectItem value="En cours">Em Curso</SelectItem>
-              <SelectItem value="Facturé">Faturado</SelectItem>
-              <SelectItem value="Terminé">Concluído</SelectItem>
-              <SelectItem value="Annulé">Cancelado</SelectItem>
+              <SelectItem value="all">Tous les statuts</SelectItem>
+              <SelectItem value="En cours">En cours</SelectItem>
+              <SelectItem value="Facturé">Facturée</SelectItem>
+              <SelectItem value="Terminé">Terminée</SelectItem>
+              <SelectItem value="Annulé">Annulée</SelectItem>
             </SelectContent>
           </Select>
           <Select value={languageFilter} onValueChange={setLanguageFilter}>
             <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Idioma" />
+              <SelectValue placeholder="Langue" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos os Idiomas</SelectItem>
-              <SelectItem value="Anglais">Inglês</SelectItem>
-              <SelectItem value="Portugais brésilien">Português</SelectItem>
-              <SelectItem value="Italien">Italiano</SelectItem>
-              <SelectItem value="Allemand">Alemão</SelectItem>
+              <SelectItem value="all">Toutes les langues</SelectItem>
+              <SelectItem value="Anglais">Anglais</SelectItem>
+              <SelectItem value="Portugais brésilien">Portugais</SelectItem>
+              <SelectItem value="Italien">Italien</SelectItem>
+              <SelectItem value="Allemand">Allemand</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" size="icon">
@@ -146,7 +146,7 @@ export default function Inscriptions() {
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <ClipboardList className="h-12 w-12 text-destructive/50 mb-4" />
-              <h3 className="text-lg font-medium">Erro ao carregar inscrições</h3>
+              <h3 className="text-lg font-medium">Erreur de chargement</h3>
               <p className="text-muted-foreground mt-1 max-w-sm">
                 {error.message}
               </p>
@@ -154,14 +154,14 @@ export default function Inscriptions() {
           ) : !inscriptions || inscriptions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <ClipboardList className="h-12 w-12 text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-medium">Nenhuma inscrição encontrada</h3>
+              <h3 className="text-lg font-medium">Aucune inscription trouvée</h3>
               <p className="text-muted-foreground mt-1 max-w-sm">
-                As inscrições aparecerão aqui quando os alunos se registrarem ou você importar dados.
+                Les inscriptions apparaîtront ici lorsque les stagiaires s'inscriront ou après importation de données.
               </p>
               <Button asChild className="mt-4">
                 <Link to="/admin/import">
                   <Upload className="mr-2 h-4 w-4" />
-                  Importar CSV
+                  Importer CSV
                 </Link>
               </Button>
             </div>
@@ -169,15 +169,15 @@ export default function Inscriptions() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Código</TableHead>
-                  <TableHead>Aluno</TableHead>
-                  <TableHead>Escola de Esqui</TableHead>
-                  <TableHead>Idioma</TableHead>
-                  <TableHead>Nível</TableHead>
-                  <TableHead>Período</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead>Code</TableHead>
+                  <TableHead>Stagiaire</TableHead>
+                  <TableHead>École de ski</TableHead>
+                  <TableHead>Langue</TableHead>
+                  <TableHead>Niveau</TableHead>
+                  <TableHead>Période</TableHead>
+                  <TableHead>Montant</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -233,14 +233,14 @@ export default function Inscriptions() {
         {/* Pagination */}
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Mostrando {inscriptions?.length || 0} inscrições
+            Affichage de {inscriptions?.length || 0} inscriptions
           </p>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" disabled>
-              Anterior
+              Précédent
             </Button>
             <Button variant="outline" size="sm" disabled>
-              Próximo
+              Suivant
             </Button>
           </div>
         </div>

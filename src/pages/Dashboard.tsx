@@ -24,38 +24,38 @@ export default function Dashboard() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold">Painel</h1>
+          <h1 className="text-2xl font-bold">Tableau de bord</h1>
           <p className="text-muted-foreground">
-            Visão geral da gestão da sua escola de idiomas
+            Vue d'ensemble de la gestion de votre école de langues
           </p>
         </div>
 
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
-            title="Total de Alunos"
+            title="Total Stagiaires"
             value={studentStats?.total || 0}
-            subtitle="Cadastrados no sistema"
+            subtitle="Inscrits dans le système"
             icon={Users}
           />
           <StatCard
-            title="Total de Inscrições"
+            title="Total Inscriptions"
             value={inscriptionStats?.total || 0}
-            subtitle={`${inscriptionStats?.active || 0} em curso`}
+            subtitle={`${inscriptionStats?.active || 0} en cours`}
             icon={ClipboardList}
             variant="warning"
           />
           <StatCard
-            title="Faturado"
+            title="Facturées"
             value={inscriptionStats?.billed || 0}
-            subtitle="Inscrições faturadas"
+            subtitle="Inscriptions facturées"
             icon={GraduationCap}
             variant="success"
           />
           <StatCard
-            title="Receita Total"
+            title="Chiffre d'affaires"
             value={formatCurrency(inscriptionStats?.totalRevenue || 0)}
-            subtitle="Valor total das inscrições"
+            subtitle="Montant total des inscriptions"
             icon={Euro}
             variant="info"
           />

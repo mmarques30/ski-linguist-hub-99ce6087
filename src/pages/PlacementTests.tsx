@@ -16,7 +16,7 @@ interface TestStats {
 
 const testStats: TestStats[] = [];
 
-const availableLanguages = ["Inglês", "Português", "Russo", "Holandês"];
+const availableLanguages = ["Anglais", "Portugais", "Russe", "Néerlandais"];
 
 const levelColors: Record<string, string> = {
   A1: "bg-red-100 text-red-800",
@@ -43,23 +43,23 @@ export default function PlacementTests() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Testes de Nível</h1>
+            <h1 className="text-2xl font-bold">Tests de niveau</h1>
             <p className="text-muted-foreground">
-              Gerencie testes de proficiência e visualize resultados
+              Gérez les tests de niveau et consultez les résultats
             </p>
           </div>
           <Button>
             <ExternalLink className="mr-2 h-4 w-4" />
-            Visualizar Teste
+            Voir le test
           </Button>
         </div>
 
         {/* Quick Links */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Links Públicos de Testes</CardTitle>
+            <CardTitle className="text-lg">Liens publics des tests</CardTitle>
             <CardDescription>
-              Compartilhe estes links com alunos para realizar testes de nível
+              Partagez ces liens avec les stagiaires pour passer les tests de niveau
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -94,9 +94,9 @@ export default function PlacementTests() {
         {testStats.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border bg-card">
             <FileQuestion className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium">Nenhum teste concluído ainda</h3>
+            <h3 className="text-lg font-medium">Aucun test complété</h3>
             <p className="text-muted-foreground mt-1 max-w-sm">
-              As estatísticas aparecerão aqui quando os alunos completarem os testes de nível.
+              Les statistiques apparaîtront ici lorsque les stagiaires auront complété les tests de niveau.
             </p>
           </div>
         ) : (
@@ -105,18 +105,18 @@ export default function PlacementTests() {
               <Card key={test.language}>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle>Teste de {test.language}</CardTitle>
-                    <Badge variant="outline">{test.totalQuestions} perguntas</Badge>
+                    <CardTitle>Test de {test.language}</CardTitle>
+                    <Badge variant="outline">{test.totalQuestions} questions</Badge>
                   </div>
                   <CardDescription>
-                    {test.completedTests} testes concluídos
+                    {test.completedTests} tests complétés
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Average Score */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Pontuação Média</span>
+                      <span className="text-muted-foreground">Score moyen</span>
                       <span className="font-medium">{test.averageScore}%</span>
                     </div>
                     <Progress value={test.averageScore} className="h-2" />
@@ -124,7 +124,7 @@ export default function PlacementTests() {
 
                   {/* Level Distribution */}
                   <div className="space-y-3">
-                    <p className="text-sm font-medium">Distribuição por Nível</p>
+                    <p className="text-sm font-medium">Répartition par niveau</p>
                     <div className="space-y-2">
                       {test.levelDistribution.map((level) => (
                         <div
@@ -146,7 +146,7 @@ export default function PlacementTests() {
                   </div>
 
                   <Button variant="outline" className="w-full">
-                    Ver Resultados Detalhados
+                    Voir les résultats détaillés
                   </Button>
                 </CardContent>
               </Card>
