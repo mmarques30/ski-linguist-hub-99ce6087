@@ -205,10 +205,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "inscriptions_ski_school_id_fkey"
+            columns: ["ski_school_id"]
+            isOneToOne: false
+            referencedRelation: "test_bookings_complete"
+            referencedColumns: ["ski_school_id"]
+          },
+          {
             foreignKeyName: "inscriptions_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instructor_availabilities: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          datetime: string
+          id: string
+          instructor_id: string
+          is_booked: boolean
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          datetime: string
+          id?: string
+          instructor_id: string
+          is_booked?: boolean
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          datetime?: string
+          id?: string
+          instructor_id?: string
+          is_booked?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instructor_availabilities_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "test_bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instructor_availabilities_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "test_bookings_complete"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instructor_availabilities_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
             referencedColumns: ["id"]
           },
         ]
@@ -490,6 +546,45 @@ export type Database = {
           },
         ]
       }
+      schools_invoice_policy: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          ski_school_id: string
+          valid_until: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          ski_school_id: string
+          valid_until?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          ski_school_id?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schools_invoice_policy_ski_school_id_fkey"
+            columns: ["ski_school_id"]
+            isOneToOne: true
+            referencedRelation: "ski_schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schools_invoice_policy_ski_school_id_fkey"
+            columns: ["ski_school_id"]
+            isOneToOne: true
+            referencedRelation: "test_bookings_complete"
+            referencedColumns: ["ski_school_id"]
+          },
+        ]
+      }
       ski_schools: {
         Row: {
           created_at: string
@@ -559,6 +654,304 @@ export type Database = {
           postal_code?: string | null
           street_address?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      test_bookings: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          datetime: string
+          google_event_id: string | null
+          google_meet_link: string | null
+          id: string
+          instructor_id: string | null
+          language: string
+          payment_type: string
+          previous_result: string | null
+          previous_test: boolean
+          source: string
+          status: string
+          stripe_payment_id: string | null
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          datetime: string
+          google_event_id?: string | null
+          google_meet_link?: string | null
+          id?: string
+          instructor_id?: string | null
+          language: string
+          payment_type: string
+          previous_result?: string | null
+          previous_test?: boolean
+          source?: string
+          status?: string
+          stripe_payment_id?: string | null
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          datetime?: string
+          google_event_id?: string | null
+          google_meet_link?: string | null
+          id?: string
+          instructor_id?: string | null
+          language?: string
+          payment_type?: string
+          previous_result?: string | null
+          previous_test?: boolean
+          source?: string
+          status?: string
+          stripe_payment_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_bookings_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "test_candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_bookings_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_candidates: {
+        Row: {
+          carte_syndicale: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string
+          photo_face_url: string | null
+          photo_id_url: string | null
+          profession: string
+          profession_autre: string | null
+          ski_school_id: string
+          student_id: string | null
+        }
+        Insert: {
+          carte_syndicale?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          phone: string
+          photo_face_url?: string | null
+          photo_id_url?: string | null
+          profession: string
+          profession_autre?: string | null
+          ski_school_id: string
+          student_id?: string | null
+        }
+        Update: {
+          carte_syndicale?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string
+          photo_face_url?: string | null
+          photo_id_url?: string | null
+          profession?: string
+          profession_autre?: string | null
+          ski_school_id?: string
+          student_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_candidates_ski_school_id_fkey"
+            columns: ["ski_school_id"]
+            isOneToOne: false
+            referencedRelation: "ski_schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_candidates_ski_school_id_fkey"
+            columns: ["ski_school_id"]
+            isOneToOne: false
+            referencedRelation: "test_bookings_complete"
+            referencedColumns: ["ski_school_id"]
+          },
+          {
+            foreignKeyName: "test_candidates_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_criteria: {
+        Row: {
+          active: boolean
+          category: string
+          created_at: string
+          criterion_text: string
+          id: string
+          language: string
+          level: string
+          order_index: number
+        }
+        Insert: {
+          active?: boolean
+          category: string
+          created_at?: string
+          criterion_text: string
+          id?: string
+          language: string
+          level: string
+          order_index?: number
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          criterion_text?: string
+          id?: string
+          language?: string
+          level?: string
+          order_index?: number
+        }
+        Relationships: []
+      }
+      test_evaluations: {
+        Row: {
+          appreciation_comprehension: string | null
+          appreciation_conclusion: string | null
+          appreciation_grammar: string | null
+          appreciation_intro: string | null
+          appreciation_technique: string | null
+          attestation_sent_at: string | null
+          attestation_type: string
+          attestation_url: string | null
+          booking_id: string
+          comments: string | null
+          created_at: string
+          criteria_checklist: Json | null
+          grammar_points: string[] | null
+          id: string
+          score_comprehension: number
+          score_conversation: number
+          score_expression: number
+          score_general: number
+          score_structure: number
+          score_technique: number
+          scoring_system: string
+          vocabulary_examples: string[] | null
+        }
+        Insert: {
+          appreciation_comprehension?: string | null
+          appreciation_conclusion?: string | null
+          appreciation_grammar?: string | null
+          appreciation_intro?: string | null
+          appreciation_technique?: string | null
+          attestation_sent_at?: string | null
+          attestation_type: string
+          attestation_url?: string | null
+          booking_id: string
+          comments?: string | null
+          created_at?: string
+          criteria_checklist?: Json | null
+          grammar_points?: string[] | null
+          id?: string
+          score_comprehension: number
+          score_conversation: number
+          score_expression: number
+          score_general: number
+          score_structure: number
+          score_technique: number
+          scoring_system?: string
+          vocabulary_examples?: string[] | null
+        }
+        Update: {
+          appreciation_comprehension?: string | null
+          appreciation_conclusion?: string | null
+          appreciation_grammar?: string | null
+          appreciation_intro?: string | null
+          appreciation_technique?: string | null
+          attestation_sent_at?: string | null
+          attestation_type?: string
+          attestation_url?: string | null
+          booking_id?: string
+          comments?: string | null
+          created_at?: string
+          criteria_checklist?: Json | null
+          grammar_points?: string[] | null
+          id?: string
+          score_comprehension?: number
+          score_conversation?: number
+          score_expression?: number
+          score_general?: number
+          score_structure?: number
+          score_technique?: number
+          scoring_system?: string
+          vocabulary_examples?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_evaluations_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "test_bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_evaluations_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "test_bookings_complete"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_phrases: {
+        Row: {
+          active: boolean
+          category: string
+          created_at: string
+          id: string
+          is_positive: boolean
+          language: string
+          level_max: string | null
+          level_min: string | null
+          order_index: number
+          profession: string | null
+          text_fr: string
+        }
+        Insert: {
+          active?: boolean
+          category: string
+          created_at?: string
+          id?: string
+          is_positive?: boolean
+          language: string
+          level_max?: string | null
+          level_min?: string | null
+          order_index?: number
+          profession?: string | null
+          text_fr: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          id?: string
+          is_positive?: boolean
+          language?: string
+          level_max?: string | null
+          level_min?: string | null
+          order_index?: number
+          profession?: string | null
+          text_fr?: string
         }
         Relationships: []
       }
@@ -636,7 +1029,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "inscriptions_ski_school_id_fkey"
+            columns: ["ski_school_id"]
+            isOneToOne: false
+            referencedRelation: "test_bookings_complete"
+            referencedColumns: ["ski_school_id"]
+          },
+          {
             foreignKeyName: "inscriptions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_bookings_complete: {
+        Row: {
+          attestation_sent_at: string | null
+          attestation_url: string | null
+          candidate_email: string | null
+          candidate_id: string | null
+          candidate_name: string | null
+          candidate_phone: string | null
+          candidate_photo: string | null
+          candidate_profession: string | null
+          created_at: string | null
+          datetime: string | null
+          evaluation_id: string | null
+          google_event_id: string | null
+          google_meet_link: string | null
+          id: string | null
+          instructor_email: string | null
+          instructor_id: string | null
+          instructor_name: string | null
+          language: string | null
+          payment_type: string | null
+          previous_result: string | null
+          previous_test: boolean | null
+          score_general: number | null
+          ski_school_id: string | null
+          ski_school_name: string | null
+          source: string | null
+          status: string | null
+          stripe_payment_id: string | null
+          student_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_bookings_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "test_candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_bookings_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_candidates_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
