@@ -29,6 +29,8 @@ export interface InvoiceWithInscription extends Invoice {
     student_phone: string | null;
     student_city: string | null;
     student_company: string | null;
+    student_address: string | null;
+    student_postal_code: string | null;
     course_location: string | null;
     start_date: string;
     end_date: string;
@@ -61,10 +63,66 @@ export function useInvoices(filters?: { status?: string; type?: string; search?:
         query = query.ilike("invoice_number", `%${filters.search}%`);
       }
 
-      const { data, error } = await query;
-
+      const { data: invoicesData, error } = await query;
       if (error) throw error;
-      return data as Invoice[];
+
+      // Fetch inscription details for each invoice
+      const invoicesWithInscriptions = await Promise.all(
+        (invoicesData || []).map(async (invoice) => {
+          if (!invoice.inscription_id) return invoice;
+
+          const { data: inscription } = await supabase
+            .from("inscriptions")
+            .select(`
+              id,
+              code,
+              course_location,
+              start_date,
+              end_date,
+              duration_hours,
+              language,
+              price,
+              deposit_amount,
+              deposit_date,
+              student_id
+            `)
+            .eq("id", invoice.inscription_id)
+            .maybeSingle();
+
+          if (!inscription) return invoice;
+
+          // Fetch student details
+          const { data: student } = await supabase
+            .from("students")
+            .select("first_name, last_name, email, phone, city, company, street_address, postal_code")
+            .eq("id", inscription.student_id)
+            .maybeSingle();
+
+          return {
+            ...invoice,
+            inscription: {
+              code: inscription.code,
+              student_name: student ? `${student.first_name} ${student.last_name}` : null,
+              student_email: student?.email || null,
+              student_phone: student?.phone || null,
+              student_city: student?.city || null,
+              student_company: student?.company || null,
+              student_address: student?.street_address || null,
+              student_postal_code: student?.postal_code || null,
+              course_location: inscription.course_location,
+              start_date: inscription.start_date,
+              end_date: inscription.end_date,
+              duration_hours: inscription.duration_hours,
+              language: inscription.language,
+              price: inscription.price,
+              deposit_amount: inscription.deposit_amount,
+              deposit_date: inscription.deposit_date,
+            },
+          } as InvoiceWithInscription;
+        })
+      );
+
+      return invoicesWithInscriptions as InvoiceWithInscription[];
     },
   });
 }
