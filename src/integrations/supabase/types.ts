@@ -261,6 +261,8 @@ export type Database = {
           notes: string | null
           payment_date: string | null
           payment_method: string | null
+          payment_type: string
+          related_invoice_id: string | null
           sequence_number: number | null
           status: string
           tva_rate: number | null
@@ -280,6 +282,8 @@ export type Database = {
           notes?: string | null
           payment_date?: string | null
           payment_method?: string | null
+          payment_type?: string
+          related_invoice_id?: string | null
           sequence_number?: number | null
           status?: string
           tva_rate?: number | null
@@ -299,6 +303,8 @@ export type Database = {
           notes?: string | null
           payment_date?: string | null
           payment_method?: string | null
+          payment_type?: string
+          related_invoice_id?: string | null
           sequence_number?: number | null
           status?: string
           tva_rate?: number | null
@@ -317,6 +323,13 @@ export type Database = {
             columns: ["inscription_id"]
             isOneToOne: false
             referencedRelation: "inscriptions_complete"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_related_invoice_id_fkey"
+            columns: ["related_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
             referencedColumns: ["id"]
           },
         ]
