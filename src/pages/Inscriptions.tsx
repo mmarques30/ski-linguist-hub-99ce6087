@@ -23,7 +23,171 @@ import { cn } from "@/lib/utils";
 import { useInscriptions } from "@/hooks/useInscriptions";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { fr, ptBR, enUS } from "date-fns/locale";
+import { useLanguage } from "@/contexts/LanguageContext";
+
+const translations = {
+  title: {
+    fr: "Inscriptions",
+    "pt-BR": "Inscrições",
+    en: "Enrollments",
+  },
+  subtitle: {
+    fr: "Gérer les inscriptions et candidatures des stagiaires",
+    "pt-BR": "Gerenciar inscrições e candidaturas de estagiários",
+    en: "Manage student enrollments and applications",
+  },
+  importCSV: {
+    fr: "Importer CSV",
+    "pt-BR": "Importar CSV",
+    en: "Import CSV",
+  },
+  export: {
+    fr: "Exporter",
+    "pt-BR": "Exportar",
+    en: "Export",
+  },
+  newInscription: {
+    fr: "Nouvelle inscription",
+    "pt-BR": "Nova inscrição",
+    en: "New Enrollment",
+  },
+  searchPlaceholder: {
+    fr: "Rechercher par nom, email ou code...",
+    "pt-BR": "Buscar por nome, e-mail ou código...",
+    en: "Search by name, email or code...",
+  },
+  allStatuses: {
+    fr: "Tous les statuts",
+    "pt-BR": "Todos os status",
+    en: "All statuses",
+  },
+  statusInProgress: {
+    fr: "En cours",
+    "pt-BR": "Em andamento",
+    en: "In Progress",
+  },
+  statusBilled: {
+    fr: "Facturée",
+    "pt-BR": "Faturada",
+    en: "Billed",
+  },
+  statusCompleted: {
+    fr: "Terminée",
+    "pt-BR": "Concluída",
+    en: "Completed",
+  },
+  statusCancelled: {
+    fr: "Annulée",
+    "pt-BR": "Cancelada",
+    en: "Cancelled",
+  },
+  allLanguages: {
+    fr: "Toutes les langues",
+    "pt-BR": "Todos os idiomas",
+    en: "All languages",
+  },
+  english: {
+    fr: "Anglais",
+    "pt-BR": "Inglês",
+    en: "English",
+  },
+  portuguese: {
+    fr: "Portugais",
+    "pt-BR": "Português",
+    en: "Portuguese",
+  },
+  italian: {
+    fr: "Italien",
+    "pt-BR": "Italiano",
+    en: "Italian",
+  },
+  german: {
+    fr: "Allemand",
+    "pt-BR": "Alemão",
+    en: "German",
+  },
+  code: {
+    fr: "Code",
+    "pt-BR": "Código",
+    en: "Code",
+  },
+  student: {
+    fr: "Stagiaire",
+    "pt-BR": "Estagiário",
+    en: "Student",
+  },
+  skiSchool: {
+    fr: "École de ski",
+    "pt-BR": "Escola de ski",
+    en: "Ski School",
+  },
+  language: {
+    fr: "Langue",
+    "pt-BR": "Idioma",
+    en: "Language",
+  },
+  level: {
+    fr: "Niveau",
+    "pt-BR": "Nível",
+    en: "Level",
+  },
+  period: {
+    fr: "Période",
+    "pt-BR": "Período",
+    en: "Period",
+  },
+  amount: {
+    fr: "Montant",
+    "pt-BR": "Valor",
+    en: "Amount",
+  },
+  status: {
+    fr: "Statut",
+    "pt-BR": "Status",
+    en: "Status",
+  },
+  actions: {
+    fr: "Actions",
+    "pt-BR": "Ações",
+    en: "Actions",
+  },
+  loadingError: {
+    fr: "Erreur de chargement",
+    "pt-BR": "Erro ao carregar",
+    en: "Loading error",
+  },
+  noInscriptionsTitle: {
+    fr: "Aucune inscription trouvée",
+    "pt-BR": "Nenhuma inscrição encontrada",
+    en: "No enrollments found",
+  },
+  noInscriptionsDesc: {
+    fr: "Les inscriptions apparaîtront ici lorsque les stagiaires s'inscriront ou après importation de données.",
+    "pt-BR": "As inscrições aparecerão aqui quando os estagiários se inscreverem ou após a importação de dados.",
+    en: "Enrollments will appear here when students enroll or after data import.",
+  },
+  showing: {
+    fr: "Affichage de",
+    "pt-BR": "Exibindo",
+    en: "Showing",
+  },
+  inscriptions: {
+    fr: "inscriptions",
+    "pt-BR": "inscrições",
+    en: "enrollments",
+  },
+  previous: {
+    fr: "Précédent",
+    "pt-BR": "Anterior",
+    en: "Previous",
+  },
+  next: {
+    fr: "Suivant",
+    "pt-BR": "Próximo",
+    en: "Next",
+  },
+};
 
 const statusStyles: Record<string, string> = {
   "En cours": "bg-blue-100 text-blue-800",
@@ -32,17 +196,11 @@ const statusStyles: Record<string, string> = {
   "Annulé": "bg-red-100 text-red-800",
 };
 
-const statusLabels: Record<string, string> = {
-  "En cours": "En cours",
-  "Facturé": "Facturée",
-  "Terminé": "Terminée",
-  "Annulé": "Annulée",
-};
-
 export default function Inscriptions() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [languageFilter, setLanguageFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const { language, t } = useLanguage();
 
   const { data: inscriptions, isLoading, error } = useInscriptions({
     status: statusFilter,
@@ -50,9 +208,17 @@ export default function Inscriptions() {
     search: search || undefined,
   });
 
+  const getDateLocale = () => {
+    switch (language) {
+      case "pt-BR": return ptBR;
+      case "en": return enUS;
+      default: return fr;
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     try {
-      return format(new Date(dateStr), "dd/MM/yyyy", { locale: fr });
+      return format(new Date(dateStr), "dd/MM/yyyy", { locale: getDateLocale() });
     } catch {
       return dateStr;
     }
@@ -60,10 +226,18 @@ export default function Inscriptions() {
 
   const formatPrice = (price: number | null) => {
     if (!price) return "-";
-    return new Intl.NumberFormat("fr-FR", {
+    const locale = language === "pt-BR" ? "pt-BR" : language === "en" ? "en-US" : "fr-FR";
+    return new Intl.NumberFormat(locale, {
       style: "currency",
       currency: "EUR",
     }).format(price);
+  };
+
+  const statusLabels: Record<string, string> = {
+    "En cours": t(translations.statusInProgress),
+    "Facturé": t(translations.statusBilled),
+    "Terminé": t(translations.statusCompleted),
+    "Annulé": t(translations.statusCancelled),
   };
 
   return (
@@ -72,25 +246,25 @@ export default function Inscriptions() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Inscriptions</h1>
+            <h1 className="text-2xl font-bold">{t(translations.title)}</h1>
             <p className="text-muted-foreground">
-              Gérer les inscriptions et candidatures des stagiaires
+              {t(translations.subtitle)}
             </p>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm" asChild>
               <Link to="/admin/import">
                 <Upload className="mr-2 h-4 w-4" />
-                Importer CSV
+                {t(translations.importCSV)}
               </Link>
             </Button>
             <Button variant="outline" size="sm">
               <Download className="mr-2 h-4 w-4" />
-              Exporter
+              {t(translations.export)}
             </Button>
             <Button size="sm">
               <Plus className="mr-2 h-4 w-4" />
-              Nouvelle inscription
+              {t(translations.newInscription)}
             </Button>
           </div>
         </div>
@@ -101,7 +275,7 @@ export default function Inscriptions() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par nom, email ou code..."
+                placeholder={t(translations.searchPlaceholder)}
                 className="pl-10"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -110,26 +284,26 @@ export default function Inscriptions() {
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Statut" />
+              <SelectValue placeholder={t(translations.status)} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous les statuts</SelectItem>
-              <SelectItem value="En cours">En cours</SelectItem>
-              <SelectItem value="Facturé">Facturée</SelectItem>
-              <SelectItem value="Terminé">Terminée</SelectItem>
-              <SelectItem value="Annulé">Annulée</SelectItem>
+              <SelectItem value="all">{t(translations.allStatuses)}</SelectItem>
+              <SelectItem value="En cours">{t(translations.statusInProgress)}</SelectItem>
+              <SelectItem value="Facturé">{t(translations.statusBilled)}</SelectItem>
+              <SelectItem value="Terminé">{t(translations.statusCompleted)}</SelectItem>
+              <SelectItem value="Annulé">{t(translations.statusCancelled)}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={languageFilter} onValueChange={setLanguageFilter}>
             <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Langue" />
+              <SelectValue placeholder={t(translations.language)} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Toutes les langues</SelectItem>
-              <SelectItem value="Anglais">Anglais</SelectItem>
-              <SelectItem value="Portugais brésilien">Portugais</SelectItem>
-              <SelectItem value="Italien">Italien</SelectItem>
-              <SelectItem value="Allemand">Allemand</SelectItem>
+              <SelectItem value="all">{t(translations.allLanguages)}</SelectItem>
+              <SelectItem value="Anglais">{t(translations.english)}</SelectItem>
+              <SelectItem value="Portugais brésilien">{t(translations.portuguese)}</SelectItem>
+              <SelectItem value="Italien">{t(translations.italian)}</SelectItem>
+              <SelectItem value="Allemand">{t(translations.german)}</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" size="icon">
@@ -146,7 +320,7 @@ export default function Inscriptions() {
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <ClipboardList className="h-12 w-12 text-destructive/50 mb-4" />
-              <h3 className="text-lg font-medium">Erreur de chargement</h3>
+              <h3 className="text-lg font-medium">{t(translations.loadingError)}</h3>
               <p className="text-muted-foreground mt-1 max-w-sm">
                 {error.message}
               </p>
@@ -154,14 +328,14 @@ export default function Inscriptions() {
           ) : !inscriptions || inscriptions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <ClipboardList className="h-12 w-12 text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-medium">Aucune inscription trouvée</h3>
+              <h3 className="text-lg font-medium">{t(translations.noInscriptionsTitle)}</h3>
               <p className="text-muted-foreground mt-1 max-w-sm">
-                Les inscriptions apparaîtront ici lorsque les stagiaires s'inscriront ou après importation de données.
+                {t(translations.noInscriptionsDesc)}
               </p>
               <Button asChild className="mt-4">
                 <Link to="/admin/import">
                   <Upload className="mr-2 h-4 w-4" />
-                  Importer CSV
+                  {t(translations.importCSV)}
                 </Link>
               </Button>
             </div>
@@ -169,15 +343,15 @@ export default function Inscriptions() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Stagiaire</TableHead>
-                  <TableHead>École de ski</TableHead>
-                  <TableHead>Langue</TableHead>
-                  <TableHead>Niveau</TableHead>
-                  <TableHead>Période</TableHead>
-                  <TableHead>Montant</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t(translations.code)}</TableHead>
+                  <TableHead>{t(translations.student)}</TableHead>
+                  <TableHead>{t(translations.skiSchool)}</TableHead>
+                  <TableHead>{t(translations.language)}</TableHead>
+                  <TableHead>{t(translations.level)}</TableHead>
+                  <TableHead>{t(translations.period)}</TableHead>
+                  <TableHead>{t(translations.amount)}</TableHead>
+                  <TableHead>{t(translations.status)}</TableHead>
+                  <TableHead className="text-right">{t(translations.actions)}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -233,14 +407,14 @@ export default function Inscriptions() {
         {/* Pagination */}
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Affichage de {inscriptions?.length || 0} inscriptions
+            {t(translations.showing)} {inscriptions?.length || 0} {t(translations.inscriptions)}
           </p>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" disabled>
-              Précédent
+              {t(translations.previous)}
             </Button>
             <Button variant="outline" size="sm" disabled>
-              Suivant
+              {t(translations.next)}
             </Button>
           </div>
         </div>

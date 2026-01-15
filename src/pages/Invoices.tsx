@@ -31,27 +31,178 @@ import { InvoiceTemplate, InvoiceData } from "@/components/invoices/InvoiceTempl
 import { InvoiceEditDialog } from "@/components/invoices/InvoiceEditDialog";
 import { InvoiceCreateDialog } from "@/components/invoices/InvoiceCreateDialog";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { fr, ptBR, enUS } from "date-fns/locale";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
+
+const translations = {
+  title: {
+    fr: "Factures",
+    "pt-BR": "Faturas",
+    en: "Invoices",
+  },
+  subtitle: {
+    fr: "Gérer les factures et le suivi des paiements",
+    "pt-BR": "Gerenciar faturas e acompanhamento de pagamentos",
+    en: "Manage invoices and payment tracking",
+  },
+  export: {
+    fr: "Exporter",
+    "pt-BR": "Exportar",
+    en: "Export",
+  },
+  newInvoice: {
+    fr: "Nouvelle Facture",
+    "pt-BR": "Nova Fatura",
+    en: "New Invoice",
+  },
+  searchPlaceholder: {
+    fr: "Rechercher par numéro...",
+    "pt-BR": "Buscar por número...",
+    en: "Search by number...",
+  },
+  allStatuses: {
+    fr: "Tous les statuts",
+    "pt-BR": "Todos os status",
+    en: "All statuses",
+  },
+  statusDraft: {
+    fr: "Brouillon",
+    "pt-BR": "Rascunho",
+    en: "Draft",
+  },
+  statusSent: {
+    fr: "Envoyée",
+    "pt-BR": "Enviada",
+    en: "Sent",
+  },
+  statusPaid: {
+    fr: "Payée",
+    "pt-BR": "Paga",
+    en: "Paid",
+  },
+  statusCancelled: {
+    fr: "Annulée",
+    "pt-BR": "Cancelada",
+    en: "Cancelled",
+  },
+  allTypes: {
+    fr: "Tous les types",
+    "pt-BR": "Todos os tipos",
+    en: "All types",
+  },
+  typeFormation: {
+    fr: "Formation",
+    "pt-BR": "Formação",
+    en: "Training",
+  },
+  typeTest: {
+    fr: "Test",
+    "pt-BR": "Teste",
+    en: "Test",
+  },
+  typeSubcontracting: {
+    fr: "Sous-traitance",
+    "pt-BR": "Subcontratação",
+    en: "Subcontracting",
+  },
+  number: {
+    fr: "Numéro",
+    "pt-BR": "Número",
+    en: "Number",
+  },
+  date: {
+    fr: "Date",
+    "pt-BR": "Data",
+    en: "Date",
+  },
+  type: {
+    fr: "Type",
+    "pt-BR": "Tipo",
+    en: "Type",
+  },
+  amountHT: {
+    fr: "Montant HT",
+    "pt-BR": "Valor sem impostos",
+    en: "Amount excl. VAT",
+  },
+  tva: {
+    fr: "TVA",
+    "pt-BR": "IVA",
+    en: "VAT",
+  },
+  amountTTC: {
+    fr: "Montant TTC",
+    "pt-BR": "Valor com impostos",
+    en: "Amount incl. VAT",
+  },
+  dueDate: {
+    fr: "Échéance",
+    "pt-BR": "Vencimento",
+    en: "Due Date",
+  },
+  status: {
+    fr: "Statut",
+    "pt-BR": "Status",
+    en: "Status",
+  },
+  actions: {
+    fr: "Actions",
+    "pt-BR": "Ações",
+    en: "Actions",
+  },
+  loadingError: {
+    fr: "Erreur de chargement",
+    "pt-BR": "Erro ao carregar",
+    en: "Loading error",
+  },
+  noInvoicesTitle: {
+    fr: "Aucune facture",
+    "pt-BR": "Nenhuma fatura",
+    en: "No invoices",
+  },
+  noInvoicesDesc: {
+    fr: "Les factures apparaîtront ici lorsque vous en créerez.",
+    "pt-BR": "As faturas aparecerão aqui quando você criá-las.",
+    en: "Invoices will appear here when you create them.",
+  },
+  createInvoice: {
+    fr: "Créer une facture",
+    "pt-BR": "Criar fatura",
+    en: "Create invoice",
+  },
+  invoices: {
+    fr: "facture(s)",
+    "pt-BR": "fatura(s)",
+    en: "invoice(s)",
+  },
+  previewTitle: {
+    fr: "Aperçu de la facture",
+    "pt-BR": "Visualização da fatura",
+    en: "Invoice Preview",
+  },
+  markedAsSent: {
+    fr: "Facture marquée comme envoyée",
+    "pt-BR": "Fatura marcada como enviada",
+    en: "Invoice marked as sent",
+  },
+  markedAsPaid: {
+    fr: "Facture marquée comme payée",
+    "pt-BR": "Fatura marcada como paga",
+    en: "Invoice marked as paid",
+  },
+  updateError: {
+    fr: "Erreur lors de la mise à jour",
+    "pt-BR": "Erro ao atualizar",
+    en: "Error updating",
+  },
+};
 
 const statusStyles: Record<string, string> = {
   draft: "bg-gray-100 text-gray-800",
   sent: "bg-blue-100 text-blue-800",
   paid: "bg-emerald-100 text-emerald-800",
   cancelled: "bg-red-100 text-red-800",
-};
-
-const statusLabels: Record<string, string> = {
-  draft: "Brouillon",
-  sent: "Envoyée",
-  paid: "Payée",
-  cancelled: "Annulée",
-};
-
-const typeLabels: Record<string, string> = {
-  formation: "Formation",
-  test: "Test",
-  soustraitance: "Sous-traitance",
 };
 
 export default function Invoices() {
@@ -62,6 +213,7 @@ export default function Invoices() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const { language, t } = useLanguage();
 
   const { data: invoices, isLoading, error } = useInvoices({
     status: statusFilter,
@@ -71,10 +223,18 @@ export default function Invoices() {
 
   const updateInvoice = useUpdateInvoice();
 
+  const getDateLocale = () => {
+    switch (language) {
+      case "pt-BR": return ptBR;
+      case "en": return enUS;
+      default: return fr;
+    }
+  };
+
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "-";
     try {
-      return format(new Date(dateStr), "dd/MM/yyyy", { locale: fr });
+      return format(new Date(dateStr), "dd/MM/yyyy", { locale: getDateLocale() });
     } catch {
       return dateStr;
     }
@@ -82,18 +242,32 @@ export default function Invoices() {
 
   const formatPrice = (price: number | null) => {
     if (price === null || price === undefined) return "-";
-    return new Intl.NumberFormat("fr-FR", {
+    const locale = language === "pt-BR" ? "pt-BR" : language === "en" ? "en-US" : "fr-FR";
+    return new Intl.NumberFormat(locale, {
       style: "currency",
       currency: "EUR",
     }).format(price);
   };
 
+  const statusLabels: Record<string, string> = {
+    draft: t(translations.statusDraft),
+    sent: t(translations.statusSent),
+    paid: t(translations.statusPaid),
+    cancelled: t(translations.statusCancelled),
+  };
+
+  const typeLabels: Record<string, string> = {
+    formation: t(translations.typeFormation),
+    test: t(translations.typeTest),
+    soustraitance: t(translations.typeSubcontracting),
+  };
+
   const handleMarkAsSent = async (invoice: InvoiceWithInscription) => {
     try {
       await updateInvoice.mutateAsync({ id: invoice.id, status: "sent" });
-      toast.success("Facture marquée comme envoyée");
+      toast.success(t(translations.markedAsSent));
     } catch (err) {
-      toast.error("Erreur lors de la mise à jour");
+      toast.error(t(translations.updateError));
     }
   };
 
@@ -104,9 +278,9 @@ export default function Invoices() {
         status: "paid",
         payment_date: new Date().toISOString().split("T")[0],
       });
-      toast.success("Facture marquée comme payée");
+      toast.success(t(translations.markedAsPaid));
     } catch (err) {
-      toast.error("Erreur lors de la mise à jour");
+      toast.error(t(translations.updateError));
     }
   };
 
@@ -143,19 +317,19 @@ export default function Invoices() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Factures</h1>
+            <h1 className="text-2xl font-bold">{t(translations.title)}</h1>
             <p className="text-muted-foreground">
-              Gérer les factures et le suivi des paiements
+              {t(translations.subtitle)}
             </p>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm">
               <Download className="mr-2 h-4 w-4" />
-              Exporter
+              {t(translations.export)}
             </Button>
             <Button size="sm" onClick={() => setCreateOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
-              Nouvelle Facture
+              {t(translations.newInvoice)}
             </Button>
           </div>
         </div>
@@ -166,7 +340,7 @@ export default function Invoices() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par numéro..."
+                placeholder={t(translations.searchPlaceholder)}
                 className="pl-10"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -175,25 +349,25 @@ export default function Invoices() {
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Statut" />
+              <SelectValue placeholder={t(translations.status)} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous les statuts</SelectItem>
-              <SelectItem value="draft">Brouillon</SelectItem>
-              <SelectItem value="sent">Envoyée</SelectItem>
-              <SelectItem value="paid">Payée</SelectItem>
-              <SelectItem value="cancelled">Annulée</SelectItem>
+              <SelectItem value="all">{t(translations.allStatuses)}</SelectItem>
+              <SelectItem value="draft">{t(translations.statusDraft)}</SelectItem>
+              <SelectItem value="sent">{t(translations.statusSent)}</SelectItem>
+              <SelectItem value="paid">{t(translations.statusPaid)}</SelectItem>
+              <SelectItem value="cancelled">{t(translations.statusCancelled)}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
             <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Type" />
+              <SelectValue placeholder={t(translations.type)} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous les types</SelectItem>
-              <SelectItem value="formation">Formation</SelectItem>
-              <SelectItem value="test">Test</SelectItem>
-              <SelectItem value="soustraitance">Sous-traitance</SelectItem>
+              <SelectItem value="all">{t(translations.allTypes)}</SelectItem>
+              <SelectItem value="formation">{t(translations.typeFormation)}</SelectItem>
+              <SelectItem value="test">{t(translations.typeTest)}</SelectItem>
+              <SelectItem value="soustraitance">{t(translations.typeSubcontracting)}</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" size="icon">
@@ -210,7 +384,7 @@ export default function Invoices() {
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <FileText className="h-12 w-12 text-destructive/50 mb-4" />
-              <h3 className="text-lg font-medium">Erreur de chargement</h3>
+              <h3 className="text-lg font-medium">{t(translations.loadingError)}</h3>
               <p className="text-muted-foreground mt-1 max-w-sm">
                 {error.message}
               </p>
@@ -218,28 +392,28 @@ export default function Invoices() {
           ) : !invoices || invoices.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-medium">Aucune facture</h3>
+              <h3 className="text-lg font-medium">{t(translations.noInvoicesTitle)}</h3>
               <p className="text-muted-foreground mt-1 max-w-sm">
-                Les factures apparaîtront ici lorsque vous en créerez.
+                {t(translations.noInvoicesDesc)}
               </p>
               <Button className="mt-4" onClick={() => setCreateOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
-                Créer une facture
+                {t(translations.createInvoice)}
               </Button>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Numéro</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Montant HT</TableHead>
-                  <TableHead>TVA</TableHead>
-                  <TableHead>Montant TTC</TableHead>
-                  <TableHead>Échéance</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t(translations.number)}</TableHead>
+                  <TableHead>{t(translations.date)}</TableHead>
+                  <TableHead>{t(translations.type)}</TableHead>
+                  <TableHead>{t(translations.amountHT)}</TableHead>
+                  <TableHead>{t(translations.tva)}</TableHead>
+                  <TableHead>{t(translations.amountTTC)}</TableHead>
+                  <TableHead>{t(translations.dueDate)}</TableHead>
+                  <TableHead>{t(translations.status)}</TableHead>
+                  <TableHead className="text-right">{t(translations.actions)}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -324,7 +498,7 @@ export default function Invoices() {
         {/* Pagination */}
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            {invoices?.length || 0} facture(s)
+            {invoices?.length || 0} {t(translations.invoices)}
           </p>
         </div>
       </div>
@@ -333,7 +507,7 @@ export default function Invoices() {
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Aperçu de la facture</DialogTitle>
+            <DialogTitle>{t(translations.previewTitle)}</DialogTitle>
           </DialogHeader>
           {selectedInvoice && (
             <div className="relative">

@@ -4,6 +4,101 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FileText, Download, Upload, Search, Eye, Trash2, FolderOpen } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+
+const translations = {
+  title: {
+    fr: "Documents",
+    "pt-BR": "Documentos",
+    en: "Documents",
+  },
+  subtitle: {
+    fr: "Gérez les documents informatifs et ressources pour les stagiaires",
+    "pt-BR": "Gerencie documentos informativos e recursos para estagiários",
+    en: "Manage informative documents and resources for students",
+  },
+  uploadDocument: {
+    fr: "Téléverser un document",
+    "pt-BR": "Enviar documento",
+    en: "Upload Document",
+  },
+  searchPlaceholder: {
+    fr: "Rechercher des documents...",
+    "pt-BR": "Buscar documentos...",
+    en: "Search documents...",
+  },
+  files: {
+    fr: "fichiers",
+    "pt-BR": "arquivos",
+    en: "files",
+  },
+  allDocuments: {
+    fr: "Tous les documents",
+    "pt-BR": "Todos os documentos",
+    en: "All Documents",
+  },
+  allDocumentsDesc: {
+    fr: "Parcourez et gérez tous les documents téléversés",
+    "pt-BR": "Navegue e gerencie todos os documentos enviados",
+    en: "Browse and manage all uploaded documents",
+  },
+  noDocumentsTitle: {
+    fr: "Aucun document téléversé",
+    "pt-BR": "Nenhum documento enviado",
+    en: "No documents uploaded",
+  },
+  noDocumentsDesc: {
+    fr: "Téléversez votre premier document pour commencer à organiser vos ressources.",
+    "pt-BR": "Envie seu primeiro documento para começar a organizar seus recursos.",
+    en: "Upload your first document to start organizing your resources.",
+  },
+  downloads: {
+    fr: "téléchargements",
+    "pt-BR": "downloads",
+    en: "downloads",
+  },
+  // Categories
+  catFifpl: {
+    fr: "Financement FIFPL",
+    "pt-BR": "Financiamento FIFPL",
+    en: "FIFPL Funding",
+  },
+  catFifplDesc: {
+    fr: "Documents relatifs aux critères et processus de financement FIFPL",
+    "pt-BR": "Documentos relacionados aos critérios e processos de financiamento FIFPL",
+    en: "Documents related to FIFPL funding criteria and processes",
+  },
+  catReimbursement: {
+    fr: "Tutoriels remboursement",
+    "pt-BR": "Tutoriais de reembolso",
+    en: "Reimbursement Tutorials",
+  },
+  catReimbursementDesc: {
+    fr: "Guides étape par étape pour les demandes de remboursement",
+    "pt-BR": "Guias passo a passo para solicitações de reembolso",
+    en: "Step-by-step guides for reimbursement requests",
+  },
+  catMicroEnterprise: {
+    fr: "Info Micro-entreprise",
+    "pt-BR": "Info Microempresa",
+    en: "Micro-enterprise Info",
+  },
+  catMicroEnterpriseDesc: {
+    fr: "Informations sur les plafonds de prise en charge pour micro-entreprises",
+    "pt-BR": "Informações sobre limites de cobertura para microempresas",
+    en: "Information on coverage limits for micro-enterprises",
+  },
+  catCertificates: {
+    fr: "Certificats",
+    "pt-BR": "Certificados",
+    en: "Certificates",
+  },
+  catCertificatesDesc: {
+    fr: "Attestations CFP et certificats de langues",
+    "pt-BR": "Atestados CFP e certificados de idiomas",
+    en: "CFP attestations and language certificates",
+  },
+};
 
 interface Document {
   id: string;
@@ -15,53 +110,55 @@ interface Document {
   downloads: number;
 }
 
-const documentCategories = [
-  {
-    name: "Financement FIFPL",
-    description: "Documents relatifs aux critères et processus de financement FIFPL",
-    count: 0,
-  },
-  {
-    name: "Tutoriels remboursement",
-    description: "Guides étape par étape pour les demandes de remboursement",
-    count: 0,
-  },
-  {
-    name: "Info Micro-entreprise",
-    description: "Informations sur les plafonds de prise en charge pour micro-entreprises",
-    count: 0,
-  },
-  {
-    name: "Certificats",
-    description: "Attestations CFP et certificats de langues",
-    count: 0,
-  },
-];
-
 const documents: Document[] = [];
 
 export default function Documents() {
+  const { t } = useLanguage();
+
+  const documentCategories = [
+    {
+      name: t(translations.catFifpl),
+      description: t(translations.catFifplDesc),
+      count: 0,
+    },
+    {
+      name: t(translations.catReimbursement),
+      description: t(translations.catReimbursementDesc),
+      count: 0,
+    },
+    {
+      name: t(translations.catMicroEnterprise),
+      description: t(translations.catMicroEnterpriseDesc),
+      count: 0,
+    },
+    {
+      name: t(translations.catCertificates),
+      description: t(translations.catCertificatesDesc),
+      count: 0,
+    },
+  ];
+
   return (
     <MainLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Documents</h1>
+            <h1 className="text-2xl font-bold">{t(translations.title)}</h1>
             <p className="text-muted-foreground">
-              Gérez les documents informatifs et ressources pour les stagiaires
+              {t(translations.subtitle)}
             </p>
           </div>
           <Button>
             <Upload className="mr-2 h-4 w-4" />
-            Téléverser un document
+            {t(translations.uploadDocument)}
           </Button>
         </div>
 
         {/* Search */}
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Rechercher des documents..." className="pl-10" />
+          <Input placeholder={t(translations.searchPlaceholder)} className="pl-10" />
         </div>
 
         {/* Categories */}
@@ -76,7 +173,7 @@ export default function Documents() {
                   <div>
                     <CardTitle className="text-base">{category.name}</CardTitle>
                     <Badge variant="secondary" className="mt-1">
-                      {category.count} fichiers
+                      {category.count} {t(translations.files)}
                     </Badge>
                   </div>
                 </div>
@@ -91,18 +188,18 @@ export default function Documents() {
         {/* Document List */}
         <Card>
           <CardHeader>
-            <CardTitle>Tous les documents</CardTitle>
+            <CardTitle>{t(translations.allDocuments)}</CardTitle>
             <CardDescription>
-              Parcourez et gérez tous les documents téléversés
+              {t(translations.allDocumentsDesc)}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {documents.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                <h3 className="text-lg font-medium">Aucun document téléversé</h3>
+                <h3 className="text-lg font-medium">{t(translations.noDocumentsTitle)}</h3>
                 <p className="text-muted-foreground mt-1 max-w-sm">
-                  Téléversez votre premier document pour commencer à organiser vos ressources.
+                  {t(translations.noDocumentsDesc)}
                 </p>
               </div>
             ) : (
@@ -122,7 +219,7 @@ export default function Documents() {
                           <span>{doc.category}</span>
                           <span>{doc.type}</span>
                           <span>{doc.size}</span>
-                          <span>{doc.downloads} téléchargements</span>
+                          <span>{doc.downloads} {t(translations.downloads)}</span>
                         </div>
                       </div>
                     </div>

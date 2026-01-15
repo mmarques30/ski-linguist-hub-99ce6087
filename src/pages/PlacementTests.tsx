@@ -5,6 +5,95 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Link2, ExternalLink, Copy, Check, FileQuestion } from "lucide-react";
 import { useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
+
+const translations = {
+  title: {
+    fr: "Tests de niveau",
+    "pt-BR": "Testes de nível",
+    en: "Placement Tests",
+  },
+  subtitle: {
+    fr: "Gérez les tests de niveau et consultez les résultats",
+    "pt-BR": "Gerencie os testes de nível e consulte os resultados",
+    en: "Manage placement tests and view results",
+  },
+  viewTest: {
+    fr: "Voir le test",
+    "pt-BR": "Ver teste",
+    en: "View Test",
+  },
+  publicLinksTitle: {
+    fr: "Liens publics des tests",
+    "pt-BR": "Links públicos dos testes",
+    en: "Public Test Links",
+  },
+  publicLinksDesc: {
+    fr: "Partagez ces liens avec les stagiaires pour passer les tests de niveau",
+    "pt-BR": "Compartilhe estes links com os estagiários para fazer os testes de nível",
+    en: "Share these links with students to take placement tests",
+  },
+  english: {
+    fr: "Anglais",
+    "pt-BR": "Inglês",
+    en: "English",
+  },
+  portuguese: {
+    fr: "Portugais",
+    "pt-BR": "Português",
+    en: "Portuguese",
+  },
+  russian: {
+    fr: "Russe",
+    "pt-BR": "Russo",
+    en: "Russian",
+  },
+  dutch: {
+    fr: "Néerlandais",
+    "pt-BR": "Holandês",
+    en: "Dutch",
+  },
+  noTestsTitle: {
+    fr: "Aucun test complété",
+    "pt-BR": "Nenhum teste concluído",
+    en: "No tests completed",
+  },
+  noTestsDesc: {
+    fr: "Les statistiques apparaîtront ici lorsque les stagiaires auront complété les tests de niveau.",
+    "pt-BR": "As estatísticas aparecerão aqui quando os estagiários completarem os testes de nível.",
+    en: "Statistics will appear here when students complete placement tests.",
+  },
+  testOf: {
+    fr: "Test de",
+    "pt-BR": "Teste de",
+    en: "Test of",
+  },
+  questions: {
+    fr: "questions",
+    "pt-BR": "perguntas",
+    en: "questions",
+  },
+  testsCompleted: {
+    fr: "tests complétés",
+    "pt-BR": "testes concluídos",
+    en: "tests completed",
+  },
+  averageScore: {
+    fr: "Score moyen",
+    "pt-BR": "Pontuação média",
+    en: "Average Score",
+  },
+  levelDistribution: {
+    fr: "Répartition par niveau",
+    "pt-BR": "Distribuição por nível",
+    en: "Level Distribution",
+  },
+  viewDetails: {
+    fr: "Voir les résultats détaillés",
+    "pt-BR": "Ver resultados detalhados",
+    en: "View detailed results",
+  },
+};
 
 interface TestStats {
   language: string;
@@ -15,8 +104,6 @@ interface TestStats {
 }
 
 const testStats: TestStats[] = [];
-
-const availableLanguages = ["Anglais", "Portugais", "Russe", "Néerlandais"];
 
 const levelColors: Record<string, string> = {
   A1: "bg-red-100 text-red-800",
@@ -29,11 +116,19 @@ const levelColors: Record<string, string> = {
 
 export default function PlacementTests() {
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
+  const { t } = useLanguage();
 
-  const copyTestLink = (language: string) => {
-    const link = `${window.location.origin}/register?test=${language.toLowerCase()}`;
+  const availableLanguages = [
+    { key: "english", label: t(translations.english) },
+    { key: "portuguese", label: t(translations.portuguese) },
+    { key: "russian", label: t(translations.russian) },
+    { key: "dutch", label: t(translations.dutch) },
+  ];
+
+  const copyTestLink = (languageKey: string) => {
+    const link = `${window.location.origin}/register?test=${languageKey}`;
     navigator.clipboard.writeText(link);
-    setCopiedLink(language);
+    setCopiedLink(languageKey);
     setTimeout(() => setCopiedLink(null), 2000);
   };
 
@@ -43,42 +138,42 @@ export default function PlacementTests() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Tests de niveau</h1>
+            <h1 className="text-2xl font-bold">{t(translations.title)}</h1>
             <p className="text-muted-foreground">
-              Gérez les tests de niveau et consultez les résultats
+              {t(translations.subtitle)}
             </p>
           </div>
           <Button>
             <ExternalLink className="mr-2 h-4 w-4" />
-            Voir le test
+            {t(translations.viewTest)}
           </Button>
         </div>
 
         {/* Quick Links */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Liens publics des tests</CardTitle>
+            <CardTitle className="text-lg">{t(translations.publicLinksTitle)}</CardTitle>
             <CardDescription>
-              Partagez ces liens avec les stagiaires pour passer les tests de niveau
+              {t(translations.publicLinksDesc)}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-              {availableLanguages.map((language) => (
+              {availableLanguages.map((lang) => (
                 <div
-                  key={language}
+                  key={lang.key}
                   className="flex items-center justify-between rounded-lg border p-3"
                 >
                   <div className="flex items-center gap-2">
                     <Link2 className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{language}</span>
+                    <span className="font-medium">{lang.label}</span>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => copyTestLink(language)}
+                    onClick={() => copyTestLink(lang.key)}
                   >
-                    {copiedLink === language ? (
+                    {copiedLink === lang.key ? (
                       <Check className="h-4 w-4 text-emerald-600" />
                     ) : (
                       <Copy className="h-4 w-4" />
@@ -94,9 +189,9 @@ export default function PlacementTests() {
         {testStats.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border bg-card">
             <FileQuestion className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium">Aucun test complété</h3>
+            <h3 className="text-lg font-medium">{t(translations.noTestsTitle)}</h3>
             <p className="text-muted-foreground mt-1 max-w-sm">
-              Les statistiques apparaîtront ici lorsque les stagiaires auront complété les tests de niveau.
+              {t(translations.noTestsDesc)}
             </p>
           </div>
         ) : (
@@ -105,18 +200,18 @@ export default function PlacementTests() {
               <Card key={test.language}>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle>Test de {test.language}</CardTitle>
-                    <Badge variant="outline">{test.totalQuestions} questions</Badge>
+                    <CardTitle>{t(translations.testOf)} {test.language}</CardTitle>
+                    <Badge variant="outline">{test.totalQuestions} {t(translations.questions)}</Badge>
                   </div>
                   <CardDescription>
-                    {test.completedTests} tests complétés
+                    {test.completedTests} {t(translations.testsCompleted)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Average Score */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Score moyen</span>
+                      <span className="text-muted-foreground">{t(translations.averageScore)}</span>
                       <span className="font-medium">{test.averageScore}%</span>
                     </div>
                     <Progress value={test.averageScore} className="h-2" />
@@ -124,7 +219,7 @@ export default function PlacementTests() {
 
                   {/* Level Distribution */}
                   <div className="space-y-3">
-                    <p className="text-sm font-medium">Répartition par niveau</p>
+                    <p className="text-sm font-medium">{t(translations.levelDistribution)}</p>
                     <div className="space-y-2">
                       {test.levelDistribution.map((level) => (
                         <div
@@ -146,7 +241,7 @@ export default function PlacementTests() {
                   </div>
 
                   <Button variant="outline" className="w-full">
-                    Voir les résultats détaillés
+                    {t(translations.viewDetails)}
                   </Button>
                 </CardContent>
               </Card>
