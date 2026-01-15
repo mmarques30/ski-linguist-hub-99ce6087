@@ -21,16 +21,16 @@ export function PersonalInfoStep({ data, onUpdate, onNext }: PersonalInfoStepPro
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Dados Pessoais</CardTitle>
+        <CardTitle>Informations personnelles</CardTitle>
         <CardDescription>
-          Por favor, forneça seus dados pessoais para a inscrição
+          Veuillez renseigner vos informations personnelles pour l'inscription
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Civility */}
+          {/* Civilité */}
           <div className="space-y-3">
-            <Label>Tratamento</Label>
+            <Label>Civilité</Label>
             <RadioGroup
               value={data.civility || ""}
               onValueChange={(value) => onUpdate({ civility: value })}
@@ -47,25 +47,25 @@ export function PersonalInfoStep({ data, onUpdate, onNext }: PersonalInfoStepPro
             </RadioGroup>
           </div>
 
-          {/* Name */}
+          {/* Nom */}
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="firstName">Nome</Label>
+              <Label htmlFor="firstName">Prénom</Label>
               <Input
                 id="firstName"
                 value={data.firstName || ""}
                 onChange={(e) => onUpdate({ firstName: e.target.value })}
-                placeholder="Digite seu nome"
+                placeholder="Votre prénom"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName">Sobrenome</Label>
+              <Label htmlFor="lastName">Nom</Label>
               <Input
                 id="lastName"
                 value={data.lastName || ""}
                 onChange={(e) => onUpdate({ lastName: e.target.value })}
-                placeholder="Digite seu sobrenome"
+                placeholder="Votre nom"
                 required
               />
             </div>
@@ -80,12 +80,12 @@ export function PersonalInfoStep({ data, onUpdate, onNext }: PersonalInfoStepPro
                 type="email"
                 value={data.email || ""}
                 onChange={(e) => onUpdate({ email: e.target.value })}
-                placeholder="seu.email@exemplo.com"
+                placeholder="votre.email@exemple.com"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Telefone (Celular)</Label>
+              <Label htmlFor="phone">Téléphone (portable)</Label>
               <Input
                 id="phone"
                 type="tel"
@@ -97,21 +97,21 @@ export function PersonalInfoStep({ data, onUpdate, onNext }: PersonalInfoStepPro
             </div>
           </div>
 
-          {/* Address */}
+          {/* Adresse */}
           <div className="space-y-2">
-            <Label htmlFor="address">Endereço</Label>
+            <Label htmlFor="address">Adresse</Label>
             <Input
               id="address"
               value={data.address || ""}
               onChange={(e) => onUpdate({ address: e.target.value })}
-              placeholder="Endereço completo"
+              placeholder="Adresse complète"
               required
             />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="postalCode">Código Postal</Label>
+              <Label htmlFor="postalCode">Code postal</Label>
               <Input
                 id="postalCode"
                 value={data.postalCode || ""}
@@ -121,12 +121,12 @@ export function PersonalInfoStep({ data, onUpdate, onNext }: PersonalInfoStepPro
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="city">Cidade</Label>
+              <Label htmlFor="city">Ville</Label>
               <Input
                 id="city"
                 value={data.city || ""}
                 onChange={(e) => onUpdate({ city: e.target.value })}
-                placeholder="Nome da cidade"
+                placeholder="Nom de la ville"
                 required
               />
             </div>
@@ -135,9 +135,9 @@ export function PersonalInfoStep({ data, onUpdate, onNext }: PersonalInfoStepPro
           {/* Handicap */}
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div>
-              <p className="font-medium">Acessibilidade para Deficiência</p>
+              <p className="font-medium">Accessibilité handicap</p>
               <p className="text-sm text-muted-foreground">
-                Você necessita de alguma acomodação especial devido a uma deficiência?
+                Avez-vous besoin d'aménagements spéciaux en raison d'un handicap ?
               </p>
             </div>
             <Switch
@@ -147,7 +147,7 @@ export function PersonalInfoStep({ data, onUpdate, onNext }: PersonalInfoStepPro
           </div>
 
           <Button type="submit" className="w-full">
-            Continuar para Perfil Profissional
+            Continuer vers le profil professionnel
           </Button>
         </form>
       </CardContent>

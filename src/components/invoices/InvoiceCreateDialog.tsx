@@ -51,7 +51,7 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
 
   const createInvoice = useCreateInvoice();
 
-  // Buscar inscrições disponíveis
+  // Récupérer les inscriptions disponibles
   const { data: inscriptions, isLoading: loadingInscriptions } = useQuery({
     queryKey: ["inscriptions-for-invoice"],
     queryFn: async () => {
@@ -69,7 +69,7 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
 
       if (error) throw error;
 
-      // Buscar nomes dos alunos para cada inscrição
+      // Récupérer les noms des stagiaires pour chaque inscription
       const inscriptionsWithStudents = await Promise.all(
         (data || []).map(async (inscription) => {
           const { data: student } = await supabase
@@ -81,7 +81,7 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
           return {
             id: inscription.id,
             code: inscription.code,
-            student_name: student ? `${student.first_name} ${student.last_name}` : "Cliente desconhecido",
+            student_name: student ? `${student.first_name} ${student.last_name}` : "Client inconnu",
             language: inscription.language,
             start_date: inscription.start_date,
             price: inscription.price,
@@ -94,7 +94,7 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
     enabled: open,
   });
 
-  // Resetar formulário quando o diálogo abre
+  // Réinitialiser le formulaire à l'ouverture
   useEffect(() => {
     if (open) {
       const today = new Date();
@@ -114,7 +114,7 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
     }
   }, [open]);
 
-  // Atualizar taxa de IVA baseado no tipo de fatura
+  // Mettre à jour le taux de TVA selon le type de facture
   useEffect(() => {
     if (formData.invoice_type === "formation") {
       setFormData((prev) => ({ ...prev, tva_rate: 0 }));
@@ -123,7 +123,7 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
     }
   }, [formData.invoice_type]);
 
-  // Atualizar valor quando inscrição é selecionada
+  // Mettre à jour le montant lors de la sélection d'une inscription
   useEffect(() => {
     if (formData.inscription_id && inscriptions) {
       const selectedInscription = inscriptions.find(
@@ -144,7 +144,7 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
     e.preventDefault();
 
     if (formData.amount_ht <= 0) {
-      toast.error("O valor HT deve ser maior que 0");
+      toast.error("Le montant HT doit être supérieur à 0");
       return;
     }
 
@@ -157,17 +157,17 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
         notes: formData.notes || undefined,
       });
 
-      toast.success("Fatura criada com sucesso");
+      toast.success("Facture créée avec succès");
       onOpenChange(false);
     } catch (error) {
-      console.error("Erro ao criar fatura:", error);
-      toast.error("Erro ao criar a fatura");
+      console.error("Erreur lors de la création de la facture:", error);
+      toast.error("Erreur lors de la création de la facture");
     }
   };
 
   const formatDate = (dateStr: string) => {
     try {
-      return new Date(dateStr).toLocaleDateString("pt-BR");
+      return new Date(dateStr).toLocaleDateString("fr-FR");
     } catch {
       return dateStr;
     }
@@ -177,13 +177,13 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Nova Fatura</DialogTitle>
+          <DialogTitle>Nouvelle facture</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Seleção de Inscrição */}
+          {/* Sélection d'inscription */}
           <div className="space-y-2">
-            <Label htmlFor="inscription">Inscrição (opcional)</Label>
+            <Label htmlFor="inscription">Inscription (optionnel)</Label>
             <Select
               value={formData.inscription_id}
               onValueChange={(value) =>
@@ -191,10 +191,10 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecionar uma inscrição..." />
+                <SelectValue placeholder="Sélectionner une inscription..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Nenhuma inscrição</SelectItem>
+                <SelectItem value="">Aucune inscription</SelectItem>
                 {loadingInscriptions ? (
                   <div className="flex items-center justify-center p-4">
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -211,10 +211,10 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
             </Select>
           </div>
 
-          {/* Datas */}
+          {/* Dates */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="invoice_date">Data da fatura</Label>
+              <Label htmlFor="invoice_date">Date de facture</Label>
               <Input
                 id="invoice_date"
                 type="date"
@@ -226,7 +226,7 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="due_date">Data de vencimento</Label>
+              <Label htmlFor="due_date">Date d'échéance</Label>
               <Input
                 id="due_date"
                 type="date"
@@ -238,10 +238,10 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
             </div>
           </div>
 
-          {/* Tipo e Tipo de Pagamento */}
+          {/* Type et type de paiement */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Tipo de fatura</Label>
+              <Label>Type de facture</Label>
               <Select
                 value={formData.invoice_type}
                 onValueChange={(value: "formation" | "test" | "soustraitance") =>
@@ -252,14 +252,14 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="formation">Formação (IVA 0%)</SelectItem>
-                  <SelectItem value="test">Teste (IVA 20%)</SelectItem>
-                  <SelectItem value="soustraitance">Subcontratação (IVA 20%)</SelectItem>
+                  <SelectItem value="formation">Formation (TVA 0%)</SelectItem>
+                  <SelectItem value="test">Test (TVA 20%)</SelectItem>
+                  <SelectItem value="soustraitance">Sous-traitance (TVA 20%)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Tipo de pagamento</Label>
+              <Label>Type de paiement</Label>
               <Select
                 value={formData.payment_type}
                 onValueChange={(value: "integral" | "acompte" | "solde") =>
@@ -270,18 +270,18 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="integral">Integral</SelectItem>
-                  <SelectItem value="acompte">Adiantamento</SelectItem>
-                  <SelectItem value="solde">Saldo</SelectItem>
+                  <SelectItem value="integral">Intégral</SelectItem>
+                  <SelectItem value="acompte">Acompte</SelectItem>
+                  <SelectItem value="solde">Solde</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          {/* Valores */}
+          {/* Montants */}
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="amount_ht">Valor HT (€)</Label>
+              <Label htmlFor="amount_ht">Montant HT (€)</Label>
               <Input
                 id="amount_ht"
                 type="number"
@@ -298,7 +298,7 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="tva_rate">IVA (%)</Label>
+              <Label htmlFor="tva_rate">TVA (%)</Label>
               <Input
                 id="tva_rate"
                 type="number"
@@ -315,7 +315,7 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
               />
             </div>
             <div className="space-y-2">
-              <Label>Valor TTC (€)</Label>
+              <Label>Montant TTC (€)</Label>
               <Input
                 type="text"
                 value={calculatedTTC.toFixed(2)}
@@ -325,9 +325,9 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
             </div>
           </div>
 
-          {/* Observações */}
+          {/* Notes */}
           <div className="space-y-2">
-            <Label htmlFor="notes">Observações</Label>
+            <Label htmlFor="notes">Notes</Label>
             <Textarea
               id="notes"
               value={formData.notes}
@@ -335,7 +335,7 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
                 setFormData((prev) => ({ ...prev, notes: e.target.value }))
               }
               rows={3}
-              placeholder="Notas ou observações..."
+              placeholder="Notes ou observations..."
             />
           </div>
 
@@ -345,13 +345,13 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Cancelar
+              Annuler
             </Button>
             <Button type="submit" disabled={createInvoice.isPending}>
               {createInvoice.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              Criar fatura
+              Créer la facture
             </Button>
           </DialogFooter>
         </form>
