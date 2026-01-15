@@ -24,6 +24,7 @@ const navigation = [
   { name: "Faturas", href: "/invoices", icon: Receipt },
   { name: "Alunos", href: "/students", icon: Users },
   { name: "Testes de Nível", href: "/tests", icon: GraduationCap },
+  { name: "Évaluations", href: "/formateur/evaluations", icon: ClipboardList },
   { name: "Turmas", href: "/classes", icon: Calendar },
   { name: "Documentos", href: "/documents", icon: FileText },
   { name: "Configurações", href: "/settings", icon: Settings },
