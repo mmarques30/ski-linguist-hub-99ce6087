@@ -107,10 +107,10 @@ export function generateScoreOptions(system: 'sur_5' | 'sur_20'): number[] {
 }
 
 // Schools that use /20 scoring system
-export const SCHOOLS_SUR_20 = ['alpe-dhuez', 'villard-reculas'];
+export const SCHOOLS_SUR_20 = ['alpe', 'villard-reculas', 'villard reculas'];
 
 export function getScoringSystem(schoolName: string): 'sur_5' | 'sur_20' {
-  const normalized = schoolName.toLowerCase().replace(/['\s]/g, '-');
+  const normalized = schoolName.toLowerCase();
   return SCHOOLS_SUR_20.some(s => normalized.includes(s)) ? 'sur_20' : 'sur_5';
 }
 
