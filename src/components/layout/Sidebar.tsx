@@ -17,6 +17,7 @@ import { useState } from "react";
 import fliLogo from "@/assets/fli-marca-yellow.png";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 const navigation = [
   { name: "Tableau de bord", href: "/", icon: LayoutDashboard },
@@ -106,11 +107,13 @@ export function Sidebar() {
           })}
         </nav>
 
-        {/* Footer with Logout */}
+        {/* Footer with Language Selector and Logout */}
         <div className={cn(
           "border-t border-sidebar-border p-4 space-y-3",
           collapsed && "px-2"
         )}>
+          <LanguageSelector collapsed={collapsed} />
+          
           <button
             onClick={handleLogout}
             className={cn(
