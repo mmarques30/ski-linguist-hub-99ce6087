@@ -139,9 +139,9 @@ export default function EvaluationForm() {
       score_technique: scores.technique,
       score_conversation: scores.conversation,
       scoring_system: scoringSystem,
-      attestation_type: determinedLevel.includes("B") || determinedLevel.includes("C") 
-        ? "positif" 
-        : "negatif",
+      attestation_type: booking.ski_school_name?.toLowerCase().includes("alpe") 
+        ? "alpe_huez" 
+        : "generique",
       appreciation_intro: buildAppreciation("introduction"),
       appreciation_comprehension: buildAppreciation("comprehension"),
       appreciation_grammar: buildAppreciation("grammar"),
