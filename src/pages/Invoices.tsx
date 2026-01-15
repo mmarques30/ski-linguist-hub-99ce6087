@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { useInvoices, useUpdateInvoice, InvoiceWithInscription } from "@/hooks/useInvoices";
 import { InvoiceTemplate, InvoiceData } from "@/components/invoices/InvoiceTemplate";
 import { InvoiceEditDialog } from "@/components/invoices/InvoiceEditDialog";
+import { InvoiceCreateDialog } from "@/components/invoices/InvoiceCreateDialog";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
@@ -60,6 +61,7 @@ export default function Invoices() {
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceWithInscription | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const { data: invoices, isLoading, error } = useInvoices({
     status: statusFilter,
@@ -151,7 +153,7 @@ export default function Invoices() {
               <Download className="mr-2 h-4 w-4" />
               Exporter
             </Button>
-            <Button size="sm">
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Nouvelle Facture
             </Button>
@@ -220,7 +222,7 @@ export default function Invoices() {
               <p className="text-muted-foreground mt-1 max-w-sm">
                 Les factures apparaîtront ici lorsque vous en créerez.
               </p>
-              <Button className="mt-4">
+              <Button className="mt-4" onClick={() => setCreateOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Créer une facture
               </Button>
@@ -347,6 +349,9 @@ export default function Invoices() {
         open={editOpen}
         onOpenChange={setEditOpen}
       />
+
+      {/* Create Dialog */}
+      <InvoiceCreateDialog open={createOpen} onOpenChange={setCreateOpen} />
     </MainLayout>
   );
 }
