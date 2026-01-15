@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { Search, Filter, Download, Plus, Eye, FileText, Loader2, Send, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useInvoices, useUpdateInvoice, Invoice } from "@/hooks/useInvoices";
+import { useInvoices, useUpdateInvoice, InvoiceWithInscription } from "@/hooks/useInvoices";
 import { InvoiceTemplate, InvoiceData } from "@/components/invoices/InvoiceTemplate";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -56,7 +56,7 @@ export default function Invoices() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [search, setSearch] = useState("");
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceWithInscription | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
   const { data: invoices, isLoading, error } = useInvoices({
@@ -84,7 +84,7 @@ export default function Invoices() {
     }).format(price);
   };
 
-  const handleMarkAsSent = async (invoice: Invoice) => {
+  const handleMarkAsSent = async (invoice: InvoiceWithInscription) => {
     try {
       await updateInvoice.mutateAsync({ id: invoice.id, status: "sent" });
       toast.success("Facture marquée comme envoyée");
@@ -93,7 +93,7 @@ export default function Invoices() {
     }
   };
 
-  const handleMarkAsPaid = async (invoice: Invoice) => {
+  const handleMarkAsPaid = async (invoice: InvoiceWithInscription) => {
     try {
       await updateInvoice.mutateAsync({
         id: invoice.id,
@@ -106,20 +106,29 @@ export default function Invoices() {
     }
   };
 
-  const getPreviewData = (invoice: Invoice): InvoiceData => {
+  const getPreviewData = (invoice: InvoiceWithInscription): InvoiceData => {
+    const inscription = invoice.inscription;
     return {
       invoiceNumber: invoice.invoice_number || "",
       invoiceDate: new Date(invoice.invoice_date),
       dueDate: invoice.due_date ? new Date(invoice.due_date) : new Date(),
       invoiceType: invoice.invoice_type,
       status: invoice.status,
-      clientName: "Client",
-      clientAddress: "",
-      clientCity: "",
-      clientPostalCode: "",
+      clientName: inscription?.student_name || "Client non renseigné",
+      clientAddress: inscription?.student_address || "",
+      clientCity: inscription?.student_city || "",
+      clientPostalCode: inscription?.student_postal_code || "",
+      clientCompany: inscription?.student_company || undefined,
+      courseDescription: inscription ? `Formation ${inscription.language}` : undefined,
+      courseDateStart: inscription?.start_date ? new Date(inscription.start_date) : undefined,
+      courseDateEnd: inscription?.end_date ? new Date(inscription.end_date) : undefined,
+      courseDuration: inscription?.duration_hours || undefined,
+      courseLocation: inscription?.course_location || undefined,
       amountHT: invoice.amount_ht,
       tvaRate: invoice.tva_rate || 0,
       amountTTC: invoice.amount_ttc || invoice.amount_ht,
+      acompteAmount: inscription?.deposit_amount || undefined,
+      acompteDate: inscription?.deposit_date ? new Date(inscription.deposit_date) : undefined,
       paymentDate: invoice.payment_date ? new Date(invoice.payment_date) : undefined,
     };
   };
