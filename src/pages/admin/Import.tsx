@@ -372,7 +372,7 @@ export default function Import() {
           payment_type: paymentType,
           amount_ht: isEmpty(row.amount_ht) ? 0 : parseFloat(row.amount_ht),
           tva_rate: isEmpty(row.tva_rate) ? (type === 'formation' ? 0 : 20) : parseFloat(row.tva_rate),
-          amount_ttc: isEmpty(row.amount_ttc) ? null : parseFloat(row.amount_ttc),
+          // amount_ttc is computed by the database, don't include it
           status: status,
           payment_date: isEmpty(row.payment_date) ? null : row.payment_date,
           payment_method: isEmpty(row.payment_method) ? null : row.payment_method,
