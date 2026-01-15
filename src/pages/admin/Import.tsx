@@ -6,9 +6,13 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Upload, FileSpreadsheet, CheckCircle2, XCircle, AlertTriangle, Loader2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Upload, FileSpreadsheet, CheckCircle2, XCircle, AlertTriangle, Loader2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+type TableType = "instructors" | "ski_schools" | "students" | "inscriptions";
 
 interface CSVRow {
   [key: string]: string;
@@ -16,17 +20,73 @@ interface CSVRow {
 
 interface ImportStats {
   totalRows: number;
-  studentsCreated: number;
-  studentsReused: number;
-  instructorsCreated: number;
-  instructorsReused: number;
-  skiSchoolsCreated: number;
-  skiSchoolsReused: number;
-  inscriptionsCreated: number;
+  imported: number;
   errors: string[];
 }
 
-// Parse CSV with semicolon separator
+// Column mappings for each table type
+const COLUMN_MAPPINGS: Record<TableType, Record<string, string>> = {
+  instructors: {
+    id: "id",
+    full_name: "full_name",
+    email: "email",
+    phone: "phone",
+    languages: "languages",
+    hourly_rate: "hourly_rate",
+    status: "status",
+  },
+  ski_schools: {
+    id: "id",
+    name: "name",
+    director_name: "director_name",
+    director_phone: "director_phone",
+    address: "address",
+    email: "email",
+    contact_notes: "contact_notes",
+  },
+  students: {
+    id: "id",
+    email: "email",
+    first_name: "first_name",
+    last_name: "last_name",
+    full_name: "full_name",
+    gender: "gender",
+    phone: "phone",
+    address: "address",
+    postal_code: "postal_code",
+    city: "city",
+    company: "company",
+  },
+  inscriptions: {
+    id: "id",
+    code: "code",
+    student_id: "student_id",
+    instructor_id: "instructor_id",
+    ski_school_id: "ski_school_id",
+    modality: "modality",
+    type: "type",
+    language: "language",
+    location: "location",
+    start_date: "start_date",
+    end_date: "end_date",
+    duration_hours: "duration_hours",
+    price_ht: "price_ht",
+    deposit: "deposit",
+    deposit_date: "deposit_date",
+    payment_mode: "payment_mode",
+    level_entry: "level_entry",
+    level_exit_general: "level_exit_general",
+    level_exit_specific: "level_exit_specific",
+    certification: "certification",
+    certification_date: "certification_date",
+    certification_result: "certification_result",
+    status: "status",
+    status_original: "status_original",
+    observations: "observations",
+  },
+};
+
+// Parse CSV with comma separator
 function parseCSV(text: string): CSVRow[] {
   const lines = text.split('\n').filter(line => line.trim());
   if (lines.length === 0) return [];
@@ -37,12 +97,12 @@ function parseCSV(text: string): CSVRow[] {
     headerLine = headerLine.slice(1);
   }
   
-  const headers = headerLine.split(';').map(h => h.trim());
+  const headers = headerLine.split(',').map(h => h.trim());
   const rows: CSVRow[] = [];
   
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(';');
-    if (values.length < 5) continue; // Skip empty rows
+    const values = lines[i].split(',');
+    if (values.length < 2) continue;
     
     const row: CSVRow = {};
     headers.forEach((header, index) => {
@@ -54,51 +114,6 @@ function parseCSV(text: string): CSVRow[] {
   return rows;
 }
 
-// Parse French date format DD/MM/YYYY to ISO
-function parseDate(dateStr: string): string | null {
-  if (!dateStr || dateStr === '-' || dateStr === 'N/A') return null;
-  
-  const parts = dateStr.split('/');
-  if (parts.length === 3) {
-    const [day, month, year] = parts;
-    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-  }
-  return null;
-}
-
-// Parse monetary value "630,00 €" or "1 100,00 €" to number
-function parsePrice(priceStr: string): number | null {
-  if (!priceStr || priceStr === '-' || priceStr === 'N/A') return null;
-  
-  const cleaned = priceStr
-    .replace(/€/g, '')
-    .replace(/\s/g, '')
-    .replace(',', '.')
-    .trim();
-  
-  const num = parseFloat(cleaned);
-  return isNaN(num) ? null : num;
-}
-
-// Parse "Nom et Prénom" into first_name and last_name
-function parseName(fullName: string): { firstName: string; lastName: string } {
-  if (!fullName || fullName === '-' || fullName === 'N/A') {
-    return { firstName: 'Desconhecido', lastName: 'Desconhecido' };
-  }
-  
-  const parts = fullName.trim().split(' ');
-  if (parts.length === 1) {
-    return { firstName: parts[0], lastName: '' };
-  }
-  
-  // Last word is last name, rest is first name
-  const lastName = parts[parts.length - 1];
-  const firstName = parts.slice(0, -1).join(' ');
-  
-  return { firstName, lastName };
-}
-
-// Check if value is empty/null equivalent
 function isEmpty(value: string): boolean {
   return !value || value === '-' || value === 'N/A' || value.trim() === '';
 }
@@ -107,7 +122,9 @@ export default function Import() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<CSVRow[]>([]);
   const [allRows, setAllRows] = useState<CSVRow[]>([]);
+  const [selectedTable, setSelectedTable] = useState<TableType>("instructors");
   const [isImporting, setIsImporting] = useState(false);
+  const [isPurging, setIsPurging] = useState(false);
   const [progress, setProgress] = useState(0);
   const [stats, setStats] = useState<ImportStats | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -127,6 +144,37 @@ export default function Import() {
     setPreview(rows.slice(0, 10));
   };
 
+  const handlePurgeData = async () => {
+    setIsPurging(true);
+    try {
+      // Delete in reverse order to respect foreign keys
+      const { error: inscError } = await supabase.from('inscriptions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      if (inscError) throw new Error(`Inscriptions: ${inscError.message}`);
+
+      const { error: studError } = await supabase.from('students').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      if (studError) throw new Error(`Students: ${studError.message}`);
+
+      const { error: schoolError } = await supabase.from('ski_schools').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      if (schoolError) throw new Error(`Ski Schools: ${schoolError.message}`);
+
+      const { error: instrError } = await supabase.from('instructors').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      if (instrError) throw new Error(`Instructors: ${instrError.message}`);
+
+      toast({
+        title: "Données purgées",
+        description: "Toutes les données ont été supprimées avec succès.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur de purge",
+        description: error instanceof Error ? error.message : "Erreur inconnue",
+      });
+    } finally {
+      setIsPurging(false);
+    }
+  };
+
   const handleImport = async () => {
     if (allRows.length === 0) return;
 
@@ -135,237 +183,228 @@ export default function Import() {
 
     const importStats: ImportStats = {
       totalRows: allRows.length,
-      studentsCreated: 0,
-      studentsReused: 0,
-      instructorsCreated: 0,
-      instructorsReused: 0,
-      skiSchoolsCreated: 0,
-      skiSchoolsReused: 0,
-      inscriptionsCreated: 0,
+      imported: 0,
       errors: [],
     };
 
-    // Cache for lookups
-    const studentCache = new Map<string, string>();
-    const instructorCache = new Map<string, string>();
-    const skiSchoolCache = new Map<string, string>();
+    const batchSize = 50;
+    const batches = [];
+    
+    for (let i = 0; i < allRows.length; i += batchSize) {
+      batches.push(allRows.slice(i, i + batchSize));
+    }
 
-    // Pre-fetch existing data
-    const { data: existingStudents } = await supabase.from('students').select('id, email');
-    existingStudents?.forEach(s => studentCache.set(s.email.toLowerCase(), s.id));
-
-    const { data: existingInstructors } = await supabase.from('instructors').select('id, email');
-    existingInstructors?.forEach(i => {
-      if (i.email) instructorCache.set(i.email.toLowerCase(), i.id);
-    });
-
-    const { data: existingSchools } = await supabase.from('ski_schools').select('id, name');
-    existingSchools?.forEach(s => skiSchoolCache.set(s.name.toLowerCase(), s.id));
-
-    for (let i = 0; i < allRows.length; i++) {
-      const row = allRows[i];
-      
-      try {
-        // 1. Process Student
-        const email = row['Email']?.toLowerCase().trim();
-        if (!email) {
-          importStats.errors.push(`Linha ${i + 2}: Email do aluno não encontrado`);
-          continue;
+    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+      const batch = batches[batchIndex];
+      const records = batch.map((row, rowIndex) => {
+        const globalIndex = batchIndex * batchSize + rowIndex;
+        try {
+          return mapRowToRecord(row, selectedTable);
+        } catch (error) {
+          importStats.errors.push(`Ligne ${globalIndex + 2}: ${error}`);
+          return null;
         }
+      }).filter(Boolean);
 
-        let studentId = studentCache.get(email);
+      if (records.length > 0) {
+        const { error } = await supabase.from(selectedTable).insert(records as any[]);
         
-        if (!studentId) {
-          const { firstName, lastName } = parseName(row['Nom et Prénom']);
-          
-          const { data: newStudent, error: studentError } = await supabase
-            .from('students')
-            .insert({
-              email,
-              first_name: firstName,
-              last_name: lastName,
-              civility: row['Civilité'] || null,
-              phone: row['Tél'] || null,
-              street_address: row['Rue ou localité'] || null,
-              postal_code: row['CP'] || null,
-              city: row['Ville'] || null,
-              company: isEmpty(row['Entreprise']) ? null : row['Entreprise'],
-            })
-            .select('id')
-            .single();
-
-          if (studentError) {
-            importStats.errors.push(`Linha ${i + 2}: Erro ao criar aluno - ${studentError.message}`);
-            continue;
-          }
-
-          studentId = newStudent.id;
-          studentCache.set(email, studentId);
-          importStats.studentsCreated++;
+        if (error) {
+          importStats.errors.push(`Batch ${batchIndex + 1}: ${error.message}`);
         } else {
-          importStats.studentsReused++;
+          importStats.imported += records.length;
         }
-
-        // 2. Process Instructor
-        let instructorId: string | null = null;
-        const instructorEmail = row['e-mail Prof']?.toLowerCase().trim();
-        
-        if (instructorEmail && !isEmpty(instructorEmail)) {
-          instructorId = instructorCache.get(instructorEmail) || null;
-          
-          if (!instructorId) {
-            const instructorName = row['Formateur'] || '';
-            const nameParts = instructorName.trim().split(' ');
-            const instructorFirstName = nameParts.slice(0, -1).join(' ') || '';
-            const instructorLastName = nameParts[nameParts.length - 1] || 'Desconhecido';
-
-            const { data: newInstructor, error: instructorError } = await supabase
-              .from('instructors')
-              .insert({
-                email: instructorEmail,
-                first_name: instructorFirstName,
-                last_name: instructorLastName,
-                phone: row['Tél Prof'] || null,
-                languages: row['Langue'] ? [row['Langue']] : [],
-              })
-              .select('id')
-              .single();
-
-            if (!instructorError && newInstructor) {
-              instructorId = newInstructor.id;
-              instructorCache.set(instructorEmail, instructorId);
-              importStats.instructorsCreated++;
-            }
-          } else {
-            importStats.instructorsReused++;
-          }
-        }
-
-        // 3. Process Ski School
-        let skiSchoolId: string | null = null;
-        const schoolName = row['École de SKI']?.trim();
-        
-        if (schoolName && !isEmpty(schoolName)) {
-          skiSchoolId = skiSchoolCache.get(schoolName.toLowerCase()) || null;
-          
-          if (!skiSchoolId) {
-            const { data: newSchool, error: schoolError } = await supabase
-              .from('ski_schools')
-              .insert({
-                name: schoolName,
-                director_name: isEmpty(row['Directeur de l\'école de ski']) ? null : row['Directeur de l\'école de ski'],
-                director_phone: isEmpty(row['N° de Portable du Directeur']) ? null : row['N° de Portable du Directeur'],
-              })
-              .select('id')
-              .single();
-
-            if (!schoolError && newSchool) {
-              skiSchoolId = newSchool.id;
-              skiSchoolCache.set(schoolName.toLowerCase(), skiSchoolId);
-              importStats.skiSchoolsCreated++;
-            }
-          } else {
-            importStats.skiSchoolsReused++;
-          }
-        }
-
-        // 4. Create Inscription
-        const startDate = parseDate(row['Date début']);
-        const endDate = parseDate(row['Date fin']);
-        
-        if (!startDate || !endDate) {
-          importStats.errors.push(`Linha ${i + 2}: Datas inválidas`);
-          continue;
-        }
-
-        const { error: inscriptionError } = await supabase
-          .from('inscriptions')
-          .insert({
-            student_id: studentId,
-            instructor_id: instructorId,
-            ski_school_id: skiSchoolId,
-            modality: row['Modalité'] || null,
-            course_type: row['Type'] || null,
-            max_participants: row['Effectif'] || null,
-            language: row['Langue'] || 'Não especificado',
-            certification_type: isEmpty(row['Certification']) ? null : row['Certification'],
-            course_location: isEmpty(row['Lieu du stage']) ? null : row['Lieu du stage'],
-            course_address: isEmpty(row['Adresse du stage']) ? null : row['Adresse du stage'],
-            start_date: startDate,
-            end_date: endDate,
-            duration_hours: parsePrice(row['Durée (en heures)']),
-            duration_days: parsePrice(row['Durée (en jours)']),
-            hours_per_day: parsePrice(row['Heures par jour']),
-            schedule: isEmpty(row['Horaires']) ? null : row['Horaires'],
-            rhythm: isEmpty(row['Rythme']) ? null : row['Rythme'],
-            entry_test_score: isEmpty(row['Résultat test - entrée']) ? null : row['Résultat test - entrée'],
-            entry_level: isEmpty(row['Niveau entrée']) ? null : row['Niveau entrée'],
-            group_name: isEmpty(row['Groupe']) ? null : row['Groupe'],
-            final_general_level: isEmpty(row['Niv géneral en fin de stage']) ? null : row['Niv géneral en fin de stage'],
-            final_specific_level: isEmpty(row['Niv spécifique']) ? null : row['Niv spécifique'],
-            certification_date: parseDate(row['Date de la certification']),
-            certification_result: isEmpty(row['Résultat Certif Baréme Européen']) ? null : row['Résultat Certif Baréme Européen'],
-            pedagogical_cost: parsePrice(row['Coût pédagogique']),
-            price: parsePrice(row[' € ']),
-            payment_method: isEmpty(row[' Mode de paiement acompte 1 ']) ? null : row[' Mode de paiement acompte 1 '],
-            deposit_amount: parsePrice(row[' Acompte ']),
-            deposit_date: parseDate(row['Date Acompte']),
-            check_number: isEmpty(row['Chèque']) ? null : row['Chèque'],
-            check_date: parseDate(row['Date d\'émission du chèque']),
-            balance_after_deposit: parsePrice(row[' Solde après acompte ']),
-            status: row['Status'] || 'En cours',
-            final_status: isEmpty(row['Status final']) ? null : row['Status final'],
-            qualiopi_status: isEmpty(row['QUALIOPI']) ? null : row['QUALIOPI'],
-            expectations: isEmpty(row['Attentes']) ? null : row['Attentes'],
-            observations: isEmpty(row['Observation']) ? null : row['Observation'],
-            course_materials: isEmpty(row['Support de cours']) ? null : row['Support de cours'],
-            code: isEmpty(row['Code']) ? null : row['Code'],
-          });
-
-        if (inscriptionError) {
-          importStats.errors.push(`Linha ${i + 2}: Erro ao criar inscrição - ${inscriptionError.message}`);
-        } else {
-          importStats.inscriptionsCreated++;
-        }
-
-      } catch (error) {
-        importStats.errors.push(`Linha ${i + 2}: Erro inesperado - ${error}`);
       }
 
-      setProgress(Math.round(((i + 1) / allRows.length) * 100));
+      setProgress(Math.round(((batchIndex + 1) / batches.length) * 100));
     }
 
     setStats(importStats);
     setIsImporting(false);
     
     toast({
-      title: "Importação concluída!",
-      description: `${importStats.inscriptionsCreated} inscrições importadas com sucesso.`,
+      title: "Import terminé",
+      description: `${importStats.imported} enregistrements importés dans ${selectedTable}.`,
     });
   };
 
-  const headers = preview.length > 0 ? Object.keys(preview[0]).slice(0, 8) : [];
+  const mapRowToRecord = (row: CSVRow, table: TableType) => {
+    switch (table) {
+      case "instructors": {
+        const nameParts = (row.full_name || '').split(' ');
+        const firstName = nameParts.slice(0, -1).join(' ') || '';
+        const lastName = nameParts[nameParts.length - 1] || row.full_name || 'Inconnu';
+        
+        return {
+          id: row.id,
+          first_name: firstName || null,
+          last_name: lastName,
+          email: isEmpty(row.email) ? null : row.email,
+          phone: isEmpty(row.phone) ? null : row.phone,
+          languages: isEmpty(row.languages) ? null : row.languages.split(',').map(l => l.trim()),
+          is_active: row.status === 'active',
+        };
+      }
+      
+      case "ski_schools": {
+        return {
+          id: row.id,
+          name: row.name || 'Inconnu',
+          director_name: isEmpty(row.director_name) ? null : row.director_name,
+          director_phone: isEmpty(row.director_phone) ? null : row.director_phone,
+          observations: isEmpty(row.contact_notes) ? null : row.contact_notes,
+        };
+      }
+      
+      case "students": {
+        return {
+          id: row.id,
+          email: row.email || `unknown-${row.id}@placeholder.com`,
+          first_name: row.first_name || 'Inconnu',
+          last_name: row.last_name || 'Inconnu',
+          civility: isEmpty(row.gender) ? null : row.gender,
+          phone: isEmpty(row.phone) ? null : row.phone,
+          street_address: isEmpty(row.address) ? null : row.address,
+          postal_code: isEmpty(row.postal_code) ? null : row.postal_code,
+          city: isEmpty(row.city) ? null : row.city,
+          company: isEmpty(row.company) ? null : row.company,
+        };
+      }
+      
+      case "inscriptions": {
+        return {
+          id: row.id,
+          code: isEmpty(row.code) ? null : row.code,
+          student_id: row.student_id,
+          instructor_id: isEmpty(row.instructor_id) ? null : row.instructor_id,
+          ski_school_id: isEmpty(row.ski_school_id) ? null : row.ski_school_id,
+          modality: isEmpty(row.modality) ? null : row.modality,
+          course_type: isEmpty(row.type) ? null : row.type,
+          language: row.language || 'Non spécifié',
+          course_location: isEmpty(row.location) ? null : row.location,
+          start_date: row.start_date,
+          end_date: row.end_date,
+          duration_hours: isEmpty(row.duration_hours) ? null : parseFloat(row.duration_hours),
+          price: isEmpty(row.price_ht) ? null : parseFloat(row.price_ht),
+          deposit_amount: isEmpty(row.deposit) ? null : parseFloat(row.deposit),
+          deposit_date: isEmpty(row.deposit_date) ? null : row.deposit_date,
+          payment_method: isEmpty(row.payment_mode) ? null : row.payment_mode,
+          entry_level: isEmpty(row.level_entry) ? null : row.level_entry,
+          final_general_level: isEmpty(row.level_exit_general) ? null : row.level_exit_general,
+          final_specific_level: isEmpty(row.level_exit_specific) ? null : row.level_exit_specific,
+          certification_type: isEmpty(row.certification) ? null : row.certification,
+          certification_date: isEmpty(row.certification_date) ? null : row.certification_date,
+          certification_result: isEmpty(row.certification_result) ? null : row.certification_result,
+          status: mapStatus(row.status),
+          observations: isEmpty(row.observations) ? null : row.observations,
+        };
+      }
+      
+      default:
+        throw new Error(`Table non supportée: ${table}`);
+    }
+  };
+
+  const mapStatus = (status: string): string => {
+    const statusMap: Record<string, string> = {
+      'invoiced': 'Facturé',
+      'completed': 'Terminé',
+      'in_progress': 'En cours',
+      'cancelled': 'Annulé',
+    };
+    return statusMap[status] || status || 'En cours';
+  };
+
+  const headers = preview.length > 0 ? Object.keys(preview[0]).slice(0, 10) : [];
+
+  const tableLabels: Record<TableType, string> = {
+    instructors: "1. Formateurs (instructors)",
+    ski_schools: "2. Écoles de ski (ski_schools)",
+    students: "3. Stagiaires (students)",
+    inscriptions: "4. Inscriptions (inscriptions)",
+  };
 
   return (
     <MainLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold">Importar Dados CSV</h1>
-          <p className="text-muted-foreground">
-            Importe dados históricos de inscrições a partir de um arquivo CSV
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Import de données CSV</h1>
+            <p className="text-muted-foreground">
+              Importez vos données propres table par table
+            </p>
+          </div>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" disabled={isPurging}>
+                {isPurging ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="mr-2 h-4 w-4" />
+                )}
+                Purger toutes les données
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirmer la purge des données</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Cette action va supprimer TOUTES les données des tables suivantes dans l'ordre :
+                  <ul className="list-disc list-inside mt-2 space-y-1">
+                    <li>inscriptions</li>
+                    <li>students</li>
+                    <li>ski_schools</li>
+                    <li>instructors</li>
+                  </ul>
+                  <br />
+                  <strong className="text-destructive">Cette action est irréversible.</strong>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogAction onClick={handlePurgeData} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Confirmer la purge
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
+
+        {/* Table Selection */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Sélection de la table</CardTitle>
+            <CardDescription>
+              Importez les tables dans l'ordre : 1. Formateurs → 2. Écoles → 3. Stagiaires → 4. Inscriptions
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Select value={selectedTable} onValueChange={(v) => setSelectedTable(v as TableType)}>
+              <SelectTrigger className="w-[400px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(tableLabels).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
 
         {/* Upload Card */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileSpreadsheet className="h-5 w-5" />
-              Arquivo CSV
+              Fichier CSV - {tableLabels[selectedTable]}
             </CardTitle>
             <CardDescription>
-              Selecione o arquivo CSV com os dados de inscrições. O separador deve ser ponto e vírgula (;)
+              Format attendu : CSV avec séparateur virgule (,)
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -377,10 +416,10 @@ export default function Import() {
                 <Upload className="h-10 w-10 text-muted-foreground" />
                 <div className="text-center">
                   <p className="font-medium">
-                    {file ? file.name : "Clique para selecionar um arquivo"}
+                    {file ? file.name : "Cliquez pour sélectionner un fichier"}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {file ? `${allRows.length} registros encontrados` : "CSV com separador ponto e vírgula (;)"}
+                    {file ? `${allRows.length} enregistrements trouvés` : "CSV avec séparateur virgule (,)"}
                   </p>
                 </div>
               </div>
@@ -399,9 +438,9 @@ export default function Import() {
         {preview.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Preview (primeiros 10 registros)</CardTitle>
+              <CardTitle>Aperçu (10 premiers enregistrements)</CardTitle>
               <CardDescription>
-                Verifique se os dados estão sendo lidos corretamente antes de importar
+                Vérifiez que les données sont correctement lues avant d'importer
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -439,12 +478,12 @@ export default function Import() {
                   {isImporting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Importando...
+                      Import en cours...
                     </>
                   ) : (
                     <>
                       <Upload className="mr-2 h-4 w-4" />
-                      Importar {allRows.length} Registros
+                      Importer {allRows.length} enregistrements dans {selectedTable}
                     </>
                   )}
                 </Button>
@@ -452,7 +491,7 @@ export default function Import() {
                 {isImporting && (
                   <div className="flex-1">
                     <Progress value={progress} className="h-2" />
-                    <p className="text-sm text-muted-foreground mt-1">{progress}% concluído</p>
+                    <p className="text-sm text-muted-foreground mt-1">{progress}% terminé</p>
                   </div>
                 )}
               </div>
@@ -466,45 +505,36 @@ export default function Import() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle2 className="h-5 w-5 text-green-600" />
-                Resultado da Importação
+                Résultat de l'import
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-4">
-                <div className="rounded-lg bg-muted p-4">
-                  <p className="text-2xl font-bold">{stats.inscriptionsCreated}</p>
-                  <p className="text-sm text-muted-foreground">Inscrições Criadas</p>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="rounded-lg border p-4">
+                  <p className="text-2xl font-bold">{stats.totalRows}</p>
+                  <p className="text-sm text-muted-foreground">Total lignes</p>
                 </div>
-                <div className="rounded-lg bg-muted p-4">
-                  <p className="text-2xl font-bold">{stats.studentsCreated}</p>
-                  <p className="text-sm text-muted-foreground">Novos Alunos</p>
-                  <Badge variant="secondary" className="mt-1">{stats.studentsReused} reutilizados</Badge>
+                <div className="rounded-lg border p-4">
+                  <p className="text-2xl font-bold text-green-600">{stats.imported}</p>
+                  <p className="text-sm text-muted-foreground">Importés</p>
                 </div>
-                <div className="rounded-lg bg-muted p-4">
-                  <p className="text-2xl font-bold">{stats.instructorsCreated}</p>
-                  <p className="text-sm text-muted-foreground">Novos Instrutores</p>
-                  <Badge variant="secondary" className="mt-1">{stats.instructorsReused} reutilizados</Badge>
-                </div>
-                <div className="rounded-lg bg-muted p-4">
-                  <p className="text-2xl font-bold">{stats.skiSchoolsCreated}</p>
-                  <p className="text-sm text-muted-foreground">Novas Escolas</p>
-                  <Badge variant="secondary" className="mt-1">{stats.skiSchoolsReused} reutilizadas</Badge>
+                <div className="rounded-lg border p-4">
+                  <p className="text-2xl font-bold text-red-600">{stats.errors.length}</p>
+                  <p className="text-sm text-muted-foreground">Erreurs</p>
                 </div>
               </div>
 
               {stats.errors.length > 0 && (
-                <Alert variant="destructive" className="mt-4">
+                <Alert variant="destructive">
                   <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Erros durante a importação ({stats.errors.length})</AlertTitle>
+                  <AlertTitle>Erreurs d'import ({stats.errors.length})</AlertTitle>
                   <AlertDescription>
-                    <div className="mt-2 max-h-40 overflow-y-auto">
-                      {stats.errors.slice(0, 20).map((error, index) => (
-                        <p key={index} className="text-sm">{error}</p>
+                    <div className="max-h-[200px] overflow-y-auto mt-2 space-y-1 text-sm">
+                      {stats.errors.slice(0, 50).map((error, i) => (
+                        <p key={i}>• {error}</p>
                       ))}
-                      {stats.errors.length > 20 && (
-                        <p className="text-sm font-medium mt-2">
-                          ... e mais {stats.errors.length - 20} erros
-                        </p>
+                      {stats.errors.length > 50 && (
+                        <p className="font-medium">... et {stats.errors.length - 50} autres erreurs</p>
                       )}
                     </div>
                   </AlertDescription>
@@ -513,6 +543,25 @@ export default function Import() {
             </CardContent>
           </Card>
         )}
+
+        {/* Instructions */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Instructions d'import</CardTitle>
+          </CardHeader>
+          <CardContent className="prose prose-sm max-w-none">
+            <ol className="space-y-2">
+              <li><strong>Purger d'abord</strong> toutes les données existantes avec le bouton rouge</li>
+              <li>Importer <strong>instructors.csv</strong> (26 formateurs)</li>
+              <li>Importer <strong>ski_schools.csv</strong> (16 écoles)</li>
+              <li>Importer <strong>students.csv</strong> (582 stagiaires)</li>
+              <li>Importer <strong>inscriptions.csv</strong> (871 inscriptions)</li>
+            </ol>
+            <p className="text-muted-foreground mt-4">
+              Les colonnes sont mappées automatiquement. Les UUIDs dans les fichiers correspondent aux références entre tables.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </MainLayout>
   );
