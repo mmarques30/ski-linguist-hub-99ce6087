@@ -14,6 +14,7 @@ import Classes from "./pages/Classes";
 import Documents from "./pages/Documents";
 import Settings from "./pages/Settings";
 import Import from "./pages/admin/Import";
+import ImportPhrases from "./pages/admin/ImportPhrases";
 import AdminPhrases from "./pages/admin/Phrases";
 import EvaluationsList from "./pages/formateur/EvaluationsList";
 import EvaluationForm from "./pages/formateur/EvaluationForm";
@@ -45,7 +46,10 @@ const App = () => (
           <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/admin/import" element={<ProtectedRoute><Import /></ProtectedRoute>} />
-          
+          <Route path="/admin/import-phrases" element={<ProtectedRoute><ImportPhrases /></ProtectedRoute>} />
+          <Route path="/admin/phrases" element={<ProtectedRoute><AdminPhrases /></ProtectedRoute>} />
+          <Route path="/formateur/evaluations" element={<ProtectedRoute><EvaluationsList /></ProtectedRoute>} />
+          <Route path="/formateur/evaluation/:bookingId" element={<ProtectedRoute><EvaluationForm /></ProtectedRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
