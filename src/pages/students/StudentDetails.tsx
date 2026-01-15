@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { useStudentDetails } from "@/hooks/useStudentDetails";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { fr } from "date-fns/locale";
 
 export default function StudentDetails() {
   const { id } = useParams<{ id: string }>();
@@ -41,7 +41,7 @@ export default function StudentDetails() {
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "-";
     try {
-      return format(new Date(dateStr), "dd/MM/yyyy", { locale: ptBR });
+      return format(new Date(dateStr), "dd/MM/yyyy", { locale: fr });
     } catch {
       return dateStr;
     }
@@ -101,13 +101,13 @@ export default function StudentDetails() {
       <MainLayout>
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <User className="h-12 w-12 text-destructive/50 mb-4" />
-          <h3 className="text-lg font-medium">Aluno não encontrado</h3>
+          <h3 className="text-lg font-medium">Stagiaire non trouvé</h3>
           <p className="text-muted-foreground mt-1 max-w-sm">
-            {error?.message || "O aluno solicitado não existe ou foi removido."}
+            {error?.message || "Le stagiaire demandé n'existe pas ou a été supprimé."}
           </p>
           <Button variant="outline" className="mt-4" onClick={() => navigate("/students")}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar para Alunos
+            Retour aux stagiaires
           </Button>
         </div>
       </MainLayout>
@@ -167,7 +167,7 @@ export default function StudentDetails() {
           <div className="flex gap-2">
             <Button variant="outline" size="sm">
               <Mail className="mr-2 h-4 w-4" />
-              Enviar Email
+              Envoyer un email
             </Button>
           </div>
         </div>
@@ -176,43 +176,43 @@ export default function StudentDetails() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Inscrições</CardTitle>
+              <CardTitle className="text-sm font-medium">Total des inscriptions</CardTitle>
               <BookOpen className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{student.stats.totalInscriptions}</div>
               <p className="text-xs text-muted-foreground">
-                {student.stats.completedCourses} cursos concluídos
+                {student.stats.completedCourses} formations terminées
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Horas de Curso</CardTitle>
+              <CardTitle className="text-sm font-medium">Heures de formation</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{student.stats.totalHours}h</div>
-              <p className="text-xs text-muted-foreground">Total acumulado</p>
+              <p className="text-xs text-muted-foreground">Total cumulé</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Certificações</CardTitle>
+              <CardTitle className="text-sm font-medium">Certifications</CardTitle>
               <Award className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{student.stats.certifications}</div>
               <p className="text-xs text-muted-foreground">
                 {bestCertification
-                  ? `Melhor: ${bestCertification.certification_result}`
-                  : "Nenhuma certificação"}
+                  ? `Meilleur : ${bestCertification.certification_result}`
+                  : "Aucune certification"}
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Idiomas</CardTitle>
+              <CardTitle className="text-sm font-medium">Langues</CardTitle>
               <Languages className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -232,7 +232,7 @@ export default function StudentDetails() {
             {/* Contact & Location */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Informações de Contato</CardTitle>
+                <CardTitle className="text-lg">Informations de contact</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-start gap-3">
@@ -246,7 +246,7 @@ export default function StudentDetails() {
                   <div className="flex items-start gap-3">
                     <Phone className="h-4 w-4 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium">Telefone</p>
+                      <p className="text-sm font-medium">Téléphone</p>
                       <p className="text-sm text-muted-foreground">{student.phone}</p>
                     </div>
                   </div>
@@ -255,7 +255,7 @@ export default function StudentDetails() {
                   <div className="flex items-start gap-3">
                     <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium">Endereço</p>
+                      <p className="text-sm font-medium">Adresse</p>
                       <p className="text-sm text-muted-foreground">
                         {[student.street_address, student.postal_code, student.city]
                           .filter(Boolean)
@@ -268,7 +268,7 @@ export default function StudentDetails() {
                   <div className="flex items-start gap-3">
                     <Building2 className="h-4 w-4 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium">Empresa</p>
+                      <p className="text-sm font-medium">Entreprise</p>
                       <p className="text-sm text-muted-foreground">{student.company}</p>
                     </div>
                   </div>
@@ -276,7 +276,7 @@ export default function StudentDetails() {
                 <div className="flex items-start gap-3">
                   <Calendar className="h-4 w-4 text-muted-foreground mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium">Cliente desde</p>
+                    <p className="text-sm font-medium">Client depuis</p>
                     <p className="text-sm text-muted-foreground">
                       {formatDate(student.created_at)}
                     </p>
@@ -288,7 +288,7 @@ export default function StudentDetails() {
             {/* Progress by Language */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Progresso por Idioma</CardTitle>
+                <CardTitle className="text-lg">Progression par langue</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {student.stats.languages.length > 0 ? (
@@ -313,13 +313,13 @@ export default function StudentDetails() {
                         </div>
                         <Progress value={getLevelProgress(level)} className="h-2" />
                         <p className="text-xs text-muted-foreground">
-                          {langInscriptions.length} inscrição(ões)
+                          {langInscriptions.length} inscription(s)
                         </p>
                       </div>
                     );
                   })
                 ) : (
-                  <p className="text-sm text-muted-foreground">Nenhum idioma registrado</p>
+                  <p className="text-sm text-muted-foreground">Aucune langue enregistrée</p>
                 )}
               </CardContent>
             </Card>
@@ -331,18 +331,18 @@ export default function StudentDetails() {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <GraduationCap className="h-5 w-5" />
-                  Histórico de Inscrições
+                  Historique des inscriptions
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="all" className="w-full">
                   <TabsList className="mb-4">
-                    <TabsTrigger value="all">Todas ({student.inscriptions.length})</TabsTrigger>
+                    <TabsTrigger value="all">Toutes ({student.inscriptions.length})</TabsTrigger>
                     <TabsTrigger value="completed">
-                      Concluídas ({student.stats.completedCourses})
+                      Terminées ({student.stats.completedCourses})
                     </TabsTrigger>
                     <TabsTrigger value="certifications">
-                      Com Certificação ({student.stats.certifications})
+                      Avec certification ({student.stats.certifications})
                     </TabsTrigger>
                   </TabsList>
 
@@ -379,7 +379,7 @@ function InscriptionTable({ inscriptions }: { inscriptions: any[] }) {
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "-";
     try {
-      return format(new Date(dateStr), "dd/MM/yyyy", { locale: ptBR });
+      return format(new Date(dateStr), "dd/MM/yyyy", { locale: fr });
     } catch {
       return dateStr;
     }
@@ -412,7 +412,7 @@ function InscriptionTable({ inscriptions }: { inscriptions: any[] }) {
     return (
       <div className="py-8 text-center text-muted-foreground">
         <BookOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
-        <p>Nenhuma inscrição encontrada</p>
+        <p>Aucune inscription trouvée</p>
       </div>
     );
   }
@@ -422,13 +422,13 @@ function InscriptionTable({ inscriptions }: { inscriptions: any[] }) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Código</TableHead>
-            <TableHead>Idioma</TableHead>
-            <TableHead>Modalidade</TableHead>
-            <TableHead>Período</TableHead>
-            <TableHead>Duração</TableHead>
-            <TableHead>Certificação</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead>Code</TableHead>
+            <TableHead>Langue</TableHead>
+            <TableHead>Modalité</TableHead>
+            <TableHead>Période</TableHead>
+            <TableHead>Durée</TableHead>
+            <TableHead>Certification</TableHead>
+            <TableHead>Statut</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -456,7 +456,7 @@ function InscriptionTable({ inscriptions }: { inscriptions: any[] }) {
               </TableCell>
               <TableCell>
                 <Badge variant="outline" className={getStatusColor(inscription.status)}>
-                  {inscription.status}
+                  {inscription.status || "-"}
                 </Badge>
               </TableCell>
             </TableRow>

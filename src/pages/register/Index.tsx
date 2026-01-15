@@ -11,7 +11,7 @@ import { ExpectationsStep } from "@/components/registration/ExpectationsStep";
 import { ConfirmationStep } from "@/components/registration/ConfirmationStep";
 
 export interface RegistrationData {
-  // Personal Info
+  // Informations personnelles
   civility: string;
   firstName: string;
   lastName: string;
@@ -22,11 +22,11 @@ export interface RegistrationData {
   city: string;
   hasHandicap: boolean;
   
-  // Professional Profile
+  // Profil professionnel
   profession: "ski_instructor" | "other";
   skiSchool: string;
   
-  // Training Config
+  // Configuration de la formation
   fundingType: string;
   modality: string;
   language: string;
@@ -34,23 +34,23 @@ export interface RegistrationData {
   location: string;
   dates: string;
   
-  // Placement Test
+  // Test de niveau
   hasBeenEvaluated: boolean;
   currentLevel: string;
   testScore: number;
   
-  // Expectations
+  // Attentes
   expectations: string;
   certification: string;
 }
 
 const steps = [
-  { id: 1, name: "Dados Pessoais" },
-  { id: 2, name: "Perfil Profissional" },
-  { id: 3, name: "Configuração da Formação" },
-  { id: 4, name: "Teste de Nível" },
-  { id: 5, name: "Expectativas" },
-  { id: 6, name: "Confirmação" },
+  { id: 1, name: "Informations personnelles" },
+  { id: 2, name: "Profil professionnel" },
+  { id: 3, name: "Configuration formation" },
+  { id: 4, name: "Test de niveau" },
+  { id: 5, name: "Attentes" },
+  { id: 6, name: "Confirmation" },
 ];
 
 export default function Register() {
@@ -126,25 +126,25 @@ export default function Register() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      {/* En-tête */}
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <img src={fliLogo} alt="FLI" className="h-12 w-auto" />
             <div className="text-right">
-              <p className="text-sm text-muted-foreground">Formulário de Inscrição</p>
-              <p className="font-semibold">Formação em Idiomas para Instrutores de Esqui</p>
+              <p className="text-sm text-muted-foreground">Formulaire d'inscription</p>
+              <p className="font-semibold">Formation linguistique pour moniteurs de ski</p>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Progress */}
+      {/* Progression */}
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium">
-              Etapa {currentStep} de {steps.length}
+              Étape {currentStep} sur {steps.length}
             </span>
             <span className="text-sm text-muted-foreground">
               {steps[currentStep - 1].name}
@@ -154,7 +154,7 @@ export default function Register() {
         </div>
       </div>
 
-      {/* Step Navigation */}
+      {/* Navigation des étapes */}
       <div className="border-b bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="flex overflow-x-auto scrollbar-thin py-2 gap-2">
@@ -181,7 +181,7 @@ export default function Register() {
         </div>
       </div>
 
-      {/* Content */}
+      {/* Contenu */}
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
           {currentStep > 1 && (
@@ -192,18 +192,18 @@ export default function Register() {
               className="mb-6"
             >
               <ChevronLeft className="mr-2 h-4 w-4" />
-              Voltar
+              Retour
             </Button>
           )}
           {renderStep()}
         </div>
       </main>
 
-      {/* Footer */}
+      {/* Pied de page */}
       <footer className="border-t bg-card mt-auto">
         <div className="container mx-auto px-4 py-4">
           <p className="text-center text-sm text-muted-foreground">
-            France Langues International - Formação em Idiomas para Instrutores de Esqui
+            France Langues International - Formation linguistique pour moniteurs de ski
           </p>
         </div>
       </footer>
