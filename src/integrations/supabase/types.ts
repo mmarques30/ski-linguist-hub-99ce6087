@@ -835,6 +835,12 @@ export type Database = {
           attestation_url: string | null
           booking_id: string
           comments: string | null
+          comments_comprehension: string | null
+          comments_conclusion: string | null
+          comments_expression: string | null
+          comments_grammar: string | null
+          comments_introduction: string | null
+          comments_technique: string | null
           created_at: string
           criteria_checklist: Json | null
           grammar_points: string[] | null
@@ -846,6 +852,7 @@ export type Database = {
           score_structure: number
           score_technique: number
           scoring_system: string
+          selected_phrase_ids: string[] | null
           vocabulary_examples: string[] | null
         }
         Insert: {
@@ -859,6 +866,12 @@ export type Database = {
           attestation_url?: string | null
           booking_id: string
           comments?: string | null
+          comments_comprehension?: string | null
+          comments_conclusion?: string | null
+          comments_expression?: string | null
+          comments_grammar?: string | null
+          comments_introduction?: string | null
+          comments_technique?: string | null
           created_at?: string
           criteria_checklist?: Json | null
           grammar_points?: string[] | null
@@ -870,6 +883,7 @@ export type Database = {
           score_structure: number
           score_technique: number
           scoring_system?: string
+          selected_phrase_ids?: string[] | null
           vocabulary_examples?: string[] | null
         }
         Update: {
@@ -883,6 +897,12 @@ export type Database = {
           attestation_url?: string | null
           booking_id?: string
           comments?: string | null
+          comments_comprehension?: string | null
+          comments_conclusion?: string | null
+          comments_expression?: string | null
+          comments_grammar?: string | null
+          comments_introduction?: string | null
+          comments_technique?: string | null
           created_at?: string
           criteria_checklist?: Json | null
           grammar_points?: string[] | null
@@ -894,6 +914,7 @@ export type Database = {
           score_structure?: number
           score_technique?: number
           scoring_system?: string
+          selected_phrase_ids?: string[] | null
           vocabulary_examples?: string[] | null
         }
         Relationships: [
@@ -917,6 +938,7 @@ export type Database = {
         Row: {
           active: boolean
           category: string
+          code: string | null
           created_at: string
           id: string
           is_positive: boolean
@@ -926,10 +948,12 @@ export type Database = {
           order_index: number
           profession: string | null
           text_fr: string
+          updated_at: string | null
         }
         Insert: {
           active?: boolean
           category: string
+          code?: string | null
           created_at?: string
           id?: string
           is_positive?: boolean
@@ -939,10 +963,12 @@ export type Database = {
           order_index?: number
           profession?: string | null
           text_fr: string
+          updated_at?: string | null
         }
         Update: {
           active?: boolean
           category?: string
+          code?: string | null
           created_at?: string
           id?: string
           is_positive?: boolean
@@ -952,6 +978,7 @@ export type Database = {
           order_index?: number
           profession?: string | null
           text_fr?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
