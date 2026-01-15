@@ -4,13 +4,6 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Table,
@@ -21,23 +14,136 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Search, Filter, Download, Eye, Mail, Phone, Grid, List, Users, Loader2, Building2 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useStudents } from "@/hooks/useStudents";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { fr, enUS, ptBR } from "date-fns/locale";
+import { useLanguage } from "@/contexts/LanguageContext";
+
+// Translations for the Students page
+const translations = {
+  title: {
+    fr: "Stagiaires",
+    "pt-BR": "Estagiários",
+    en: "Students"
+  },
+  subtitle: {
+    fr: "Gérez votre base de données et profils de stagiaires",
+    "pt-BR": "Gerencie seu banco de dados e perfis de estagiários",
+    en: "Manage your student database and profiles"
+  },
+  export: {
+    fr: "Exporter",
+    "pt-BR": "Exportar",
+    en: "Export"
+  },
+  searchPlaceholder: {
+    fr: "Rechercher par nom, email ou entreprise...",
+    "pt-BR": "Pesquisar por nome, email ou empresa...",
+    en: "Search by name, email or company..."
+  },
+  loadingError: {
+    fr: "Erreur de chargement",
+    "pt-BR": "Erro de carregamento",
+    en: "Loading error"
+  },
+  noStudents: {
+    fr: "Aucun stagiaire inscrit",
+    "pt-BR": "Nenhum estagiário inscrito",
+    en: "No students registered"
+  },
+  noStudentsDescription: {
+    fr: "Les stagiaires apparaîtront ici après avoir complété leurs inscriptions ou après importation.",
+    "pt-BR": "Os estagiários aparecerão aqui após completarem suas inscrições ou após importação.",
+    en: "Students will appear here after completing their registrations or after import."
+  },
+  student: {
+    fr: "Stagiaire",
+    "pt-BR": "Estagiário",
+    en: "Student"
+  },
+  email: {
+    fr: "Email",
+    "pt-BR": "Email",
+    en: "Email"
+  },
+  phone: {
+    fr: "Téléphone",
+    "pt-BR": "Telefone",
+    en: "Phone"
+  },
+  city: {
+    fr: "Ville",
+    "pt-BR": "Cidade",
+    en: "City"
+  },
+  company: {
+    fr: "Entreprise",
+    "pt-BR": "Empresa",
+    en: "Company"
+  },
+  registration: {
+    fr: "Inscription",
+    "pt-BR": "Inscrição",
+    en: "Registration"
+  },
+  actions: {
+    fr: "Actions",
+    "pt-BR": "Ações",
+    en: "Actions"
+  },
+  cityNotProvided: {
+    fr: "Ville non renseignée",
+    "pt-BR": "Cidade não informada",
+    en: "City not provided"
+  },
+  viewProfile: {
+    fr: "Voir le profil",
+    "pt-BR": "Ver perfil",
+    en: "View profile"
+  },
+  showing: {
+    fr: "Affichage de",
+    "pt-BR": "Exibindo",
+    en: "Showing"
+  },
+  students: {
+    fr: "stagiaires",
+    "pt-BR": "estagiários",
+    en: "students"
+  },
+  previous: {
+    fr: "Précédent",
+    "pt-BR": "Anterior",
+    en: "Previous"
+  },
+  next: {
+    fr: "Suivant",
+    "pt-BR": "Próximo",
+    en: "Next"
+  }
+};
 
 export default function Students() {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [search, setSearch] = useState("");
+  const { language, t } = useLanguage();
 
   const { data: students, isLoading, error } = useStudents({
     search: search || undefined,
   });
 
+  const getDateLocale = () => {
+    switch (language) {
+      case "pt-BR": return ptBR;
+      case "en": return enUS;
+      default: return fr;
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     try {
-      return format(new Date(dateStr), "dd/MM/yyyy", { locale: fr });
+      return format(new Date(dateStr), "dd/MM/yyyy", { locale: getDateLocale() });
     } catch {
       return dateStr;
     }
@@ -53,15 +159,15 @@ export default function Students() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Stagiaires</h1>
+            <h1 className="text-2xl font-bold">{t(translations.title)}</h1>
             <p className="text-muted-foreground">
-              Gérez votre base de données et profils de stagiaires
+              {t(translations.subtitle)}
             </p>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm">
               <Download className="mr-2 h-4 w-4" />
-              Exporter
+              {t(translations.export)}
             </Button>
           </div>
         </div>
@@ -72,7 +178,7 @@ export default function Students() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par nom, email ou entreprise..."
+                placeholder={t(translations.searchPlaceholder)}
                 className="pl-10"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -110,15 +216,15 @@ export default function Students() {
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border bg-card">
             <Users className="h-12 w-12 text-destructive/50 mb-4" />
-            <h3 className="text-lg font-medium">Erreur de chargement</h3>
+            <h3 className="text-lg font-medium">{t(translations.loadingError)}</h3>
             <p className="text-muted-foreground mt-1 max-w-sm">{error.message}</p>
           </div>
         ) : !students || students.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border bg-card">
             <Users className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium">Aucun stagiaire inscrit</h3>
+            <h3 className="text-lg font-medium">{t(translations.noStudents)}</h3>
             <p className="text-muted-foreground mt-1 max-w-sm">
-              Les stagiaires apparaîtront ici après avoir complété leurs inscriptions ou après importation.
+              {t(translations.noStudentsDescription)}
             </p>
           </div>
         ) : viewMode === "list" ? (
@@ -126,13 +232,13 @@ export default function Students() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Stagiaire</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Téléphone</TableHead>
-                  <TableHead>Ville</TableHead>
-                  <TableHead>Entreprise</TableHead>
-                  <TableHead>Inscription</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t(translations.student)}</TableHead>
+                  <TableHead>{t(translations.email)}</TableHead>
+                  <TableHead>{t(translations.phone)}</TableHead>
+                  <TableHead>{t(translations.city)}</TableHead>
+                  <TableHead>{t(translations.company)}</TableHead>
+                  <TableHead>{t(translations.registration)}</TableHead>
+                  <TableHead className="text-right">{t(translations.actions)}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -198,7 +304,7 @@ export default function Students() {
                           {student.first_name} {student.last_name}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {student.city || "Ville non renseignée"}
+                          {student.city || t(translations.cityNotProvided)}
                         </p>
                       </div>
                     </div>
@@ -213,11 +319,11 @@ export default function Students() {
                   )}
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-muted-foreground">Email</p>
+                      <p className="text-muted-foreground">{t(translations.email)}</p>
                       <p className="font-medium truncate">{student.email}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Téléphone</p>
+                      <p className="text-muted-foreground">{t(translations.phone)}</p>
                       <p className="font-medium">{student.phone || "-"}</p>
                     </div>
                   </div>
@@ -229,7 +335,7 @@ export default function Students() {
                       onClick={() => navigate(`/students/${student.id}`)}
                     >
                       <Eye className="mr-2 h-4 w-4" />
-                      Voir le profil
+                      {t(translations.viewProfile)}
                     </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
                       <Mail className="h-4 w-4" />
@@ -247,14 +353,14 @@ export default function Students() {
         {/* Pagination */}
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Affichage de {students?.length || 0} stagiaires
+            {t(translations.showing)} {students?.length || 0} {t(translations.students)}
           </p>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" disabled>
-              Précédent
+              {t(translations.previous)}
             </Button>
             <Button variant="outline" size="sm" disabled>
-              Suivant
+              {t(translations.next)}
             </Button>
           </div>
         </div>
