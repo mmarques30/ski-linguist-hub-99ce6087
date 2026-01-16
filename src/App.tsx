@@ -17,6 +17,7 @@ import Settings from "./pages/Settings";
 import Import from "./pages/admin/Import";
 import ImportPhrases from "./pages/admin/ImportPhrases";
 import AdminPhrases from "./pages/admin/Phrases";
+import TestingChecklist from "./pages/admin/TestingChecklist";
 import EvaluationsList from "./pages/formateur/EvaluationsList";
 import EvaluationForm from "./pages/formateur/EvaluationForm";
 import EvaluationView from "./pages/formateur/EvaluationView";
@@ -31,6 +32,7 @@ import FinanceTresorerie from "./pages/finance/FinanceTresorerie";
 import FinanceChargesFixes from "./pages/finance/FinanceChargesFixes";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+
 
 const queryClient = new QueryClient();
 
@@ -65,6 +67,7 @@ const App = () => (
             <Route path="/admin/import" element={<ProtectedRoute><Import /></ProtectedRoute>} />
             <Route path="/admin/import-phrases" element={<ProtectedRoute><ImportPhrases /></ProtectedRoute>} />
             <Route path="/admin/phrases" element={<ProtectedRoute><AdminPhrases /></ProtectedRoute>} />
+            <Route path="/admin/testing" element={<ProtectedRoute><TestingChecklist /></ProtectedRoute>} />
             <Route path="/formateur/evaluations" element={<ProtectedRoute><EvaluationsList /></ProtectedRoute>} />
             <Route path="/formateur/evaluation/:bookingId" element={<ProtectedRoute><EvaluationForm /></ProtectedRoute>} />
             <Route path="/formateur/evaluation/:bookingId/edit" element={<ProtectedRoute><EvaluationForm /></ProtectedRoute>} />
