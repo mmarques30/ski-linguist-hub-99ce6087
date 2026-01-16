@@ -10,6 +10,7 @@ export interface Invoice {
   invoice_date: string;
   due_date: string | null;
   invoice_type: "formation" | "test" | "soustraitance";
+  client_type: "stagiaire" | "ecole_ski" | "dsf" | "autre";
   amount_ht: number;
   tva_rate: number | null;
   amount_ttc: number | null;
@@ -168,6 +169,7 @@ export function useCreateInvoice() {
       invoice_date?: string;
       due_date?: string;
       invoice_type: "formation" | "test" | "soustraitance";
+      client_type?: "stagiaire" | "ecole_ski" | "dsf" | "autre";
       payment_type?: "integral" | "acompte" | "solde";
       amount_ht: number;
       tva_rate?: number;

@@ -43,6 +43,7 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
     invoice_date: new Date().toISOString().split("T")[0],
     due_date: "",
     invoice_type: "formation" as "formation" | "test" | "soustraitance",
+    client_type: "stagiaire" as "stagiaire" | "ecole_ski" | "dsf" | "autre",
     payment_type: "integral" as "integral" | "acompte" | "solde",
     amount_ht: 0,
     tva_rate: 0,
@@ -106,6 +107,7 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
         invoice_date: today.toISOString().split("T")[0],
         due_date: dueDate.toISOString().split("T")[0],
         invoice_type: "formation",
+        client_type: "stagiaire",
         payment_type: "integral",
         amount_ht: 0,
         tva_rate: 0,
@@ -154,6 +156,7 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
         invoice_date: formData.invoice_date,
         due_date: formData.due_date || undefined,
         invoice_type: formData.invoice_type,
+        client_type: formData.client_type,
         payment_type: formData.payment_type,
         amount_ht: formData.amount_ht,
         tva_rate: formData.tva_rate,
@@ -241,8 +244,8 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
             </div>
           </div>
 
-          {/* Type et type de paiement */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Type, Client et type de paiement */}
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Type de facture</Label>
               <Select
@@ -258,6 +261,25 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
                   <SelectItem value="formation">Formation (TVA 0%)</SelectItem>
                   <SelectItem value="test">Test (TVA 20%)</SelectItem>
                   <SelectItem value="soustraitance">Sous-traitance (TVA 20%)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Type de client</Label>
+              <Select
+                value={formData.client_type}
+                onValueChange={(value: "stagiaire" | "ecole_ski" | "dsf" | "autre") =>
+                  setFormData((prev) => ({ ...prev, client_type: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="stagiaire">Stagiaire</SelectItem>
+                  <SelectItem value="ecole_ski">École de ski</SelectItem>
+                  <SelectItem value="dsf">DSF</SelectItem>
+                  <SelectItem value="autre">Autre</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -196,6 +196,31 @@ const translations = {
     "pt-BR": "Erro ao atualizar",
     en: "Error updating",
   },
+  client: {
+    fr: "Client",
+    "pt-BR": "Cliente",
+    en: "Client",
+  },
+  clientStagiaire: {
+    fr: "Stagiaire",
+    "pt-BR": "Estagiário",
+    en: "Trainee",
+  },
+  clientEcoleSki: {
+    fr: "École de ski",
+    "pt-BR": "Escola de esqui",
+    en: "Ski School",
+  },
+  clientDSF: {
+    fr: "DSF",
+    "pt-BR": "DSF",
+    en: "DSF",
+  },
+  clientAutre: {
+    fr: "Autre",
+    "pt-BR": "Outro",
+    en: "Other",
+  },
 };
 
 const statusStyles: Record<string, string> = {
@@ -260,6 +285,27 @@ export default function Invoices() {
     formation: t(translations.typeFormation),
     test: t(translations.typeTest),
     soustraitance: t(translations.typeSubcontracting),
+  };
+
+  const clientTypeLabels: Record<string, string> = {
+    stagiaire: t(translations.clientStagiaire),
+    ecole_ski: t(translations.clientEcoleSki),
+    dsf: t(translations.clientDSF),
+    autre: t(translations.clientAutre),
+  };
+
+  const clientTypeStyles: Record<string, string> = {
+    stagiaire: "bg-purple-100 text-purple-800",
+    ecole_ski: "bg-sky-100 text-sky-800",
+    dsf: "bg-amber-100 text-amber-800",
+    autre: "bg-gray-100 text-gray-800",
+  };
+
+  const getClientName = (invoice: InvoiceWithInscription) => {
+    if (invoice.inscription?.student_name) {
+      return invoice.inscription.student_name;
+    }
+    return "-";
   };
 
   const handleMarkAsSent = async (invoice: InvoiceWithInscription) => {
@@ -408,6 +454,7 @@ export default function Invoices() {
                   <TableHead>{t(translations.number)}</TableHead>
                   <TableHead>{t(translations.date)}</TableHead>
                   <TableHead>{t(translations.type)}</TableHead>
+                  <TableHead>{t(translations.client)}</TableHead>
                   <TableHead>{t(translations.amountHT)}</TableHead>
                   <TableHead>{t(translations.tva)}</TableHead>
                   <TableHead>{t(translations.amountTTC)}</TableHead>
@@ -427,6 +474,21 @@ export default function Invoices() {
                       <Badge variant="outline">
                         {typeLabels[invoice.invoice_type] || invoice.invoice_type}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-sm font-medium truncate max-w-[150px]">
+                          {getClientName(invoice)}
+                        </span>
+                        <Badge
+                          className={cn(
+                            clientTypeStyles[invoice.client_type] || "bg-gray-100 text-gray-800",
+                            "text-xs w-fit"
+                          )}
+                        >
+                          {clientTypeLabels[invoice.client_type] || invoice.client_type}
+                        </Badge>
+                      </div>
                     </TableCell>
                     <TableCell>{formatPrice(invoice.amount_ht)}</TableCell>
                     <TableCell>{invoice.tva_rate}%</TableCell>
