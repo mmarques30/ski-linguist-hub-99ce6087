@@ -13,11 +13,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Filter, Download, Eye, Mail, Phone, Grid, List, Users, Loader2, Building2 } from "lucide-react";
+import { Search, Filter, Download, Eye, Mail, Phone, Grid, List, Users, Loader2, Building2, Plus, Pencil } from "lucide-react";
 import { useStudents } from "@/hooks/useStudents";
 import { format } from "date-fns";
 import { fr, enUS, ptBR } from "date-fns/locale";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { StudentFormDialog } from "@/components/students/StudentFormDialog";
 
 // Translations for the Students page
 const translations = {
@@ -120,6 +121,16 @@ const translations = {
     fr: "Suivant",
     "pt-BR": "Próximo",
     en: "Next"
+  },
+  newStudent: {
+    fr: "Nouveau stagiaire",
+    "pt-BR": "Novo estagiário",
+    en: "New Student"
+  },
+  edit: {
+    fr: "Modifier",
+    "pt-BR": "Editar",
+    en: "Edit"
   }
 };
 
@@ -127,11 +138,23 @@ export default function Students() {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [search, setSearch] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const { language, t } = useLanguage();
 
   const { data: students, isLoading, error } = useStudents({
     search: search || undefined,
   });
+
+  const handleCreateStudent = () => {
+    setSelectedStudent(null);
+    setDialogOpen(true);
+  };
+
+  const handleEditStudent = (student: any) => {
+    setSelectedStudent(student);
+    setDialogOpen(true);
+  };
 
   const getDateLocale = () => {
     switch (language) {
@@ -168,6 +191,10 @@ export default function Students() {
             <Button variant="outline" size="sm">
               <Download className="mr-2 h-4 w-4" />
               {t(translations.export)}
+            </Button>
+            <Button size="sm" onClick={handleCreateStudent}>
+              <Plus className="mr-2 h-4 w-4" />
+              {t(translations.newStudent)}
             </Button>
           </div>
         </div>
@@ -276,6 +303,15 @@ export default function Students() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={() => handleEditStudent(student)}
+                          title={t(translations.edit)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                           <Mail className="h-4 w-4" />
                         </Button>
@@ -337,6 +373,15 @@ export default function Students() {
                       <Eye className="mr-2 h-4 w-4" />
                       {t(translations.viewProfile)}
                     </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={() => handleEditStudent(student)}
+                      title={t(translations.edit)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
                       <Mail className="h-4 w-4" />
                     </Button>
@@ -365,6 +410,12 @@ export default function Students() {
           </div>
         </div>
       </div>
+
+      <StudentFormDialog 
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        student={selectedStudent}
+      />
     </MainLayout>
   );
 }
