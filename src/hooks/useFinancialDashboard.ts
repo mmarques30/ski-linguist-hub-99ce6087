@@ -163,10 +163,18 @@ export function useFinancialKPIs(startDate: string, endDate: string) {
   });
 }
 
-export function useCAByMonth(startDate: string, endDate: string) {
+// Helper to shift date by one year
+function shiftDateByYear(dateStr: string, years: number): string {
+  const date = new Date(dateStr);
+  date.setFullYear(date.getFullYear() + years);
+  return date.toISOString().split('T')[0];
+}
+
+export function useCAByMonth(startDate: string, endDate: string, withComparison = false) {
   return useQuery({
-    queryKey: ['ca-by-month', startDate, endDate],
+    queryKey: ['ca-by-month', startDate, endDate, withComparison],
     queryFn: async () => {
+      // Current period
       const { data: invoices } = await supabase
         .from('invoices')
         .select('invoice_date, amount_ht, invoice_type')
@@ -174,27 +182,56 @@ export function useCAByMonth(startDate: string, endDate: string) {
         .lte('invoice_date', endDate)
         .neq('status', 'cancelled');
       
-      // Group by month
-      const byMonth = new Map<string, { month: string; total: number; byType: Record<string, number> }>();
+      // N-1 period
+      let invoicesN1: typeof invoices = [];
+      if (withComparison) {
+        const startN1 = shiftDateByYear(startDate, -1);
+        const endN1 = shiftDateByYear(endDate, -1);
+        const { data } = await supabase
+          .from('invoices')
+          .select('invoice_date, amount_ht, invoice_type')
+          .gte('invoice_date', startN1)
+          .lte('invoice_date', endN1)
+          .neq('status', 'cancelled');
+        invoicesN1 = data || [];
+      }
+      
+      // Group current period by month
+      const byMonth = new Map<string, { month: string; total: number; totalN1: number; byType: Record<string, number> }>();
       
       invoices?.forEach(inv => {
         const month = inv.invoice_date.substring(0, 7);
         if (!byMonth.has(month)) {
-          byMonth.set(month, { month, total: 0, byType: {} });
+          byMonth.set(month, { month, total: 0, totalN1: 0, byType: {} });
         }
         const entry = byMonth.get(month)!;
         entry.total += Number(inv.amount_ht || 0);
         entry.byType[inv.invoice_type] = (entry.byType[inv.invoice_type] || 0) + Number(inv.amount_ht || 0);
       });
       
+      // Add N-1 data - map to equivalent current year month
+      if (withComparison) {
+        invoicesN1?.forEach(inv => {
+          const invDate = new Date(inv.invoice_date);
+          invDate.setFullYear(invDate.getFullYear() + 1);
+          const monthN = invDate.toISOString().substring(0, 7);
+          
+          if (!byMonth.has(monthN)) {
+            byMonth.set(monthN, { month: monthN, total: 0, totalN1: 0, byType: {} });
+          }
+          const entry = byMonth.get(monthN)!;
+          entry.totalN1 += Number(inv.amount_ht || 0);
+        });
+      }
+      
       return Array.from(byMonth.values()).sort((a, b) => a.month.localeCompare(b.month));
     },
   });
 }
 
-export function useCAByType(startDate: string, endDate: string) {
+export function useCAByType(startDate: string, endDate: string, withComparison = false) {
   return useQuery({
-    queryKey: ['ca-by-type', startDate, endDate],
+    queryKey: ['ca-by-type', startDate, endDate, withComparison],
     queryFn: async () => {
       const { data: invoices } = await supabase
         .from('invoices')
@@ -203,9 +240,28 @@ export function useCAByType(startDate: string, endDate: string) {
         .lte('invoice_date', endDate)
         .neq('status', 'cancelled');
       
+      // N-1 period
+      let invoicesN1: typeof invoices = [];
+      if (withComparison) {
+        const startN1 = shiftDateByYear(startDate, -1);
+        const endN1 = shiftDateByYear(endDate, -1);
+        const { data } = await supabase
+          .from('invoices')
+          .select('invoice_type, amount_ht')
+          .gte('invoice_date', startN1)
+          .lte('invoice_date', endN1)
+          .neq('status', 'cancelled');
+        invoicesN1 = data || [];
+      }
+      
       const byType = new Map<string, number>();
       invoices?.forEach(inv => {
         byType.set(inv.invoice_type, (byType.get(inv.invoice_type) || 0) + Number(inv.amount_ht || 0));
+      });
+      
+      const byTypeN1 = new Map<string, number>();
+      invoicesN1?.forEach(inv => {
+        byTypeN1.set(inv.invoice_type, (byTypeN1.get(inv.invoice_type) || 0) + Number(inv.amount_ht || 0));
       });
       
       const typeLabels: Record<string, string> = {
@@ -214,13 +270,23 @@ export function useCAByType(startDate: string, endDate: string) {
         'soustraitance': 'Sous-traitance',
       };
       
-      return Array.from(byType.entries()).map(([type, value]) => ({
+      // Get all types from both periods
+      const allTypes = new Set([...byType.keys(), ...byTypeN1.keys()]);
+      
+      return Array.from(allTypes).map(type => ({
         name: typeLabels[type] || type,
-        value,
+        value: byType.get(type) || 0,
+        valueN1: byTypeN1.get(type) || 0,
+        evolution: calculateEvolution(byType.get(type) || 0, byTypeN1.get(type) || 0),
         type,
       }));
     },
   });
+}
+
+function calculateEvolution(current: number, previous: number): number | null {
+  if (previous === 0) return current > 0 ? 100 : null;
+  return ((current - previous) / previous) * 100;
 }
 
 export function usePendingInvoices() {

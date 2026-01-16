@@ -52,7 +52,7 @@ export default function FinanceDashboard() {
   const [selectedInstructor, setSelectedInstructor] = useState<any>(null);
 
   const { data: kpis, isLoading: kpisLoading } = useFinancialKPIs(startDate, endDate);
-  const { data: caByMonth } = useCAByMonth(startDate, endDate);
+  const { data: caByMonth } = useCAByMonth(startDate, endDate, true);
   const { data: caByType } = useCAByType(startDate, endDate);
   const { data: pendingInvoices } = usePendingInvoices();
   const { data: instructorBalance } = useInstructorBalance();
@@ -138,7 +138,7 @@ export default function FinanceDashboard() {
 
         {/* Charts */}
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* CA Evolution */}
+          {/* CA Evolution with N-1 comparison */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Évolution du CA</CardTitle>
@@ -161,18 +161,32 @@ export default function FinanceDashboard() {
                       className="text-xs"
                     />
                     <Tooltip 
-                      formatter={(value: number) => formatPrice(value)}
+                      formatter={(value: number, name: string) => [
+                        formatPrice(value),
+                        name === 'total' ? 'CA N' : 'CA N-1'
+                      ]}
                       labelFormatter={(label) => {
                         const date = new Date(label + '-01');
                         return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
                       }}
                     />
+                    <Legend formatter={(value) => value === 'total' ? 'CA N' : 'CA N-1'} />
                     <Line 
                       type="monotone" 
                       dataKey="total" 
+                      name="total"
                       stroke="hsl(var(--primary))" 
                       strokeWidth={2}
                       dot={{ fill: 'hsl(var(--primary))' }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="totalN1" 
+                      name="totalN1"
+                      stroke="hsl(var(--muted-foreground))" 
+                      strokeWidth={2}
+                      strokeDasharray="5 5"
+                      dot={{ fill: 'hsl(var(--muted-foreground))' }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
