@@ -3,7 +3,10 @@ import { fr } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Printer, Download } from "lucide-react";
+import { Printer, Download, Loader2 } from "lucide-react";
+import { useState, useRef } from "react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import fliLogo from "@/assets/fli-logo.png";
 
 interface CertificatePreviewProps {
@@ -21,8 +24,48 @@ interface CertificatePreviewProps {
 }
 
 export function CertificatePreview({ data }: CertificatePreviewProps) {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const certificateRef = useRef<HTMLDivElement>(null);
+
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!certificateRef.current) return;
+
+    setIsGenerating(true);
+    try {
+      const canvas = await html2canvas(certificateRef.current, {
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+      } as Parameters<typeof html2canvas>[1]);
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 10;
+
+      pdf.addImage(imgData, "PNG", imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      
+      const fileName = `certificat-${data.studentName.replace(/\s+/g, "-").toLowerCase()}-${data.inscriptionCode || "formation"}.pdf`;
+      pdf.save(fileName);
+    } catch (error) {
+      console.error("Erreur lors de la génération du PDF:", error);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -33,14 +76,19 @@ export function CertificatePreview({ data }: CertificatePreviewProps) {
           <Printer className="h-4 w-4 mr-2" />
           Imprimer
         </Button>
-        <Button variant="outline">
-          <Download className="h-4 w-4 mr-2" />
+        <Button variant="outline" onClick={handleDownloadPDF} disabled={isGenerating}>
+          {isGenerating ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Download className="h-4 w-4 mr-2" />
+          )}
           Télécharger PDF
         </Button>
       </div>
 
       {/* Certificate Content */}
       <div 
+        ref={certificateRef}
         className="bg-white border-4 border-double border-primary/20 rounded-lg p-12 print:border-none print:p-8 min-h-[600px] flex flex-col"
         id="certificate-pdf"
       >
