@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useSatisfactionStats } from "@/hooks/useSatisfactionStats";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useSatisfactionStats, SatisfactionFilters, PeriodFilter, LanguageFilter } from "@/hooks/useSatisfactionStats";
 import { 
   BarChart, 
   Bar, 
@@ -30,7 +32,9 @@ import {
   Star,
   MessageSquare,
   Award,
-  Target
+  Target,
+  Calendar,
+  Languages
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -111,8 +115,36 @@ function QualiopiIndicator({ label, value, target, unit = "%" }: {
   );
 }
 
+const periodOptions: { value: PeriodFilter; label: string }[] = [
+  { value: "all", label: "Toutes les périodes" },
+  { value: "thisMonth", label: "Ce mois" },
+  { value: "lastMonth", label: "Mois dernier" },
+  { value: "thisQuarter", label: "Ce trimestre" },
+  { value: "lastQuarter", label: "Trimestre dernier" },
+  { value: "thisYear", label: "Cette année" },
+  { value: "lastYear", label: "Année dernière" },
+  { value: "last3Months", label: "3 derniers mois" },
+  { value: "last6Months", label: "6 derniers mois" },
+  { value: "last12Months", label: "12 derniers mois" },
+];
+
+const languageOptions: { value: LanguageFilter; label: string }[] = [
+  { value: "all", label: "Toutes les langues" },
+  { value: "Anglais", label: "Anglais" },
+  { value: "Espagnol", label: "Espagnol" },
+  { value: "Français", label: "Français" },
+  { value: "Allemand", label: "Allemand" },
+  { value: "Italien", label: "Italien" },
+  { value: "Portugais", label: "Portugais" },
+];
+
 export default function SatisfactionStats() {
-  const { data: stats, isLoading } = useSatisfactionStats();
+  const [filters, setFilters] = useState<SatisfactionFilters>({
+    period: "all",
+    language: "all",
+  });
+  
+  const { data: stats, isLoading } = useSatisfactionStats(filters);
 
   if (isLoading) {
     return (
@@ -145,11 +177,50 @@ export default function SatisfactionStats() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Statistiques de Satisfaction</h1>
-          <p className="text-muted-foreground">
-            Indicateurs Qualiopi et analyse des retours stagiaires
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Statistiques de Satisfaction</h1>
+            <p className="text-muted-foreground">
+              Indicateurs Qualiopi et analyse des retours stagiaires
+            </p>
+          </div>
+          
+          {/* Filters */}
+          <div className="flex flex-wrap gap-3">
+            <Select 
+              value={filters.period} 
+              onValueChange={(value: PeriodFilter) => setFilters(prev => ({ ...prev, period: value }))}
+            >
+              <SelectTrigger className="w-[180px]">
+                <Calendar className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Période" />
+              </SelectTrigger>
+              <SelectContent>
+                {periodOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Select 
+              value={filters.language} 
+              onValueChange={(value: LanguageFilter) => setFilters(prev => ({ ...prev, language: value }))}
+            >
+              <SelectTrigger className="w-[180px]">
+                <Languages className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Langue" />
+              </SelectTrigger>
+              <SelectContent>
+                {languageOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* KPI Cards */}

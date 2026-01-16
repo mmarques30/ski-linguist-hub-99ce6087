@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, subYears, startOfQuarter, endOfQuarter, subQuarters } from "date-fns";
 
 interface SatisfactionSurvey {
   id: string;
@@ -16,6 +17,45 @@ interface SatisfactionSurvey {
   satisfaction_expectations: number | null;
   strong_points: string | null;
   weak_points: string | null;
+  inscription?: {
+    language: string | null;
+  };
+}
+
+export type PeriodFilter = "all" | "thisMonth" | "lastMonth" | "thisQuarter" | "lastQuarter" | "thisYear" | "lastYear" | "last3Months" | "last6Months" | "last12Months";
+export type LanguageFilter = "all" | "Anglais" | "Espagnol" | "Français" | "Allemand" | "Italien" | "Portugais";
+
+export interface SatisfactionFilters {
+  period: PeriodFilter;
+  language: LanguageFilter;
+}
+
+function getDateRange(period: PeriodFilter): { start: Date | null; end: Date | null } {
+  const now = new Date();
+  
+  switch (period) {
+    case "thisMonth":
+      return { start: startOfMonth(now), end: endOfMonth(now) };
+    case "lastMonth":
+      return { start: startOfMonth(subMonths(now, 1)), end: endOfMonth(subMonths(now, 1)) };
+    case "thisQuarter":
+      return { start: startOfQuarter(now), end: endOfQuarter(now) };
+    case "lastQuarter":
+      return { start: startOfQuarter(subQuarters(now, 1)), end: endOfQuarter(subQuarters(now, 1)) };
+    case "thisYear":
+      return { start: startOfYear(now), end: endOfYear(now) };
+    case "lastYear":
+      return { start: startOfYear(subYears(now, 1)), end: endOfYear(subYears(now, 1)) };
+    case "last3Months":
+      return { start: subMonths(now, 3), end: now };
+    case "last6Months":
+      return { start: subMonths(now, 6), end: now };
+    case "last12Months":
+      return { start: subMonths(now, 12), end: now };
+    case "all":
+    default:
+      return { start: null, end: null };
+  }
 }
 
 interface SatisfactionStats {
@@ -57,18 +97,38 @@ interface SatisfactionStats {
   };
 }
 
-export function useSatisfactionStats() {
+export function useSatisfactionStats(filters?: SatisfactionFilters) {
+  const period = filters?.period || "all";
+  const language = filters?.language || "all";
+  
   return useQuery({
-    queryKey: ["satisfaction-stats"],
+    queryKey: ["satisfaction-stats", period, language],
     queryFn: async (): Promise<SatisfactionStats> => {
       const { data: surveys, error } = await supabase
         .from("satisfaction_surveys")
-        .select("*")
+        .select(`
+          *,
+          inscription:inscriptions(language)
+        `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      const typedSurveys = surveys as SatisfactionSurvey[];
+      let typedSurveys = surveys as SatisfactionSurvey[];
+      
+      // Apply language filter
+      if (language !== "all") {
+        typedSurveys = typedSurveys.filter((s) => s.inscription?.language === language);
+      }
+      
+      // Apply period filter
+      const { start, end } = getDateRange(period);
+      if (start && end) {
+        typedSurveys = typedSurveys.filter((s) => {
+          const date = s.completed_at ? new Date(s.completed_at) : new Date(s.created_at);
+          return date >= start && date <= end;
+        });
+      }
       const completedSurveys = typedSurveys.filter((s) => s.completed_at !== null);
       const totalSurveys = typedSurveys.length;
       const responseRate = totalSurveys > 0 ? (completedSurveys.length / totalSurveys) * 100 : 0;
