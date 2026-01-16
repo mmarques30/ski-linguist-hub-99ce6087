@@ -91,6 +91,11 @@ const translations = {
     "pt-BR": "Todos os tipos",
     en: "All types",
   },
+  allClients: {
+    fr: "Tous les clients",
+    "pt-BR": "Todos os clientes",
+    en: "All clients",
+  },
   typeFormation: {
     fr: "Formation",
     "pt-BR": "Formação",
@@ -233,6 +238,7 @@ const statusStyles: Record<string, string> = {
 export default function Invoices() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [clientTypeFilter, setClientTypeFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceWithInscription | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -243,6 +249,7 @@ export default function Invoices() {
   const { data: invoices, isLoading, error } = useInvoices({
     status: statusFilter,
     type: typeFilter,
+    clientType: clientTypeFilter,
     search: search || undefined,
   });
 
@@ -414,6 +421,18 @@ export default function Invoices() {
               <SelectItem value="formation">{t(translations.typeFormation)}</SelectItem>
               <SelectItem value="test">{t(translations.typeTest)}</SelectItem>
               <SelectItem value="soustraitance">{t(translations.typeSubcontracting)}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={clientTypeFilter} onValueChange={setClientTypeFilter}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder={t(translations.client)} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t(translations.allClients)}</SelectItem>
+              <SelectItem value="stagiaire">{t(translations.clientStagiaire)}</SelectItem>
+              <SelectItem value="ecole_ski">{t(translations.clientEcoleSki)}</SelectItem>
+              <SelectItem value="dsf">{t(translations.clientDSF)}</SelectItem>
+              <SelectItem value="autre">{t(translations.clientAutre)}</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" size="icon">

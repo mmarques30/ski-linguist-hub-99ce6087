@@ -43,7 +43,7 @@ export interface InvoiceWithInscription extends Invoice {
   };
 }
 
-export function useInvoices(filters?: { status?: string; type?: string; search?: string }) {
+export function useInvoices(filters?: { status?: string; type?: string; clientType?: string; search?: string }) {
   return useQuery({
     queryKey: ["invoices", filters],
     queryFn: async () => {
@@ -58,6 +58,10 @@ export function useInvoices(filters?: { status?: string; type?: string; search?:
 
       if (filters?.type && filters.type !== "all") {
         query = query.eq("invoice_type", filters.type);
+      }
+
+      if (filters?.clientType && filters.clientType !== "all") {
+        query = query.eq("client_type", filters.clientType);
       }
 
       if (filters?.search) {
