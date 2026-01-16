@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
   CheckCircle2, 
@@ -12,7 +13,9 @@ import {
   ChevronDown, 
   RotateCcw,
   Download,
-  ClipboardList
+  ClipboardList,
+  MessageSquare,
+  ChevronUp
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -155,6 +158,7 @@ const STORAGE_KEY = "fli-testing-checklist";
 export default function TestingChecklist() {
   const [testData, setTestData] = useState<TestSection[]>(initialTestData);
   const [openSections, setOpenSections] = useState<string[]>(["auth"]);
+  const [expandedNotes, setExpandedNotes] = useState<string[]>([]);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -194,6 +198,28 @@ export default function TestingChecklist() {
     toast.success(statusMessages[status]);
   };
 
+  const updateItemNotes = (sectionId: string, itemId: string, notes: string) => {
+    setTestData(prev => prev.map(section => {
+      if (section.id === sectionId) {
+        return {
+          ...section,
+          items: section.items.map(item => 
+            item.id === itemId ? { ...item, notes } : item
+          )
+        };
+      }
+      return section;
+    }));
+  };
+
+  const toggleNotes = (itemId: string) => {
+    setExpandedNotes(prev => 
+      prev.includes(itemId) 
+        ? prev.filter(id => id !== itemId)
+        : [...prev, itemId]
+    );
+  };
+
   const resetAll = () => {
     setTestData(initialTestData);
     toast.success("Checklist resetado!");
@@ -223,7 +249,8 @@ export default function TestingChecklist() {
         title: s.title,
         items: s.items.map(i => ({
           name: i.name,
-          status: i.status
+          status: i.status,
+          notes: i.notes || null
         }))
       }))
     };
@@ -339,45 +366,84 @@ export default function TestingChecklist() {
                   <CollapsibleContent>
                     <CardContent className="pt-0">
                       <div className="space-y-3">
-                        {section.items.map(item => (
-                          <div 
-                            key={item.id}
-                            className="flex items-start justify-between p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
-                          >
-                            <div className="flex items-start gap-3">
-                              {getStatusIcon(item.status)}
-                              <div>
-                                <div className="font-medium">{item.name}</div>
-                                <div className="text-sm text-muted-foreground">{item.description}</div>
+                        {section.items.map(item => {
+                          const isNotesExpanded = expandedNotes.includes(item.id);
+                          const hasNotes = item.notes && item.notes.trim().length > 0;
+                          
+                          return (
+                            <div 
+                              key={item.id}
+                              className="p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start gap-3 flex-1">
+                                  {getStatusIcon(item.status)}
+                                  <div className="flex-1">
+                                    <div className="font-medium">{item.name}</div>
+                                    <div className="text-sm text-muted-foreground">{item.description}</div>
+                                  </div>
+                                </div>
+                                <div className="flex gap-1 shrink-0">
+                                  <Button
+                                    size="sm"
+                                    variant={hasNotes ? "secondary" : "ghost"}
+                                    className={hasNotes ? "text-blue-600" : ""}
+                                    onClick={() => toggleNotes(item.id)}
+                                    title="Adicionar notas"
+                                  >
+                                    <MessageSquare className="h-4 w-4" />
+                                    {isNotesExpanded ? <ChevronUp className="h-3 w-3 ml-1" /> : <ChevronDown className="h-3 w-3 ml-1" />}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant={item.status === "success" ? "default" : "outline"}
+                                    className={item.status === "success" ? "bg-green-500 hover:bg-green-600" : ""}
+                                    onClick={() => updateItemStatus(section.id, item.id, "success")}
+                                  >
+                                    <CheckCircle2 className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant={item.status === "failure" ? "default" : "outline"}
+                                    className={item.status === "failure" ? "bg-red-500 hover:bg-red-600" : ""}
+                                    onClick={() => updateItemStatus(section.id, item.id, "failure")}
+                                  >
+                                    <XCircle className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => updateItemStatus(section.id, item.id, "pending")}
+                                  >
+                                    <RotateCcw className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </div>
+                              
+                              {/* Notes Section */}
+                              {isNotesExpanded && (
+                                <div className="mt-3 pt-3 border-t">
+                                  <Textarea
+                                    placeholder="Adicione observações, bugs encontrados, screenshots necessários..."
+                                    value={item.notes || ""}
+                                    onChange={(e) => updateItemNotes(section.id, item.id, e.target.value)}
+                                    className="min-h-[80px] text-sm"
+                                  />
+                                </div>
+                              )}
+                              
+                              {/* Show notes preview when collapsed */}
+                              {!isNotesExpanded && hasNotes && (
+                                <div 
+                                  className="mt-2 pt-2 border-t text-sm text-blue-600 cursor-pointer hover:underline"
+                                  onClick={() => toggleNotes(item.id)}
+                                >
+                                  📝 {item.notes!.substring(0, 100)}{item.notes!.length > 100 ? "..." : ""}
+                                </div>
+                              )}
                             </div>
-                            <div className="flex gap-1 shrink-0">
-                              <Button
-                                size="sm"
-                                variant={item.status === "success" ? "default" : "outline"}
-                                className={item.status === "success" ? "bg-green-500 hover:bg-green-600" : ""}
-                                onClick={() => updateItemStatus(section.id, item.id, "success")}
-                              >
-                                <CheckCircle2 className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant={item.status === "failure" ? "default" : "outline"}
-                                className={item.status === "failure" ? "bg-red-500 hover:bg-red-600" : ""}
-                                onClick={() => updateItemStatus(section.id, item.id, "failure")}
-                              >
-                                <XCircle className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => updateItemStatus(section.id, item.id, "pending")}
-                              >
-                                <RotateCcw className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </CardContent>
                   </CollapsibleContent>
