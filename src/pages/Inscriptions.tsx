@@ -223,6 +223,7 @@ export default function Inscriptions() {
   const [search, setSearch] = useState("");
   const [endPackInscription, setEndPackInscription] = useState<any>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editingInscription, setEditingInscription] = useState<any>(null);
   const { language, t } = useLanguage();
   const updateStatus = useUpdateInscriptionStatus();
 
@@ -446,7 +447,12 @@ export default function Inscriptions() {
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={() => setEditingInscription(inscription)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <DropdownMenu>
@@ -513,10 +519,16 @@ export default function Inscriptions() {
         />
       )}
 
-      {/* Create Inscription Dialog */}
+      {/* Create/Edit Inscription Dialog */}
       <InscriptionFormDialog
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
+        open={createDialogOpen || !!editingInscription}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCreateDialogOpen(false);
+            setEditingInscription(null);
+          }
+        }}
+        inscription={editingInscription}
       />
     </MainLayout>
   );

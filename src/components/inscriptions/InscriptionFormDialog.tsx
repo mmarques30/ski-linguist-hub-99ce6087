@@ -36,15 +36,25 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { format } from "date-fns";
 
 const translations = {
-  title: {
+  titleCreate: {
     fr: "Nouvelle inscription",
     "pt-BR": "Nova inscrição",
     en: "New Enrollment"
   },
-  description: {
+  titleEdit: {
+    fr: "Modifier l'inscription",
+    "pt-BR": "Editar inscrição",
+    en: "Edit Enrollment"
+  },
+  descriptionCreate: {
     fr: "Créez une nouvelle inscription pour un stagiaire.",
     "pt-BR": "Crie uma nova inscrição para um estagiário.",
     en: "Create a new enrollment for a student."
+  },
+  descriptionEdit: {
+    fr: "Modifiez les informations de l'inscription.",
+    "pt-BR": "Edite as informações da inscrição.",
+    en: "Edit the enrollment information."
   },
   student: {
     fr: "Stagiaire",
@@ -136,20 +146,40 @@ const translations = {
     "pt-BR": "Criar inscrição",
     en: "Create Enrollment"
   },
+  save: {
+    fr: "Enregistrer",
+    "pt-BR": "Salvar",
+    en: "Save"
+  },
   creating: {
     fr: "Création...",
     "pt-BR": "Criando...",
     en: "Creating..."
   },
-  success: {
+  saving: {
+    fr: "Enregistrement...",
+    "pt-BR": "Salvando...",
+    en: "Saving..."
+  },
+  successCreate: {
     fr: "Inscription créée avec succès",
     "pt-BR": "Inscrição criada com sucesso",
     en: "Enrollment created successfully"
   },
-  error: {
+  successEdit: {
+    fr: "Inscription modifiée avec succès",
+    "pt-BR": "Inscrição modificada com sucesso",
+    en: "Enrollment updated successfully"
+  },
+  errorCreate: {
     fr: "Erreur lors de la création",
     "pt-BR": "Erro ao criar",
     en: "Error creating enrollment"
+  },
+  errorEdit: {
+    fr: "Erreur lors de la modification",
+    "pt-BR": "Erro ao modificar",
+    en: "Error updating enrollment"
   },
   codeGenerated: {
     fr: "Code généré automatiquement",
@@ -205,16 +235,34 @@ const inscriptionSchema = z.object({
 
 type InscriptionFormData = z.infer<typeof inscriptionSchema>;
 
+interface InscriptionToEdit {
+  id: string;
+  student_id?: string | null;
+  instructor_id?: string | null;
+  ski_school_id?: string | null;
+  language: string;
+  start_date: string;
+  end_date: string;
+  duration_hours?: number | null;
+  price?: number | null;
+  entry_level?: string | null;
+  modality?: string | null;
+  course_location?: string | null;
+  observations?: string | null;
+}
+
 interface InscriptionFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  inscription?: InscriptionToEdit | null;
 }
 
-export function InscriptionFormDialog({ open, onOpenChange }: InscriptionFormDialogProps) {
+export function InscriptionFormDialog({ open, onOpenChange, inscription }: InscriptionFormDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [studentSearch, setStudentSearch] = useState("");
   const queryClient = useQueryClient();
   const { t, language: uiLanguage } = useLanguage();
+  const isEditMode = !!inscription;
 
   const form = useForm<InscriptionFormData>({
     resolver: zodResolver(inscriptionSchema),
@@ -285,47 +333,87 @@ export function InscriptionFormDialog({ open, onOpenChange }: InscriptionFormDia
   });
 
   useEffect(() => {
-    if (!open) {
+    if (open && inscription) {
+      // Populate form with inscription data for edit mode
+      form.reset({
+        student_id: inscription.student_id || "",
+        instructor_id: inscription.instructor_id || "",
+        ski_school_id: inscription.ski_school_id || "",
+        language: inscription.language || "",
+        start_date: inscription.start_date || "",
+        end_date: inscription.end_date || "",
+        duration_hours: inscription.duration_hours ?? undefined,
+        price: inscription.price ?? undefined,
+        entry_level: inscription.entry_level || "",
+        modality: inscription.modality || "Présentiel",
+        course_location: inscription.course_location || "",
+        observations: inscription.observations || "",
+      });
+    } else if (!open) {
       form.reset();
       setStudentSearch("");
     }
-  }, [open, form]);
+  }, [open, inscription, form]);
 
   const onSubmit = async (data: InscriptionFormData) => {
     setIsSubmitting(true);
     try {
-      // Generate code using the database function
-      const { data: codeResult, error: codeError } = await supabase
-        .rpc("generate_inscription_code");
+      if (isEditMode && inscription) {
+        // Update existing inscription
+        const { error } = await supabase
+          .from("inscriptions")
+          .update({
+            student_id: data.student_id,
+            instructor_id: data.instructor_id || null,
+            ski_school_id: data.ski_school_id || null,
+            language: data.language,
+            start_date: data.start_date,
+            end_date: data.end_date,
+            duration_hours: data.duration_hours || null,
+            price: data.price || null,
+            entry_level: data.entry_level || null,
+            modality: data.modality || null,
+            course_location: data.course_location || null,
+            observations: data.observations || null,
+          })
+          .eq("id", inscription.id);
 
-      if (codeError) throw codeError;
+        if (error) throw error;
+        toast.success(t(translations.successEdit));
+      } else {
+        // Create new inscription
+        const { data: codeResult, error: codeError } = await supabase
+          .rpc("generate_inscription_code");
 
-      const { error } = await supabase.from("inscriptions").insert({
-        code: codeResult,
-        student_id: data.student_id,
-        instructor_id: data.instructor_id || null,
-        ski_school_id: data.ski_school_id || null,
-        language: data.language,
-        start_date: data.start_date,
-        end_date: data.end_date,
-        duration_hours: data.duration_hours || null,
-        price: data.price || null,
-        entry_level: data.entry_level || null,
-        modality: data.modality || null,
-        course_location: data.course_location || null,
-        observations: data.observations || null,
-        status: "En cours",
-      });
+        if (codeError) throw codeError;
 
-      if (error) throw error;
+        const { error } = await supabase.from("inscriptions").insert({
+          code: codeResult,
+          student_id: data.student_id,
+          instructor_id: data.instructor_id || null,
+          ski_school_id: data.ski_school_id || null,
+          language: data.language,
+          start_date: data.start_date,
+          end_date: data.end_date,
+          duration_hours: data.duration_hours || null,
+          price: data.price || null,
+          entry_level: data.entry_level || null,
+          modality: data.modality || null,
+          course_location: data.course_location || null,
+          observations: data.observations || null,
+          status: "En cours",
+        });
 
-      toast.success(t(translations.success));
+        if (error) throw error;
+        toast.success(t(translations.successCreate));
+      }
+
       queryClient.invalidateQueries({ queryKey: ["inscriptions"] });
       queryClient.invalidateQueries({ queryKey: ["inscription-stats"] });
       onOpenChange(false);
     } catch (error: any) {
-      console.error("Error creating inscription:", error);
-      toast.error(t(translations.error));
+      console.error("Error saving inscription:", error);
+      toast.error(isEditMode ? t(translations.errorEdit) : t(translations.errorCreate));
     } finally {
       setIsSubmitting(false);
     }
@@ -335,8 +423,8 @@ export function InscriptionFormDialog({ open, onOpenChange }: InscriptionFormDia
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{t(translations.title)}</DialogTitle>
-          <DialogDescription>{t(translations.description)}</DialogDescription>
+          <DialogTitle>{isEditMode ? t(translations.titleEdit) : t(translations.titleCreate)}</DialogTitle>
+          <DialogDescription>{isEditMode ? t(translations.descriptionEdit) : t(translations.descriptionCreate)}</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -606,9 +694,11 @@ export function InscriptionFormDialog({ open, onOpenChange }: InscriptionFormDia
               )}
             />
 
-            <p className="text-xs text-muted-foreground italic">
-              {t(translations.codeGenerated)}
-            </p>
+            {!isEditMode && (
+              <p className="text-xs text-muted-foreground italic">
+                {t(translations.codeGenerated)}
+              </p>
+            )}
 
             <DialogFooter>
               <Button
@@ -623,10 +713,10 @@ export function InscriptionFormDialog({ open, onOpenChange }: InscriptionFormDia
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t(translations.creating)}
+                    {isEditMode ? t(translations.saving) : t(translations.creating)}
                   </>
                 ) : (
-                  t(translations.create)
+                  isEditMode ? t(translations.save) : t(translations.create)
                 )}
               </Button>
             </DialogFooter>
