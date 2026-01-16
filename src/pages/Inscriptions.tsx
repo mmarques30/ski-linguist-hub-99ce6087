@@ -24,15 +24,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, Filter, Download, Plus, Eye, Edit, Trash2, ClipboardList, Upload, Loader2, Package, MoreHorizontal } from "lucide-react";
+import { Search, Filter, Download, Plus, Eye, Edit, Trash2, ClipboardList, Upload, Loader2, Package, MoreHorizontal, CheckCircle, XCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useInscriptions } from "@/hooks/useInscriptions";
+import { useInscriptions, useUpdateInscriptionStatus } from "@/hooks/useInscriptions";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { EndPackDialog } from "@/components/endpack/EndPackDialog";
 import { InscriptionFormDialog } from "@/components/inscriptions/InscriptionFormDialog";
+import { toast } from "sonner";
 const translations = {
   title: {
     fr: "Inscriptions",
@@ -194,14 +195,27 @@ const translations = {
     "pt-BR": "Próximo",
     en: "Next",
   },
+  statusUpdated: {
+    fr: "Statut mis à jour",
+    "pt-BR": "Status atualizado",
+    en: "Status updated",
+  },
 };
 
 const statusStyles: Record<string, string> = {
   "En cours": "bg-blue-100 text-blue-800",
   "Facturé": "bg-emerald-100 text-emerald-800",
+  "Terminée": "bg-gray-100 text-gray-800",
   "Terminé": "bg-gray-100 text-gray-800",
+  "Annulée": "bg-red-100 text-red-800",
   "Annulé": "bg-red-100 text-red-800",
 };
+
+const statusOptions = [
+  { value: "En cours", icon: Clock, color: "text-blue-600" },
+  { value: "Terminée", icon: CheckCircle, color: "text-gray-600" },
+  { value: "Annulée", icon: XCircle, color: "text-red-600" },
+];
 
 export default function Inscriptions() {
   const [statusFilter, setStatusFilter] = useState("all");
@@ -210,6 +224,7 @@ export default function Inscriptions() {
   const [endPackInscription, setEndPackInscription] = useState<any>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const { language, t } = useLanguage();
+  const updateStatus = useUpdateInscriptionStatus();
 
   const { data: inscriptions, isLoading, error, refetch } = useInscriptions({
     status: statusFilter,
@@ -245,8 +260,20 @@ export default function Inscriptions() {
   const statusLabels: Record<string, string> = {
     "En cours": t(translations.statusInProgress),
     "Facturé": t(translations.statusBilled),
+    "Terminée": t(translations.statusCompleted),
     "Terminé": t(translations.statusCompleted),
+    "Annulée": t(translations.statusCancelled),
     "Annulé": t(translations.statusCancelled),
+  };
+
+  const handleStatusChange = async (inscriptionId: string, newStatus: string) => {
+    try {
+      await updateStatus.mutateAsync({ id: inscriptionId, status: newStatus });
+      toast.success(t(translations.statusUpdated));
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast.error("Erreur lors de la mise à jour du statut");
+    }
   };
 
   return (
@@ -389,9 +416,30 @@ export default function Inscriptions() {
                     </TableCell>
                     <TableCell>{formatPrice(inscription.price)}</TableCell>
                     <TableCell>
-                      <Badge className={cn(statusStyles[inscription.status] || "bg-gray-100 text-gray-800", "hover:opacity-80")}>
-                        {statusLabels[inscription.status] || inscription.status}
-                      </Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-auto p-0 hover:bg-transparent">
+                            <Badge className={cn(statusStyles[inscription.status] || "bg-gray-100 text-gray-800", "hover:opacity-80 cursor-pointer")}>
+                              {statusLabels[inscription.status] || inscription.status}
+                            </Badge>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          {statusOptions.map((option) => {
+                            const Icon = option.icon;
+                            return (
+                              <DropdownMenuItem
+                                key={option.value}
+                                onClick={() => handleStatusChange(inscription.id, option.value)}
+                                disabled={inscription.status === option.value || updateStatus.isPending}
+                              >
+                                <Icon className={cn("mr-2 h-4 w-4", option.color)} />
+                                {statusLabels[option.value]}
+                              </DropdownMenuItem>
+                            );
+                          })}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
