@@ -22,16 +22,19 @@ import {
   RefreshCw,
   CheckCircle2,
   Eye,
-  Edit
+  Edit,
+  QrCode
 } from "lucide-react";
 import { useTestBookingsToEvaluate, useCompletedEvaluations } from "@/hooks/useTestEvaluations";
 import { LANGUAGE_FLAGS, LANGUAGE_LABELS, scoreToLevel } from "@/lib/evaluation-utils";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { SurveyQRCodeDialog } from "@/components/survey/SurveyQRCodeDialog";
 
 export default function EvaluationsList() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("pending");
+  const [showQRDialog, setShowQRDialog] = useState(false);
   
   const { data: pendingBookings, isLoading: pendingLoading, refetch: refetchPending } = useTestBookingsToEvaluate();
   const { data: completedBookings, isLoading: completedLoading, refetch: refetchCompleted } = useCompletedEvaluations();
@@ -52,11 +55,20 @@ export default function EvaluationsList() {
               Gérer les évaluations de tests
             </p>
           </div>
-          <Button variant="outline" onClick={handleRefresh}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Actualiser
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowQRDialog(true)}>
+              <QrCode className="h-4 w-4 mr-2" />
+              QR Satisfaction
+            </Button>
+            <Button variant="outline" onClick={handleRefresh}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Actualiser
+            </Button>
+          </div>
         </div>
+
+        {/* QR Code Dialog */}
+        <SurveyQRCodeDialog open={showQRDialog} onOpenChange={setShowQRDialog} />
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
