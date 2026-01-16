@@ -32,6 +32,7 @@ import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { EndPackDialog } from "@/components/endpack/EndPackDialog";
+import { InscriptionFormDialog } from "@/components/inscriptions/InscriptionFormDialog";
 const translations = {
   title: {
     fr: "Inscriptions",
@@ -207,6 +208,7 @@ export default function Inscriptions() {
   const [languageFilter, setLanguageFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [endPackInscription, setEndPackInscription] = useState<any>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const { language, t } = useLanguage();
 
   const { data: inscriptions, isLoading, error, refetch } = useInscriptions({
@@ -269,7 +271,7 @@ export default function Inscriptions() {
               <Download className="mr-2 h-4 w-4" />
               {t(translations.export)}
             </Button>
-            <Button size="sm">
+            <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               {t(translations.newInscription)}
             </Button>
@@ -462,6 +464,12 @@ export default function Inscriptions() {
           onSuccess={() => refetch()}
         />
       )}
+
+      {/* Create Inscription Dialog */}
+      <InscriptionFormDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+      />
     </MainLayout>
   );
 }
