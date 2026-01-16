@@ -874,6 +874,7 @@ export type Database = {
         Row: {
           amount_ht: number
           amount_ttc: number | null
+          client_type: string
           created_at: string
           due_date: string | null
           fiscal_year: string | null
@@ -898,6 +899,7 @@ export type Database = {
         Insert: {
           amount_ht?: number
           amount_ttc?: number | null
+          client_type?: string
           created_at?: string
           due_date?: string | null
           fiscal_year?: string | null
@@ -922,6 +924,7 @@ export type Database = {
         Update: {
           amount_ht?: number
           amount_ttc?: number | null
+          client_type?: string
           created_at?: string
           due_date?: string | null
           fiscal_year?: string | null

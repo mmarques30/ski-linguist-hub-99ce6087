@@ -34,6 +34,7 @@ export function InvoiceEditDialog({ invoice, open, onOpenChange }: InvoiceEditDi
     invoice_date: "",
     due_date: "",
     invoice_type: "formation" as "formation" | "test" | "soustraitance",
+    client_type: "stagiaire" as "stagiaire" | "ecole_ski" | "dsf" | "autre",
     amount_ht: 0,
     tva_rate: 0,
     status: "draft" as "draft" | "sent" | "paid" | "cancelled",
@@ -48,6 +49,7 @@ export function InvoiceEditDialog({ invoice, open, onOpenChange }: InvoiceEditDi
         invoice_date: invoice.invoice_date || "",
         due_date: invoice.due_date || "",
         invoice_type: invoice.invoice_type,
+        client_type: invoice.client_type || "stagiaire",
         amount_ht: invoice.amount_ht || 0,
         tva_rate: invoice.tva_rate || 0,
         status: invoice.status,
@@ -68,6 +70,7 @@ export function InvoiceEditDialog({ invoice, open, onOpenChange }: InvoiceEditDi
         invoice_date: formData.invoice_date,
         due_date: formData.due_date || null,
         invoice_type: formData.invoice_type,
+        client_type: formData.client_type,
         amount_ht: formData.amount_ht,
         tva_rate: formData.tva_rate,
         status: formData.status,
@@ -121,8 +124,8 @@ export function InvoiceEditDialog({ invoice, open, onOpenChange }: InvoiceEditDi
             </div>
           </div>
 
-          {/* Type et Statut */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Type, Client et Statut */}
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="invoice_type">Type de facture</Label>
               <Select
@@ -138,6 +141,25 @@ export function InvoiceEditDialog({ invoice, open, onOpenChange }: InvoiceEditDi
                   <SelectItem value="formation">Formation</SelectItem>
                   <SelectItem value="test">Test</SelectItem>
                   <SelectItem value="soustraitance">Sous-traitance</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="client_type">Type de client</Label>
+              <Select
+                value={formData.client_type}
+                onValueChange={(value: "stagiaire" | "ecole_ski" | "dsf" | "autre") =>
+                  setFormData({ ...formData, client_type: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="stagiaire">Stagiaire</SelectItem>
+                  <SelectItem value="ecole_ski">École de ski</SelectItem>
+                  <SelectItem value="dsf">DSF</SelectItem>
+                  <SelectItem value="autre">Autre</SelectItem>
                 </SelectContent>
               </Select>
             </div>
