@@ -21,6 +21,7 @@ import EvaluationsList from "./pages/formateur/EvaluationsList";
 import EvaluationForm from "./pages/formateur/EvaluationForm";
 import EvaluationView from "./pages/formateur/EvaluationView";
 import Register from "./pages/register/Index";
+import SatisfactionSurvey from "./pages/survey/SatisfactionSurvey";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -37,6 +38,7 @@ const App = () => (
             {/* Public routes */}
             <Route path="/auth" element={<Auth />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/survey/:token" element={<SatisfactionSurvey />} />
             
             {/* Protected admin routes */}
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
