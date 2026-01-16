@@ -12,7 +12,8 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
-  TrendingUp
+  TrendingUp,
+  BarChart3
 } from "lucide-react";
 import { useState } from "react";
 import fliLogo from "@/assets/fli-marca-yellow.png";
@@ -29,6 +30,7 @@ const navigation = [
   { name: "Évaluations", href: "/formateur/evaluations", icon: ClipboardList },
   { name: "Sessions", href: "/classes", icon: Calendar },
   { name: "Documents", href: "/documents", icon: FileText },
+  { name: "Satisfaction", href: "/satisfaction-stats", icon: BarChart3 },
   { name: "Amélioration", href: "/amelioration", icon: TrendingUp },
   { name: "Paramètres", href: "/settings", icon: Settings },
 ];
