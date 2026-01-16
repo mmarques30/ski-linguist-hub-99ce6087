@@ -1,4 +1,5 @@
-import { useParams, Link } from "react-router-dom";
+import { useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -7,6 +8,16 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   ArrowLeft, 
   Calendar, 
@@ -22,11 +33,14 @@ import {
   FileText,
   Edit,
   Package,
-  Receipt
+  Receipt,
+  Trash2
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useDeleteInscription } from "@/hooks/useInscriptions";
+import { toast } from "sonner";
 
 const translations = {
   back: { fr: "Retour", "pt-BR": "Voltar", en: "Back" },
@@ -61,6 +75,11 @@ const translations = {
   editInscription: { fr: "Modifier", "pt-BR": "Editar", en: "Edit" },
   endPack: { fr: "End Pack", "pt-BR": "End Pack", en: "End Pack" },
   createInvoice: { fr: "Créer facture", "pt-BR": "Criar fatura", en: "Create Invoice" },
+  deleteInscription: { fr: "Supprimer", "pt-BR": "Excluir", en: "Delete" },
+  confirmDelete: { fr: "Confirmer la suppression", "pt-BR": "Confirmar exclusão", en: "Confirm Deletion" },
+  confirmDeleteDesc: { fr: "Êtes-vous sûr de vouloir supprimer cette inscription ? Cette action est irréversible.", "pt-BR": "Tem certeza que deseja excluir esta inscrição? Esta ação é irreversível.", en: "Are you sure you want to delete this enrollment? This action cannot be undone." },
+  cancel: { fr: "Annuler", "pt-BR": "Cancelar", en: "Cancel" },
+  deleted: { fr: "Inscription supprimée", "pt-BR": "Inscrição excluída", en: "Enrollment deleted" },
   statusInProgress: { fr: "En cours", "pt-BR": "Em andamento", en: "In Progress" },
   statusCompleted: { fr: "Terminée", "pt-BR": "Concluída", en: "Completed" },
   statusCancelled: { fr: "Annulée", "pt-BR": "Cancelada", en: "Cancelled" },
@@ -78,8 +97,10 @@ const statusStyles: Record<string, string> = {
 
 export default function InscriptionDetails() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { t, language } = useLanguage();
-
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const deleteInscription = useDeleteInscription();
   const getDateLocale = () => {
     switch (language) {
       case "pt-BR": return ptBR;
@@ -211,6 +232,15 @@ export default function InscriptionDetails() {
             <Button size="sm">
               <Receipt className="mr-2 h-4 w-4" />
               {t(translations.createInvoice)}
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              {t(translations.deleteInscription)}
             </Button>
           </div>
         </div>
@@ -577,6 +607,42 @@ export default function InscriptionDetails() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t(translations.confirmDelete)}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(translations.confirmDeleteDesc)}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t(translations.cancel)}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!id) return;
+                try {
+                  await deleteInscription.mutateAsync(id);
+                  toast.success(t(translations.deleted));
+                  navigate("/inscriptions");
+                } catch (error: any) {
+                  toast.error(error.message || "Error deleting inscription");
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteInscription.isPending}
+            >
+              {deleteInscription.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="mr-2 h-4 w-4" />
+              )}
+              {t(translations.deleteInscription)}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   );
 }

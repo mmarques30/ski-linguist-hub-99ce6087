@@ -118,3 +118,22 @@ export function useUpdateInscriptionStatus() {
     },
   });
 }
+
+export function useDeleteInscription() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("inscriptions")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["inscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["inscription-stats"] });
+    },
+  });
+}
