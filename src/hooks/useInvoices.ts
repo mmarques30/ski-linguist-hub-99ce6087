@@ -166,13 +166,48 @@ export function useCreateInvoice() {
     mutationFn: async (invoiceData: {
       inscription_id?: string;
       invoice_date?: string;
+      due_date?: string;
       invoice_type: "formation" | "test" | "soustraitance";
+      payment_type?: "integral" | "acompte" | "solde";
       amount_ht: number;
+      tva_rate?: number;
       notes?: string;
     }) => {
+      // Get fiscal year
+      const invoiceDate = invoiceData.invoice_date || new Date().toISOString().split("T")[0];
+      const { data: fiscalYearData, error: fyError } = await supabase
+        .rpc("get_fiscal_year", { invoice_date: invoiceDate });
+      
+      if (fyError) throw fyError;
+      const fiscalYear = fiscalYearData as string;
+
+      // Get next sequence number for this fiscal year
+      const { data: maxSeq, error: seqError } = await supabase
+        .from("invoices")
+        .select("sequence_number")
+        .eq("fiscal_year", fiscalYear)
+        .order("sequence_number", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (seqError) throw seqError;
+      
+      const nextSequence = (maxSeq?.sequence_number || 0) + 1;
+      const invoiceNumber = `${fiscalYear}.${nextSequence.toString().padStart(5, "0")}`;
+
+      // Calculate TTC
+      const tvaRate = invoiceData.tva_rate ?? 0;
+      const amountTtc = invoiceData.amount_ht * (1 + tvaRate / 100);
+
       const { data, error } = await supabase
         .from("invoices")
-        .insert(invoiceData)
+        .insert({
+          ...invoiceData,
+          invoice_number: invoiceNumber,
+          fiscal_year: fiscalYear,
+          sequence_number: nextSequence,
+          amount_ttc: amountTtc,
+        })
         .select()
         .single();
 
@@ -181,6 +216,7 @@ export function useCreateInvoice() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["invoice-stats"] });
     },
   });
 }

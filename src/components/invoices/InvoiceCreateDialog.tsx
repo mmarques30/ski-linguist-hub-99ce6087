@@ -149,15 +149,18 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
     }
 
     try {
-      await createInvoice.mutateAsync({
+      const result = await createInvoice.mutateAsync({
         inscription_id: formData.inscription_id || undefined,
         invoice_date: formData.invoice_date,
+        due_date: formData.due_date || undefined,
         invoice_type: formData.invoice_type,
+        payment_type: formData.payment_type,
         amount_ht: formData.amount_ht,
+        tva_rate: formData.tva_rate,
         notes: formData.notes || undefined,
       });
 
-      toast.success("Facture créée avec succès");
+      toast.success(`Facture ${result.invoice_number} créée avec succès`);
       onOpenChange(false);
     } catch (error) {
       console.error("Erreur lors de la création de la facture:", error);
