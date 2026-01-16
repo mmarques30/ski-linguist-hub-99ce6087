@@ -162,6 +162,13 @@ interface SatisfactionStatsData {
     score: number;
     label: string;
   }[];
+  recentFeedback: {
+    id: string;
+    completedAt: string;
+    averageScore: number;
+    strongPoints: string | null;
+    weakPoints: string | null;
+  }[];
 }
 
 function generateQualioPDF(stats: SatisfactionStatsData, periodLabel: string, languageLabel: string) {
@@ -271,10 +278,86 @@ function generateQualioPDF(stats: SatisfactionStatsData, periodLabel: string, la
   
   yPos += 10;
   
-  // Section: Synthèse
+  // Section: Points forts (verbatims)
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("4. Synthèse et Conformité Qualiopi", 20, yPos);
+  doc.text("4. Points Forts (Verbatims Stagiaires)", 20, yPos);
+  yPos += 8;
+  
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  
+  const strongPoints = stats.recentFeedback
+    .filter(f => f.strongPoints && f.strongPoints.trim())
+    .slice(0, 8);
+  
+  if (strongPoints.length > 0) {
+    strongPoints.forEach((feedback) => {
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+      const text = `• "${feedback.strongPoints}"`;
+      const lines = doc.splitTextToSize(text, pageWidth - 50);
+      doc.text(lines, 25, yPos);
+      yPos += lines.length * 4 + 3;
+    });
+  } else {
+    doc.setTextColor(128);
+    doc.text("Aucun commentaire disponible pour cette période.", 25, yPos);
+    doc.setTextColor(0);
+    yPos += 8;
+  }
+  
+  yPos += 8;
+  
+  // Section: Axes d'amélioration (verbatims)
+  if (yPos > 230) {
+    doc.addPage();
+    yPos = 20;
+  }
+  
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text("5. Axes d'Amélioration (Verbatims Stagiaires)", 20, yPos);
+  yPos += 8;
+  
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  
+  const weakPoints = stats.recentFeedback
+    .filter(f => f.weakPoints && f.weakPoints.trim())
+    .slice(0, 8);
+  
+  if (weakPoints.length > 0) {
+    weakPoints.forEach((feedback) => {
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+      const text = `• "${feedback.weakPoints}"`;
+      const lines = doc.splitTextToSize(text, pageWidth - 50);
+      doc.text(lines, 25, yPos);
+      yPos += lines.length * 4 + 3;
+    });
+  } else {
+    doc.setTextColor(128);
+    doc.text("Aucun commentaire disponible pour cette période.", 25, yPos);
+    doc.setTextColor(0);
+    yPos += 8;
+  }
+  
+  yPos += 10;
+  
+  // Section: Synthèse
+  if (yPos > 220) {
+    doc.addPage();
+    yPos = 20;
+  }
+  
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text("6. Synthèse et Conformité Qualiopi", 20, yPos);
   yPos += 10;
   
   doc.setFontSize(10);
@@ -299,11 +382,19 @@ function generateQualioPDF(stats: SatisfactionStatsData, periodLabel: string, la
   
   yPos += 30;
   
-  // Footer
-  doc.setFontSize(8);
-  doc.setTextColor(128);
-  doc.text("Ce rapport a été généré automatiquement par le système de gestion FLI.", pageWidth / 2, yPos, { align: "center" });
-  doc.text("Document à conserver pour les audits Qualiopi - Critère 7.", pageWidth / 2, yPos + 5, { align: "center" });
+  // Footer on last page
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(128);
+    doc.text(`Page ${i}/${pageCount}`, pageWidth - 20, doc.internal.pageSize.getHeight() - 10, { align: "right" });
+    if (i === pageCount) {
+      doc.text("Ce rapport a été généré automatiquement par le système de gestion FLI.", pageWidth / 2, doc.internal.pageSize.getHeight() - 15, { align: "center" });
+      doc.text("Document à conserver pour les audits Qualiopi - Critère 7.", pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: "center" });
+    }
+  }
+  doc.setTextColor(0);
   
   // Save PDF
   const fileName = `rapport-satisfaction-qualiopi-${format(new Date(), "yyyy-MM-dd")}.pdf`;
