@@ -6,6 +6,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
   useSatisfactionStats, 
   useSeasonComparison,
@@ -14,6 +17,7 @@ import {
   LanguageFilter,
   SeasonFilter,
   SeasonComparisonFilters,
+  CustomDateRange,
   SEASON_LABELS
 } from "@/hooks/useSatisfactionStats";
 import { 
@@ -47,10 +51,12 @@ import {
   Languages,
   GitCompare,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  CalendarRange
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 function StatCard({ 
   title, 
@@ -153,6 +159,7 @@ const languageOptions: { value: LanguageFilter; label: string }[] = [
 
 const seasonOptions: { value: SeasonFilter; label: string }[] = [
   { value: "all", label: "Sélectionner une période" },
+  { value: "custom", label: "📅 Période personnalisée" },
   { value: "autumn2025", label: "Automne 2025" },
   { value: "summer2025", label: "Été 2025" },
   { value: "spring2025", label: "Printemps 2025" },
@@ -161,6 +168,72 @@ const seasonOptions: { value: SeasonFilter; label: string }[] = [
   { value: "summer2024", label: "Été 2024" },
   { value: "spring2024", label: "Printemps 2024" },
 ];
+
+function DateRangePicker({ 
+  label,
+  dateRange,
+  onDateRangeChange 
+}: { 
+  label: string;
+  dateRange: CustomDateRange;
+  onDateRangeChange: (range: CustomDateRange) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <div className="flex gap-2">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn(
+                "w-[130px] justify-start text-left font-normal",
+                !dateRange.start && "text-muted-foreground"
+              )}
+            >
+              <CalendarRange className="mr-2 h-4 w-4" />
+              {dateRange.start ? format(dateRange.start, "dd/MM/yy", { locale: fr }) : "Début"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <CalendarComponent
+              mode="single"
+              selected={dateRange.start || undefined}
+              onSelect={(date) => onDateRangeChange({ ...dateRange, start: date || null })}
+              initialFocus
+              className="p-3 pointer-events-auto"
+            />
+          </PopoverContent>
+        </Popover>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn(
+                "w-[130px] justify-start text-left font-normal",
+                !dateRange.end && "text-muted-foreground"
+              )}
+            >
+              <CalendarRange className="mr-2 h-4 w-4" />
+              {dateRange.end ? format(dateRange.end, "dd/MM/yy", { locale: fr }) : "Fin"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <CalendarComponent
+              mode="single"
+              selected={dateRange.end || undefined}
+              onSelect={(date) => onDateRangeChange({ ...dateRange, end: date || null })}
+              initialFocus
+              className="p-3 pointer-events-auto"
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+    </div>
+  );
+}
 
 function DeltaIndicator({ value, unit = "", positiveIsGood = true }: { value: number; unit?: string; positiveIsGood?: boolean }) {
   const isPositive = value > 0;
@@ -229,6 +302,8 @@ export default function SatisfactionStats() {
     currentSeason: "autumn2025",
     comparisonSeason: "autumn2024",
     language: "all",
+    customCurrentRange: { start: null, end: null },
+    customComparisonRange: { start: null, end: null },
   });
   
   const { data: stats, isLoading } = useSatisfactionStats(filters);
@@ -335,59 +410,84 @@ export default function SatisfactionStats() {
             
             {/* Filters for comparison tab */}
             {activeTab === "comparison" && (
-              <div className="flex flex-wrap gap-3">
-                <Select 
-                  value={comparisonFilters.currentSeason} 
-                  onValueChange={(value: SeasonFilter) => setComparisonFilters(prev => ({ ...prev, currentSeason: value }))}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Période actuelle" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {seasonOptions.filter(o => o.value !== "all").map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium text-muted-foreground">Période actuelle</span>
+                  <Select 
+                    value={comparisonFilters.currentSeason} 
+                    onValueChange={(value: SeasonFilter) => setComparisonFilters(prev => ({ ...prev, currentSeason: value }))}
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="Période actuelle" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {seasonOptions.filter(o => o.value !== "all").map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 
-                <span className="flex items-center text-muted-foreground">vs</span>
+                {comparisonFilters.currentSeason === "custom" && (
+                  <DateRangePicker
+                    label="Dates période actuelle"
+                    dateRange={comparisonFilters.customCurrentRange || { start: null, end: null }}
+                    onDateRangeChange={(range) => setComparisonFilters(prev => ({ ...prev, customCurrentRange: range }))}
+                  />
+                )}
                 
-                <Select 
-                  value={comparisonFilters.comparisonSeason} 
-                  onValueChange={(value: SeasonFilter) => setComparisonFilters(prev => ({ ...prev, comparisonSeason: value }))}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Période comparée" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {seasonOptions.filter(o => o.value !== "all").map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <span className="flex items-center text-muted-foreground pb-2">vs</span>
                 
-                <Select 
-                  value={comparisonFilters.language} 
-                  onValueChange={(value: LanguageFilter) => setComparisonFilters(prev => ({ ...prev, language: value }))}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <Languages className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Langue" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {languageOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium text-muted-foreground">Période comparée</span>
+                  <Select 
+                    value={comparisonFilters.comparisonSeason} 
+                    onValueChange={(value: SeasonFilter) => setComparisonFilters(prev => ({ ...prev, comparisonSeason: value }))}
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="Période comparée" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {seasonOptions.filter(o => o.value !== "all").map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {comparisonFilters.comparisonSeason === "custom" && (
+                  <DateRangePicker
+                    label="Dates période comparée"
+                    dateRange={comparisonFilters.customComparisonRange || { start: null, end: null }}
+                    onDateRangeChange={(range) => setComparisonFilters(prev => ({ ...prev, customComparisonRange: range }))}
+                  />
+                )}
+                
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium text-muted-foreground">Langue</span>
+                  <Select 
+                    value={comparisonFilters.language} 
+                    onValueChange={(value: LanguageFilter) => setComparisonFilters(prev => ({ ...prev, language: value }))}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <Languages className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="Langue" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {languageOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             )}
           </div>
