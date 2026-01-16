@@ -51,7 +51,7 @@ export default function FinanceDashboard() {
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [selectedInstructor, setSelectedInstructor] = useState<any>(null);
 
-  const { data: kpis, isLoading: kpisLoading } = useFinancialKPIs(startDate, endDate);
+  const { data: kpis, isLoading: kpisLoading } = useFinancialKPIs(startDate, endDate, true);
   const { data: caByMonth } = useCAByMonth(startDate, endDate, true);
   const { data: caByType } = useCAByType(startDate, endDate);
   const { data: pendingInvoices } = usePendingInvoices();
@@ -106,6 +106,7 @@ export default function FinanceDashboard() {
             title="CA Facturé"
             value={kpis?.caFacture || 0}
             subtitle={`${kpis?.nbFactures || 0} factures`}
+            evolution={kpis?.caFactureEvol ?? undefined}
             icon={Receipt}
             variant="info"
             formatAsPrice
@@ -114,6 +115,7 @@ export default function FinanceDashboard() {
             title="Encaissé"
             value={kpis?.encaisse || 0}
             subtitle={`${formatPrice(kpis?.enAttente || 0)} en attente`}
+            evolution={kpis?.encaisseEvol ?? undefined}
             icon={CreditCard}
             variant="success"
             formatAsPrice
@@ -122,6 +124,7 @@ export default function FinanceDashboard() {
             title="À payer formateurs"
             value={kpis?.aPayerFormateurs || 0}
             subtitle={`${kpis?.formateursConcernes || 0} formateurs`}
+            evolution={kpis?.aPayerFormateursEvol ?? undefined}
             icon={Users}
             variant="warning"
             formatAsPrice
@@ -130,6 +133,7 @@ export default function FinanceDashboard() {
             title="Marge brute"
             value={kpis?.margeBrute || 0}
             subtitle={`${kpis?.margePourcent?.toFixed(1) || 0}% du CA`}
+            evolution={kpis?.margeBruteEvol ?? undefined}
             icon={TrendingUp}
             variant={kpis?.margePourcent && kpis.margePourcent >= 50 ? 'success' : kpis?.margePourcent && kpis.margePourcent >= 30 ? 'warning' : 'danger'}
             formatAsPrice

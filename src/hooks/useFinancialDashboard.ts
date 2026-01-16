@@ -85,85 +85,122 @@ export function getCurrentSaison(): string {
 }
 
 // Hooks
-export function useFinancialKPIs(startDate: string, endDate: string) {
+export function useFinancialKPIs(startDate: string, endDate: string, withComparison = false) {
   return useQuery({
-    queryKey: ['financial-kpis', startDate, endDate],
+    queryKey: ['financial-kpis', startDate, endDate, withComparison],
     queryFn: async () => {
-      // CA Facturé
-      const { data: invoices } = await supabase
-        .from('invoices')
-        .select('amount_ht, amount_ttc, status, invoice_type')
-        .gte('invoice_date', startDate)
-        .lte('invoice_date', endDate)
-        .neq('status', 'cancelled');
+      // Helper to calculate KPIs for a period
+      const calculateKPIs = async (start: string, end: string) => {
+        // CA Facturé
+        const { data: invoices } = await supabase
+          .from('invoices')
+          .select('amount_ht, amount_ttc, status, invoice_type')
+          .gte('invoice_date', start)
+          .lte('invoice_date', end)
+          .neq('status', 'cancelled');
+        
+        const caFacture = invoices?.reduce((sum, inv) => sum + Number(inv.amount_ht || 0), 0) || 0;
+        const caTTC = invoices?.reduce((sum, inv) => sum + Number(inv.amount_ttc || inv.amount_ht || 0), 0) || 0;
+        
+        // Encaissé (factures payées)
+        const { data: paidInvoices } = await supabase
+          .from('invoices')
+          .select('amount_ttc, amount_ht')
+          .eq('status', 'paid')
+          .gte('payment_date', start)
+          .lte('payment_date', end);
+        
+        const encaisse = paidInvoices?.reduce((sum, inv) => sum + Number(inv.amount_ttc || inv.amount_ht || 0), 0) || 0;
+        
+        // En attente
+        const enAttente = caTTC - encaisse;
+        
+        // À payer formateurs
+        const { data: instructorCosts } = await supabase
+          .from('formation_costs')
+          .select('montant_ttc, instructor_id')
+          .eq('cost_type', 'formateur')
+          .gte('date_cout', start)
+          .lte('date_cout', end);
+        
+        const { data: instructorPayments } = await supabase
+          .from('instructor_payments')
+          .select('montant')
+          .eq('statut', 'paye')
+          .gte('date_paiement', start)
+          .lte('date_paiement', end);
+        
+        const totalDuFormateurs = instructorCosts?.reduce((sum, c) => sum + Number(c.montant_ttc || 0), 0) || 0;
+        const totalPayeFormateurs = instructorPayments?.reduce((sum, p) => sum + Number(p.montant || 0), 0) || 0;
+        const aPayerFormateurs = totalDuFormateurs - totalPayeFormateurs;
+        
+        // Coûts directs
+        const { data: allCosts } = await supabase
+          .from('formation_costs')
+          .select('montant_ht')
+          .gte('date_cout', start)
+          .lte('date_cout', end);
+        
+        const coutsDirects = allCosts?.reduce((sum, c) => sum + Number(c.montant_ht || 0), 0) || 0;
+        
+        // Marge brute
+        const margeBrute = caFacture - coutsDirects;
+        const margePourcent = caFacture > 0 ? (margeBrute / caFacture) * 100 : 0;
+        
+        // Formateurs concernés
+        const formateursConcernes = new Set(instructorCosts?.filter(c => c.instructor_id).map(c => c.instructor_id)).size;
+        
+        return {
+          caFacture,
+          caTTC,
+          encaisse,
+          enAttente,
+          aPayerFormateurs,
+          margeBrute,
+          margePourcent,
+          formateursConcernes,
+          nbFactures: invoices?.length || 0,
+        };
+      };
+
+      // Current period KPIs
+      const current = await calculateKPIs(startDate, endDate);
       
-      const caFacture = invoices?.reduce((sum, inv) => sum + Number(inv.amount_ht || 0), 0) || 0;
-      const caTTC = invoices?.reduce((sum, inv) => sum + Number(inv.amount_ttc || inv.amount_ht || 0), 0) || 0;
-      
-      // Encaissé (factures payées)
-      const { data: paidInvoices } = await supabase
-        .from('invoices')
-        .select('amount_ttc, amount_ht')
-        .eq('status', 'paid')
-        .gte('payment_date', startDate)
-        .lte('payment_date', endDate);
-      
-      const encaisse = paidInvoices?.reduce((sum, inv) => sum + Number(inv.amount_ttc || inv.amount_ht || 0), 0) || 0;
-      
-      // En attente
-      const enAttente = caTTC - encaisse;
-      
-      // À payer formateurs
-      const { data: instructorCosts } = await supabase
-        .from('formation_costs')
-        .select('montant_ttc, instructor_id')
-        .eq('cost_type', 'formateur')
-        .gte('date_cout', startDate)
-        .lte('date_cout', endDate);
-      
-      const { data: instructorPayments } = await supabase
-        .from('instructor_payments')
-        .select('montant')
-        .eq('statut', 'paye')
-        .gte('date_paiement', startDate)
-        .lte('date_paiement', endDate);
-      
-      const totalDuFormateurs = instructorCosts?.reduce((sum, c) => sum + Number(c.montant_ttc || 0), 0) || 0;
-      const totalPayeFormateurs = instructorPayments?.reduce((sum, p) => sum + Number(p.montant || 0), 0) || 0;
-      const aPayerFormateurs = totalDuFormateurs - totalPayeFormateurs;
-      
-      // Coûts directs
-      const { data: allCosts } = await supabase
-        .from('formation_costs')
-        .select('montant_ht')
-        .gte('date_cout', startDate)
-        .lte('date_cout', endDate);
-      
-      const coutsDirects = allCosts?.reduce((sum, c) => sum + Number(c.montant_ht || 0), 0) || 0;
-      
-      // Marge brute
-      const margeBrute = caFacture - coutsDirects;
-      const margePourcent = caFacture > 0 ? (margeBrute / caFacture) * 100 : 0;
-      
-      // Formateurs concernés
-      const formateursConcernes = new Set(instructorCosts?.filter(c => c.instructor_id).map(c => c.instructor_id)).size;
+      // N-1 period KPIs if comparison requested
+      let evolution = {
+        caFactureEvol: null as number | null,
+        encaisseEvol: null as number | null,
+        aPayerFormateursEvol: null as number | null,
+        margeBruteEvol: null as number | null,
+      };
+
+      if (withComparison) {
+        const startN1 = shiftDateByYear(startDate, -1);
+        const endN1 = shiftDateByYear(endDate, -1);
+        const previous = await calculateKPIs(startN1, endN1);
+
+        const calcEvol = (curr: number, prev: number): number | null => {
+          if (prev === 0) return curr > 0 ? 100 : null;
+          return ((curr - prev) / prev) * 100;
+        };
+
+        evolution = {
+          caFactureEvol: calcEvol(current.caFacture, previous.caFacture),
+          encaisseEvol: calcEvol(current.encaisse, previous.encaisse),
+          aPayerFormateursEvol: calcEvol(current.aPayerFormateurs, previous.aPayerFormateurs),
+          margeBruteEvol: calcEvol(current.margeBrute, previous.margeBrute),
+        };
+      }
       
       return {
-        caFacture,
-        caTTC,
-        encaisse,
-        enAttente,
-        aPayerFormateurs,
-        margeBrute,
-        margePourcent,
-        formateursConcernes,
-        nbFactures: invoices?.length || 0,
+        ...current,
+        ...evolution,
       };
     },
   });
 }
 
-// Helper to shift date by one year
+// Helper to shift date by years (defined once for all hooks)
 function shiftDateByYear(dateStr: string, years: number): string {
   const date = new Date(dateStr);
   date.setFullYear(date.getFullYear() + years);
