@@ -56,9 +56,234 @@ export type Database = {
           },
         ]
       }
+      app_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
+      availability_requests: {
+        Row: {
+          assigned_instructor_id: string | null
+          created_at: string
+          end_date: string
+          id: string
+          instructors_contacted: string[] | null
+          language: string
+          message: string | null
+          sent_at: string | null
+          start_date: string
+          status: string
+          zone: string | null
+        }
+        Insert: {
+          assigned_instructor_id?: string | null
+          created_at?: string
+          end_date: string
+          id?: string
+          instructors_contacted?: string[] | null
+          language: string
+          message?: string | null
+          sent_at?: string | null
+          start_date: string
+          status?: string
+          zone?: string | null
+        }
+        Update: {
+          assigned_instructor_id?: string | null
+          created_at?: string
+          end_date?: string
+          id?: string
+          instructors_contacted?: string[] | null
+          language?: string
+          message?: string | null
+          sent_at?: string | null
+          start_date?: string
+          status?: string
+          zone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "availability_requests_assigned_instructor_id_fkey"
+            columns: ["assigned_instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      certificates: {
+        Row: {
+          attendance_rate: number | null
+          created_at: string
+          id: string
+          inscription_id: string
+          issue_date: string
+          level_achieved: string
+          pdf_url: string | null
+          student_id: string
+        }
+        Insert: {
+          attendance_rate?: number | null
+          created_at?: string
+          id?: string
+          inscription_id: string
+          issue_date?: string
+          level_achieved: string
+          pdf_url?: string | null
+          student_id: string
+        }
+        Update: {
+          attendance_rate?: number | null
+          created_at?: string
+          id?: string
+          inscription_id?: string
+          issue_date?: string
+          level_achieved?: string
+          pdf_url?: string | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificates_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions_complete"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      continuous_improvement: {
+        Row: {
+          action: string
+          created_at: string
+          end_date: string | null
+          id: string
+          problem: string | null
+          source: string | null
+          start_date: string
+          status: string
+          theme: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          problem?: string | null
+          source?: string | null
+          start_date?: string
+          status?: string
+          theme?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          problem?: string | null
+          source?: string | null
+          start_date?: string
+          status?: string
+          theme?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      document_sendings: {
+        Row: {
+          created_at: string
+          document_type: string
+          id: string
+          inscription_id: string
+          opened_at: string | null
+          pdf_url: string | null
+          sent_at: string
+          sent_to: string
+        }
+        Insert: {
+          created_at?: string
+          document_type: string
+          id?: string
+          inscription_id: string
+          opened_at?: string | null
+          pdf_url?: string | null
+          sent_at?: string
+          sent_to: string
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          id?: string
+          inscription_id?: string
+          opened_at?: string | null
+          pdf_url?: string | null
+          sent_at?: string
+          sent_to?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_sendings_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_sendings_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions_complete"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inscriptions: {
         Row: {
           balance_after_deposit: number | null
+          bpf_category_c: string | null
+          bpf_category_f: string | null
+          certificate_level: string | null
           certification_date: string | null
           certification_result: string | null
           certification_type: string | null
@@ -72,16 +297,24 @@ export type Database = {
           created_at: string
           deposit_amount: number | null
           deposit_date: string | null
+          documents_sent_at: string | null
           duration_days: number | null
           duration_hours: number | null
           end_date: string
+          end_pack_sent_at: string | null
           entry_level: string | null
+          entry_test_id: string | null
           entry_test_score: string | null
+          exit_level: string | null
+          exit_test_id: string | null
           expectations: string | null
           final_general_level: string | null
           final_specific_level: string | null
           final_status: string | null
+          funding_details: string | null
+          funding_organization: string | null
           group_name: string | null
+          group_size: number | null
           hours_per_day: number | null
           id: string
           instructor_id: string | null
@@ -92,6 +325,7 @@ export type Database = {
           payment_method: string | null
           pedagogical_cost: number | null
           price: number | null
+          progression: string | null
           qualiopi_status: string | null
           rhythm: string | null
           schedule: string | null
@@ -103,6 +337,9 @@ export type Database = {
         }
         Insert: {
           balance_after_deposit?: number | null
+          bpf_category_c?: string | null
+          bpf_category_f?: string | null
+          certificate_level?: string | null
           certification_date?: string | null
           certification_result?: string | null
           certification_type?: string | null
@@ -116,16 +353,24 @@ export type Database = {
           created_at?: string
           deposit_amount?: number | null
           deposit_date?: string | null
+          documents_sent_at?: string | null
           duration_days?: number | null
           duration_hours?: number | null
           end_date: string
+          end_pack_sent_at?: string | null
           entry_level?: string | null
+          entry_test_id?: string | null
           entry_test_score?: string | null
+          exit_level?: string | null
+          exit_test_id?: string | null
           expectations?: string | null
           final_general_level?: string | null
           final_specific_level?: string | null
           final_status?: string | null
+          funding_details?: string | null
+          funding_organization?: string | null
           group_name?: string | null
+          group_size?: number | null
           hours_per_day?: number | null
           id?: string
           instructor_id?: string | null
@@ -136,6 +381,7 @@ export type Database = {
           payment_method?: string | null
           pedagogical_cost?: number | null
           price?: number | null
+          progression?: string | null
           qualiopi_status?: string | null
           rhythm?: string | null
           schedule?: string | null
@@ -147,6 +393,9 @@ export type Database = {
         }
         Update: {
           balance_after_deposit?: number | null
+          bpf_category_c?: string | null
+          bpf_category_f?: string | null
+          certificate_level?: string | null
           certification_date?: string | null
           certification_result?: string | null
           certification_type?: string | null
@@ -160,16 +409,24 @@ export type Database = {
           created_at?: string
           deposit_amount?: number | null
           deposit_date?: string | null
+          documents_sent_at?: string | null
           duration_days?: number | null
           duration_hours?: number | null
           end_date?: string
+          end_pack_sent_at?: string | null
           entry_level?: string | null
+          entry_test_id?: string | null
           entry_test_score?: string | null
+          exit_level?: string | null
+          exit_test_id?: string | null
           expectations?: string | null
           final_general_level?: string | null
           final_specific_level?: string | null
           final_status?: string | null
+          funding_details?: string | null
+          funding_organization?: string | null
           group_name?: string | null
+          group_size?: number | null
           hours_per_day?: number | null
           id?: string
           instructor_id?: string | null
@@ -180,6 +437,7 @@ export type Database = {
           payment_method?: string | null
           pedagogical_cost?: number | null
           price?: number | null
+          progression?: string | null
           qualiopi_status?: string | null
           rhythm?: string | null
           schedule?: string | null
@@ -222,28 +480,40 @@ export type Database = {
       }
       instructor_availabilities: {
         Row: {
+          availability_status: string | null
           booking_id: string | null
           created_at: string
+          created_by: string | null
+          date: string | null
           datetime: string
           id: string
           instructor_id: string
           is_booked: boolean
+          notes: string | null
         }
         Insert: {
+          availability_status?: string | null
           booking_id?: string | null
           created_at?: string
+          created_by?: string | null
+          date?: string | null
           datetime: string
           id?: string
           instructor_id: string
           is_booked?: boolean
+          notes?: string | null
         }
         Update: {
+          availability_status?: string | null
           booking_id?: string | null
           created_at?: string
+          created_by?: string | null
+          date?: string | null
           datetime?: string
           id?: string
           instructor_id?: string
           is_booked?: boolean
+          notes?: string | null
         }
         Relationships: [
           {
@@ -269,36 +539,151 @@ export type Database = {
           },
         ]
       }
+      instructor_contracts: {
+        Row: {
+          contract_number: string | null
+          created_at: string
+          end_date: string
+          generated_at: string
+          hourly_rate: number
+          id: string
+          inscription_id: string | null
+          instructor_id: string
+          location: string | null
+          pdf_url: string | null
+          sent_at: string | null
+          signature_data: string | null
+          signature_token: string | null
+          signed_at: string | null
+          start_date: string
+          student_or_company: string | null
+          total_amount: number
+          total_hours: number
+        }
+        Insert: {
+          contract_number?: string | null
+          created_at?: string
+          end_date: string
+          generated_at?: string
+          hourly_rate: number
+          id?: string
+          inscription_id?: string | null
+          instructor_id: string
+          location?: string | null
+          pdf_url?: string | null
+          sent_at?: string | null
+          signature_data?: string | null
+          signature_token?: string | null
+          signed_at?: string | null
+          start_date: string
+          student_or_company?: string | null
+          total_amount: number
+          total_hours: number
+        }
+        Update: {
+          contract_number?: string | null
+          created_at?: string
+          end_date?: string
+          generated_at?: string
+          hourly_rate?: number
+          id?: string
+          inscription_id?: string | null
+          instructor_id?: string
+          location?: string | null
+          pdf_url?: string | null
+          sent_at?: string | null
+          signature_data?: string | null
+          signature_token?: string | null
+          signed_at?: string | null
+          start_date?: string
+          student_or_company?: string | null
+          total_amount?: number
+          total_hours?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instructor_contracts_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instructor_contracts_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions_complete"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instructor_contracts_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       instructors: {
         Row: {
+          address: string | null
+          city: string | null
           created_at: string
           email: string | null
           first_name: string | null
+          geographic_zones: string[] | null
+          hourly_rate: number | null
           id: string
           is_active: boolean | null
           languages: string[] | null
           last_name: string
           phone: string | null
+          postal_code: string | null
+          siret: string | null
+          specialties: string[] | null
+          specialty_details: string | null
+          status: string | null
+          status_notes: string | null
         }
         Insert: {
+          address?: string | null
+          city?: string | null
           created_at?: string
           email?: string | null
           first_name?: string | null
+          geographic_zones?: string[] | null
+          hourly_rate?: number | null
           id?: string
           is_active?: boolean | null
           languages?: string[] | null
           last_name: string
           phone?: string | null
+          postal_code?: string | null
+          siret?: string | null
+          specialties?: string[] | null
+          specialty_details?: string | null
+          status?: string | null
+          status_notes?: string | null
         }
         Update: {
+          address?: string | null
+          city?: string | null
           created_at?: string
           email?: string | null
           first_name?: string | null
+          geographic_zones?: string[] | null
+          hourly_rate?: number | null
           id?: string
           is_active?: boolean | null
           languages?: string[] | null
           last_name?: string
           phone?: string | null
+          postal_code?: string | null
+          siret?: string | null
+          specialties?: string[] | null
+          specialty_details?: string | null
+          status?: string | null
+          status_notes?: string | null
         }
         Relationships: []
       }
@@ -393,6 +778,11 @@ export type Database = {
       payments: {
         Row: {
           amount: number
+          cheque_bank: string | null
+          cheque_date: string | null
+          cheque_deposit_date: string | null
+          cheque_deposited: boolean | null
+          cheque_number: string | null
           created_at: string
           id: string
           invoice_id: string | null
@@ -405,6 +795,11 @@ export type Database = {
         }
         Insert: {
           amount: number
+          cheque_bank?: string | null
+          cheque_date?: string | null
+          cheque_deposit_date?: string | null
+          cheque_deposited?: boolean | null
+          cheque_number?: string | null
           created_at?: string
           id?: string
           invoice_id?: string | null
@@ -417,6 +812,11 @@ export type Database = {
         }
         Update: {
           amount?: number
+          cheque_bank?: string | null
+          cheque_date?: string | null
+          cheque_deposit_date?: string | null
+          cheque_deposited?: boolean | null
+          cheque_number?: string | null
           created_at?: string
           id?: string
           invoice_id?: string | null
@@ -545,6 +945,172 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      prospects: {
+        Row: {
+          created_at: string
+          email: string | null
+          first_contact_date: string | null
+          id: string
+          name: string
+          next_action_date: string | null
+          next_action_notes: string | null
+          notes: string | null
+          phone: string | null
+          source: string | null
+          status: string
+          type: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          first_contact_date?: string | null
+          id?: string
+          name: string
+          next_action_date?: string | null
+          next_action_notes?: string | null
+          notes?: string | null
+          phone?: string | null
+          source?: string | null
+          status?: string
+          type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          first_contact_date?: string | null
+          id?: string
+          name?: string
+          next_action_date?: string | null
+          next_action_notes?: string | null
+          notes?: string | null
+          phone?: string | null
+          source?: string | null
+          status?: string
+          type?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      satisfaction_surveys: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          exit_test_scores: Json | null
+          id: string
+          inscription_id: string
+          reminder_1_sent_at: string | null
+          reminder_2_sent_at: string | null
+          satisfaction_animation: number | null
+          satisfaction_content: number | null
+          satisfaction_duration: number | null
+          satisfaction_expectations: number | null
+          satisfaction_materials: number | null
+          satisfaction_organization: number | null
+          satisfaction_utility: number | null
+          strong_points: string | null
+          student_id: string
+          token: string
+          weak_points: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          exit_test_scores?: Json | null
+          id?: string
+          inscription_id: string
+          reminder_1_sent_at?: string | null
+          reminder_2_sent_at?: string | null
+          satisfaction_animation?: number | null
+          satisfaction_content?: number | null
+          satisfaction_duration?: number | null
+          satisfaction_expectations?: number | null
+          satisfaction_materials?: number | null
+          satisfaction_organization?: number | null
+          satisfaction_utility?: number | null
+          strong_points?: string | null
+          student_id: string
+          token?: string
+          weak_points?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          exit_test_scores?: Json | null
+          id?: string
+          inscription_id?: string
+          reminder_1_sent_at?: string | null
+          reminder_2_sent_at?: string | null
+          satisfaction_animation?: number | null
+          satisfaction_content?: number | null
+          satisfaction_duration?: number | null
+          satisfaction_expectations?: number | null
+          satisfaction_materials?: number | null
+          satisfaction_organization?: number | null
+          satisfaction_utility?: number | null
+          strong_points?: string | null
+          student_id?: string
+          token?: string
+          weak_points?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "satisfaction_surveys_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "satisfaction_surveys_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions_complete"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "satisfaction_surveys_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scheduled_reminders: {
+        Row: {
+          created_at: string
+          id: string
+          related_id: string
+          related_table: string
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          related_id: string
+          related_table: string
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          related_id?: string
+          related_table?: string
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          type?: string
+        }
+        Relationships: []
       }
       schools_invoice_policy: {
         Row: {
