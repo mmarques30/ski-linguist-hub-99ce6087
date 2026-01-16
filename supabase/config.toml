@@ -2,3 +2,6 @@ project_id = "nghkrmvakjomzmfwdhbo"
 
 [functions.generate-monthly-charges]
 verify_jwt = false
+
+[functions.process-invoice-reminders]
+verify_jwt = false
