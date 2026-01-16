@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface InscriptionComplete {
@@ -93,6 +93,28 @@ export function useInscriptionStats() {
         completed: byStatus['Terminé'] || 0,
         billed: byStatus['Facturé'] || 0,
       };
+    },
+  });
+}
+
+export function useUpdateInscriptionStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { data, error } = await supabase
+        .from("inscriptions")
+        .update({ status })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["inscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["inscription-stats"] });
     },
   });
 }
