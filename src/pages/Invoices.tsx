@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,13 +24,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Search, Filter, Download, Plus, Eye, FileText, Loader2, Send, CheckCircle, Pencil } from "lucide-react";
+import { Search, Filter, Download, Plus, Eye, FileText, Loader2, Send, CheckCircle, Pencil, CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useInvoices, useUpdateInvoice, InvoiceWithInscription } from "@/hooks/useInvoices";
 import { InvoiceTemplate, InvoiceData } from "@/components/invoices/InvoiceTemplate";
 import { InvoiceEditDialog } from "@/components/invoices/InvoiceEditDialog";
 import { InvoiceCreateDialog } from "@/components/invoices/InvoiceCreateDialog";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, subMonths, subQuarters, subYears } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -241,6 +241,51 @@ const translations = {
     "pt-BR": "Outro",
     en: "Other",
   },
+  allPeriods: {
+    fr: "Toutes périodes",
+    "pt-BR": "Todos os períodos",
+    en: "All periods",
+  },
+  periodThisMonth: {
+    fr: "Ce mois",
+    "pt-BR": "Este mês",
+    en: "This month",
+  },
+  periodLastMonth: {
+    fr: "Mois dernier",
+    "pt-BR": "Mês passado",
+    en: "Last month",
+  },
+  periodThisQuarter: {
+    fr: "Ce trimestre",
+    "pt-BR": "Este trimestre",
+    en: "This quarter",
+  },
+  periodLastQuarter: {
+    fr: "Trimestre dernier",
+    "pt-BR": "Trimestre passado",
+    en: "Last quarter",
+  },
+  periodThisYear: {
+    fr: "Cette année",
+    "pt-BR": "Este ano",
+    en: "This year",
+  },
+  periodLastYear: {
+    fr: "Année dernière",
+    "pt-BR": "Ano passado",
+    en: "Last year",
+  },
+  periodThisSeason: {
+    fr: "Cette saison",
+    "pt-BR": "Esta temporada",
+    en: "This season",
+  },
+  periodLastSeason: {
+    fr: "Saison dernière",
+    "pt-BR": "Temporada passada",
+    en: "Last season",
+  },
 };
 
 const statusStyles: Record<string, string> = {
@@ -254,6 +299,7 @@ export default function Invoices() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [clientTypeFilter, setClientTypeFilter] = useState("all");
+  const [periodFilter, setPeriodFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceWithInscription | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -261,11 +307,72 @@ export default function Invoices() {
   const [createOpen, setCreateOpen] = useState(false);
   const { language, t } = useLanguage();
 
+  // Calculate date range based on period filter
+  const getSeasonDates = (offset: number = 0) => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    // Season runs from July 1 to June 30
+    let seasonStartYear = currentMonth >= 6 ? currentYear : currentYear - 1;
+    seasonStartYear += offset;
+    return {
+      start: new Date(seasonStartYear, 6, 1), // July 1
+      end: new Date(seasonStartYear + 1, 5, 30), // June 30
+    };
+  };
+
+  const dateRange = useMemo(() => {
+    const now = new Date();
+    switch (periodFilter) {
+      case "this_month":
+        return { from: format(startOfMonth(now), "yyyy-MM-dd"), to: format(endOfMonth(now), "yyyy-MM-dd") };
+      case "last_month": {
+        const lastMonth = subMonths(now, 1);
+        return { from: format(startOfMonth(lastMonth), "yyyy-MM-dd"), to: format(endOfMonth(lastMonth), "yyyy-MM-dd") };
+      }
+      case "this_quarter":
+        return { from: format(startOfQuarter(now), "yyyy-MM-dd"), to: format(endOfQuarter(now), "yyyy-MM-dd") };
+      case "last_quarter": {
+        const lastQuarter = subQuarters(now, 1);
+        return { from: format(startOfQuarter(lastQuarter), "yyyy-MM-dd"), to: format(endOfQuarter(lastQuarter), "yyyy-MM-dd") };
+      }
+      case "this_year":
+        return { from: format(startOfYear(now), "yyyy-MM-dd"), to: format(endOfYear(now), "yyyy-MM-dd") };
+      case "last_year": {
+        const lastYear = subYears(now, 1);
+        return { from: format(startOfYear(lastYear), "yyyy-MM-dd"), to: format(endOfYear(lastYear), "yyyy-MM-dd") };
+      }
+      case "this_season": {
+        const season = getSeasonDates(0);
+        return { from: format(season.start, "yyyy-MM-dd"), to: format(season.end, "yyyy-MM-dd") };
+      }
+      case "last_season": {
+        const season = getSeasonDates(-1);
+        return { from: format(season.start, "yyyy-MM-dd"), to: format(season.end, "yyyy-MM-dd") };
+      }
+      default:
+        return { from: undefined, to: undefined };
+    }
+  }, [periodFilter]);
+
+  const periodLabels: Record<string, string> = {
+    this_month: t(translations.periodThisMonth),
+    last_month: t(translations.periodLastMonth),
+    this_quarter: t(translations.periodThisQuarter),
+    last_quarter: t(translations.periodLastQuarter),
+    this_year: t(translations.periodThisYear),
+    last_year: t(translations.periodLastYear),
+    this_season: t(translations.periodThisSeason),
+    last_season: t(translations.periodLastSeason),
+  };
+
   const { data: invoices, isLoading, error } = useInvoices({
     status: statusFilter,
     type: typeFilter,
     clientType: clientTypeFilter,
     search: search || undefined,
+    dateFrom: dateRange.from,
+    dateTo: dateRange.to,
   });
 
   const updateInvoice = useUpdateInvoice();
@@ -493,10 +600,28 @@ export default function Invoices() {
               <SelectItem value="autre">{t(translations.clientAutre)}</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={periodFilter} onValueChange={setPeriodFilter}>
+            <SelectTrigger className="w-[160px]">
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              <SelectValue placeholder={t(translations.allPeriods)} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t(translations.allPeriods)}</SelectItem>
+              <SelectItem value="this_month">{t(translations.periodThisMonth)}</SelectItem>
+              <SelectItem value="last_month">{t(translations.periodLastMonth)}</SelectItem>
+              <SelectItem value="this_quarter">{t(translations.periodThisQuarter)}</SelectItem>
+              <SelectItem value="last_quarter">{t(translations.periodLastQuarter)}</SelectItem>
+              <SelectItem value="this_year">{t(translations.periodThisYear)}</SelectItem>
+              <SelectItem value="last_year">{t(translations.periodLastYear)}</SelectItem>
+              <SelectItem value="this_season">{t(translations.periodThisSeason)}</SelectItem>
+              <SelectItem value="last_season">{t(translations.periodLastSeason)}</SelectItem>
+            </SelectContent>
+          </Select>
           <Button variant="outline" size="icon" onClick={() => {
             setStatusFilter("all");
             setTypeFilter("all");
             setClientTypeFilter("all");
+            setPeriodFilter("all");
             setSearch("");
           }}>
             <Filter className="h-4 w-4" />
@@ -507,8 +632,8 @@ export default function Invoices() {
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span className="font-medium text-foreground">{invoices?.length || 0}</span>
           <span>{t(translations.resultsCount)}</span>
-          {(statusFilter !== "all" || typeFilter !== "all" || clientTypeFilter !== "all" || search) && (
-            <div className="flex items-center gap-2 ml-2">
+          {(statusFilter !== "all" || typeFilter !== "all" || clientTypeFilter !== "all" || periodFilter !== "all" || search) && (
+            <div className="flex items-center gap-2 ml-2 flex-wrap">
               <span>•</span>
               <span>{t(translations.activeFilters)}:</span>
               {statusFilter !== "all" && (
@@ -524,6 +649,11 @@ export default function Invoices() {
               {clientTypeFilter !== "all" && (
                 <Badge variant="secondary" className="text-xs">
                   {clientTypeLabels[clientTypeFilter]}
+                </Badge>
+              )}
+              {periodFilter !== "all" && (
+                <Badge variant="secondary" className="text-xs">
+                  {periodLabels[periodFilter]}
                 </Badge>
               )}
               {search && (
