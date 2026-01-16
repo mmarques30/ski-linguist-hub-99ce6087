@@ -7,6 +7,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import Dashboard from "./pages/Dashboard";
 import Inscriptions from "./pages/Inscriptions";
+import InscriptionDetails from "./pages/inscriptions/InscriptionDetails";
 import Invoices from "./pages/Invoices";
 import Students from "./pages/Students";
 import StudentDetails from "./pages/students/StudentDetails";
@@ -57,6 +58,7 @@ const App = () => (
             <Route path="/finance/tresorerie" element={<ProtectedRoute><FinanceTresorerie /></ProtectedRoute>} />
             <Route path="/finance/charges-fixes" element={<ProtectedRoute><FinanceChargesFixes /></ProtectedRoute>} />
             <Route path="/inscriptions" element={<ProtectedRoute><Inscriptions /></ProtectedRoute>} />
+            <Route path="/inscriptions/:id" element={<ProtectedRoute><InscriptionDetails /></ProtectedRoute>} />
             <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
             <Route path="/students" element={<ProtectedRoute><Students /></ProtectedRoute>} />
             <Route path="/students/:id" element={<ProtectedRoute><StudentDetails /></ProtectedRoute>} />
