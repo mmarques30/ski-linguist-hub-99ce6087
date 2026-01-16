@@ -43,7 +43,14 @@ export interface InvoiceWithInscription extends Invoice {
   };
 }
 
-export function useInvoices(filters?: { status?: string; type?: string; clientType?: string; search?: string }) {
+export function useInvoices(filters?: { 
+  status?: string; 
+  type?: string; 
+  clientType?: string; 
+  search?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}) {
   return useQuery({
     queryKey: ["invoices", filters],
     queryFn: async () => {
@@ -66,6 +73,14 @@ export function useInvoices(filters?: { status?: string; type?: string; clientTy
 
       if (filters?.search) {
         query = query.ilike("invoice_number", `%${filters.search}%`);
+      }
+
+      if (filters?.dateFrom) {
+        query = query.gte("invoice_date", filters.dateFrom);
+      }
+
+      if (filters?.dateTo) {
+        query = query.lte("invoice_date", filters.dateTo);
       }
 
       const { data: invoicesData, error } = await query;
