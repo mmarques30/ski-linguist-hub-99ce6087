@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import fliLogo from "@/assets/fli-logo.png";
 import { useLanguage } from "@/contexts/LanguageContext";
-
+import { toast } from "sonner";
 const translations = {
   title: {
     fr: "Paramètres",
@@ -246,23 +247,50 @@ const translations = {
     "pt-BR": "Chinês",
     en: "Chinese",
   },
+  saveSuccess: {
+    fr: "Modifications enregistrées avec succès",
+    "pt-BR": "Alterações salvas com sucesso",
+    en: "Changes saved successfully",
+  },
+};
+
+const initialLanguages: Record<string, boolean> = {
+  English: true,
+  Portuguese: true,
+  Russian: true,
+  Dutch: true,
+  Spanish: false,
+  Italian: false,
+  German: false,
+  FLE: false,
+  Chinese: false,
 };
 
 export default function Settings() {
   const { t } = useLanguage();
+  const [enabledLanguages, setEnabledLanguages] = useState<Record<string, boolean>>(initialLanguages);
 
   const languageList = [
-    { key: "English", label: t(translations.langEnglish), enabled: true },
-    { key: "Portuguese", label: t(translations.langPortuguese), enabled: true },
-    { key: "Russian", label: t(translations.langRussian), enabled: true },
-    { key: "Dutch", label: t(translations.langDutch), enabled: true },
-    { key: "Spanish", label: t(translations.langSpanish), enabled: false },
-    { key: "Italian", label: t(translations.langItalian), enabled: false },
-    { key: "German", label: t(translations.langGerman), enabled: false },
-    { key: "FLE", label: t(translations.langFLE), enabled: false },
-    { key: "Chinese", label: t(translations.langChinese), enabled: false },
+    { key: "English", label: t(translations.langEnglish) },
+    { key: "Portuguese", label: t(translations.langPortuguese) },
+    { key: "Russian", label: t(translations.langRussian) },
+    { key: "Dutch", label: t(translations.langDutch) },
+    { key: "Spanish", label: t(translations.langSpanish) },
+    { key: "Italian", label: t(translations.langItalian) },
+    { key: "German", label: t(translations.langGerman) },
+    { key: "FLE", label: t(translations.langFLE) },
+    { key: "Chinese", label: t(translations.langChinese) },
   ];
 
+  const handleLanguageToggle = (key: string, checked: boolean) => {
+    setEnabledLanguages((prev) => ({ ...prev, [key]: checked }));
+  };
+
+  const handleSave = () => {
+    // TODO: Persist settings to database when ready
+    console.log("Saving languages:", enabledLanguages);
+    toast.success(t(translations.saveSuccess));
+  };
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -482,7 +510,10 @@ export default function Settings() {
                 {languageList.map((lang) => (
                   <div key={lang.key} className="flex items-center justify-between py-2">
                     <span className="font-medium">{lang.label}</span>
-                    <Switch defaultChecked={lang.enabled} />
+                    <Switch 
+                      checked={enabledLanguages[lang.key]} 
+                      onCheckedChange={(checked) => handleLanguageToggle(lang.key, checked)}
+                    />
                   </div>
                 ))}
               </CardContent>
@@ -491,8 +522,10 @@ export default function Settings() {
         </Tabs>
 
         <div className="flex justify-end gap-3">
-          <Button variant="outline">{t(translations.cancel)}</Button>
-          <Button>{t(translations.saveChanges)}</Button>
+          <Button variant="outline" onClick={() => setEnabledLanguages(initialLanguages)}>
+            {t(translations.cancel)}
+          </Button>
+          <Button onClick={handleSave}>{t(translations.saveChanges)}</Button>
         </div>
       </div>
     </MainLayout>
