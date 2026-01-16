@@ -18,14 +18,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Filter, Download, Plus, Eye, Edit, Trash2, ClipboardList, Upload, Loader2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Search, Filter, Download, Plus, Eye, Edit, Trash2, ClipboardList, Upload, Loader2, Package, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useInscriptions } from "@/hooks/useInscriptions";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
 import { useLanguage } from "@/contexts/LanguageContext";
-
+import { EndPackDialog } from "@/components/endpack/EndPackDialog";
 const translations = {
   title: {
     fr: "Inscriptions",
@@ -200,9 +206,10 @@ export default function Inscriptions() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [languageFilter, setLanguageFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [endPackInscription, setEndPackInscription] = useState<any>(null);
   const { language, t } = useLanguage();
 
-  const { data: inscriptions, isLoading, error } = useInscriptions({
+  const { data: inscriptions, isLoading, error, refetch } = useInscriptions({
     status: statusFilter,
     language: languageFilter,
     search: search || undefined,
@@ -392,9 +399,35 @@ export default function Inscriptions() {
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => setEndPackInscription({
+                                id: inscription.id,
+                                student_id: inscription.student_id,
+                                student_name: inscription.student_name,
+                                language: inscription.language,
+                                entry_level: inscription.entry_level,
+                                exit_level: inscription.exit_level,
+                                duration_hours: inscription.duration_hours,
+                                price: inscription.price,
+                                code: inscription.code,
+                              })}
+                            >
+                              <Package className="mr-2 h-4 w-4" />
+                              Pack Fin de Formation
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive">
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Supprimer
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -419,6 +452,16 @@ export default function Inscriptions() {
           </div>
         </div>
       </div>
+
+      {/* End Pack Dialog */}
+      {endPackInscription && (
+        <EndPackDialog
+          open={!!endPackInscription}
+          onOpenChange={(open) => !open && setEndPackInscription(null)}
+          inscription={endPackInscription}
+          onSuccess={() => refetch()}
+        />
+      )}
     </MainLayout>
   );
 }
