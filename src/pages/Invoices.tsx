@@ -181,6 +181,16 @@ const translations = {
     "pt-BR": "fatura(s)",
     en: "invoice(s)",
   },
+  resultsCount: {
+    fr: "résultat(s)",
+    "pt-BR": "resultado(s)",
+    en: "result(s)",
+  },
+  activeFilters: {
+    fr: "Filtres actifs",
+    "pt-BR": "Filtros ativos",
+    en: "Active filters",
+  },
   previewTitle: {
     fr: "Aperçu de la facture",
     "pt-BR": "Visualização da fatura",
@@ -435,9 +445,46 @@ export default function Invoices() {
               <SelectItem value="autre">{t(translations.clientAutre)}</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon">
+          <Button variant="outline" size="icon" onClick={() => {
+            setStatusFilter("all");
+            setTypeFilter("all");
+            setClientTypeFilter("all");
+            setSearch("");
+          }}>
             <Filter className="h-4 w-4" />
           </Button>
+        </div>
+
+        {/* Results counter */}
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">{invoices?.length || 0}</span>
+          <span>{t(translations.resultsCount)}</span>
+          {(statusFilter !== "all" || typeFilter !== "all" || clientTypeFilter !== "all" || search) && (
+            <div className="flex items-center gap-2 ml-2">
+              <span>•</span>
+              <span>{t(translations.activeFilters)}:</span>
+              {statusFilter !== "all" && (
+                <Badge variant="secondary" className="text-xs">
+                  {statusLabels[statusFilter]}
+                </Badge>
+              )}
+              {typeFilter !== "all" && (
+                <Badge variant="secondary" className="text-xs">
+                  {typeLabels[typeFilter]}
+                </Badge>
+              )}
+              {clientTypeFilter !== "all" && (
+                <Badge variant="secondary" className="text-xs">
+                  {clientTypeLabels[clientTypeFilter]}
+                </Badge>
+              )}
+              {search && (
+                <Badge variant="secondary" className="text-xs">
+                  "{search}"
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Table */}
