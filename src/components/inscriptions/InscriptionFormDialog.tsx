@@ -364,8 +364,8 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
           .from("inscriptions")
           .update({
             student_id: data.student_id,
-            instructor_id: data.instructor_id || null,
-            ski_school_id: data.ski_school_id || null,
+            instructor_id: data.instructor_id === "none" ? null : data.instructor_id || null,
+            ski_school_id: data.ski_school_id === "none" ? null : data.ski_school_id || null,
             language: data.language,
             start_date: data.start_date,
             end_date: data.end_date,
@@ -390,8 +390,8 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
         const { error } = await supabase.from("inscriptions").insert({
           code: codeResult,
           student_id: data.student_id,
-          instructor_id: data.instructor_id || null,
-          ski_school_id: data.ski_school_id || null,
+          instructor_id: data.instructor_id === "none" ? null : data.instructor_id || null,
+          ski_school_id: data.ski_school_id === "none" ? null : data.ski_school_id || null,
           language: data.language,
           start_date: data.start_date,
           end_date: data.end_date,
@@ -474,14 +474,14 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t(translations.instructor)}</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value || "none"}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t(translations.selectInstructor)} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">{t(translations.none)}</SelectItem>
+                        <SelectItem value="none">{t(translations.none)}</SelectItem>
                         {instructors?.map((instructor) => (
                           <SelectItem key={instructor.id} value={instructor.id}>
                             {instructor.first_name} {instructor.last_name}
@@ -501,14 +501,14 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t(translations.skiSchool)}</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value || "none"}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t(translations.selectSkiSchool)} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">{t(translations.none)}</SelectItem>
+                        <SelectItem value="none">{t(translations.none)}</SelectItem>
                         {skiSchools?.map((school) => (
                           <SelectItem key={school.id} value={school.id}>
                             {school.name}
