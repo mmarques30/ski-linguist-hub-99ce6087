@@ -16,7 +16,7 @@ export default function FinanceAnalyses() {
   const [startDate, setStartDate] = useState(format(startOfMonth(today), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(endOfMonth(today), 'yyyy-MM-dd'));
 
-  const { data: caByType } = useCAByType(startDate, endDate);
+  const { data: caByType } = useCAByType(startDate, endDate, true);
   const { data: instructorBalance } = useInstructorBalance();
 
   // CA by client/school
@@ -142,7 +142,9 @@ export default function FinanceAnalyses() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Activité</TableHead>
-                      <TableHead className="text-right">CA HT</TableHead>
+                      <TableHead className="text-right">CA N</TableHead>
+                      <TableHead className="text-right">CA N-1</TableHead>
+                      <TableHead className="text-right">Évolution</TableHead>
                       <TableHead className="text-right">% du total</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -154,6 +156,16 @@ export default function FinanceAnalyses() {
                         <TableRow key={item.type}>
                           <TableCell className="font-medium">{item.name}</TableCell>
                           <TableCell className="text-right">{formatPrice(item.value)}</TableCell>
+                          <TableCell className="text-right text-muted-foreground">{formatPrice(item.valueN1)}</TableCell>
+                          <TableCell className="text-right">
+                            {item.evolution !== null ? (
+                              <span className={item.evolution >= 0 ? 'text-emerald-600' : 'text-red-600'}>
+                                {item.evolution >= 0 ? '+' : ''}{item.evolution.toFixed(1)}%
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-right">{percent.toFixed(1)}%</TableCell>
                         </TableRow>
                       );
@@ -163,6 +175,22 @@ export default function FinanceAnalyses() {
                         <TableCell>Total</TableCell>
                         <TableCell className="text-right">
                           {formatPrice(caByType.reduce((sum, i) => sum + i.value, 0))}
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                          {formatPrice(caByType.reduce((sum, i) => sum + i.valueN1, 0))}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {(() => {
+                            const totalN = caByType.reduce((sum, i) => sum + i.value, 0);
+                            const totalN1 = caByType.reduce((sum, i) => sum + i.valueN1, 0);
+                            if (totalN1 === 0) return <span className="text-muted-foreground">-</span>;
+                            const evol = ((totalN - totalN1) / totalN1) * 100;
+                            return (
+                              <span className={evol >= 0 ? 'text-emerald-600' : 'text-red-600'}>
+                                {evol >= 0 ? '+' : ''}{evol.toFixed(1)}%
+                              </span>
+                            );
+                          })()}
                         </TableCell>
                         <TableCell className="text-right">100%</TableCell>
                       </TableRow>
