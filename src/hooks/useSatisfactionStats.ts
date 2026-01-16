@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, subYears, startOfQuarter, endOfQuarter, subQuarters } from "date-fns";
+import { startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, subYears, startOfQuarter, endOfQuarter, subQuarters, format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 interface SatisfactionSurvey {
   id: string;
@@ -23,7 +24,7 @@ interface SatisfactionSurvey {
 }
 
 export type PeriodFilter = "all" | "thisMonth" | "lastMonth" | "thisQuarter" | "lastQuarter" | "thisYear" | "lastYear" | "last3Months" | "last6Months" | "last12Months";
-export type SeasonFilter = "all" | "spring2024" | "summer2024" | "autumn2024" | "winter2024" | "spring2025" | "summer2025" | "autumn2025" | "winter2025";
+export type SeasonFilter = "all" | "spring2024" | "summer2024" | "autumn2024" | "winter2024" | "spring2025" | "summer2025" | "autumn2025" | "winter2025" | "custom";
 export type LanguageFilter = "all" | "Anglais" | "Espagnol" | "Français" | "Allemand" | "Italien" | "Portugais";
 
 export interface SatisfactionFilters {
@@ -32,13 +33,24 @@ export interface SatisfactionFilters {
   comparisonPeriod?: PeriodFilter;
 }
 
+export interface CustomDateRange {
+  start: Date | null;
+  end: Date | null;
+}
+
 export interface SeasonComparisonFilters {
   currentSeason: SeasonFilter;
   comparisonSeason: SeasonFilter;
   language: LanguageFilter;
+  customCurrentRange?: CustomDateRange;
+  customComparisonRange?: CustomDateRange;
 }
 
-function getSeasonDateRange(season: SeasonFilter): { start: Date | null; end: Date | null } {
+export function getSeasonDateRange(season: SeasonFilter, customRange?: CustomDateRange): { start: Date | null; end: Date | null } {
+  if (season === "custom" && customRange) {
+    return { start: customRange.start, end: customRange.end };
+  }
+  
   switch (season) {
     case "spring2024":
       return { start: new Date(2024, 2, 1), end: new Date(2024, 4, 31) }; // Mar-May 2024
@@ -56,6 +68,7 @@ function getSeasonDateRange(season: SeasonFilter): { start: Date | null; end: Da
       return { start: new Date(2025, 8, 1), end: new Date(2025, 10, 30) }; // Sep-Nov 2025
     case "winter2025":
       return { start: new Date(2025, 11, 1), end: new Date(2026, 1, 28) }; // Dec 2025 - Feb 2026
+    case "custom":
     case "all":
     default:
       return { start: null, end: null };
@@ -344,7 +357,7 @@ export function useSatisfactionStats(filters?: SatisfactionFilters) {
   });
 }
 
-const SEASON_LABELS: Record<SeasonFilter, string> = {
+export const SEASON_LABELS: Record<SeasonFilter, string> = {
   all: "Toutes les périodes",
   spring2024: "Printemps 2024",
   summer2024: "Été 2024",
@@ -354,6 +367,7 @@ const SEASON_LABELS: Record<SeasonFilter, string> = {
   summer2025: "Été 2025",
   autumn2025: "Automne 2025",
   winter2025: "Hiver 2025/26",
+  custom: "Période personnalisée",
 };
 
 function calculatePeriodStats(surveys: SatisfactionSurvey[], start: Date | null, end: Date | null) {
@@ -409,10 +423,10 @@ function calculatePeriodStats(surveys: SatisfactionSurvey[], start: Date | null,
 }
 
 export function useSeasonComparison(filters: SeasonComparisonFilters) {
-  const { currentSeason, comparisonSeason, language } = filters;
+  const { currentSeason, comparisonSeason, language, customCurrentRange, customComparisonRange } = filters;
   
   return useQuery({
-    queryKey: ["satisfaction-comparison", currentSeason, comparisonSeason, language],
+    queryKey: ["satisfaction-comparison", currentSeason, comparisonSeason, language, customCurrentRange?.start?.toISOString(), customCurrentRange?.end?.toISOString(), customComparisonRange?.start?.toISOString(), customComparisonRange?.end?.toISOString()],
     queryFn: async (): Promise<SeasonComparisonStats> => {
       const { data: surveys, error } = await supabase
         .from("satisfaction_surveys")
@@ -431,19 +445,35 @@ export function useSeasonComparison(filters: SeasonComparisonFilters) {
         typedSurveys = typedSurveys.filter((s) => s.inscription?.language === language);
       }
       
-      const currentRange = getSeasonDateRange(currentSeason);
-      const comparisonRange = getSeasonDateRange(comparisonSeason);
+      const currentRange = getSeasonDateRange(currentSeason, customCurrentRange);
+      const comparisonRange = getSeasonDateRange(comparisonSeason, customComparisonRange);
       
       const currentStats = calculatePeriodStats(typedSurveys, currentRange.start, currentRange.end);
       const comparisonStats = calculatePeriodStats(typedSurveys, comparisonRange.start, comparisonRange.end);
       
+      // Generate labels for custom date ranges
+      const formatCustomLabel = (range: { start: Date | null; end: Date | null }) => {
+        if (range.start && range.end) {
+          return `${format(range.start, "dd/MM/yy", { locale: fr })} - ${format(range.end, "dd/MM/yy", { locale: fr })}`;
+        }
+        return "Période personnalisée";
+      };
+      
+      const currentLabel = currentSeason === "custom" && customCurrentRange 
+        ? formatCustomLabel(currentRange) 
+        : SEASON_LABELS[currentSeason];
+      
+      const comparisonLabel = comparisonSeason === "custom" && customComparisonRange 
+        ? formatCustomLabel(comparisonRange) 
+        : SEASON_LABELS[comparisonSeason];
+      
       return {
         current: {
-          label: SEASON_LABELS[currentSeason],
+          label: currentLabel,
           ...currentStats,
         },
         comparison: {
-          label: SEASON_LABELS[comparisonSeason],
+          label: comparisonLabel,
           ...comparisonStats,
         },
         deltas: {
@@ -458,4 +488,4 @@ export function useSeasonComparison(filters: SeasonComparisonFilters) {
   });
 }
 
-export { SEASON_LABELS };
+
