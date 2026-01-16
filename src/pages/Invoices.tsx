@@ -47,9 +47,14 @@ const translations = {
     en: "Manage invoices and payment tracking",
   },
   export: {
-    fr: "Exporter",
-    "pt-BR": "Exportar",
-    en: "Export",
+    fr: "Exporter CSV",
+    "pt-BR": "Exportar CSV",
+    en: "Export CSV",
+  },
+  exportSuccess: {
+    fr: "Export CSV téléchargé",
+    "pt-BR": "CSV exportado com sucesso",
+    en: "CSV export downloaded",
   },
   newInvoice: {
     fr: "Nouvelle Facture",
@@ -347,6 +352,49 @@ export default function Invoices() {
     }
   };
 
+  const handleExportCSV = () => {
+    if (!invoices?.length) return;
+
+    const headers = [
+      t(translations.number),
+      t(translations.date),
+      t(translations.client),
+      t(translations.type),
+      t(translations.amountHT),
+      t(translations.tva),
+      t(translations.amountTTC),
+      t(translations.dueDate),
+      t(translations.status),
+    ];
+
+    const rows = invoices.map((invoice) => [
+      invoice.invoice_number || "",
+      formatDate(invoice.invoice_date),
+      getClientName(invoice),
+      typeLabels[invoice.invoice_type] || invoice.invoice_type,
+      invoice.amount_ht?.toString() || "0",
+      `${invoice.tva_rate || 0}%`,
+      invoice.amount_ttc?.toString() || invoice.amount_ht?.toString() || "0",
+      formatDate(invoice.due_date),
+      statusLabels[invoice.status] || invoice.status,
+    ]);
+
+    const csvContent = [
+      headers.join(";"),
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(";")),
+    ].join("\n");
+
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `factures_${format(new Date(), "yyyy-MM-dd")}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+
+    toast.success(t(translations.exportSuccess));
+  };
+
   const getPreviewData = (invoice: InvoiceWithInscription): InvoiceData => {
     const inscription = invoice.inscription;
     return {
@@ -386,7 +434,7 @@ export default function Invoices() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={!invoices?.length}>
               <Download className="mr-2 h-4 w-4" />
               {t(translations.export)}
             </Button>
