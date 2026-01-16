@@ -197,7 +197,61 @@ export default function FinanceDashboard() {
               </div>
             </CardContent>
           </Card>
+        </div>
 
+        {/* Grouped Bar Chart N vs N-1 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Comparaison CA mensuel N vs N-1</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={caByMonth || []}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis 
+                    dataKey="month" 
+                    tickFormatter={(v) => {
+                      const date = new Date(v + '-01');
+                      return date.toLocaleDateString('fr-FR', { month: 'short' });
+                    }}
+                    className="text-xs"
+                  />
+                  <YAxis 
+                    tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+                    className="text-xs"
+                  />
+                  <Tooltip 
+                    formatter={(value: number, name: string) => [
+                      formatPrice(value),
+                      name === 'total' ? 'CA N' : 'CA N-1'
+                    ]}
+                    labelFormatter={(label) => {
+                      const date = new Date(label + '-01');
+                      return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+                    }}
+                  />
+                  <Legend formatter={(value) => value === 'total' ? 'CA N' : 'CA N-1'} />
+                  <Bar 
+                    dataKey="total" 
+                    name="total"
+                    fill="hsl(var(--primary))" 
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar 
+                    dataKey="totalN1" 
+                    name="totalN1"
+                    fill="hsl(var(--muted-foreground))" 
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Charts Row 2 */}
+        <div className="grid gap-6 lg:grid-cols-2">
           {/* CA by Type */}
           <Card>
             <CardHeader>
