@@ -236,10 +236,10 @@ const translations = {
     "pt-BR": "Alemão",
     en: "German",
   },
-  langJapanese: {
-    fr: "Japonais",
-    "pt-BR": "Japonês",
-    en: "Japanese",
+  langFLE: {
+    fr: "Français Langue Étrangère",
+    "pt-BR": "Francês Língua Estrangeira",
+    en: "French as a Foreign Language",
   },
   langChinese: {
     fr: "Chinois",
@@ -259,7 +259,7 @@ export default function Settings() {
     { key: "Spanish", label: t(translations.langSpanish), enabled: false },
     { key: "Italian", label: t(translations.langItalian), enabled: false },
     { key: "German", label: t(translations.langGerman), enabled: false },
-    { key: "Japanese", label: t(translations.langJapanese), enabled: false },
+    { key: "FLE", label: t(translations.langFLE), enabled: false },
     { key: "Chinese", label: t(translations.langChinese), enabled: false },
   ];
 
