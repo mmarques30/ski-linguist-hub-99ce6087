@@ -276,9 +276,122 @@ function generateQualioPDF(stats: SatisfactionStatsData, periodLabel: string, la
     yPos += 10;
   });
   
+  yPos += 15;
+  
+  // Section: Graphique Radar
+  if (yPos > 140) {
+    doc.addPage();
+    yPos = 20;
+  }
+  
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text("3.1 Visualisation Radar des Critères", 20, yPos);
   yPos += 10;
   
+  // Draw radar chart
+  const radarCenterX = pageWidth / 2;
+  const radarCenterY = yPos + 55;
+  const radarRadius = 45;
+  const numAxes = stats.categoryBreakdown.length;
+  const angleStep = (2 * Math.PI) / numAxes;
+  
+  // Draw grid circles (representing scores 1-5)
+  doc.setDrawColor(200);
+  doc.setLineWidth(0.3);
+  for (let level = 1; level <= 5; level++) {
+    const levelRadius = (level / 5) * radarRadius;
+    doc.setLineDashPattern([1, 1], 0);
+    
+    // Draw polygon for this level
+    for (let i = 0; i < numAxes; i++) {
+      const angle1 = i * angleStep - Math.PI / 2;
+      const angle2 = (i + 1) * angleStep - Math.PI / 2;
+      const x1 = radarCenterX + levelRadius * Math.cos(angle1);
+      const y1 = radarCenterY + levelRadius * Math.sin(angle1);
+      const x2 = radarCenterX + levelRadius * Math.cos(angle2);
+      const y2 = radarCenterY + levelRadius * Math.sin(angle2);
+      doc.line(x1, y1, x2, y2);
+    }
+  }
+  
+  // Draw axes
+  doc.setLineDashPattern([], 0);
+  doc.setDrawColor(150);
+  for (let i = 0; i < numAxes; i++) {
+    const angle = i * angleStep - Math.PI / 2;
+    const x = radarCenterX + radarRadius * Math.cos(angle);
+    const y = radarCenterY + radarRadius * Math.sin(angle);
+    doc.line(radarCenterX, radarCenterY, x, y);
+  }
+  
+  // Draw data polygon outline
+  doc.setDrawColor(59, 130, 246); // Blue
+  doc.setLineWidth(1.5);
+  
+  const dataPoints: { x: number; y: number }[] = [];
+  for (let i = 0; i < numAxes; i++) {
+    const angle = i * angleStep - Math.PI / 2;
+    const score = stats.categoryBreakdown[i].score;
+    const dataRadius = (score / 5) * radarRadius;
+    const x = radarCenterX + dataRadius * Math.cos(angle);
+    const y = radarCenterY + dataRadius * Math.sin(angle);
+    dataPoints.push({ x, y });
+  }
+  
+  // Draw outline
+  for (let i = 0; i < dataPoints.length; i++) {
+    const next = (i + 1) % dataPoints.length;
+    doc.line(dataPoints[i].x, dataPoints[i].y, dataPoints[next].x, dataPoints[next].y);
+  }
+  
+  // Draw data points
+  doc.setFillColor(59, 130, 246);
+  dataPoints.forEach(point => {
+    doc.circle(point.x, point.y, 1.5, "F");
+  });
+  
+  // Draw labels with scores
+  doc.setFontSize(7);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(0);
+  doc.setLineWidth(0.5);
+  for (let i = 0; i < numAxes; i++) {
+    const angle = i * angleStep - Math.PI / 2;
+    const labelRadius = radarRadius + 12;
+    let x = radarCenterX + labelRadius * Math.cos(angle);
+    let y = radarCenterY + labelRadius * Math.sin(angle);
+    
+    const label = stats.categoryBreakdown[i].label;
+    const shortLabel = label.length > 12 ? label.substring(0, 10) + "..." : label;
+    const score = stats.categoryBreakdown[i].score.toFixed(1);
+    
+    // Adjust text alignment based on position
+    let align: "left" | "center" | "right" = "center";
+    if (Math.cos(angle) < -0.3) align = "right";
+    else if (Math.cos(angle) > 0.3) align = "left";
+    
+    // Adjust vertical position
+    if (Math.sin(angle) < -0.5) y -= 2;
+    else if (Math.sin(angle) > 0.5) y += 4;
+    
+    doc.text(`${shortLabel} (${score})`, x, y, { align });
+  }
+  
+  // Scale legend
+  doc.setFontSize(6);
+  doc.setTextColor(100);
+  doc.text("Échelle: 0 (centre) à 5 (bord)", radarCenterX, radarCenterY + radarRadius + 18, { align: "center" });
+  doc.setTextColor(0);
+  
+  yPos = radarCenterY + radarRadius + 28;
+  
   // Section: Points forts (verbatims)
+  if (yPos > 220) {
+    doc.addPage();
+    yPos = 20;
+  }
+  
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
   doc.text("4. Points Forts (Verbatims Stagiaires)", 20, yPos);
