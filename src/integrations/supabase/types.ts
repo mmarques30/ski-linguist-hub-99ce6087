@@ -230,6 +230,33 @@ export type Database = {
         }
         Relationships: []
       }
+      cost_templates: {
+        Row: {
+          actif: boolean | null
+          cost_type: string
+          created_at: string
+          description: string | null
+          id: string
+          montant_mensuel: number
+        }
+        Insert: {
+          actif?: boolean | null
+          cost_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          montant_mensuel: number
+        }
+        Update: {
+          actif?: boolean | null
+          cost_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          montant_mensuel?: number
+        }
+        Relationships: []
+      }
       document_sendings: {
         Row: {
           created_at: string
@@ -274,6 +301,109 @@ export type Database = {
             columns: ["inscription_id"]
             isOneToOne: false
             referencedRelation: "inscriptions_complete"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fixed_costs: {
+        Row: {
+          cost_type: string
+          created_at: string
+          date_paiement: string | null
+          description: string | null
+          id: string
+          mois: string
+          montant: number
+          paye: boolean | null
+          recurrent: boolean | null
+        }
+        Insert: {
+          cost_type: string
+          created_at?: string
+          date_paiement?: string | null
+          description?: string | null
+          id?: string
+          mois: string
+          montant: number
+          paye?: boolean | null
+          recurrent?: boolean | null
+        }
+        Update: {
+          cost_type?: string
+          created_at?: string
+          date_paiement?: string | null
+          description?: string | null
+          id?: string
+          mois?: string
+          montant?: number
+          paye?: boolean | null
+          recurrent?: boolean | null
+        }
+        Relationships: []
+      }
+      formation_costs: {
+        Row: {
+          cost_type: string
+          created_at: string
+          date_cout: string | null
+          description: string | null
+          document_url: string | null
+          id: string
+          inscription_id: string | null
+          instructor_id: string | null
+          montant_ht: number
+          montant_ttc: number
+          montant_tva: number | null
+          updated_at: string
+        }
+        Insert: {
+          cost_type: string
+          created_at?: string
+          date_cout?: string | null
+          description?: string | null
+          document_url?: string | null
+          id?: string
+          inscription_id?: string | null
+          instructor_id?: string | null
+          montant_ht: number
+          montant_ttc: number
+          montant_tva?: number | null
+          updated_at?: string
+        }
+        Update: {
+          cost_type?: string
+          created_at?: string
+          date_cout?: string | null
+          description?: string | null
+          document_url?: string | null
+          id?: string
+          inscription_id?: string | null
+          instructor_id?: string | null
+          montant_ht?: number
+          montant_ttc?: number
+          montant_tva?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "formation_costs_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "formation_costs_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions_complete"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "formation_costs_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
             referencedColumns: ["id"]
           },
         ]
@@ -617,6 +747,59 @@ export type Database = {
           },
           {
             foreignKeyName: "instructor_contracts_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instructor_payments: {
+        Row: {
+          created_at: string
+          date_paiement: string | null
+          id: string
+          instructor_id: string
+          montant: number
+          moyen_paiement: string | null
+          notes: string | null
+          periode_debut: string
+          periode_fin: string
+          reference_paiement: string | null
+          statut: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date_paiement?: string | null
+          id?: string
+          instructor_id: string
+          montant: number
+          moyen_paiement?: string | null
+          notes?: string | null
+          periode_debut: string
+          periode_fin: string
+          reference_paiement?: string | null
+          statut?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date_paiement?: string | null
+          id?: string
+          instructor_id?: string
+          montant?: number
+          moyen_paiement?: string | null
+          notes?: string | null
+          periode_debut?: string
+          periode_fin?: string
+          reference_paiement?: string | null
+          statut?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instructor_payments_instructor_id_fkey"
             columns: ["instructor_id"]
             isOneToOne: false
             referencedRelation: "instructors"

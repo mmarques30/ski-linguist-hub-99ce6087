@@ -13,7 +13,8 @@ import {
   ChevronRight,
   LogOut,
   TrendingUp,
-  BarChart3
+  BarChart3,
+  Wallet,
 } from "lucide-react";
 import { useState } from "react";
 import fliLogo from "@/assets/fli-marca-yellow.png";
@@ -23,6 +24,7 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 
 const navigation = [
   { name: "Tableau de bord", href: "/", icon: LayoutDashboard },
+  { name: "Finance", href: "/finance", icon: Wallet },
   { name: "Inscriptions", href: "/inscriptions", icon: ClipboardList },
   { name: "Factures", href: "/invoices", icon: Receipt },
   { name: "Stagiaires", href: "/students", icon: Users },
