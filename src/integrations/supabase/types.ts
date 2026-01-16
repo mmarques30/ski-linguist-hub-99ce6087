@@ -887,6 +887,9 @@ export type Database = {
           payment_method: string | null
           payment_type: string
           related_invoice_id: string | null
+          reminder_1_sent_at: string | null
+          reminder_2_sent_at: string | null
+          reminder_3_sent_at: string | null
           sequence_number: number | null
           status: string
           tva_rate: number | null
@@ -908,6 +911,9 @@ export type Database = {
           payment_method?: string | null
           payment_type?: string
           related_invoice_id?: string | null
+          reminder_1_sent_at?: string | null
+          reminder_2_sent_at?: string | null
+          reminder_3_sent_at?: string | null
           sequence_number?: number | null
           status?: string
           tva_rate?: number | null
@@ -929,6 +935,9 @@ export type Database = {
           payment_method?: string | null
           payment_type?: string
           related_invoice_id?: string | null
+          reminder_1_sent_at?: string | null
+          reminder_2_sent_at?: string | null
+          reminder_3_sent_at?: string | null
           sequence_number?: number | null
           status?: string
           tva_rate?: number | null
