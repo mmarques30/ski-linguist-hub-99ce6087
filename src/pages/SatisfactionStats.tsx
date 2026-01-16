@@ -5,7 +5,17 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useSatisfactionStats, SatisfactionFilters, PeriodFilter, LanguageFilter } from "@/hooks/useSatisfactionStats";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  useSatisfactionStats, 
+  useSeasonComparison,
+  SatisfactionFilters, 
+  PeriodFilter, 
+  LanguageFilter,
+  SeasonFilter,
+  SeasonComparisonFilters,
+  SEASON_LABELS
+} from "@/hooks/useSatisfactionStats";
 import { 
   BarChart, 
   Bar, 
@@ -34,7 +44,10 @@ import {
   Award,
   Target,
   Calendar,
-  Languages
+  Languages,
+  GitCompare,
+  ArrowUpRight,
+  ArrowDownRight
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -138,13 +151,88 @@ const languageOptions: { value: LanguageFilter; label: string }[] = [
   { value: "Portugais", label: "Portugais" },
 ];
 
+const seasonOptions: { value: SeasonFilter; label: string }[] = [
+  { value: "all", label: "Sélectionner une période" },
+  { value: "autumn2025", label: "Automne 2025" },
+  { value: "summer2025", label: "Été 2025" },
+  { value: "spring2025", label: "Printemps 2025" },
+  { value: "winter2024", label: "Hiver 2024/25" },
+  { value: "autumn2024", label: "Automne 2024" },
+  { value: "summer2024", label: "Été 2024" },
+  { value: "spring2024", label: "Printemps 2024" },
+];
+
+function DeltaIndicator({ value, unit = "", positiveIsGood = true }: { value: number; unit?: string; positiveIsGood?: boolean }) {
+  const isPositive = value > 0;
+  const isGood = positiveIsGood ? isPositive : !isPositive;
+  
+  if (Math.abs(value) < 0.01) {
+    return (
+      <span className="text-muted-foreground text-sm flex items-center gap-1">
+        <Minus className="h-3 w-3" />
+        stable
+      </span>
+    );
+  }
+  
+  return (
+    <span className={`text-sm flex items-center gap-1 ${isGood ? "text-green-600" : "text-red-600"}`}>
+      {isPositive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+      {isPositive ? "+" : ""}{value.toFixed(1)}{unit}
+    </span>
+  );
+}
+
+function ComparisonCard({ 
+  title, 
+  currentValue, 
+  comparisonValue, 
+  delta, 
+  unit = "",
+  icon: Icon,
+  positiveIsGood = true 
+}: { 
+  title: string;
+  currentValue: number;
+  comparisonValue: number;
+  delta: number;
+  unit?: string;
+  icon: React.ElementType;
+  positiveIsGood?: boolean;
+}) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <Icon className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-baseline gap-2">
+          <span className="text-2xl font-bold">{currentValue.toFixed(1)}{unit}</span>
+          <DeltaIndicator value={delta} unit={unit} positiveIsGood={positiveIsGood} />
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">
+          vs {comparisonValue.toFixed(1)}{unit} période précédente
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function SatisfactionStats() {
+  const [activeTab, setActiveTab] = useState<"overview" | "comparison">("overview");
   const [filters, setFilters] = useState<SatisfactionFilters>({
     period: "all",
     language: "all",
   });
+  const [comparisonFilters, setComparisonFilters] = useState<SeasonComparisonFilters>({
+    currentSeason: "autumn2025",
+    comparisonSeason: "autumn2024",
+    language: "all",
+  });
   
   const { data: stats, isLoading } = useSatisfactionStats(filters);
+  const { data: comparison, isLoading: isLoadingComparison } = useSeasonComparison(comparisonFilters);
 
   if (isLoading) {
     return (
@@ -174,6 +262,13 @@ export default function SatisfactionStats() {
     monthLabels[d.month] = format(date, "MMM yy", { locale: fr });
   });
 
+  // Prepare comparison chart data
+  const comparisonChartData = comparison ? comparison.current.categoryScores.map((cat, idx) => ({
+    category: cat.label,
+    current: cat.score,
+    comparison: comparison.comparison.categoryScores[idx]?.score || 0,
+  })) : [];
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -184,44 +279,120 @@ export default function SatisfactionStats() {
               Indicateurs Qualiopi et analyse des retours stagiaires
             </p>
           </div>
-          
-          {/* Filters */}
-          <div className="flex flex-wrap gap-3">
-            <Select 
-              value={filters.period} 
-              onValueChange={(value: PeriodFilter) => setFilters(prev => ({ ...prev, period: value }))}
-            >
-              <SelectTrigger className="w-[180px]">
-                <Calendar className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Période" />
-              </SelectTrigger>
-              <SelectContent>
-                {periodOptions.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <Select 
-              value={filters.language} 
-              onValueChange={(value: LanguageFilter) => setFilters(prev => ({ ...prev, language: value }))}
-            >
-              <SelectTrigger className="w-[180px]">
-                <Languages className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Langue" />
-              </SelectTrigger>
-              <SelectContent>
-                {languageOptions.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         </div>
+
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "overview" | "comparison")}>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <TabsList>
+              <TabsTrigger value="overview" className="gap-2">
+                <Target className="h-4 w-4" />
+                Vue d'ensemble
+              </TabsTrigger>
+              <TabsTrigger value="comparison" className="gap-2">
+                <GitCompare className="h-4 w-4" />
+                Comparaison
+              </TabsTrigger>
+            </TabsList>
+            
+            {/* Filters for overview tab */}
+            {activeTab === "overview" && (
+              <div className="flex flex-wrap gap-3">
+                <Select 
+                  value={filters.period} 
+                  onValueChange={(value: PeriodFilter) => setFilters(prev => ({ ...prev, period: value }))}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Période" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {periodOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Select 
+                  value={filters.language} 
+                  onValueChange={(value: LanguageFilter) => setFilters(prev => ({ ...prev, language: value }))}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <Languages className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Langue" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {languageOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            
+            {/* Filters for comparison tab */}
+            {activeTab === "comparison" && (
+              <div className="flex flex-wrap gap-3">
+                <Select 
+                  value={comparisonFilters.currentSeason} 
+                  onValueChange={(value: SeasonFilter) => setComparisonFilters(prev => ({ ...prev, currentSeason: value }))}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Période actuelle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {seasonOptions.filter(o => o.value !== "all").map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <span className="flex items-center text-muted-foreground">vs</span>
+                
+                <Select 
+                  value={comparisonFilters.comparisonSeason} 
+                  onValueChange={(value: SeasonFilter) => setComparisonFilters(prev => ({ ...prev, comparisonSeason: value }))}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Période comparée" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {seasonOptions.filter(o => o.value !== "all").map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Select 
+                  value={comparisonFilters.language} 
+                  onValueChange={(value: LanguageFilter) => setComparisonFilters(prev => ({ ...prev, language: value }))}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <Languages className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Langue" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {languageOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          <TabsContent value="overview" className="space-y-6 mt-6">
 
         {/* KPI Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -436,6 +607,171 @@ export default function SatisfactionStats() {
             </ScrollArea>
           </CardContent>
         </Card>
+          </TabsContent>
+
+          {/* Comparison Tab */}
+          <TabsContent value="comparison" className="space-y-6 mt-6">
+            {isLoadingComparison ? (
+              <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  {[...Array(4)].map((_, i) => (
+                    <Skeleton key={i} className="h-32" />
+                  ))}
+                </div>
+                <Skeleton className="h-80" />
+              </div>
+            ) : comparison ? (
+              <>
+                {/* Comparison Header */}
+                <div className="flex items-center justify-center gap-4 p-4 bg-muted/50 rounded-lg">
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Période actuelle</p>
+                    <p className="text-lg font-semibold">{comparison.current.label}</p>
+                  </div>
+                  <GitCompare className="h-6 w-6 text-muted-foreground" />
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Période comparée</p>
+                    <p className="text-lg font-semibold">{comparison.comparison.label}</p>
+                  </div>
+                </div>
+
+                {/* Comparison KPI Cards */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  <ComparisonCard
+                    title="Questionnaires complétés"
+                    currentValue={comparison.current.completedSurveys}
+                    comparisonValue={comparison.comparison.completedSurveys}
+                    delta={comparison.deltas.completedSurveys}
+                    icon={Users}
+                  />
+                  <ComparisonCard
+                    title="Taux de réponse"
+                    currentValue={comparison.current.responseRate}
+                    comparisonValue={comparison.comparison.responseRate}
+                    delta={comparison.deltas.responseRate}
+                    unit="%"
+                    icon={Target}
+                  />
+                  <ComparisonCard
+                    title="Note moyenne"
+                    currentValue={comparison.current.averageScore}
+                    comparisonValue={comparison.comparison.averageScore}
+                    delta={comparison.deltas.averageScore}
+                    unit="/5"
+                    icon={Star}
+                  />
+                  <ComparisonCard
+                    title="Taux de satisfaction"
+                    currentValue={comparison.current.satisfactionRate}
+                    comparisonValue={comparison.comparison.satisfactionRate}
+                    delta={comparison.deltas.satisfactionRate}
+                    unit="%"
+                    icon={Award}
+                  />
+                </div>
+
+                {/* Comparison Chart */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Comparaison par critère</CardTitle>
+                    <CardDescription>
+                      {comparison.current.label} vs {comparison.comparison.label}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={350}>
+                      <BarChart data={comparisonChartData} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis type="number" domain={[0, 5]} className="text-xs" />
+                        <YAxis type="category" dataKey="category" width={100} className="text-xs" />
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: "hsl(var(--background))", border: "1px solid hsl(var(--border))" }}
+                          formatter={(value: number) => [`${value.toFixed(2)}/5`]}
+                        />
+                        <Legend />
+                        <Bar 
+                          dataKey="current" 
+                          fill="hsl(var(--primary))"
+                          name={comparison.current.label}
+                          radius={[0, 4, 4, 0]}
+                        />
+                        <Bar 
+                          dataKey="comparison" 
+                          fill="hsl(var(--muted-foreground))"
+                          name={comparison.comparison.label}
+                          radius={[0, 4, 4, 0]}
+                          opacity={0.6}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                {/* Radar Comparison */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Vue radar comparative</CardTitle>
+                    <CardDescription>Superposition des profils de satisfaction</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={350}>
+                      <RadarChart data={comparisonChartData}>
+                        <PolarGrid className="stroke-muted" />
+                        <PolarAngleAxis dataKey="category" className="text-xs" />
+                        <PolarRadiusAxis angle={30} domain={[0, 5]} className="text-xs" />
+                        <Radar
+                          name={comparison.current.label}
+                          dataKey="current"
+                          stroke="hsl(var(--primary))"
+                          fill="hsl(var(--primary))"
+                          fillOpacity={0.3}
+                        />
+                        <Radar
+                          name={comparison.comparison.label}
+                          dataKey="comparison"
+                          stroke="hsl(var(--muted-foreground))"
+                          fill="hsl(var(--muted-foreground))"
+                          fillOpacity={0.2}
+                        />
+                        <Legend />
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: "hsl(var(--background))", border: "1px solid hsl(var(--border))" }}
+                          formatter={(value: number) => [`${value.toFixed(2)}/5`]}
+                        />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                {/* Delta Summary */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Résumé des évolutions</CardTitle>
+                    <CardDescription>Variation entre les deux périodes</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                      {comparison.current.categoryScores.map((cat, idx) => {
+                        const comparisonScore = comparison.comparison.categoryScores[idx]?.score || 0;
+                        const delta = cat.score - comparisonScore;
+                        return (
+                          <div key={cat.category} className="flex items-center justify-between p-3 border rounded-lg">
+                            <span className="font-medium">{cat.label}</span>
+                            <DeltaIndicator value={delta} unit="/5" />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                Sélectionnez deux périodes à comparer
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </MainLayout>
   );

@@ -23,11 +23,43 @@ interface SatisfactionSurvey {
 }
 
 export type PeriodFilter = "all" | "thisMonth" | "lastMonth" | "thisQuarter" | "lastQuarter" | "thisYear" | "lastYear" | "last3Months" | "last6Months" | "last12Months";
+export type SeasonFilter = "all" | "spring2024" | "summer2024" | "autumn2024" | "winter2024" | "spring2025" | "summer2025" | "autumn2025" | "winter2025";
 export type LanguageFilter = "all" | "Anglais" | "Espagnol" | "Français" | "Allemand" | "Italien" | "Portugais";
 
 export interface SatisfactionFilters {
   period: PeriodFilter;
   language: LanguageFilter;
+  comparisonPeriod?: PeriodFilter;
+}
+
+export interface SeasonComparisonFilters {
+  currentSeason: SeasonFilter;
+  comparisonSeason: SeasonFilter;
+  language: LanguageFilter;
+}
+
+function getSeasonDateRange(season: SeasonFilter): { start: Date | null; end: Date | null } {
+  switch (season) {
+    case "spring2024":
+      return { start: new Date(2024, 2, 1), end: new Date(2024, 4, 31) }; // Mar-May 2024
+    case "summer2024":
+      return { start: new Date(2024, 5, 1), end: new Date(2024, 7, 31) }; // Jun-Aug 2024
+    case "autumn2024":
+      return { start: new Date(2024, 8, 1), end: new Date(2024, 10, 30) }; // Sep-Nov 2024
+    case "winter2024":
+      return { start: new Date(2024, 11, 1), end: new Date(2025, 1, 28) }; // Dec 2024 - Feb 2025
+    case "spring2025":
+      return { start: new Date(2025, 2, 1), end: new Date(2025, 4, 31) }; // Mar-May 2025
+    case "summer2025":
+      return { start: new Date(2025, 5, 1), end: new Date(2025, 7, 31) }; // Jun-Aug 2025
+    case "autumn2025":
+      return { start: new Date(2025, 8, 1), end: new Date(2025, 10, 30) }; // Sep-Nov 2025
+    case "winter2025":
+      return { start: new Date(2025, 11, 1), end: new Date(2026, 1, 28) }; // Dec 2025 - Feb 2026
+    case "all":
+    default:
+      return { start: null, end: null };
+  }
 }
 
 function getDateRange(period: PeriodFilter): { start: Date | null; end: Date | null } {
@@ -94,6 +126,33 @@ interface SatisfactionStats {
     responseRate: number;
     averageScore: number;
     trend: "up" | "down" | "stable";
+  };
+}
+
+export interface SeasonComparisonStats {
+  current: {
+    label: string;
+    totalSurveys: number;
+    completedSurveys: number;
+    responseRate: number;
+    averageScore: number;
+    satisfactionRate: number;
+    categoryScores: { category: string; label: string; score: number }[];
+  };
+  comparison: {
+    label: string;
+    totalSurveys: number;
+    completedSurveys: number;
+    responseRate: number;
+    averageScore: number;
+    satisfactionRate: number;
+    categoryScores: { category: string; label: string; score: number }[];
+  };
+  deltas: {
+    responseRate: number;
+    averageScore: number;
+    satisfactionRate: number;
+    completedSurveys: number;
   };
 }
 
@@ -284,3 +343,119 @@ export function useSatisfactionStats(filters?: SatisfactionFilters) {
     },
   });
 }
+
+const SEASON_LABELS: Record<SeasonFilter, string> = {
+  all: "Toutes les périodes",
+  spring2024: "Printemps 2024",
+  summer2024: "Été 2024",
+  autumn2024: "Automne 2024",
+  winter2024: "Hiver 2024/25",
+  spring2025: "Printemps 2025",
+  summer2025: "Été 2025",
+  autumn2025: "Automne 2025",
+  winter2025: "Hiver 2025/26",
+};
+
+function calculatePeriodStats(surveys: SatisfactionSurvey[], start: Date | null, end: Date | null) {
+  let filtered = surveys;
+  
+  if (start && end) {
+    filtered = surveys.filter((s) => {
+      const date = s.completed_at ? new Date(s.completed_at) : new Date(s.created_at);
+      return date >= start && date <= end;
+    });
+  }
+  
+  const completed = filtered.filter((s) => s.completed_at !== null);
+  const total = filtered.length;
+  const responseRate = total > 0 ? (completed.length / total) * 100 : 0;
+  
+  const calculateCategoryAvg = (field: keyof SatisfactionSurvey) => {
+    const values = completed
+      .map((s) => s[field] as number | null)
+      .filter((v): v is number => v !== null);
+    return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+  };
+  
+  const categoryScores = [
+    { category: "content", label: "Contenu", score: calculateCategoryAvg("satisfaction_content") },
+    { category: "animation", label: "Animation", score: calculateCategoryAvg("satisfaction_animation") },
+    { category: "duration", label: "Durée", score: calculateCategoryAvg("satisfaction_duration") },
+    { category: "utility", label: "Utilité", score: calculateCategoryAvg("satisfaction_utility") },
+    { category: "materials", label: "Supports", score: calculateCategoryAvg("satisfaction_materials") },
+    { category: "organization", label: "Organisation", score: calculateCategoryAvg("satisfaction_organization") },
+    { category: "expectations", label: "Attentes", score: calculateCategoryAvg("satisfaction_expectations") },
+  ];
+  
+  const allScores = categoryScores.map(c => c.score).filter(v => v > 0);
+  const averageScore = allScores.length > 0 ? allScores.reduce((a, b) => a + b, 0) / allScores.length : 0;
+  
+  const satisfactionRate = completed.length > 0
+    ? (completed.filter((s) => {
+        const scores = [s.satisfaction_content, s.satisfaction_animation, s.satisfaction_duration, s.satisfaction_utility, s.satisfaction_materials, s.satisfaction_organization, s.satisfaction_expectations].filter((v): v is number => v !== null);
+        const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+        return avg >= 3.5;
+      }).length / completed.length) * 100
+    : 0;
+  
+  return {
+    totalSurveys: total,
+    completedSurveys: completed.length,
+    responseRate,
+    averageScore,
+    satisfactionRate,
+    categoryScores,
+  };
+}
+
+export function useSeasonComparison(filters: SeasonComparisonFilters) {
+  const { currentSeason, comparisonSeason, language } = filters;
+  
+  return useQuery({
+    queryKey: ["satisfaction-comparison", currentSeason, comparisonSeason, language],
+    queryFn: async (): Promise<SeasonComparisonStats> => {
+      const { data: surveys, error } = await supabase
+        .from("satisfaction_surveys")
+        .select(`
+          *,
+          inscription:inscriptions(language)
+        `)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      let typedSurveys = surveys as SatisfactionSurvey[];
+      
+      // Apply language filter
+      if (language !== "all") {
+        typedSurveys = typedSurveys.filter((s) => s.inscription?.language === language);
+      }
+      
+      const currentRange = getSeasonDateRange(currentSeason);
+      const comparisonRange = getSeasonDateRange(comparisonSeason);
+      
+      const currentStats = calculatePeriodStats(typedSurveys, currentRange.start, currentRange.end);
+      const comparisonStats = calculatePeriodStats(typedSurveys, comparisonRange.start, comparisonRange.end);
+      
+      return {
+        current: {
+          label: SEASON_LABELS[currentSeason],
+          ...currentStats,
+        },
+        comparison: {
+          label: SEASON_LABELS[comparisonSeason],
+          ...comparisonStats,
+        },
+        deltas: {
+          responseRate: currentStats.responseRate - comparisonStats.responseRate,
+          averageScore: currentStats.averageScore - comparisonStats.averageScore,
+          satisfactionRate: currentStats.satisfactionRate - comparisonStats.satisfactionRate,
+          completedSurveys: currentStats.completedSurveys - comparisonStats.completedSurveys,
+        },
+      };
+    },
+    enabled: currentSeason !== "all" || comparisonSeason !== "all",
+  });
+}
+
+export { SEASON_LABELS };
