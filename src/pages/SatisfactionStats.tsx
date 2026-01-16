@@ -52,11 +52,14 @@ import {
   GitCompare,
   ArrowUpRight,
   ArrowDownRight,
-  CalendarRange
+  CalendarRange,
+  FileDown
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { jsPDF } from "jspdf";
+import { toast } from "sonner";
 
 function StatCard({ 
   title, 
@@ -132,6 +135,180 @@ function QualiopiIndicator({ label, value, target, unit = "%" }: {
       </div>
     </div>
   );
+}
+
+interface SatisfactionStatsData {
+  totalSurveys: number;
+  completedSurveys: number;
+  responseRate: number;
+  averageScores: {
+    content: number;
+    animation: number;
+    duration: number;
+    utility: number;
+    materials: number;
+    organization: number;
+    expectations: number;
+    overall: number;
+  };
+  qualiopiIndicators: {
+    satisfactionRate: number;
+    responseRate: number;
+    averageScore: number;
+    trend: "up" | "down" | "stable";
+  };
+  categoryBreakdown: {
+    category: string;
+    score: number;
+    label: string;
+  }[];
+}
+
+function generateQualioPDF(stats: SatisfactionStatsData, periodLabel: string, languageLabel: string) {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  let yPos = 20;
+  
+  // Header
+  doc.setFontSize(20);
+  doc.setFont("helvetica", "bold");
+  doc.text("Rapport de Satisfaction - Indicateurs Qualiopi", pageWidth / 2, yPos, { align: "center" });
+  
+  yPos += 10;
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text("FLI - Formation Linguistique pour Instructeurs", pageWidth / 2, yPos, { align: "center" });
+  
+  yPos += 8;
+  doc.setFontSize(9);
+  doc.setTextColor(100);
+  doc.text(`Généré le ${format(new Date(), "dd MMMM yyyy à HH:mm", { locale: fr })}`, pageWidth / 2, yPos, { align: "center" });
+  doc.text(`Période: ${periodLabel} | Langue: ${languageLabel}`, pageWidth / 2, yPos + 5, { align: "center" });
+  doc.setTextColor(0);
+  
+  yPos += 20;
+  
+  // Section: Indicateurs Qualiopi principaux
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text("1. Indicateurs Qualiopi Principaux", 20, yPos);
+  yPos += 10;
+  
+  // Draw indicators table
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  
+  const indicators = [
+    { label: "Taux de réponse aux questionnaires", value: `${stats.responseRate.toFixed(1)}%`, target: "50%", status: stats.responseRate >= 50 ? "✓ Conforme" : "⚠ À améliorer" },
+    { label: "Taux de satisfaction globale (note ≥ 3.5/5)", value: `${stats.qualiopiIndicators.satisfactionRate.toFixed(1)}%`, target: "80%", status: stats.qualiopiIndicators.satisfactionRate >= 80 ? "✓ Conforme" : "⚠ À améliorer" },
+    { label: "Note moyenne de satisfaction", value: `${stats.averageScores.overall.toFixed(2)}/5`, target: "3.5/5", status: stats.averageScores.overall >= 3.5 ? "✓ Conforme" : "⚠ À améliorer" },
+  ];
+  
+  // Table header
+  doc.setFillColor(240, 240, 240);
+  doc.rect(20, yPos, pageWidth - 40, 8, "F");
+  doc.setFont("helvetica", "bold");
+  doc.text("Indicateur", 25, yPos + 5);
+  doc.text("Valeur", 110, yPos + 5);
+  doc.text("Objectif", 140, yPos + 5);
+  doc.text("Statut", 165, yPos + 5);
+  yPos += 10;
+  
+  doc.setFont("helvetica", "normal");
+  indicators.forEach((ind) => {
+    doc.text(ind.label, 25, yPos + 4);
+    doc.text(ind.value, 110, yPos + 4);
+    doc.text(ind.target, 140, yPos + 4);
+    doc.setTextColor(ind.status.includes("Conforme") ? 0 : 150, ind.status.includes("Conforme") ? 128 : 100, 0);
+    doc.text(ind.status, 165, yPos + 4);
+    doc.setTextColor(0);
+    doc.line(20, yPos + 7, pageWidth - 20, yPos + 7);
+    yPos += 10;
+  });
+  
+  yPos += 10;
+  
+  // Section: Volume de données
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text("2. Volume de Données", 20, yPos);
+  yPos += 10;
+  
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(`• Nombre total de questionnaires envoyés: ${stats.totalSurveys}`, 25, yPos);
+  yPos += 6;
+  doc.text(`• Nombre de questionnaires complétés: ${stats.completedSurveys}`, 25, yPos);
+  yPos += 6;
+  doc.text(`• Taux de réponse effectif: ${stats.responseRate.toFixed(1)}%`, 25, yPos);
+  yPos += 15;
+  
+  // Section: Notes détaillées par critère
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text("3. Notes Détaillées par Critère de Satisfaction", 20, yPos);
+  yPos += 10;
+  
+  doc.setFillColor(240, 240, 240);
+  doc.rect(20, yPos, pageWidth - 40, 8, "F");
+  doc.setFont("helvetica", "bold");
+  doc.text("Critère", 25, yPos + 5);
+  doc.text("Note /5", 120, yPos + 5);
+  doc.text("Appréciation", 150, yPos + 5);
+  yPos += 10;
+  
+  doc.setFont("helvetica", "normal");
+  stats.categoryBreakdown.forEach((cat) => {
+    const appreciation = cat.score >= 4.5 ? "Excellent" : cat.score >= 4 ? "Très bien" : cat.score >= 3.5 ? "Bien" : cat.score >= 3 ? "Satisfaisant" : "À améliorer";
+    doc.text(cat.label, 25, yPos + 4);
+    doc.text(cat.score.toFixed(2), 120, yPos + 4);
+    doc.setTextColor(cat.score >= 3.5 ? 0 : 150, cat.score >= 3.5 ? 128 : 0, 0);
+    doc.text(appreciation, 150, yPos + 4);
+    doc.setTextColor(0);
+    doc.line(20, yPos + 7, pageWidth - 20, yPos + 7);
+    yPos += 10;
+  });
+  
+  yPos += 10;
+  
+  // Section: Synthèse
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text("4. Synthèse et Conformité Qualiopi", 20, yPos);
+  yPos += 10;
+  
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  
+  const allCompliant = stats.responseRate >= 50 && stats.qualiopiIndicators.satisfactionRate >= 80 && stats.averageScores.overall >= 3.5;
+  
+  if (allCompliant) {
+    doc.setFillColor(220, 252, 231);
+    doc.rect(20, yPos - 3, pageWidth - 40, 20, "F");
+    doc.setTextColor(22, 101, 52);
+    doc.text("✓ CONFORME AUX EXIGENCES QUALIOPI", pageWidth / 2, yPos + 5, { align: "center" });
+    doc.text("Tous les indicateurs de satisfaction répondent aux objectifs fixés.", pageWidth / 2, yPos + 12, { align: "center" });
+  } else {
+    doc.setFillColor(254, 243, 199);
+    doc.rect(20, yPos - 3, pageWidth - 40, 20, "F");
+    doc.setTextColor(146, 64, 14);
+    doc.text("⚠ AXES D'AMÉLIORATION IDENTIFIÉS", pageWidth / 2, yPos + 5, { align: "center" });
+    doc.text("Certains indicateurs nécessitent une attention particulière.", pageWidth / 2, yPos + 12, { align: "center" });
+  }
+  doc.setTextColor(0);
+  
+  yPos += 30;
+  
+  // Footer
+  doc.setFontSize(8);
+  doc.setTextColor(128);
+  doc.text("Ce rapport a été généré automatiquement par le système de gestion FLI.", pageWidth / 2, yPos, { align: "center" });
+  doc.text("Document à conserver pour les audits Qualiopi - Critère 7.", pageWidth / 2, yPos + 5, { align: "center" });
+  
+  // Save PDF
+  const fileName = `rapport-satisfaction-qualiopi-${format(new Date(), "yyyy-MM-dd")}.pdf`;
+  doc.save(fileName);
+  toast.success("Rapport PDF généré avec succès");
 }
 
 const periodOptions: { value: PeriodFilter; label: string }[] = [
@@ -354,6 +531,17 @@ export default function SatisfactionStats() {
               Indicateurs Qualiopi et analyse des retours stagiaires
             </p>
           </div>
+          <Button
+            onClick={() => {
+              const periodLabel = periodOptions.find(p => p.value === filters.period)?.label || "Toutes les périodes";
+              const languageLabel = languageOptions.find(l => l.value === filters.language)?.label || "Toutes les langues";
+              generateQualioPDF(stats, periodLabel, languageLabel);
+            }}
+            className="gap-2"
+          >
+            <FileDown className="h-4 w-4" />
+            Exporter PDF Qualiopi
+          </Button>
         </div>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "overview" | "comparison")}>
