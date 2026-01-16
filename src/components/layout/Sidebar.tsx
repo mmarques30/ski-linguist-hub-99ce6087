@@ -15,6 +15,7 @@ import {
   TrendingUp,
   BarChart3,
   Wallet,
+  FlaskConical,
 } from "lucide-react";
 import { useState } from "react";
 import fliLogo from "@/assets/fli-marca-yellow.png";
@@ -34,6 +35,7 @@ const navigation = [
   { name: "Documents", href: "/documents", icon: FileText },
   { name: "Satisfaction", href: "/satisfaction-stats", icon: BarChart3 },
   { name: "Amélioration", href: "/amelioration", icon: TrendingUp },
+  { name: "Tests QA", href: "/admin/testing", icon: FlaskConical },
   { name: "Paramètres", href: "/settings", icon: Settings },
 ];
 
