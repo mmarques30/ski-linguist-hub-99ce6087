@@ -1,1 +1,4 @@
 project_id = "nghkrmvakjomzmfwdhbo"
+
+[functions.generate-monthly-charges]
+verify_jwt = false
