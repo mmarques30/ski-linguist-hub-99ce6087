@@ -22,6 +22,7 @@ import EvaluationForm from "./pages/formateur/EvaluationForm";
 import EvaluationView from "./pages/formateur/EvaluationView";
 import Register from "./pages/register/Index";
 import SatisfactionSurvey from "./pages/survey/SatisfactionSurvey";
+import ContinuousImprovement from "./pages/ContinuousImprovement";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -57,6 +58,7 @@ const App = () => (
             <Route path="/formateur/evaluation/:bookingId" element={<ProtectedRoute><EvaluationForm /></ProtectedRoute>} />
             <Route path="/formateur/evaluation/:bookingId/edit" element={<ProtectedRoute><EvaluationForm /></ProtectedRoute>} />
             <Route path="/formateur/evaluation-view/:evaluationId" element={<ProtectedRoute><EvaluationView /></ProtectedRoute>} />
+            <Route path="/amelioration" element={<ProtectedRoute><ContinuousImprovement /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
