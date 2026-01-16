@@ -24,9 +24,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Search, Filter, Download, Plus, Eye, Edit, Trash2, ClipboardList, Upload, Loader2, Package, MoreHorizontal, CheckCircle, XCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useInscriptions, useUpdateInscriptionStatus } from "@/hooks/useInscriptions";
+import { useInscriptions, useUpdateInscriptionStatus, useDeleteInscription } from "@/hooks/useInscriptions";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
@@ -224,8 +234,11 @@ export default function Inscriptions() {
   const [endPackInscription, setEndPackInscription] = useState<any>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingInscription, setEditingInscription] = useState<any>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [inscriptionToDelete, setInscriptionToDelete] = useState<{ id: string; name: string } | null>(null);
   const { language, t } = useLanguage();
   const updateStatus = useUpdateInscriptionStatus();
+  const deleteInscription = useDeleteInscription();
 
   const { data: inscriptions, isLoading, error, refetch } = useInscriptions({
     status: statusFilter,
@@ -274,6 +287,27 @@ export default function Inscriptions() {
     } catch (error) {
       console.error("Error updating status:", error);
       toast.error("Erreur lors de la mise à jour du statut");
+    }
+  };
+
+  const handleDeleteClick = (inscription: { id: string; student_name: string | null; code: string | null }) => {
+    setInscriptionToDelete({
+      id: inscription.id,
+      name: inscription.student_name || inscription.code || inscription.id,
+    });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!inscriptionToDelete) return;
+    try {
+      await deleteInscription.mutateAsync(inscriptionToDelete.id);
+      toast.success("Inscription supprimée avec succès");
+      setDeleteDialogOpen(false);
+      setInscriptionToDelete(null);
+    } catch (error: any) {
+      console.error("Error deleting inscription:", error);
+      toast.error(error.message || "Erreur lors de la suppression");
     }
   };
 
@@ -480,7 +514,10 @@ export default function Inscriptions() {
                               <Package className="mr-2 h-4 w-4" />
                               Pack Fin de Formation
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
+                            <DropdownMenuItem 
+                              className="text-destructive"
+                              onClick={() => handleDeleteClick(inscription)}
+                            >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Supprimer
                             </DropdownMenuItem>
@@ -532,6 +569,36 @@ export default function Inscriptions() {
         }}
         inscription={editingInscription}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer l'inscription de{" "}
+              <strong>{inscriptionToDelete?.name}</strong> ? Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setInscriptionToDelete(null)}>
+              Annuler
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteInscription.isPending}
+            >
+              {deleteInscription.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="mr-2 h-4 w-4" />
+              )}
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   );
 }
