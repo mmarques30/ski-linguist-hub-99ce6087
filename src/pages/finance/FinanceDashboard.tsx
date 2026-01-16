@@ -15,6 +15,7 @@ import {
   usePendingInvoices, 
   useInstructorBalance,
 } from "@/hooks/useFinancialDashboard";
+import { useFinancialRealtime } from "@/hooks/useFinancialRealtime";
 import { 
   Receipt, 
   CreditCard, 
@@ -50,6 +51,9 @@ export default function FinanceDashboard() {
   const [addCostOpen, setAddCostOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [selectedInstructor, setSelectedInstructor] = useState<any>(null);
+
+  // Enable realtime updates
+  useFinancialRealtime();
 
   const { data: kpis, isLoading: kpisLoading } = useFinancialKPIs(startDate, endDate, true);
   const { data: caByMonth } = useCAByMonth(startDate, endDate, true);
