@@ -31,16 +31,22 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const url = new URL(req.url)
+    const dryRun = url.searchParams.get('dry_run') === 'true'
+    
+    console.log(`🚀 Starting invoice reminder processing... (dry_run: ${dryRun})`)
+    
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const resendApiKey = Deno.env.get('RESEND_API_KEY')
 
-    if (!resendApiKey) {
-      console.log('RESEND_API_KEY not configured - skipping email sending')
+    // In dry-run mode, we don't need Resend API key
+    if (!dryRun && !resendApiKey) {
+      console.log('⚠️ RESEND_API_KEY not configured - skipping email sending')
       return new Response(
         JSON.stringify({ 
           success: false, 
-          message: 'RESEND_API_KEY not configured' 
+          message: 'RESEND_API_KEY not configured. Use ?dry_run=true to test without sending emails.' 
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
@@ -79,10 +85,22 @@ Deno.serve(async (req) => {
       throw error
     }
 
+    console.log(`📋 Found ${invoices?.length || 0} overdue invoices`)
+
     const results = {
+      dryRun,
+      totalOverdue: invoices?.length || 0,
       reminder1Sent: 0,
       reminder2Sent: 0,
       reminder3Sent: 0,
+      skipped: 0,
+      details: [] as Array<{
+        invoiceNumber: string
+        email: string
+        daysOverdue: number
+        reminderLevel: number | null
+        action: string
+      }>,
       errors: [] as string[]
     }
 
@@ -91,7 +109,15 @@ Deno.serve(async (req) => {
       const student = inscription?.students
       
       if (!student?.email) {
-        console.log(`Skipping invoice ${invoice.invoice_number} - no student email found`)
+        console.log(`⏭️ Skipping invoice ${invoice.invoice_number} - no student email found`)
+        results.skipped++
+        results.details.push({
+          invoiceNumber: invoice.invoice_number,
+          email: 'N/A',
+          daysOverdue: 0,
+          reminderLevel: null,
+          action: 'SKIPPED - No email'
+        })
         continue
       }
 
@@ -101,82 +127,131 @@ Deno.serve(async (req) => {
       try {
         // Reminder 1: 7 days overdue
         if (!invoice.reminder_1_sent_at && daysOverdue >= 7 && daysOverdue < 15) {
-          await sendReminderEmail(
-            resendApiKey,
-            student.email,
-            student.first_name,
-            invoice.invoice_number,
-            invoice.amount_ttc || invoice.amount_ht,
-            invoice.due_date,
-            1
-          )
+          if (!dryRun && resendApiKey) {
+            await sendReminderEmail(
+              resendApiKey,
+              student.email,
+              student.first_name,
+              invoice.invoice_number,
+              invoice.amount_ttc || invoice.amount_ht,
+              invoice.due_date,
+              1
+            )
 
-          await supabase
-            .from('invoices')
-            .update({ reminder_1_sent_at: now.toISOString() })
-            .eq('id', invoice.id)
+            await supabase
+              .from('invoices')
+              .update({ reminder_1_sent_at: now.toISOString() })
+              .eq('id', invoice.id)
+          }
 
           results.reminder1Sent++
-          console.log(`Sent reminder 1 to ${student.email} for invoice ${invoice.invoice_number}`)
+          results.details.push({
+            invoiceNumber: invoice.invoice_number,
+            email: student.email,
+            daysOverdue,
+            reminderLevel: 1,
+            action: dryRun ? 'WOULD SEND Reminder 1' : 'SENT Reminder 1'
+          })
+          console.log(`📧 ${dryRun ? '[DRY-RUN]' : ''} Reminder 1 to ${student.email} for invoice ${invoice.invoice_number}`)
         }
         // Reminder 2: 15 days overdue
         else if (invoice.reminder_1_sent_at && !invoice.reminder_2_sent_at && daysOverdue >= 15 && daysOverdue < 30) {
-          await sendReminderEmail(
-            resendApiKey,
-            student.email,
-            student.first_name,
-            invoice.invoice_number,
-            invoice.amount_ttc || invoice.amount_ht,
-            invoice.due_date,
-            2
-          )
+          if (!dryRun && resendApiKey) {
+            await sendReminderEmail(
+              resendApiKey,
+              student.email,
+              student.first_name,
+              invoice.invoice_number,
+              invoice.amount_ttc || invoice.amount_ht,
+              invoice.due_date,
+              2
+            )
 
-          await supabase
-            .from('invoices')
-            .update({ reminder_2_sent_at: now.toISOString() })
-            .eq('id', invoice.id)
+            await supabase
+              .from('invoices')
+              .update({ reminder_2_sent_at: now.toISOString() })
+              .eq('id', invoice.id)
+          }
 
           results.reminder2Sent++
-          console.log(`Sent reminder 2 to ${student.email} for invoice ${invoice.invoice_number}`)
+          results.details.push({
+            invoiceNumber: invoice.invoice_number,
+            email: student.email,
+            daysOverdue,
+            reminderLevel: 2,
+            action: dryRun ? 'WOULD SEND Reminder 2' : 'SENT Reminder 2'
+          })
+          console.log(`📧 ${dryRun ? '[DRY-RUN]' : ''} Reminder 2 to ${student.email} for invoice ${invoice.invoice_number}`)
         }
         // Reminder 3: 30 days overdue (final notice)
         else if (invoice.reminder_2_sent_at && !invoice.reminder_3_sent_at && daysOverdue >= 30) {
-          await sendReminderEmail(
-            resendApiKey,
-            student.email,
-            student.first_name,
-            invoice.invoice_number,
-            invoice.amount_ttc || invoice.amount_ht,
-            invoice.due_date,
-            3
-          )
+          if (!dryRun && resendApiKey) {
+            await sendReminderEmail(
+              resendApiKey,
+              student.email,
+              student.first_name,
+              invoice.invoice_number,
+              invoice.amount_ttc || invoice.amount_ht,
+              invoice.due_date,
+              3
+            )
 
-          await supabase
-            .from('invoices')
-            .update({ reminder_3_sent_at: now.toISOString() })
-            .eq('id', invoice.id)
+            await supabase
+              .from('invoices')
+              .update({ reminder_3_sent_at: now.toISOString() })
+              .eq('id', invoice.id)
+          }
 
           results.reminder3Sent++
-          console.log(`Sent reminder 3 (final notice) to ${student.email} for invoice ${invoice.invoice_number}`)
+          results.details.push({
+            invoiceNumber: invoice.invoice_number,
+            email: student.email,
+            daysOverdue,
+            reminderLevel: 3,
+            action: dryRun ? 'WOULD SEND Final Notice' : 'SENT Final Notice'
+          })
+          console.log(`📧 ${dryRun ? '[DRY-RUN]' : ''} Final notice to ${student.email} for invoice ${invoice.invoice_number}`)
+        }
+        // No action needed yet
+        else {
+          let reason = 'Not due for reminder yet'
+          if (daysOverdue < 7) reason = `Only ${daysOverdue} days overdue (needs 7+)`
+          else if (invoice.reminder_3_sent_at) reason = 'All reminders already sent'
+          else if (!invoice.reminder_1_sent_at && daysOverdue >= 15) reason = 'Reminder 1 not sent yet'
+          else if (!invoice.reminder_2_sent_at && daysOverdue >= 30) reason = 'Reminder 2 not sent yet'
+          
+          results.details.push({
+            invoiceNumber: invoice.invoice_number,
+            email: student.email,
+            daysOverdue,
+            reminderLevel: null,
+            action: `SKIPPED - ${reason}`
+          })
         }
       } catch (emailError) {
         const errorMsg = `Failed to send reminder for invoice ${invoice.invoice_number}: ${emailError}`
-        console.error(errorMsg)
+        console.error(`❌ ${errorMsg}`)
         results.errors.push(errorMsg)
       }
     }
+
+    const summary = dryRun
+      ? `[DRY-RUN] Would send ${results.reminder1Sent} first, ${results.reminder2Sent} second, ${results.reminder3Sent} final reminders`
+      : `Sent ${results.reminder1Sent} first, ${results.reminder2Sent} second, ${results.reminder3Sent} final reminders`
+
+    console.log(`✅ ${summary}`)
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         results,
-        message: `Sent ${results.reminder1Sent} first reminders, ${results.reminder2Sent} second reminders, and ${results.reminder3Sent} final notices`
+        summary
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (error) {
-    console.error('Error processing invoice reminders:', error)
+    console.error('❌ Error processing invoice reminders:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return new Response(
       JSON.stringify({ success: false, error: errorMessage }),
