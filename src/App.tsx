@@ -27,10 +27,6 @@ import SatisfactionSurvey from "./pages/survey/SatisfactionSurvey";
 import ContinuousImprovement from "./pages/ContinuousImprovement";
 import SatisfactionStats from "./pages/SatisfactionStats";
 import FinanceDashboard from "./pages/finance/FinanceDashboard";
-import FinanceAnalyses from "./pages/finance/FinanceAnalyses";
-import FinanceRentabilite from "./pages/finance/FinanceRentabilite";
-import FinanceTresorerie from "./pages/finance/FinanceTresorerie";
-import FinanceChargesFixes from "./pages/finance/FinanceChargesFixes";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -53,10 +49,6 @@ const App = () => (
             {/* Protected admin routes */}
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/finance" element={<ProtectedRoute><FinanceDashboard /></ProtectedRoute>} />
-            <Route path="/finance/analyses" element={<ProtectedRoute><FinanceAnalyses /></ProtectedRoute>} />
-            <Route path="/finance/rentabilite" element={<ProtectedRoute><FinanceRentabilite /></ProtectedRoute>} />
-            <Route path="/finance/tresorerie" element={<ProtectedRoute><FinanceTresorerie /></ProtectedRoute>} />
-            <Route path="/finance/charges-fixes" element={<ProtectedRoute><FinanceChargesFixes /></ProtectedRoute>} />
             <Route path="/inscriptions" element={<ProtectedRoute><Inscriptions /></ProtectedRoute>} />
             <Route path="/inscriptions/:id" element={<ProtectedRoute><InscriptionDetails /></ProtectedRoute>} />
             <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
