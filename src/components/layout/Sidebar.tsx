@@ -282,7 +282,7 @@ export function AppSidebar() {
     .filter((group) => group.items.length > 0);
 
   return (
-    <Sidebar collapsible="icon" className="border-r-0">
+    <Sidebar collapsible="offcanvas" className="border-r-0">
       <SidebarHeader className="border-b border-sidebar-border py-1" />
 
       <SidebarContent className="scrollbar-thin">

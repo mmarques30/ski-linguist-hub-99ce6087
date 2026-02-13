@@ -36,13 +36,13 @@ export function TopHeader() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background/80 backdrop-blur-md px-4 lg:px-6 transition-transform duration-300",
+        "sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b border-[hsl(219_52%_25%)] bg-[hsl(219_52%_16%)] backdrop-blur-md px-4 lg:px-6 transition-transform duration-300",
         visible ? "translate-y-0" : "-translate-y-full"
       )}
     >
       {/* Left: toggle + logo */}
       <div className="flex items-center gap-3">
-        <SidebarTrigger className="h-9 w-9" />
+        <SidebarTrigger className="h-9 w-9 text-white/80 hover:text-white" />
         <img src={fliLogo} alt="FLI" className="h-7 w-auto" />
       </div>
 
@@ -50,7 +50,7 @@ export function TopHeader() {
       <div className="flex items-center gap-1">
         {/* Notifications */}
         <button
-          className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-muted/50 text-muted-foreground transition-all duration-200 hover:scale-110 hover:bg-muted hover:text-foreground hover:shadow-md"
+          className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-white/70 transition-all duration-200 hover:scale-110 hover:bg-white/20 hover:text-white hover:shadow-md"
           aria-label="Notifications"
         >
           <Bell className="h-[18px] w-[18px]" />
@@ -61,7 +61,7 @@ export function TopHeader() {
 
         {/* Profile */}
         <button
-          className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted/50 text-muted-foreground transition-all duration-200 hover:scale-110 hover:bg-muted hover:text-foreground hover:shadow-md"
+          className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-white/70 transition-all duration-200 hover:scale-110 hover:bg-white/20 hover:text-white hover:shadow-md"
           aria-label="Profile"
         >
           <Avatar className="h-7 w-7">
