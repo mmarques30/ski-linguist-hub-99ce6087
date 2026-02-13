@@ -1,0 +1,65 @@
+export interface RoutePermission {
+  key: string;
+  label: string;
+  parent?: string;
+}
+
+export interface RouteGroup {
+  label: string;
+  routes: RoutePermission[];
+}
+
+export const ROUTE_GROUPS: RouteGroup[] = [
+  {
+    label: "Gestion",
+    routes: [
+      { key: "finance", label: "Vue d'ensemble" },
+      { key: "finance.analyses", label: "Analyses" },
+      { key: "finance.rentabilite", label: "Rentabilité" },
+      { key: "finance.tresorerie", label: "Trésorerie" },
+      { key: "finance.charges_fixes", label: "Charges fixes" },
+      { key: "inscriptions", label: "Inscriptions" },
+      { key: "invoices", label: "Factures" },
+      { key: "students", label: "Stagiaires" },
+    ],
+  },
+  {
+    label: "Formation",
+    routes: [
+      { key: "tests", label: "Tests de niveau" },
+      { key: "evaluations", label: "Évaluations" },
+      { key: "classes", label: "Sessions" },
+    ],
+  },
+  {
+    label: "Qualité",
+    routes: [
+      { key: "satisfaction", label: "Satisfaction" },
+      { key: "amelioration", label: "Amélioration" },
+      { key: "documents", label: "Documents" },
+    ],
+  },
+];
+
+export const ALL_ROUTE_KEYS = ROUTE_GROUPS.flatMap((g) =>
+  g.routes.map((r) => r.key)
+);
+
+// Map URL paths to route_keys for sidebar filtering
+export const PATH_TO_ROUTE_KEY: Record<string, string> = {
+  "/": "dashboard",
+  "/finance": "finance",
+  "/finance/analyses": "finance.analyses",
+  "/finance/rentabilite": "finance.rentabilite",
+  "/finance/tresorerie": "finance.tresorerie",
+  "/finance/charges-fixes": "finance.charges_fixes",
+  "/inscriptions": "inscriptions",
+  "/invoices": "invoices",
+  "/students": "students",
+  "/tests": "tests",
+  "/formateur/evaluations": "evaluations",
+  "/classes": "classes",
+  "/satisfaction-stats": "satisfaction",
+  "/amelioration": "amelioration",
+  "/documents": "documents",
+};
