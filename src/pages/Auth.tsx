@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { useAuth } from "@/hooks/useAuth";
+import authBg from "@/assets/fli-auth-bg.png";
 
 export default function Auth() {
   const { user, loading } = useAuth();
@@ -22,20 +23,31 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-background p-4">
-      <AuthCard />
-      
-      <div className="mt-8 text-center">
-        <Link 
-          to="/register" 
-          className="text-sm text-muted-foreground hover:text-primary transition-colors"
-        >
-          Formulaire d'inscription publique
-        </Link>
+    <div className="relative min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden">
+      {/* Background image with blur */}
+      <div
+        className="absolute inset-0 -m-4 bg-cover bg-center blur-sm scale-105"
+        style={{ backgroundImage: `url(${authBg})` }}
+      />
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-black/40" />
+
+      {/* Content */}
+      <div className="relative z-10 w-full flex flex-col items-center">
+        <AuthCard />
+        
+        <div className="mt-8 text-center">
+          <Link 
+            to="/register" 
+            className="text-sm text-white/80 hover:text-white transition-colors"
+          >
+            Formulaire d'inscription publique
+          </Link>
+        </div>
       </div>
       
-      <footer className="absolute bottom-4 text-center">
-        <p className="text-xs text-muted-foreground">
+      <footer className="absolute bottom-4 z-10 text-center">
+        <p className="text-xs text-white/60">
           France Langues International
         </p>
       </footer>
