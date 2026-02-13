@@ -82,7 +82,18 @@ const navigationGroups: NavGroup[] = [
     label: "Gestion",
     icon: Briefcase,
     items: [
-      { name: "Finance", href: "/finance", icon: Wallet },
+      { 
+        name: "Finance", 
+        href: "/finance", 
+        icon: Wallet,
+        subItems: [
+          { name: "Vue d'ensemble", href: "/finance" },
+          { name: "Analyses", href: "/finance/analyses" },
+          { name: "Rentabilité", href: "/finance/rentabilite" },
+          { name: "Trésorerie", href: "/finance/tresorerie" },
+          { name: "Charges fixes", href: "/finance/charges-fixes" },
+        ],
+      },
       { name: "Inscriptions", href: "/inscriptions", icon: ClipboardList },
       { name: "Factures", href: "/invoices", icon: Receipt },
       { name: "Stagiaires", href: "/students", icon: Users },
