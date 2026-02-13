@@ -52,21 +52,20 @@ export default function FinanceRentabilite() {
   };
 
   const getMargeColor = (percent: number) => {
-    if (percent >= 50) return 'text-emerald-600';
-    if (percent >= 30) return 'text-amber-600';
-    return 'text-red-600';
+    if (percent >= 50) return 'text-[hsl(var(--fli-yellow))]';
+    if (percent >= 30) return 'text-foreground';
+    return 'text-destructive';
   };
 
   const getMargeBadge = (percent: number) => {
-    if (percent >= 50) return <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">Excellent</Badge>;
-    if (percent >= 30) return <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300">Correct</Badge>;
-    return <Badge className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">Faible</Badge>;
+    if (percent >= 50) return <Badge className="bg-[hsl(var(--fli-yellow))]/15 text-[hsl(var(--fli-yellow))] border-[hsl(var(--fli-yellow))]/30">Excellent</Badge>;
+    if (percent >= 30) return <Badge variant="secondary">Correct</Badge>;
+    return <Badge variant="destructive">Faible</Badge>;
   };
 
   return (
     <MainLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold">Rentabilité des Formations</h1>
@@ -80,7 +79,6 @@ export default function FinanceRentabilite() {
           </Button>
         </div>
 
-        {/* Period Selector */}
         <PeriodSelector
           startDate={startDate}
           endDate={endDate}
@@ -90,30 +88,30 @@ export default function FinanceRentabilite() {
         {/* Summary */}
         {formations && formations.length > 0 && (
           <div className="grid gap-4 md:grid-cols-4">
-            <Card className="p-4">
+            <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-[hsl(var(--fli-yellow))]">
               <p className="text-sm text-muted-foreground">CA Total</p>
               <p className="text-xl font-bold">
                 {formatPrice(formations.reduce((sum, f) => sum + f.ca_ht, 0))}
               </p>
-            </Card>
-            <Card className="p-4">
+            </div>
+            <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-[hsl(var(--fli-navy))]">
               <p className="text-sm text-muted-foreground">Coûts Totaux</p>
               <p className="text-xl font-bold">
                 {formatPrice(formations.reduce((sum, f) => sum + f.couts_totaux, 0))}
               </p>
-            </Card>
-            <Card className="p-4">
+            </div>
+            <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-[hsl(var(--fli-yellow))]">
               <p className="text-sm text-muted-foreground">Marge Totale</p>
-              <p className="text-xl font-bold text-emerald-600">
+              <p className="text-xl font-bold text-[hsl(var(--fli-yellow))]">
                 {formatPrice(formations.reduce((sum, f) => sum + f.marge_brute, 0))}
               </p>
-            </Card>
-            <Card className="p-4">
+            </div>
+            <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-[hsl(var(--fli-navy))]">
               <p className="text-sm text-muted-foreground">Marge Moyenne</p>
               <p className="text-xl font-bold">
                 {(formations.reduce((sum, f) => sum + f.marge_pourcent, 0) / formations.length).toFixed(1)}%
               </p>
-            </Card>
+            </div>
           </div>
         )}
 

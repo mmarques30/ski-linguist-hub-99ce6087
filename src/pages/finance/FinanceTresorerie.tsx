@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useTresoreriePrevisionnelle } from "@/hooks/useFinancialDashboard";
-import { AlertTriangle, TrendingUp, TrendingDown } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function FinanceTresorerie() {
@@ -18,9 +18,8 @@ export default function FinanceTresorerie() {
     }).format(value);
   };
 
-  // Calculate cumulative balance
   let cumulativeBalance = 0;
-  const tresorerieWithCumulative = tresorerie?.map((m, idx) => {
+  const tresorerieWithCumulative = tresorerie?.map((m) => {
     cumulativeBalance += m.solde;
     return { ...m, soldeCumulatif: cumulativeBalance };
   });
@@ -30,7 +29,6 @@ export default function FinanceTresorerie() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div>
           <h1 className="text-2xl font-bold">Trésorerie Prévisionnelle</h1>
           <p className="text-muted-foreground">
@@ -38,16 +36,15 @@ export default function FinanceTresorerie() {
           </p>
         </div>
 
-        {/* Alert if negative balance */}
         {hasNegativeBalance && (
-          <Card className="border-amber-500 bg-amber-50 dark:bg-amber-950/30">
+          <Card className="border-destructive/50 bg-destructive/5">
             <CardContent className="flex items-center gap-3 py-4">
-              <AlertTriangle className="h-5 w-5 text-amber-600" />
+              <AlertTriangle className="h-5 w-5 text-destructive" />
               <div>
-                <p className="font-medium text-amber-800 dark:text-amber-200">
+                <p className="font-medium">
                   Attention: Solde prévisionnel négatif détecté
                 </p>
-                <p className="text-sm text-amber-700 dark:text-amber-300">
+                <p className="text-sm text-muted-foreground">
                   Certains mois présentent un déficit de trésorerie prévu
                 </p>
               </div>
@@ -55,7 +52,6 @@ export default function FinanceTresorerie() {
           </Card>
         )}
 
-        {/* Tresorerie Table */}
         <Card>
           <CardHeader>
             <CardTitle>Flux de trésorerie prévisionnels</CardTitle>
@@ -78,15 +74,12 @@ export default function FinanceTresorerie() {
                   </TableHeader>
                   <TableBody>
                     {/* Entrées */}
-                    <TableRow className="bg-emerald-50/50 dark:bg-emerald-950/20">
-                      <TableCell className="font-medium text-emerald-700 dark:text-emerald-400">
-                        <div className="flex items-center gap-2">
-                          <TrendingUp className="h-4 w-4" />
-                          Entrées prévues
-                        </div>
+                    <TableRow className="bg-[hsl(var(--fli-yellow))]/5">
+                      <TableCell className="font-medium text-[hsl(var(--fli-yellow))]">
+                        Entrées prévues
                       </TableCell>
                       {tresorerieWithCumulative?.map((m) => (
-                        <TableCell key={m.mois} className="text-center font-medium text-emerald-600">
+                        <TableCell key={m.mois} className="text-center font-medium text-[hsl(var(--fli-yellow))]">
                           {formatPrice(m.entrees)}
                         </TableCell>
                       ))}
@@ -113,15 +106,12 @@ export default function FinanceTresorerie() {
                     </TableRow>
 
                     {/* Sorties */}
-                    <TableRow className="bg-red-50/50 dark:bg-red-950/20">
-                      <TableCell className="font-medium text-red-700 dark:text-red-400">
-                        <div className="flex items-center gap-2">
-                          <TrendingDown className="h-4 w-4" />
-                          Sorties prévues
-                        </div>
+                    <TableRow className="bg-[hsl(var(--fli-navy))]/5">
+                      <TableCell className="font-medium text-[hsl(var(--fli-navy))]">
+                        Sorties prévues
                       </TableCell>
                       {tresorerieWithCumulative?.map((m) => (
-                        <TableCell key={m.mois} className="text-center font-medium text-red-600">
+                        <TableCell key={m.mois} className="text-center font-medium text-[hsl(var(--fli-navy))]">
                           {formatPrice(m.sorties)}
                         </TableCell>
                       ))}
@@ -155,7 +145,7 @@ export default function FinanceTresorerie() {
                           key={m.mois} 
                           className={cn(
                             "text-center font-medium",
-                            m.solde >= 0 ? "text-emerald-600" : "text-red-600"
+                            m.solde >= 0 ? "text-[hsl(var(--fli-yellow))]" : "text-destructive"
                           )}
                         >
                           {formatPrice(m.solde)}
@@ -173,7 +163,7 @@ export default function FinanceTresorerie() {
                             className={cn(
                               "text-sm font-bold",
                               m.soldeCumulatif >= 0 
-                                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200"
+                                ? "bg-[hsl(var(--fli-yellow))]/15 text-[hsl(var(--fli-yellow))] border-[hsl(var(--fli-yellow))]/30"
                                 : ""
                             )}
                           >
@@ -189,7 +179,6 @@ export default function FinanceTresorerie() {
           </CardContent>
         </Card>
 
-        {/* Notes */}
         <Card>
           <CardContent className="py-4">
             <p className="text-sm text-muted-foreground">

@@ -44,7 +44,6 @@ export default function FinanceAnalyses() {
         .lte('invoice_date', endDate)
         .neq('status', 'cancelled');
 
-      // Group by client
       const byClient = new Map<string, { name: string; total: number; count: number }>();
       
       invoices?.forEach(inv => {
@@ -84,13 +83,11 @@ export default function FinanceAnalyses() {
 
   const exportCSV = (data: any[], filename: string) => {
     if (!data?.length) return;
-    
     const headers = Object.keys(data[0]);
     const csvContent = [
       headers.join(';'),
       ...data.map(row => headers.map(h => row[h]).join(';'))
     ].join('\n');
-    
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -101,7 +98,6 @@ export default function FinanceAnalyses() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div>
           <h1 className="text-2xl font-bold">Analyses Financières</h1>
           <p className="text-muted-foreground">
@@ -109,14 +105,12 @@ export default function FinanceAnalyses() {
           </p>
         </div>
 
-        {/* Period Selector */}
         <PeriodSelector
           startDate={startDate}
           endDate={endDate}
           onPeriodChange={handlePeriodChange}
         />
 
-        {/* Tabs */}
         <Tabs defaultValue="activity" className="space-y-4">
           <TabsList>
             <TabsTrigger value="activity">Par activité</TabsTrigger>
@@ -159,7 +153,7 @@ export default function FinanceAnalyses() {
                           <TableCell className="text-right text-muted-foreground">{formatPrice(item.valueN1)}</TableCell>
                           <TableCell className="text-right">
                             {item.evolution !== null ? (
-                              <span className={item.evolution >= 0 ? 'text-emerald-600' : 'text-red-600'}>
+                              <span className={item.evolution >= 0 ? 'text-[hsl(var(--fli-yellow))]' : 'text-destructive'}>
                                 {item.evolution >= 0 ? '+' : ''}{item.evolution.toFixed(1)}%
                               </span>
                             ) : (
@@ -186,7 +180,7 @@ export default function FinanceAnalyses() {
                             if (totalN1 === 0) return <span className="text-muted-foreground">-</span>;
                             const evol = ((totalN - totalN1) / totalN1) * 100;
                             return (
-                              <span className={evol >= 0 ? 'text-emerald-600' : 'text-red-600'}>
+                              <span className={evol >= 0 ? 'text-[hsl(var(--fli-yellow))]' : 'text-destructive'}>
                                 {evol >= 0 ? '+' : ''}{evol.toFixed(1)}%
                               </span>
                             );
@@ -286,8 +280,8 @@ export default function FinanceAnalyses() {
                           {inst.first_name} {inst.last_name}
                         </TableCell>
                         <TableCell className="text-right">{formatPrice(inst.total_du)}</TableCell>
-                        <TableCell className="text-right text-emerald-600">{formatPrice(inst.total_paye)}</TableCell>
-                        <TableCell className="text-right text-amber-600 font-medium">{formatPrice(inst.a_payer)}</TableCell>
+                        <TableCell className="text-right text-[hsl(var(--fli-yellow))]">{formatPrice(inst.total_paye)}</TableCell>
+                        <TableCell className="text-right font-medium">{formatPrice(inst.a_payer)}</TableCell>
                       </TableRow>
                     ))}
                     {instructorBalance && instructorBalance.length > 0 && (
@@ -296,10 +290,10 @@ export default function FinanceAnalyses() {
                         <TableCell className="text-right">
                           {formatPrice(instructorBalance.reduce((sum, i) => sum + i.total_du, 0))}
                         </TableCell>
-                        <TableCell className="text-right text-emerald-600">
+                        <TableCell className="text-right text-[hsl(var(--fli-yellow))]">
                           {formatPrice(instructorBalance.reduce((sum, i) => sum + i.total_paye, 0))}
                         </TableCell>
-                        <TableCell className="text-right text-amber-600">
+                        <TableCell className="text-right">
                           {formatPrice(instructorBalance.reduce((sum, i) => sum + i.a_payer, 0))}
                         </TableCell>
                       </TableRow>
