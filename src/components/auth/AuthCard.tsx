@@ -159,10 +159,10 @@ export function AuthCard() {
         <CardContent className="pt-4">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <TabsTrigger value="login" className="data-[state=active]:bg-fli-navy data-[state=active]:text-white">
                 Entrar
               </TabsTrigger>
-              <TabsTrigger value="register" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <TabsTrigger value="register" className="data-[state=active]:bg-fli-navy data-[state=active]:text-white">
                 Criar Conta
               </TabsTrigger>
             </TabsList>
@@ -236,7 +236,7 @@ export function AuthCard() {
               >
                 <Button
                   type="submit"
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium h-11"
+                  className="w-full bg-fli-navy hover:bg-fli-navy/90 text-white font-medium h-11"
                   disabled={isLoading || loginSuccess}
                 >
                   {isLoading ? (

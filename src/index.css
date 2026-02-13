@@ -17,6 +17,7 @@
     --fli-teal: 177 100% 35%;        /* #00B5AD - Accent teal */
     --fli-purple: 300 32% 48%;       /* #A154A1 - Accent purple */
     --fli-gray: 220 5% 67%;          /* #A7A9AC - Light gray */
+    --fli-navy: 219 52% 16%;         /* #14213D - Dark navy */
 
     /* Semantic tokens using FLI colors */
     --background: 0 0% 99%;
