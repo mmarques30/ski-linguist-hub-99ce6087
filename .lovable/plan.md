@@ -1,38 +1,56 @@
 
 
-# Background com Foto e Efeito Glassmorphism na Tela de Login
+# Menus Laterais com Categorias Colapsaveis
+
+## Problema atual
+As categorias (Gestion, Formation, Qualite, Administration) sao labels estaticos (`SidebarGroupLabel`) que ficam sempre visiveis. O usuario quer que funcionem como menus dropdown colapsaveis, semelhante ao comportamento atual do item "Finance".
 
 ## O que sera feito
 
-Adaptar a pagina `/auth` para usar a foto ESF/FLI como background em tela cheia, com efeito de desfoque (blur), e aplicar glassmorphism no card de login -- inspirado no exemplo do 21st.dev.
+Transformar a estrutura de navegacao para que cada categoria seja um item colapsavel com icone e seta, contendo seus sub-itens. O Dashboard permanece no topo como item direto.
 
-## Alteracoes
+### Nova estrutura visual
 
-### 1. Copiar a foto para o projeto
-- Copiar `fli_esf_v2_05.png` para `src/assets/fli-auth-bg.png`
+```text
+  FLI Logo
+  ─────────────
+  Dashboard
+  ─────────────
+  > Gestion          (colapsavel)
+      Finance >      (com sub-sub-itens)
+      Inscriptions
+      Factures
+      Stagiaires
+  > Formation         (colapsavel)
+      Tests de niveau
+      Evaluations
+      Sessions
+  > Qualite           (colapsavel)
+      Satisfaction
+      Amelioration
+      Documents
+  > Administration    (colapsavel)
+      Import
+      Phrases
+      Tests QA
+      Parametres
+  ─────────────
+  Langue | Deconnexion
+```
 
-### 2. Modificar `src/pages/Auth.tsx`
-- Adicionar a foto como background full-screen com `object-cover`
-- Aplicar `blur-sm` (desfoque leve) na imagem de fundo
-- Adicionar overlay escuro semi-transparente para contraste
-- Manter o card centralizado sobre o fundo
+### Alteracoes tecnicas em `src/components/layout/Sidebar.tsx`
 
-### 3. Modificar `src/components/auth/AuthCard.tsx`
-- Aplicar efeito glassmorphism no Card:
-  - `backdrop-blur-xl` para desfoque no card
-  - `bg-white/80` (fundo branco semi-transparente)
-  - `border border-white/20` para borda sutil
-  - `shadow-2xl` para profundidade
-- Garantir legibilidade do texto sobre o fundo translucido
+1. **Reestruturar `navigationGroups`**: Cada grupo com label passa a ser um item `Collapsible` com icone proprio:
+   - Gestion: icone `Briefcase`
+   - Formation: icone `GraduationCap`
+   - Qualite: icone `Shield` ou `Award`
+   - Administration: icone `Settings`
 
-## Resultado visual esperado
-- Foto de ski ESF cobrindo toda a tela, levemente desfocada
-- Overlay escuro sutil para garantir contraste
-- Card de login flutuando com efeito vidro fosco (glassmorphism)
-- Visual profissional e moderno
+2. **Novo componente `NavGroupCollapsible`**: Renderiza o grupo como um `Collapsible` com `SidebarMenuButton` (icone + nome + seta), e dentro dele os itens filhos. Se um filho tiver `subItems` (como Finance), renderiza aninhado com outro nivel de `Collapsible`.
 
-## Detalhes tecnicos
-- Imagem importada via ES6 module (`import bgImage from "@/assets/fli-auth-bg.png"`)
-- Blur no background: CSS `blur(4px)` ou Tailwind `blur-sm`
-- Glassmorphism no card: `backdrop-filter: blur(20px)` + fundo semi-transparente
-- Dark mode: ajustar para `bg-black/60` no overlay e `bg-gray-900/70` no card
+3. **Auto-abrir grupo ativo**: O grupo que contem a rota atual abre automaticamente via `useState` inicializado com base no `location.pathname`.
+
+4. **Dashboard sem grupo**: Permanece como item simples no topo, fora de qualquer grupo colapsavel.
+
+5. **Modo colapsado (icon)**: Quando o sidebar esta em modo icone, cada grupo mostra apenas seu icone com tooltip do nome da categoria.
+
