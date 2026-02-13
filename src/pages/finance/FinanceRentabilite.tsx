@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { PeriodSelector } from "@/components/finance/PeriodSelector";
+import { FinanceKPICard } from "@/components/finance/FinanceKPICard";
 import { AddCostDialog } from "@/components/finance/AddCostDialog";
 import { useFormationProfitability } from "@/hooks/useFinancialDashboard";
-import { Plus, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, ChevronDown, ChevronRight, TrendingUp, Receipt, Landmark } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -63,6 +64,14 @@ export default function FinanceRentabilite() {
     return <Badge variant="destructive">Faible</Badge>;
   };
 
+  // Summary calculations
+  const caTotal = formations?.reduce((sum, f) => sum + f.ca_ht, 0) || 0;
+  const coutsTotal = formations?.reduce((sum, f) => sum + f.couts_totaux, 0) || 0;
+  const margeTotal = caTotal - coutsTotal;
+  const margeMoyenne = formations && formations.length > 0
+    ? formations.reduce((sum, f) => sum + f.marge_pourcent, 0) / formations.length
+    : 0;
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -85,35 +94,32 @@ export default function FinanceRentabilite() {
           onPeriodChange={handlePeriodChange}
         />
 
-        {/* Summary */}
-        {formations && formations.length > 0 && (
-          <div className="grid gap-4 md:grid-cols-4">
-            <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-[hsl(var(--fli-yellow))]">
-              <p className="text-sm text-muted-foreground">CA Total</p>
-              <p className="text-xl font-bold">
-                {formatPrice(formations.reduce((sum, f) => sum + f.ca_ht, 0))}
-              </p>
-            </div>
-            <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-[hsl(var(--fli-navy))]">
-              <p className="text-sm text-muted-foreground">Coûts Totaux</p>
-              <p className="text-xl font-bold">
-                {formatPrice(formations.reduce((sum, f) => sum + f.couts_totaux, 0))}
-              </p>
-            </div>
-            <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-[hsl(var(--fli-yellow))]">
-              <p className="text-sm text-muted-foreground">Marge Totale</p>
-              <p className="text-xl font-bold text-[hsl(var(--fli-yellow))]">
-                {formatPrice(formations.reduce((sum, f) => sum + f.marge_brute, 0))}
-              </p>
-            </div>
-            <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-[hsl(var(--fli-navy))]">
-              <p className="text-sm text-muted-foreground">Marge Moyenne</p>
-              <p className="text-xl font-bold">
-                {(formations.reduce((sum, f) => sum + f.marge_pourcent, 0) / formations.length).toFixed(1)}%
-              </p>
-            </div>
-          </div>
-        )}
+        {/* Summary KPI Cards */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <FinanceKPICard
+            title="Marge brute"
+            value={margeTotal}
+            subtitle={`${margeMoyenne.toFixed(1)}% en moyenne`}
+            variant="gold"
+            formatAsPrice
+            icon={TrendingUp}
+          />
+          <FinanceKPICard
+            title="Coûts directs"
+            value={coutsTotal}
+            subtitle={`${formations?.length || 0} formations`}
+            variant="navy"
+            formatAsPrice
+            icon={Receipt}
+          />
+          <FinanceKPICard
+            title="CA Total"
+            value={caTotal}
+            variant="gold"
+            formatAsPrice
+            icon={Landmark}
+          />
+        </div>
 
         {/* Formations Table */}
         <Card>

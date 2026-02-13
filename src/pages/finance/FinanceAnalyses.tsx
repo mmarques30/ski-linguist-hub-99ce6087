@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PeriodSelector } from "@/components/finance/PeriodSelector";
+import { FinanceKPICard } from "@/components/finance/FinanceKPICard";
 import { useCAByType, useInstructorBalance } from "@/hooks/useFinancialDashboard";
-import { Download } from "lucide-react";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { Download, BarChart3, Ticket, CalendarRange } from "lucide-react";
+import { format, startOfMonth, endOfMonth, differenceInMonths } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -19,7 +20,6 @@ export default function FinanceAnalyses() {
   const { data: caByType } = useCAByType(startDate, endDate, true);
   const { data: instructorBalance } = useInstructorBalance();
 
-  // CA by client/school
   const { data: caByClient } = useQuery({
     queryKey: ['ca-by-client', startDate, endDate],
     queryFn: async () => {
@@ -28,16 +28,8 @@ export default function FinanceAnalyses() {
         .select(`
           amount_ht,
           inscription:inscription_id (
-            ski_school:ski_school_id (
-              id,
-              name
-            ),
-            student:student_id (
-              id,
-              company,
-              first_name,
-              last_name
-            )
+            ski_school:ski_school_id ( id, name ),
+            student:student_id ( id, company, first_name, last_name )
           )
         `)
         .gte('invoice_date', startDate)
@@ -45,15 +37,12 @@ export default function FinanceAnalyses() {
         .neq('status', 'cancelled');
 
       const byClient = new Map<string, { name: string; total: number; count: number }>();
-      
       invoices?.forEach(inv => {
         const clientName = inv.inscription?.ski_school?.name || 
           inv.inscription?.student?.company || 
           `${inv.inscription?.student?.first_name || ''} ${inv.inscription?.student?.last_name || ''}`.trim() ||
           'Client inconnu';
-        
         const clientId = inv.inscription?.ski_school?.id || inv.inscription?.student?.id || 'unknown';
-        
         if (!byClient.has(clientId)) {
           byClient.set(clientId, { name: clientName, total: 0, count: 0 });
         }
@@ -61,9 +50,7 @@ export default function FinanceAnalyses() {
         entry.total += Number(inv.amount_ht || 0);
         entry.count += 1;
       });
-
-      return Array.from(byClient.values())
-        .sort((a, b) => b.total - a.total);
+      return Array.from(byClient.values()).sort((a, b) => b.total - a.total);
     },
   });
 
@@ -80,6 +67,16 @@ export default function FinanceAnalyses() {
       maximumFractionDigits: 0,
     }).format(value);
   };
+
+  // Summary KPIs
+  const summaryKPIs = useMemo(() => {
+    const nbFormations = caByType?.length || 0;
+    const caTotal = caByType?.reduce((s, i) => s + i.value, 0) || 0;
+    const ticketMoyen = nbFormations > 0 ? caTotal / nbFormations : 0;
+    const nbMois = Math.max(differenceInMonths(new Date(endDate), new Date(startDate)), 1);
+    const caMensuelMoyen = caTotal / nbMois;
+    return { nbFormations, ticketMoyen, caMensuelMoyen };
+  }, [caByType, startDate, endDate]);
 
   const exportCSV = (data: any[], filename: string) => {
     if (!data?.length) return;
@@ -111,6 +108,30 @@ export default function FinanceAnalyses() {
           onPeriodChange={handlePeriodChange}
         />
 
+        {/* Summary KPI Cards */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <FinanceKPICard
+            title="Nb activités"
+            value={summaryKPIs.nbFormations}
+            variant="gold"
+            icon={BarChart3}
+          />
+          <FinanceKPICard
+            title="Ticket moyen"
+            value={summaryKPIs.ticketMoyen}
+            variant="navy"
+            formatAsPrice
+            icon={Ticket}
+          />
+          <FinanceKPICard
+            title="CA mensuel moyen"
+            value={summaryKPIs.caMensuelMoyen}
+            variant="gold"
+            formatAsPrice
+            icon={CalendarRange}
+          />
+        </div>
+
         <Tabs defaultValue="activity" className="space-y-4">
           <TabsList>
             <TabsTrigger value="activity">Par activité</TabsTrigger>
@@ -122,11 +143,7 @@ export default function FinanceAnalyses() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>CA par type d'activité</CardTitle>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => exportCSV(caByType || [], 'ca-par-activite')}
-                >
+                <Button variant="outline" size="sm" onClick={() => exportCSV(caByType || [], 'ca-par-activite')}>
                   <Download className="h-4 w-4 mr-2" />
                   Export CSV
                 </Button>
@@ -167,12 +184,8 @@ export default function FinanceAnalyses() {
                     {caByType && caByType.length > 0 && (
                       <TableRow className="bg-muted/50 font-medium">
                         <TableCell>Total</TableCell>
-                        <TableCell className="text-right">
-                          {formatPrice(caByType.reduce((sum, i) => sum + i.value, 0))}
-                        </TableCell>
-                        <TableCell className="text-right text-muted-foreground">
-                          {formatPrice(caByType.reduce((sum, i) => sum + i.valueN1, 0))}
-                        </TableCell>
+                        <TableCell className="text-right">{formatPrice(caByType.reduce((sum, i) => sum + i.value, 0))}</TableCell>
+                        <TableCell className="text-right text-muted-foreground">{formatPrice(caByType.reduce((sum, i) => sum + i.valueN1, 0))}</TableCell>
                         <TableCell className="text-right">
                           {(() => {
                             const totalN = caByType.reduce((sum, i) => sum + i.value, 0);
@@ -199,11 +212,7 @@ export default function FinanceAnalyses() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>CA par client / ESF</CardTitle>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => exportCSV(caByClient || [], 'ca-par-client')}
-                >
+                <Button variant="outline" size="sm" onClick={() => exportCSV(caByClient || [], 'ca-par-client')}>
                   <Download className="h-4 w-4 mr-2" />
                   Export CSV
                 </Button>
@@ -228,12 +237,8 @@ export default function FinanceAnalyses() {
                     {caByClient && caByClient.length > 0 && (
                       <TableRow className="bg-muted/50 font-medium">
                         <TableCell>Total</TableCell>
-                        <TableCell className="text-right">
-                          {formatPrice(caByClient.reduce((sum, c) => sum + c.total, 0))}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {caByClient.reduce((sum, c) => sum + c.count, 0)}
-                        </TableCell>
+                        <TableCell className="text-right">{formatPrice(caByClient.reduce((sum, c) => sum + c.total, 0))}</TableCell>
+                        <TableCell className="text-right">{caByClient.reduce((sum, c) => sum + c.count, 0)}</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
@@ -246,19 +251,15 @@ export default function FinanceAnalyses() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Balance formateurs</CardTitle>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => exportCSV(
-                    instructorBalance?.map(i => ({
-                      Formateur: `${i.first_name} ${i.last_name}`,
-                      Total_du: i.total_du,
-                      Total_paye: i.total_paye,
-                      A_payer: i.a_payer,
-                    })) || [], 
-                    'balance-formateurs'
-                  )}
-                >
+                <Button variant="outline" size="sm" onClick={() => exportCSV(
+                  instructorBalance?.map(i => ({
+                    Formateur: `${i.first_name} ${i.last_name}`,
+                    Total_du: i.total_du,
+                    Total_paye: i.total_paye,
+                    A_payer: i.a_payer,
+                  })) || [], 
+                  'balance-formateurs'
+                )}>
                   <Download className="h-4 w-4 mr-2" />
                   Export CSV
                 </Button>
@@ -276,9 +277,7 @@ export default function FinanceAnalyses() {
                   <TableBody>
                     {instructorBalance?.map((inst) => (
                       <TableRow key={inst.id}>
-                        <TableCell className="font-medium">
-                          {inst.first_name} {inst.last_name}
-                        </TableCell>
+                        <TableCell className="font-medium">{inst.first_name} {inst.last_name}</TableCell>
                         <TableCell className="text-right">{formatPrice(inst.total_du)}</TableCell>
                         <TableCell className="text-right text-[hsl(var(--fli-yellow))]">{formatPrice(inst.total_paye)}</TableCell>
                         <TableCell className="text-right font-medium">{formatPrice(inst.a_payer)}</TableCell>
@@ -287,15 +286,9 @@ export default function FinanceAnalyses() {
                     {instructorBalance && instructorBalance.length > 0 && (
                       <TableRow className="bg-muted/50 font-medium">
                         <TableCell>Total</TableCell>
-                        <TableCell className="text-right">
-                          {formatPrice(instructorBalance.reduce((sum, i) => sum + i.total_du, 0))}
-                        </TableCell>
-                        <TableCell className="text-right text-[hsl(var(--fli-yellow))]">
-                          {formatPrice(instructorBalance.reduce((sum, i) => sum + i.total_paye, 0))}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatPrice(instructorBalance.reduce((sum, i) => sum + i.a_payer, 0))}
-                        </TableCell>
+                        <TableCell className="text-right">{formatPrice(instructorBalance.reduce((sum, i) => sum + i.total_du, 0))}</TableCell>
+                        <TableCell className="text-right text-[hsl(var(--fli-yellow))]">{formatPrice(instructorBalance.reduce((sum, i) => sum + i.total_paye, 0))}</TableCell>
+                        <TableCell className="text-right">{formatPrice(instructorBalance.reduce((sum, i) => sum + i.a_payer, 0))}</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
