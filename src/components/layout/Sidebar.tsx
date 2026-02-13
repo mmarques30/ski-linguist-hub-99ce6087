@@ -253,25 +253,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
-      <SidebarHeader className="border-b border-sidebar-border">
-        <div
-          className={cn(
-            "flex items-center gap-2 px-2 py-2",
-            isCollapsed ? "justify-center" : "justify-start"
-          )}
-        >
-          {!isCollapsed && (
-            <img src={fliLogo} alt="FLI" className="h-8 w-auto" />
-          )}
-          {isCollapsed && (
-            <div className="h-8 w-8 rounded-md bg-sidebar-primary flex items-center justify-center">
-              <span className="text-sidebar-primary-foreground font-bold text-sm">
-                FLI
-              </span>
-            </div>
-          )}
-        </div>
-      </SidebarHeader>
+      <SidebarHeader className="border-b border-sidebar-border py-1" />
 
       <SidebarContent className="scrollbar-thin">
         {/* Dashboard - standalone */}
