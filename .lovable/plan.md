@@ -1,149 +1,105 @@
 
+# Integrar permissoes de edicao em todas as paginas do sistema
 
-# Gestao de Usuarios com Permissoes por Aba/Sub-aba
+## Contexto
+O hook `useUserPermissions` ja possui as funcoes `canView()` e `canEdit()`, e as permissoes ja sao armazenadas no banco. Porem, nenhuma pagina utiliza `canEdit()` para condicionar a exibicao dos controles de edicao (botoes de criar, editar, excluir). Todos os usuarios autenticados veem todos os botoes.
 
 ## Objetivo
-Criar um sistema completo de gestao de usuarios dentro do menu Administration, permitindo ao admin criar novos usuarios e configurar permissoes granulares de visualizacao e edicao por aba e sub-aba do sistema.
+Condicionar a exibicao e habilitacao dos botoes de criacao, edicao e exclusao em todas as paginas com base na permissao `can_edit` do usuario logado. Admins continuam com acesso total.
 
-## Arquitetura do Banco de Dados
+## Abordagem
+Cada pagina passara a importar `useUserPermissions` e usar `canEdit(routeKey)` para esconder ou desabilitar os controles de escrita.
 
-### 1. Tabela `user_roles` (papel global)
-```sql
-CREATE TYPE public.app_role AS ENUM ('admin', 'user');
+## Paginas afetadas e elementos condicionados
 
-CREATE TABLE public.user_roles (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  role app_role NOT NULL DEFAULT 'user',
-  UNIQUE (user_id, role)
-);
+### 1. `src/pages/Students.tsx` (routeKey: `students`)
+- Esconder botao "Nouveau stagiaire"
+- Esconder botao de edicao (Pencil) em cada linha/card
+- O botao "Voir le profil" (Eye) permanece visivel (leitura)
+
+### 2. `src/pages/Inscriptions.tsx` (routeKey: `inscriptions`)
+- Esconder botao "Nouvelle inscription"
+- Esconder botao "Importer CSV"
+- Esconder botao de edicao (Edit) e exclusao (Trash2) em cada linha
+- Esconder dropdown de mudanca de status
+- Esconder botao "End Pack" (Package)
+- Manter botao "Voir" (Eye)
+
+### 3. `src/pages/Invoices.tsx` (routeKey: `invoices`)
+- Esconder botao "Nouvelle Facture"
+- Esconder botao de edicao (Pencil) em cada linha
+- Esconder acoes "Marquer envoyee" e "Marquer payee"
+- Manter botao de visualizacao (Eye)
+
+### 4. `src/pages/finance/FinanceDashboard.tsx` (routeKey: `finance`)
+- Esconder botao "Payer" na tabela de formadores a pagar
+- Graficos e KPIs permanecem visiveis (leitura)
+
+### 5. `src/pages/finance/FinanceAnalyses.tsx` (routeKey: `finance.analyses`)
+- Pagina e predominantemente leitura (graficos/tabelas)
+- Sem alteracoes necessarias (nao ha botoes de edicao)
+
+### 6. `src/pages/finance/FinanceRentabilite.tsx` (routeKey: `finance.rentabilite`)
+- Esconder botao "Ajouter coût" em cada formacao
+- Manter os dados de visualizacao
+
+### 7. `src/pages/finance/FinanceTresorerie.tsx` (routeKey: `finance.tresorerie`)
+- Pagina de leitura apenas - sem alteracoes
+
+### 8. `src/pages/finance/FinanceChargesFixes.tsx` (routeKey: `finance.charges_fixes`)
+- Esconder edicao inline dos templates (botao de edicao de montante)
+- Esconder switch de ativo/inativo dos templates
+- Esconder botao "Generer charges"
+- Esconder checkbox de "pago" nas linhas de custos mensais
+
+### 9. `src/pages/PlacementTests.tsx` (routeKey: `tests`)
+- Pagina de leitura - nao ha acoes de edicao direta
+
+### 10. `src/pages/formateur/EvaluationsList.tsx` (routeKey: `evaluations`)
+- Esconder botao "Evaluer" nas avaliacoes pendentes
+- Esconder botao "Modifier" nas avaliacoes completas
+- Manter botao "Voir" (Eye)
+
+### 11. `src/pages/Classes.tsx` (routeKey: `classes`)
+- Esconder botao "Nouvelle session"
+- Pagina atualmente sem dados, mas preparar para o futuro
+
+### 12. `src/pages/SatisfactionStats.tsx` (routeKey: `satisfaction`)
+- Pagina de leitura - sem acoes de edicao
+
+### 13. `src/pages/ContinuousImprovement.tsx` (routeKey: `amelioration`)
+- Esconder botao "Nouvelle action"
+- Esconder botao de edicao (Pencil) e exclusao (Trash2) em cada linha
+- Manter visualizacao dos KPIs e tabela
+
+### 14. `src/pages/Documents.tsx` (routeKey: `documents`)
+- Esconder botao "Televerser un document"
+- Esconder botao de exclusao (Trash2) nos documentos
+
+### 15. `src/pages/students/StudentDetails.tsx` e `src/pages/inscriptions/InscriptionDetails.tsx`
+- Esconder botoes de edicao nos detalhes (herdam routeKey do pai: `students` / `inscriptions`)
+
+## Detalhes tecnicos
+
+### Padrao de implementacao (mesmo para todas as paginas)
+```tsx
+import { useUserPermissions } from "@/hooks/useUserPermissions";
+
+// No componente:
+const { canEdit } = useUserPermissions();
+const editable = canEdit("routeKey");
+
+// Nos botoes de edicao:
+{editable && (
+  <Button onClick={...}>
+    <Plus /> Ajouter
+  </Button>
+)}
 ```
 
-### 2. Tabela `user_permissions` (permissoes granulares por rota)
-```sql
-CREATE TABLE public.user_permissions (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  route_key TEXT NOT NULL,        -- ex: "finance", "finance.analyses", "inscriptions"
-  can_view BOOLEAN DEFAULT false,
-  can_edit BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE (user_id, route_key)
-);
-```
+### Paginas sem edicao (somente leitura)
+As paginas a seguir nao possuem acoes de escrita e nao precisam de alteracoes:
+- FinanceAnalyses, FinanceTresorerie, PlacementTests, SatisfactionStats
 
-### 3. Tabela `profiles` (informacoes do usuario)
-```sql
-CREATE TABLE public.profiles (
-  id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  email TEXT NOT NULL,
-  full_name TEXT,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-```
-
-### 4. Funcao de seguranca + RLS
-- Funcao `has_role(user_id, role)` como SECURITY DEFINER para evitar recursao
-- RLS em `user_roles`: somente admins podem ler/escrever
-- RLS em `user_permissions`: somente admins podem ler/escrever
-- RLS em `profiles`: admins podem ver todos, usuario pode ver o proprio
-- Trigger para criar profile automaticamente ao criar usuario (via auth trigger)
-
-## Rotas do Sistema (route_keys)
-Mapa completo de rotas para permissoes:
-
-| route_key | Label | Pai |
-|-----------|-------|-----|
-| dashboard | Dashboard | - |
-| finance | Vue d'ensemble | Gestion |
-| finance.analyses | Analyses | Finance |
-| finance.rentabilite | Rentabilite | Finance |
-| finance.tresorerie | Tresorerie | Finance |
-| finance.charges_fixes | Charges fixes | Finance |
-| inscriptions | Inscriptions | Gestion |
-| invoices | Factures | Gestion |
-| students | Stagiaires | Gestion |
-| tests | Tests de niveau | Formation |
-| evaluations | Evaluations | Formation |
-| classes | Sessions | Formation |
-| satisfaction | Satisfaction | Qualite |
-| amelioration | Amelioration | Qualite |
-| documents | Documents | Qualite |
-| admin | Administration | - |
-
-Admins tem acesso total automaticamente. A secao "Administration" so aparece para admins.
-
-## Ficheiros Novos
-
-### `src/pages/admin/UserManagement.tsx`
-Pagina principal de gestao de usuarios com:
-- Lista de usuarios (tabela com nome, email, role, status)
-- Botao "Ajouter un utilisateur"
-- Acoes: editar permissoes, desativar
-
-### `src/components/admin/UserFormDialog.tsx`
-Dialog para criar novo usuario:
-- Campos: nome completo, email, senha temporaria
-- Select de role (admin / user)
-- Grid de permissoes com checkboxes por aba/sub-aba (can_view, can_edit)
-- Estrutura em accordion por grupo (Gestion, Formation, Qualite)
-
-### `src/components/admin/UserPermissionsEditor.tsx`
-Componente reutilizavel com a grid de permissoes:
-- Accordion por grupo de navegacao
-- Cada item com 2 checkboxes: Visualiser / Modifier
-- Toggle "tout selectionner" por grupo
-- Logica: se can_edit=true, can_view e forcado a true
-
-### `src/hooks/useUserManagement.ts`
-Hook para CRUD de usuarios:
-- Listar profiles + roles + permissions
-- Criar usuario (via edge function que chama admin API)
-- Atualizar permissoes
-- Desativar usuario
-
-### `src/hooks/useUserPermissions.ts`
-Hook para verificar permissoes do usuario logado:
-- Carrega permissoes do usuario atual
-- Funcao `canView(routeKey)` e `canEdit(routeKey)`
-- Admins retornam true para tudo
-
-### Edge Function `supabase/functions/create-user/index.ts`
-- Recebe email, password, full_name, role, permissions
-- Usa service_role para criar usuario via `supabase.auth.admin.createUser()`
-- Insere profile, role e permissions
-- Retorna o usuario criado
-
-## Ficheiros Modificados
-
-### `src/components/layout/Sidebar.tsx`
-- Adicionar item "Utilisateurs" no grupo Administration (icone `UserCog`)
-- Filtrar itens de navegacao baseado nas permissoes do usuario (esconder abas sem can_view)
-
-### `src/App.tsx`
-- Adicionar rota `/admin/users` -> `UserManagement`
-
-### `src/components/auth/ProtectedRoute.tsx`
-- Versao melhorada que aceita prop `routeKey` opcional
-- Se routeKey fornecido, verifica se usuario tem can_view para essa rota
-- Se nao tem, redireciona para "/" ou mostra pagina "Acces refuse"
-
-## Fluxo de Criacao de Usuario
-
-1. Admin clica "Ajouter un utilisateur"
-2. Preenche nome, email, senha temporaria
-3. Seleciona role (admin/user)
-4. Se role=user, configura permissoes aba por aba com checkboxes
-5. Ao salvar, chama edge function `create-user`
-6. Edge function cria usuario, profile, role e permissions
-7. Lista atualiza mostrando novo usuario
-
-## Detalhes Tecnicos
-
-- O `create-user` edge function usa `SUPABASE_SERVICE_ROLE_KEY` (ja configurado)
-- Permissoes sao armazenadas como linhas individuais em `user_permissions` (uma por rota)
-- A sidebar filtra dinamicamente: se usuario nao tem can_view para nenhum item de um grupo, o grupo inteiro some
-- O hook `useUserPermissions` usa cache via react-query para evitar queries repetidas
-- Nenhuma verificacao de permissao via localStorage (tudo server-side via RLS + queries)
-
+### Total de ficheiros modificados: ~11 paginas
+Nenhum ficheiro novo. Nenhuma migracao de banco de dados.
