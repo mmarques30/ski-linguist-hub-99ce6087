@@ -1,42 +1,76 @@
 
-# Reorganizar Analyses com Tabs internas
+
+# Melhorar Rentabilite com Dashboard visual + Tabs
 
 ## Objetivo
-Separar a pagina Analyses em 2 abas internas (Tabs): uma para o dashboard visual e outra para as tabelas detalhadas. Remover os cards de exportacao CSV das tabelas "CA par type" e "CA par client".
+Reorganizar a pagina Rentabilite em 2 abas internas (como feito em Analyses): uma aba "Dashboard" com KPIs visuais, grafico e cards de custos, e uma aba "Tableaux" com a tabela detalhada existente.
 
-## Alteracoes em `src/pages/finance/FinanceAnalyses.tsx`
+## Estrutura Final
 
-### 1. Adicionar Tabs (Radix UI)
-- Importar `Tabs, TabsList, TabsTrigger, TabsContent` de `@/components/ui/tabs`
-- Colocar o `PeriodSelector` FORA das tabs (visivel em ambas)
-- Criar 2 abas:
-  - **"Dashboard"** (default): contem KPI Grid, RevenueChart, RevenueSources + QuarterlyForecast
-  - **"Tableaux"**: contem as 3 tabelas (CA par activite, CA par client, Balance formateurs)
-
-### 2. Remover botoes Export CSV
-- Remover o botao "Export CSV" do card "CA par type d'activite" (linhas 117-119)
-- Remover o botao "Export CSV" do card "CA par client / ESF" (linhas 177-179)
-- Manter o botao "Export CSV" apenas no card "Balance formateurs"
-
-### 3. Estrutura final
 ```text
-Titre: Analyses Financieres
-PeriodSelector (dropdown)
+Titre: Rentabilite des Formations
+PeriodSelector (dropdown) + Botao "Ajouter un cout"
 [Dashboard] [Tableaux]    <-- TabsList
 
 -- Tab Dashboard --
-  KPI Grid (2x3)
-  RevenueChart
-  RevenueSources | QuarterlyForecast
+  6 KPI Cards (2x3)
+  Grafico "Couts et Projections" (LineChart)
+  2 cards lado a lado: Couts par Categorie | Prevision de Couts
 
 -- Tab Tableaux --
-  CA par type d'activite (sem Export CSV)
-  CA par client / ESF (sem Export CSV)
-  Balance formateurs (com Export CSV)
+  Tabela detalhada por formacao (existente, sem alteracao)
 ```
 
-### 4. Simplification CardHeader des tables sans export
-- Les CardHeader des tables sans export passent d'un layout `flex-row justify-between` a un simple CardHeader standard
+## Detalhes por secao
 
-## Fichier modifie
-- `src/pages/finance/FinanceAnalyses.tsx` uniquement
+### Secao 1 - KPI Cards (2 linhas x 3)
+**Linha 1:**
+- **Marge Brute** - margeMoyenne (%), evolucao badge, subtitulo "CA - Couts directs"
+- **Couts Directs** - coutsTotal (EUR), subtitulo "Formateurs + materiel"
+- **CA Formations** - caTotal (EUR), subtitulo "total mensuel"
+
+**Linha 2:**
+- **Depenses Mensuelles** - media mensal de custos (coutsTotal / nb meses do periodo)
+- **Cout par Aluno** - custo medio por formacao (coutsTotal / nb formations)
+- **Margem de Lucro** - margeMoyenne (%), subtitulo "vs mes anterior"
+
+Dados calculados localmente a partir do `useFormationProfitability` existente.
+
+### Secao 2 - Grafico "Couts et Projections"
+- `LineChart` (recharts) com 2 linhas:
+  - Linha solida vermelha/laranja: custos reais agrupados por mes (a partir dos dados de formations)
+  - Linha tracejada laranja: projecao (media movel dos ultimos 3 meses)
+- Eixo X: meses, Eixo Y: EUR
+
+### Secao 3 - Grid 2 colunas
+**Coluna esquerda - "Couts par Categorie":**
+- Card com lista: Formateur, Hebergement, Deplacement, Salle, Autres
+- Cada item com nome, barra de progresso proporcional, valor EUR
+- Dados agregados de todas as formations do periodo
+
+**Coluna direita - "Prevision de Couts":**
+- Card com projecao dos proximos 3 meses (media movel)
+- Linha total + badge "Lucro Projete Q[X]"
+
+### Tab Tableaux
+- Tabela detalhada existante (linhas 124-228 do ficheiro atual) movida para esta aba sem alteracao
+
+## Ficheiros
+
+### Novos componentes
+- `src/components/finance/RentabiliteDashboard.tsx` - contem KPIs + grafico + cards visuais
+- `src/components/finance/CostsByCategory.tsx` - card "Couts par Categorie" com barras
+- `src/components/finance/CostForecast.tsx` - card "Prevision de Couts" trimestral
+
+### Ficheiro modificado
+- `src/pages/finance/FinanceRentabilite.tsx` - adicionar Tabs, mover tabela para tab Tableaux, adicionar RentabiliteDashboard na tab Dashboard
+
+## Detalhes tecnicos
+- Imports: `Tabs, TabsList, TabsTrigger, TabsContent` de `@/components/ui/tabs`
+- Imports recharts: `LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend`
+- Calculos de custos por mes: agrupar `formations` por `start_date.substring(0,7)` e somar `couts_totaux`
+- Calculos de custos por categoria: somar `cout_formateur`, `cout_hebergement`, etc. de todas as formations
+- Projecao: media movel dos ultimos 3 meses projetada para os 3 proximos
+- Cores: BRAND_GOLD (`hsl(var(--fli-yellow))`) para linhas solidas, vermelho para custos reais
+- Nenhuma migration de banco necessaria
+
