@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { PeriodSelector } from "@/components/finance/PeriodSelector";
 import { FinanceKPICard } from "@/components/finance/FinanceKPICard";
-import { AddCostDialog } from "@/components/finance/AddCostDialog";
 import { InstructorPaymentDialog } from "@/components/finance/InstructorPaymentDialog";
 import { 
   useFinancialKPIs, 
@@ -17,22 +16,11 @@ import {
   useInstructorBalance,
 } from "@/hooks/useFinancialDashboard";
 import { useFinancialRealtime } from "@/hooks/useFinancialRealtime";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, DollarSign, CreditCard, Users, TrendingUp } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  Legend,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
 } from "recharts";
 
 const BRAND_GOLD = 'hsl(40, 97%, 54%)';
@@ -45,7 +33,6 @@ export default function FinanceDashboard() {
   const today = new Date();
   const [startDate, setStartDate] = useState(format(startOfMonth(today), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(endOfMonth(today), 'yyyy-MM-dd'));
-  const [addCostOpen, setAddCostOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [selectedInstructor, setSelectedInstructor] = useState<any>(null);
 
@@ -76,6 +63,36 @@ export default function FinanceDashboard() {
     }).format(value);
   };
 
+  // Horizontal bars data: revenue vs expenses per month
+  const revenueVsExpenses = useMemo(() => {
+    if (!caByMonth) return [];
+    return caByMonth.map(m => {
+      const date = new Date(m.month + '-01');
+      return {
+        label: date.toLocaleDateString('fr-FR', { month: 'short' }),
+        revenue: m.total,
+        expenses: m.totalN1 || 0, // using N-1 as comparison
+      };
+    });
+  }, [caByMonth]);
+
+  const maxBarValue = useMemo(() => {
+    if (!revenueVsExpenses.length) return 1;
+    return Math.max(...revenueVsExpenses.flatMap(m => [m.revenue, m.expenses]), 1);
+  }, [revenueVsExpenses]);
+
+  // Quarterly goals (hardcoded targets for now)
+  const quarterlyGoals = useMemo(() => {
+    const caTotal = kpis?.caFacture || 0;
+    const margeActuelle = kpis?.margePourcent || 0;
+    const nbFormateurs = kpis?.formateursConcernes || 0;
+    return [
+      { label: 'Receita Trimestral', current: caTotal, target: 50000, format: 'price' as const },
+      { label: 'Novos Stagiaires', current: nbFormateurs, target: 15, format: 'number' as const },
+      { label: 'Marge cible', current: margeActuelle, target: 60, format: 'percent' as const },
+    ];
+  }, [kpis]);
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -87,7 +104,6 @@ export default function FinanceDashboard() {
           </p>
         </div>
 
-        {/* Period Selector */}
         <PeriodSelector
           startDate={startDate}
           endDate={endDate}
@@ -103,6 +119,7 @@ export default function FinanceDashboard() {
             evolution={kpis?.caFactureEvol ?? undefined}
             variant="gold"
             formatAsPrice
+            icon={DollarSign}
           />
           <FinanceKPICard
             title="Encaissé"
@@ -111,6 +128,7 @@ export default function FinanceDashboard() {
             evolution={kpis?.encaisseEvol ?? undefined}
             variant="gold"
             formatAsPrice
+            icon={CreditCard}
           />
           <FinanceKPICard
             title="À payer formateurs"
@@ -119,6 +137,7 @@ export default function FinanceDashboard() {
             evolution={kpis?.aPayerFormateursEvol ?? undefined}
             variant="navy"
             formatAsPrice
+            icon={Users}
           />
           <FinanceKPICard
             title="Marge brute"
@@ -127,64 +146,58 @@ export default function FinanceDashboard() {
             evolution={kpis?.margeBruteEvol ?? undefined}
             variant={kpis?.margePourcent && kpis.margePourcent >= 50 ? 'gold' : 'navy'}
             formatAsPrice
+            icon={TrendingUp}
           />
         </div>
 
-        {/* Charts Row 1 */}
+        {/* Charts Row: Horizontal Bars + Pie */}
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* CA Evolution */}
+          {/* Receitas vs Despesas - Custom horizontal bars */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Évolution du CA</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Receitas vs Despesas</CardTitle>
+                <div className="flex items-center gap-4 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-2.5 w-2.5 rounded-full bg-[hsl(var(--fli-yellow))]" />
+                    <span className="text-muted-foreground">Receitas</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-2.5 w-2.5 rounded-full bg-[hsl(var(--fli-navy))]" />
+                    <span className="text-muted-foreground">Despesas</span>
+                  </div>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={caByMonth || []}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis 
-                      dataKey="month" 
-                      tickFormatter={(v) => {
-                        const date = new Date(v + '-01');
-                        return date.toLocaleDateString('fr-FR', { month: 'short' });
-                      }}
-                      className="text-xs"
-                    />
-                    <YAxis 
-                      tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
-                      className="text-xs"
-                    />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
-                      formatter={(value: number, name: string) => [
-                        formatPrice(value),
-                        name === 'total' ? 'CA N' : 'CA N-1'
-                      ]}
-                      labelFormatter={(label) => {
-                        const date = new Date(label + '-01');
-                        return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-                      }}
-                    />
-                    <Legend formatter={(value) => value === 'total' ? 'CA N' : 'CA N-1'} />
-                    <Line 
-                      type="monotone" 
-                      dataKey="total" 
-                      name="total"
-                      stroke={BRAND_GOLD}
-                      strokeWidth={2}
-                      dot={{ fill: BRAND_GOLD }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="totalN1" 
-                      name="totalN1"
-                      stroke={BRAND_NAVY}
-                      strokeWidth={2}
-                      strokeDasharray="5 5"
-                      dot={{ fill: BRAND_NAVY }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+              <div className="space-y-4">
+                {revenueVsExpenses.length > 0 ? revenueVsExpenses.map((m, idx) => (
+                  <div key={idx} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium capitalize w-12">{m.label}</span>
+                      <div className="flex gap-4 text-xs text-muted-foreground">
+                        <span>{formatPrice(m.revenue)}</span>
+                        <span>{formatPrice(m.expenses)}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-[hsl(var(--fli-yellow))] transition-all duration-500"
+                          style={{ width: `${(m.revenue / maxBarValue) * 100}%` }}
+                        />
+                      </div>
+                      <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-[hsl(var(--fli-navy))] transition-all duration-500"
+                          style={{ width: `${(m.expenses / maxBarValue) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )) : (
+                  <p className="text-center text-muted-foreground py-8">Aucune donnée</p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -223,15 +236,44 @@ export default function FinanceDashboard() {
           </Card>
         </div>
 
-        {/* Comparaison CA N vs N-1 */}
+        {/* Metas do Trimestre */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Comparaison CA mensuel N vs N-1</CardTitle>
+            <CardTitle className="text-lg">Metas do Trimestre</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-6 md:grid-cols-3">
+              {quarterlyGoals.map((goal, idx) => {
+                const progress = Math.min((goal.current / goal.target) * 100, 100);
+                const displayCurrent = goal.format === 'price' ? formatPrice(goal.current) 
+                  : goal.format === 'percent' ? `${goal.current.toFixed(1)}%`
+                  : goal.current.toString();
+                const displayTarget = goal.format === 'price' ? formatPrice(goal.target)
+                  : goal.format === 'percent' ? `${goal.target}%`
+                  : goal.target.toString();
+                return (
+                  <div key={idx} className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium">{goal.label}</span>
+                      <span className="text-muted-foreground">{displayCurrent} / {displayTarget}</span>
+                    </div>
+                    <Progress value={progress} className="h-2.5 [&>div]:bg-[hsl(var(--fli-yellow))]" />
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* CA Evolution */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Évolution du CA</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={caByMonth || []}>
+                <LineChart data={caByMonth || []}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis 
                     dataKey="month" 
@@ -257,19 +299,9 @@ export default function FinanceDashboard() {
                     }}
                   />
                   <Legend formatter={(value) => value === 'total' ? 'CA N' : 'CA N-1'} />
-                  <Bar 
-                    dataKey="total" 
-                    name="total"
-                    fill={BRAND_GOLD}
-                    radius={[4, 4, 0, 0]}
-                  />
-                  <Bar 
-                    dataKey="totalN1" 
-                    name="totalN1"
-                    fill={BRAND_NAVY}
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
+                  <Line type="monotone" dataKey="total" name="total" stroke={BRAND_GOLD} strokeWidth={2} dot={{ fill: BRAND_GOLD }} />
+                  <Line type="monotone" dataKey="totalN1" name="totalN1" stroke={BRAND_NAVY} strokeWidth={2} strokeDasharray="5 5" dot={{ fill: BRAND_NAVY }} />
+                </LineChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
@@ -372,7 +404,6 @@ export default function FinanceDashboard() {
         </div>
       </div>
 
-      <AddCostDialog open={addCostOpen} onOpenChange={setAddCostOpen} />
       <InstructorPaymentDialog 
         open={paymentOpen} 
         onOpenChange={setPaymentOpen}
