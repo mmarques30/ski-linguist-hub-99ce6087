@@ -1,76 +1,36 @@
 
 
-# Melhorar Rentabilite com Dashboard visual + Tabs
+# Corriger la lisibilite du graphique "Repartition des impayes"
 
-## Objetivo
-Reorganizar a pagina Rentabilite em 2 abas internas (como feito em Analyses): uma aba "Dashboard" com KPIs visuais, grafico e cards de custos, e uma aba "Tableaux" com a tabela detalhada existente.
+## Probleme
+Le graphique PieChart sur la page Charges Fixes a des labels qui se chevauchent et sont coupes car:
+1. `labelLine={false}` force les labels directement sur les segments, ce qui provoque des superpositions
+2. Le conteneur (250px de hauteur) est trop petit pour afficher tous les labels
+3. Seulement 4 couleurs definies (`CHART_COLORS`) pour potentiellement 10 types de couts, ce qui rend les categories difficiles a distinguer
 
-## Estrutura Final
+## Solution
 
-```text
-Titre: Rentabilite des Formations
-PeriodSelector (dropdown) + Botao "Ajouter un cout"
-[Dashboard] [Tableaux]    <-- TabsList
+### Fichier: `src/pages/finance/FinanceChargesFixes.tsx`
 
--- Tab Dashboard --
-  6 KPI Cards (2x3)
-  Grafico "Couts et Projections" (LineChart)
-  2 cards lado a lado: Couts par Categorie | Prevision de Couts
+**1. Ajouter plus de couleurs**
+- Etendre `CHART_COLORS` de 4 a 10 couleurs distinctes pour couvrir tous les types de couts
 
--- Tab Tableaux --
-  Tabela detalhada por formacao (existente, sem alteracao)
+**2. Remplacer les labels du Pie par une legende externe**
+- Retirer le `label` custom du composant `<Pie>` (qui cause les superpositions)
+- Ajouter une legende en dessous du graphique sous forme de liste avec pastilles de couleur + nom + pourcentage + valeur
+- Augmenter la hauteur du conteneur de 250px a 300px
+
+**3. Structure du nouveau rendu**
+```
+[    Donut Chart (sans labels)    ]
+[  Legende: pastille + nom + %   ]
 ```
 
-## Detalhes por secao
+La legende sera une grille 2 colonnes sous le donut, chaque item montrant:
+- Pastille de couleur
+- Nom de la categorie
+- Pourcentage
+- Valeur en EUR
 
-### Secao 1 - KPI Cards (2 linhas x 3)
-**Linha 1:**
-- **Marge Brute** - margeMoyenne (%), evolucao badge, subtitulo "CA - Couts directs"
-- **Couts Directs** - coutsTotal (EUR), subtitulo "Formateurs + materiel"
-- **CA Formations** - caTotal (EUR), subtitulo "total mensuel"
-
-**Linha 2:**
-- **Depenses Mensuelles** - media mensal de custos (coutsTotal / nb meses do periodo)
-- **Cout par Aluno** - custo medio por formacao (coutsTotal / nb formations)
-- **Margem de Lucro** - margeMoyenne (%), subtitulo "vs mes anterior"
-
-Dados calculados localmente a partir do `useFormationProfitability` existente.
-
-### Secao 2 - Grafico "Couts et Projections"
-- `LineChart` (recharts) com 2 linhas:
-  - Linha solida vermelha/laranja: custos reais agrupados por mes (a partir dos dados de formations)
-  - Linha tracejada laranja: projecao (media movel dos ultimos 3 meses)
-- Eixo X: meses, Eixo Y: EUR
-
-### Secao 3 - Grid 2 colunas
-**Coluna esquerda - "Couts par Categorie":**
-- Card com lista: Formateur, Hebergement, Deplacement, Salle, Autres
-- Cada item com nome, barra de progresso proporcional, valor EUR
-- Dados agregados de todas as formations do periodo
-
-**Coluna direita - "Prevision de Couts":**
-- Card com projecao dos proximos 3 meses (media movel)
-- Linha total + badge "Lucro Projete Q[X]"
-
-### Tab Tableaux
-- Tabela detalhada existante (linhas 124-228 do ficheiro atual) movida para esta aba sem alteracao
-
-## Ficheiros
-
-### Novos componentes
-- `src/components/finance/RentabiliteDashboard.tsx` - contem KPIs + grafico + cards visuais
-- `src/components/finance/CostsByCategory.tsx` - card "Couts par Categorie" com barras
-- `src/components/finance/CostForecast.tsx` - card "Prevision de Couts" trimestral
-
-### Ficheiro modificado
-- `src/pages/finance/FinanceRentabilite.tsx` - adicionar Tabs, mover tabela para tab Tableaux, adicionar RentabiliteDashboard na tab Dashboard
-
-## Detalhes tecnicos
-- Imports: `Tabs, TabsList, TabsTrigger, TabsContent` de `@/components/ui/tabs`
-- Imports recharts: `LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend`
-- Calculos de custos por mes: agrupar `formations` por `start_date.substring(0,7)` e somar `couts_totaux`
-- Calculos de custos por categoria: somar `cout_formateur`, `cout_hebergement`, etc. de todas as formations
-- Projecao: media movel dos ultimos 3 meses projetada para os 3 proximos
-- Cores: BRAND_GOLD (`hsl(var(--fli-yellow))`) para linhas solidas, vermelho para custos reais
-- Nenhuma migration de banco necessaria
+Cela garantit que toutes les categories sont lisibles independamment de la taille des segments.
 
