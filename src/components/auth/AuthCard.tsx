@@ -107,7 +107,7 @@ export function AuthCard() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="w-full max-w-lg mx-auto shadow-xl border-0 bg-card px-4">
+      <Card className="w-full max-w-xl mx-auto shadow-xl border-0 bg-card">
         <CardHeader className="space-y-4 text-center pb-2">
           <motion.div
             initial={{ scale: 0.9 }}
