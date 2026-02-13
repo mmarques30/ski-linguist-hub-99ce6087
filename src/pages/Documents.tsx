@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { FileText, Download, Upload, Search, Eye, Trash2, FolderOpen } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 
 const translations = {
   title: {
@@ -114,6 +115,8 @@ const documents: Document[] = [];
 
 export default function Documents() {
   const { t } = useLanguage();
+  const { canEdit } = useUserPermissions();
+  const editable = canEdit("documents");
 
   const documentCategories = [
     {
@@ -149,10 +152,12 @@ export default function Documents() {
               {t(translations.subtitle)}
             </p>
           </div>
-          <Button>
-            <Upload className="mr-2 h-4 w-4" />
-            {t(translations.uploadDocument)}
-          </Button>
+          {editable && (
+            <Button>
+              <Upload className="mr-2 h-4 w-4" />
+              {t(translations.uploadDocument)}
+            </Button>
+          )}
         </div>
 
         {/* Search */}
@@ -230,9 +235,11 @@ export default function Documents() {
                       <Button variant="ghost" size="icon" className="h-8 w-8">
                         <Download className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {editable && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 ))}

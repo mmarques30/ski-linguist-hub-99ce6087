@@ -12,6 +12,7 @@ import {
 import { Calendar, MapPin, Users, Clock, Plus, ChevronLeft, ChevronRight, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 
 const translations = {
   title: {
@@ -150,6 +151,8 @@ const timeLabels = {
 
 export default function Classes() {
   const { t } = useLanguage();
+  const { canEdit } = useUserPermissions();
+  const editable = canEdit("classes");
 
   const statusLabels = {
     upcoming: t(translations.statusUpcoming),
@@ -168,10 +171,12 @@ export default function Classes() {
               {t(translations.subtitle)}
             </p>
           </div>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            {t(translations.newSession)}
-          </Button>
+          {editable && (
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              {t(translations.newSession)}
+            </Button>
+          )}
         </div>
 
         {/* Calendar Navigation */}

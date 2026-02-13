@@ -41,6 +41,7 @@ import { fr, ptBR, enUS } from "date-fns/locale";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDeleteInscription } from "@/hooks/useInscriptions";
 import { toast } from "sonner";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 
 const translations = {
   back: { fr: "Retour", "pt-BR": "Voltar", en: "Back" },
@@ -99,6 +100,8 @@ export default function InscriptionDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t, language } = useLanguage();
+  const { canEdit } = useUserPermissions();
+  const editable = canEdit("inscriptions");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const deleteInscription = useDeleteInscription();
   const getDateLocale = () => {
@@ -220,29 +223,31 @@ export default function InscriptionDetails() {
               {inscription.student_name} • {inscription.language}
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <Edit className="mr-2 h-4 w-4" />
-              {t(translations.editInscription)}
-            </Button>
-            <Button variant="outline" size="sm">
-              <Package className="mr-2 h-4 w-4" />
-              {t(translations.endPack)}
-            </Button>
-            <Button size="sm">
-              <Receipt className="mr-2 h-4 w-4" />
-              {t(translations.createInvoice)}
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-              onClick={() => setDeleteDialogOpen(true)}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              {t(translations.deleteInscription)}
-            </Button>
-          </div>
+          {editable && (
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm">
+                <Edit className="mr-2 h-4 w-4" />
+                {t(translations.editInscription)}
+              </Button>
+              <Button variant="outline" size="sm">
+                <Package className="mr-2 h-4 w-4" />
+                {t(translations.endPack)}
+              </Button>
+              <Button size="sm">
+                <Receipt className="mr-2 h-4 w-4" />
+                {t(translations.createInvoice)}
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {t(translations.deleteInscription)}
+              </Button>
+            </div>
+          )}
         </div>
 
         <Tabs defaultValue="general" className="space-y-4">

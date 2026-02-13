@@ -40,6 +40,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 
 const typeLabels: Record<ImprovementType, string> = {
   'VEILLE_PEDAGOGIQUE': 'Veille pédagogique',
@@ -71,6 +72,8 @@ const typeColors: Record<ImprovementType, string> = {
 
 export default function ContinuousImprovementPage() {
   const { improvements, isLoading, createImprovement, updateImprovement, deleteImprovement } = useContinuousImprovement();
+  const { canEdit } = useUserPermissions();
+  const editable = canEdit("amelioration");
   
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -286,26 +289,28 @@ export default function ContinuousImprovementPage() {
                         {format(new Date(item.start_date), 'dd MMM yyyy', { locale: fr })}
                       </TableCell>
                       <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEdit(item)}>
-                              <Pencil className="mr-2 h-4 w-4" />
-                              Modifier
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => handleDelete(item)}
-                              className="text-destructive"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Supprimer
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        {editable && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEdit(item)}>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Modifier
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleDelete(item)}
+                                className="text-destructive"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Supprimer
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))
@@ -316,13 +321,15 @@ export default function ContinuousImprovementPage() {
         </Card>
 
         {/* Floating Action Button */}
-        <Button
-          onClick={handleCreate}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg"
-          size="icon"
-        >
-          <Plus className="h-6 w-6" />
-        </Button>
+        {editable && (
+          <Button
+            onClick={handleCreate}
+            className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg"
+            size="icon"
+          >
+            <Plus className="h-6 w-6" />
+          </Button>
+        )}
 
         {/* Form Dialog */}
         <ImprovementFormDialog

@@ -13,6 +13,7 @@ import { useFormationProfitability } from "@/hooks/useFinancialDashboard";
 import { Plus, ChevronDown, ChevronRight } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 
 export default function FinanceRentabilite() {
   const today = new Date();
@@ -23,6 +24,8 @@ export default function FinanceRentabilite() {
   const [selectedInscription, setSelectedInscription] = useState<string | undefined>();
 
   const { data: formations } = useFormationProfitability(startDate, endDate);
+  const { canEdit } = useUserPermissions();
+  const editable = canEdit("finance.rentabilite");
 
   const handlePeriodChange = (start: string, end: string) => {
     setStartDate(start);
@@ -64,10 +67,12 @@ export default function FinanceRentabilite() {
             <h1 className="text-2xl font-bold">Rentabilité des Formations</h1>
             <p className="text-muted-foreground">Analyse de la marge par formation</p>
           </div>
-          <Button onClick={() => { setSelectedInscription(undefined); setAddCostOpen(true); }}>
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter un coût
-          </Button>
+          {editable && (
+            <Button onClick={() => { setSelectedInscription(undefined); setAddCostOpen(true); }}>
+              <Plus className="h-4 w-4 mr-2" />
+              Ajouter un coût
+            </Button>
+          )}
         </div>
 
         <PeriodSelector startDate={startDate} endDate={endDate} onPeriodChange={handlePeriodChange} />
@@ -128,11 +133,13 @@ export default function FinanceRentabilite() {
                               {formatPrice(formation.marge_brute)}
                             </TableCell>
                             <TableCell className="text-right">{getMargeBadge(formation.marge_pourcent)}</TableCell>
-                            <TableCell>
-                              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleAddCost(formation.id!); }}>
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
+                            {editable && (
+                              <TableCell>
+                                <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleAddCost(formation.id!); }}>
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            )}
                           </TableRow>
                           <CollapsibleContent asChild>
                             <TableRow className="bg-muted/30">

@@ -44,6 +44,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { EndPackDialog } from "@/components/endpack/EndPackDialog";
 import { InscriptionFormDialog } from "@/components/inscriptions/InscriptionFormDialog";
 import { toast } from "sonner";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 const translations = {
   title: {
     fr: "Inscriptions",
@@ -237,6 +238,8 @@ export default function Inscriptions() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [inscriptionToDelete, setInscriptionToDelete] = useState<{ id: string; name: string } | null>(null);
   const { language, t } = useLanguage();
+  const { canEdit } = useUserPermissions();
+  const editable = canEdit("inscriptions");
   const updateStatus = useUpdateInscriptionStatus();
   const deleteInscription = useDeleteInscription();
 
@@ -323,20 +326,24 @@ export default function Inscriptions() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/import">
-                <Upload className="mr-2 h-4 w-4" />
-                {t(translations.importCSV)}
-              </Link>
-            </Button>
+            {editable && (
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/admin/import">
+                  <Upload className="mr-2 h-4 w-4" />
+                  {t(translations.importCSV)}
+                </Link>
+              </Button>
+            )}
             <Button variant="outline" size="sm">
               <Download className="mr-2 h-4 w-4" />
               {t(translations.export)}
             </Button>
-            <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              {t(translations.newInscription)}
-            </Button>
+            {editable && (
+              <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                {t(translations.newInscription)}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -451,30 +458,36 @@ export default function Inscriptions() {
                     </TableCell>
                     <TableCell>{formatPrice(inscription.price)}</TableCell>
                     <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-auto p-0 hover:bg-transparent">
-                            <Badge className={cn(statusStyles[inscription.status] || "bg-gray-100 text-gray-800", "hover:opacity-80 cursor-pointer")}>
-                              {statusLabels[inscription.status] || inscription.status}
-                            </Badge>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                          {statusOptions.map((option) => {
-                            const Icon = option.icon;
-                            return (
-                              <DropdownMenuItem
-                                key={option.value}
-                                onClick={() => handleStatusChange(inscription.id, option.value)}
-                                disabled={inscription.status === option.value || updateStatus.isPending}
-                              >
-                                <Icon className={cn("mr-2 h-4 w-4", option.color)} />
-                                {statusLabels[option.value]}
-                              </DropdownMenuItem>
-                            );
-                          })}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {editable ? (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-auto p-0 hover:bg-transparent">
+                              <Badge className={cn(statusStyles[inscription.status] || "bg-gray-100 text-gray-800", "hover:opacity-80 cursor-pointer")}>
+                                {statusLabels[inscription.status] || inscription.status}
+                              </Badge>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start">
+                            {statusOptions.map((option) => {
+                              const Icon = option.icon;
+                              return (
+                                <DropdownMenuItem
+                                  key={option.value}
+                                  onClick={() => handleStatusChange(inscription.id, option.value)}
+                                  disabled={inscription.status === option.value || updateStatus.isPending}
+                                >
+                                  <Icon className={cn("mr-2 h-4 w-4", option.color)} />
+                                  {statusLabels[option.value]}
+                                </DropdownMenuItem>
+                              );
+                            })}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ) : (
+                        <Badge className={cn(statusStyles[inscription.status] || "bg-gray-100 text-gray-800")}>
+                          {statusLabels[inscription.status] || inscription.status}
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
@@ -483,46 +496,50 @@ export default function Inscriptions() {
                             <Eye className="h-4 w-4" />
                           </Link>
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8"
-                          onClick={() => setEditingInscription(inscription)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
+                        {editable && (
+                          <>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8"
+                              onClick={() => setEditingInscription(inscription)}
+                            >
+                              <Edit className="h-4 w-4" />
                             </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => setEndPackInscription({
-                                id: inscription.id,
-                                student_id: inscription.student_id,
-                                student_name: inscription.student_name,
-                                language: inscription.language,
-                                entry_level: inscription.entry_level,
-                                exit_level: inscription.exit_level,
-                                duration_hours: inscription.duration_hours,
-                                price: inscription.price,
-                                code: inscription.code,
-                              })}
-                            >
-                              <Package className="mr-2 h-4 w-4" />
-                              Pack Fin de Formation
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="text-destructive"
-                              onClick={() => handleDeleteClick(inscription)}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Supprimer
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => setEndPackInscription({
+                                    id: inscription.id,
+                                    student_id: inscription.student_id,
+                                    student_name: inscription.student_name,
+                                    language: inscription.language,
+                                    entry_level: inscription.entry_level,
+                                    exit_level: inscription.exit_level,
+                                    duration_hours: inscription.duration_hours,
+                                    price: inscription.price,
+                                    code: inscription.code,
+                                  })}
+                                >
+                                  <Package className="mr-2 h-4 w-4" />
+                                  Pack Fin de Formation
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  className="text-destructive"
+                                  onClick={() => handleDeleteClick(inscription)}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Supprimer
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

@@ -34,6 +34,7 @@ import { format, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOf
 import { fr, ptBR, enUS } from "date-fns/locale";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 
 const translations = {
   title: {
@@ -306,6 +307,8 @@ export default function Invoices() {
   const [editOpen, setEditOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const { language, t } = useLanguage();
+  const { canEdit } = useUserPermissions();
+  const editable = canEdit("invoices");
 
   // Calculate date range based on period filter
   const getSeasonDates = (offset: number = 0) => {
@@ -545,10 +548,12 @@ export default function Invoices() {
               <Download className="mr-2 h-4 w-4" />
               {t(translations.export)}
             </Button>
-            <Button size="sm" onClick={() => setCreateOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              {t(translations.newInvoice)}
-            </Button>
+            {editable && (
+              <Button size="sm" onClick={() => setCreateOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                {t(translations.newInvoice)}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -761,36 +766,40 @@ export default function Invoices() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => {
-                            setSelectedInvoice(invoice);
-                            setEditOpen(true);
-                          }}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        {invoice.status === "draft" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-blue-600"
-                            onClick={() => handleMarkAsSent(invoice)}
-                          >
-                            <Send className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {invoice.status === "sent" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-emerald-600"
-                            onClick={() => handleMarkAsPaid(invoice)}
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                          </Button>
+                        {editable && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => {
+                                setSelectedInvoice(invoice);
+                                setEditOpen(true);
+                              }}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            {invoice.status === "draft" && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-blue-600"
+                                onClick={() => handleMarkAsSent(invoice)}
+                              >
+                                <Send className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {invoice.status === "sent" && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-emerald-600"
+                                onClick={() => handleMarkAsPaid(invoice)}
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </>
                         )}
                       </div>
                     </TableCell>
