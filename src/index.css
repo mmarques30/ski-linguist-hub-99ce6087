@@ -60,6 +60,13 @@
     --sidebar-border: 300 2% 30%;
     --sidebar-ring: 40 97% 54%;
 
+    /* Chart colors - Brand palette */
+    --chart-1: 40 97% 54%;         /* Gold #FCA311 */
+    --chart-2: 219 52% 16%;        /* Navy #14213D */
+    --chart-3: 0 0% 90%;           /* Gray #E5E5E5 */
+    --chart-4: 0 0% 9%;            /* Black */
+    --chart-5: 0 0% 100%;          /* White */
+
     /* Status colors */
     --status-pending: 40 97% 54%;
     --status-active: 177 100% 35%;

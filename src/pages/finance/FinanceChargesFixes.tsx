@@ -16,10 +16,16 @@ import {
   useUpdateFixedCost,
 } from "@/hooks/useFinancialDashboard";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw, CheckCircle, AlertCircle, TrendingUp, Wallet, Clock, PieChart } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { format, startOfMonth, subMonths, isBefore } from "date-fns";
 import { fr } from "date-fns/locale";
-import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+
+const BRAND_GOLD = 'hsl(40, 97%, 54%)';
+const BRAND_NAVY = 'hsl(219, 52%, 16%)';
+const BRAND_GRAY = 'hsl(0, 0%, 90%)';
+const BRAND_BLACK = 'hsl(0, 0%, 9%)';
+const CHART_COLORS = [BRAND_GOLD, BRAND_NAVY, BRAND_GRAY, BRAND_BLACK];
 
 const costTypeLabels: Record<string, string> = {
   loyer: 'Loyer',
@@ -44,12 +50,11 @@ export default function FinanceChargesFixes() {
 
   const { data: templates } = useCostTemplates();
   const { data: fixedCosts } = useFixedCosts(selectedMonth);
-  const { data: allFixedCosts } = useFixedCosts(); // All costs for dashboard
+  const { data: allFixedCosts } = useFixedCosts();
   const updateTemplate = useUpdateCostTemplate();
   const generateCharges = useGenerateMonthlyCharges();
   const updateFixedCost = useUpdateFixedCost();
 
-  // Calculate unpaid costs across all months
   const unpaidStats = useMemo(() => {
     if (!allFixedCosts) return { total: 0, count: 0, byType: [], overdue: [] };
     
@@ -59,7 +64,6 @@ export default function FinanceChargesFixes() {
     const unpaid = allFixedCosts.filter(c => !c.paye);
     const total = unpaid.reduce((sum, c) => sum + Number(c.montant), 0);
     
-    // Group by type
     const byTypeMap = new Map<string, number>();
     unpaid.forEach(c => {
       const current = byTypeMap.get(c.cost_type) || 0;
@@ -70,7 +74,6 @@ export default function FinanceChargesFixes() {
       value,
     }));
     
-    // Overdue = unpaid and month is before current month
     const overdue = unpaid.filter(c => {
       const costMonth = new Date(c.mois);
       return isBefore(costMonth, currentMonthStart);
@@ -79,7 +82,6 @@ export default function FinanceChargesFixes() {
     return { total, count: unpaid.length, byType, overdue };
   }, [allFixedCosts]);
 
-  // Monthly trend data
   const monthlyTrend = useMemo(() => {
     if (!allFixedCosts) return [];
     
@@ -101,7 +103,6 @@ export default function FinanceChargesFixes() {
     return last6Months;
   }, [allFixedCosts]);
 
-  // Generate list of months for selection
   const months = [];
   for (let i = -3; i <= 3; i++) {
     const d = new Date();
@@ -168,12 +169,9 @@ export default function FinanceChargesFixes() {
   const totalPaid = fixedCosts?.filter(c => c.paye).reduce((sum, c) => sum + Number(c.montant), 0) || 0;
   const paymentProgress = totalCharges > 0 ? (totalPaid / totalCharges) * 100 : 0;
 
-  const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
-
   return (
     <MainLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div>
           <h1 className="text-2xl font-bold">Charges Fixes</h1>
           <p className="text-muted-foreground">
@@ -190,73 +188,43 @@ export default function FinanceChargesFixes() {
 
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="space-y-6">
-            {/* KPI Cards */}
             <div className="grid gap-4 md:grid-cols-4">
-              <Card className="p-4 border-l-4 border-l-destructive">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total impayé</p>
-                    <p className="text-2xl font-bold text-destructive">{formatPrice(unpaidStats.total)}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{unpaidStats.count} charge(s)</p>
-                  </div>
-                  <div className="p-2 bg-destructive/10 rounded-full">
-                    <Wallet className="h-5 w-5 text-destructive" />
-                  </div>
-                </div>
-              </Card>
+              <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-destructive">
+                <p className="text-sm text-muted-foreground">Total impayé</p>
+                <p className="text-2xl font-bold text-destructive">{formatPrice(unpaidStats.total)}</p>
+                <p className="text-xs text-muted-foreground mt-1">{unpaidStats.count} charge(s)</p>
+              </div>
               
-              <Card className={`p-4 border-l-4 ${unpaidStats.overdue.length > 0 ? 'border-l-amber-500' : 'border-l-emerald-500'}`}>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">En retard</p>
-                    <p className={`text-2xl font-bold ${unpaidStats.overdue.length > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
-                      {unpaidStats.overdue.length}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {formatPrice(unpaidStats.overdue.reduce((s, c) => s + Number(c.montant), 0))}
-                    </p>
-                  </div>
-                  <div className={`p-2 rounded-full ${unpaidStats.overdue.length > 0 ? 'bg-amber-500/10' : 'bg-emerald-500/10'}`}>
-                    <Clock className={`h-5 w-5 ${unpaidStats.overdue.length > 0 ? 'text-amber-600' : 'text-emerald-600'}`} />
-                  </div>
-                </div>
-              </Card>
+              <div className={`bg-card border border-border rounded-lg p-4 border-l-4 ${unpaidStats.overdue.length > 0 ? 'border-l-destructive' : 'border-l-[hsl(var(--fli-yellow))]'}`}>
+                <p className="text-sm text-muted-foreground">En retard</p>
+                <p className={`text-2xl font-bold ${unpaidStats.overdue.length > 0 ? 'text-destructive' : 'text-[hsl(var(--fli-yellow))]'}`}>
+                  {unpaidStats.overdue.length}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formatPrice(unpaidStats.overdue.reduce((s, c) => s + Number(c.montant), 0))}
+                </p>
+              </div>
 
-              <Card className="p-4 border-l-4 border-l-primary">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Ce mois</p>
-                    <p className="text-2xl font-bold">{formatPrice(totalCharges)}</p>
-                    <div className="mt-2">
-                      <Progress value={paymentProgress} className="h-2" />
-                      <p className="text-xs text-muted-foreground mt-1">{Math.round(paymentProgress)}% payé</p>
-                    </div>
-                  </div>
-                  <div className="p-2 bg-primary/10 rounded-full">
-                    <TrendingUp className="h-5 w-5 text-primary" />
-                  </div>
+              <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-[hsl(var(--fli-yellow))]">
+                <p className="text-sm text-muted-foreground">Ce mois</p>
+                <p className="text-2xl font-bold">{formatPrice(totalCharges)}</p>
+                <div className="mt-2">
+                  <Progress value={paymentProgress} className="h-2" />
+                  <p className="text-xs text-muted-foreground mt-1">{Math.round(paymentProgress)}% payé</p>
                 </div>
-              </Card>
+              </div>
 
-              <Card className="p-4 border-l-4 border-l-muted-foreground">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Mensuel prévu</p>
-                    <p className="text-2xl font-bold">{formatPrice(totalTemplates)}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {templates?.filter(t => t.actif).length} modèles actifs
-                    </p>
-                  </div>
-                  <div className="p-2 bg-muted rounded-full">
-                    <PieChart className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                </div>
-              </Card>
+              <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-[hsl(var(--fli-navy))]">
+                <p className="text-sm text-muted-foreground">Mensuel prévu</p>
+                <p className="text-2xl font-bold">{formatPrice(totalTemplates)}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {templates?.filter(t => t.actif).length} modèles actifs
+                </p>
+              </div>
             </div>
 
             {/* Charts Row */}
             <div className="grid gap-6 md:grid-cols-2">
-              {/* Unpaid by Type Pie Chart */}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Répartition des impayés</CardTitle>
@@ -277,36 +245,32 @@ export default function FinanceChargesFixes() {
                           labelLine={false}
                         >
                           {unpaidStats.byType.map((_, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                           ))}
                         </Pie>
                         <Tooltip 
+                          contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
                           formatter={(value: number) => formatPrice(value)}
                         />
                       </RechartsPie>
                     </ResponsiveContainer>
                   ) : (
                     <div className="flex flex-col items-center justify-center h-[250px] text-muted-foreground">
-                      <CheckCircle className="h-12 w-12 text-emerald-500 mb-2" />
-                      <p>Toutes les charges sont payées !</p>
+                      <p>Toutes les charges sont payées</p>
                     </div>
                   )}
                 </CardContent>
               </Card>
 
-              {/* Overdue List */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5 text-amber-500" />
-                    Charges en retard
-                  </CardTitle>
+                  <CardTitle className="text-lg">Charges en retard</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {unpaidStats.overdue.length > 0 ? (
                     <div className="space-y-3 max-h-[250px] overflow-auto">
                       {unpaidStats.overdue.map((cost) => (
-                        <div key={cost.id} className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
+                        <div key={cost.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
                           <div>
                             <p className="font-medium">{costTypeLabels[cost.cost_type] || cost.cost_type}</p>
                             <p className="text-sm text-muted-foreground">
@@ -314,7 +278,7 @@ export default function FinanceChargesFixes() {
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-bold text-amber-600">{formatPrice(Number(cost.montant))}</p>
+                            <p className="font-bold">{formatPrice(Number(cost.montant))}</p>
                             <Button
                               size="sm"
                               variant="outline"
@@ -329,7 +293,6 @@ export default function FinanceChargesFixes() {
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center h-[250px] text-muted-foreground">
-                      <CheckCircle className="h-12 w-12 text-emerald-500 mb-2" />
                       <p>Aucune charge en retard</p>
                     </div>
                   )}
@@ -354,11 +317,11 @@ export default function FinanceChargesFixes() {
                       </div>
                       <div className="flex h-3 rounded-full overflow-hidden bg-muted">
                         <div 
-                          className="bg-emerald-500 transition-all"
+                          className="bg-[hsl(var(--fli-yellow))] transition-all"
                           style={{ width: `${month.total > 0 ? (month.paid / month.total) * 100 : 0}%` }}
                         />
                         <div 
-                          className="bg-destructive/60 transition-all"
+                          className="bg-[hsl(var(--fli-navy))]/60 transition-all"
                           style={{ width: `${month.total > 0 ? (month.unpaid / month.total) * 100 : 0}%` }}
                         />
                       </div>
@@ -367,11 +330,11 @@ export default function FinanceChargesFixes() {
                 </div>
                 <div className="flex items-center gap-4 mt-4 text-sm">
                   <div className="flex items-center gap-2">
-                    <div className="h-3 w-3 rounded-full bg-emerald-500" />
+                    <div className="h-3 w-3 rounded-full bg-[hsl(var(--fli-yellow))]" />
                     <span>Payé</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="h-3 w-3 rounded-full bg-destructive/60" />
+                    <div className="h-3 w-3 rounded-full bg-[hsl(var(--fli-navy))]/60" />
                     <span>Impayé</span>
                   </div>
                 </div>
@@ -380,7 +343,6 @@ export default function FinanceChargesFixes() {
           </TabsContent>
 
           <TabsContent value="month" className="space-y-4">
-            {/* Month Selector and Generate */}
             <div className="flex flex-wrap items-center gap-4">
               <select
                 value={selectedMonth}
@@ -399,23 +361,21 @@ export default function FinanceChargesFixes() {
               </Button>
             </div>
 
-            {/* Summary */}
             <div className="grid gap-4 md:grid-cols-3">
-              <Card className="p-4">
+              <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-[hsl(var(--fli-navy))]">
                 <p className="text-sm text-muted-foreground">Total charges</p>
                 <p className="text-xl font-bold">{formatPrice(totalCharges)}</p>
-              </Card>
-              <Card className="p-4 bg-emerald-50 dark:bg-emerald-950/30">
+              </div>
+              <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-[hsl(var(--fli-yellow))]">
                 <p className="text-sm text-muted-foreground">Payé</p>
-                <p className="text-xl font-bold text-emerald-600">{formatPrice(totalPaid)}</p>
-              </Card>
-              <Card className="p-4 bg-amber-50 dark:bg-amber-950/30">
+                <p className="text-xl font-bold text-[hsl(var(--fli-yellow))]">{formatPrice(totalPaid)}</p>
+              </div>
+              <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-destructive">
                 <p className="text-sm text-muted-foreground">À payer</p>
-                <p className="text-xl font-bold text-amber-600">{formatPrice(totalCharges - totalPaid)}</p>
-              </Card>
+                <p className="text-xl font-bold">{formatPrice(totalCharges - totalPaid)}</p>
+              </div>
             </div>
 
-            {/* Charges Table */}
             <Card>
               <CardHeader>
                 <CardTitle>
@@ -447,8 +407,7 @@ export default function FinanceChargesFixes() {
                         </TableCell>
                         <TableCell className="text-center">
                           {cost.paye ? (
-                            <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 gap-1">
-                              <CheckCircle className="h-3 w-3" />
+                            <Badge className="bg-[hsl(var(--fli-yellow))]/15 text-[hsl(var(--fli-yellow))] border-[hsl(var(--fli-yellow))]/30">
                               Payé
                             </Badge>
                           ) : (
@@ -480,7 +439,6 @@ export default function FinanceChargesFixes() {
           </TabsContent>
 
           <TabsContent value="templates" className="space-y-4">
-            {/* Templates Summary */}
             <Card className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -493,7 +451,6 @@ export default function FinanceChargesFixes() {
               </div>
             </Card>
 
-            {/* Templates Table */}
             <Card>
               <CardHeader>
                 <CardTitle>Modèles de charges récurrentes</CardTitle>
@@ -531,7 +488,7 @@ export default function FinanceChargesFixes() {
                                 OK
                               </Button>
                               <Button size="sm" variant="ghost" onClick={() => setEditingTemplate(null)}>
-                                ✕
+                                X
                               </Button>
                             </div>
                           ) : (
