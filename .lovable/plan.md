@@ -1,36 +1,52 @@
 
+# Menu Superior com Logo, Notificacoes e Perfil
 
-# Corriger la lisibilite du graphique "Repartition des impayes"
+## Objetivo
+Criar um header superior fixo que esconde ao rolar para baixo e reaparece ao voltar ao topo, contendo a logo FLI (removida da sidebar), icones de notificacoes e perfil no estilo dock/glassmorphic. Tambem corrigir o delay visual ao colapsar a sidebar.
 
-## Probleme
-Le graphique PieChart sur la page Charges Fixes a des labels qui se chevauchent et sont coupes car:
-1. `labelLine={false}` force les labels directement sur les segments, ce qui provoque des superpositions
-2. Le conteneur (250px de hauteur) est trop petit pour afficher tous les labels
-3. Seulement 4 couleurs definies (`CHART_COLORS`) pour potentiellement 10 types de couts, ce qui rend les categories difficiles a distinguer
+## Alteracoes
 
-## Solution
+### 1. Novo componente `src/components/layout/TopHeader.tsx`
+- Header fixo no topo com `position: sticky` e comportamento hide-on-scroll
+- Usar um hook de scroll direction: ao rolar para baixo o header desliza para cima (`-translate-y-full`), ao rolar para cima ou estar no topo ele reaparece (`translate-y-0`)
+- Conteudo:
+  - **Esquerda**: `SidebarTrigger` (botao toggle menu lateral) + Logo FLI (imagem `fli-marca-yellow.png`)
+  - **Direita**: Icones estilo dock com efeitos hover (scale + glow sutil):
+    - `Bell` (notificacoes) - com badge vermelho opcional
+    - `User` (perfil) - avatar com iniciais do usuario
+- Estilo glassmorphic: `bg-background/80 backdrop-blur-md border-b`
+- Transicao suave: `transition-transform duration-300`
 
-### Fichier: `src/pages/finance/FinanceChargesFixes.tsx`
+### 2. Modificar `src/components/layout/MainLayout.tsx`
+- Substituir o header atual pelo novo `TopHeader`
+- Remover o header inline existente (linhas 15-17)
+- O TopHeader ficara dentro do `SidebarInset` para respeitar o layout da sidebar
 
-**1. Ajouter plus de couleurs**
-- Etendre `CHART_COLORS` de 4 a 10 couleurs distinctes pour couvrir tous les types de couts
+### 3. Modificar `src/components/layout/Sidebar.tsx`
+- **Remover a logo** do `SidebarHeader` (ja estara no TopHeader)
+- Simplificar o `SidebarHeader` para ficar sem conteudo visivel ou remover completamente
+- **Corrigir delay de colapso**: adicionar `overflow-hidden` e `transition-none` nos textos dos itens quando colapsado, para que o texto desapareca instantaneamente em vez de fazer fade/slide
 
-**2. Remplacer les labels du Pie par une legende externe**
-- Retirer le `label` custom du composant `<Pie>` (qui cause les superpositions)
-- Ajouter une legende en dessous du graphique sous forme de liste avec pastilles de couleur + nom + pourcentage + valeur
-- Augmenter la hauteur du conteneur de 250px a 300px
+### 4. Modificar `src/components/ui/sidebar.tsx`
+- No componente `SidebarContent`, alterar a classe de transicao de `duration-200` para remover o delay nos textos ao colapsar (os textos dos menus devem sumir instantaneamente via `opacity-0` com `duration-0` quando collapsed)
+- Alternativa: aplicar `[&_span]:group-data-[collapsible=icon]:hidden` para esconder textos imediatamente
 
-**3. Structure du nouveau rendu**
+## Comportamento do scroll hide/show
+```text
+Scroll para baixo -> header desliza para cima (hidden)
+Scroll para cima  -> header desliza de volta (visible)  
+No topo da pagina -> header sempre visivel
 ```
-[    Donut Chart (sans labels)    ]
-[  Legende: pastille + nom + %   ]
+
+Implementacao via `useEffect` com `scroll` event listener comparando `scrollY` atual vs anterior.
+
+## Estrutura visual do header
+```text
+[Toggle] [Logo FLI]                    [Bell] [User]
 ```
 
-La legende sera une grille 2 colonnes sous le donut, chaque item montrant:
-- Pastille de couleur
-- Nom de la categorie
-- Pourcentage
-- Valeur en EUR
-
-Cela garantit que toutes les categories sont lisibles independamment de la taille des segments.
-
+## Ficheiros
+- **Novo**: `src/components/layout/TopHeader.tsx`
+- **Modificado**: `src/components/layout/MainLayout.tsx`
+- **Modificado**: `src/components/layout/Sidebar.tsx`
+- **Modificado**: `src/components/ui/sidebar.tsx` (fix delay)
