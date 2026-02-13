@@ -1,39 +1,61 @@
 
 
-# Remplacer le PeriodSelector "sub-tabs" par un filtre compact
+# Melhorar Interface de Analyses Financieres
 
-## Probleme
-Le composant `PeriodSelector` affiche 6 boutons horizontaux ("Ce mois", "Mois dernier", "Cette saison", etc.) qui ressemblent a des sous-onglets de navigation. Ce composant est repete identiquement sur 3 pages: Dashboard, Analyses, et Rentabilite. Il faut le transformer en un filtre compact (dropdown/select) qui ne ressemble plus a des onglets.
+## Referencia Visual
+As imagens mostram um layout moderno com:
+- 2 linhas de 3 KPI cards com badges de evolucao em laranja
+- Grafico de linhas "Receita e Projecoes" (linha solida laranja = real, tracejada escura = projecao)
+- 2 cards lado a lado: "Fontes de Receita" (lista por tipo) e "Previsao Trimestral" (projecao por mes)
 
-## Solution
-Remplacer les 6 boutons par un **Select dropdown** compact avec les memes options, accompagne de la plage de dates affichee. Le calendrier personnalise reste accessible via l'option "Personnalise".
+## Estrutura Nova do `FinanceAnalyses.tsx`
 
-### Avant (boutons horizontaux)
-```text
-[Ce mois] [Mois dernier] [Cette saison] [Saison derniere] [Cette annee] [Personnalise]  31 janv. 2026 - 27 fevr. 2026
-```
+### Secao 1 - KPI Cards (2 linhas x 3 cards)
+**Linha 1:**
+- **CA par Activite** - Total CA do periodo, com evolucao vs N-1, subtitulo "Formations"
+- **CA par Client** - Ticket moyen (CA / nb clients), com evolucao, subtitulo "ticket moyen"
+- **CA par Formateur** - Moyenne mensuelle formateur, com evolucao, subtitulo "moyenne mensuelle"
 
-### Apres (dropdown compact)
-```text
-[v Ce mois]  31 janv. 2026 - 27 fevr. 2026
-```
+**Linha 2:**
+- **Receita Mensal** - CA mensuel moyen, com evolucao, subtitulo com mes de referencia
+- **Ticket Moyen** - Valor medio por factura, com evolucao, subtitulo "por aluno"
+- **Taxa de Conversao** - Ratio faturas pagas/emitidas, com evolucao, subtitulo "leads para alunos"
 
-## Fichier modifie
+Todos os cards usam `FinanceKPICard` com badge de evolucao (estilo laranja existente).
 
-### `src/components/finance/PeriodSelector.tsx`
-- Remplacer les 6 `Button` par un composant `Select` (de `@/components/ui/select`)
-- Le `Select` affiche la periode selectionnee avec une icone calendrier
-- Les `SelectItem` contiennent les 6 options (Ce mois, Mois dernier, etc.)
-- Quand "Personnalise" est selectionne, le Popover avec les 2 calendriers s'ouvre
-- La plage de dates reste affichee a droite du select
-- Style compact: le select prend juste la largeur necessaire
+### Secao 2 - Grafico "Receita e Projecoes"
+- `LineChart` do recharts com 2 linhas:
+  - Linha solida laranja: CA real por mes (dados de `useCAByMonth`)
+  - Linha tracejada escura: projecao simples (media movel dos ultimos 3 meses projetada para frente)
+- Eixo X: meses (Jan, Fev, Mar...)
+- Eixo Y: valores em EUR
+- Legenda: "Receita Real" / "Projecao"
 
-### Pages inchangees
-Les 3 pages (Dashboard, Analyses, Rentabilite) ne necessitent aucune modification car elles utilisent toutes le meme composant `PeriodSelector`. Le changement dans le composant se propage automatiquement.
+### Secao 3 - Grid 2 colunas
+**Coluna esquerda - "Fontes de Receita":**
+- Card com subtitulo "Distribution par type de cours"
+- Lista simples (sem tabela) com icone + nome + valor alinhado a direita
+- Dados de `useCAByType`
 
-## Detail technique
-- Import `Select, SelectContent, SelectItem, SelectTrigger, SelectValue` de `@/components/ui/select`
-- Le `SelectTrigger` aura une largeur `w-auto` avec icone `CalendarIcon`
-- Le `onValueChange` du Select appelle `handlePeriodChange` comme avant
-- Le Popover pour les dates personnalisees reste identique
+**Coluna direita - "Previsao Trimestral":**
+- Card com subtitulo "Projection pour Q[X] [ano]"
+- Lista dos 3 proximos meses com valores projetados
+- Linha total no final
+- Dados calculados a partir da media dos meses anteriores
+
+### Secao 4 - Tabelas detalhadas (mantidas)
+As 3 tabelas existentes (CA par activite, CA par client, Balance formateurs) ficam abaixo, empilhadas, com Export CSV.
+
+## Dados adicionais necessarios
+- `useCAByMonth(startDate, endDate, true)` - ja existe, sera adicionado ao componente
+- `useFinancialKPIs(startDate, endDate, true)` - ja existe, sera adicionado para KPIs extras
+- Projecao: calculo local baseado na media movel dos dados existentes
+
+## Detalhes Tecnicos
+- Arquivo modificado: `src/pages/finance/FinanceAnalyses.tsx`
+- Imports adicionais: `LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend` de recharts
+- Imports adicionais: `useCAByMonth, useFinancialKPIs` de useFinancialDashboard
+- Icones: `DollarSign, Users, Target, TrendingUp, BookOpen, UserCheck` de lucide-react
+- Cores: BRAND_GOLD e BRAND_NAVY (mesmo padrao do FinanceDashboard)
+- Nenhuma tabela ou migration de banco necessaria
 
