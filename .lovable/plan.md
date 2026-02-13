@@ -1,61 +1,42 @@
 
+# Reorganizar Analyses com Tabs internas
 
-# Melhorar Interface de Analyses Financieres
+## Objetivo
+Separar a pagina Analyses em 2 abas internas (Tabs): uma para o dashboard visual e outra para as tabelas detalhadas. Remover os cards de exportacao CSV das tabelas "CA par type" e "CA par client".
 
-## Referencia Visual
-As imagens mostram um layout moderno com:
-- 2 linhas de 3 KPI cards com badges de evolucao em laranja
-- Grafico de linhas "Receita e Projecoes" (linha solida laranja = real, tracejada escura = projecao)
-- 2 cards lado a lado: "Fontes de Receita" (lista por tipo) e "Previsao Trimestral" (projecao por mes)
+## Alteracoes em `src/pages/finance/FinanceAnalyses.tsx`
 
-## Estrutura Nova do `FinanceAnalyses.tsx`
+### 1. Adicionar Tabs (Radix UI)
+- Importar `Tabs, TabsList, TabsTrigger, TabsContent` de `@/components/ui/tabs`
+- Colocar o `PeriodSelector` FORA das tabs (visivel em ambas)
+- Criar 2 abas:
+  - **"Dashboard"** (default): contem KPI Grid, RevenueChart, RevenueSources + QuarterlyForecast
+  - **"Tableaux"**: contem as 3 tabelas (CA par activite, CA par client, Balance formateurs)
 
-### Secao 1 - KPI Cards (2 linhas x 3 cards)
-**Linha 1:**
-- **CA par Activite** - Total CA do periodo, com evolucao vs N-1, subtitulo "Formations"
-- **CA par Client** - Ticket moyen (CA / nb clients), com evolucao, subtitulo "ticket moyen"
-- **CA par Formateur** - Moyenne mensuelle formateur, com evolucao, subtitulo "moyenne mensuelle"
+### 2. Remover botoes Export CSV
+- Remover o botao "Export CSV" do card "CA par type d'activite" (linhas 117-119)
+- Remover o botao "Export CSV" do card "CA par client / ESF" (linhas 177-179)
+- Manter o botao "Export CSV" apenas no card "Balance formateurs"
 
-**Linha 2:**
-- **Receita Mensal** - CA mensuel moyen, com evolucao, subtitulo com mes de referencia
-- **Ticket Moyen** - Valor medio por factura, com evolucao, subtitulo "por aluno"
-- **Taxa de Conversao** - Ratio faturas pagas/emitidas, com evolucao, subtitulo "leads para alunos"
+### 3. Estrutura final
+```text
+Titre: Analyses Financieres
+PeriodSelector (dropdown)
+[Dashboard] [Tableaux]    <-- TabsList
 
-Todos os cards usam `FinanceKPICard` com badge de evolucao (estilo laranja existente).
+-- Tab Dashboard --
+  KPI Grid (2x3)
+  RevenueChart
+  RevenueSources | QuarterlyForecast
 
-### Secao 2 - Grafico "Receita e Projecoes"
-- `LineChart` do recharts com 2 linhas:
-  - Linha solida laranja: CA real por mes (dados de `useCAByMonth`)
-  - Linha tracejada escura: projecao simples (media movel dos ultimos 3 meses projetada para frente)
-- Eixo X: meses (Jan, Fev, Mar...)
-- Eixo Y: valores em EUR
-- Legenda: "Receita Real" / "Projecao"
+-- Tab Tableaux --
+  CA par type d'activite (sem Export CSV)
+  CA par client / ESF (sem Export CSV)
+  Balance formateurs (com Export CSV)
+```
 
-### Secao 3 - Grid 2 colunas
-**Coluna esquerda - "Fontes de Receita":**
-- Card com subtitulo "Distribution par type de cours"
-- Lista simples (sem tabela) com icone + nome + valor alinhado a direita
-- Dados de `useCAByType`
+### 4. Simplification CardHeader des tables sans export
+- Les CardHeader des tables sans export passent d'un layout `flex-row justify-between` a un simple CardHeader standard
 
-**Coluna direita - "Previsao Trimestral":**
-- Card com subtitulo "Projection pour Q[X] [ano]"
-- Lista dos 3 proximos meses com valores projetados
-- Linha total no final
-- Dados calculados a partir da media dos meses anteriores
-
-### Secao 4 - Tabelas detalhadas (mantidas)
-As 3 tabelas existentes (CA par activite, CA par client, Balance formateurs) ficam abaixo, empilhadas, com Export CSV.
-
-## Dados adicionais necessarios
-- `useCAByMonth(startDate, endDate, true)` - ja existe, sera adicionado ao componente
-- `useFinancialKPIs(startDate, endDate, true)` - ja existe, sera adicionado para KPIs extras
-- Projecao: calculo local baseado na media movel dos dados existentes
-
-## Detalhes Tecnicos
-- Arquivo modificado: `src/pages/finance/FinanceAnalyses.tsx`
-- Imports adicionais: `LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend` de recharts
-- Imports adicionais: `useCAByMonth, useFinancialKPIs` de useFinancialDashboard
-- Icones: `DollarSign, Users, Target, TrendingUp, BookOpen, UserCheck` de lucide-react
-- Cores: BRAND_GOLD e BRAND_NAVY (mesmo padrao do FinanceDashboard)
-- Nenhuma tabela ou migration de banco necessaria
-
+## Fichier modifie
+- `src/pages/finance/FinanceAnalyses.tsx` uniquement
