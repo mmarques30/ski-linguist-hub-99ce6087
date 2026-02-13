@@ -1,40 +1,39 @@
 
-# Eliminar Sub-abas Internas -- Usar Filtros em Painel Unico
 
-## Problema
-Duas paginas do modulo Finance possuem sub-abas internas que fragmentam a visualizacao dos dados em visoes separadas. O objetivo e unificar tudo em um unico painel com filtros, mostrando as informacoes comparativas lado a lado.
+# Remplacer le PeriodSelector "sub-tabs" par un filtre compact
 
-## Paginas afetadas
+## Probleme
+Le composant `PeriodSelector` affiche 6 boutons horizontaux ("Ce mois", "Mois dernier", "Cette saison", etc.) qui ressemblent a des sous-onglets de navigation. Ce composant est repete identiquement sur 3 pages: Dashboard, Analyses, et Rentabilite. Il faut le transformer en un filtre compact (dropdown/select) qui ne ressemble plus a des onglets.
 
-### 1. `src/pages/finance/FinanceChargesFixes.tsx`
-**Sub-abas atuais:** "Tableau de bord" | "Charges du mois" | "Modèles récurrents"
+## Solution
+Remplacer les 6 boutons par un **Select dropdown** compact avec les memes options, accompagne de la plage de dates affichee. Le calendrier personnalise reste accessible via l'option "Personnalise".
 
-**Nova estrutura (painel unico):**
-- **Topo:** 4 KPI cards (Total impaye, En retard, Ce mois, Mensuel prevu) -- mantidos
-- **Filtro de mes:** Select de mes movido para o header da pagina (ao lado do titulo), funciona como filtro global
-- **Secao 1 - Grid 2 colunas:**
-  - Coluna esquerda: Repartition des impayes (PieChart) -- do antigo tab "dashboard"
-  - Coluna direita: Charges en retard (lista) -- do antigo tab "dashboard"
-- **Secao 2 - Charges du mois:** Tabela de charges do mes selecionado com botao "Generer les charges" no header -- do antigo tab "month"
-- **Secao 3 - Evolution des 6 derniers mois:** Barras de progresso pagas/impagas -- do antigo tab "dashboard"
-- **Secao 4 - Modeles recurrents:** Tabela de templates com switch actif/inactif e edicao de montant -- do antigo tab "templates"
+### Avant (boutons horizontaux)
+```text
+[Ce mois] [Mois dernier] [Cette saison] [Saison derniere] [Cette annee] [Personnalise]  31 janv. 2026 - 27 fevr. 2026
+```
 
-Tudo visivel em scroll vertical, sem abas.
+### Apres (dropdown compact)
+```text
+[v Ce mois]  31 janv. 2026 - 27 fevr. 2026
+```
 
-### 2. `src/pages/finance/FinanceAnalyses.tsx`
-**Sub-abas atuais:** "Par activité" | "Par client/ESF" | "Par formateur"
+## Fichier modifie
 
-**Nova estrutura (painel unico):**
-- **Topo:** 3 KPI cards (Nb activites, Ticket moyen, CA mensuel moyen) -- mantidos
-- **PeriodSelector:** Mantido como filtro global
-- **Secao 1 - CA par type d'activite:** Tabela com colunas CA N, CA N-1, Evolution, % du total + botao Export CSV
-- **Secao 2 - CA par client/ESF:** Tabela com colunas CA HT, Nb factures + botao Export CSV
-- **Secao 3 - Balance formateurs:** Tabela com colunas Total du, Paye, A payer + botao Export CSV
+### `src/components/finance/PeriodSelector.tsx`
+- Remplacer les 6 `Button` par un composant `Select` (de `@/components/ui/select`)
+- Le `Select` affiche la periode selectionnee avec une icone calendrier
+- Les `SelectItem` contiennent les 6 options (Ce mois, Mois dernier, etc.)
+- Quand "Personnalise" est selectionne, le Popover avec les 2 calendriers s'ouvre
+- La plage de dates reste affichee a droite du select
+- Style compact: le select prend juste la largeur necessaire
 
-As 3 tabelas ficam empilhadas verticalmente, cada uma dentro de seu proprio Card, todas visiveis simultaneamente. Sem abas.
+### Pages inchangees
+Les 3 pages (Dashboard, Analyses, Rentabilite) ne necessitent aucune modification car elles utilisent toutes le meme composant `PeriodSelector`. Le changement dans le composant se propage automatiquement.
 
-## Resultado
-- Todas as informacoes comparativas visiveis no mesmo painel
-- Navegacao simplificada: sem cliques extras para trocar entre categorias
-- Filtros (periodo, mes) aplicados globalmente a todas as secoes
-- Layout em scroll vertical, organizado por secoes com Cards
+## Detail technique
+- Import `Select, SelectContent, SelectItem, SelectTrigger, SelectValue` de `@/components/ui/select`
+- Le `SelectTrigger` aura une largeur `w-auto` avec icone `CalendarIcon`
+- Le `onValueChange` du Select appelle `handlePeriodChange` comme avant
+- Le Popover pour les dates personnalisees reste identique
+
