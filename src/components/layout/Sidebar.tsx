@@ -2,7 +2,8 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { 
   Users, 
-  ClipboardList, 
+  ClipboardList,
+  UserCog,
   GraduationCap, 
   Calendar,
   FileText,
@@ -47,6 +48,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { PATH_TO_ROUTE_KEY } from "@/lib/route-permissions";
 import {
   Tooltip,
   TooltipContent,
@@ -124,6 +127,7 @@ const navigationGroups: NavGroup[] = [
       { name: "Import", href: "/admin/import", icon: Upload },
       { name: "Phrases", href: "/admin/phrases", icon: MessageSquare },
       { name: "Tests QA", href: "/admin/testing", icon: FlaskConical },
+      { name: "Utilisateurs", href: "/admin/users", icon: UserCog },
       { name: "Paramètres", href: "/settings", icon: Settings },
     ],
   },
@@ -237,6 +241,7 @@ export function AppSidebar() {
   const { toast } = useToast();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
+  const { isAdmin, canView, loading: permsLoading } = useUserPermissions();
 
   const handleLogout = async () => {
     const { error } = await signOut();
@@ -250,6 +255,31 @@ export function AppSidebar() {
       navigate("/auth", { replace: true });
     }
   };
+
+  // Filter navigation groups based on permissions
+  const filteredGroups = navigationGroups
+    .filter((group) => {
+      // Administration only for admins
+      if (group.label === "Administration") return isAdmin;
+      return true;
+    })
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => {
+        if (isAdmin) return true;
+        const routeKey = PATH_TO_ROUTE_KEY[item.href];
+        if (!routeKey) return true;
+        // For items with subitems (like Finance), show if any sub has permission
+        if (item.subItems) {
+          return item.subItems.some((sub) => {
+            const subKey = PATH_TO_ROUTE_KEY[sub.href];
+            return subKey ? canView(subKey) : true;
+          });
+        }
+        return canView(routeKey);
+      }),
+    }))
+    .filter((group) => group.items.length > 0);
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
@@ -288,7 +318,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationGroups.map((group) => (
+              {filteredGroups.map((group) => (
                 <NavGroupCollapsible key={group.label} group={group} />
               ))}
             </SidebarMenu>
