@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import fliLogo from "@/assets/fli-marca-black.png";
@@ -22,9 +22,8 @@ export function AuthCard() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
-  const [activeTab, setActiveTab] = useState("login");
   
-  const { signIn, signUp } = useAuth();
+  const { signIn } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -55,46 +54,21 @@ export function AuthCard() {
     setIsLoading(true);
 
     try {
-      if (activeTab === "login") {
-        const { error } = await signIn(email, password);
-        if (error) {
-          toast({
-            variant: "destructive",
-            title: "Erro ao entrar",
-            description: error.message === "Invalid login credentials" 
-              ? "Email ou senha incorretos" 
-              : error.message,
-          });
-        } else {
-          setLoginSuccess(true);
-          triggerConfetti();
-          setTimeout(() => {
-            navigate("/");
-          }, 1500);
-        }
+      const { error } = await signIn(email, password);
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erro ao entrar",
+          description: error.message === "Invalid login credentials" 
+            ? "Email ou senha incorretos" 
+            : error.message,
+        });
       } else {
-        const { error } = await signUp(email, password);
-        if (error) {
-          let message = error.message;
-          if (error.message.includes("already registered")) {
-            message = "Este email já está cadastrado";
-          }
-          toast({
-            variant: "destructive",
-            title: "Erro ao criar conta",
-            description: message,
-          });
-        } else {
-          setLoginSuccess(true);
-          triggerConfetti();
-          toast({
-            title: "Conta criada com sucesso",
-            description: "Bem-vindo ao FLI",
-          });
-          setTimeout(() => {
-            navigate("/");
-          }, 1500);
-        }
+        setLoginSuccess(true);
+        triggerConfetti();
+        setTimeout(() => {
+          navigate("/");
+        }, 1500);
       }
     } finally {
       setIsLoading(false);
@@ -157,81 +131,38 @@ export function AuthCard() {
         </CardHeader>
 
         <CardContent className="pt-4">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login" className="data-[state=active]:bg-fli-navy data-[state=active]:text-white">
-                Entrar
-              </TabsTrigger>
-              <TabsTrigger value="register" className="data-[state=active]:bg-fli-navy data-[state=active]:text-white">
-                Criar Conta
-              </TabsTrigger>
-            </TabsList>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <TabsContent value="login" className="space-y-4 mt-0">
-                <div className="space-y-2">
-                  <Label htmlFor="email-login" className="text-foreground">Email</Label>
-                  <motion.div whileHover={{ scale: 1.01 }} whileFocus={{ scale: 1.01 }}>
-                    <Input
-                      id="email-login"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="transition-all duration-200 focus:ring-2 focus:ring-primary"
-                      required
-                    />
-                  </motion.div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password-login" className="text-foreground">Senha</Label>
-                  <motion.div whileHover={{ scale: 1.01 }} whileFocus={{ scale: 1.01 }}>
-                    <Input
-                      id="password-login"
-                      type="password"
-                      placeholder="********"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="transition-all duration-200 focus:ring-2 focus:ring-primary"
-                      required
-                    />
-                  </motion.div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="register" className="space-y-4 mt-0">
-                <div className="space-y-2">
-                  <Label htmlFor="email-register" className="text-foreground">Email</Label>
-                  <motion.div whileHover={{ scale: 1.01 }} whileFocus={{ scale: 1.01 }}>
-                    <Input
-                      id="email-register"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="transition-all duration-200 focus:ring-2 focus:ring-primary"
-                      required
-                    />
-                  </motion.div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password-register" className="text-foreground">Senha</Label>
-                  <motion.div whileHover={{ scale: 1.01 }} whileFocus={{ scale: 1.01 }}>
-                    <Input
-                      id="password-register"
-                      type="password"
-                      placeholder="Mínimo 6 caracteres"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="transition-all duration-200 focus:ring-2 focus:ring-primary"
-                      required
-                    />
-                  </motion.div>
-                </div>
-              </TabsContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email-login" className="text-foreground">Email</Label>
+              <motion.div whileHover={{ scale: 1.01 }} whileFocus={{ scale: 1.01 }}>
+                <Input
+                  id="email-login"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="transition-all duration-200 focus:ring-2 focus:ring-primary"
+                  required
+                />
+              </motion.div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password-login" className="text-foreground">Senha</Label>
+              <motion.div whileHover={{ scale: 1.01 }} whileFocus={{ scale: 1.01 }}>
+                <Input
+                  id="password-login"
+                  type="password"
+                  placeholder="********"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="transition-all duration-200 focus:ring-2 focus:ring-primary"
+                  required
+                />
+              </motion.div>
+            </div>
 
               <motion.div
-                whileHover={{ scale: 1.02, boxShadow: "0 10px 30px rgba(252, 175, 23, 0.25)" }}
+                whileHover={{ scale: 1.02, boxShadow: "0 10px 30px rgba(20, 33, 61, 0.25)" }}
                 whileTap={{ scale: 0.98 }}
               >
                 <Button
@@ -243,19 +174,16 @@ export function AuthCard() {
                     <motion.div
                       animate={{ rotate: 360 }}
                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full"
+                      className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
                     />
                   ) : loginSuccess ? (
                     "Sucesso"
-                  ) : activeTab === "login" ? (
-                    "Entrar"
                   ) : (
-                    "Criar Conta"
+                    "Entrar"
                   )}
                 </Button>
               </motion.div>
             </form>
-          </Tabs>
         </CardContent>
       </Card>
     </motion.div>
