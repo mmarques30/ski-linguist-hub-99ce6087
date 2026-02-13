@@ -1,13 +1,16 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { PeriodSelector } from "@/components/finance/PeriodSelector";
-import { FinanceKPICard } from "@/components/finance/FinanceKPICard";
-import { useCAByType, useInstructorBalance } from "@/hooks/useFinancialDashboard";
-import { Download, BarChart3, Ticket, CalendarRange } from "lucide-react";
-import { format, startOfMonth, endOfMonth, differenceInMonths } from "date-fns";
+import { AnalysesKPIGrid } from "@/components/finance/AnalysesKPIGrid";
+import { RevenueChart } from "@/components/finance/RevenueChart";
+import { RevenueSources } from "@/components/finance/RevenueSources";
+import { QuarterlyForecast } from "@/components/finance/QuarterlyForecast";
+import { useCAByType, useCAByMonth, useInstructorBalance, useFinancialKPIs } from "@/hooks/useFinancialDashboard";
+import { Download } from "lucide-react";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -17,6 +20,8 @@ export default function FinanceAnalyses() {
   const [endDate, setEndDate] = useState(format(endOfMonth(today), 'yyyy-MM-dd'));
 
   const { data: caByType } = useCAByType(startDate, endDate, true);
+  const { data: caByMonth } = useCAByMonth(startDate, endDate, true);
+  const { data: kpis } = useFinancialKPIs(startDate, endDate, true);
   const { data: instructorBalance } = useInstructorBalance();
 
   const { data: caByClient } = useQuery({
@@ -58,23 +63,8 @@ export default function FinanceAnalyses() {
     setEndDate(end);
   };
 
-  const formatPrice = (value: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
-
-  const summaryKPIs = useMemo(() => {
-    const nbFormations = caByType?.length || 0;
-    const caTotal = caByType?.reduce((s, i) => s + i.value, 0) || 0;
-    const ticketMoyen = nbFormations > 0 ? caTotal / nbFormations : 0;
-    const nbMois = Math.max(differenceInMonths(new Date(endDate), new Date(startDate)), 1);
-    const caMensuelMoyen = caTotal / nbMois;
-    return { nbFormations, ticketMoyen, caMensuelMoyen };
-  }, [caByType, startDate, endDate]);
+  const formatPrice = (value: number) =>
+    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
 
   const exportCSV = (data: any[], filename: string) => {
     if (!data?.length) return;
@@ -100,43 +90,32 @@ export default function FinanceAnalyses() {
           </p>
         </div>
 
-        <PeriodSelector
+        <PeriodSelector startDate={startDate} endDate={endDate} onPeriodChange={handlePeriodChange} />
+
+        {/* KPI Grid - 2 rows x 3 */}
+        <AnalysesKPIGrid
+          caByType={caByType}
+          caByClient={caByClient}
+          kpis={kpis}
           startDate={startDate}
           endDate={endDate}
-          onPeriodChange={handlePeriodChange}
         />
 
-        {/* Summary KPI Cards */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <FinanceKPICard
-            title="Nb activités"
-            value={summaryKPIs.nbFormations}
-            variant="gold"
-            icon={BarChart3}
-          />
-          <FinanceKPICard
-            title="Ticket moyen"
-            value={summaryKPIs.ticketMoyen}
-            variant="navy"
-            formatAsPrice
-            icon={Ticket}
-          />
-          <FinanceKPICard
-            title="CA mensuel moyen"
-            value={summaryKPIs.caMensuelMoyen}
-            variant="gold"
-            formatAsPrice
-            icon={CalendarRange}
-          />
+        {/* Revenue Chart */}
+        <RevenueChart caByMonth={caByMonth} />
+
+        {/* Sources + Forecast side by side */}
+        <div className="grid gap-4 md:grid-cols-2">
+          <RevenueSources caByType={caByType} />
+          <QuarterlyForecast caByMonth={caByMonth} />
         </div>
 
-        {/* Section 1: CA par type d'activité */}
+        {/* Detailed Tables */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>CA par type d'activité</CardTitle>
             <Button variant="outline" size="sm" onClick={() => exportCSV(caByType || [], 'ca-par-activite')}>
-              <Download className="h-4 w-4 mr-2" />
-              Export CSV
+              <Download className="h-4 w-4 mr-2" />Export CSV
             </Button>
           </CardHeader>
           <CardContent>
@@ -164,9 +143,7 @@ export default function FinanceAnalyses() {
                           <span className={item.evolution >= 0 ? 'text-[hsl(var(--fli-yellow))]' : 'text-destructive'}>
                             {item.evolution >= 0 ? '+' : ''}{item.evolution.toFixed(1)}%
                           </span>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
+                        ) : <span className="text-muted-foreground">-</span>}
                       </TableCell>
                       <TableCell className="text-right">{percent.toFixed(1)}%</TableCell>
                     </TableRow>
@@ -183,11 +160,7 @@ export default function FinanceAnalyses() {
                         const totalN1 = caByType.reduce((sum, i) => sum + i.valueN1, 0);
                         if (totalN1 === 0) return <span className="text-muted-foreground">-</span>;
                         const evol = ((totalN - totalN1) / totalN1) * 100;
-                        return (
-                          <span className={evol >= 0 ? 'text-[hsl(var(--fli-yellow))]' : 'text-destructive'}>
-                            {evol >= 0 ? '+' : ''}{evol.toFixed(1)}%
-                          </span>
-                        );
+                        return <span className={evol >= 0 ? 'text-[hsl(var(--fli-yellow))]' : 'text-destructive'}>{evol >= 0 ? '+' : ''}{evol.toFixed(1)}%</span>;
                       })()}
                     </TableCell>
                     <TableCell className="text-right">100%</TableCell>
@@ -198,13 +171,11 @@ export default function FinanceAnalyses() {
           </CardContent>
         </Card>
 
-        {/* Section 2: CA par client/ESF */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>CA par client / ESF</CardTitle>
             <Button variant="outline" size="sm" onClick={() => exportCSV(caByClient || [], 'ca-par-client')}>
-              <Download className="h-4 w-4 mr-2" />
-              Export CSV
+              <Download className="h-4 w-4 mr-2" />Export CSV
             </Button>
           </CardHeader>
           <CardContent>
@@ -236,7 +207,6 @@ export default function FinanceAnalyses() {
           </CardContent>
         </Card>
 
-        {/* Section 3: Balance formateurs */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Balance formateurs</CardTitle>
@@ -246,11 +216,9 @@ export default function FinanceAnalyses() {
                 Total_du: i.total_du,
                 Total_paye: i.total_paye,
                 A_payer: i.a_payer,
-              })) || [], 
-              'balance-formateurs'
+              })) || [], 'balance-formateurs'
             )}>
-              <Download className="h-4 w-4 mr-2" />
-              Export CSV
+              <Download className="h-4 w-4 mr-2" />Export CSV
             </Button>
           </CardHeader>
           <CardContent>
