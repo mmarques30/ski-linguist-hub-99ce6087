@@ -24,7 +24,11 @@ const BRAND_GOLD = 'hsl(40, 97%, 54%)';
 const BRAND_NAVY = 'hsl(219, 52%, 16%)';
 const BRAND_GRAY = 'hsl(0, 0%, 90%)';
 const BRAND_BLACK = 'hsl(0, 0%, 9%)';
-const CHART_COLORS = [BRAND_GOLD, BRAND_NAVY, BRAND_GRAY, BRAND_BLACK];
+const CHART_COLORS = [
+  BRAND_GOLD, BRAND_NAVY, 'hsl(142, 71%, 45%)', 'hsl(0, 84%, 60%)',
+  'hsl(262, 52%, 47%)', 'hsl(199, 89%, 48%)', 'hsl(25, 95%, 53%)',
+  'hsl(330, 81%, 60%)', BRAND_GRAY, BRAND_BLACK,
+];
 
 const costTypeLabels: Record<string, string> = {
   loyer: 'Loyer',
@@ -236,29 +240,42 @@ export default function FinanceChargesFixes() {
             </CardHeader>
             <CardContent>
               {unpaidStats.byType.length > 0 ? (
-                <ResponsiveContainer width="100%" height={250}>
-                  <RechartsPie>
-                    <Pie
-                      data={unpaidStats.byType}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
-                      paddingAngle={2}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                      labelLine={false}
-                    >
-                      {unpaidStats.byType.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
-                      formatter={(value: number) => formatPrice(value)}
-                    />
-                  </RechartsPie>
-                </ResponsiveContainer>
+                <div>
+                  <ResponsiveContainer width="100%" height={180}>
+                    <RechartsPie>
+                      <Pie
+                        data={unpaidStats.byType}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={80}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {unpaidStats.byType.map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                        formatter={(value: number) => formatPrice(value)}
+                      />
+                    </RechartsPie>
+                  </ResponsiveContainer>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-3">
+                    {unpaidStats.byType.map((item, index) => {
+                      const total = unpaidStats.byType.reduce((s, i) => s + i.value, 0);
+                      const pct = total > 0 ? ((item.value / total) * 100).toFixed(0) : '0';
+                      return (
+                        <div key={item.name} className="flex items-center gap-2 text-sm">
+                          <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }} />
+                          <span className="truncate text-muted-foreground">{item.name}</span>
+                          <span className="ml-auto font-medium whitespace-nowrap">{pct}%</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               ) : (
                 <div className="flex flex-col items-center justify-center h-[250px] text-muted-foreground">
                   <p>Toutes les charges sont payées</p>
