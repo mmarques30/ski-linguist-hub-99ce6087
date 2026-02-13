@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, subYears } from "date-fns";
 import { fr } from "date-fns/locale";
-import { cn } from "@/lib/utils";
 import { getCurrentSaison, getDebutSaison, getFinSaison, getSaison } from "@/hooks/useFinancialDashboard";
 
 type Period = 'this-month' | 'last-month' | 'this-season' | 'last-season' | 'this-year' | 'custom';
@@ -77,20 +77,20 @@ export function PeriodSelector({ startDate, endDate, onPeriodChange }: PeriodSel
   ];
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      {periods.map((period) => (
-        <Button
-          key={period.value}
-          variant={selectedPeriod === period.value ? "default" : "outline"}
-          size="sm"
-          onClick={() => handlePeriodChange(period.value)}
-          className={cn(
-            selectedPeriod === period.value && "bg-primary text-primary-foreground"
-          )}
-        >
-          {period.label}
-        </Button>
-      ))}
+    <div className="flex items-center gap-3">
+      <Select value={selectedPeriod} onValueChange={(val) => handlePeriodChange(val as Period)}>
+        <SelectTrigger className="w-auto gap-2 h-9">
+          <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {periods.map((period) => (
+            <SelectItem key={period.value} value={period.value}>
+              {period.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       {selectedPeriod === 'custom' && (
         <Popover open={isCustomOpen} onOpenChange={setIsCustomOpen}>
@@ -130,7 +130,7 @@ export function PeriodSelector({ startDate, endDate, onPeriodChange }: PeriodSel
         </Popover>
       )}
 
-      <span className="text-sm text-muted-foreground ml-2">
+      <span className="text-sm text-muted-foreground">
         {format(new Date(startDate), 'dd MMM yyyy', { locale: fr })} - {format(new Date(endDate), 'dd MMM yyyy', { locale: fr })}
       </span>
     </div>
