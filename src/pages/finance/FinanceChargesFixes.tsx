@@ -19,6 +19,7 @@ import { RefreshCw } from "lucide-react";
 import { format, startOfMonth, subMonths, isBefore } from "date-fns";
 import { fr } from "date-fns/locale";
 import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 
 const BRAND_GOLD = 'hsl(40, 97%, 54%)';
 const BRAND_NAVY = 'hsl(219, 52%, 16%)';
@@ -45,6 +46,8 @@ const costTypeLabels: Record<string, string> = {
 
 export default function FinanceChargesFixes() {
   const { toast } = useToast();
+  const { canEdit } = useUserPermissions();
+  const editable = canEdit("finance.charges_fixes");
   const currentMonth = format(startOfMonth(new Date()), 'yyyy-MM-dd');
   
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
@@ -301,14 +304,16 @@ export default function FinanceChargesFixes() {
                       </div>
                       <div className="text-right">
                         <p className="font-bold">{formatPrice(Number(cost.montant))}</p>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="mt-1 h-7 text-xs"
-                          onClick={() => handleTogglePaid(cost.id, false)}
-                        >
-                          Marquer payé
-                        </Button>
+                        {editable && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="mt-1 h-7 text-xs"
+                            onClick={() => handleTogglePaid(cost.id, false)}
+                          >
+                            Marquer payé
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -328,10 +333,12 @@ export default function FinanceChargesFixes() {
             <CardTitle>
               Charges de {format(new Date(selectedMonth), 'MMMM yyyy', { locale: fr })}
             </CardTitle>
-            <Button onClick={handleGenerateCharges} disabled={generateCharges.isPending} size="sm">
-              <RefreshCw className={`h-4 w-4 mr-2 ${generateCharges.isPending ? 'animate-spin' : ''}`} />
-              Générer les charges
-            </Button>
+            {editable && (
+              <Button onClick={handleGenerateCharges} disabled={generateCharges.isPending} size="sm">
+                <RefreshCw className={`h-4 w-4 mr-2 ${generateCharges.isPending ? 'animate-spin' : ''}`} />
+                Générer les charges
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
             <Table>
@@ -365,15 +372,17 @@ export default function FinanceChargesFixes() {
                         <Badge variant="secondary">À payer</Badge>
                       )}
                     </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleTogglePaid(cost.id, cost.paye)}
-                      >
-                        {cost.paye ? 'Annuler' : 'Marquer payé'}
-                      </Button>
-                    </TableCell>
+                    {editable && (
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleTogglePaid(cost.id, cost.paye)}
+                        >
+                          {cost.paye ? 'Annuler' : 'Marquer payé'}
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
                 {(!fixedCosts || fixedCosts.length === 0) && (
@@ -457,7 +466,7 @@ export default function FinanceChargesFixes() {
                       {template.description}
                     </TableCell>
                     <TableCell className="text-right">
-                      {editingTemplate === template.id ? (
+                      {editable && editingTemplate === template.id ? (
                         <div className="flex items-center justify-end gap-2">
                           <Input
                             type="number"
@@ -473,7 +482,7 @@ export default function FinanceChargesFixes() {
                             X
                           </Button>
                         </div>
-                      ) : (
+                      ) : editable ? (
                         <Button
                           variant="ghost"
                           className="font-medium"
@@ -484,12 +493,15 @@ export default function FinanceChargesFixes() {
                         >
                           {formatPrice(Number(template.montant_mensuel))}
                         </Button>
+                      ) : (
+                        <span className="font-medium">{formatPrice(Number(template.montant_mensuel))}</span>
                       )}
                     </TableCell>
                     <TableCell className="text-center">
                       <Switch
                         checked={template.actif}
                         onCheckedChange={() => handleToggleTemplate(template.id, template.actif)}
+                        disabled={!editable}
                       />
                     </TableCell>
                   </TableRow>

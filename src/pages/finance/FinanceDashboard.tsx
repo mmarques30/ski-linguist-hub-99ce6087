@@ -17,6 +17,7 @@ import {
 } from "@/hooks/useFinancialDashboard";
 import { useFinancialRealtime } from "@/hooks/useFinancialRealtime";
 import { AlertCircle, DollarSign, CreditCard, Users, TrendingUp } from "lucide-react";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -37,6 +38,8 @@ export default function FinanceDashboard() {
   const [selectedInstructor, setSelectedInstructor] = useState<any>(null);
 
   useFinancialRealtime();
+  const { canEdit } = useUserPermissions();
+  const editable = canEdit("finance");
 
   const { data: kpis } = useFinancialKPIs(startDate, endDate, true);
   const { data: caByMonth } = useCAByMonth(startDate, endDate, true);
@@ -379,15 +382,17 @@ export default function FinanceDashboard() {
                       <TableCell className="text-right font-medium">
                         {formatPrice(instructor.a_payer)}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handlePayInstructor(instructor)}
-                        >
-                          Payer
-                        </Button>
-                      </TableCell>
+                      {editable && (
+                        <TableCell className="text-right">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handlePayInstructor(instructor)}
+                          >
+                            Payer
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                   {(!instructorBalance || instructorBalance.length === 0) && (

@@ -19,6 +19,7 @@ import { format } from "date-fns";
 import { fr, enUS, ptBR } from "date-fns/locale";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { StudentFormDialog } from "@/components/students/StudentFormDialog";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 
 // Translations for the Students page
 const translations = {
@@ -141,6 +142,8 @@ export default function Students() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const { language, t } = useLanguage();
+  const { canEdit } = useUserPermissions();
+  const editable = canEdit("students");
 
   const { data: students, isLoading, error } = useStudents({
     search: search || undefined,
@@ -192,10 +195,12 @@ export default function Students() {
               <Download className="mr-2 h-4 w-4" />
               {t(translations.export)}
             </Button>
-            <Button size="sm" onClick={handleCreateStudent}>
-              <Plus className="mr-2 h-4 w-4" />
-              {t(translations.newStudent)}
-            </Button>
+            {editable && (
+              <Button size="sm" onClick={handleCreateStudent}>
+                <Plus className="mr-2 h-4 w-4" />
+                {t(translations.newStudent)}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -303,15 +308,17 @@ export default function Students() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8"
-                          onClick={() => handleEditStudent(student)}
-                          title={t(translations.edit)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
+                        {editable && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => handleEditStudent(student)}
+                            title={t(translations.edit)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                           <Mail className="h-4 w-4" />
                         </Button>
@@ -373,15 +380,17 @@ export default function Students() {
                       <Eye className="mr-2 h-4 w-4" />
                       {t(translations.viewProfile)}
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8"
-                      onClick={() => handleEditStudent(student)}
-                      title={t(translations.edit)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
+                    {editable && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={() => handleEditStudent(student)}
+                        title={t(translations.edit)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    )}
                     <Button variant="ghost" size="icon" className="h-8 w-8">
                       <Mail className="h-4 w-4" />
                     </Button>

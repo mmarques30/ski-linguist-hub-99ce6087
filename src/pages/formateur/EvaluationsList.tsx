@@ -30,11 +30,14 @@ import { LANGUAGE_FLAGS, LANGUAGE_LABELS, scoreToLevel } from "@/lib/evaluation-
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { SurveyQRCodeDialog } from "@/components/survey/SurveyQRCodeDialog";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 
 export default function EvaluationsList() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("pending");
   const [showQRDialog, setShowQRDialog] = useState(false);
+  const { canEdit } = useUserPermissions();
+  const editable = canEdit("evaluations");
   
   const { data: pendingBookings, isLoading: pendingLoading, refetch: refetchPending } = useTestBookingsToEvaluate();
   const { data: completedBookings, isLoading: completedLoading, refetch: refetchCompleted } = useCompletedEvaluations();
@@ -194,13 +197,17 @@ export default function EvaluationsList() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Button
-                              size="sm"
-                              onClick={() => navigate(`/formateur/evaluation/${booking.id}`)}
-                            >
-                              Évaluer
-                              <ChevronRight className="h-4 w-4 ml-1" />
-                            </Button>
+                            {editable ? (
+                              <Button
+                                size="sm"
+                                onClick={() => navigate(`/formateur/evaluation/${booking.id}`)}
+                              >
+                                Évaluer
+                                <ChevronRight className="h-4 w-4 ml-1" />
+                              </Button>
+                            ) : (
+                              <Badge variant="secondary">En attente</Badge>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))
@@ -299,13 +306,15 @@ export default function EvaluationsList() {
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => navigate(`/formateur/evaluation/${booking.id}/edit`)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
+                              {editable && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => navigate(`/formateur/evaluation/${booking.id}/edit`)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
