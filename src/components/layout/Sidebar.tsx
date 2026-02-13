@@ -18,6 +18,8 @@ import {
   MessageSquare,
   ChevronRight,
   PanelLeft,
+  Briefcase,
+  Award,
 } from "lucide-react";
 import { useState } from "react";
 import fliLogo from "@/assets/fli-marca-yellow.png";
@@ -30,7 +32,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -65,19 +66,21 @@ interface NavItem {
 }
 
 interface NavGroup {
-  label: string | null;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
   items: NavItem[];
 }
 
+const dashboardItem: NavItem = {
+  name: "Dashboard",
+  href: "/",
+  icon: LayoutDashboard,
+};
+
 const navigationGroups: NavGroup[] = [
   {
-    label: null,
-    items: [
-      { name: "Dashboard", href: "/", icon: LayoutDashboard }
-    ]
-  },
-  {
     label: "Gestion",
+    icon: Briefcase,
     items: [
       { 
         name: "Finance", 
@@ -88,143 +91,148 @@ const navigationGroups: NavGroup[] = [
           { name: "Analyses", href: "/finance/analyses" },
           { name: "Rentabilité", href: "/finance/rentabilite" },
           { name: "Trésorerie", href: "/finance/tresorerie" },
-          { name: "Charges fixes", href: "/finance/charges-fixes" }
-        ]
+          { name: "Charges fixes", href: "/finance/charges-fixes" },
+        ],
       },
       { name: "Inscriptions", href: "/inscriptions", icon: ClipboardList },
       { name: "Factures", href: "/invoices", icon: Receipt },
-      { name: "Stagiaires", href: "/students", icon: Users }
-    ]
+      { name: "Stagiaires", href: "/students", icon: Users },
+    ],
   },
   {
     label: "Formation",
+    icon: GraduationCap,
     items: [
       { name: "Tests de niveau", href: "/tests", icon: GraduationCap },
       { name: "Évaluations", href: "/formateur/evaluations", icon: ClipboardList },
-      { name: "Sessions", href: "/classes", icon: Calendar }
-    ]
+      { name: "Sessions", href: "/classes", icon: Calendar },
+    ],
   },
   {
     label: "Qualité",
+    icon: Award,
     items: [
       { name: "Satisfaction", href: "/satisfaction-stats", icon: BarChart3 },
       { name: "Amélioration", href: "/amelioration", icon: TrendingUp },
-      { name: "Documents", href: "/documents", icon: FileText }
-    ]
+      { name: "Documents", href: "/documents", icon: FileText },
+    ],
   },
   {
     label: "Administration",
+    icon: Settings,
     items: [
       { name: "Import", href: "/admin/import", icon: Upload },
       { name: "Phrases", href: "/admin/phrases", icon: MessageSquare },
       { name: "Tests QA", href: "/admin/testing", icon: FlaskConical },
-      { name: "Paramètres", href: "/settings", icon: Settings }
-    ]
-  }
+      { name: "Paramètres", href: "/settings", icon: Settings },
+    ],
+  },
 ];
 
-function NavItemWithSub({ item }: { item: NavItem }) {
+function isGroupActive(group: NavGroup, pathname: string): boolean {
+  return group.items.some(
+    (item) =>
+      pathname === item.href ||
+      item.subItems?.some((sub) => pathname === sub.href)
+  );
+}
+
+function SubItemCollapsible({ item }: { item: NavItem }) {
   const location = useLocation();
-  const { state } = useSidebar();
-  const isCollapsed = state === "collapsed";
-  
   const isActive = location.pathname === item.href;
-  const isSubActive = item.subItems?.some(sub => location.pathname === sub.href);
-  const shouldBeOpen = isActive || isSubActive;
-  
-  const [isOpen, setIsOpen] = useState(shouldBeOpen);
+  const isSubActive = item.subItems?.some((s) => location.pathname === s.href);
+  const [isOpen, setIsOpen] = useState(isActive || !!isSubActive);
 
   if (!item.subItems) {
     return (
-      <SidebarMenuItem>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <SidebarMenuButton asChild isActive={isActive}>
-              <NavLink to={item.href}>
-                <item.icon className="h-4 w-4" />
-                <span>{item.name}</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </TooltipTrigger>
-          {isCollapsed && (
-            <TooltipContent side="right">
-              {item.name}
-            </TooltipContent>
-          )}
-        </Tooltip>
-      </SidebarMenuItem>
+      <SidebarMenuSubItem>
+        <SidebarMenuSubButton asChild isActive={isActive}>
+          <NavLink to={item.href}>
+            <item.icon className="h-4 w-4" />
+            <span>{item.name}</span>
+          </NavLink>
+        </SidebarMenuSubButton>
+      </SidebarMenuSubItem>
     );
   }
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="group/collapsible">
-      <SidebarMenuItem>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <CollapsibleTrigger asChild>
-              <SidebarMenuButton isActive={isActive || isSubActive}>
-                <item.icon className="h-4 w-4" />
-                <span>{item.name}</span>
-                <ChevronRight className={cn(
-                  "ml-auto h-4 w-4 transition-transform duration-200",
-                  isOpen && "rotate-90"
-                )} />
-              </SidebarMenuButton>
-            </CollapsibleTrigger>
-          </TooltipTrigger>
-          {isCollapsed && (
-            <TooltipContent side="right">
-              {item.name}
-            </TooltipContent>
-          )}
-        </Tooltip>
+    <SidebarMenuSubItem>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuSubButton isActive={isActive || !!isSubActive} className="cursor-pointer">
+            <item.icon className="h-4 w-4" />
+            <span>{item.name}</span>
+            <ChevronRight
+              className={cn(
+                "ml-auto h-3 w-3 transition-transform duration-200",
+                isOpen && "rotate-90"
+              )}
+            />
+          </SidebarMenuSubButton>
+        </CollapsibleTrigger>
         <CollapsibleContent>
           <SidebarMenuSub>
-            {item.subItems.map((subItem) => (
-              <SidebarMenuSubItem key={subItem.href}>
-                <SidebarMenuSubButton asChild isActive={location.pathname === subItem.href}>
-                  <NavLink to={subItem.href}>
-                    <span>{subItem.name}</span>
+            {item.subItems.map((sub) => (
+              <SidebarMenuSubItem key={sub.href}>
+                <SidebarMenuSubButton asChild isActive={location.pathname === sub.href}>
+                  <NavLink to={sub.href}>
+                    <span>{sub.name}</span>
                   </NavLink>
                 </SidebarMenuSubButton>
               </SidebarMenuSubItem>
             ))}
           </SidebarMenuSub>
         </CollapsibleContent>
-      </SidebarMenuItem>
-    </Collapsible>
+      </Collapsible>
+    </SidebarMenuSubItem>
   );
 }
 
-function NavItemSimple({ item }: { item: NavItem }) {
+function NavGroupCollapsible({ group }: { group: NavGroup }) {
   const location = useLocation();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
-  const isActive = location.pathname === item.href;
+  const groupActive = isGroupActive(group, location.pathname);
+  const [isOpen, setIsOpen] = useState(groupActive);
 
   return (
     <SidebarMenuItem>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <SidebarMenuButton asChild isActive={isActive}>
-            <NavLink to={item.href}>
-              <item.icon className="h-4 w-4" />
-              <span>{item.name}</span>
-            </NavLink>
-          </SidebarMenuButton>
-        </TooltipTrigger>
-        {isCollapsed && (
-          <TooltipContent side="right">
-            {item.name}
-          </TooltipContent>
-        )}
-      </Tooltip>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <CollapsibleTrigger asChild>
+              <SidebarMenuButton isActive={groupActive}>
+                <group.icon className="h-4 w-4" />
+                <span>{group.label}</span>
+                <ChevronRight
+                  className={cn(
+                    "ml-auto h-4 w-4 transition-transform duration-200",
+                    isOpen && "rotate-90"
+                  )}
+                />
+              </SidebarMenuButton>
+            </CollapsibleTrigger>
+          </TooltipTrigger>
+          {isCollapsed && (
+            <TooltipContent side="right">{group.label}</TooltipContent>
+          )}
+        </Tooltip>
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            {group.items.map((item) => (
+              <SubItemCollapsible key={item.href} item={item} />
+            ))}
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </Collapsible>
     </SidebarMenuItem>
   );
 }
 
 export function AppSidebar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signOut } = useAuth();
   const { toast } = useToast();
   const { state } = useSidebar();
@@ -245,52 +253,67 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
-      {/* Header with Logo */}
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className={cn(
-          "flex items-center gap-2 px-2 py-2",
-          isCollapsed ? "justify-center" : "justify-start"
-        )}>
+        <div
+          className={cn(
+            "flex items-center gap-2 px-2 py-2",
+            isCollapsed ? "justify-center" : "justify-start"
+          )}
+        >
           {!isCollapsed && (
-            <img 
-              src={fliLogo} 
-              alt="FLI" 
-              className="h-8 w-auto"
-            />
+            <img src={fliLogo} alt="FLI" className="h-8 w-auto" />
           )}
           {isCollapsed && (
             <div className="h-8 w-8 rounded-md bg-sidebar-primary flex items-center justify-center">
-              <span className="text-sidebar-primary-foreground font-bold text-sm">FLI</span>
+              <span className="text-sidebar-primary-foreground font-bold text-sm">
+                FLI
+              </span>
             </div>
           )}
         </div>
       </SidebarHeader>
 
-      {/* Navigation Content */}
       <SidebarContent className="scrollbar-thin">
-        {navigationGroups.map((group, groupIndex) => (
-          <SidebarGroup key={groupIndex}>
-            {group.label && (
-              <SidebarGroupLabel className="text-sidebar-foreground/50 uppercase text-xs tracking-wider">
-                {group.label}
-              </SidebarGroupLabel>
-            )}
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {group.items.map((item) => (
-                  item.subItems ? (
-                    <NavItemWithSub key={item.href} item={item} />
-                  ) : (
-                    <NavItemSimple key={item.href} item={item} />
-                  )
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+        {/* Dashboard - standalone */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname === dashboardItem.href}
+                    >
+                      <NavLink to={dashboardItem.href}>
+                        <dashboardItem.icon className="h-4 w-4" />
+                        <span>{dashboardItem.name}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </TooltipTrigger>
+                  {isCollapsed && (
+                    <TooltipContent side="right">
+                      {dashboardItem.name}
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Collapsible groups */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navigationGroups.map((group) => (
+                <NavGroupCollapsible key={group.label} group={group} />
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
-      {/* Footer */}
       <SidebarFooter className="border-t border-sidebar-border">
         <SidebarMenu>
           <SidebarMenuItem>
@@ -305,9 +328,7 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </TooltipTrigger>
               {isCollapsed && (
-                <TooltipContent side="right">
-                  Déconnexion
-                </TooltipContent>
+                <TooltipContent side="right">Déconnexion</TooltipContent>
               )}
             </Tooltip>
           </SidebarMenuItem>
