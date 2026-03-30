@@ -82,10 +82,10 @@ export default function AdminPhrases() {
   const { toast } = useToast();
   
   // Filters
-  const [languageFilter, setLanguageFilter] = useState<string>("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("");
-  const [professionFilter, setProfessionFilter] = useState<string>("");
-  const [positiveFilter, setPositiveFilter] = useState<string>("");
+  const [languageFilter, setLanguageFilter] = useState<string>("_all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("_all");
+  const [professionFilter, setProfessionFilter] = useState<string>("_all");
+  const [positiveFilter, setPositiveFilter] = useState<string>("_all");
   const [activeFilter, setActiveFilter] = useState<string>("true");
   const [searchQuery, setSearchQuery] = useState("");
 
