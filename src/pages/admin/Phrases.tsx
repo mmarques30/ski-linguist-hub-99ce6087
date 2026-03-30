@@ -288,7 +288,7 @@ export default function AdminPhrases() {
                   <SelectValue placeholder="Langue" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Toutes</SelectItem>
+                  <SelectItem value="_all">Toutes</SelectItem>
                   {LANGUAGES.map((lang) => (
                     <SelectItem key={lang} value={lang}>
                       {LANGUAGE_FLAGS[lang]} {LANGUAGE_LABELS[lang]}
