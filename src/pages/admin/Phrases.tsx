@@ -330,7 +330,7 @@ export default function AdminPhrases() {
                   <SelectValue placeholder="Tonalité" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Toutes</SelectItem>
+                  <SelectItem value="_all">Toutes</SelectItem>
                   <SelectItem value="true">Positives</SelectItem>
                   <SelectItem value="false">Lacunes</SelectItem>
                 </SelectContent>
