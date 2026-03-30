@@ -341,7 +341,7 @@ export default function AdminPhrases() {
                   <SelectValue placeholder="Statut" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Toutes</SelectItem>
+                  <SelectItem value="_all">Toutes</SelectItem>
                   <SelectItem value="true">Actives</SelectItem>
                   <SelectItem value="false">Archivées</SelectItem>
                 </SelectContent>
