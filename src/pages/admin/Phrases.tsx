@@ -82,10 +82,10 @@ export default function AdminPhrases() {
   const { toast } = useToast();
   
   // Filters
-  const [languageFilter, setLanguageFilter] = useState<string>("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("");
-  const [professionFilter, setProfessionFilter] = useState<string>("");
-  const [positiveFilter, setPositiveFilter] = useState<string>("");
+  const [languageFilter, setLanguageFilter] = useState<string>("_all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("_all");
+  const [professionFilter, setProfessionFilter] = useState<string>("_all");
+  const [positiveFilter, setPositiveFilter] = useState<string>("_all");
   const [activeFilter, setActiveFilter] = useState<string>("true");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -115,11 +115,11 @@ export default function AdminPhrases() {
 
   // Queries and mutations
   const { data: phrases, isLoading, refetch } = useTestPhrases({
-    language: languageFilter || undefined,
-    category: categoryFilter || undefined,
-    profession: professionFilter || undefined,
-    isPositive: positiveFilter === "" ? undefined : positiveFilter === "true",
-    active: activeFilter === "" ? undefined : activeFilter === "true",
+    language: languageFilter === "_all" ? undefined : languageFilter,
+    category: categoryFilter === "_all" ? undefined : categoryFilter,
+    profession: professionFilter === "_all" ? undefined : professionFilter,
+    isPositive: positiveFilter === "_all" ? undefined : positiveFilter === "true",
+    active: activeFilter === "_all" ? undefined : activeFilter === "true",
     search: searchQuery || undefined,
   });
 
@@ -288,7 +288,7 @@ export default function AdminPhrases() {
                   <SelectValue placeholder="Langue" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Toutes</SelectItem>
+                  <SelectItem value="_all">Toutes</SelectItem>
                   {LANGUAGES.map((lang) => (
                     <SelectItem key={lang} value={lang}>
                       {LANGUAGE_FLAGS[lang]} {LANGUAGE_LABELS[lang]}
@@ -302,7 +302,7 @@ export default function AdminPhrases() {
                   <SelectValue placeholder="Catégorie" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Toutes</SelectItem>
+                  <SelectItem value="_all">Toutes</SelectItem>
                   {CATEGORIES.map((cat) => (
                     <SelectItem key={cat} value={cat}>
                       {CATEGORY_LABELS[cat]}
@@ -316,7 +316,7 @@ export default function AdminPhrases() {
                   <SelectValue placeholder="Profession" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Toutes</SelectItem>
+                  <SelectItem value="_all">Toutes</SelectItem>
                   {PROFESSIONS.map((prof) => (
                     <SelectItem key={prof} value={prof}>
                       {PROFESSION_LABELS[prof]}
@@ -330,7 +330,7 @@ export default function AdminPhrases() {
                   <SelectValue placeholder="Tonalité" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Toutes</SelectItem>
+                  <SelectItem value="_all">Toutes</SelectItem>
                   <SelectItem value="true">Positives</SelectItem>
                   <SelectItem value="false">Lacunes</SelectItem>
                 </SelectContent>
@@ -341,7 +341,7 @@ export default function AdminPhrases() {
                   <SelectValue placeholder="Statut" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Toutes</SelectItem>
+                  <SelectItem value="_all">Toutes</SelectItem>
                   <SelectItem value="true">Actives</SelectItem>
                   <SelectItem value="false">Archivées</SelectItem>
                 </SelectContent>
@@ -530,14 +530,14 @@ export default function AdminPhrases() {
             <div className="space-y-2">
               <Label>Profession (optionnel)</Label>
               <Select
-                value={formData.profession}
-                onValueChange={(v) => setFormData({ ...formData, profession: v })}
+                value={formData.profession || "_none"}
+                onValueChange={(v) => setFormData({ ...formData, profession: v === "_none" ? "" : v })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Tous" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tous</SelectItem>
+                  <SelectItem value="_none">Tous</SelectItem>
                   {PROFESSIONS.map((prof) => (
                     <SelectItem key={prof} value={prof}>
                       {PROFESSION_LABELS[prof]}
@@ -550,14 +550,14 @@ export default function AdminPhrases() {
             <div className="space-y-2">
               <Label>Niveau minimum</Label>
               <Select
-                value={formData.level_min}
-                onValueChange={(v) => setFormData({ ...formData, level_min: v })}
+                value={formData.level_min || "_none"}
+                onValueChange={(v) => setFormData({ ...formData, level_min: v === "_none" ? "" : v })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Tous" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tous</SelectItem>
+                  <SelectItem value="_none">Tous</SelectItem>
                   {LEVELS.map((level) => (
                     <SelectItem key={level} value={level}>{level}</SelectItem>
                   ))}
@@ -568,14 +568,14 @@ export default function AdminPhrases() {
             <div className="space-y-2">
               <Label>Niveau maximum</Label>
               <Select
-                value={formData.level_max}
-                onValueChange={(v) => setFormData({ ...formData, level_max: v })}
+                value={formData.level_max || "_none"}
+                onValueChange={(v) => setFormData({ ...formData, level_max: v === "_none" ? "" : v })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Tous" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tous</SelectItem>
+                  <SelectItem value="_none">Tous</SelectItem>
                   {LEVELS.map((level) => (
                     <SelectItem key={level} value={level}>{level}</SelectItem>
                   ))}
