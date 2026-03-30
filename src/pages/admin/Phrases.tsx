@@ -568,14 +568,14 @@ export default function AdminPhrases() {
             <div className="space-y-2">
               <Label>Niveau maximum</Label>
               <Select
-                value={formData.level_max}
-                onValueChange={(v) => setFormData({ ...formData, level_max: v })}
+                value={formData.level_max || "_none"}
+                onValueChange={(v) => setFormData({ ...formData, level_max: v === "_none" ? "" : v })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Tous" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tous</SelectItem>
+                  <SelectItem value="_none">Tous</SelectItem>
                   {LEVELS.map((level) => (
                     <SelectItem key={level} value={level}>{level}</SelectItem>
                   ))}
