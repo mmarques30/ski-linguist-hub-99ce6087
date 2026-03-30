@@ -316,7 +316,7 @@ export default function AdminPhrases() {
                   <SelectValue placeholder="Profession" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Toutes</SelectItem>
+                  <SelectItem value="_all">Toutes</SelectItem>
                   {PROFESSIONS.map((prof) => (
                     <SelectItem key={prof} value={prof}>
                       {PROFESSION_LABELS[prof]}
