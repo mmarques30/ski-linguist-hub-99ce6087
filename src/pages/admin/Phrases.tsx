@@ -530,14 +530,14 @@ export default function AdminPhrases() {
             <div className="space-y-2">
               <Label>Profession (optionnel)</Label>
               <Select
-                value={formData.profession}
-                onValueChange={(v) => setFormData({ ...formData, profession: v })}
+                value={formData.profession || "_none"}
+                onValueChange={(v) => setFormData({ ...formData, profession: v === "_none" ? "" : v })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Tous" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tous</SelectItem>
+                  <SelectItem value="_none">Tous</SelectItem>
                   {PROFESSIONS.map((prof) => (
                     <SelectItem key={prof} value={prof}>
                       {PROFESSION_LABELS[prof]}
