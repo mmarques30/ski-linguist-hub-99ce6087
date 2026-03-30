@@ -115,11 +115,11 @@ export default function AdminPhrases() {
 
   // Queries and mutations
   const { data: phrases, isLoading, refetch } = useTestPhrases({
-    language: languageFilter || undefined,
-    category: categoryFilter || undefined,
-    profession: professionFilter || undefined,
-    isPositive: positiveFilter === "" ? undefined : positiveFilter === "true",
-    active: activeFilter === "" ? undefined : activeFilter === "true",
+    language: languageFilter === "_all" ? undefined : languageFilter,
+    category: categoryFilter === "_all" ? undefined : categoryFilter,
+    profession: professionFilter === "_all" ? undefined : professionFilter,
+    isPositive: positiveFilter === "_all" ? undefined : positiveFilter === "true",
+    active: activeFilter === "_all" ? undefined : activeFilter === "true",
     search: searchQuery || undefined,
   });
 
