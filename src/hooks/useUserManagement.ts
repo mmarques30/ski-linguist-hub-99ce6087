@@ -8,6 +8,7 @@ export interface UserWithRole {
   is_active: boolean;
   role: string | null;
   created_at: string;
+  has_complete_profile: boolean;
 }
 
 export interface CreateUserInput {
@@ -42,6 +43,7 @@ export function useUserManagement() {
         ...p,
         is_active: p.is_active ?? true,
         role: roleMap.get(p.id) ?? "user",
+        has_complete_profile: !!p.full_name && p.full_name.trim() !== "",
       })) as UserWithRole[];
     },
   });
