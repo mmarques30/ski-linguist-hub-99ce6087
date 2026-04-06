@@ -514,7 +514,7 @@ export function DashboardGestao() {
                               {isValidated && (
                                 <Badge className="bg-[hsl(var(--fli-teal)/0.1)] border-[hsl(var(--fli-teal)/0.3)] text-[hsl(var(--fli-teal))]">
                                   <CheckCircle2 className="h-3 w-3 mr-1" />
-                                  {t(translations.validated)}
+                                  {t(translations.confirmed_classes)}
                                 </Badge>
                               )}
                             </div>
