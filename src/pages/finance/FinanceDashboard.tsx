@@ -67,6 +67,14 @@ export default function FinanceDashboard() {
     setEndDate(end);
   };
 
+  const handleSeasonChange = (seasonId: string | undefined, start?: string, end?: string) => {
+    setSelectedSeasonId(seasonId);
+    if (start && end) {
+      setStartDate(start);
+      setEndDate(end);
+    }
+  };
+
   const handlePayInstructor = (instructor: any) => {
     setSelectedInstructor(instructor);
     setPaymentOpen(true);
