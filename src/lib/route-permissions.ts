@@ -18,6 +18,7 @@ export const ROUTE_GROUPS: RouteGroup[] = [
       { key: "finance.rentabilite", label: "Rentabilité" },
       { key: "finance.tresorerie", label: "Trésorerie" },
       { key: "finance.charges_fixes", label: "Charges fixes" },
+      { key: "partenaires", label: "Partenaires" },
       { key: "inscriptions", label: "Inscriptions" },
       { key: "invoices", label: "Factures" },
       { key: "students", label: "Stagiaires" },
