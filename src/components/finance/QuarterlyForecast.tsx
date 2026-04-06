@@ -41,9 +41,9 @@ export function QuarterlyForecast({ caByMonth }: QuarterlyForecastProps) {
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle className="text-base">Previsão Trimestral</CardTitle>
+        <CardTitle className="text-base">{t(i18n.title)}</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Projection pour Q{quarter} {now.getFullYear()}
+          {t(i18n.subtitle)}{quarter} {now.getFullYear()}
         </p>
       </CardHeader>
       <CardContent>

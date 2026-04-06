@@ -77,7 +77,7 @@ export function RevenueChart({ caByMonth }: RevenueChartProps) {
               <Line
                 type="monotone"
                 dataKey="projection"
-                name="Projeção"
+                name={t(i18n.projection)}
                 stroke={BRAND_NAVY}
                 strokeWidth={2}
                 strokeDasharray="6 4"

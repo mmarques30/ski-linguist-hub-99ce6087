@@ -253,7 +253,7 @@ export default function FinanceDashboard() {
         {/* Metas do Trimestre */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Metas do Trimestre</CardTitle>
+            <CardTitle className="text-lg">{t(translations.quarterlyGoals)}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-6 md:grid-cols-3">

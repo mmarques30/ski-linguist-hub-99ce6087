@@ -73,7 +73,7 @@ export function AnalysesKPIGrid({ caByType, caByClient, kpis, startDate, endDate
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         <FinanceKPICard
-          title="Receita Mensal"
+          title={t(i18n.monthlyRevenue)}
           value={caMensuelMoyen}
           variant="navy"
           formatAsPrice
