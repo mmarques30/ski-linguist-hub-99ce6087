@@ -19,6 +19,7 @@ import Import from "./pages/admin/Import";
 import ImportPhrases from "./pages/admin/ImportPhrases";
 import AdminPhrases from "./pages/admin/Phrases";
 import TestingChecklist from "./pages/admin/TestingChecklist";
+import Seasons from "./pages/admin/Seasons";
 import UserManagement from "./pages/admin/UserManagement";
 import EvaluationsList from "./pages/formateur/EvaluationsList";
 import EvaluationForm from "./pages/formateur/EvaluationForm";
