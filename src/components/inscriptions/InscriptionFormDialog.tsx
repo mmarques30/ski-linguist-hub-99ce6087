@@ -358,6 +358,26 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
     }
   }, [open, inscription, form]);
 
+  // Price lookup from season pricing rules
+  const watchedLanguage = form.watch("language");
+  const watchedLevel = form.watch("entry_level");
+  const watchedModality = form.watch("modality");
+  const watchedDuration = form.watch("duration_hours");
+
+  const { data: priceLookup } = usePriceLookup(
+    currentSeason?.id,
+    watchedLanguage,
+    watchedLevel,
+    watchedModality,
+    watchedDuration
+  );
+
+  useEffect(() => {
+    if (priceLookup?.base_price && !isEditMode) {
+      form.setValue("price", Number(priceLookup.base_price));
+    }
+  }, [priceLookup, isEditMode]);
+
   const onSubmit = async (data: InscriptionFormData) => {
     setIsSubmitting(true);
     try {
