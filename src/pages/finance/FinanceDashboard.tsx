@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { PeriodSelector } from "@/components/finance/PeriodSelector";
+import { SeasonSelector } from "@/components/finance/SeasonSelector";
 import { FinanceKPICard } from "@/components/finance/FinanceKPICard";
 import { InstructorPaymentDialog } from "@/components/finance/InstructorPaymentDialog";
+import { useCurrentSeason } from "@/hooks/useSeasons";
 import { 
   useFinancialKPIs, 
   useCAByMonth, 
@@ -42,8 +44,10 @@ const translations = {
 
 export default function FinanceDashboard() {
   const today = new Date();
+  const { data: currentSeason } = useCurrentSeason();
   const [startDate, setStartDate] = useState(format(startOfMonth(today), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(endOfMonth(today), 'yyyy-MM-dd'));
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string | undefined>();
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [selectedInstructor, setSelectedInstructor] = useState<any>(null);
 
@@ -61,6 +65,14 @@ export default function FinanceDashboard() {
   const handlePeriodChange = (start: string, end: string) => {
     setStartDate(start);
     setEndDate(end);
+  };
+
+  const handleSeasonChange = (seasonId: string | undefined, start?: string, end?: string) => {
+    setSelectedSeasonId(seasonId);
+    if (start && end) {
+      setStartDate(start);
+      setEndDate(end);
+    }
   };
 
   const handlePayInstructor = (instructor: any) => {
@@ -118,11 +130,14 @@ export default function FinanceDashboard() {
           </p>
         </div>
 
-        <PeriodSelector
-          startDate={startDate}
-          endDate={endDate}
-          onPeriodChange={handlePeriodChange}
-        />
+        <div className="flex flex-wrap items-center gap-4">
+          <PeriodSelector
+            startDate={startDate}
+            endDate={endDate}
+            onPeriodChange={handlePeriodChange}
+          />
+          <SeasonSelector value={selectedSeasonId} onChange={handleSeasonChange} />
+        </div>
 
         {/* KPI Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

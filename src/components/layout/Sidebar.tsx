@@ -128,6 +128,7 @@ const navigationGroups: NavGroup[] = [
     items: [
       { name: "Import", href: "/admin/import", icon: Upload },
       { name: "Phrases", href: "/admin/phrases", icon: MessageSquare },
+      { name: "Saisons", href: "/admin/seasons", icon: Calendar },
       { name: "Tests QA", href: "/admin/testing", icon: FlaskConical },
       { name: "Utilisateurs", href: "/admin/users", icon: UserCog },
       { name: "Paramètres", href: "/settings", icon: Settings },

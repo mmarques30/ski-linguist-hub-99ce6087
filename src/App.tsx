@@ -19,6 +19,7 @@ import Import from "./pages/admin/Import";
 import ImportPhrases from "./pages/admin/ImportPhrases";
 import AdminPhrases from "./pages/admin/Phrases";
 import TestingChecklist from "./pages/admin/TestingChecklist";
+import Seasons from "./pages/admin/Seasons";
 import UserManagement from "./pages/admin/UserManagement";
 import EvaluationsList from "./pages/formateur/EvaluationsList";
 import EvaluationForm from "./pages/formateur/EvaluationForm";
@@ -78,6 +79,7 @@ const App = () => (
             <Route path="/admin/phrases" element={<ProtectedRoute><AdminPhrases /></ProtectedRoute>} />
             <Route path="/admin/testing" element={<ProtectedRoute><TestingChecklist /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
+            <Route path="/admin/seasons" element={<ProtectedRoute><Seasons /></ProtectedRoute>} />
             <Route path="/formateur/evaluations" element={<ProtectedRoute><EvaluationsList /></ProtectedRoute>} />
             <Route path="/formateur/evaluation/:bookingId" element={<ProtectedRoute><EvaluationForm /></ProtectedRoute>} />
             <Route path="/formateur/evaluation/:bookingId/edit" element={<ProtectedRoute><EvaluationForm /></ProtectedRoute>} />

@@ -460,6 +460,7 @@ export type Database = {
           qualiopi_status: string | null
           rhythm: string | null
           schedule: string | null
+          season_id: string | null
           ski_school_id: string | null
           start_date: string
           status: string
@@ -519,6 +520,7 @@ export type Database = {
           qualiopi_status?: string | null
           rhythm?: string | null
           schedule?: string | null
+          season_id?: string | null
           ski_school_id?: string | null
           start_date: string
           status?: string
@@ -578,6 +580,7 @@ export type Database = {
           qualiopi_status?: string | null
           rhythm?: string | null
           schedule?: string | null
+          season_id?: string | null
           ski_school_id?: string | null
           start_date?: string
           status?: string
@@ -599,6 +602,13 @@ export type Database = {
             columns: ["partner_id"]
             isOneToOne: false
             referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inscriptions_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "seasons"
             referencedColumns: ["id"]
           },
           {
@@ -907,6 +917,7 @@ export type Database = {
           reminder_1_sent_at: string | null
           reminder_2_sent_at: string | null
           reminder_3_sent_at: string | null
+          season_id: string | null
           sequence_number: number | null
           status: string
           tva_rate: number | null
@@ -932,6 +943,7 @@ export type Database = {
           reminder_1_sent_at?: string | null
           reminder_2_sent_at?: string | null
           reminder_3_sent_at?: string | null
+          season_id?: string | null
           sequence_number?: number | null
           status?: string
           tva_rate?: number | null
@@ -957,6 +969,7 @@ export type Database = {
           reminder_1_sent_at?: string | null
           reminder_2_sent_at?: string | null
           reminder_3_sent_at?: string | null
+          season_id?: string | null
           sequence_number?: number | null
           status?: string
           tva_rate?: number | null
@@ -982,6 +995,13 @@ export type Database = {
             columns: ["related_invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "seasons"
             referencedColumns: ["id"]
           },
         ]
@@ -1425,6 +1445,59 @@ export type Database = {
           },
         ]
       }
+      pricing_rules: {
+        Row: {
+          base_price: number
+          created_at: string
+          duration_hours: number
+          esf_partner_price: number | null
+          group_discount_percent: number | null
+          id: string
+          language: string
+          level: string
+          modality: string
+          opco_eligible: boolean | null
+          season_id: string
+          updated_at: string
+        }
+        Insert: {
+          base_price: number
+          created_at?: string
+          duration_hours: number
+          esf_partner_price?: number | null
+          group_discount_percent?: number | null
+          id?: string
+          language: string
+          level: string
+          modality: string
+          opco_eligible?: boolean | null
+          season_id: string
+          updated_at?: string
+        }
+        Update: {
+          base_price?: number
+          created_at?: string
+          duration_hours?: number
+          esf_partner_price?: number | null
+          group_discount_percent?: number | null
+          id?: string
+          language?: string
+          level?: string
+          modality?: string
+          opco_eligible?: boolean | null
+          season_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_rules_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "seasons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -1656,6 +1729,48 @@ export type Database = {
             referencedColumns: ["ski_school_id"]
           },
         ]
+      }
+      seasons: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          is_current: boolean
+          name: string
+          notes: string | null
+          revenue_target: number | null
+          slug: string
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          is_current?: boolean
+          name: string
+          notes?: string | null
+          revenue_target?: number | null
+          slug: string
+          start_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          is_current?: boolean
+          name?: string
+          notes?: string | null
+          revenue_target?: number | null
+          slug?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       ski_schools: {
         Row: {
@@ -2247,6 +2362,7 @@ export type Database = {
       }
     }
     Functions: {
+      activate_season: { Args: { p_season_id: string }; Returns: undefined }
       generate_inscription_code: { Args: never; Returns: string }
       get_fiscal_year: { Args: { invoice_date: string }; Returns: string }
       get_user_role: { Args: never; Returns: string }

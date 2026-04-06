@@ -29,11 +29,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { format } from "date-fns";
+import { useCurrentSeason, usePriceLookup } from "@/hooks/useSeasons";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const translations = {
   titleCreate: {
@@ -263,6 +266,7 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
   const queryClient = useQueryClient();
   const { t, language: uiLanguage } = useLanguage();
   const isEditMode = !!inscription;
+  const { data: currentSeason } = useCurrentSeason();
 
   const form = useForm<InscriptionFormData>({
     resolver: zodResolver(inscriptionSchema),
@@ -355,6 +359,26 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
     }
   }, [open, inscription, form]);
 
+  // Price lookup from season pricing rules
+  const watchedLanguage = form.watch("language");
+  const watchedLevel = form.watch("entry_level");
+  const watchedModality = form.watch("modality");
+  const watchedDuration = form.watch("duration_hours");
+
+  const { data: priceLookup } = usePriceLookup(
+    currentSeason?.id,
+    watchedLanguage,
+    watchedLevel,
+    watchedModality,
+    watchedDuration
+  );
+
+  useEffect(() => {
+    if (priceLookup?.base_price && !isEditMode) {
+      form.setValue("price", Number(priceLookup.base_price));
+    }
+  }, [priceLookup, isEditMode]);
+
   const onSubmit = async (data: InscriptionFormData) => {
     setIsSubmitting(true);
     try {
@@ -401,6 +425,7 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
           modality: data.modality || null,
           course_location: data.course_location || null,
           observations: data.observations || null,
+          season_id: currentSeason?.id || null,
           status: "brouillon",
         });
 
@@ -630,7 +655,19 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t(translations.price)}</FormLabel>
+                    <FormLabel className="flex items-center gap-1.5">
+                      {t(translations.price)}
+                      {priceLookup && currentSeason && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 cursor-help">
+                              Tarif {currentSeason.name}
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>Prix auto-rempli depuis la grille tarifaire de la saison</TooltipContent>
+                        </Tooltip>
+                      )}
+                    </FormLabel>
                     <FormControl>
                       <Input type="number" min="0" step="0.01" {...field} />
                     </FormControl>

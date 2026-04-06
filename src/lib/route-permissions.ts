@@ -64,4 +64,5 @@ export const PATH_TO_ROUTE_KEY: Record<string, string> = {
   "/satisfaction-stats": "satisfaction",
   "/amelioration": "amelioration",
   "/documents": "documents",
+  "/admin/seasons": "admin.seasons",
 };
