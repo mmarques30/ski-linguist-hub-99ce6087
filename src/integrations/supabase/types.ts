@@ -2505,6 +2505,7 @@ export type Database = {
       activate_season: { Args: { p_season_id: string }; Returns: undefined }
       generate_inscription_code: { Args: never; Returns: string }
       get_fiscal_year: { Args: { invoice_date: string }; Returns: string }
+      get_my_student_id: { Args: never; Returns: string }
       get_user_role: { Args: never; Returns: string }
       has_role: {
         Args: {
@@ -2514,6 +2515,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_student: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user" | "student"
