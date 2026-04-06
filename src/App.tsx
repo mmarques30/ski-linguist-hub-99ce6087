@@ -94,6 +94,14 @@ const App = () => (
             <Route path="/formateur/evaluation-view/:evaluationId" element={<ProtectedRoute><EvaluationView /></ProtectedRoute>} />
             <Route path="/amelioration" element={<ProtectedRoute><ContinuousImprovement /></ProtectedRoute>} />
             <Route path="/satisfaction-stats" element={<ProtectedRoute><SatisfactionStats /></ProtectedRoute>} />
+
+            {/* Student portal routes */}
+            <Route path="/student/dashboard" element={<StudentProtectedRoute><StudentDashboard /></StudentProtectedRoute>} />
+            <Route path="/student/test" element={<StudentProtectedRoute><StudentTest /></StudentProtectedRoute>} />
+            <Route path="/student/planning" element={<StudentProtectedRoute><StudentPlanning /></StudentProtectedRoute>} />
+            <Route path="/student/documents" element={<StudentProtectedRoute><StudentDocuments /></StudentProtectedRoute>} />
+            <Route path="/student/evaluation" element={<StudentProtectedRoute><StudentEvaluation /></StudentProtectedRoute>} />
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
