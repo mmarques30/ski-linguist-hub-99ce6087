@@ -34,6 +34,8 @@ import { toast } from "sonner";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { format } from "date-fns";
+import { useCurrentSeason, usePriceLookup } from "@/hooks/useSeasons";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const translations = {
   titleCreate: {
