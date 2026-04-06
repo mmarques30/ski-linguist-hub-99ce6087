@@ -452,6 +452,7 @@ export type Database = {
           max_participants: string | null
           modality: string | null
           observations: string | null
+          partner_id: string | null
           payment_method: string | null
           pedagogical_cost: number | null
           price: number | null
@@ -508,6 +509,7 @@ export type Database = {
           max_participants?: string | null
           modality?: string | null
           observations?: string | null
+          partner_id?: string | null
           payment_method?: string | null
           pedagogical_cost?: number | null
           price?: number | null
@@ -564,6 +566,7 @@ export type Database = {
           max_participants?: string | null
           modality?: string | null
           observations?: string | null
+          partner_id?: string | null
           payment_method?: string | null
           pedagogical_cost?: number | null
           price?: number | null
@@ -583,6 +586,13 @@ export type Database = {
             columns: ["instructor_id"]
             isOneToOne: false
             referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inscriptions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
             referencedColumns: ["id"]
           },
           {
@@ -969,6 +979,148 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      partner_contacts: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          is_primary: boolean
+          name: string
+          partner_id: string
+          phone: string | null
+          role: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_primary?: boolean
+          name: string
+          partner_id: string
+          phone?: string | null
+          role?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_primary?: boolean
+          name?: string
+          partner_id?: string
+          phone?: string | null
+          role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_contacts_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_contracts: {
+        Row: {
+          contract_type: string
+          created_at: string
+          document_url: string | null
+          id: string
+          negotiated_rate: number | null
+          notes: string | null
+          partner_id: string
+          payment_terms: string | null
+          signed_date: string | null
+          updated_at: string
+          volume_commitment: string | null
+        }
+        Insert: {
+          contract_type?: string
+          created_at?: string
+          document_url?: string | null
+          id?: string
+          negotiated_rate?: number | null
+          notes?: string | null
+          partner_id: string
+          payment_terms?: string | null
+          signed_date?: string | null
+          updated_at?: string
+          volume_commitment?: string | null
+        }
+        Update: {
+          contract_type?: string
+          created_at?: string
+          document_url?: string | null
+          id?: string
+          negotiated_rate?: number | null
+          notes?: string | null
+          partner_id?: string
+          payment_terms?: string | null
+          signed_date?: string | null
+          updated_at?: string
+          volume_commitment?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_contracts_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partners: {
+        Row: {
+          address: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          contract_end_date: string | null
+          contract_start_date: string | null
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          station: string | null
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          contract_end_date?: string | null
+          contract_start_date?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          station?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          contract_end_date?: string | null
+          contract_start_date?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          station?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       payments: {
         Row: {
