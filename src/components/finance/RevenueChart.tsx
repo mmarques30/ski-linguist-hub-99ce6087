@@ -1,10 +1,17 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from "recharts";
 import { format, addMonths } from "date-fns";
 import { fr } from "date-fns/locale";
+
+const i18n = {
+  title: { fr: 'CA et Projections', 'pt-BR': 'Receita e Projeções', en: 'Revenue & Projections' },
+  actual: { fr: 'CA Réel', 'pt-BR': 'Receita Real', en: 'Actual Revenue' },
+  projection: { fr: 'Projection', 'pt-BR': 'Projeção', en: 'Projection' },
+};
 
 const BRAND_GOLD = "hsl(45, 93%, 47%)";
 const BRAND_NAVY = "hsl(213, 50%, 20%)";
