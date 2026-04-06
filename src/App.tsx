@@ -31,6 +31,7 @@ import FinanceDashboard from "./pages/finance/FinanceDashboard";
 import FinanceAnalyses from "./pages/finance/FinanceAnalyses";
 import FinanceRentabilite from "./pages/finance/FinanceRentabilite";
 import FinanceTresorerie from "./pages/finance/FinanceTresorerie";
+import FinancePayments from "./pages/finance/FinancePayments";
 import FinanceChargesFixes from "./pages/finance/FinanceChargesFixes";
 import PartnersList from "./pages/partners/PartnersList";
 import PartnerDetails from "./pages/partners/PartnerDetails";
