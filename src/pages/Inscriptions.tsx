@@ -289,9 +289,16 @@ export default function Inscriptions() {
     try {
       await updateStatus.mutateAsync({ id: inscriptionId, status: newStatus });
       toast.success(t(translations.statusUpdated));
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating status:", error);
-      toast.error("Erreur lors de la mise à jour du statut");
+      const msg = error?.message || "";
+      if (msg.includes("Transition de statut non autorisée")) {
+        toast.error(msg);
+      } else if (msg.includes("Impossible d'annuler")) {
+        toast.error(msg);
+      } else {
+        toast.error(language === "pt-BR" ? "Erro ao atualizar status" : language === "en" ? "Error updating status" : "Erreur lors de la mise à jour du statut");
+      }
     }
   };
 
