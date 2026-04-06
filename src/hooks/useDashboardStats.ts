@@ -58,9 +58,8 @@ export function useDashboardStats() {
       // Fetch active inscriptions (turmas ativas)
       const { data: activeInscriptions } = await supabase
         .from("inscriptions")
-        .select("id, status")
+        .select("id, status, instructor_id")
         .eq("status", "En cours");
-
       // Calculate stats
       const confirmedInscriptions =
         inscriptions?.filter(
@@ -73,9 +72,9 @@ export function useDashboardStats() {
           ?.filter((i) => i.status === "paid")
           .reduce((sum, i) => sum + (Number(i.amount_ttc) || 0), 0) || 0;
 
-      // Classes are validated if they have a billed status
+      // Classes are confirmed if they have an instructor assigned
       const validatedClasses =
-        activeInscriptions?.filter((i) => i.status === "Facturé").length || 0;
+        activeInscriptions?.filter((i) => i.instructor_id != null).length || 0;
 
       return {
         newInscriptions: {

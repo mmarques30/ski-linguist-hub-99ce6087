@@ -69,10 +69,15 @@ const translations = {
     "pt-BR": "Turmas Ativas",
     en: "Active Classes",
   },
-  validated: {
-    fr: "validées",
-    "pt-BR": "validadas",
-    en: "validated",
+  confirmed_classes: {
+    fr: "confirmées",
+    "pt-BR": "confirmadas",
+    en: "confirmed",
+  },
+  noActiveClasses: {
+    fr: "Aucune formation en cours",
+    "pt-BR": "Nenhuma turma ativa",
+    en: "No active classes",
   },
   tabInscriptions: {
     fr: "Inscriptions",
@@ -336,7 +341,9 @@ export function DashboardGestao() {
           <CardContent>
             <div className="text-3xl font-bold">{stats?.activeClasses.total || 0}</div>
             <p className="text-sm text-muted-foreground">
-              {stats?.activeClasses.validated || 0} {t(translations.validated)}
+              {(stats?.activeClasses.total || 0) === 0
+                ? t(translations.noActiveClasses)
+                : `${stats?.activeClasses.validated || 0} ${t(translations.confirmed_classes)}`}
             </p>
           </CardContent>
         </Card>
@@ -507,7 +514,7 @@ export function DashboardGestao() {
                               {isValidated && (
                                 <Badge className="bg-[hsl(var(--fli-teal)/0.1)] border-[hsl(var(--fli-teal)/0.3)] text-[hsl(var(--fli-teal))]">
                                   <CheckCircle2 className="h-3 w-3 mr-1" />
-                                  {t(translations.validated)}
+                                  {t(translations.confirmed_classes)}
                                 </Badge>
                               )}
                             </div>
