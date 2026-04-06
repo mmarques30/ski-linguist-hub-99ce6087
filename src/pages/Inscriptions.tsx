@@ -214,18 +214,19 @@ const translations = {
 };
 
 const statusStyles: Record<string, string> = {
-  "En cours": "bg-blue-100 text-blue-800",
-  "Facturé": "bg-emerald-100 text-emerald-800",
-  "Terminée": "bg-gray-100 text-gray-800",
-  "Terminé": "bg-gray-100 text-gray-800",
-  "Annulée": "bg-red-100 text-red-800",
-  "Annulé": "bg-red-100 text-red-800",
+  brouillon: "bg-gray-100 text-gray-800",
+  en_attente: "bg-yellow-100 text-yellow-800",
+  confirmee: "bg-blue-100 text-blue-800",
+  en_cours: "bg-indigo-100 text-indigo-800",
+  terminee: "bg-gray-100 text-gray-800",
+  facturee: "bg-emerald-100 text-emerald-800",
+  annulee: "bg-red-100 text-red-800",
 };
 
 const statusOptions = [
-  { value: "En cours", icon: Clock, color: "text-blue-600" },
-  { value: "Terminée", icon: CheckCircle, color: "text-gray-600" },
-  { value: "Annulée", icon: XCircle, color: "text-red-600" },
+  { value: "en_cours", icon: Clock, color: "text-indigo-600" },
+  { value: "terminee", icon: CheckCircle, color: "text-gray-600" },
+  { value: "annulee", icon: XCircle, color: "text-red-600" },
 ];
 
 export default function Inscriptions() {
@@ -275,12 +276,13 @@ export default function Inscriptions() {
   };
 
   const statusLabels: Record<string, string> = {
-    "En cours": t(translations.statusInProgress),
-    "Facturé": t(translations.statusBilled),
-    "Terminée": t(translations.statusCompleted),
-    "Terminé": t(translations.statusCompleted),
-    "Annulée": t(translations.statusCancelled),
-    "Annulé": t(translations.statusCancelled),
+    brouillon: language === "pt-BR" ? "Rascunho" : language === "en" ? "Draft" : "Brouillon",
+    en_attente: language === "pt-BR" ? "Pendente" : language === "en" ? "Pending" : "En attente",
+    confirmee: language === "pt-BR" ? "Confirmada" : language === "en" ? "Confirmed" : "Confirmée",
+    en_cours: t(translations.statusInProgress),
+    terminee: t(translations.statusCompleted),
+    facturee: t(translations.statusBilled),
+    annulee: t(translations.statusCancelled),
   };
 
   const handleStatusChange = async (inscriptionId: string, newStatus: string) => {
