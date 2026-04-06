@@ -15,6 +15,7 @@ interface QuarterlyForecastProps {
 }
 
 export function QuarterlyForecast({ caByMonth }: QuarterlyForecastProps) {
+  const { t } = useLanguage();
   const forecast = useMemo(() => {
     if (!caByMonth?.length) return [];
     const lastMonths = caByMonth.slice(-3);
