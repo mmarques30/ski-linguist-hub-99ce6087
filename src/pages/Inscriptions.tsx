@@ -214,18 +214,19 @@ const translations = {
 };
 
 const statusStyles: Record<string, string> = {
-  "En cours": "bg-blue-100 text-blue-800",
-  "Facturé": "bg-emerald-100 text-emerald-800",
-  "Terminée": "bg-gray-100 text-gray-800",
-  "Terminé": "bg-gray-100 text-gray-800",
-  "Annulée": "bg-red-100 text-red-800",
-  "Annulé": "bg-red-100 text-red-800",
+  brouillon: "bg-gray-100 text-gray-800",
+  en_attente: "bg-yellow-100 text-yellow-800",
+  confirmee: "bg-blue-100 text-blue-800",
+  en_cours: "bg-indigo-100 text-indigo-800",
+  terminee: "bg-gray-100 text-gray-800",
+  facturee: "bg-emerald-100 text-emerald-800",
+  annulee: "bg-red-100 text-red-800",
 };
 
 const statusOptions = [
-  { value: "En cours", icon: Clock, color: "text-blue-600" },
-  { value: "Terminée", icon: CheckCircle, color: "text-gray-600" },
-  { value: "Annulée", icon: XCircle, color: "text-red-600" },
+  { value: "en_cours", icon: Clock, color: "text-indigo-600" },
+  { value: "terminee", icon: CheckCircle, color: "text-gray-600" },
+  { value: "annulee", icon: XCircle, color: "text-red-600" },
 ];
 
 export default function Inscriptions() {
@@ -275,21 +276,29 @@ export default function Inscriptions() {
   };
 
   const statusLabels: Record<string, string> = {
-    "En cours": t(translations.statusInProgress),
-    "Facturé": t(translations.statusBilled),
-    "Terminée": t(translations.statusCompleted),
-    "Terminé": t(translations.statusCompleted),
-    "Annulée": t(translations.statusCancelled),
-    "Annulé": t(translations.statusCancelled),
+    brouillon: language === "pt-BR" ? "Rascunho" : language === "en" ? "Draft" : "Brouillon",
+    en_attente: language === "pt-BR" ? "Pendente" : language === "en" ? "Pending" : "En attente",
+    confirmee: language === "pt-BR" ? "Confirmada" : language === "en" ? "Confirmed" : "Confirmée",
+    en_cours: t(translations.statusInProgress),
+    terminee: t(translations.statusCompleted),
+    facturee: t(translations.statusBilled),
+    annulee: t(translations.statusCancelled),
   };
 
   const handleStatusChange = async (inscriptionId: string, newStatus: string) => {
     try {
       await updateStatus.mutateAsync({ id: inscriptionId, status: newStatus });
       toast.success(t(translations.statusUpdated));
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating status:", error);
-      toast.error("Erreur lors de la mise à jour du statut");
+      const msg = error?.message || "";
+      if (msg.includes("Transition de statut non autorisée")) {
+        toast.error(msg);
+      } else if (msg.includes("Impossible d'annuler")) {
+        toast.error(msg);
+      } else {
+        toast.error(language === "pt-BR" ? "Erro ao atualizar status" : language === "en" ? "Error updating status" : "Erreur lors de la mise à jour du statut");
+      }
     }
   };
 
@@ -366,10 +375,12 @@ export default function Inscriptions() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t(translations.allStatuses)}</SelectItem>
-              <SelectItem value="En cours">{t(translations.statusInProgress)}</SelectItem>
-              <SelectItem value="Facturé">{t(translations.statusBilled)}</SelectItem>
-              <SelectItem value="Terminé">{t(translations.statusCompleted)}</SelectItem>
-              <SelectItem value="Annulé">{t(translations.statusCancelled)}</SelectItem>
+              <SelectItem value="en_attente">{language === "pt-BR" ? "Pendente" : language === "en" ? "Pending" : "En attente"}</SelectItem>
+              <SelectItem value="confirmee">{language === "pt-BR" ? "Confirmada" : language === "en" ? "Confirmed" : "Confirmée"}</SelectItem>
+              <SelectItem value="en_cours">{t(translations.statusInProgress)}</SelectItem>
+              <SelectItem value="terminee">{t(translations.statusCompleted)}</SelectItem>
+              <SelectItem value="facturee">{t(translations.statusBilled)}</SelectItem>
+              <SelectItem value="annulee">{t(translations.statusCancelled)}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={languageFilter} onValueChange={setLanguageFilter}>

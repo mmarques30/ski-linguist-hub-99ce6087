@@ -29,9 +29,9 @@ export function useGenerateEndPack() {
       const { error: updateError } = await supabase
         .from("inscriptions")
         .update({
-          status: "Terminé",
+          status: "terminee",
           exit_level: data.exitLevel,
-          final_status: "Terminé",
+          final_status: "terminee",
           end_pack_sent_at: new Date().toISOString(),
         })
         .eq("id", data.inscriptionId);

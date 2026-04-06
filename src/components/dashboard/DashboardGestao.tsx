@@ -239,7 +239,7 @@ export function DashboardGestao() {
 
   // Group inscriptions by language for class preparation
   const classPreparation = inscriptions
-    ?.filter((i) => i.status === "En cours")
+    ?.filter((i) => i.status === "en_cours")
     .reduce(
       (acc, i) => {
         const lang = i.language || "Autre";
@@ -412,12 +412,12 @@ export function DashboardGestao() {
                         <Badge
                           variant="outline"
                           className={
-                            inscription.status === "En cours" || inscription.status === "Facturé"
+                            inscription.status === "en_cours" || inscription.status === "confirmee" || inscription.status === "facturee"
                               ? "bg-accent border-primary/30 text-foreground"
                               : "bg-muted border-border text-muted-foreground"
                           }
                         >
-                          {inscription.status === "En cours" || inscription.status === "Facturé"
+                          {inscription.status === "en_cours" || inscription.status === "confirmee" || inscription.status === "facturee"
                             ? t(translations.statusConfirmed)
                             : t(translations.statusPending)}
                         </Badge>

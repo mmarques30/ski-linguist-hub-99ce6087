@@ -88,12 +88,13 @@ const translations = {
 };
 
 const statusStyles: Record<string, string> = {
-  "En cours": "bg-blue-100 text-blue-800",
-  "Facturé": "bg-emerald-100 text-emerald-800",
-  "Terminée": "bg-gray-100 text-gray-800",
-  "Terminé": "bg-gray-100 text-gray-800",
-  "Annulée": "bg-red-100 text-red-800",
-  "Annulé": "bg-red-100 text-red-800",
+  brouillon: "bg-gray-100 text-gray-800",
+  en_attente: "bg-yellow-100 text-yellow-800",
+  confirmee: "bg-blue-100 text-blue-800",
+  en_cours: "bg-indigo-100 text-indigo-800",
+  terminee: "bg-gray-100 text-gray-800",
+  facturee: "bg-emerald-100 text-emerald-800",
+  annulee: "bg-red-100 text-red-800",
 };
 
 export default function InscriptionDetails() {
@@ -161,12 +162,13 @@ export default function InscriptionDetails() {
   };
 
   const statusLabels: Record<string, string> = {
-    "En cours": t(translations.statusInProgress),
-    "Facturé": t(translations.statusBilled),
-    "Terminée": t(translations.statusCompleted),
-    "Terminé": t(translations.statusCompleted),
-    "Annulée": t(translations.statusCancelled),
-    "Annulé": t(translations.statusCancelled),
+    brouillon: language === "pt-BR" ? "Rascunho" : language === "en" ? "Draft" : "Brouillon",
+    en_attente: language === "pt-BR" ? "Pendente" : language === "en" ? "Pending" : "En attente",
+    confirmee: language === "pt-BR" ? "Confirmada" : language === "en" ? "Confirmed" : "Confirmée",
+    en_cours: t(translations.statusInProgress),
+    terminee: t(translations.statusCompleted),
+    facturee: t(translations.statusBilled),
+    annulee: t(translations.statusCancelled),
   };
 
   if (isLoading) {

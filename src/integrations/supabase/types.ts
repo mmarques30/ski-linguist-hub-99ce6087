@@ -463,6 +463,8 @@ export type Database = {
           ski_school_id: string | null
           start_date: string
           status: string
+          status_changed_at: string | null
+          status_changed_by: string | null
           student_id: string
           updated_at: string
         }
@@ -520,6 +522,8 @@ export type Database = {
           ski_school_id?: string | null
           start_date: string
           status?: string
+          status_changed_at?: string | null
+          status_changed_by?: string | null
           student_id: string
           updated_at?: string
         }
@@ -577,6 +581,8 @@ export type Database = {
           ski_school_id?: string | null
           start_date?: string
           status?: string
+          status_changed_at?: string | null
+          status_changed_by?: string | null
           student_id?: string
           updated_at?: string
         }
@@ -2050,6 +2056,8 @@ export type Database = {
           ski_school_name: string | null
           start_date: string | null
           status: string | null
+          status_changed_at: string | null
+          status_changed_by: string | null
           student_city: string | null
           student_company: string | null
           student_email: string | null

@@ -43,7 +43,7 @@ export function useStudentDetails(studentId: string | undefined) {
       // Calculate stats
       const inscriptionsList = inscriptions || [];
       const completedCourses = inscriptionsList.filter(
-        (i) => i.status === "Terminé" || i.status === "Facturé"
+        (i) => i.status === "terminee" || i.status === "facturee"
       ).length;
 
       const totalHours = inscriptionsList.reduce(
