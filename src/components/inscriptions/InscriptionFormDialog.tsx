@@ -654,7 +654,19 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t(translations.price)}</FormLabel>
+                    <FormLabel className="flex items-center gap-1.5">
+                      {t(translations.price)}
+                      {priceLookup && currentSeason && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 cursor-help">
+                              Tarif {currentSeason.name}
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>Prix auto-rempli depuis la grille tarifaire de la saison</TooltipContent>
+                        </Tooltip>
+                      )}
+                    </FormLabel>
                     <FormControl>
                       <Input type="number" min="0" step="0.01" {...field} />
                     </FormControl>
