@@ -85,7 +85,14 @@ export default function UserManagement() {
                 users.map((u) => (
                   <TableRow key={u.id}>
                     <TableCell className="font-medium">
-                      {u.full_name || "—"}
+                      <div className="flex items-center gap-2">
+                        {u.full_name || u.email}
+                        {!u.has_complete_profile && (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-orange-300 text-orange-600 bg-orange-50">
+                            Profil incomplet
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>{u.email}</TableCell>
                     <TableCell>
