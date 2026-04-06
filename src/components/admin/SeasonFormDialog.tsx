@@ -81,7 +81,14 @@ export function SeasonFormDialog({ open, onOpenChange, season }: Props) {
       if (isEdit && season) {
         await updateMutation.mutateAsync({ id: season.id, ...data, slug });
       } else {
-        await createMutation.mutateAsync({ ...data, slug, revenue_target: data.revenue_target ?? 0, notes: data.notes ?? null });
+        await createMutation.mutateAsync({
+          name: data.name,
+          start_date: data.start_date,
+          end_date: data.end_date,
+          slug,
+          revenue_target: data.revenue_target ?? 0,
+          notes: data.notes ?? null,
+        });
       }
       toast.success(t(translations.success));
       onOpenChange(false);
