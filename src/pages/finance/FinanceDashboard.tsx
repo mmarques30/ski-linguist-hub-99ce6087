@@ -170,15 +170,15 @@ export default function FinanceDashboard() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Receitas vs Despesas</CardTitle>
+                <CardTitle className="text-lg">{t(translations.revenueVsExpenses)}</CardTitle>
                 <div className="flex items-center gap-4 text-xs">
                   <div className="flex items-center gap-1.5">
                     <div className="h-2.5 w-2.5 rounded-full bg-[hsl(var(--fli-yellow))]" />
-                    <span className="text-muted-foreground">Receitas</span>
+                    <span className="text-muted-foreground">{t(translations.revenue)}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <div className="h-2.5 w-2.5 rounded-full bg-[hsl(var(--fli-navy))]" />
-                    <span className="text-muted-foreground">Despesas</span>
+                    <span className="text-muted-foreground">{t(translations.expenses)}</span>
                   </div>
                 </div>
               </div>
