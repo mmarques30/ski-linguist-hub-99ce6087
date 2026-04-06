@@ -101,8 +101,8 @@ export default function FinanceDashboard() {
     const margeActuelle = kpis?.margePourcent || 0;
     const nbFormateurs = kpis?.formateursConcernes || 0;
     return [
-      { label: 'Receita Trimestral', current: caTotal, target: 50000, format: 'price' as const },
-      { label: 'Novos Stagiaires', current: nbFormateurs, target: 15, format: 'number' as const },
+      { label: t(translations.quarterlyRevenue), current: caTotal, target: 50000, format: 'price' as const },
+      { label: t(translations.newTrainees), current: nbFormateurs, target: 15, format: 'number' as const },
       { label: 'Marge cible', current: margeActuelle, target: 60, format: 'percent' as const },
     ];
   }, [kpis]);
