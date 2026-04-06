@@ -137,3 +137,28 @@ export function useDeleteInscription() {
     },
   });
 }
+
+export function useRecentInscriptions() {
+  return useQuery({
+    queryKey: ["recent-inscriptions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("inscriptions_complete")
+        .select("*")
+        .order("updated_at", { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+
+      // Deduplicate by student_id, keeping most recent (already sorted)
+      const seen = new Map<string, InscriptionComplete>();
+      for (const insc of (data || [])) {
+        const key = insc.student_id || insc.id;
+        if (!seen.has(key)) {
+          seen.set(key, insc as InscriptionComplete);
+        }
+      }
+      return Array.from(seen.values()).slice(0, 5);
+    },
+  });
+}

@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ClipboardList, Loader2 } from "lucide-react";
-import { useInscriptions } from "@/hooks/useInscriptions";
+import { useRecentInscriptions } from "@/hooks/useInscriptions";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
@@ -63,10 +63,8 @@ const statusStyles: Record<string, string> = {
 };
 
 export function RecentInscriptions() {
-  const { data: inscriptions, isLoading } = useInscriptions();
+  const { data: recentInscriptions = [], isLoading } = useRecentInscriptions();
   const { language, t } = useLanguage();
-  
-  const recentInscriptions = inscriptions?.slice(0, 5) || [];
 
   const getDateLocale = () => {
     switch (language) {
