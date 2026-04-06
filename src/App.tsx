@@ -13,6 +13,7 @@ import Students from "./pages/Students";
 import StudentDetails from "./pages/students/StudentDetails";
 import PlacementTests from "./pages/PlacementTests";
 import Classes from "./pages/Classes";
+import Sessions from "./pages/Sessions";
 import Documents from "./pages/Documents";
 import Settings from "./pages/Settings";
 import Import from "./pages/admin/Import";
