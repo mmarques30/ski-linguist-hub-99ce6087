@@ -1938,6 +1938,7 @@ export type Database = {
       }
       students: {
         Row: {
+          auth_user_id: string | null
           city: string | null
           civility: string | null
           company: string | null
@@ -1952,6 +1953,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auth_user_id?: string | null
           city?: string | null
           civility?: string | null
           company?: string | null
@@ -1966,6 +1968,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auth_user_id?: string | null
           city?: string | null
           civility?: string | null
           company?: string | null
@@ -2513,7 +2516,7 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "student"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2641,7 +2644,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "student"],
     },
   },
 } as const
