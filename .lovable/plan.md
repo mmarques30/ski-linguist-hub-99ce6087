@@ -1,72 +1,75 @@
 
 
-# Standardiser la numérotation des factures : FLI-YYYY-NNNN
+# Notifications dynamiques dans le TopHeader
 
-## Problème
-Deux systèmes concurrents génèrent des numéros de facture :
-- Le trigger DB `before_invoice_insert` produit `YYYY.NNNNN` (ex: `2026.14244`)
-- Le hook client `useCreateInvoice` produit aussi `YYYY.NNNNN` mais avec sa propre logique de séquence
-- Certaines factures existantes utilisent `FLI-2025-004`
+## Contexte
+Le badge "3" est hardcode dans `TopHeader.tsx` (ligne 58). Il faut le remplacer par un systeme connecte a la base de donnees.
 
-## Plan
+## 1. Migration SQL
 
-### 1. Migration SQL
-- Remplacer la fonction `before_invoice_insert` par une nouvelle logique :
-  - Format : `FLI-{ANNEE}-{SEQ_4_CHIFFRES}` (ex: `FLI-2026-0001`)
-  - L'année est extraite de `invoice_date`
-  - Le séquentiel est calculé par : MAX des factures existantes au format `FLI-YYYY-%` pour cette année + 1
-  - Si aucune facture FLI-YYYY n'existe, commence à 0001
-- Le trigger ne modifie `invoice_number` QUE si celui-ci est NULL (les factures existantes ne sont pas touchées)
-- Ajouter une contrainte `UNIQUE` sur `invoice_number` (les NULLs existants ne posent pas de problème car UNIQUE autorise plusieurs NULLs en PostgreSQL)
-
-### 2. Modifier `src/hooks/useInvoices.ts`
-- Supprimer toute la logique client de génération de numéro (appels à `get_fiscal_year`, calcul de `sequence_number`, formatage du numéro)
-- L'insert envoie simplement les données sans `invoice_number`, `fiscal_year`, ni `sequence_number` — le trigger DB s'en charge
-- Conserver le calcul de `amount_ttc` côté client
-
-### 3. Modifier `src/components/invoices/InvoiceCreateDialog.tsx`
-- Aucun changement nécessaire (le dialog passe déjà les données au hook)
-
-## Détail technique du trigger
-
+### Table `notifications`
 ```sql
-CREATE OR REPLACE FUNCTION public.before_invoice_insert()
-RETURNS trigger LANGUAGE plpgsql SET search_path TO 'public' AS $$
-DECLARE
-  yr TEXT;
-  max_seq INTEGER;
-BEGIN
-  IF NEW.invoice_number IS NULL THEN
-    yr := TO_CHAR(NEW.invoice_date, 'YYYY');
-    NEW.fiscal_year := yr;
+CREATE TABLE public.notifications (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  type text NOT NULL DEFAULT 'inscription',
+  title text NOT NULL,
+  message text,
+  is_read boolean NOT NULL DEFAULT false,
+  link text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
 
-    SELECT COALESCE(MAX(
-      CAST(SUBSTRING(invoice_number FROM 10 FOR 4) AS INTEGER)
-    ), 0)
-    INTO max_seq
-    FROM public.invoices
-    WHERE invoice_number LIKE 'FLI-' || yr || '-%';
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 
-    NEW.sequence_number := max_seq + 1;
-    NEW.invoice_number := 'FLI-' || yr || '-' || LPAD(NEW.sequence_number::TEXT, 4, '0');
-  END IF;
+-- Users can only see their own notifications
+CREATE POLICY "Users can view own notifications"
+  ON public.notifications FOR SELECT TO authenticated
+  USING (user_id = auth.uid());
 
-  -- TVA selon type
-  NEW.tva_rate := CASE NEW.invoice_type
-    WHEN 'formation' THEN 0 ELSE 20
-  END;
+CREATE POLICY "Users can update own notifications"
+  ON public.notifications FOR UPDATE TO authenticated
+  USING (user_id = auth.uid());
 
-  NEW.due_date := COALESCE(NEW.due_date, NEW.invoice_date + INTERVAL '30 days');
+CREATE POLICY "Staff can insert notifications"
+  ON public.notifications FOR INSERT TO authenticated
+  WITH CHECK (true);
 
-  RETURN NEW;
-END;
-$$;
+CREATE POLICY "Admin can delete notifications"
+  ON public.notifications FOR DELETE TO authenticated
+  USING (is_admin());
 
-ALTER TABLE public.invoices ADD CONSTRAINT invoices_invoice_number_unique UNIQUE (invoice_number);
+-- Enable realtime for live badge updates
+ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
 ```
 
-## Résumé
-- 1 migration (remplacer trigger + ajouter contrainte UNIQUE)
-- 1 fichier modifié (`useInvoices.ts` — simplifier `useCreateInvoice`)
-- 0 facture existante modifiée
+## 2. Hook `src/hooks/useNotifications.ts`
+
+- `useUnreadCount()` : query `notifications` where `user_id = auth.uid()` and `is_read = false`, return count. Subscribe to realtime changes for live updates.
+- `useRecentNotifications()` : fetch 10 most recent notifications for current user, ordered by `created_at DESC`.
+- `useMarkAsRead(id)` : mutation to set `is_read = true` on a single notification.
+- `useMarkAllAsRead()` : mutation to mark all unread as read.
+
+## 3. Modifier `src/components/layout/TopHeader.tsx`
+
+- Import `Popover` / `PopoverTrigger` / `PopoverContent` from `@/components/ui/popover`
+- Replace the hardcoded `<button>` with a `Popover` wrapping the bell icon
+- Badge shows `unreadCount` from `useUnreadCount()` ; hidden when 0
+- Popover content: list of 10 recent notifications with icon by type, title, relative time
+- Click on a notification: call `markAsRead(id)`, then `navigate(link)`
+- "Tout marquer comme lu" button at the bottom
+
+## 4. Fichiers
+
+| Action | Fichier |
+|--------|---------|
+| Creer | `src/hooks/useNotifications.ts` |
+| Modifier | `src/components/layout/TopHeader.tsx` |
+| Migration | Table `notifications` + RLS + realtime |
+
+## Resume
+- 1 migration (table + RLS + realtime)
+- 1 nouveau hook
+- 1 fichier modifie (TopHeader)
+- Badge dynamique avec realtime, dropdown au clic, marquage lu avec redirection
 
