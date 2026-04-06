@@ -44,8 +44,10 @@ const translations = {
 
 export default function FinanceDashboard() {
   const today = new Date();
+  const { data: currentSeason } = useCurrentSeason();
   const [startDate, setStartDate] = useState(format(startOfMonth(today), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(endOfMonth(today), 'yyyy-MM-dd'));
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string | undefined>();
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [selectedInstructor, setSelectedInstructor] = useState<any>(null);
 
