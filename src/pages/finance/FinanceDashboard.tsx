@@ -130,11 +130,14 @@ export default function FinanceDashboard() {
           </p>
         </div>
 
-        <PeriodSelector
-          startDate={startDate}
-          endDate={endDate}
-          onPeriodChange={handlePeriodChange}
-        />
+        <div className="flex flex-wrap items-center gap-4">
+          <PeriodSelector
+            startDate={startDate}
+            endDate={endDate}
+            onPeriodChange={handlePeriodChange}
+          />
+          <SeasonSelector value={selectedSeasonId} onChange={handleSeasonChange} />
+        </div>
 
         {/* KPI Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
