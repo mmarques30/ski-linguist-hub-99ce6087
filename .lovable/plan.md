@@ -1,134 +1,114 @@
 
 
-# Module de gestion des saisons FLI
+# Module de gestion des formateurs
 
-## Résumé
+## Contexte
 
-Création d'un système complet de saisons avec tables de tarification, liaison aux inscriptions/factures, filtrage financier par saison, et UI d'administration.
+La table `instructors` existe deja avec : `languages`, `hourly_rate`, `siret`, `status`, `specialties`, `geographic_zones`, etc. La table `instructor_payments` existe aussi avec des colonnes en francais (`montant`, `statut`, `periode_debut`, etc.) et est deja utilisee par le module financier. Il ne faut donc PAS recreer `instructor_payments`.
 
 ## 1. Migration SQL
 
-### Table `seasons`
+### Enrichir `instructors` (colonnes manquantes uniquement)
 ```sql
-CREATE TABLE public.seasons (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  slug text NOT NULL UNIQUE,
-  start_date date NOT NULL,
-  end_date date NOT NULL,
-  status text NOT NULL DEFAULT 'planifiee',
-  is_current boolean NOT NULL DEFAULT false,
-  revenue_target numeric DEFAULT 0,
-  notes text,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
+ALTER TABLE public.instructors
+  ADD COLUMN IF NOT EXISTS tax_status text DEFAULT 'auto_entrepreneur',
+  ADD COLUMN IF NOT EXISTS availability_status text DEFAULT 'disponible',
+  ADD COLUMN IF NOT EXISTS bio text,
+  ADD COLUMN IF NOT EXISTS photo_url text,
+  ADD COLUMN IF NOT EXISTS rating_average numeric DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS certifications jsonb DEFAULT '[]',
+  ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
 ```
+- `languages` existe deja (= languages_taught)
+- `hourly_rate` et `siret` existent deja
 
-### Table `pricing_rules`
+### Creer `instructor_sessions`
 ```sql
-CREATE TABLE public.pricing_rules (
+CREATE TABLE public.instructor_sessions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  season_id uuid NOT NULL REFERENCES public.seasons(id) ON DELETE CASCADE,
-  language text NOT NULL,
-  level text NOT NULL,
+  instructor_id uuid NOT NULL REFERENCES public.instructors(id) ON DELETE CASCADE,
+  inscription_id uuid REFERENCES public.inscriptions(id) ON DELETE SET NULL,
+  session_date date NOT NULL,
+  start_time time NOT NULL,
+  end_time time NOT NULL,
   duration_hours numeric NOT NULL,
-  modality text NOT NULL,
-  base_price numeric NOT NULL,
-  group_discount_percent numeric DEFAULT 0,
-  esf_partner_price numeric,
-  opco_eligible boolean DEFAULT false,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
+  status text NOT NULL DEFAULT 'planifiee',
+  location text,
+  notes text,
+  created_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE public.instructor_sessions ENABLE ROW LEVEL SECURITY;
+-- RLS: same pattern as other tables (authenticated SELECT/INSERT/UPDATE, admin DELETE)
 ```
 
-### Colonnes FK sur tables existantes
+### `instructor_payments` - Pas de changement
+La table existe et est deja integree au module financier. On la reutilise telle quelle.
+
+### Trigger updated_at sur instructors
 ```sql
-ALTER TABLE public.inscriptions ADD COLUMN season_id uuid REFERENCES public.seasons(id);
-ALTER TABLE public.invoices ADD COLUMN season_id uuid REFERENCES public.seasons(id);
+CREATE TRIGGER set_instructors_updated_at
+  BEFORE UPDATE ON public.instructors
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 ```
 
-### Fonction d'activation unique
-```sql
-CREATE OR REPLACE FUNCTION public.activate_season(p_season_id uuid)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-BEGIN
-  UPDATE public.seasons SET is_current = false, status = 'terminee'
-    WHERE is_current = true AND id != p_season_id;
-  UPDATE public.seasons SET is_current = true, status = 'active'
-    WHERE id = p_season_id;
-END;
-$$;
-```
+## 2. Fichiers a creer (6)
 
-### RLS
-- `seasons` : SELECT `authenticated`, INSERT/UPDATE `authenticated`, DELETE `is_admin()`
-- `pricing_rules` : SELECT `authenticated`, INSERT/UPDATE `authenticated`, DELETE `is_admin()`
-- Trigger `updated_at` sur les deux tables
+### `src/hooks/useInstructors.ts`
+- `useInstructors(filters?)` : liste avec filtres par langue, disponibilite, recherche
+- `useInstructorDetails(id)` : profil complet + stats (heures ce mois, note moyenne)
+- `useCreateInstructor()` / `useUpdateInstructor()` / `useDeleteInstructor()`
+- `useInstructorSessions(instructorId)` : sessions planifiees et passees
+- `useCreateSession()` / `useUpdateSession()`
+- `useCheckScheduleConflict(instructorId, date, startTime, endTime)` : verification de conflit
 
-## 2. Fichiers à créer
+### `src/pages/formateurs/InstructorsList.tsx`
+- Grille de cartes avec : photo (avatar fallback), nom, langues enseignees (badges), statut de disponibilite (badge colore), heures ce mois, note moyenne (etoiles)
+- Filtres : langue, disponibilite, recherche texte
+- Bouton "Ajouter un formateur"
+- Clic sur une carte → navigation vers `/formateurs/:id`
 
-### `src/hooks/useSeasons.ts`
-- `useSeasons()` : liste toutes les saisons triées par date
-- `useCurrentSeason()` : retourne la saison `is_current = true`
-- `useActivateSeason()` : mutation qui appelle `activate_season()`
-- `useCreateSeason()` / `useUpdateSeason()` / `useDeleteSeason()`
-- `usePricingRules(seasonId)` : liste les règles tarifaires d'une saison
-- `useCreatePricingRule()` / `useUpdatePricingRule()` / `useDeletePricingRule()`
-- `usePriceLookup(seasonId, language, level, modality, duration)` : cherche le tarif correspondant
+### `src/pages/formateurs/InstructorDetails.tsx`
+- Header avec photo, nom, statut, contact
+- 4 onglets (Tabs) :
+  - **Profil** : infos personnelles, certifications (jsonb affiché en liste), tarif horaire, statut fiscal, SIRET, bio
+  - **Planning** : calendrier/liste des sessions a venir depuis `instructor_sessions`
+  - **Historique** : sessions passees (status = 'realisee'), evaluations recues (jointure avec `test_evaluations`)
+  - **Paiements** : releve depuis `instructor_payments` existant (montant, periode, statut)
 
-### `src/pages/admin/Seasons.tsx`
-- Liste des saisons en cartes avec badge visuel (Planifiée/Active/Terminée)
-- Badge doré pour la saison active
-- Bouton "Activer" sur chaque saison non-active (avec confirmation)
-- Bouton "Nouvelle saison" ouvrant le formulaire
-- Clic sur une saison ouvre le détail avec les règles tarifaires
+### `src/components/formateurs/InstructorFormDialog.tsx`
+- Formulaire creation/edition : nom, prenom, email, telephone, langues (multi-select), specialites, tarif horaire, statut fiscal, SIRET, bio, certifications, zones geographiques
+- Upload photo vers storage bucket `documents`
 
-### `src/components/admin/SeasonFormDialog.tsx`
-- Formulaire création/édition : name, slug (auto-généré), dates, revenue_target, notes
-- En mode édition, section inférieure avec la grille des règles tarifaires
-- Bouton "Ajouter une règle" pour chaque combinaison langue/niveau/durée/modalité
+### `src/components/formateurs/SessionFormDialog.tsx`
+- Formulaire creation de session : formateur (pre-selectionne si depuis la fiche), inscription (select), date, heure debut/fin, lieu, notes
+- Verification automatique de conflit d'horaire avant enregistrement (appel a `useCheckScheduleConflict`)
 
-### `src/components/admin/PricingRulesTable.tsx`
-- Tableau éditable des règles tarifaires (inline editing)
-- Colonnes : Langue, Niveau, Durée, Modalité, Prix de base, Remise groupe %, Prix ESF, OPCO
-- Filtres par langue et niveau
+### `src/components/formateurs/InstructorCard.tsx`
+- Composant carte reutilisable pour la liste : avatar, nom, langues, disponibilite, heures/mois, note
 
-### `src/components/finance/SeasonSelector.tsx`
-- Dropdown compact qui liste les saisons
-- Saison active pré-sélectionnée par défaut
-- Émet `onSeasonChange(seasonId, startDate, endDate)` pour piloter les filtres financiers
-
-## 3. Fichiers à modifier
+## 3. Fichiers a modifier (3)
 
 ### `src/App.tsx`
-- Ajouter route `/admin/seasons` → `Seasons`
+- Ajouter routes `/formateurs` et `/formateurs/:id` (protegees)
 
 ### `src/components/layout/Sidebar.tsx`
-- Ajouter entrée "Saisons" dans le groupe Administration (icône `Calendar`)
+- Ajouter groupe "Formateurs" entre "Formation" et "Qualite" avec icone `UserCog`
+- Un seul item : "Formateurs" → `/formateurs`
 
 ### `src/lib/route-permissions.ts`
-- Ajouter `{ key: "admin.seasons", label: "Saisons" }` dans le groupe Administration ou Gestion
+- Ajouter `{ key: "formateurs", label: "Formateurs" }` dans un nouveau groupe ou dans Formation
+- Ajouter `"/formateurs": "formateurs"` dans `PATH_TO_ROUTE_KEY`
 
-### `src/pages/finance/FinanceDashboard.tsx`
-- Ajouter `SeasonSelector` à côté du `PeriodSelector`
-- Quand une saison est sélectionnée, les dates start/end du PeriodSelector se calent automatiquement sur la saison
-- Passer `season_id` aux hooks financiers si on veut filtrer aussi par FK (optionnel, le filtre par dates suffit)
+## 4. Integration Sessions
+- Dans `src/pages/Classes.tsx` : ajouter un select "Formateur" lors de la creation d'une session, qui cree aussi une entree dans `instructor_sessions`
+- La verification de conflit affiche un warning si le formateur a deja une session au meme creneau
 
-### `src/components/inscriptions/InscriptionFormDialog.tsx`
-- Ajouter champ caché `season_id` auto-rempli avec la saison active
-- Quand langue + niveau + modalité + durée sont renseignés, lookup automatique du prix via `usePriceLookup` et pré-remplissage du champ `price`
-- Tooltip "Tarif saison X" à côté du champ prix
+## 5. i18n
+Toutes les chaines suivent le pattern existant avec `useLanguage()` et objets `translations` locaux (FR, PT-BR, EN).
 
-### `src/hooks/useInscriptions.ts` (type `InscriptionComplete`)
-- Ajouter `season_id` au type
-
-## 4. Détails techniques
-
-- Le slug est auto-généré depuis le nom (ex: "Hiver 2025-2026" → "hiver-2025-2026")
-- `activate_season()` est une fonction DB SECURITY DEFINER qui garantit qu'une seule saison est active à la fois
-- Le lookup de prix utilise une correspondance exacte (language + level + modality + duration_hours) ; si aucune règle ne correspond, le champ prix reste vide et éditable manuellement
-- Les traductions i18n suivront le pattern existant avec `useLanguage()` et objets `translations` locaux (FR, PT-BR, EN)
-- 11 fichiers touchés au total (1 migration, 5 créés, 5 modifiés)
+## Resume
+- 1 migration (enrichir instructors + creer instructor_sessions + RLS + trigger)
+- 6 fichiers crees
+- 3 fichiers modifies
+- 0 impact sur instructor_payments existant
 
