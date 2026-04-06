@@ -341,7 +341,9 @@ export function DashboardGestao() {
           <CardContent>
             <div className="text-3xl font-bold">{stats?.activeClasses.total || 0}</div>
             <p className="text-sm text-muted-foreground">
-              {stats?.activeClasses.validated || 0} {t(translations.validated)}
+              {(stats?.activeClasses.total || 0) === 0
+                ? t(translations.noActiveClasses)
+                : `${stats?.activeClasses.validated || 0} ${t(translations.confirmed_classes)}`}
             </p>
           </CardContent>
         </Card>
