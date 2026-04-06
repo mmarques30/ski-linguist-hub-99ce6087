@@ -91,6 +91,7 @@ const navigationGroups: NavGroup[] = [
         icon: Wallet,
         subItems: [
           { name: "Vue d'ensemble", href: "/finance" },
+          { name: "Paiements", href: "/finance/payments" },
           { name: "Analyses", href: "/finance/analyses" },
           { name: "Rentabilité", href: "/finance/rentabilite" },
           { name: "Trésorerie", href: "/finance/tresorerie" },

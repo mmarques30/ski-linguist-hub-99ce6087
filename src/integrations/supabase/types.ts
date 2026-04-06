@@ -1161,6 +1161,64 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_reminders: {
+        Row: {
+          created_at: string
+          id: string
+          inscription_id: string
+          notes: string | null
+          payment_id: string | null
+          reminder_type: string
+          response_status: string | null
+          sent_at: string
+          sent_via: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inscription_id: string
+          notes?: string | null
+          payment_id?: string | null
+          reminder_type?: string
+          response_status?: string | null
+          sent_at?: string
+          sent_via?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inscription_id?: string
+          notes?: string | null
+          payment_id?: string | null
+          reminder_type?: string
+          response_status?: string | null
+          sent_at?: string
+          sent_via?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_reminders_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_reminders_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions_complete"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_reminders_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -1170,14 +1228,21 @@ export type Database = {
           cheque_deposited: boolean | null
           cheque_number: string | null
           created_at: string
+          currency: string
           id: string
+          inscription_id: string | null
           invoice_id: string | null
           notes: string | null
+          payer_name: string | null
+          payer_type: string | null
           payment_date: string
           payment_method: string
           payment_type: string
+          reference: string | null
+          status: string
           stripe_checkout_session_id: string | null
           stripe_payment_intent_id: string | null
+          updated_at: string
         }
         Insert: {
           amount: number
@@ -1187,14 +1252,21 @@ export type Database = {
           cheque_deposited?: boolean | null
           cheque_number?: string | null
           created_at?: string
+          currency?: string
           id?: string
+          inscription_id?: string | null
           invoice_id?: string | null
           notes?: string | null
+          payer_name?: string | null
+          payer_type?: string | null
           payment_date?: string
           payment_method: string
           payment_type?: string
+          reference?: string | null
+          status?: string
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
+          updated_at?: string
         }
         Update: {
           amount?: number
@@ -1204,16 +1276,37 @@ export type Database = {
           cheque_deposited?: boolean | null
           cheque_number?: string | null
           created_at?: string
+          currency?: string
           id?: string
+          inscription_id?: string | null
           invoice_id?: string | null
           notes?: string | null
+          payer_name?: string | null
+          payer_type?: string | null
           payment_date?: string
           payment_method?: string
           payment_type?: string
+          reference?: string | null
+          status?: string
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
+          updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "payments_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions_complete"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payments_invoice_id_fkey"
             columns: ["invoice_id"]

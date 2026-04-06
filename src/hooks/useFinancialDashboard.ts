@@ -102,15 +102,15 @@ export function useFinancialKPIs(startDate: string, endDate: string, withCompari
         const caFacture = invoices?.reduce((sum, inv) => sum + Number(inv.amount_ht || 0), 0) || 0;
         const caTTC = invoices?.reduce((sum, inv) => sum + Number(inv.amount_ttc || inv.amount_ht || 0), 0) || 0;
         
-        // Encaissé (factures payées)
-        const { data: paidInvoices } = await supabase
-          .from('invoices')
-          .select('amount_ttc, amount_ht')
-          .eq('status', 'paid')
+        // Encaissé (paiements reçus)
+        const { data: receivedPayments } = await supabase
+          .from('payments')
+          .select('amount')
+          .eq('status', 'recu')
           .gte('payment_date', start)
           .lte('payment_date', end);
         
-        const encaisse = paidInvoices?.reduce((sum, inv) => sum + Number(inv.amount_ttc || inv.amount_ht || 0), 0) || 0;
+        const encaisse = receivedPayments?.reduce((sum, p) => sum + Number(p.amount || 0), 0) || 0;
         
         // En attente
         const enAttente = caTTC - encaisse;
