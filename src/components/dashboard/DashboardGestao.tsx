@@ -239,7 +239,7 @@ export function DashboardGestao() {
 
   // Group inscriptions by language for class preparation
   const classPreparation = inscriptions
-    ?.filter((i) => i.status === "En cours")
+    ?.filter((i) => i.status === "en_cours")
     .reduce(
       (acc, i) => {
         const lang = i.language || "Autre";
