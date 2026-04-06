@@ -68,7 +68,7 @@ export function RevenueChart({ caByMonth }: RevenueChartProps) {
               <Line
                 type="monotone"
                 dataKey="real"
-                name="Receita Real"
+                name={t(i18n.actual)}
                 stroke={BRAND_GOLD}
                 strokeWidth={2}
                 dot={{ fill: BRAND_GOLD, r: 4 }}
