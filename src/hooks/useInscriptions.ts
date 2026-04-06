@@ -89,9 +89,9 @@ export function useInscriptionStats() {
         totalRevenue,
         byStatus,
         byLanguage,
-        active: byStatus['En cours'] || 0,
-        completed: byStatus['Terminé'] || 0,
-        billed: byStatus['Facturé'] || 0,
+        active: byStatus['en_cours'] || 0,
+        completed: byStatus['terminee'] || 0,
+        billed: byStatus['facturee'] || 0,
       };
     },
   });

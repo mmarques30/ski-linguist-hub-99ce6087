@@ -412,12 +412,12 @@ export function DashboardGestao() {
                         <Badge
                           variant="outline"
                           className={
-                            inscription.status === "En cours" || inscription.status === "Facturé"
+                            inscription.status === "en_cours" || inscription.status === "confirmee" || inscription.status === "facturee"
                               ? "bg-accent border-primary/30 text-foreground"
                               : "bg-muted border-border text-muted-foreground"
                           }
                         >
-                          {inscription.status === "En cours" || inscription.status === "Facturé"
+                          {inscription.status === "en_cours" || inscription.status === "confirmee" || inscription.status === "facturee"
                             ? t(translations.statusConfirmed)
                             : t(translations.statusPending)}
                         </Badge>

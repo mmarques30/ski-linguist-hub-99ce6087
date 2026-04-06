@@ -368,10 +368,12 @@ export default function Inscriptions() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t(translations.allStatuses)}</SelectItem>
-              <SelectItem value="En cours">{t(translations.statusInProgress)}</SelectItem>
-              <SelectItem value="Facturé">{t(translations.statusBilled)}</SelectItem>
-              <SelectItem value="Terminé">{t(translations.statusCompleted)}</SelectItem>
-              <SelectItem value="Annulé">{t(translations.statusCancelled)}</SelectItem>
+              <SelectItem value="en_attente">{language === "pt-BR" ? "Pendente" : language === "en" ? "Pending" : "En attente"}</SelectItem>
+              <SelectItem value="confirmee">{language === "pt-BR" ? "Confirmada" : language === "en" ? "Confirmed" : "Confirmée"}</SelectItem>
+              <SelectItem value="en_cours">{t(translations.statusInProgress)}</SelectItem>
+              <SelectItem value="terminee">{t(translations.statusCompleted)}</SelectItem>
+              <SelectItem value="facturee">{t(translations.statusBilled)}</SelectItem>
+              <SelectItem value="annulee">{t(translations.statusCancelled)}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={languageFilter} onValueChange={setLanguageFilter}>

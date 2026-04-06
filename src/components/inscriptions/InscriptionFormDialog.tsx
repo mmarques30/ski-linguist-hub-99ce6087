@@ -401,7 +401,7 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
           modality: data.modality || null,
           course_location: data.course_location || null,
           observations: data.observations || null,
-          status: "En cours",
+          status: "brouillon",
         });
 
         if (error) throw error;

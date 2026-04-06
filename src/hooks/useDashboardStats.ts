@@ -59,11 +59,11 @@ export function useDashboardStats() {
       const { data: activeInscriptions } = await supabase
         .from("inscriptions")
         .select("id, status, instructor_id")
-        .eq("status", "En cours");
+        .eq("status", "en_cours");
       // Calculate stats
       const confirmedInscriptions =
         inscriptions?.filter(
-          (i) => i.status === "Confirmé" || i.status === "En cours" || i.status === "Facturé"
+          (i) => i.status === "confirmee" || i.status === "en_cours" || i.status === "facturee"
         ).length || 0;
 
       const projectedRevenue = invoices?.reduce((sum, i) => sum + (Number(i.amount_ttc) || 0), 0) || 0;

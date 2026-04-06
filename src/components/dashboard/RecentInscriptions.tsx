@@ -56,10 +56,13 @@ const translations = {
 };
 
 const statusStyles: Record<string, string> = {
-  "En cours": "bg-blue-100 text-blue-800 hover:bg-blue-100",
-  "Facturé": "bg-emerald-100 text-emerald-800 hover:bg-emerald-100",
-  "Terminé": "bg-gray-100 text-gray-800 hover:bg-gray-100",
-  "Annulé": "bg-red-100 text-red-800 hover:bg-red-100",
+  brouillon: "bg-gray-100 text-gray-800 hover:bg-gray-100",
+  en_attente: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
+  confirmee: "bg-blue-100 text-blue-800 hover:bg-blue-100",
+  en_cours: "bg-indigo-100 text-indigo-800 hover:bg-indigo-100",
+  terminee: "bg-gray-100 text-gray-800 hover:bg-gray-100",
+  facturee: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100",
+  annulee: "bg-red-100 text-red-800 hover:bg-red-100",
 };
 
 export function RecentInscriptions() {
@@ -88,10 +91,13 @@ export function RecentInscriptions() {
   };
 
   const statusLabels: Record<string, string> = {
-    "En cours": t(translations.statusInProgress),
-    "Facturé": t(translations.statusBilled),
-    "Terminé": t(translations.statusCompleted),
-    "Annulé": t(translations.statusCancelled),
+    brouillon: language === "pt-BR" ? "Rascunho" : language === "en" ? "Draft" : "Brouillon",
+    en_attente: language === "pt-BR" ? "Pendente" : language === "en" ? "Pending" : "En attente",
+    confirmee: language === "pt-BR" ? "Confirmada" : language === "en" ? "Confirmed" : "Confirmée",
+    en_cours: t(translations.statusInProgress),
+    terminee: t(translations.statusCompleted),
+    facturee: t(translations.statusBilled),
+    annulee: t(translations.statusCancelled),
   };
 
   return (
