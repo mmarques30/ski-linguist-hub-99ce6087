@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { PeriodSelector } from "@/components/finance/PeriodSelector";
+import { SeasonSelector } from "@/components/finance/SeasonSelector";
 import { FinanceKPICard } from "@/components/finance/FinanceKPICard";
 import { InstructorPaymentDialog } from "@/components/finance/InstructorPaymentDialog";
+import { useCurrentSeason } from "@/hooks/useSeasons";
 import { 
   useFinancialKPIs, 
   useCAByMonth, 
