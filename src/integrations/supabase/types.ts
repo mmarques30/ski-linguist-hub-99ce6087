@@ -1772,6 +1772,143 @@ export type Database = {
         }
         Relationships: []
       }
+      session_enrollments: {
+        Row: {
+          attendance_status: string
+          created_at: string
+          id: string
+          inscription_id: string | null
+          notes: string | null
+          session_id: string
+          student_id: string
+        }
+        Insert: {
+          attendance_status?: string
+          created_at?: string
+          id?: string
+          inscription_id?: string | null
+          notes?: string | null
+          session_id: string
+          student_id: string
+        }
+        Update: {
+          attendance_status?: string
+          created_at?: string
+          id?: string
+          inscription_id?: string | null
+          notes?: string | null
+          session_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_enrollments_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_enrollments_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions_complete"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_enrollments_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_enrollments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          created_at: string
+          current_students: number
+          end_datetime: string
+          id: string
+          instructor_id: string | null
+          language: string
+          level: string
+          location: string | null
+          max_students: number
+          modality: string
+          notes: string | null
+          recurrence: string | null
+          room: string | null
+          season_id: string | null
+          start_datetime: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_students?: number
+          end_datetime: string
+          id?: string
+          instructor_id?: string | null
+          language: string
+          level?: string
+          location?: string | null
+          max_students?: number
+          modality?: string
+          notes?: string | null
+          recurrence?: string | null
+          room?: string | null
+          season_id?: string | null
+          start_datetime: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_students?: number
+          end_datetime?: string
+          id?: string
+          instructor_id?: string | null
+          language?: string
+          level?: string
+          location?: string | null
+          max_students?: number
+          modality?: string
+          notes?: string | null
+          recurrence?: string | null
+          room?: string | null
+          season_id?: string | null
+          start_datetime?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "seasons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ski_schools: {
         Row: {
           created_at: string
