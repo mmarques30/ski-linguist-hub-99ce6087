@@ -23,6 +23,7 @@ interface AnalysesKPIGridProps {
 }
 
 export function AnalysesKPIGrid({ caByType, caByClient, kpis, startDate, endDate }: AnalysesKPIGridProps) {
+  const { t } = useLanguage();
   const caTotal = caByType?.reduce((s, i) => s + i.value, 0) || 0;
   const caTotalN1 = caByType?.reduce((s, i) => s + i.valueN1, 0) || 0;
   const nbClients = caByClient?.length || 1;
