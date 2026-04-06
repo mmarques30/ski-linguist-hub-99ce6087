@@ -1,75 +1,60 @@
 
+# Refactoring Inscriptions — Approche Progressive
 
-# Notifications dynamiques dans le TopHeader
+## Phase 1 : Machine à états + Audit (cette itération)
 
-## Contexte
-Le badge "3" est hardcode dans `TopHeader.tsx` (ligne 58). Il faut le remplacer par un systeme connecte a la base de donnees.
+### 1.1 Migration SQL
+- Ajouter les colonnes `status_changed_at` (timestamptz) et `status_changed_by` (uuid) à `inscriptions`
+- Migrer les statuts existants vers les nouveaux codes :
+  - `En cours` → `en_cours`
+  - `Terminé` → `terminee`
+  - `Facturé` → `facturee`
+  - `Annulé` → `annulee`
+  - `Confirmé` → `confirmee`
+  - Tout autre → `brouillon`
+- Créer une fonction PostgreSQL `validate_inscription_status_transition()` qui :
+  - Autorise : brouillon→en_attente, en_attente→confirmee, en_attente→annulee, confirmee→en_cours, confirmee→annulee (si avant start_date), en_cours→terminee, terminee→facturee
+  - Bloque toute autre transition avec `RAISE EXCEPTION`
+  - Met à jour automatiquement `status_changed_at` et `status_changed_by`
+- Créer un trigger `BEFORE UPDATE` sur `inscriptions` qui appelle cette fonction
+- Mettre à jour la vue `inscriptions_complete` pour utiliser les nouveaux statuts
 
-## 1. Migration SQL
+### 1.2 Code — Constantes et helpers
+- Créer `src/lib/inscription-status.ts` : enum des statuts, map des transitions autorisées, labels traduits (FR/PT-BR/EN), couleurs de badges
 
-### Table `notifications`
-```sql
-CREATE TABLE public.notifications (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  type text NOT NULL DEFAULT 'inscription',
-  title text NOT NULL,
-  message text,
-  is_read boolean NOT NULL DEFAULT false,
-  link text,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+### 1.3 Code — Mise à jour des composants
+- Mettre à jour tous les composants qui référencent les anciens statuts français :
+  - `useInscriptions.ts` (filtres, stats)
+  - `useDashboardStats.ts` (compteurs)
+  - `useStudentDetails.ts` (stats)
+  - `RecentInscriptions.tsx` (badges, labels)
+  - `DashboardGestao.tsx` (KPIs)
+  - `InscriptionFormDialog.tsx` (sélection de statut)
+  - `InscriptionDetails.tsx` (affichage)
+  - `Inscriptions.tsx` (filtres)
+  - Tout autre fichier référençant "En cours", "Terminé", "Facturé", "Annulé", "Confirmé"
 
-ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
-
--- Users can only see their own notifications
-CREATE POLICY "Users can view own notifications"
-  ON public.notifications FOR SELECT TO authenticated
-  USING (user_id = auth.uid());
-
-CREATE POLICY "Users can update own notifications"
-  ON public.notifications FOR UPDATE TO authenticated
-  USING (user_id = auth.uid());
-
-CREATE POLICY "Staff can insert notifications"
-  ON public.notifications FOR INSERT TO authenticated
-  WITH CHECK (true);
-
-CREATE POLICY "Admin can delete notifications"
-  ON public.notifications FOR DELETE TO authenticated
-  USING (is_admin());
-
--- Enable realtime for live badge updates
-ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
-```
-
-## 2. Hook `src/hooks/useNotifications.ts`
-
-- `useUnreadCount()` : query `notifications` where `user_id = auth.uid()` and `is_read = false`, return count. Subscribe to realtime changes for live updates.
-- `useRecentNotifications()` : fetch 10 most recent notifications for current user, ordered by `created_at DESC`.
-- `useMarkAsRead(id)` : mutation to set `is_read = true` on a single notification.
-- `useMarkAllAsRead()` : mutation to mark all unread as read.
-
-## 3. Modifier `src/components/layout/TopHeader.tsx`
-
-- Import `Popover` / `PopoverTrigger` / `PopoverContent` from `@/components/ui/popover`
-- Replace the hardcoded `<button>` with a `Popover` wrapping the bell icon
-- Badge shows `unreadCount` from `useUnreadCount()` ; hidden when 0
-- Popover content: list of 10 recent notifications with icon by type, title, relative time
-- Click on a notification: call `markAsRead(id)`, then `navigate(link)`
-- "Tout marquer comme lu" button at the bottom
-
-## 4. Fichiers
-
+### Fichiers concernés Phase 1
 | Action | Fichier |
 |--------|---------|
-| Creer | `src/hooks/useNotifications.ts` |
-| Modifier | `src/components/layout/TopHeader.tsx` |
-| Migration | Table `notifications` + RLS + realtime |
+| Migration | Colonnes audit + statuts + trigger + vue |
+| Créer | `src/lib/inscription-status.ts` |
+| Modifier | ~8-10 fichiers existants (hooks + composants) |
 
-## Resume
-- 1 migration (table + RLS + realtime)
-- 1 nouveau hook
-- 1 fichier modifie (TopHeader)
-- Badge dynamique avec realtime, dropdown au clic, marquage lu avec redirection
+---
 
+## Phase 2 : Normalisation tables (prochaine itération)
+- Créer `inscription_financials`, `inscription_pedagogy`, `inscription_logistics`
+- Répartir les colonnes existantes :
+  - **Core** (inscriptions) : id, student_id, instructor_id, partner_id, ski_school_id, code, status, language, modality, course_type, course_location, start_date, end_date, duration_hours, duration_days, hours_per_day, schedule, rhythm, group_name, group_size, max_participants, observations, created_at, updated_at, status_changed_at, status_changed_by
+  - **Financials** : price, deposit_amount, deposit_date, balance_after_deposit, payment_method, check_number, check_date, pedagogical_cost, funding_organization, funding_details, bpf_category_c, bpf_category_f
+  - **Pedagogy** : entry_level, entry_test_id, entry_test_score, exit_level, exit_test_id, progression, certification_type, certification_result, certification_date, certificate_level, final_general_level, final_specific_level, expectations
+  - **Logistics** : course_address, course_materials, documents_sent_at, end_pack_sent_at, qualiopi_status, final_status
+- Migrer les données existantes
+- Recréer la vue `inscriptions_complete` avec jointures
+- RLS sur les nouvelles tables
+
+## Phase 3 : Mise à jour composants pour normalisation (itération suivante)
+- Mettre à jour les hooks pour utiliser les jointures/vues
+- Mettre à jour les formulaires pour écrire dans les bonnes tables
+- Tests de non-régression
