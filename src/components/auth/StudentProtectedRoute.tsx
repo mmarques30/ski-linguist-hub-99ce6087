@@ -4,11 +4,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-interface ProtectedRouteProps {
+interface Props {
   children: React.ReactNode;
 }
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
+export function StudentProtectedRoute({ children }: Props) {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -29,14 +29,14 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate("/auth", { replace: true });
+      navigate("/auth?mode=student", { replace: true });
     }
   }, [user, loading, navigate]);
 
-  // Redirect students to their portal
   useEffect(() => {
-    if (!roleLoading && role === "student") {
-      navigate("/student/dashboard", { replace: true });
+    if (!roleLoading && role && role !== "student") {
+      // Not a student — redirect to admin dashboard
+      navigate("/", { replace: true });
     }
   }, [role, roleLoading, navigate]);
 
@@ -45,15 +45,13 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-muted-foreground">Carregando...</p>
+          <p className="text-muted-foreground">Chargement de votre espace...</p>
         </div>
       </div>
     );
   }
 
-  if (!user || role === "student") {
-    return null;
-  }
+  if (!user) return null;
 
   return <>{children}</>;
 }

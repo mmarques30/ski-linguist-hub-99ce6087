@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { StudentProtectedRoute } from "@/components/auth/StudentProtectedRoute";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import Dashboard from "./pages/Dashboard";
 import Inscriptions from "./pages/Inscriptions";
@@ -39,6 +40,11 @@ import PartnersList from "./pages/partners/PartnersList";
 import PartnerDetails from "./pages/partners/PartnerDetails";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import StudentDashboard from "./pages/student/StudentDashboard";
+import StudentTest from "./pages/student/StudentTest";
+import StudentDocuments from "./pages/student/StudentDocuments";
+import StudentEvaluation from "./pages/student/StudentEvaluation";
+import StudentPlanning from "./pages/student/StudentPlanning";
 
 
 const queryClient = new QueryClient();
@@ -88,6 +94,14 @@ const App = () => (
             <Route path="/formateur/evaluation-view/:evaluationId" element={<ProtectedRoute><EvaluationView /></ProtectedRoute>} />
             <Route path="/amelioration" element={<ProtectedRoute><ContinuousImprovement /></ProtectedRoute>} />
             <Route path="/satisfaction-stats" element={<ProtectedRoute><SatisfactionStats /></ProtectedRoute>} />
+
+            {/* Student portal routes */}
+            <Route path="/student/dashboard" element={<StudentProtectedRoute><StudentDashboard /></StudentProtectedRoute>} />
+            <Route path="/student/test" element={<StudentProtectedRoute><StudentTest /></StudentProtectedRoute>} />
+            <Route path="/student/planning" element={<StudentProtectedRoute><StudentPlanning /></StudentProtectedRoute>} />
+            <Route path="/student/documents" element={<StudentProtectedRoute><StudentDocuments /></StudentProtectedRoute>} />
+            <Route path="/student/evaluation" element={<StudentProtectedRoute><StudentEvaluation /></StudentProtectedRoute>} />
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

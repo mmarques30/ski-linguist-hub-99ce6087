@@ -1938,6 +1938,7 @@ export type Database = {
       }
       students: {
         Row: {
+          auth_user_id: string | null
           city: string | null
           civility: string | null
           company: string | null
@@ -1952,6 +1953,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auth_user_id?: string | null
           city?: string | null
           civility?: string | null
           company?: string | null
@@ -1966,6 +1968,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auth_user_id?: string | null
           city?: string | null
           civility?: string | null
           company?: string | null
@@ -2502,6 +2505,7 @@ export type Database = {
       activate_season: { Args: { p_season_id: string }; Returns: undefined }
       generate_inscription_code: { Args: never; Returns: string }
       get_fiscal_year: { Args: { invoice_date: string }; Returns: string }
+      get_my_student_id: { Args: never; Returns: string }
       get_user_role: { Args: never; Returns: string }
       has_role: {
         Args: {
@@ -2511,9 +2515,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_student: { Args: never; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "student"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2641,7 +2646,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "student"],
     },
   },
 } as const
