@@ -58,9 +58,8 @@ export function useDashboardStats() {
       // Fetch active inscriptions (turmas ativas)
       const { data: activeInscriptions } = await supabase
         .from("inscriptions")
-        .select("id, status")
+        .select("id, status, instructor_id")
         .eq("status", "En cours");
-
       // Calculate stats
       const confirmedInscriptions =
         inscriptions?.filter(
