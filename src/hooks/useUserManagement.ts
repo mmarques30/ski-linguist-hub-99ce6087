@@ -8,6 +8,7 @@ export interface UserWithRole {
   is_active: boolean;
   role: string | null;
   created_at: string;
+  has_complete_profile: boolean;
 }
 
 export interface CreateUserInput {
