@@ -1,8 +1,14 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { format, addMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Separator } from "@/components/ui/separator";
+
+const i18n = {
+  title: { fr: 'Prévision Trimestrielle', 'pt-BR': 'Previsão Trimestral', en: 'Quarterly Forecast' },
+  subtitle: { fr: 'Projection pour Q', 'pt-BR': 'Projeção para Q', en: 'Forecast for Q' },
+};
 
 interface QuarterlyForecastProps {
   caByMonth: Array<{ month: string; total: number }> | undefined;
