@@ -1963,6 +1963,7 @@ export type Database = {
     Functions: {
       generate_inscription_code: { Args: never; Returns: string }
       get_fiscal_year: { Args: { invoice_date: string }; Returns: string }
+      get_user_role: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1970,6 +1971,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
