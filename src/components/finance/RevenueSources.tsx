@@ -1,5 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { BookOpen, GraduationCap, Handshake } from "lucide-react";
+
+const i18n = {
+  title: { fr: 'Sources de revenus', 'pt-BR': 'Fontes de Receita', en: 'Revenue Sources' },
+  subtitle: { fr: 'Distribution par type de cours', 'pt-BR': 'Distribuição por tipo de curso', en: 'Distribution by course type' },
+};
 
 interface RevenueSourcesProps {
   caByType: Array<{ name: string; value: number; type: string }> | undefined;
