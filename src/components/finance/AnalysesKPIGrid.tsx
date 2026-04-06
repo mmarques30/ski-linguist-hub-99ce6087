@@ -1,6 +1,11 @@
 import { FinanceKPICard } from "./FinanceKPICard";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { BarChart3, Users, UserCheck, CalendarRange, Ticket, Target } from "lucide-react";
 import { differenceInMonths } from "date-fns";
+
+const i18n = {
+  monthlyRevenue: { fr: 'CA Mensuel', 'pt-BR': 'Receita Mensal', en: 'Monthly Revenue' },
+};
 
 interface AnalysesKPIGridProps {
   caByType: Array<{ value: number; valueN1: number }> | undefined;
@@ -18,6 +23,7 @@ interface AnalysesKPIGridProps {
 }
 
 export function AnalysesKPIGrid({ caByType, caByClient, kpis, startDate, endDate }: AnalysesKPIGridProps) {
+  const { t } = useLanguage();
   const caTotal = caByType?.reduce((s, i) => s + i.value, 0) || 0;
   const caTotalN1 = caByType?.reduce((s, i) => s + i.valueN1, 0) || 0;
   const nbClients = caByClient?.length || 1;
@@ -67,7 +73,7 @@ export function AnalysesKPIGrid({ caByType, caByClient, kpis, startDate, endDate
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         <FinanceKPICard
-          title="Receita Mensal"
+          title={t(i18n.monthlyRevenue)}
           value={caMensuelMoyen}
           variant="navy"
           formatAsPrice

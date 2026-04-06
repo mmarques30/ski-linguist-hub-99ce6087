@@ -1,10 +1,17 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from "recharts";
 import { format, addMonths } from "date-fns";
 import { fr } from "date-fns/locale";
+
+const i18n = {
+  title: { fr: 'CA et Projections', 'pt-BR': 'Receita e Projeções', en: 'Revenue & Projections' },
+  actual: { fr: 'CA Réel', 'pt-BR': 'Receita Real', en: 'Actual Revenue' },
+  projection: { fr: 'Projection', 'pt-BR': 'Projeção', en: 'Projection' },
+};
 
 const BRAND_GOLD = "hsl(45, 93%, 47%)";
 const BRAND_NAVY = "hsl(213, 50%, 20%)";
@@ -14,6 +21,7 @@ interface RevenueChartProps {
 }
 
 export function RevenueChart({ caByMonth }: RevenueChartProps) {
+  const { t } = useLanguage();
   const chartData = useMemo(() => {
     if (!caByMonth?.length) return [];
 
@@ -53,7 +61,7 @@ export function RevenueChart({ caByMonth }: RevenueChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Receita e Projeções</CardTitle>
+        <CardTitle>{t(i18n.title)}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[300px]">
@@ -67,7 +75,7 @@ export function RevenueChart({ caByMonth }: RevenueChartProps) {
               <Line
                 type="monotone"
                 dataKey="real"
-                name="Receita Real"
+                name={t(i18n.actual)}
                 stroke={BRAND_GOLD}
                 strokeWidth={2}
                 dot={{ fill: BRAND_GOLD, r: 4 }}
@@ -76,7 +84,7 @@ export function RevenueChart({ caByMonth }: RevenueChartProps) {
               <Line
                 type="monotone"
                 dataKey="projection"
-                name="Projeção"
+                name={t(i18n.projection)}
                 stroke={BRAND_NAVY}
                 strokeWidth={2}
                 strokeDasharray="6 4"

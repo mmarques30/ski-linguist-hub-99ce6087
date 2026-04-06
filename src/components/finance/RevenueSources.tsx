@@ -1,5 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { BookOpen, GraduationCap, Handshake } from "lucide-react";
+
+const i18n = {
+  title: { fr: 'Sources de revenus', 'pt-BR': 'Fontes de Receita', en: 'Revenue Sources' },
+  subtitle: { fr: 'Distribution par type de cours', 'pt-BR': 'Distribuição por tipo de curso', en: 'Distribution by course type' },
+};
 
 interface RevenueSourcesProps {
   caByType: Array<{ name: string; value: number; type: string }> | undefined;
@@ -12,6 +18,7 @@ const typeIcons: Record<string, React.ElementType> = {
 };
 
 export function RevenueSources({ caByType }: RevenueSourcesProps) {
+  const { t } = useLanguage();
   const formatPrice = (value: number) =>
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
 
@@ -20,8 +27,8 @@ export function RevenueSources({ caByType }: RevenueSourcesProps) {
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle className="text-base">Fontes de Receita</CardTitle>
-        <p className="text-sm text-muted-foreground">Distribution par type de cours</p>
+        <CardTitle className="text-base">{t(i18n.title)}</CardTitle>
+        <p className="text-sm text-muted-foreground">{t(i18n.subtitle)}</p>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">

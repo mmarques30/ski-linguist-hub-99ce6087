@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,15 @@ const BRAND_GRAY = 'hsl(0, 0%, 90%)';
 const BRAND_BLACK = 'hsl(0, 0%, 9%)';
 const CHART_COLORS = [BRAND_GOLD, BRAND_NAVY, BRAND_GRAY, BRAND_BLACK];
 
+const translations = {
+  revenueVsExpenses: { fr: 'Recettes vs Dépenses', 'pt-BR': 'Receitas vs Despesas', en: 'Revenue vs Expenses' },
+  revenue: { fr: 'Recettes', 'pt-BR': 'Receitas', en: 'Revenue' },
+  expenses: { fr: 'Dépenses', 'pt-BR': 'Despesas', en: 'Expenses' },
+  quarterlyRevenue: { fr: 'CA Trimestriel', 'pt-BR': 'Receita Trimestral', en: 'Quarterly Revenue' },
+  newTrainees: { fr: 'Nouveaux stagiaires', 'pt-BR': 'Novos Estagiários', en: 'New Trainees' },
+  quarterlyGoals: { fr: 'Objectifs du trimestre', 'pt-BR': 'Metas do Trimestre', en: 'Quarterly Goals' },
+};
+
 export default function FinanceDashboard() {
   const today = new Date();
   const [startDate, setStartDate] = useState(format(startOfMonth(today), 'yyyy-MM-dd'));
@@ -40,6 +50,7 @@ export default function FinanceDashboard() {
   useFinancialRealtime();
   const { canEdit } = useUserPermissions();
   const editable = canEdit("finance");
+  const { t } = useLanguage();
 
   const { data: kpis } = useFinancialKPIs(startDate, endDate, true);
   const { data: caByMonth } = useCAByMonth(startDate, endDate, true);
@@ -90,8 +101,8 @@ export default function FinanceDashboard() {
     const margeActuelle = kpis?.margePourcent || 0;
     const nbFormateurs = kpis?.formateursConcernes || 0;
     return [
-      { label: 'Receita Trimestral', current: caTotal, target: 50000, format: 'price' as const },
-      { label: 'Novos Stagiaires', current: nbFormateurs, target: 15, format: 'number' as const },
+      { label: t(translations.quarterlyRevenue), current: caTotal, target: 50000, format: 'price' as const },
+      { label: t(translations.newTrainees), current: nbFormateurs, target: 15, format: 'number' as const },
       { label: 'Marge cible', current: margeActuelle, target: 60, format: 'percent' as const },
     ];
   }, [kpis]);
@@ -159,15 +170,15 @@ export default function FinanceDashboard() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Receitas vs Despesas</CardTitle>
+                <CardTitle className="text-lg">{t(translations.revenueVsExpenses)}</CardTitle>
                 <div className="flex items-center gap-4 text-xs">
                   <div className="flex items-center gap-1.5">
                     <div className="h-2.5 w-2.5 rounded-full bg-[hsl(var(--fli-yellow))]" />
-                    <span className="text-muted-foreground">Receitas</span>
+                    <span className="text-muted-foreground">{t(translations.revenue)}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <div className="h-2.5 w-2.5 rounded-full bg-[hsl(var(--fli-navy))]" />
-                    <span className="text-muted-foreground">Despesas</span>
+                    <span className="text-muted-foreground">{t(translations.expenses)}</span>
                   </div>
                 </div>
               </div>
@@ -242,7 +253,7 @@ export default function FinanceDashboard() {
         {/* Metas do Trimestre */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Metas do Trimestre</CardTitle>
+            <CardTitle className="text-lg">{t(translations.quarterlyGoals)}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-6 md:grid-cols-3">
