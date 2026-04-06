@@ -32,6 +32,8 @@ import FinanceAnalyses from "./pages/finance/FinanceAnalyses";
 import FinanceRentabilite from "./pages/finance/FinanceRentabilite";
 import FinanceTresorerie from "./pages/finance/FinanceTresorerie";
 import FinanceChargesFixes from "./pages/finance/FinanceChargesFixes";
+import PartnersList from "./pages/partners/PartnersList";
+import PartnerDetails from "./pages/partners/PartnerDetails";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -58,6 +60,8 @@ const App = () => (
             <Route path="/finance/rentabilite" element={<ProtectedRoute><FinanceRentabilite /></ProtectedRoute>} />
             <Route path="/finance/tresorerie" element={<ProtectedRoute><FinanceTresorerie /></ProtectedRoute>} />
             <Route path="/finance/charges-fixes" element={<ProtectedRoute><FinanceChargesFixes /></ProtectedRoute>} />
+            <Route path="/gestion/partenaires" element={<ProtectedRoute><PartnersList /></ProtectedRoute>} />
+            <Route path="/gestion/partenaires/:id" element={<ProtectedRoute><PartnerDetails /></ProtectedRoute>} />
             <Route path="/inscriptions" element={<ProtectedRoute><Inscriptions /></ProtectedRoute>} />
             <Route path="/inscriptions/:id" element={<ProtectedRoute><InscriptionDetails /></ProtectedRoute>} />
             <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
