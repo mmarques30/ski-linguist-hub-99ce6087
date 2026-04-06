@@ -265,6 +265,7 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
   const queryClient = useQueryClient();
   const { t, language: uiLanguage } = useLanguage();
   const isEditMode = !!inscription;
+  const { data: currentSeason } = useCurrentSeason();
 
   const form = useForm<InscriptionFormData>({
     resolver: zodResolver(inscriptionSchema),
