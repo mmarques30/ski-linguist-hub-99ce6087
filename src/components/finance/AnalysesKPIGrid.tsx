@@ -1,6 +1,11 @@
 import { FinanceKPICard } from "./FinanceKPICard";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { BarChart3, Users, UserCheck, CalendarRange, Ticket, Target } from "lucide-react";
 import { differenceInMonths } from "date-fns";
+
+const i18n = {
+  monthlyRevenue: { fr: 'CA Mensuel', 'pt-BR': 'Receita Mensal', en: 'Monthly Revenue' },
+};
 
 interface AnalysesKPIGridProps {
   caByType: Array<{ value: number; valueN1: number }> | undefined;
