@@ -69,10 +69,15 @@ const translations = {
     "pt-BR": "Turmas Ativas",
     en: "Active Classes",
   },
-  validated: {
-    fr: "validées",
-    "pt-BR": "validadas",
-    en: "validated",
+  confirmed_classes: {
+    fr: "confirmées",
+    "pt-BR": "confirmadas",
+    en: "confirmed",
+  },
+  noActiveClasses: {
+    fr: "Aucune formation en cours",
+    "pt-BR": "Nenhuma turma ativa",
+    en: "No active classes",
   },
   tabInscriptions: {
     fr: "Inscriptions",
