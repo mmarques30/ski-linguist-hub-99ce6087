@@ -54,7 +54,7 @@ export function RevenueChart({ caByMonth }: RevenueChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Receita e Projeções</CardTitle>
+        <CardTitle>{t(i18n.title)}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[300px]">
