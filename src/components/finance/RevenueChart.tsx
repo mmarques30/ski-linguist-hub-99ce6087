@@ -14,6 +14,7 @@ interface RevenueChartProps {
 }
 
 export function RevenueChart({ caByMonth }: RevenueChartProps) {
+  const { t } = useLanguage();
   const chartData = useMemo(() => {
     if (!caByMonth?.length) return [];
 
