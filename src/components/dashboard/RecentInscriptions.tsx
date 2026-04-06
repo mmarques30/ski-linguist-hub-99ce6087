@@ -63,10 +63,8 @@ const statusStyles: Record<string, string> = {
 };
 
 export function RecentInscriptions() {
-  const { data: inscriptions, isLoading } = useInscriptions();
+  const { data: recentInscriptions = [], isLoading } = useRecentInscriptions();
   const { language, t } = useLanguage();
-  
-  const recentInscriptions = inscriptions?.slice(0, 5) || [];
 
   const getDateLocale = () => {
     switch (language) {
