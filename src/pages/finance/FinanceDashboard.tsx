@@ -31,6 +31,15 @@ const BRAND_GRAY = 'hsl(0, 0%, 90%)';
 const BRAND_BLACK = 'hsl(0, 0%, 9%)';
 const CHART_COLORS = [BRAND_GOLD, BRAND_NAVY, BRAND_GRAY, BRAND_BLACK];
 
+const translations = {
+  revenueVsExpenses: { fr: 'Recettes vs Dépenses', 'pt-BR': 'Receitas vs Despesas', en: 'Revenue vs Expenses' },
+  revenue: { fr: 'Recettes', 'pt-BR': 'Receitas', en: 'Revenue' },
+  expenses: { fr: 'Dépenses', 'pt-BR': 'Despesas', en: 'Expenses' },
+  quarterlyRevenue: { fr: 'CA Trimestriel', 'pt-BR': 'Receita Trimestral', en: 'Quarterly Revenue' },
+  newTrainees: { fr: 'Nouveaux stagiaires', 'pt-BR': 'Novos Estagiários', en: 'New Trainees' },
+  quarterlyGoals: { fr: 'Objectifs du trimestre', 'pt-BR': 'Metas do Trimestre', en: 'Quarterly Goals' },
+};
+
 export default function FinanceDashboard() {
   const today = new Date();
   const [startDate, setStartDate] = useState(format(startOfMonth(today), 'yyyy-MM-dd'));
@@ -41,6 +50,7 @@ export default function FinanceDashboard() {
   useFinancialRealtime();
   const { canEdit } = useUserPermissions();
   const editable = canEdit("finance");
+  const { t } = useLanguage();
 
   const { data: kpis } = useFinancialKPIs(startDate, endDate, true);
   const { data: caByMonth } = useCAByMonth(startDate, endDate, true);
