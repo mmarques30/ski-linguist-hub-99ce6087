@@ -40,6 +40,11 @@ import PartnersList from "./pages/partners/PartnersList";
 import PartnerDetails from "./pages/partners/PartnerDetails";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import StudentDashboard from "./pages/student/StudentDashboard";
+import StudentTest from "./pages/student/StudentTest";
+import StudentDocuments from "./pages/student/StudentDocuments";
+import StudentEvaluation from "./pages/student/StudentEvaluation";
+import StudentPlanning from "./pages/student/StudentPlanning";
 
 
 const queryClient = new QueryClient();
