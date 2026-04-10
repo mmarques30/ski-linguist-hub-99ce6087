@@ -341,6 +341,105 @@ export type Database = {
           },
         ]
       }
+      email_log: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          inscription_id: string | null
+          recipient_email: string
+          recipient_name: string | null
+          sent_at: string
+          status: string
+          template_slug: string
+          variables_used: Json | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          inscription_id?: string | null
+          recipient_email: string
+          recipient_name?: string | null
+          sent_at?: string
+          status?: string
+          template_slug: string
+          variables_used?: Json | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          inscription_id?: string | null
+          recipient_email?: string
+          recipient_name?: string | null
+          sent_at?: string
+          status?: string
+          template_slug?: string
+          variables_used?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_log_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_log_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions_complete"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_templates: {
+        Row: {
+          body_en: string
+          body_fr: string
+          body_pt: string
+          created_at: string
+          id: string
+          is_active: boolean
+          slug: string
+          subject_en: string
+          subject_fr: string
+          subject_pt: string
+          updated_at: string
+          variables: Json
+        }
+        Insert: {
+          body_en?: string
+          body_fr?: string
+          body_pt?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          slug: string
+          subject_en?: string
+          subject_fr?: string
+          subject_pt?: string
+          updated_at?: string
+          variables?: Json
+        }
+        Update: {
+          body_en?: string
+          body_fr?: string
+          body_pt?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          slug?: string
+          subject_en?: string
+          subject_fr?: string
+          subject_pt?: string
+          updated_at?: string
+          variables?: Json
+        }
+        Relationships: []
+      }
       fixed_costs: {
         Row: {
           cost_type: string
