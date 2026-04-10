@@ -83,6 +83,42 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string | null
+          table_name: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       availability_requests: {
         Row: {
           assigned_instructor_id: string | null
@@ -1773,6 +1809,65 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      qualiopi_indicators: {
+        Row: {
+          created_at: string
+          criterion_number: number
+          current_value: number | null
+          evidence_description: string | null
+          evidence_type: string
+          id: string
+          indicator_number: string
+          label: string
+          measurement_date: string | null
+          season_id: string | null
+          status: string
+          target_value: number | null
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          criterion_number: number
+          current_value?: number | null
+          evidence_description?: string | null
+          evidence_type?: string
+          id?: string
+          indicator_number: string
+          label: string
+          measurement_date?: string | null
+          season_id?: string | null
+          status?: string
+          target_value?: number | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          criterion_number?: number
+          current_value?: number | null
+          evidence_description?: string | null
+          evidence_type?: string
+          id?: string
+          indicator_number?: string
+          label?: string
+          measurement_date?: string | null
+          season_id?: string | null
+          status?: string
+          target_value?: number | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qualiopi_indicators_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "seasons"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       satisfaction_surveys: {
         Row: {
