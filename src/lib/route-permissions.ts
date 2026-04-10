@@ -38,6 +38,8 @@ export const ROUTE_GROUPS: RouteGroup[] = [
     routes: [
       { key: "satisfaction", label: "Satisfaction" },
       { key: "amelioration", label: "Amélioration" },
+      { key: "qualiopi_audit", label: "Audit Qualiopi" },
+      { key: "audit_history", label: "Historique audit" },
       { key: "documents", label: "Documents" },
     ],
   },
@@ -68,4 +70,6 @@ export const PATH_TO_ROUTE_KEY: Record<string, string> = {
   "/documents": "documents",
   "/admin/seasons": "admin.seasons",
   "/formateurs": "formateurs",
+  "/qualite/audit": "qualiopi_audit",
+  "/qualite/historique": "audit_history",
 };

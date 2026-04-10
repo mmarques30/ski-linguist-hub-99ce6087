@@ -127,6 +127,8 @@ const navigationGroups: NavGroup[] = [
     items: [
       { name: "Satisfaction", href: "/satisfaction-stats", icon: BarChart3 },
       { name: "Amélioration", href: "/amelioration", icon: TrendingUp },
+      { name: "Audit Qualiopi", href: "/qualite/audit", icon: Award },
+      { name: "Historique", href: "/qualite/historique", icon: ClipboardList },
       { name: "Documents", href: "/documents", icon: FileText },
     ],
   },
