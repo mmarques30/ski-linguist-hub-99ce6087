@@ -30,6 +30,7 @@ export const ROUTE_GROUPS: RouteGroup[] = [
       { key: "tests", label: "Tests de niveau" },
       { key: "evaluations", label: "Évaluations" },
       { key: "classes", label: "Sessions" },
+      { key: "formateurs", label: "Formateurs" },
     ],
   },
   {
@@ -66,4 +67,5 @@ export const PATH_TO_ROUTE_KEY: Record<string, string> = {
   "/amelioration": "amelioration",
   "/documents": "documents",
   "/admin/seasons": "admin.seasons",
+  "/formateurs": "formateurs",
 };

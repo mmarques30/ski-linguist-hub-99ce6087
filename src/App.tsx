@@ -40,6 +40,8 @@ import PartnersList from "./pages/partners/PartnersList";
 import PartnerDetails from "./pages/partners/PartnerDetails";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import InstructorsList from "./pages/formateurs/InstructorsList";
+import InstructorDetails from "./pages/formateurs/InstructorDetails";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import StudentTest from "./pages/student/StudentTest";
 import StudentDocuments from "./pages/student/StudentDocuments";
@@ -94,6 +96,8 @@ const App = () => (
             <Route path="/formateur/evaluation-view/:evaluationId" element={<ProtectedRoute><EvaluationView /></ProtectedRoute>} />
             <Route path="/amelioration" element={<ProtectedRoute><ContinuousImprovement /></ProtectedRoute>} />
             <Route path="/satisfaction-stats" element={<ProtectedRoute><SatisfactionStats /></ProtectedRoute>} />
+            <Route path="/formateurs" element={<ProtectedRoute><InstructorsList /></ProtectedRoute>} />
+            <Route path="/formateurs/:id" element={<ProtectedRoute><InstructorDetails /></ProtectedRoute>} />
 
             {/* Student portal routes */}
             <Route path="/student/dashboard" element={<StudentProtectedRoute><StudentDashboard /></StudentProtectedRoute>} />
