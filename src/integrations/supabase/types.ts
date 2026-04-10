@@ -408,6 +408,122 @@ export type Database = {
           },
         ]
       }
+      funding_documents: {
+        Row: {
+          document_type: string
+          file_url: string | null
+          funding_request_id: string
+          id: string
+          status: string
+          uploaded_at: string
+        }
+        Insert: {
+          document_type: string
+          file_url?: string | null
+          funding_request_id: string
+          id?: string
+          status?: string
+          uploaded_at?: string
+        }
+        Update: {
+          document_type?: string
+          file_url?: string | null
+          funding_request_id?: string
+          id?: string
+          status?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funding_documents_funding_request_id_fkey"
+            columns: ["funding_request_id"]
+            isOneToOne: false
+            referencedRelation: "funding_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funding_requests: {
+        Row: {
+          amount_granted: number | null
+          amount_requested: number | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          convention_number: string | null
+          created_at: string
+          decision_date: string | null
+          documents_sent: Json | null
+          funding_organization: string
+          id: string
+          inscription_id: string
+          notes: string | null
+          payment_amount: number | null
+          payment_date: string | null
+          reference_number: string | null
+          request_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_granted?: number | null
+          amount_requested?: number | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          convention_number?: string | null
+          created_at?: string
+          decision_date?: string | null
+          documents_sent?: Json | null
+          funding_organization?: string
+          id?: string
+          inscription_id: string
+          notes?: string | null
+          payment_amount?: number | null
+          payment_date?: string | null
+          reference_number?: string | null
+          request_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_granted?: number | null
+          amount_requested?: number | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          convention_number?: string | null
+          created_at?: string
+          decision_date?: string | null
+          documents_sent?: Json | null
+          funding_organization?: string
+          id?: string
+          inscription_id?: string
+          notes?: string | null
+          payment_amount?: number | null
+          payment_date?: string | null
+          reference_number?: string | null
+          request_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funding_requests_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "funding_requests_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions_complete"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inscriptions: {
         Row: {
           balance_after_deposit: number | null
@@ -833,9 +949,76 @@ export type Database = {
           },
         ]
       }
+      instructor_sessions: {
+        Row: {
+          created_at: string
+          duration_hours: number
+          end_time: string
+          id: string
+          inscription_id: string | null
+          instructor_id: string
+          location: string | null
+          notes: string | null
+          session_date: string
+          start_time: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          duration_hours: number
+          end_time: string
+          id?: string
+          inscription_id?: string | null
+          instructor_id: string
+          location?: string | null
+          notes?: string | null
+          session_date: string
+          start_time: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          duration_hours?: number
+          end_time?: string
+          id?: string
+          inscription_id?: string | null
+          instructor_id?: string
+          location?: string | null
+          notes?: string | null
+          session_date?: string
+          start_time?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instructor_sessions_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instructor_sessions_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions_complete"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instructor_sessions_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       instructors: {
         Row: {
           address: string | null
+          availability_status: string | null
+          bio: string | null
+          certifications: Json | null
           city: string | null
           created_at: string
           email: string | null
@@ -847,15 +1030,22 @@ export type Database = {
           languages: string[] | null
           last_name: string
           phone: string | null
+          photo_url: string | null
           postal_code: string | null
+          rating_average: number | null
           siret: string | null
           specialties: string[] | null
           specialty_details: string | null
           status: string | null
           status_notes: string | null
+          tax_status: string | null
+          updated_at: string | null
         }
         Insert: {
           address?: string | null
+          availability_status?: string | null
+          bio?: string | null
+          certifications?: Json | null
           city?: string | null
           created_at?: string
           email?: string | null
@@ -867,15 +1057,22 @@ export type Database = {
           languages?: string[] | null
           last_name: string
           phone?: string | null
+          photo_url?: string | null
           postal_code?: string | null
+          rating_average?: number | null
           siret?: string | null
           specialties?: string[] | null
           specialty_details?: string | null
           status?: string | null
           status_notes?: string | null
+          tax_status?: string | null
+          updated_at?: string | null
         }
         Update: {
           address?: string | null
+          availability_status?: string | null
+          bio?: string | null
+          certifications?: Json | null
           city?: string | null
           created_at?: string
           email?: string | null
@@ -887,12 +1084,16 @@ export type Database = {
           languages?: string[] | null
           last_name?: string
           phone?: string | null
+          photo_url?: string | null
           postal_code?: string | null
+          rating_average?: number | null
           siret?: string | null
           specialties?: string[] | null
           specialty_details?: string | null
           status?: string | null
           status_notes?: string | null
+          tax_status?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }

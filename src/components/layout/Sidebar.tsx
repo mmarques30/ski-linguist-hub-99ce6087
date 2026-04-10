@@ -115,6 +115,13 @@ const navigationGroups: NavGroup[] = [
     ],
   },
   {
+    label: "Formateurs",
+    icon: UserCog,
+    items: [
+      { name: "Formateurs", href: "/formateurs", icon: UserCog },
+    ],
+  },
+  {
     label: "Qualité",
     icon: Award,
     items: [
