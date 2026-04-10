@@ -42,6 +42,8 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import InstructorsList from "./pages/formateurs/InstructorsList";
 import InstructorDetails from "./pages/formateurs/InstructorDetails";
+import QualiopiAudit from "./pages/qualite/QualiopiAudit";
+import AuditHistory from "./pages/qualite/AuditHistory";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import StudentTest from "./pages/student/StudentTest";
 import StudentDocuments from "./pages/student/StudentDocuments";
@@ -98,6 +100,8 @@ const App = () => (
             <Route path="/satisfaction-stats" element={<ProtectedRoute><SatisfactionStats /></ProtectedRoute>} />
             <Route path="/formateurs" element={<ProtectedRoute><InstructorsList /></ProtectedRoute>} />
             <Route path="/formateurs/:id" element={<ProtectedRoute><InstructorDetails /></ProtectedRoute>} />
+            <Route path="/qualite/audit" element={<ProtectedRoute><QualiopiAudit /></ProtectedRoute>} />
+            <Route path="/qualite/historique" element={<ProtectedRoute><AuditHistory /></ProtectedRoute>} />
 
             {/* Student portal routes */}
             <Route path="/student/dashboard" element={<StudentProtectedRoute><StudentDashboard /></StudentProtectedRoute>} />
