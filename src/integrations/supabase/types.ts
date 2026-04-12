@@ -1342,6 +1342,104 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          assigned_to: string | null
+          company: string | null
+          contact_email: string | null
+          contact_name: string
+          contact_phone: string | null
+          created_at: string
+          estimated_revenue: number | null
+          estimated_students: number | null
+          id: string
+          inscription_id: string | null
+          language_interest: string | null
+          loss_reason: string | null
+          next_action: string | null
+          next_action_date: string | null
+          notes: string | null
+          partner_id: string | null
+          season_id: string | null
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          company?: string | null
+          contact_email?: string | null
+          contact_name: string
+          contact_phone?: string | null
+          created_at?: string
+          estimated_revenue?: number | null
+          estimated_students?: number | null
+          id?: string
+          inscription_id?: string | null
+          language_interest?: string | null
+          loss_reason?: string | null
+          next_action?: string | null
+          next_action_date?: string | null
+          notes?: string | null
+          partner_id?: string | null
+          season_id?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          company?: string | null
+          contact_email?: string | null
+          contact_name?: string
+          contact_phone?: string | null
+          created_at?: string
+          estimated_revenue?: number | null
+          estimated_students?: number | null
+          id?: string
+          inscription_id?: string | null
+          language_interest?: string | null
+          loss_reason?: string | null
+          next_action?: string | null
+          next_action_date?: string | null
+          notes?: string | null
+          partner_id?: string | null
+          season_id?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions_complete"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "seasons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
