@@ -98,6 +98,7 @@ const navigationGroups: NavGroup[] = [
           { name: "Charges fixes", href: "/finance/charges-fixes" },
         ],
       },
+      { name: "Commercial", href: "/gestion/commercial", icon: TrendingUp },
       { name: "Partenaires", href: "/gestion/partenaires", icon: Briefcase },
       { name: "Inscriptions", href: "/inscriptions", icon: ClipboardList },
       { name: "Factures", href: "/invoices", icon: Receipt },

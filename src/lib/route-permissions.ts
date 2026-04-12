@@ -13,6 +13,7 @@ export const ROUTE_GROUPS: RouteGroup[] = [
   {
     label: "Gestion",
     routes: [
+      { key: "commercial", label: "Commercial" },
       { key: "finance", label: "Vue d'ensemble" },
       { key: "finance.analyses", label: "Analyses" },
       { key: "finance.rentabilite", label: "Rentabilité" },
