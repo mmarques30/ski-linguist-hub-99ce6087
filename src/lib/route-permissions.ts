@@ -58,6 +58,7 @@ export const PATH_TO_ROUTE_KEY: Record<string, string> = {
   "/finance/rentabilite": "finance.rentabilite",
   "/finance/tresorerie": "finance.tresorerie",
   "/finance/charges-fixes": "finance.charges_fixes",
+  "/gestion/commercial": "commercial",
   "/gestion/partenaires": "partenaires",
   "/inscriptions": "inscriptions",
   "/invoices": "invoices",
