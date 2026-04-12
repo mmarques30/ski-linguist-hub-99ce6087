@@ -49,7 +49,7 @@ import StudentTest from "./pages/student/StudentTest";
 import StudentDocuments from "./pages/student/StudentDocuments";
 import StudentEvaluation from "./pages/student/StudentEvaluation";
 import StudentPlanning from "./pages/student/StudentPlanning";
-
+import CommercialDashboard from "./pages/commercial/CommercialDashboard";
 
 const queryClient = new QueryClient();
 
