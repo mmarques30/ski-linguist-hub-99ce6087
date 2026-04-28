@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useUnreadCount, useRecentNotifications, useMarkAsRead, useMarkAllAsRead } from "@/hooks/useNotifications";
 import fliLogo from "@/assets/fli-marca-yellow.png";
+import { GlobalSearch } from "./GlobalSearch";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -76,6 +77,10 @@ export function TopHeader() {
 
       {/* Right: dock icons */}
       <div className="flex items-center gap-1">
+        {/* Global search */}
+        <div className="mr-2">
+          <GlobalSearch />
+        </div>
         {/* Notifications */}
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>

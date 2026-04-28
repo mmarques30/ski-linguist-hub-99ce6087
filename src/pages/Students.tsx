@@ -20,6 +20,8 @@ import { fr, enUS, ptBR } from "date-fns/locale";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { StudentFormDialog } from "@/components/students/StudentFormDialog";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { ListSkeleton } from "@/components/common/ListSkeleton";
+import { EmptyState } from "@/components/common/EmptyState";
 
 // Translations for the Students page
 const translations = {
@@ -242,9 +244,7 @@ export default function Students() {
 
         {/* Content */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
+          <ListSkeleton rows={6} />
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border bg-card">
             <Users className="h-12 w-12 text-destructive/50 mb-4" />
@@ -252,13 +252,16 @@ export default function Students() {
             <p className="text-muted-foreground mt-1 max-w-sm">{error.message}</p>
           </div>
         ) : !students || students.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border bg-card">
-            <Users className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium">{t(translations.noStudents)}</h3>
-            <p className="text-muted-foreground mt-1 max-w-sm">
-              {t(translations.noStudentsDescription)}
-            </p>
-          </div>
+          <EmptyState
+            icon={Users}
+            title={t(translations.noStudents)}
+            description={t(translations.noStudentsDescription)}
+            action={editable ? {
+              label: "Ajouter un stagiaire",
+              icon: Plus,
+              onClick: handleCreateStudent,
+            } : undefined}
+          />
         ) : viewMode === "list" ? (
           <div className="rounded-lg border bg-card">
             <Table>

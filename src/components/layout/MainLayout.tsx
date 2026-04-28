@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { AppSidebar } from "./Sidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { TopHeader } from "./TopHeader";
+import { Breadcrumbs } from "./Breadcrumbs";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -14,6 +15,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         <AppSidebar />
         <SidebarInset className="flex flex-col flex-1">
           <TopHeader />
+          <Breadcrumbs />
           <main className="flex-1 p-4 lg:p-6">
             {children}
           </main>

@@ -35,6 +35,7 @@ import { fr, ptBR, enUS } from "date-fns/locale";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { ListSkeleton } from "@/components/common/ListSkeleton";
 
 const translations = {
   title: {
@@ -673,9 +674,7 @@ export default function Invoices() {
         {/* Table */}
         <div className="rounded-lg border bg-card">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
+            <ListSkeleton rows={6} />
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <FileText className="h-12 w-12 text-destructive/50 mb-4" />

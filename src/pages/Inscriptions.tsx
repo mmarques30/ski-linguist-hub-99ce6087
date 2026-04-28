@@ -45,6 +45,7 @@ import { EndPackDialog } from "@/components/endpack/EndPackDialog";
 import { InscriptionFormDialog } from "@/components/inscriptions/InscriptionFormDialog";
 import { toast } from "sonner";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { ListSkeleton } from "@/components/common/ListSkeleton";
 const translations = {
   title: {
     fr: "Inscriptions",
@@ -403,9 +404,7 @@ export default function Inscriptions() {
         {/* Table */}
         <div className="rounded-lg border bg-card">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
+            <ListSkeleton rows={6} />
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <ClipboardList className="h-12 w-12 text-destructive/50 mb-4" />
