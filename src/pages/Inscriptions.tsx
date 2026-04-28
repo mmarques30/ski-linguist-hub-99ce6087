@@ -45,6 +45,7 @@ import { EndPackDialog } from "@/components/endpack/EndPackDialog";
 import { InscriptionFormDialog } from "@/components/inscriptions/InscriptionFormDialog";
 import { toast } from "sonner";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { ListSkeleton } from "@/components/common/ListSkeleton";
 const translations = {
   title: {
     fr: "Inscriptions",
