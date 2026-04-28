@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { StudentProtectedRoute } from "@/components/auth/StudentProtectedRoute";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
 import Dashboard from "./pages/Dashboard";
 import Inscriptions from "./pages/Inscriptions";
 import InscriptionDetails from "./pages/inscriptions/InscriptionDetails";
@@ -54,6 +55,7 @@ import CommercialDashboard from "./pages/commercial/CommercialDashboard";
 const queryClient = new QueryClient();
 
 const App = () => (
+  <ErrorBoundary>
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
       <TooltipProvider>
@@ -118,6 +120,7 @@ const App = () => (
       </TooltipProvider>
     </LanguageProvider>
   </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
