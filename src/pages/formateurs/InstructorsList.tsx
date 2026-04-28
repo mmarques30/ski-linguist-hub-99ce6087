@@ -15,6 +15,8 @@ import { useInstructors } from "@/hooks/useInstructors";
 import { InstructorCard } from "@/components/formateurs/InstructorCard";
 import { InstructorFormDialog } from "@/components/formateurs/InstructorFormDialog";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { EmptyState } from "@/components/common/EmptyState";
+import { CardGridSkeleton } from "@/components/common/ListSkeleton";
 
 export default function InstructorsList() {
   const navigate = useNavigate();
@@ -85,15 +87,18 @@ export default function InstructorsList() {
         </div>
 
         {isLoading ? (
-          <div className="text-center py-12 text-muted-foreground">Chargement...</div>
+          <CardGridSkeleton count={6} />
         ) : instructors.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border bg-card">
-            <UserCog className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium">Aucun formateur</h3>
-            <p className="text-muted-foreground mt-1">
-              Ajoutez votre premier formateur pour commencer.
-            </p>
-          </div>
+          <EmptyState
+            icon={UserCog}
+            title="Aucun formateur"
+            description="Ajoutez votre premier formateur pour commencer à organiser le planning et les paiements."
+            action={editable ? {
+              label: "Ajouter un formateur",
+              icon: Plus,
+              onClick: () => setShowForm(true),
+            } : undefined}
+          />
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {instructors.map((inst) => (
