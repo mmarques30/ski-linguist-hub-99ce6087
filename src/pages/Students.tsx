@@ -259,7 +259,7 @@ export default function Students() {
             action={editable ? {
               label: "Ajouter un stagiaire",
               icon: Plus,
-              onClick: () => { setEditingStudent(null); setDialogOpen(true); },
+              onClick: handleCreateStudent,
             } : undefined}
           />
         ) : viewMode === "list" ? (
