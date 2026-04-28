@@ -35,6 +35,7 @@ import { fr, ptBR, enUS } from "date-fns/locale";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { ListSkeleton } from "@/components/common/ListSkeleton";
 
 const translations = {
   title: {
