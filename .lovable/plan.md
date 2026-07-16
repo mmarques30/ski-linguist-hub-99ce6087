@@ -1,60 +1,42 @@
 
-# Refactoring Inscriptions — Approche Progressive
+# Plano — Recuperar acesso de teste
 
-## Phase 1 : Machine à états + Audit (cette itération)
+## Diagnóstico (já verificado)
 
-### 1.1 Migration SQL
-- Ajouter les colonnes `status_changed_at` (timestamptz) et `status_changed_by` (uuid) à `inscriptions`
-- Migrer les statuts existants vers les nouveaux codes :
-  - `En cours` → `en_cours`
-  - `Terminé` → `terminee`
-  - `Facturé` → `facturee`
-  - `Annulé` → `annulee`
-  - `Confirmé` → `confirmee`
-  - Tout autre → `brouillon`
-- Créer une fonction PostgreSQL `validate_inscription_status_transition()` qui :
-  - Autorise : brouillon→en_attente, en_attente→confirmee, en_attente→annulee, confirmee→en_cours, confirmee→annulee (si avant start_date), en_cours→terminee, terminee→facturee
-  - Bloque toute autre transition avec `RAISE EXCEPTION`
-  - Met à jour automatiquement `status_changed_at` et `status_changed_by`
-- Créer un trigger `BEFORE UPDATE` sur `inscriptions` qui appelle cette fonction
-- Mettre à jour la vue `inscriptions_complete` pour utiliser les nouveaux statuts
+Consultei o backend agora:
 
-### 1.2 Code — Constantes et helpers
-- Créer `src/lib/inscription-status.ts` : enum des statuts, map des transitions autorisées, labels traduits (FR/PT-BR/EN), couleurs de badges
+- `info@fli.fr` **existe** e **já está confirmado** (`email_confirmed_at = 2026-04-06`).
+- Último login bem-sucedido: 12/abr/2026.
+- Os erros recentes são `invalid_credentials` (HTTP 400) — ou seja, **senha errada**, não problema de confirmação nem de proxy. As senhas tentadas (`fli2025`, `Fli2025`, `Senha@2670`, `aplica2025`) não batem com a que está no banco.
+- `teste@fli.fr` **não existe**.
 
-### 1.3 Code — Mise à jour des composants
-- Mettre à jour tous les composants qui référencent les anciens statuts français :
-  - `useInscriptions.ts` (filtres, stats)
-  - `useDashboardStats.ts` (compteurs)
-  - `useStudentDetails.ts` (stats)
-  - `RecentInscriptions.tsx` (badges, labels)
-  - `DashboardGestao.tsx` (KPIs)
-  - `InscriptionFormDialog.tsx` (sélection de statut)
-  - `InscriptionDetails.tsx` (affichage)
-  - `Inscriptions.tsx` (filtres)
-  - Tout autre fichier référençant "En cours", "Terminé", "Facturé", "Annulé", "Confirmé"
+Portanto o problema real é: senha esquecida. Nada a "confirmar".
 
-### Fichiers concernés Phase 1
-| Action | Fichier |
-|--------|---------|
-| Migration | Colonnes audit + statuts + trigger + vue |
-| Créer | `src/lib/inscription-status.ts` |
-| Modifier | ~8-10 fichiers existants (hooks + composants) |
+## O que farei ao entrar em build mode
 
----
+1. **Desativar exigência de confirmação de email para novos cadastros** (ambiente de teste)
+   - `configure_auth` com `auto_confirm_email: true`, mantendo `disable_signup: true` (registro público continua fechado conforme regra do projeto — só admin cria usuários; a mudança afeta usuários criados via admin/edge function, que já entram confirmados).
 
-## Phase 2 : Normalisation tables (prochaine itération)
-- Créer `inscription_financials`, `inscription_pedagogy`, `inscription_logistics`
-- Répartir les colonnes existantes :
-  - **Core** (inscriptions) : id, student_id, instructor_id, partner_id, ski_school_id, code, status, language, modality, course_type, course_location, start_date, end_date, duration_hours, duration_days, hours_per_day, schedule, rhythm, group_name, group_size, max_participants, observations, created_at, updated_at, status_changed_at, status_changed_by
-  - **Financials** : price, deposit_amount, deposit_date, balance_after_deposit, payment_method, check_number, check_date, pedagogical_cost, funding_organization, funding_details, bpf_category_c, bpf_category_f
-  - **Pedagogy** : entry_level, entry_test_id, entry_test_score, exit_level, exit_test_id, progression, certification_type, certification_result, certification_date, certificate_level, final_general_level, final_specific_level, expectations
-  - **Logistics** : course_address, course_materials, documents_sent_at, end_pack_sent_at, qualiopi_status, final_status
-- Migrer les données existantes
-- Recréer la vue `inscriptions_complete` avec jointures
-- RLS sur les nouvelles tables
+2. **Resetar a senha de `info@fli.fr` E criar `teste@fli.fr`** — via edge function descartável
+   - Como não há tool direto para "set password", criarei uma edge function temporária `admin-bootstrap` que usa `SUPABASE_SERVICE_ROLE_KEY` para:
+     - `auth.admin.updateUserById(<info-id>, { password: "<nova-senha>", email_confirm: true })`
+     - `auth.admin.createUser({ email: "teste@fli.fr", password: "<senha>", email_confirm: true })` + inserir role `admin` em `user_roles` + `profiles`
+   - Protegida por um `BOOTSTRAP_TOKEN` (secret gerado) para não ficar aberta.
+   - Chamo a função uma vez via `curl_edge_functions`, confirmo sucesso, e **apago a função** logo em seguida com `delete_edge_functions` (não fica resíduo no projeto).
 
-## Phase 3 : Mise à jour composants pour normalisation (itération suivante)
-- Mettre à jour les hooks pour utiliser les jointures/vues
-- Mettre à jour les formulaires pour écrire dans les bonnes tables
-- Tests de non-régression
+3. **Devolver as credenciais no chat**
+   - `info@fli.fr` → nova senha
+   - `teste@fli.fr` → senha (usuário admin, já confirmado)
+   - As senhas serão geradas pelo próprio agente (fortes, ~16 chars) e mostradas uma única vez aqui.
+
+## O que NÃO farei
+
+- Não vou reabrir cadastro público (fere regra do projeto).
+- Não vou tocar em `auth.users` direto por SQL (proibido tocar schema `auth`).
+- Não vou expor `SERVICE_ROLE_KEY` — ela fica só dentro da edge function temporária.
+
+## Riscos
+
+- A edge function temporária existe por ~1 turno; se algo falhar entre criação e deleção, aviso e removo manualmente. Só aceita chamadas com o token de bootstrap.
+
+Aprove para eu executar.
