@@ -5,7 +5,6 @@ export interface RegistrationSubmissionResult {
   inscriptionId: string;
   inscriptionCode: string;
   studentId: string;
-  timeSlot: "matin" | "apres-midi" | null;
   needsAdminCall: boolean;
   emailSent: boolean;
 }

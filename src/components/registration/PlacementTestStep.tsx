@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -6,16 +6,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, Loader2, Phone, Sun, Sunset } from "lucide-react";
+import { CheckCircle, Loader2, Phone, Mountain } from "lucide-react";
 import type { RegistrationData } from "@/pages/register/Index";
 import { usePlacementQuestions } from "@/hooks/usePlacementQuestions";
 import {
-  countCorrectAnswers,
-  determineLevelFromAnswers,
-  getTimeSlotFromScore,
-  needsAdminCall,
-  PLACEMENT_TEST_QUESTION_COUNT,
-} from "@/lib/registration-utils";
+  buildAdaptiveTestResult,
+  evaluateSlope,
+  getNextSlopeAfterSlope,
+  getQuestionsForSlope,
+  QUESTIONS_PER_SLOPE,
+  SLOPE_COLORS,
+  SLOPE_LABELS,
+  type AdaptiveTestResult,
+  type PlacementQuestion,
+  type SlopeLevel,
+  type SlopeResult,
+} from "@/lib/placement-test-engine";
 
 interface PlacementTestStepProps {
   data: Partial<RegistrationData>;
@@ -27,17 +33,22 @@ const levels = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
 export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepProps) {
   const [testStarted, setTestStarted] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [currentSlope, setCurrentSlope] = useState<SlopeLevel>("verte");
+  const [questionIndex, setQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [slopeResults, setSlopeResults] = useState<SlopeResult[]>([]);
+  const [passedSlopes, setPassedSlopes] = useState<SlopeLevel[]>([]);
   const [testCompleted, setTestCompleted] = useState(false);
-  const [result, setResult] = useState<{
-    correctAnswers: number;
-    level: string;
-    timeSlot: "matin" | "apres-midi";
-    needsCall: boolean;
-  } | null>(null);
+  const [result, setResult] = useState<AdaptiveTestResult | null>(null);
 
-  const { data: questions = [], isLoading } = usePlacementQuestions(data.language);
+  const { data: allQuestions = [], isLoading } = usePlacementQuestions(data.language);
+
+  const slopeQuestions = useMemo(
+    () => getQuestionsForSlope(allQuestions, currentSlope),
+    [allQuestions, currentSlope]
+  );
+
+  const currentQuestion: PlacementQuestion | undefined = slopeQuestions[questionIndex];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,41 +56,114 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
   };
 
   const startTest = () => {
-    if (questions.length < PLACEMENT_TEST_QUESTION_COUNT) return;
+    if (allQuestions.length === 0) return;
     setTestStarted(true);
-    setCurrentQuestion(0);
+    setCurrentSlope("verte");
+    setQuestionIndex(0);
     setAnswers({});
+    setSlopeResults([]);
+    setPassedSlopes([]);
     setResult(null);
   };
 
-  const selectAnswer = (answer: string) => {
-    const question = questions[currentQuestion];
-    if (!question) return;
+  const finishTest = (
+    finalAnswers: Record<string, string>,
+    finalSlopeResults: SlopeResult[],
+    finalPassedSlopes: SlopeLevel[],
+    endedAtVocab: boolean
+  ) => {
+    const testResult = buildAdaptiveTestResult(
+      allQuestions,
+      finalAnswers,
+      finalSlopeResults,
+      finalPassedSlopes,
+      endedAtVocab
+    );
+    setResult(testResult);
+    onUpdate({
+      testScore: Math.round((testResult.correctAnswers / testResult.totalAnswered) * 100),
+      correctAnswers: testResult.correctAnswers,
+      currentLevel: testResult.determinedLevel,
+      needsAdminCall: testResult.needsAdminCall,
+      testAnswers: testResult.answers,
+      testSummary: {
+        slopeResults: testResult.slopeResults,
+        passedSlopes: testResult.passedSlopes,
+        highestSlopeReached: testResult.highestSlopeReached,
+        endedAtVocab: testResult.endedAtVocab,
+      },
+    });
+    setTestCompleted(true);
+  };
 
-    const newAnswers = { ...answers, [question.id]: answer };
-    setAnswers(newAnswers);
+  const completeSlope = (
+    slope: SlopeLevel,
+    slopeAnswers: Record<string, string>,
+    prevSlopeResults: SlopeResult[],
+    prevPassedSlopes: SlopeLevel[]
+  ) => {
+    const questions = getQuestionsForSlope(allQuestions, slope);
+    const correct = questions.filter((q) => slopeAnswers[q.id] === q.correct_answer).length;
+    const passed = evaluateSlope(correct);
+    const slopeResult: SlopeResult = { slope, correct, total: questions.length, passed };
+    const newSlopeResults = [...prevSlopeResults, slopeResult];
+    const newPassedSlopes = passed ? [...prevPassedSlopes, slope] : prevPassedSlopes;
+    const next = getNextSlopeAfterSlope(slope, passed);
 
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
+    if (next === "done") {
+      finishTest(slopeAnswers, newSlopeResults, newPassedSlopes, false);
       return;
     }
 
-    const correctAnswers = countCorrectAnswers(questions, newAnswers);
-    const level = determineLevelFromAnswers(questions, newAnswers);
-    const timeSlot = getTimeSlotFromScore(correctAnswers);
-    const callRequired = needsAdminCall(correctAnswers);
+    if (next === "vocab_ski") {
+      setSlopeResults(newSlopeResults);
+      setPassedSlopes(newPassedSlopes);
+      setCurrentSlope("vocab_ski");
+      setQuestionIndex(0);
+      return;
+    }
 
-    const testResult = { correctAnswers, level, timeSlot, needsCall: callRequired };
-    setResult(testResult);
-    onUpdate({
-      testScore: Math.round((correctAnswers / PLACEMENT_TEST_QUESTION_COUNT) * 100),
-      correctAnswers,
-      currentLevel: level,
-      timeSlot,
-      needsAdminCall: callRequired,
-      testAnswers: newAnswers,
-    });
-    setTestCompleted(true);
+    setSlopeResults(newSlopeResults);
+    setPassedSlopes(newPassedSlopes);
+    setCurrentSlope(next);
+    setQuestionIndex(0);
+  };
+
+  const selectAnswer = (answer: string) => {
+    if (!currentQuestion) return;
+
+    const newAnswers = { ...answers, [currentQuestion.id]: answer };
+
+    if (questionIndex < slopeQuestions.length - 1) {
+      setAnswers(newAnswers);
+      setQuestionIndex(questionIndex + 1);
+      return;
+    }
+
+    // Last question in current slope
+    setAnswers(newAnswers);
+
+    if (currentSlope === "vocab_ski") {
+      const vocabQuestions = getQuestionsForSlope(allQuestions, "vocab_ski");
+      const correct = vocabQuestions.filter(
+        (q) => newAnswers[q.id] === q.correct_answer
+      ).length;
+      const vocabResult: SlopeResult = {
+        slope: "vocab_ski",
+        correct,
+        total: vocabQuestions.length,
+        passed: evaluateSlope(correct),
+      };
+      finishTest(
+        newAnswers,
+        [...slopeResults, vocabResult],
+        passedSlopes,
+        true
+      );
+      return;
+    }
+
+    completeSlope(currentSlope, newAnswers, slopeResults, passedSlopes);
   };
 
   if (testCompleted && result) {
@@ -90,45 +174,53 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
             <CheckCircle className="h-6 w-6 text-emerald-600" />
             Test terminé
           </CardTitle>
-          <CardDescription>Votre test de niveau a été évalué</CardDescription>
+          <CardDescription>Votre niveau a été évalué selon le parcours adaptatif FLI</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="text-center p-4 rounded-lg bg-muted/50">
               <p className="text-sm text-muted-foreground mb-2">Niveau estimé</p>
-              <Badge className="text-xl px-4 py-1">{result.level}</Badge>
+              <Badge className="text-xl px-4 py-1">{result.determinedLevel}</Badge>
             </div>
             <div className="text-center p-4 rounded-lg bg-muted/50">
-              <p className="text-sm text-muted-foreground mb-2">Score</p>
-              <p className="text-2xl font-bold">{result.correctAnswers}/{PLACEMENT_TEST_QUESTION_COUNT}</p>
-            </div>
-            <div className="text-center p-4 rounded-lg bg-muted/50">
-              <p className="text-sm text-muted-foreground mb-2">Créneau suggéré</p>
-              <Badge variant="outline" className="text-base px-3 py-1 gap-1">
-                {result.timeSlot === "matin" ? (
-                  <><Sun className="h-4 w-4" /> Matin</>
-                ) : (
-                  <><Sunset className="h-4 w-4" /> Après-midi</>
-                )}
-              </Badge>
+              <p className="text-sm text-muted-foreground mb-2">Score global</p>
+              <p className="text-2xl font-bold">
+                {result.correctAnswers}/{result.totalAnswered}
+              </p>
             </div>
           </div>
 
-          {result.needsCall && (
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Parcours des pistes</p>
+            <div className="flex flex-wrap gap-2">
+              {result.slopeResults.map((sr) => (
+                <Badge
+                  key={sr.slope}
+                  variant={sr.passed ? "default" : "secondary"}
+                  className={sr.passed ? SLOPE_COLORS[sr.slope] : ""}
+                >
+                  {SLOPE_LABELS[sr.slope]}: {sr.correct}/{sr.total}
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          {result.needsAdminCall && (
             <Alert variant="destructive">
               <Phone className="h-4 w-4" />
               <AlertDescription>
-                Votre score est faible. Notre équipe vous contactera par téléphone pour mieux
-                évaluer votre niveau avant l'allocation en groupe.
+                Notre équipe vous contactera par téléphone pour affiner votre niveau.
               </AlertDescription>
             </Alert>
           )}
 
-          <p className="text-sm text-muted-foreground text-center">
-            {result.timeSlot === "matin"
-              ? "Score 0-10 : vous serez orienté vers un groupe du matin."
-              : "Score 11-20 : vous serez orienté vers un groupe de l'après-midi."}
-          </p>
+          <Alert>
+            <Mountain className="h-4 w-4" />
+            <AlertDescription>
+              L'affectation au groupe du matin ou de l'après-midi sera définie par notre équipe
+              environ 10 jours avant le début des cours, après analyse de l'ensemble des inscrits.
+            </AlertDescription>
+          </Alert>
 
           <Button onClick={handleSubmit} className="w-full">
             Continuer vers les attentes
@@ -138,34 +230,37 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
     );
   }
 
-  if (testStarted && questions.length > 0) {
-    const question = questions[currentQuestion];
-    const progress = (currentQuestion / questions.length) * 100;
+  if (testStarted && currentQuestion) {
+    const progressInSlope = ((questionIndex) / slopeQuestions.length) * 100;
 
     return (
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Test de niveau</CardTitle>
-            <Badge variant="outline">
-              Question {currentQuestion + 1} sur {questions.length}
+            <CardTitle>Test de niveau adaptatif</CardTitle>
+            <Badge className={SLOPE_COLORS[currentSlope]}>
+              {SLOPE_LABELS[currentSlope]}
             </Badge>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="secondary">{question.level}</Badge>
-            <Progress value={progress} className="mt-2 flex-1" />
+            <Badge variant="outline">
+              Question {questionIndex + 1} / {slopeQuestions.length}
+            </Badge>
+            <Progress value={progressInSlope} className="flex-1" />
           </div>
+          <CardDescription>
+            {currentSlope === "vocab_ski"
+              ? "Vocabulaire technique du ski"
+              : `Répondez à ${QUESTIONS_PER_SLOPE} questions — il faut ${QUESTIONS_PER_SLOPE - 2} bonnes réponses ou plus pour passer à la piste suivante`}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="p-4 rounded-lg bg-muted/50">
-            <p className="text-lg font-medium">{question.question_text}</p>
+            <p className="text-lg font-medium">{currentQuestion.question_text}</p>
           </div>
 
-          <RadioGroup
-            onValueChange={selectAnswer}
-            className="space-y-3"
-          >
-            {question.options.map((option, index) => (
+          <RadioGroup onValueChange={selectAnswer} className="space-y-3">
+            {currentQuestion.options.map((option, index) => (
               <div
                 key={index}
                 className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-muted/50 transition-colors cursor-pointer"
@@ -187,7 +282,7 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
       <CardHeader>
         <CardTitle>Test de niveau</CardTitle>
         <CardDescription>
-          Nous devons évaluer votre niveau pour vous orienter vers le bon groupe
+          Test adaptatif par pistes (verte → bleue → rouge → noire)
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -205,19 +300,16 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
                   <Label htmlFor="evaluated-yes" className="font-medium cursor-pointer">
                     Oui, je connais mon niveau CEFR
                   </Label>
-                  <p className="text-sm text-muted-foreground">
-                    J'ai déjà été évalué et je connais mon niveau
-                  </p>
                 </div>
               </div>
               <div className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-muted/50 transition-colors">
                 <RadioGroupItem value="false" id="evaluated-no" />
                 <div className="flex-1">
                   <Label htmlFor="evaluated-no" className="font-medium cursor-pointer">
-                    Non, je souhaite passer le test
+                    Non, je souhaite passer le test adaptatif
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    {PLACEMENT_TEST_QUESTION_COUNT} questions — environ 10 minutes
+                    Commence par la piste verte — 5 questions par piste, minimum 3 bonnes réponses pour continuer
                   </p>
                 </div>
               </div>
@@ -245,16 +337,13 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
 
           {data.hasBeenEvaluated === false && (
             <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-              <div className="rounded-lg bg-muted/50 p-4 text-sm space-y-2">
-                <p>
-                  Le test comporte <strong>{PLACEMENT_TEST_QUESTION_COUNT} questions</strong> avec
-                  une difficulté progressive (A1 → C1).
-                </p>
-                <p>
-                  <strong>0-10 bonnes réponses</strong> → groupe du matin ·{" "}
-                  <strong>11-20</strong> → groupe de l'après-midi
-                </p>
-              </div>
+              <Alert>
+                <Mountain className="h-4 w-4" />
+                <AlertDescription>
+                  Le groupe matin/après-midi sera attribué par l'équipe FLI environ 10 jours avant
+                  le début des cours, après validation par Paula.
+                </AlertDescription>
+              </Alert>
               {isLoading ? (
                 <div className="flex items-center justify-center py-4">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -264,9 +353,9 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
                   type="button"
                   onClick={startTest}
                   className="w-full"
-                  disabled={questions.length < PLACEMENT_TEST_QUESTION_COUNT}
+                  disabled={allQuestions.length === 0}
                 >
-                  Commencer le test de niveau
+                  Commencer le test (piste verte)
                 </Button>
               )}
             </div>
