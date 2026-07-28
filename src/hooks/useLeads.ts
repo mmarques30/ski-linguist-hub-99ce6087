@@ -1,9 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+export type ExpansionChannel = "cpf" | "b2b" | "dsf";
+
 export interface Lead {
   id: string;
   source: string;
+  expansion_channel: ExpansionChannel;
   partner_id: string | null;
   contact_name: string;
   contact_email: string | null;
@@ -12,6 +15,10 @@ export interface Lead {
   language_interest: string | null;
   estimated_students: number | null;
   estimated_revenue: number | null;
+  cpf_amount_available: number | null;
+  course_interest: string | null;
+  project_name: string | null;
+  expected_volume: number | null;
   status: string;
   assigned_to: string | null;
   next_action: string | null;
@@ -24,6 +31,12 @@ export interface Lead {
   updated_at: string;
   partner?: { name: string } | null;
 }
+
+export const EXPANSION_CHANNELS = [
+  { key: "cpf" as const, label: "CPF", description: "Compte Personnel de Formation" },
+  { key: "b2b" as const, label: "B2B Alpespace", description: "Entreprises & écoles de ski" },
+  { key: "dsf" as const, label: "DSF", description: "Fédération & projets" },
+];
 
 export const LEAD_STATUSES = [
   { key: "nouveau", label: "Nouveau", color: "bg-blue-500" },
@@ -41,7 +54,19 @@ export const LEAD_SOURCES = [
   { key: "autre", label: "Autre" },
 ] as const;
 
-export function useLeads(filters?: { status?: string; source?: string; search?: string }) {
+export function isActionOverdue(nextActionDate: string | null): boolean {
+  if (!nextActionDate) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return new Date(nextActionDate) < today;
+}
+
+export function useLeads(filters?: {
+  status?: string;
+  source?: string;
+  search?: string;
+  expansion_channel?: ExpansionChannel;
+}) {
   return useQuery({
     queryKey: ["leads", filters],
     queryFn: async () => {
@@ -56,9 +81,12 @@ export function useLeads(filters?: { status?: string; source?: string; search?: 
       if (filters?.source && filters.source !== "all") {
         query = query.eq("source", filters.source);
       }
+      if (filters?.expansion_channel) {
+        query = query.eq("expansion_channel", filters.expansion_channel);
+      }
       if (filters?.search) {
         query = query.or(
-          `contact_name.ilike.%${filters.search}%,company.ilike.%${filters.search}%,contact_email.ilike.%${filters.search}%`
+          `contact_name.ilike.%${filters.search}%,company.ilike.%${filters.search}%,contact_email.ilike.%${filters.search}%,project_name.ilike.%${filters.search}%`
         );
       }
 
@@ -69,27 +97,34 @@ export function useLeads(filters?: { status?: string; source?: string; search?: 
   });
 }
 
-export function useLeadKPIs() {
+export function useLeadKPIs(channel?: ExpansionChannel) {
   return useQuery({
-    queryKey: ["lead-kpis"],
+    queryKey: ["lead-kpis", channel],
     queryFn: async () => {
-      const { data: leads, error } = await supabase
+      let query = supabase
         .from("leads")
-        .select("status, estimated_revenue, source, created_at, updated_at");
+        .select("status, estimated_revenue, source, expansion_channel, created_at, updated_at, next_action_date");
+
+      if (channel) {
+        query = query.eq("expansion_channel", channel);
+      }
+
+      const { data: leads, error } = await query;
       if (error) throw error;
 
       const all = leads || [];
       const total = all.length;
       const converted = all.filter((l) => l.status === "converti");
       const lost = all.filter((l) => l.status === "perdu");
-      const conversionRate = total > 0 ? (converted.length / (converted.length + lost.length || 1)) * 100 : 0;
+      const conversionRate =
+        total > 0 ? (converted.length / (converted.length + lost.length || 1)) * 100 : 0;
 
       const pipelineByStatus: Record<string, number> = {};
       for (const l of all) {
-        pipelineByStatus[l.status] = (pipelineByStatus[l.status] || 0) + Number(l.estimated_revenue || 0);
+        pipelineByStatus[l.status] =
+          (pipelineByStatus[l.status] || 0) + Number(l.estimated_revenue || 0);
       }
 
-      // Average conversion time (days) for converted leads
       const conversionTimes = converted.map((l) => {
         const created = new Date(l.created_at).getTime();
         const updated = new Date(l.updated_at).getTime();
@@ -100,11 +135,18 @@ export function useLeadKPIs() {
           ? conversionTimes.reduce((a, b) => a + b, 0) / conversionTimes.length
           : 0;
 
-      // Top sources
+      const byChannel: Record<string, number> = {};
       const sourceCount: Record<string, number> = {};
       for (const l of all) {
+        const ch = l.expansion_channel || "cpf";
+        byChannel[ch] = (byChannel[ch] || 0) + 1;
         sourceCount[l.source] = (sourceCount[l.source] || 0) + 1;
       }
+
+      const overdueActions = all.filter(
+        (l) =>
+          !["converti", "perdu"].includes(l.status) && isActionOverdue(l.next_action_date)
+      ).length;
 
       return {
         total,
@@ -113,7 +155,9 @@ export function useLeadKPIs() {
         conversionRate,
         pipelineByStatus,
         avgConversionDays,
+        byChannel,
         sourceCount,
+        overdueActions,
         totalPipelineRevenue: all
           .filter((l) => !["converti", "perdu"].includes(l.status))
           .reduce((s, l) => s + Number(l.estimated_revenue || 0), 0),
@@ -162,6 +206,111 @@ export function useDeleteLead() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["leads"] });
       qc.invalidateQueries({ queryKey: ["lead-kpis"] });
+    },
+  });
+}
+
+const LANGUAGE_MAP: Record<string, string> = {
+  francais: "Français",
+  anglais: "Anglais",
+  espagnol: "Espagnol",
+  portugais: "Portugais",
+  italien: "Italien",
+  allemand: "Allemand",
+};
+
+export function useConvertLead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (lead: Lead) => {
+      if (!lead.contact_email) {
+        throw new Error("Email requis pour convertir le lead en inscription");
+      }
+
+      const email = lead.contact_email.trim().toLowerCase();
+      const nameParts = lead.contact_name.trim().split(/\s+/);
+      const firstName = nameParts[0] || lead.contact_name;
+      const lastName = nameParts.slice(1).join(" ") || "—";
+
+      let studentId: string;
+      const { data: existing } = await supabase
+        .from("students")
+        .select("id")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (existing) {
+        studentId = existing.id;
+      } else {
+        const { data: newStudent, error: studentError } = await supabase
+          .from("students")
+          .insert({
+            first_name: firstName,
+            last_name: lastName,
+            email,
+            phone: lead.contact_phone,
+            company: lead.company,
+          })
+          .select("id")
+          .single();
+        if (studentError) throw studentError;
+        studentId = newStudent.id;
+      }
+
+      const { data: season } = await supabase
+        .from("seasons")
+        .select("id, start_date, end_date")
+        .eq("is_current", true)
+        .maybeSingle();
+
+      const { data: code, error: codeError } = await supabase.rpc("generate_inscription_code");
+      if (codeError) throw codeError;
+
+      const language = LANGUAGE_MAP[lead.language_interest || ""] || "Anglais";
+      const startDate = season?.start_date || new Date().toISOString().split("T")[0];
+      const endDate = season?.end_date || startDate;
+
+      const { data: inscription, error: inscError } = await supabase
+        .from("inscriptions")
+        .insert({
+          code,
+          student_id: studentId,
+          language,
+          start_date: startDate,
+          end_date: endDate,
+          price: lead.estimated_revenue,
+          season_id: season?.id || lead.season_id,
+          partner_id: lead.partner_id,
+          status: "brouillon",
+          observations: [
+            `Converti depuis lead ${lead.expansion_channel.toUpperCase()}`,
+            lead.project_name ? `Projet: ${lead.project_name}` : null,
+            lead.course_interest ? `Formation: ${lead.course_interest}` : null,
+          ]
+            .filter(Boolean)
+            .join("\n"),
+        })
+        .select("id, code")
+        .single();
+
+      if (inscError) throw inscError;
+
+      const { error: leadError } = await supabase
+        .from("leads")
+        .update({
+          status: "converti",
+          inscription_id: inscription.id,
+        })
+        .eq("id", lead.id);
+
+      if (leadError) throw leadError;
+
+      return { inscriptionId: inscription.id, inscriptionCode: inscription.code };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["leads"] });
+      qc.invalidateQueries({ queryKey: ["lead-kpis"] });
+      qc.invalidateQueries({ queryKey: ["inscriptions"] });
     },
   });
 }
