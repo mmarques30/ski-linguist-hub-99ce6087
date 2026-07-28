@@ -136,7 +136,44 @@
 
 ## 📧 Relances Automáticas
 
-### Teste Dry-Run (sem enviar emails)
+### Alertas de validação de horários (J-10)
+
+Envia email para Paula (`info@fli.fr`) quando inscrições com `schedule_status = pending` começam em 10 dias.
+
+#### Teste Dry-Run
+
+```bash
+curl -X POST "https://nghkrmvakjomzmfwdhbo.supabase.co/functions/v1/process-schedule-reminders?dry_run=true" \
+  -H "Authorization: Bearer <SUPABASE_ANON_KEY>"
+```
+
+#### Resposta esperada (sem inscrições elegíveis)
+
+```json
+{
+  "success": true,
+  "results": {
+    "dryRun": true,
+    "targetDate": "2026-08-07",
+    "totalPending": 0,
+    "emailSent": false
+  },
+  "summary": "No inscriptions to process"
+}
+```
+
+#### Preparar dados de teste
+
+```sql
+UPDATE inscriptions
+SET start_date = CURRENT_DATE + INTERVAL '10 days',
+    schedule_status = 'pending',
+    schedule_reminder_sent_at = NULL,
+    status = 'confirmee'
+WHERE id = 'SEU_INSCRIPTION_ID';
+```
+
+### Relances de faturas
 
 #### Via Terminal:
 ```bash
