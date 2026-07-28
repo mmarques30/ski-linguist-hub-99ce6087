@@ -112,7 +112,6 @@ const navigationGroups: NavGroup[] = [
       { name: "Tests de niveau", href: "/tests", icon: GraduationCap },
       { name: "Évaluations", href: "/formateur/evaluations", icon: ClipboardList },
       { name: "Sessions", href: "/formation/sessions", icon: Calendar },
-      { name: "Ancien planning", href: "/classes", icon: Calendar },
     ],
   },
   {

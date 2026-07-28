@@ -42,6 +42,9 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useDeleteInscription } from "@/hooks/useInscriptions";
 import { toast } from "sonner";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { InscriptionFormDialog } from "@/components/inscriptions/InscriptionFormDialog";
+import { EndPackDialog } from "@/components/endpack/EndPackDialog";
+import { InvoiceCreateDialog } from "@/components/invoices/InvoiceCreateDialog";
 
 const translations = {
   back: { fr: "Retour", "pt-BR": "Voltar", en: "Back" },
@@ -104,6 +107,9 @@ export default function InscriptionDetails() {
   const { canEdit } = useUserPermissions();
   const editable = canEdit("inscriptions");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [endPackOpen, setEndPackOpen] = useState(false);
+  const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
   const deleteInscription = useDeleteInscription();
   const getDateLocale = () => {
     switch (language) {
@@ -227,15 +233,15 @@ export default function InscriptionDetails() {
           </div>
           {editable && (
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
                 <Edit className="mr-2 h-4 w-4" />
                 {t(translations.editInscription)}
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => setEndPackOpen(true)}>
                 <Package className="mr-2 h-4 w-4" />
                 {t(translations.endPack)}
               </Button>
-              <Button size="sm">
+              <Button size="sm" onClick={() => setInvoiceDialogOpen(true)}>
                 <Receipt className="mr-2 h-4 w-4" />
                 {t(translations.createInvoice)}
               </Button>
@@ -650,6 +656,52 @@ export default function InscriptionDetails() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {inscription && (
+        <>
+          <InscriptionFormDialog
+            open={editDialogOpen}
+            onOpenChange={setEditDialogOpen}
+            inscription={{
+              id: inscription.id,
+              student_id: inscription.student_id,
+              instructor_id: inscription.instructor_id,
+              ski_school_id: inscription.ski_school_id,
+              language: inscription.language,
+              start_date: inscription.start_date,
+              end_date: inscription.end_date,
+              duration_hours: inscription.duration_hours,
+              price: inscription.price,
+              entry_level: inscription.entry_level,
+              modality: inscription.modality,
+              course_location: inscription.course_location,
+              observations: inscription.observations,
+            }}
+          />
+
+          <EndPackDialog
+            open={endPackOpen}
+            onOpenChange={setEndPackOpen}
+            inscription={{
+              id: inscription.id,
+              student_id: inscription.student_id || "",
+              student_name: inscription.student_name || "",
+              language: inscription.language,
+              entry_level: inscription.entry_level,
+              exit_level: inscription.exit_level,
+              duration_hours: inscription.duration_hours,
+              price: inscription.price,
+              code: inscription.code,
+            }}
+          />
+
+          <InvoiceCreateDialog
+            open={invoiceDialogOpen}
+            onOpenChange={setInvoiceDialogOpen}
+            defaultInscriptionId={inscription.id}
+          />
+        </>
+      )}
     </MainLayout>
   );
 }

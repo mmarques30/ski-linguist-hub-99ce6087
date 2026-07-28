@@ -4,9 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle, User, Briefcase, BookOpen, Target } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle, Loader2, Phone, Sun, Sunset, User, Briefcase, BookOpen, Target } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import type { RegistrationData } from "@/pages/register/Index";
+import { submitRegistration } from "@/services/registrationService";
 
 interface ConfirmationStepProps {
   data: RegistrationData;
@@ -39,15 +42,37 @@ const certificationLabels: Record<string, string> = {
 
 export function ConfirmationStep({ data }: ConfirmationStepProps) {
   const [accepted, setAccepted] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [result, setResult] = useState<{
+    inscriptionCode: string;
+    timeSlot: "matin" | "apres-midi" | null;
+    needsAdminCall: boolean;
+    emailSent: boolean;
+  } | null>(null);
 
-  const handleSubmit = () => {
-    // Ici on enverrait les données à la base de données
-    console.log("Soumission de l'inscription:", data);
-    setSubmitted(true);
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      const submission = await submitRegistration(data);
+      setResult({
+        inscriptionCode: submission.inscriptionCode,
+        timeSlot: submission.timeSlot,
+        needsAdminCall: submission.needsAdminCall,
+        emailSent: submission.emailSent,
+      });
+    } catch (error) {
+      console.error("Registration error:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Erreur lors de la soumission. Veuillez réessayer."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  if (submitted) {
+  if (result) {
     return (
       <Card>
         <CardContent className="pt-6">
@@ -55,16 +80,35 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             <div className="mx-auto w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
               <CheckCircle className="h-10 w-10 text-emerald-600" />
             </div>
-            <h2 className="text-2xl font-bold">Inscription terminée</h2>
+            <h2 className="text-2xl font-bold">Inscription enregistrée</h2>
             <p className="text-muted-foreground max-w-md mx-auto">
-              Merci de vous être inscrit chez France Langues International. 
-              Vous recevrez prochainement un email de confirmation avec plus d'instructions.
+              Merci de vous être inscrit chez France Langues International.
+              {result.emailSent
+                ? " Un email de confirmation vous a été envoyé."
+                : " Notre équipe vous contactera prochainement."}
             </p>
-            <div className="pt-4">
+            <div className="pt-2">
               <Badge variant="outline" className="text-lg px-4 py-2">
-                ID d'inscription : FLI-{Date.now().toString(36).toUpperCase()}
+                Code : {result.inscriptionCode}
               </Badge>
             </div>
+            {result.timeSlot && (
+              <Badge variant="secondary" className="gap-1">
+                {result.timeSlot === "matin" ? (
+                  <><Sun className="h-3.5 w-3.5" /> Groupe du matin</>
+                ) : (
+                  <><Sunset className="h-3.5 w-3.5" /> Groupe de l'après-midi</>
+                )}
+              </Badge>
+            )}
+            {result.needsAdminCall && (
+              <Alert>
+                <Phone className="h-4 w-4" />
+                <AlertDescription>
+                  Notre équipe vous contactera par téléphone suite à votre résultat au test.
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -80,7 +124,6 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Informations personnelles */}
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium">
             <User className="h-4 w-4" />
@@ -108,7 +151,6 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
 
         <Separator />
 
-        {/* Profil professionnel */}
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium">
             <Briefcase className="h-4 w-4" />
@@ -132,7 +174,6 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
 
         <Separator />
 
-        {/* Configuration de la formation */}
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium">
             <BookOpen className="h-4 w-4" />
@@ -166,7 +207,6 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
 
         <Separator />
 
-        {/* Niveau et certification */}
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium">
             <Target className="h-4 w-4" />
@@ -174,9 +214,23 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
           </div>
           <div className="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Niveau actuel</span>
+              <span className="text-muted-foreground">Niveau</span>
               <Badge>{data.currentLevel}</Badge>
             </div>
+            {data.timeSlot && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Créneau</span>
+                <span className="font-medium">
+                  {data.timeSlot === "matin" ? "Matin" : "Après-midi"}
+                </span>
+              </div>
+            )}
+            {data.correctAnswers !== undefined && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Score test</span>
+                <span className="font-medium">{data.correctAnswers}/20</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-muted-foreground">Certification</span>
               <span className="font-medium">{certificationLabels[data.certification] || data.certification}</span>
@@ -186,7 +240,6 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
 
         <Separator />
 
-        {/* Conditions générales */}
         <div className="flex items-start space-x-3 rounded-lg border p-4">
           <Checkbox
             id="terms"
@@ -198,18 +251,25 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
               J'accepte les conditions générales
             </Label>
             <p className="text-sm text-muted-foreground">
-              En soumettant cette inscription, je confirme que les informations fournies sont exactes 
+              En soumettant cette inscription, je confirme que les informations fournies sont exactes
               et j'accepte les conditions générales de formation de France Langues International.
             </p>
           </div>
         </div>
 
-        <Button 
-          onClick={handleSubmit} 
+        <Button
+          onClick={handleSubmit}
           className="w-full"
-          disabled={!accepted}
+          disabled={!accepted || isSubmitting}
         >
-          Soumettre l'inscription
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Envoi en cours...
+            </>
+          ) : (
+            "Soumettre l'inscription"
+          )}
         </Button>
       </CardContent>
     </Card>

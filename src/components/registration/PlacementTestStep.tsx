@@ -5,8 +5,17 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle, Loader2, Phone, Sun, Sunset } from "lucide-react";
 import type { RegistrationData } from "@/pages/register/Index";
+import { usePlacementQuestions } from "@/hooks/usePlacementQuestions";
+import {
+  countCorrectAnswers,
+  determineLevelFromAnswers,
+  getTimeSlotFromScore,
+  needsAdminCall,
+  PLACEMENT_TEST_QUESTION_COUNT,
+} from "@/lib/registration-utils";
 
 interface PlacementTestStepProps {
   data: Partial<RegistrationData>;
@@ -16,45 +25,19 @@ interface PlacementTestStepProps {
 
 const levels = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
-// Sample questions - will be replaced with actual questions from the database
-const sampleQuestions = [
-  {
-    id: 1,
-    question: "_____ name is John.",
-    options: ["My", "I", "Me", "Mine"],
-    correct: 0,
-  },
-  {
-    id: 2,
-    question: "She _____ to work every day.",
-    options: ["go", "goes", "going", "gone"],
-    correct: 1,
-  },
-  {
-    id: 3,
-    question: "They _____ tennis yesterday.",
-    options: ["play", "plays", "played", "playing"],
-    correct: 2,
-  },
-  {
-    id: 4,
-    question: "The ski bindings are _____.",
-    options: ["tight", "lose", "soft", "quick"],
-    correct: 0,
-  },
-  {
-    id: 5,
-    question: "Be careful not to hurt your _____ when skiing.",
-    options: ["ankles", "angels", "angles", "anchors"],
-    correct: 0,
-  },
-];
-
 export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepProps) {
   const [testStarted, setTestStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<number[]>([]);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [testCompleted, setTestCompleted] = useState(false);
+  const [result, setResult] = useState<{
+    correctAnswers: number;
+    level: string;
+    timeSlot: "matin" | "apres-midi";
+    needsCall: boolean;
+  } | null>(null);
+
+  const { data: questions = [], isLoading } = usePlacementQuestions(data.language);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,91 +45,124 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
   };
 
   const startTest = () => {
+    if (questions.length < PLACEMENT_TEST_QUESTION_COUNT) return;
     setTestStarted(true);
     setCurrentQuestion(0);
-    setAnswers([]);
+    setAnswers({});
+    setResult(null);
   };
 
-  const selectAnswer = (answerIndex: number) => {
-    const newAnswers = [...answers, answerIndex];
+  const selectAnswer = (answer: string) => {
+    const question = questions[currentQuestion];
+    if (!question) return;
+
+    const newAnswers = { ...answers, [question.id]: answer };
     setAnswers(newAnswers);
 
-    if (currentQuestion < sampleQuestions.length - 1) {
+    if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
-    } else {
-      // Calculate score
-      const correctAnswers = newAnswers.filter(
-        (answer, index) => answer === sampleQuestions[index].correct
-      ).length;
-      const score = Math.round((correctAnswers / sampleQuestions.length) * 100);
-      
-      // Determine level based on score
-      let level = "A1";
-      if (score >= 90) level = "C1";
-      else if (score >= 75) level = "B2";
-      else if (score >= 60) level = "B1";
-      else if (score >= 40) level = "A2";
-      
-      onUpdate({ testScore: score, currentLevel: level, hasBeenEvaluated: true });
-      setTestCompleted(true);
+      return;
     }
+
+    const correctAnswers = countCorrectAnswers(questions, newAnswers);
+    const level = determineLevelFromAnswers(questions, newAnswers);
+    const timeSlot = getTimeSlotFromScore(correctAnswers);
+    const callRequired = needsAdminCall(correctAnswers);
+
+    const testResult = { correctAnswers, level, timeSlot, needsCall: callRequired };
+    setResult(testResult);
+    onUpdate({
+      testScore: Math.round((correctAnswers / PLACEMENT_TEST_QUESTION_COUNT) * 100),
+      correctAnswers,
+      currentLevel: level,
+      timeSlot,
+      needsAdminCall: callRequired,
+      testAnswers: newAnswers,
+    });
+    setTestCompleted(true);
   };
 
-  if (testCompleted) {
+  if (testCompleted && result) {
     return (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CheckCircle className="h-6 w-6 text-emerald-600" />
-            Teste Concluído
+            Test terminé
           </CardTitle>
-          <CardDescription>
-            Seu teste de nível foi avaliado
-          </CardDescription>
+          <CardDescription>Votre test de niveau a été évalué</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="text-center p-6 rounded-lg bg-muted/50">
-            <p className="text-sm text-muted-foreground mb-2">Seu Nível</p>
-            <Badge className="text-2xl px-6 py-2">{data.currentLevel}</Badge>
-            <p className="mt-4 text-sm text-muted-foreground">
-              Pontuação: {data.testScore}%
-            </p>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="text-center p-4 rounded-lg bg-muted/50">
+              <p className="text-sm text-muted-foreground mb-2">Niveau estimé</p>
+              <Badge className="text-xl px-4 py-1">{result.level}</Badge>
+            </div>
+            <div className="text-center p-4 rounded-lg bg-muted/50">
+              <p className="text-sm text-muted-foreground mb-2">Score</p>
+              <p className="text-2xl font-bold">{result.correctAnswers}/{PLACEMENT_TEST_QUESTION_COUNT}</p>
+            </div>
+            <div className="text-center p-4 rounded-lg bg-muted/50">
+              <p className="text-sm text-muted-foreground mb-2">Créneau suggéré</p>
+              <Badge variant="outline" className="text-base px-3 py-1 gap-1">
+                {result.timeSlot === "matin" ? (
+                  <><Sun className="h-4 w-4" /> Matin</>
+                ) : (
+                  <><Sunset className="h-4 w-4" /> Après-midi</>
+                )}
+              </Badge>
+            </div>
           </div>
-          
+
+          {result.needsCall && (
+            <Alert variant="destructive">
+              <Phone className="h-4 w-4" />
+              <AlertDescription>
+                Votre score est faible. Notre équipe vous contactera par téléphone pour mieux
+                évaluer votre niveau avant l'allocation en groupe.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <p className="text-sm text-muted-foreground text-center">
-            Com base nos seus resultados, você será alocado em um grupo correspondente ao seu nível.
+            {result.timeSlot === "matin"
+              ? "Score 0-10 : vous serez orienté vers un groupe du matin."
+              : "Score 11-20 : vous serez orienté vers un groupe de l'après-midi."}
           </p>
 
           <Button onClick={handleSubmit} className="w-full">
-            Continuar para Expectativas
+            Continuer vers les attentes
           </Button>
         </CardContent>
       </Card>
     );
   }
 
-  if (testStarted) {
-    const question = sampleQuestions[currentQuestion];
-    const progress = ((currentQuestion) / sampleQuestions.length) * 100;
+  if (testStarted && questions.length > 0) {
+    const question = questions[currentQuestion];
+    const progress = (currentQuestion / questions.length) * 100;
 
     return (
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Teste de Nível</CardTitle>
+            <CardTitle>Test de niveau</CardTitle>
             <Badge variant="outline">
-              Pergunta {currentQuestion + 1} de {sampleQuestions.length}
+              Question {currentQuestion + 1} sur {questions.length}
             </Badge>
           </div>
-          <Progress value={progress} className="mt-2" />
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary">{question.level}</Badge>
+            <Progress value={progress} className="mt-2 flex-1" />
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="p-4 rounded-lg bg-muted/50">
-            <p className="text-lg font-medium">{question.question}</p>
+            <p className="text-lg font-medium">{question.question_text}</p>
           </div>
 
           <RadioGroup
-            onValueChange={(value) => selectAnswer(parseInt(value))}
+            onValueChange={selectAnswer}
             className="space-y-3"
           >
             {question.options.map((option, index) => (
@@ -154,7 +170,7 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
                 key={index}
                 className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-muted/50 transition-colors cursor-pointer"
               >
-                <RadioGroupItem value={index.toString()} id={`option-${index}`} />
+                <RadioGroupItem value={option} id={`option-${index}`} />
                 <Label htmlFor={`option-${index}`} className="font-normal cursor-pointer flex-1">
                   {option}
                 </Label>
@@ -169,18 +185,17 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Teste de Nível</CardTitle>
+        <CardTitle>Test de niveau</CardTitle>
         <CardDescription>
-          Precisamos avaliar seu nível atual para alocá-lo no grupo correto
+          Nous devons évaluer votre niveau pour vous orienter vers le bon groupe
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Already evaluated option */}
           <div className="space-y-3">
-            <Label>Você já foi avaliado anteriormente?</Label>
+            <Label>Avez-vous déjà été évalué ?</Label>
             <RadioGroup
-              value={data.hasBeenEvaluated?.toString() || ""}
+              value={data.hasBeenEvaluated === undefined ? "" : String(data.hasBeenEvaluated)}
               onValueChange={(value) => onUpdate({ hasBeenEvaluated: value === "true" })}
               className="space-y-2"
             >
@@ -188,10 +203,10 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
                 <RadioGroupItem value="true" id="evaluated-yes" />
                 <div className="flex-1">
                   <Label htmlFor="evaluated-yes" className="font-medium cursor-pointer">
-                    Sim, eu sei meu nível
+                    Oui, je connais mon niveau CEFR
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Já fui avaliado e conheço meu nível CEFR
+                    J'ai déjà été évalué et je connais mon niveau
                   </p>
                 </div>
               </div>
@@ -199,20 +214,19 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
                 <RadioGroupItem value="false" id="evaluated-no" />
                 <div className="flex-1">
                   <Label htmlFor="evaluated-no" className="font-medium cursor-pointer">
-                    Não, preciso fazer o teste
+                    Non, je souhaite passer le test
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Gostaria de fazer o teste de nível agora
+                    {PLACEMENT_TEST_QUESTION_COUNT} questions — environ 10 minutes
                   </p>
                 </div>
               </div>
             </RadioGroup>
           </div>
 
-          {/* Level selection if already evaluated */}
           {data.hasBeenEvaluated === true && (
             <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
-              <Label>Qual é o seu nível atual?</Label>
+              <Label>Quel est votre niveau actuel ?</Label>
               <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                 {levels.map((level) => (
                   <Button
@@ -229,25 +243,38 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
             </div>
           )}
 
-          {/* Start test button */}
           {data.hasBeenEvaluated === false && (
             <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-              <div className="rounded-lg bg-muted/50 p-4">
-                <p className="text-sm">
-                  O teste de nível consiste em <strong>{sampleQuestions.length} perguntas</strong> cobrindo 
-                  gramática, vocabulário e terminologia específica de esqui. Leva aproximadamente 5-10 minutos.
+              <div className="rounded-lg bg-muted/50 p-4 text-sm space-y-2">
+                <p>
+                  Le test comporte <strong>{PLACEMENT_TEST_QUESTION_COUNT} questions</strong> avec
+                  une difficulté progressive (A1 → C1).
+                </p>
+                <p>
+                  <strong>0-10 bonnes réponses</strong> → groupe du matin ·{" "}
+                  <strong>11-20</strong> → groupe de l'après-midi
                 </p>
               </div>
-              <Button type="button" onClick={startTest} className="w-full">
-                Iniciar Teste de Nível
-              </Button>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={startTest}
+                  className="w-full"
+                  disabled={questions.length < PLACEMENT_TEST_QUESTION_COUNT}
+                >
+                  Commencer le test de niveau
+                </Button>
+              )}
             </div>
           )}
 
-          {/* Continue button for those who already know their level */}
           {data.hasBeenEvaluated === true && data.currentLevel && (
             <Button type="submit" className="w-full">
-              Continuar para Expectativas
+              Continuer vers les attentes
             </Button>
           )}
         </form>
