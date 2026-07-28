@@ -14,6 +14,7 @@ export const ROUTE_GROUPS: RouteGroup[] = [
     label: "Gestion",
     routes: [
       { key: "commercial", label: "Commercial" },
+      { key: "moniteurs", label: "Moniteurs ski" },
       { key: "finance", label: "Vue d'ensemble" },
       { key: "finance.analyses", label: "Analyses" },
       { key: "finance.rentabilite", label: "Rentabilité" },
@@ -61,6 +62,7 @@ export const PATH_TO_ROUTE_KEY: Record<string, string> = {
   "/finance/charges-fixes": "finance.charges_fixes",
   "/finance/payments": "finance.payments",
   "/gestion/commercial": "commercial",
+  "/gestion/moniteurs": "moniteurs",
   "/gestion/partenaires": "partenaires",
   "/inscriptions": "inscriptions",
   "/invoices": "invoices",
