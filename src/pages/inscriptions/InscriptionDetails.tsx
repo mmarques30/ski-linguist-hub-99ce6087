@@ -34,7 +34,8 @@ import {
   Edit,
   Package,
   Receipt,
-  Trash2
+  Trash2,
+  Clock,
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
@@ -45,6 +46,7 @@ import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { InscriptionFormDialog } from "@/components/inscriptions/InscriptionFormDialog";
 import { EndPackDialog } from "@/components/endpack/EndPackDialog";
 import { InvoiceCreateDialog } from "@/components/invoices/InvoiceCreateDialog";
+import { ScheduleApprovalDialog } from "@/components/inscriptions/ScheduleApprovalDialog";
 
 const translations = {
   back: { fr: "Retour", "pt-BR": "Voltar", en: "Back" },
@@ -110,6 +112,7 @@ export default function InscriptionDetails() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [endPackOpen, setEndPackOpen] = useState(false);
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const deleteInscription = useDeleteInscription();
   const getDateLocale = () => {
     switch (language) {
@@ -240,6 +243,10 @@ export default function InscriptionDetails() {
               <Button variant="outline" size="sm" onClick={() => setEndPackOpen(true)}>
                 <Package className="mr-2 h-4 w-4" />
                 {t(translations.endPack)}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setScheduleDialogOpen(true)}>
+                <Clock className="mr-2 h-4 w-4" />
+                Horaire
               </Button>
               <Button size="sm" onClick={() => setInvoiceDialogOpen(true)}>
                 <Receipt className="mr-2 h-4 w-4" />
@@ -699,6 +706,21 @@ export default function InscriptionDetails() {
             open={invoiceDialogOpen}
             onOpenChange={setInvoiceDialogOpen}
             defaultInscriptionId={inscription.id}
+          />
+
+          <ScheduleApprovalDialog
+            open={scheduleDialogOpen}
+            onOpenChange={setScheduleDialogOpen}
+            inscription={{
+              id: inscription.id,
+              code: inscription.code,
+              student_name: inscription.student_name,
+              language: inscription.language,
+              start_date: inscription.start_date,
+              entry_level: inscription.entry_level,
+              schedule_status: (inscription as { schedule_status?: string }).schedule_status,
+              schedule: (inscription as { schedule?: string }).schedule,
+            }}
           />
         </>
       )}

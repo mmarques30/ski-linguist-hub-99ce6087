@@ -39,9 +39,14 @@ export interface RegistrationData {
   currentLevel: string;
   testScore: number;
   correctAnswers?: number;
-  timeSlot?: "matin" | "apres-midi";
   needsAdminCall?: boolean;
   testAnswers?: Record<string, string>;
+  testSummary?: {
+    slopeResults: Array<{ slope: string; correct: number; total: number; passed: boolean }>;
+    passedSlopes: string[];
+    highestSlopeReached: string;
+    endedAtVocab: boolean;
+  };
   
   // Attentes
   expectations: string;

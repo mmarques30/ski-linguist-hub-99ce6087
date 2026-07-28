@@ -12,6 +12,11 @@ const LANGUAGE_MAP: Record<string, string> = {
   portuguese: "Portugais",
   russian: "Russe",
   dutch: "Néerlandais",
+  german: "Allemand",
+  spanish: "Espagnol",
+  italian: "Italien",
+  chinese: "Chinois",
+  french: "Français",
 };
 
 const MODALITY_MAP: Record<string, string> = {
@@ -56,8 +61,14 @@ interface RegistrationPayload {
   currentLevel: string;
   testScore: number;
   correctAnswers?: number;
-  timeSlot?: "matin" | "apres-midi";
+  needsAdminCall?: boolean;
   testAnswers?: Record<string, string>;
+  testSummary?: {
+    slopeResults: Array<{ slope: string; correct: number; total: number; passed: boolean }>;
+    passedSlopes: string[];
+    highestSlopeReached: string;
+    endedAtVocab: boolean;
+  };
   expectations: string;
   certification: string;
 }
@@ -122,12 +133,7 @@ Deno.serve(async (req) => {
     const language = LANGUAGE_MAP[registration.language] || registration.language;
     const durationHours = parseDurationHours(registration.duration);
     const correctAnswers = registration.correctAnswers ?? 0;
-    const needsAdminCall = registration.testAnswers
-      ? correctAnswers <= 2
-      : false;
-    const timeSlot = registration.testAnswers
-      ? (registration.timeSlot ?? (correctAnswers <= 10 ? "matin" : "apres-midi"))
-      : null;
+    const needsAdminCall = registration.needsAdminCall ?? false;
 
     const { data: season } = await supabase
       .from("seasons")
@@ -215,13 +221,16 @@ Deno.serve(async (req) => {
         funding_organization: FUNDING_MAP[registration.fundingType] || registration.fundingType || null,
         certification_type: registration.certification || null,
         expectations: registration.expectations || null,
-        schedule: registration.testAnswers ? timeSlot : null,
+        schedule_status: "pending",
         entry_test_score: registration.testAnswers ? String(correctAnswers) : null,
         observations: [
           registration.dates ? `Dates souhaitées: ${registration.dates}` : null,
           registration.profession === "ski_instructor" ? "Moniteur de ski" : "Autre profession",
           registration.hasHandicap ? "Situation de handicap signalée" : null,
-          needsAdminCall ? "⚠️ ALERTE: Score test ≤ 2 — contacter le stagiaire" : null,
+          needsAdminCall ? "⚠️ ALERTE: Niveau très faible — contacter le stagiaire" : null,
+          registration.testSummary
+            ? `Test adaptatif: ${registration.testSummary.passedSlopes.join(" → ") || "vocab ski"}`
+            : null,
         ]
           .filter(Boolean)
           .join("\n"),
@@ -234,8 +243,12 @@ Deno.serve(async (req) => {
     if (inscriptionError) throw inscriptionError;
 
     if (registration.testAnswers) {
-      const totalQuestions = 20;
-      const scorePercentage = Math.round((correctAnswers / totalQuestions) * 100);
+      const totalQuestions = registration.testSummary
+        ? registration.testSummary.slopeResults.reduce((sum, r) => sum + r.total, 0)
+        : correctAnswers;
+      const scorePercentage = totalQuestions > 0
+        ? Math.round((correctAnswers / totalQuestions) * 100)
+        : 0;
 
       await supabase.from("placement_tests").insert({
         student_id: studentId,
@@ -245,7 +258,10 @@ Deno.serve(async (req) => {
         correct_answers: correctAnswers,
         score_percentage: scorePercentage,
         determined_level: registration.currentLevel,
-        answers: registration.testAnswers,
+        answers: {
+          responses: registration.testAnswers,
+          summary: registration.testSummary ?? null,
+        },
         status: "completed",
         completed_at: new Date().toISOString(),
       });
@@ -285,7 +301,7 @@ Deno.serve(async (req) => {
 
       if (needsAdminCall) {
         const adminSubject = `[ALERTE FLI] Test de niveau faible — ${studentName}`;
-        const adminHtml = `<p>Le stagiaire <strong>${studentName}</strong> (${email}) a obtenu ${correctAnswers}/20 au test de niveau.</p>
+        const adminHtml = `<p>Le stagiaire <strong>${studentName}</strong> (${email}) nécessite un contact téléphonique suite au test de niveau.</p>
           <p>Code inscription: <strong>${inscription.code}</strong></p>
           <p>Merci de le contacter par téléphone.</p>`;
         await sendEmail(resendApiKey, ADMIN_EMAIL, adminSubject, adminHtml);
@@ -303,7 +319,7 @@ Deno.serve(async (req) => {
           title: needsAdminCall
             ? `⚠️ Inscription — appeler ${registration.firstName}`
             : `Nouvelle inscription — ${registration.firstName}`,
-          message: `Inscription ${inscription.code} pour ${language}. Score test: ${registration.testAnswers ? `${correctAnswers}/20` : "auto-déclaré"}.`,
+          message: `Inscription ${inscription.code} pour ${language}. Niveau: ${registration.currentLevel}. Horaire: en attente de validation.`,
           link: `/inscriptions/${inscription.id}`,
         });
       }
@@ -316,7 +332,6 @@ Deno.serve(async (req) => {
           inscriptionId: inscription.id,
           inscriptionCode: inscription.code,
           studentId,
-          timeSlot: registration.testAnswers ? timeSlot : null,
           needsAdminCall,
           emailSent,
         },

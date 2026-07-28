@@ -1,0 +1,352 @@
+[
+  {
+    "order_index": 1,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "Uw klant komt aan bij de skischool. U zegt:",
+    "options": [
+      "Goedemorgen! Hoe gaat het met u?",
+      "Goedemorgen! Hoe bent u?",
+      "Goedemorgen! Hoe gaat het met jij?",
+      "Goedemorgen! Hoe heeft u?",
+      "je ne sais pas"
+    ],
+    "correct_answer": "Goedemorgen! Hoe gaat het met u?"
+  },
+  {
+    "order_index": 2,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "De familie heeft 5 personen. U zegt: \"Er _____ vijf personen in uw groep.\"",
+    "options": [
+      "is",
+      "zijn",
+      "heeft",
+      "hebben",
+      "je ne sais pas"
+    ],
+    "correct_answer": "zijn"
+  },
+  {
+    "order_index": 3,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "U vraagt naar de leeftijd van het kind: \"Hoe oud _____ ze?\"",
+    "options": [
+      "heeft",
+      "is",
+      "zijn",
+      "bent",
+      "je ne sais pas"
+    ],
+    "correct_answer": "is"
+  },
+  {
+    "order_index": 4,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "Het is erg koud vandaag. U zegt: \"Vandaag _____ het min 10 graden.\"",
+    "options": [
+      "is",
+      "heeft",
+      "maakt",
+      "doet",
+      "je ne sais pas"
+    ],
+    "correct_answer": "is"
+  },
+  {
+    "order_index": 5,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "U stelt uzelf voor: \"Ik _____ al 5 jaar skileraar.\"",
+    "options": [
+      "heb",
+      "ben",
+      "was",
+      "had",
+      "je ne sais pas"
+    ],
+    "correct_answer": "ben"
+  },
+  {
+    "order_index": 6,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "U vraagt naar de les van gisteren: \"Hoe _____ de skiles gisteren?\"",
+    "options": [
+      "was",
+      "is geweest",
+      "waren",
+      "A ou B",
+      "je ne sais pas"
+    ],
+    "correct_answer": "A ou B"
+  },
+  {
+    "order_index": 7,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "U legt uit waar te ontmoeten: \"We ontmoeten elkaar _____ de skischool, naast de stoeltjeslift.\"",
+    "options": [
+      "voor",
+      "voordat",
+      "vooruit",
+      "vooraan",
+      "je ne sais pas"
+    ],
+    "correct_answer": "voor"
+  },
+  {
+    "order_index": 8,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "Het weer is veranderd. U zegt: \"Gisteren _____ de zon, maar vandaag sneeuwt het.\"",
+    "options": [
+      "scheen",
+      "schijnt",
+      "heeft geschenen",
+      "A ou C",
+      "je ne sais pas"
+    ],
+    "correct_answer": "A ou C"
+  },
+  {
+    "order_index": 9,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "De klant vertelt over vroeger: \"Toen ik een kind _____, had ik nog nooit sneeuw gezien.\"",
+    "options": [
+      "ben",
+      "was",
+      "had",
+      "werd",
+      "je ne sais pas"
+    ],
+    "correct_answer": "was"
+  },
+  {
+    "order_index": 10,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "U beschrijft de piste: \"Deze piste is veel _____ dan de andere.\"",
+    "options": [
+      "makkelijk",
+      "makkelijker",
+      "het makkelijkst",
+      "meer makkelijk",
+      "je ne sais pas"
+    ],
+    "correct_answer": "makkelijker"
+  },
+  {
+    "order_index": 11,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "De klant wil naar een zwarte piste. U zegt: \"U _____ opwarmen voordat u op deze piste skiet.\"",
+    "options": [
+      "kunt",
+      "moet",
+      "wilt",
+      "zult",
+      "je ne sais pas"
+    ],
+    "correct_answer": "moet"
+  },
+  {
+    "order_index": 12,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "U vraagt naar de gewoontes van de klant: \"Toen u in Nederland _____, deed u aan wintersport?\"",
+    "options": [
+      "woonde",
+      "heeft gewoond",
+      "woont",
+      "zou wonen",
+      "je ne sais pas"
+    ],
+    "correct_answer": "woonde"
+  },
+  {
+    "order_index": 13,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "Het weer verandert. U waarschuwt: \"Het zicht _____ 's middags slechter. We kunnen beter vroeg naar beneden gaan.\"",
+    "options": [
+      "wordt",
+      "zal worden",
+      "is",
+      "A ou B",
+      "je ne sais pas"
+    ],
+    "correct_answer": "A ou B"
+  },
+  {
+    "order_index": 14,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "De klant vertelt: \"Toen ik jong was, _____ ik elke winter met mijn ouders naar de bergen.\"",
+    "options": [
+      "ging",
+      "ben gegaan",
+      "ga",
+      "zou gaan",
+      "je ne sais pas"
+    ],
+    "correct_answer": "ging"
+  },
+  {
+    "order_index": 15,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "U legt uit wat te doen: \"Als u het rode bord _____, stop dan meteen.\"",
+    "options": [
+      "ziet",
+      "zag",
+      "gezien hebt",
+      "zult zien",
+      "je ne sais pas"
+    ],
+    "correct_answer": "ziet"
+  },
+  {
+    "order_index": 16,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "De techniek uitleggen: \"Als u meer druk op de dalski _____, zou u makkelijker draaien.\"",
+    "options": [
+      "zet",
+      "zou zetten",
+      "zette",
+      "had gezet",
+      "je ne sais pas"
+    ],
+    "correct_answer": "zette"
+  },
+  {
+    "order_index": 17,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "Een klant vraagt naar lawinegevaar. U legt uit: \"Als er vannacht verse sneeuw _____, _____ het station morgen sommige pistes.\"",
+    "options": [
+      "valt / sluit",
+      "zou vallen / zou sluiten",
+      "is gevallen / sluit",
+      "viel / sloot",
+      "je ne sais pas"
+    ],
+    "correct_answer": "valt / sluit"
+  },
+  {
+    "order_index": 18,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "Beschrijven wat er gebeurd is: \"De klant _____ niet gewond geraakt als hij de veiligheidsinstructies _____ had.\"",
+    "options": [
+      "zou zijn / gevolgd",
+      "was / volgde",
+      "zou zijn / zou volgen",
+      "is / heeft gevolgd",
+      "je ne sais pas"
+    ],
+    "correct_answer": "zou zijn / gevolgd"
+  },
+  {
+    "order_index": 19,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "U vraagt over het verleden: \"Voordat u hierheen kwam, _____ u een idee hoe skiën was?\"",
+    "options": [
+      "heeft",
+      "had",
+      "hebt",
+      "zou hebben",
+      "je ne sais pas"
+    ],
+    "correct_answer": "had"
+  },
+  {
+    "order_index": 20,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "Een situatie uitleggen: \"Hoewel de piste moeilijk _____, denk ik dat u het kunt als u rustig _____.\"",
+    "options": [
+      "is / blijft",
+      "zou zijn / zou blijven",
+      "was / bleef",
+      "is / zou blijven",
+      "je ne sais pas"
+    ],
+    "correct_answer": "is / blijft"
+  },
+  {
+    "order_index": 21,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "De ski van uw klant komt los. U controleert de uitrusting en zegt: \"Ik denk dat uw _____ te los zijn. Ik stel ze bij.\"",
+    "options": [
+      "stokken",
+      "bindingen",
+      "kanten",
+      "schoenen",
+      "je ne sais pas"
+    ],
+    "correct_answer": "bindingen"
+  },
+  {
+    "order_index": 22,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "U leert de ploeg. U zegt: \"Buig uw _____ meer en houd uw gewicht naar voren.\"",
+    "options": [
+      "enkels",
+      "schouders",
+      "heupen",
+      "knieën",
+      "je ne sais pas"
+    ],
+    "correct_answer": "knieën"
+  },
+  {
+    "order_index": 23,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Uw klant valt vaak in de bochten. U legt uit: \"U moet meer druk zetten op de _____ - dat is de ski die dichter bij het dal is.\"",
+    "options": [
+      "bergski",
+      "binnenski",
+      "dalski",
+      "buitenski",
+      "je ne sais pas"
+    ],
+    "correct_answer": "dalski"
+  },
+  {
+    "order_index": 24,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Er is 30cm sneeuw gevallen vannacht. U zegt tegen de enthousiaste klant: \"Geweldig nieuws! We hebben verse _____ vandaag - perfect voor off-piste!\"",
+    "options": [
+      "ijs",
+      "poedersneeuw",
+      "harde sneeuw",
+      "mist",
+      "je ne sais pas"
+    ],
+    "correct_answer": "poedersneeuw"
+  },
+  {
+    "order_index": 25,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Een kind komt aan zonder hoofdbescherming. U zegt tegen de ouders: \"Voor de veiligheid moet uw kind een _____ dragen op de piste.\"",
+    "options": [
+      "skipas",
+      "skibril",
+      "helm",
+      "handschoenen",
+      "je ne sais pas"
+    ],
+    "correct_answer": "helm"
+  }
+]

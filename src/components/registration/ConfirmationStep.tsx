@@ -5,7 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, Loader2, Phone, Sun, Sunset, User, Briefcase, BookOpen, Target } from "lucide-react";
+import { CheckCircle, Loader2, Phone, Mountain } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { RegistrationData } from "@/pages/register/Index";
@@ -20,6 +20,11 @@ const languageLabels: Record<string, string> = {
   portuguese: "Portugais",
   russian: "Russe",
   dutch: "Néerlandais",
+  german: "Allemand",
+  spanish: "Espagnol",
+  italian: "Italien",
+  chinese: "Chinois",
+  french: "Français",
 };
 
 const modalityLabels: Record<string, string> = {
@@ -45,7 +50,6 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<{
     inscriptionCode: string;
-    timeSlot: "matin" | "apres-midi" | null;
     needsAdminCall: boolean;
     emailSent: boolean;
   } | null>(null);
@@ -56,7 +60,6 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
       const submission = await submitRegistration(data);
       setResult({
         inscriptionCode: submission.inscriptionCode,
-        timeSlot: submission.timeSlot,
         needsAdminCall: submission.needsAdminCall,
         emailSent: submission.emailSent,
       });
@@ -92,15 +95,13 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                 Code : {result.inscriptionCode}
               </Badge>
             </div>
-            {result.timeSlot && (
-              <Badge variant="secondary" className="gap-1">
-                {result.timeSlot === "matin" ? (
-                  <><Sun className="h-3.5 w-3.5" /> Groupe du matin</>
-                ) : (
-                  <><Sunset className="h-3.5 w-3.5" /> Groupe de l'après-midi</>
-                )}
-              </Badge>
-            )}
+            <Alert>
+              <Mountain className="h-4 w-4" />
+              <AlertDescription>
+                Votre groupe (matin ou après-midi) sera confirmé environ 10 jours avant le début
+                des cours, après validation par notre équipe.
+              </AlertDescription>
+            </Alert>
             {result.needsAdminCall && (
               <Alert>
                 <Phone className="h-4 w-4" />
@@ -126,7 +127,6 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
       <CardContent className="space-y-6">
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium">
-            <User className="h-4 w-4" />
             Informations personnelles
           </div>
           <div className="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
@@ -142,43 +142,12 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
               <span className="text-muted-foreground">Téléphone</span>
               <span className="font-medium">{data.phone}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Adresse</span>
-              <span className="font-medium">{data.address}, {data.postalCode} {data.city}</span>
-            </div>
           </div>
         </div>
 
         <Separator />
 
         <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <Briefcase className="h-4 w-4" />
-            Profil professionnel
-          </div>
-          <div className="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Profession</span>
-              <span className="font-medium">
-                {data.profession === "ski_instructor" ? "Moniteur de ski" : "Autre"}
-              </span>
-            </div>
-            {data.skiSchool && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">École de ski</span>
-                <span className="font-medium">{data.skiSchool}</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <Separator />
-
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <BookOpen className="h-4 w-4" />
-            Configuration de la formation
-          </div>
           <div className="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Langue</span>
@@ -193,42 +162,13 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
               <span className="font-medium">{modalityLabels[data.modality] || data.modality}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Financement</span>
-              <span className="font-medium">{fundingLabels[data.fundingType] || data.fundingType}</span>
-            </div>
-            {data.location && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Lieu</span>
-                <span className="font-medium">{data.location}</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <Separator />
-
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <Target className="h-4 w-4" />
-            Niveau et certification
-          </div>
-          <div className="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
-            <div className="flex justify-between">
               <span className="text-muted-foreground">Niveau</span>
               <Badge>{data.currentLevel}</Badge>
             </div>
-            {data.timeSlot && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Créneau</span>
-                <span className="font-medium">
-                  {data.timeSlot === "matin" ? "Matin" : "Après-midi"}
-                </span>
-              </div>
-            )}
             {data.correctAnswers !== undefined && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Score test</span>
-                <span className="font-medium">{data.correctAnswers}/20</span>
+                <span className="font-medium">{data.correctAnswers} bonnes réponses</span>
               </div>
             )}
             <div className="flex justify-between">
