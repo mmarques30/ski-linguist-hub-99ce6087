@@ -18,14 +18,14 @@
 ### Teste de Login
 1. Acesse `/auth`
 2. Insira credenciais válidas
-3. ✅ Deve redirecionar para Dashboard
+3. ✅ Deve redirecionar para Dashboard (`/`)
 
 ### Teste de Logout
 1. Clique no botão de logout no Sidebar
 2. ✅ Deve redirecionar para `/auth`
 
 ### Rota Protegida
-1. Sem login, acesse `/dashboard`
+1. Sem login, acesse `/inscriptions`
 2. ✅ Deve redirecionar para `/auth`
 
 ---
@@ -81,8 +81,13 @@
 ## 📊 Testes de Posicionamento
 
 ### Visualizar Testes
-1. Vá para `/placement-tests`
-2. ✅ Lista de testes com estatísticas
+1. Vá para `/tests`
+2. ✅ Lista de testes com links públicos
+
+### Inscrição Pública
+1. Acesse `/register`
+2. Preencha todas as etapas incluindo teste de 20 questões
+3. ✅ Inscrição salva com código FLI e aparece em `/inscriptions`
 
 ---
 
@@ -115,7 +120,7 @@
 ## 💹 Finanças
 
 ### Dashboard Financeiro
-1. Vá para `/finance/dashboard`
+1. Vá para `/finance`
 2. ✅ KPIs atualizados
 
 ### Charges Fixes

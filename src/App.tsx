@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { StudentProtectedRoute } from "@/components/auth/StudentProtectedRoute";
 import { LanguageProvider } from "@/contexts/LanguageContext";
@@ -14,7 +14,6 @@ import Invoices from "./pages/Invoices";
 import Students from "./pages/Students";
 import StudentDetails from "./pages/students/StudentDetails";
 import PlacementTests from "./pages/PlacementTests";
-import Classes from "./pages/Classes";
 import Sessions from "./pages/Sessions";
 import Documents from "./pages/Documents";
 import Settings from "./pages/Settings";
@@ -85,7 +84,7 @@ const App = () => (
             <Route path="/students" element={<ProtectedRoute><Students /></ProtectedRoute>} />
             <Route path="/students/:id" element={<ProtectedRoute><StudentDetails /></ProtectedRoute>} />
             <Route path="/tests" element={<ProtectedRoute><PlacementTests /></ProtectedRoute>} />
-            <Route path="/classes" element={<ProtectedRoute><Classes /></ProtectedRoute>} />
+            <Route path="/classes" element={<Navigate to="/formation/sessions" replace />} />
             <Route path="/formation/sessions" element={<ProtectedRoute><Sessions /></ProtectedRoute>} />
             <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />

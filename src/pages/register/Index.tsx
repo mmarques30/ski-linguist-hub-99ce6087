@@ -38,6 +38,10 @@ export interface RegistrationData {
   hasBeenEvaluated: boolean;
   currentLevel: string;
   testScore: number;
+  correctAnswers?: number;
+  timeSlot?: "matin" | "apres-midi";
+  needsAdminCall?: boolean;
+  testAnswers?: Record<string, string>;
   
   // Attentes
   expectations: string;
