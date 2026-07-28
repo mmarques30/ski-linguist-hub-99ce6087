@@ -155,7 +155,7 @@ Deno.serve(async (req) => {
       .eq("start_date", targetDateStr)
       .eq("schedule_status", "pending")
       .is("schedule_reminder_sent_at", null)
-      .not("status", "eq", "annulee");
+      .neq("status", "annulee");
 
     if (error) throw error;
 

@@ -41,4 +41,5 @@ Manter os dois sistemas separados. O teste adaptatif alimenta `entry_level` e `p
 
 - Questões importadas de `FLI_Tests_Complet_CORRIGE.xlsx` em `src/data/placement-questions/`
 - UI admin: `ScheduleApprovalDialog` em `/inscriptions/:id`
+- Email automático J-10: edge function `process-schedule-reminders` (cron diário 08:00 UTC) → `info@fli.fr`
 - Futura Onda 3: vista consolidada dos inscritos pendentes J-10 para decisão em lote
