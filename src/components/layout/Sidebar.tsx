@@ -99,6 +99,7 @@ const navigationGroups: NavGroup[] = [
         ],
       },
       { name: "Commercial", href: "/gestion/commercial", icon: TrendingUp },
+      { name: "Moniteurs ski", href: "/gestion/moniteurs", icon: Users },
       { name: "Partenaires", href: "/gestion/partenaires", icon: Briefcase },
       { name: "Inscriptions", href: "/inscriptions", icon: ClipboardList },
       { name: "Factures", href: "/invoices", icon: Receipt },

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export type ExpansionChannel = "cpf" | "b2b" | "dsf";
+export type ExpansionChannel = "cpf" | "b2b" | "dsf" | "moniteur_ski";
 
 export interface Lead {
   id: string;
@@ -36,6 +36,7 @@ export const EXPANSION_CHANNELS = [
   { key: "cpf" as const, label: "CPF", description: "Compte Personnel de Formation" },
   { key: "b2b" as const, label: "B2B Alpespace", description: "Entreprises & écoles de ski" },
   { key: "dsf" as const, label: "DSF", description: "Fédération & projets" },
+  { key: "moniteur_ski" as const, label: "Moniteurs ski", description: "Moniteurs ESF — outreach dates" },
 ];
 
 export const LEAD_STATUSES = [
