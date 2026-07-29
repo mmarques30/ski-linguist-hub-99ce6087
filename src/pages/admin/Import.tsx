@@ -12,6 +12,7 @@ import { Upload, FileSpreadsheet, CheckCircle2, XCircle, AlertTriangle, Loader2,
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { FliInscriptionsImportCard } from "@/components/admin/FliInscriptionsImportCard";
+import { FliFormResponsesImportCard } from "@/components/admin/FliFormResponsesImportCard";
 
 type TableType = "instructors" | "ski_schools" | "students" | "inscriptions" | "invoices";
 
@@ -412,6 +413,7 @@ export default function Import() {
     <MainLayout>
       <div className="space-y-6">
         <FliInscriptionsImportCard />
+        <FliFormResponsesImportCard />
 
         {/* Header */}
         <div className="flex items-center justify-between">
