@@ -698,6 +698,9 @@ export type Database = {
           group_size: number | null
           hours_per_day: number | null
           id: string
+          instructor_accommodation_address: string | null
+          instructor_accommodation_dates: string | null
+          instructor_accommodation_notes: string | null
           instructor_id: string | null
           language: string
           max_participants: string | null
@@ -758,6 +761,9 @@ export type Database = {
           group_size?: number | null
           hours_per_day?: number | null
           id?: string
+          instructor_accommodation_address?: string | null
+          instructor_accommodation_dates?: string | null
+          instructor_accommodation_notes?: string | null
           instructor_id?: string | null
           language: string
           max_participants?: string | null
@@ -818,6 +824,9 @@ export type Database = {
           group_size?: number | null
           hours_per_day?: number | null
           id?: string
+          instructor_accommodation_address?: string | null
+          instructor_accommodation_dates?: string | null
+          instructor_accommodation_notes?: string | null
           instructor_id?: string | null
           language?: string
           max_participants?: string | null
