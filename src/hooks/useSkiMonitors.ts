@@ -115,3 +115,56 @@ export function useDeleteSkiMonitor() {
     },
   });
 }
+
+export function useImportSkiMonitors() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (rows: Array<{
+      first_name: string;
+      last_name: string;
+      email: string;
+      phone: string | null;
+      home_station: string | null;
+      status: "active" | "unsubscribed";
+      notes: string | null;
+    }>) => {
+      const BATCH = 150;
+      let imported = 0;
+      const errors: string[] = [];
+
+      for (let i = 0; i < rows.length; i += BATCH) {
+        const batch = rows.slice(i, i + BATCH).map((r) => ({
+          first_name: r.first_name,
+          last_name: r.last_name,
+          email: r.email,
+          phone: r.phone,
+          home_station: r.home_station,
+          status: r.status,
+          notes: r.notes,
+          partner_id: null,
+          ski_school_id: null,
+        }));
+
+        const { error } = await supabase
+          .from("ski_monitors")
+          .upsert(batch, { onConflict: "email", ignoreDuplicates: false });
+
+        if (error) {
+          errors.push(`Lot ${Math.floor(i / BATCH) + 1}: ${error.message}`);
+        } else {
+          imported += batch.length;
+        }
+      }
+
+      if (errors.length > 0 && imported === 0) {
+        throw new Error(errors.join("\n"));
+      }
+
+      return { imported, errors };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["ski-monitors"] });
+      qc.invalidateQueries({ queryKey: ["ski-monitor-stats"] });
+    },
+  });
+}

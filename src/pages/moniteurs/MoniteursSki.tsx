@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Plus, Search, Calendar, MapPin, Users, Mail, Send,
-  Building2, Globe, Lock,
+  Building2, Globe, Lock, Upload,
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -17,6 +17,7 @@ import {
 import { useSkiMonitors, useSkiMonitorStats, SkiMonitor } from "@/hooks/useSkiMonitors";
 import { CourseIntakeFormDialog } from "@/components/moniteurs/CourseIntakeFormDialog";
 import { SkiMonitorFormDialog } from "@/components/moniteurs/SkiMonitorFormDialog";
+import { SkiMonitorImportDialog } from "@/components/moniteurs/SkiMonitorImportDialog";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { toast } from "sonner";
 import {
@@ -105,6 +106,7 @@ export default function MoniteursSki() {
   const [intakeFormOpen, setIntakeFormOpen] = useState(false);
   const [editIntake, setEditIntake] = useState<CourseIntake | null>(null);
   const [sendTarget, setSendTarget] = useState<CourseIntake | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const { data: intakes = [], isLoading: intakesLoading } = useCourseIntakes();
   const { data: monitors = [], isLoading: monitorsLoading } = useSkiMonitors({ search: searchMonitors });
@@ -186,6 +188,9 @@ export default function MoniteursSki() {
                   onChange={(e) => setSearchMonitors(e.target.value)}
                 />
               </div>
+              <Button variant="outline" onClick={() => setImportOpen(true)}>
+                <Upload className="h-4 w-4 mr-2" /> Importer CSV
+              </Button>
               <Button onClick={() => { setEditMonitor(null); setMonitorFormOpen(true); }}>
                 <Plus className="h-4 w-4 mr-2" /> Ajouter un moniteur
               </Button>
@@ -249,6 +254,8 @@ export default function MoniteursSki() {
         onOpenChange={(o) => { setMonitorFormOpen(o); if (!o) setEditMonitor(null); }}
         monitor={editMonitor}
       />
+
+      <SkiMonitorImportDialog open={importOpen} onOpenChange={setImportOpen} />
 
       <AlertDialog open={!!sendTarget} onOpenChange={(o) => !o && setSendTarget(null)}>
         <AlertDialogContent>
