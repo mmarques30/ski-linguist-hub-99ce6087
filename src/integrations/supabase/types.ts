@@ -2402,6 +2402,73 @@ export type Database = {
           },
         ]
       }
+      ski_monitors: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string
+          home_station: string | null
+          id: string
+          last_name: string
+          notes: string | null
+          partner_id: string | null
+          phone: string | null
+          ski_school_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name: string
+          home_station?: string | null
+          id?: string
+          last_name: string
+          notes?: string | null
+          partner_id?: string | null
+          phone?: string | null
+          ski_school_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string
+          home_station?: string | null
+          id?: string
+          last_name?: string
+          notes?: string | null
+          partner_id?: string | null
+          phone?: string | null
+          ski_school_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ski_monitors_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ski_monitors_ski_school_id_fkey"
+            columns: ["ski_school_id"]
+            isOneToOne: false
+            referencedRelation: "ski_schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ski_monitors_ski_school_id_fkey"
+            columns: ["ski_school_id"]
+            isOneToOne: false
+            referencedRelation: "test_bookings_complete"
+            referencedColumns: ["ski_school_id"]
+          },
+        ]
+      }
       ski_schools: {
         Row: {
           created_at: string
