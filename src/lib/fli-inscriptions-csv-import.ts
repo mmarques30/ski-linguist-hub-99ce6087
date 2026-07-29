@@ -43,9 +43,9 @@ export interface ParsedFliInscriptionRow {
   ski_school_name: string | null;
   ski_school_director: string | null;
   ski_school_director_phone: string | null;
-  accommodation_dates: string | null;
-  accommodation_address: string | null;
-  accommodation_notes: string | null;
+  instructor_accommodation_dates: string | null;
+  instructor_accommodation_address: string | null;
+  instructor_accommodation_notes: string | null;
 }
 
 export interface FliInscriptionsImportPreview {
@@ -289,9 +289,9 @@ function rowToParsed(row: Record<string, string>): ParsedFliInscriptionRow | nul
     ski_school_name: isEmpty(getColumn(row, "École de SKI", "Ecole de SKI")) ? null : getColumn(row, "École de SKI", "Ecole de SKI"),
     ski_school_director: isEmpty(getColumn(row, "Directeur de l'école de ski", "Directeur de l'ecole de ski")) ? null : getColumn(row, "Directeur de l'école de ski", "Directeur de l'ecole de ski"),
     ski_school_director_phone: isEmpty(getColumn(row, "N° de Portable du Directeur", "N de Portable du Directeur")) ? null : getColumn(row, "N° de Portable du Directeur", "N de Portable du Directeur"),
-    accommodation_dates: isEmpty(getColumn(row, "Dates du logement")) ? null : getColumn(row, "Dates du logement"),
-    accommodation_address: isEmpty(getColumn(row, "Adresse du logement")) ? null : getColumn(row, "Adresse du logement"),
-    accommodation_notes: isEmpty(getColumn(row, "Observations sur le logement")) ? null : getColumn(row, "Observations sur le logement"),
+    instructor_accommodation_dates: isEmpty(getColumn(row, "Dates du logement")) ? null : getColumn(row, "Dates du logement"),
+    instructor_accommodation_address: isEmpty(getColumn(row, "Adresse du logement")) ? null : getColumn(row, "Adresse du logement"),
+    instructor_accommodation_notes: isEmpty(getColumn(row, "Observations sur le logement")) ? null : getColumn(row, "Observations sur le logement"),
   };
 }
 

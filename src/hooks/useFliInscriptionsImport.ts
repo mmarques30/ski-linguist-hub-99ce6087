@@ -205,6 +205,9 @@ export function useFliInscriptionsImport() {
                 pedagogical_cost: row.pedagogical_cost,
                 price: row.price,
                 status: row.status,
+                instructor_accommodation_dates: row.instructor_accommodation_dates,
+                instructor_accommodation_address: row.instructor_accommodation_address,
+                instructor_accommodation_notes: row.instructor_accommodation_notes,
               })
               .select("id, code")
               .single();
@@ -213,15 +216,6 @@ export function useFliInscriptionsImport() {
 
             if (inscription.code) {
               inscriptionByCode.set(normalizeKey(inscription.code), inscription.id);
-            }
-
-            if (row.accommodation_address || row.accommodation_dates) {
-              await supabase.from("accommodations").insert({
-                inscription_id: inscription.id,
-                dates: row.accommodation_dates,
-                address: row.accommodation_address,
-                observations: row.accommodation_notes,
-              });
             }
 
             result.inscriptionsImported++;
