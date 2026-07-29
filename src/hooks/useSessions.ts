@@ -212,10 +212,18 @@ export function useRemoveEnrollment() {
       if (error) throw error;
 
       // Decrement current_students
-      await supabase
+      const { data: session } = await supabase
         .from("sessions")
-        .update({ current_students: Math.max(0, 0) }) // We'll use a simpler approach
-        .eq("id", sessionId);
+        .select("current_students")
+        .eq("id", sessionId)
+        .single();
+
+      if (session) {
+        await supabase
+          .from("sessions")
+          .update({ current_students: Math.max(0, (session.current_students || 1) - 1) })
+          .eq("id", sessionId);
+      }
     },
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ["sessions"] });
