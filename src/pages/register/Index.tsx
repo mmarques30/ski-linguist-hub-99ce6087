@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ChevronLeft } from "lucide-react";
@@ -9,6 +10,7 @@ import { TrainingConfigStep } from "@/components/registration/TrainingConfigStep
 import { PlacementTestStep } from "@/components/registration/PlacementTestStep";
 import { ExpectationsStep } from "@/components/registration/ExpectationsStep";
 import { ConfirmationStep } from "@/components/registration/ConfirmationStep";
+import { isRegistrationLanguageKey } from "@/lib/registration-languages";
 
 export interface RegistrationData {
   // Informations personnelles
@@ -63,8 +65,20 @@ const steps = [
 ];
 
 export default function Register() {
+  const [searchParams] = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<Partial<RegistrationData>>({});
+
+  useEffect(() => {
+    const testLang = searchParams.get("test") || searchParams.get("lang");
+    if (testLang && isRegistrationLanguageKey(testLang)) {
+      setFormData((prev) => ({
+        ...prev,
+        language: testLang,
+        hasBeenEvaluated: false,
+      }));
+    }
+  }, [searchParams]);
 
   const progress = (currentStep / steps.length) * 100;
 

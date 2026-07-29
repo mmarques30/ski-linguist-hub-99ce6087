@@ -10,19 +10,13 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { RegistrationData } from "@/pages/register/Index";
+import { REGISTRATION_LANGUAGES } from "@/lib/registration-languages";
 
 interface TrainingConfigStepProps {
   data: Partial<RegistrationData>;
   onUpdate: (data: Partial<RegistrationData>) => void;
   onNext: () => void;
 }
-
-const languages = [
-  { value: "english", label: "Anglais" },
-  { value: "portuguese", label: "Portugais" },
-  { value: "russian", label: "Russe" },
-  { value: "dutch", label: "Néerlandais" },
-];
 
 const durations = [
   { value: "6h", label: "6 heures", price: "150" },
@@ -125,7 +119,7 @@ export function TrainingConfigStep({ data, onUpdate, onNext }: TrainingConfigSte
                 <SelectValue placeholder="Sélectionnez une langue" />
               </SelectTrigger>
               <SelectContent>
-                {languages.map((lang) => (
+                {REGISTRATION_LANGUAGES.map((lang) => (
                   <SelectItem key={lang.value} value={lang.value}>
                     {lang.label}
                   </SelectItem>

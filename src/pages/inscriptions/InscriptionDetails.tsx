@@ -35,7 +35,6 @@ import {
   Package,
   Receipt,
   Trash2,
-  Clock,
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
@@ -47,6 +46,7 @@ import { InscriptionFormDialog } from "@/components/inscriptions/InscriptionForm
 import { EndPackDialog } from "@/components/endpack/EndPackDialog";
 import { InvoiceCreateDialog } from "@/components/invoices/InvoiceCreateDialog";
 import { ScheduleApprovalDialog } from "@/components/inscriptions/ScheduleApprovalDialog";
+import { PlacementTestSummaryCard } from "@/components/inscriptions/PlacementTestSummaryCard";
 
 const translations = {
   back: { fr: "Retour", "pt-BR": "Voltar", en: "Back" },
@@ -529,6 +529,11 @@ export default function InscriptionDetails() {
                 </div>
               </CardContent>
             </Card>
+
+            <PlacementTestSummaryCard
+              testId={(inscription as { entry_test_id?: string | null }).entry_test_id}
+              fallbackScore={inscription.entry_test_score}
+            />
           </TabsContent>
 
           {/* Financial Tab */}

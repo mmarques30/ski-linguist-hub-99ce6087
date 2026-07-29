@@ -250,21 +250,34 @@ Deno.serve(async (req) => {
         ? Math.round((correctAnswers / totalQuestions) * 100)
         : 0;
 
-      await supabase.from("placement_tests").insert({
-        student_id: studentId,
-        inscription_id: inscription.id,
-        language,
-        total_questions: totalQuestions,
-        correct_answers: correctAnswers,
-        score_percentage: scorePercentage,
-        determined_level: registration.currentLevel,
-        answers: {
-          responses: registration.testAnswers,
-          summary: registration.testSummary ?? null,
-        },
-        status: "completed",
-        completed_at: new Date().toISOString(),
-      });
+      const { data: placementTest, error: placementError } = await supabase
+        .from("placement_tests")
+        .insert({
+          student_id: studentId,
+          inscription_id: inscription.id,
+          language,
+          total_questions: totalQuestions,
+          correct_answers: correctAnswers,
+          score_percentage: scorePercentage,
+          determined_level: registration.currentLevel,
+          answers: {
+            responses: registration.testAnswers,
+            summary: registration.testSummary ?? null,
+          },
+          status: "completed",
+          completed_at: new Date().toISOString(),
+        })
+        .select("id")
+        .single();
+
+      if (placementError) throw placementError;
+
+      if (placementTest?.id) {
+        await supabase
+          .from("inscriptions")
+          .update({ entry_test_id: placementTest.id })
+          .eq("id", inscription.id);
+      }
     }
 
     let emailSent = false;

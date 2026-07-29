@@ -3,9 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Link2, ExternalLink, Copy, Check, FileQuestion } from "lucide-react";
+import { Link2, ExternalLink, Copy, Check, FileQuestion, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { REGISTRATION_LANGUAGES } from "@/lib/registration-languages";
+import { usePlacementTestStats } from "@/hooks/usePlacementTestStats";
+import { Link } from "react-router-dom";
 
 const translations = {
   title: {
@@ -14,54 +17,34 @@ const translations = {
     en: "Placement Tests",
   },
   subtitle: {
-    fr: "Gérez les tests de niveau et consultez les résultats",
-    "pt-BR": "Gerencie os testes de nível e consulte os resultados",
-    en: "Manage placement tests and view results",
+    fr: "Test adaptatif par pistes — inscriptions publiques /register",
+    "pt-BR": "Teste adaptativo por pistas — inscrições públicas /register",
+    en: "Adaptive slope test — public registration at /register",
   },
   viewTest: {
-    fr: "Voir le test",
-    "pt-BR": "Ver teste",
-    en: "View Test",
+    fr: "Ouvrir l'inscription",
+    "pt-BR": "Abrir inscrição",
+    en: "Open registration",
   },
   publicLinksTitle: {
-    fr: "Liens publics des tests",
-    "pt-BR": "Links públicos dos testes",
-    en: "Public Test Links",
+    fr: "Liens publics (test adaptatif)",
+    "pt-BR": "Links públicos (teste adaptativo)",
+    en: "Public links (adaptive test)",
   },
   publicLinksDesc: {
-    fr: "Partagez ces liens avec les stagiaires pour passer les tests de niveau",
-    "pt-BR": "Compartilhe estes links com os estagiários para fazer os testes de nível",
-    en: "Share these links with students to take placement tests",
-  },
-  english: {
-    fr: "Anglais",
-    "pt-BR": "Inglês",
-    en: "English",
-  },
-  portuguese: {
-    fr: "Portugais",
-    "pt-BR": "Português",
-    en: "Portuguese",
-  },
-  russian: {
-    fr: "Russe",
-    "pt-BR": "Russo",
-    en: "Russian",
-  },
-  dutch: {
-    fr: "Néerlandais",
-    "pt-BR": "Holandês",
-    en: "Dutch",
+    fr: "Chaque lien pré-sélectionne la langue. Le test commence à la piste verte (5 questions/piste, ≥3 pour continuer).",
+    "pt-BR": "Cada link pré-seleciona o idioma. O teste começa na pista verde.",
+    en: "Each link pre-selects the language. Test starts on green slope.",
   },
   noTestsTitle: {
-    fr: "Aucun test complété",
-    "pt-BR": "Nenhum teste concluído",
-    en: "No tests completed",
+    fr: "Aucun test complété via /register",
+    "pt-BR": "Nenhum teste via /register",
+    en: "No tests via /register yet",
   },
   noTestsDesc: {
-    fr: "Les statistiques apparaîtront ici lorsque les stagiaires auront complété les tests de niveau.",
-    "pt-BR": "As estatísticas aparecerão aqui quando os estagiários completarem os testes de nível.",
-    en: "Statistics will appear here when students complete placement tests.",
+    fr: "Les résultats des nouvelles inscriptions avec test adaptatif apparaîtront ici. Les tests importés (Google Form) restent dans les fiches inscription.",
+    "pt-BR": "Os resultados das novas inscrições aparecerão aqui.",
+    en: "Results from new registrations will appear here.",
   },
   testOf: {
     fr: "Test de",
@@ -88,22 +71,7 @@ const translations = {
     "pt-BR": "Distribuição por nível",
     en: "Level Distribution",
   },
-  viewDetails: {
-    fr: "Voir les résultats détaillés",
-    "pt-BR": "Ver resultados detalhados",
-    en: "View detailed results",
-  },
 };
-
-interface TestStats {
-  language: string;
-  totalQuestions: number;
-  completedTests: number;
-  averageScore: number;
-  levelDistribution: { level: string; count: number; percentage: number }[];
-}
-
-const testStats: TestStats[] = [];
 
 const levelColors: Record<string, string> = {
   A1: "bg-red-100 text-red-800",
@@ -117,13 +85,7 @@ const levelColors: Record<string, string> = {
 export default function PlacementTests() {
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const { t } = useLanguage();
-
-  const availableLanguages = [
-    { key: "english", label: t(translations.english) },
-    { key: "portuguese", label: t(translations.portuguese) },
-    { key: "russian", label: t(translations.russian) },
-    { key: "dutch", label: t(translations.dutch) },
-  ];
+  const { data: testStats = [], isLoading } = usePlacementTestStats();
 
   const copyTestLink = (languageKey: string) => {
     const link = `${window.location.origin}/register?test=${languageKey}`;
@@ -135,45 +97,37 @@ export default function PlacementTests() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">{t(translations.title)}</h1>
-            <p className="text-muted-foreground">
-              {t(translations.subtitle)}
-            </p>
+            <p className="text-muted-foreground">{t(translations.subtitle)}</p>
           </div>
-          <Button>
-            <ExternalLink className="mr-2 h-4 w-4" />
-            {t(translations.viewTest)}
+          <Button asChild>
+            <Link to="/register">
+              <ExternalLink className="mr-2 h-4 w-4" />
+              {t(translations.viewTest)}
+            </Link>
           </Button>
         </div>
 
-        {/* Quick Links */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">{t(translations.publicLinksTitle)}</CardTitle>
-            <CardDescription>
-              {t(translations.publicLinksDesc)}
-            </CardDescription>
+            <CardDescription>{t(translations.publicLinksDesc)}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-              {availableLanguages.map((lang) => (
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {REGISTRATION_LANGUAGES.map((lang) => (
                 <div
-                  key={lang.key}
+                  key={lang.value}
                   className="flex items-center justify-between rounded-lg border p-3"
                 >
                   <div className="flex items-center gap-2">
                     <Link2 className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">{lang.label}</span>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyTestLink(lang.key)}
-                  >
-                    {copiedLink === lang.key ? (
+                  <Button variant="ghost" size="sm" onClick={() => copyTestLink(lang.value)}>
+                    {copiedLink === lang.value ? (
                       <Check className="h-4 w-4 text-emerald-600" />
                     ) : (
                       <Copy className="h-4 w-4" />
@@ -185,30 +139,34 @@ export default function PlacementTests() {
           </CardContent>
         </Card>
 
-        {/* Test Statistics or Empty State */}
-        {testStats.length === 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : testStats.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border bg-card">
             <FileQuestion className="h-12 w-12 text-muted-foreground/50 mb-4" />
             <h3 className="text-lg font-medium">{t(translations.noTestsTitle)}</h3>
-            <p className="text-muted-foreground mt-1 max-w-sm">
-              {t(translations.noTestsDesc)}
-            </p>
+            <p className="text-muted-foreground mt-1 max-w-md">{t(translations.noTestsDesc)}</p>
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2">
             {testStats.map((test) => (
-              <Card key={test.language}>
+              <Card key={test.languageLabel}>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle>{t(translations.testOf)} {test.language}</CardTitle>
-                    <Badge variant="outline">{test.totalQuestions} {t(translations.questions)}</Badge>
+                    <CardTitle>
+                      {t(translations.testOf)} {test.languageLabel}
+                    </CardTitle>
+                    <Badge variant="outline">
+                      {test.totalQuestions} {t(translations.questions)}
+                    </Badge>
                   </div>
                   <CardDescription>
                     {test.completedTests} {t(translations.testsCompleted)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Average Score */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">{t(translations.averageScore)}</span>
@@ -217,18 +175,12 @@ export default function PlacementTests() {
                     <Progress value={test.averageScore} className="h-2" />
                   </div>
 
-                  {/* Level Distribution */}
                   <div className="space-y-3">
                     <p className="text-sm font-medium">{t(translations.levelDistribution)}</p>
                     <div className="space-y-2">
                       {test.levelDistribution.map((level) => (
-                        <div
-                          key={level.level}
-                          className="flex items-center gap-3"
-                        >
-                          <Badge className={levelColors[level.level]}>
-                            {level.level}
-                          </Badge>
+                        <div key={level.level} className="flex items-center gap-3">
+                          <Badge className={levelColors[level.level] || ""}>{level.level}</Badge>
                           <div className="flex-1">
                             <Progress value={level.percentage} className="h-2" />
                           </div>
@@ -239,10 +191,6 @@ export default function PlacementTests() {
                       ))}
                     </div>
                   </div>
-
-                  <Button variant="outline" className="w-full">
-                    {t(translations.viewDetails)}
-                  </Button>
                 </CardContent>
               </Card>
             ))}
