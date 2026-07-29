@@ -51,12 +51,19 @@ interface RegistrationPayload {
   hasHandicap: boolean;
   profession: "ski_instructor" | "other";
   skiSchool: string;
+  offeringId?: string;
   fundingType: string;
   modality: string;
   language: string;
   duration: string;
   location: string;
+  locationLabel?: string;
   dates: string;
+  dateKey?: string;
+  dateLabel?: string;
+  startDate?: string;
+  endDate?: string;
+  price?: number;
   hasBeenEvaluated: boolean;
   currentLevel: string;
   testScore: number;
@@ -141,8 +148,18 @@ Deno.serve(async (req) => {
       .eq("is_current", true)
       .maybeSingle();
 
-    let price: number | null = null;
-    if (season?.id && registration.currentLevel && registration.modality && durationHours) {
+    let price: number | null = registration.price ?? null;
+
+    if (price == null && registration.offeringId) {
+      const { data: offering } = await supabase
+        .from("registration_offerings")
+        .select("base_price")
+        .eq("id", registration.offeringId)
+        .maybeSingle();
+      price = offering?.base_price ?? null;
+    }
+
+    if (price == null && season?.id && registration.currentLevel && registration.modality && durationHours) {
       const { data: pricing } = await supabase
         .from("pricing_rules")
         .select("base_price")
@@ -202,8 +219,14 @@ Deno.serve(async (req) => {
     const { data: inscriptionCode, error: codeError } = await supabase.rpc("generate_inscription_code");
     if (codeError) throw codeError;
 
-    const startDate = season?.start_date || new Date().toISOString().split("T")[0];
-    const endDate = season?.end_date || startDate;
+    const startDate =
+      registration.startDate || season?.start_date || new Date().toISOString().split("T")[0];
+    const endDate = registration.endDate || season?.end_date || startDate;
+    const courseLocation =
+      registration.locationLabel ||
+      LOCATION_LABELS[registration.location] ||
+      registration.location ||
+      null;
 
     const { data: inscription, error: inscriptionError } = await supabase
       .from("inscriptions")
@@ -217,14 +240,17 @@ Deno.serve(async (req) => {
         price,
         entry_level: registration.currentLevel || null,
         modality: MODALITY_MAP[registration.modality] || registration.modality,
-        course_location: LOCATION_LABELS[registration.location] || registration.location || null,
+        course_location: courseLocation,
         funding_organization: FUNDING_MAP[registration.fundingType] || registration.fundingType || null,
         certification_type: registration.certification || null,
         expectations: registration.expectations || null,
         schedule_status: "pending",
         entry_test_score: registration.testAnswers ? String(correctAnswers) : null,
         observations: [
-          registration.dates ? `Dates souhaitées: ${registration.dates}` : null,
+          registration.dateLabel || registration.dates
+            ? `Dates: ${registration.dateLabel || registration.dates}`
+            : null,
+          registration.offeringId ? `Offre catalogue: ${registration.offeringId}` : null,
           registration.profession === "ski_instructor" ? "Moniteur de ski" : "Autre profession",
           registration.hasHandicap ? "Situation de handicap signalée" : null,
           needsAdminCall ? "⚠️ ALERTE: Niveau très faible — contacter le stagiaire" : null,
