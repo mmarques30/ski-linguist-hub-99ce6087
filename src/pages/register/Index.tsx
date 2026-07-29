@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ChevronLeft } from "lucide-react";
 import fliLogo from "@/assets/fli-logo.png";
+import { CourseSelectionStep } from "@/components/registration/CourseSelectionStep";
 import { PersonalInfoStep } from "@/components/registration/PersonalInfoStep";
 import { ProfessionalProfileStep } from "@/components/registration/ProfessionalProfileStep";
-import { TrainingConfigStep } from "@/components/registration/TrainingConfigStep";
 import { PlacementTestStep } from "@/components/registration/PlacementTestStep";
 import { ExpectationsStep } from "@/components/registration/ExpectationsStep";
 import { ConfirmationStep } from "@/components/registration/ConfirmationStep";
@@ -23,19 +23,26 @@ export interface RegistrationData {
   postalCode: string;
   city: string;
   hasHandicap: boolean;
-  
+
   // Profil professionnel
   profession: "ski_instructor" | "other";
   skiSchool: string;
-  
-  // Configuration de la formation
+
+  // Formation (catalogue registration_offerings)
+  offeringId?: string;
   fundingType: string;
   modality: string;
   language: string;
   duration: string;
   location: string;
+  locationLabel?: string;
   dates: string;
-  
+  dateKey?: string;
+  dateLabel?: string;
+  startDate?: string;
+  endDate?: string;
+  price?: number;
+
   // Test de niveau
   hasBeenEvaluated: boolean;
   currentLevel: string;
@@ -49,16 +56,16 @@ export interface RegistrationData {
     highestSlopeReached: string;
     endedAtVocab: boolean;
   };
-  
+
   // Attentes
   expectations: string;
   certification: string;
 }
 
 const steps = [
-  { id: 1, name: "Informations personnelles" },
-  { id: 2, name: "Profil professionnel" },
-  { id: 3, name: "Configuration formation" },
+  { id: 1, name: "Lieu et formation" },
+  { id: 2, name: "Informations personnelles" },
+  { id: 3, name: "Profil professionnel" },
   { id: 4, name: "Test de niveau" },
   { id: 5, name: "Attentes" },
   { id: 6, name: "Confirmation" },
@@ -102,7 +109,7 @@ export default function Register() {
     switch (currentStep) {
       case 1:
         return (
-          <PersonalInfoStep
+          <CourseSelectionStep
             data={formData}
             onUpdate={updateFormData}
             onNext={nextStep}
@@ -110,7 +117,7 @@ export default function Register() {
         );
       case 2:
         return (
-          <ProfessionalProfileStep
+          <PersonalInfoStep
             data={formData}
             onUpdate={updateFormData}
             onNext={nextStep}
@@ -118,7 +125,7 @@ export default function Register() {
         );
       case 3:
         return (
-          <TrainingConfigStep
+          <ProfessionalProfileStep
             data={formData}
             onUpdate={updateFormData}
             onNext={nextStep}

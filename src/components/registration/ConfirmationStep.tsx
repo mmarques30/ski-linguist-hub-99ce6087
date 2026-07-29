@@ -10,6 +10,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import type { RegistrationData } from "@/pages/register/Index";
 import { submitRegistration } from "@/services/registrationService";
+import { formatPriceEUR } from "@/lib/registration-offerings";
 
 interface ConfirmationStepProps {
   data: RegistrationData;
@@ -148,18 +149,41 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
         <Separator />
 
         <div className="space-y-3">
+          <div className="text-sm font-medium">Formation sélectionnée</div>
           <div className="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Lieu</span>
+              <span className="font-medium">{data.locationLabel || data.location}</span>
+            </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Langue</span>
               <span className="font-medium">{languageLabels[data.language] || data.language}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Durée</span>
-              <span className="font-medium">{data.duration}</span>
+              <span className="font-medium">{data.duration} heures</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Modalité</span>
               <span className="font-medium">{modalityLabels[data.modality] || data.modality}</span>
+            </div>
+            {(data.dateLabel || data.dates) && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Dates</span>
+                <span className="font-medium text-right max-w-[60%]">
+                  {data.dateLabel || data.dates}
+                </span>
+              </div>
+            )}
+            {data.price != null && data.price > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Tarif</span>
+                <span className="font-semibold">{formatPriceEUR(data.price)}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Financement</span>
+              <span className="font-medium">{fundingLabels[data.fundingType] || data.fundingType}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Niveau</span>
