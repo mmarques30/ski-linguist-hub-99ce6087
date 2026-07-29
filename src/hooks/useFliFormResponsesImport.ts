@@ -70,10 +70,21 @@ function findStudent(
   }
 
   const nameKey = normalizeName(row.full_name);
+  const phoneKey = normalizePhone(row.phone);
   const nameMatches = byName.get(nameKey) || [];
   if (nameMatches.length === 1) return nameMatches[0];
 
-  const phoneKey = normalizePhone(row.phone);
+  const nameParts = nameKey.split(" ").filter(Boolean);
+  if (nameParts.length >= 2) {
+    const reversed = [...nameParts].reverse().join(" ");
+    const reversedMatches = byName.get(reversed) || [];
+    if (reversedMatches.length === 1) return reversedMatches[0];
+    if (reversedMatches.length > 1 && phoneKey) {
+      const overlap = reversedMatches.find((s) => normalizePhone(s.phone) === phoneKey);
+      if (overlap) return overlap;
+    }
+  }
+
   if (phoneKey) {
     const phoneMatches = byPhone.get(phoneKey) || [];
     if (phoneMatches.length === 1) return phoneMatches[0];
