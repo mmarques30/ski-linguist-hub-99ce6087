@@ -7,6 +7,7 @@ export interface Partner {
   id: string;
   name: string;
   type: string;
+  esf_code?: string | null;
   station: string | null;
   address: string | null;
   contact_name: string | null;
