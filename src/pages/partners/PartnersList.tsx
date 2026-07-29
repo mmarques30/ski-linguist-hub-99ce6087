@@ -13,6 +13,7 @@ import { StatCard } from "@/components/dashboard/StatCard";
 
 const TYPE_LABELS: Record<string, string> = {
   esf: "ESF",
+  ecole_ski: "École de ski",
   hotel: "Hôtel",
   remontees_mecaniques: "Remontées méc.",
   office_tourisme: "Office tourisme",

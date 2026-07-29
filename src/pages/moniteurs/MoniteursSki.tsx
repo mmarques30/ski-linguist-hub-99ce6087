@@ -18,6 +18,7 @@ import { useSkiMonitors, useSkiMonitorStats, SkiMonitor } from "@/hooks/useSkiMo
 import { CourseIntakeFormDialog } from "@/components/moniteurs/CourseIntakeFormDialog";
 import { SkiMonitorFormDialog } from "@/components/moniteurs/SkiMonitorFormDialog";
 import { SkiMonitorImportDialog } from "@/components/moniteurs/SkiMonitorImportDialog";
+import { SkiSchoolMatchingCard } from "@/components/moniteurs/SkiSchoolMatchingCard";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { toast } from "sonner";
 import {
@@ -143,8 +144,13 @@ export default function MoniteursSki() {
         <Tabs defaultValue="dates">
           <TabsList>
             <TabsTrigger value="dates">Dates de formation</TabsTrigger>
+            <TabsTrigger value="ecoles">Écoles de ski</TabsTrigger>
             <TabsTrigger value="base">Base moniteurs</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="ecoles" className="mt-4">
+            <SkiSchoolMatchingCard />
+          </TabsContent>
 
           <TabsContent value="dates" className="mt-4 space-y-4">
             <div className="flex justify-end">
@@ -159,7 +165,7 @@ export default function MoniteursSki() {
               <Card>
                 <CardContent className="py-12 text-center text-muted-foreground">
                   <Calendar className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                  <p>Aucune date de formation. Créez une date fermée avec une école ESF.</p>
+                  <p>Aucune date de formation. Créez une date fermée avec une école de ski partenaire.</p>
                 </CardContent>
               </Card>
             ) : (

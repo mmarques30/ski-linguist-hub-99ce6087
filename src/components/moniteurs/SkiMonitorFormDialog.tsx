@@ -12,7 +12,7 @@ import {
 import { useCreateSkiMonitor, useUpdateSkiMonitor, SkiMonitor } from "@/hooks/useSkiMonitors";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useHostingSchoolPartners } from "@/hooks/useSkiSchoolPartnerMatching";
 
 interface Props {
   open: boolean;
@@ -59,18 +59,7 @@ export function SkiMonitorFormDialog({ open, onOpenChange, monitor }: Props) {
     }
   }, [monitor, open]);
 
-  const { data: partners = [] } = useQuery({
-    queryKey: ["partners-esf-select"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("partners")
-        .select("id, name, station")
-        .eq("type", "esf")
-        .in("status", ["actif", "prospect"])
-        .order("name");
-      return data || [];
-    },
-  });
+  const { data: partners = [] } = useHostingSchoolPartners();
 
   const { data: skiSchools = [] } = useQuery({
     queryKey: ["ski-schools-select"],

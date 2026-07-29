@@ -15,6 +15,7 @@ import {
 } from "@/hooks/useCourseIntakes";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useHostingSchoolPartners } from "@/hooks/useSkiSchoolPartnerMatching";
 import { toast } from "sonner";
 import { AlertCircle, Users } from "lucide-react";
 
@@ -70,18 +71,7 @@ export function CourseIntakeFormDialog({ open, onOpenChange, intake }: Props) {
     }
   }, [intake, open]);
 
-  const { data: partners = [] } = useQuery({
-    queryKey: ["partners-esf-intake"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("partners")
-        .select("id, name, station")
-        .eq("type", "esf")
-        .in("status", ["actif", "prospect"])
-        .order("name");
-      return data || [];
-    },
-  });
+  const { data: partners = [] } = useHostingSchoolPartners();
 
   const { data: currentSeason } = useQuery({
     queryKey: ["current-season"],
@@ -146,7 +136,7 @@ export function CourseIntakeFormDialog({ open, onOpenChange, intake }: Props) {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label>École hôte (partenaire ESF) *</Label>
+            <Label>École hôte (partenaire) *</Label>
             <Select value={form.hosting_partner_id} onValueChange={(v) => setForm({ ...form, hosting_partner_id: v })}>
               <SelectTrigger><SelectValue placeholder="Sélectionner l'école" /></SelectTrigger>
               <SelectContent>
