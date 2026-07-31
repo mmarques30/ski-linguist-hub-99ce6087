@@ -787,6 +787,9 @@ export type Database = {
           qualiopi_status: string | null
           rhythm: string | null
           schedule: string | null
+          schedule_approved_at: string | null
+          schedule_approved_by: string | null
+          schedule_status: string
           season_id: string | null
           ski_school_id: string | null
           start_date: string
@@ -851,6 +854,9 @@ export type Database = {
           qualiopi_status?: string | null
           rhythm?: string | null
           schedule?: string | null
+          schedule_approved_at?: string | null
+          schedule_approved_by?: string | null
+          schedule_status?: string
           season_id?: string | null
           ski_school_id?: string | null
           start_date: string
@@ -915,6 +921,9 @@ export type Database = {
           qualiopi_status?: string | null
           rhythm?: string | null
           schedule?: string | null
+          schedule_approved_at?: string | null
+          schedule_approved_by?: string | null
+          schedule_status?: string
           season_id?: string | null
           ski_school_id?: string | null
           start_date?: string
@@ -3292,7 +3301,40 @@ export type Database = {
       activate_season: { Args: { p_season_id: string }; Returns: undefined }
       generate_inscription_code: { Args: never; Returns: string }
       get_fiscal_year: { Args: { invoice_date: string }; Returns: string }
+      get_instructor_contract_by_signature_token: {
+        Args: { p_token: string }
+        Returns: {
+          contract_number: string | null
+          created_at: string
+          end_date: string
+          generated_at: string
+          hourly_rate: number
+          id: string
+          inscription_id: string | null
+          instructor_id: string
+          location: string | null
+          pdf_url: string | null
+          sent_at: string | null
+          signature_data: string | null
+          signature_token: string | null
+          signed_at: string | null
+          start_date: string
+          student_or_company: string | null
+          total_amount: number
+          total_hours: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "instructor_contracts"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_my_student_id: { Args: never; Returns: string }
+      get_satisfaction_survey_context: {
+        Args: { p_token: string }
+        Returns: Json
+      }
       get_user_role: { Args: never; Returns: string }
       has_role: {
         Args: {
@@ -3304,6 +3346,14 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       is_student: { Args: never; Returns: boolean }
+      sign_instructor_contract_by_token: {
+        Args: { p_signature_data: string; p_token: string }
+        Returns: undefined
+      }
+      submit_satisfaction_survey_by_token: {
+        Args: { p_data: Json; p_token: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "user" | "student"
