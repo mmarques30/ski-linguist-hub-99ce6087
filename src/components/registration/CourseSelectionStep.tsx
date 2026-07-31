@@ -109,6 +109,12 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
     onUpdate({ modality: modalities[0].key });
   }, [data.location, data.modality, modalities]);
 
+  // Auto-sélection de la période quand une seule option (ex. en ligne)
+  useEffect(() => {
+    if (!data.language || data.dateKey || dateOptions.length !== 1) return;
+    onUpdate({ dateKey: dateOptions[0].key, duration: "", offeringId: undefined, price: undefined });
+  }, [data.language, data.dateKey, dateOptions]);
+
   const handleLocationChange = (locationKey: string) => {
     const loc = locations.find((l) => l.key === locationKey);
     onUpdate({
