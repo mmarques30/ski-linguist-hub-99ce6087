@@ -52,13 +52,18 @@ export function useSurveyByToken(token: string | undefined) {
       });
 
       if (error) throw error;
-      if (!data?.survey) throw new Error("Enquête introuvable");
+      const ctx = data as {
+        survey?: SatisfactionSurvey;
+        inscription?: SurveyWithInscription["inscription"];
+        student?: SurveyWithInscription["student"];
+      } | null;
+      if (!ctx?.survey) throw new Error("Enquête introuvable");
 
-      const survey = data.survey as SatisfactionSurvey;
+      const survey = ctx.survey;
       return {
         ...survey,
-        inscription: data.inscription ?? null,
-        student: data.student ?? null,
+        inscription: ctx.inscription ?? null,
+        student: ctx.student ?? null,
       } as SurveyWithInscription;
     },
     enabled: !!token,
