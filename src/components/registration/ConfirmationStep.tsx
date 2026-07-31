@@ -17,6 +17,7 @@ import { formatPriceEUR, isCustomFormatDuration } from "@/lib/registration-offer
 import {
   FLI_BANK_DETAILS,
   getRegistrationPaymentSummary,
+  hasChequeBalance,
   PAYMENT_OPTION_LABELS,
   REGISTRATION_PAYMENT_OPTIONS,
   requiresStripeCheckout,
@@ -163,10 +164,21 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
               <Alert>
                 <Landmark className="h-4 w-4" />
                 <AlertDescription className="text-left space-y-3">
-                  <p className="font-medium">Virement des frais de dossier</p>
+                  <p className="font-medium">
+                    {result.paymentOption === REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL
+                      ? "Virement du montant total"
+                      : "Virement des frais de dossier"}
+                  </p>
                   <p>
                     Merci d&apos;effectuer un virement de{" "}
-                    <strong>{formatPriceEUR(getRegistrationPaymentSummary(result.coursePrice, result.paymentOption as typeof paymentOption).amountDueNow)}</strong>{" "}
+                    <strong>
+                      {formatPriceEUR(
+                        getRegistrationPaymentSummary(
+                          result.coursePrice,
+                          result.paymentOption as typeof paymentOption
+                        ).amountDueNow
+                      )}
+                    </strong>{" "}
                     en indiquant la référence <strong>{result.inscriptionCode}</strong>.
                   </p>
                   <div className="text-sm space-y-1">
@@ -185,9 +197,11 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                     </p>
                     <p>BIC : {FLI_BANK_DETAILS.bic}</p>
                   </div>
-                  <p className="text-muted-foreground text-sm">
-                    Le solde sera réglé par chèque, déposé après la fin de la formation.
-                  </p>
+                  {result.paymentOption === REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT && (
+                    <p className="text-muted-foreground text-sm">
+                      Le solde sera réglé par chèque, déposé après la fin de la formation.
+                    </p>
+                  )}
                 </AlertDescription>
               </Alert>
             )}
@@ -324,7 +338,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                   <span className="text-muted-foreground">Frais de dossier</span>
                   <span className="font-medium">{formatPriceEUR(paymentSummary.dossierFee)}</span>
                 </div>
-                {paymentSummary.balanceAfterDossier > 0 && (
+                {paymentSummary.balanceAfterDossier > 0 && hasChequeBalance(paymentOption) && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Solde (chèque après formation)</span>
                     <span className="font-medium">

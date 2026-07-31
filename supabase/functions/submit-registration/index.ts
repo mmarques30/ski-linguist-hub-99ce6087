@@ -3,6 +3,7 @@ import {
   FRAIS_DOSSIER_EUR,
   getInscriptionPaymentFields,
   isValidPaymentOption,
+  normalizePaymentOption,
   REGISTRATION_PAYMENT_OPTIONS,
 } from "../_shared/registration-payments.ts";
 
@@ -260,7 +261,7 @@ Deno.serve(async (req) => {
     const paymentFields =
       !isCustomFormat && price != null && price > 0 && registration.paymentOption &&
       isValidPaymentOption(registration.paymentOption)
-        ? getInscriptionPaymentFields(price, registration.paymentOption)
+        ? getInscriptionPaymentFields(price, normalizePaymentOption(registration.paymentOption))
         : null;
 
     const paymentFlow = paymentFields?.paymentFlow ?? "none";
@@ -268,9 +269,11 @@ Deno.serve(async (req) => {
     const paymentLabels: Record<string, string> = {
       [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]:
         "150 € Stripe + solde par chèque après formation",
-      [REGISTRATION_PAYMENT_OPTIONS.VIREMENT]:
+      [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]:
         "150 € virement + solde par chèque après formation",
       [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]: "Paiement intégral Stripe",
+      [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]: "Paiement intégral virement",
+      virement: "150 € virement + solde par chèque après formation",
     };
 
     const { data: inscription, error: inscriptionError } = await supabase
@@ -312,7 +315,9 @@ Deno.serve(async (req) => {
             : null,
           paymentFields && paymentFields.balanceAfterDeposit > 0
             ? `Frais de dossier: ${FRAIS_DOSSIER_EUR} € · Solde chèque: ${paymentFields.balanceAfterDeposit} €`
-            : null,
+            : paymentFields?.paymentType === "total" && paymentFields.paymentFlow === "virement"
+              ? `Paiement intégral par virement: ${price} €`
+              : null,
         ]
           .filter(Boolean)
           .join("\n"),
@@ -324,21 +329,22 @@ Deno.serve(async (req) => {
 
     if (inscriptionError) throw inscriptionError;
 
-    if (
-      paymentFields?.paymentFlow === "virement" &&
-      registration.paymentOption === REGISTRATION_PAYMENT_OPTIONS.VIREMENT
-    ) {
+    if (paymentFields?.paymentFlow === "virement" && paymentFields.virementAmount > 0) {
+      const isFullTransfer =
+        registration.paymentOption === REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL;
       await supabase.from("payments").insert({
         inscription_id: inscription.id,
-        amount: FRAIS_DOSSIER_EUR,
-        payment_type: "acompte",
+        amount: paymentFields.virementAmount,
+        payment_type: isFullTransfer ? "total" : "acompte",
         payment_method: "virement",
         status: "en_attente",
         payment_date: new Date().toISOString().split("T")[0],
         reference: inscription.code,
         payer_type: "stagiaire",
         payer_name: `${registration.firstName} ${registration.lastName}`,
-        notes: "Frais de dossier — en attente de virement",
+        notes: isFullTransfer
+          ? "Paiement intégral — en attente de virement"
+          : "Frais de dossier — en attente de virement",
       });
     }
 

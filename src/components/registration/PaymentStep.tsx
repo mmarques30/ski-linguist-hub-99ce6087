@@ -10,9 +10,11 @@ import {
   FRAIS_DOSSIER_EUR,
   FLI_BANK_DETAILS,
   getRegistrationPaymentSummary,
+  hasChequeBalance,
   PAYMENT_OPTION_DESCRIPTIONS,
   PAYMENT_OPTION_LABELS,
   REGISTRATION_PAYMENT_OPTIONS,
+  requiresVirementInstructions,
   type RegistrationPaymentOption,
 } from "@/lib/registration-payments";
 import { formatPriceEUR, isCustomFormatDuration } from "@/lib/registration-offerings";
@@ -28,8 +30,9 @@ const paymentOptions: Array<{
   icon: typeof CreditCard;
 }> = [
   { value: REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE, icon: CreditCard },
-  { value: REGISTRATION_PAYMENT_OPTIONS.VIREMENT, icon: Landmark },
+  { value: REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT, icon: Landmark },
   { value: REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL, icon: Receipt },
+  { value: REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL, icon: Landmark },
 ];
 
 export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
@@ -100,7 +103,7 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
                 <span className="text-muted-foreground">Frais de dossier (déduits)</span>
                 <span className="font-medium">− {formatPriceEUR(summary.dossierFee)}</span>
               </div>
-              {summary.balanceAfterDossier > 0 && (
+              {summary.balanceAfterDossier > 0 && hasChequeBalance(selectedOption) && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Solde (chèque après formation)</span>
                   <span className="font-medium">{formatPriceEUR(summary.balanceAfterDossier)}</span>
@@ -142,17 +145,28 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
             </RadioGroup>
           </div>
 
-          {selectedOption === REGISTRATION_PAYMENT_OPTIONS.VIREMENT && (
+          {requiresVirementInstructions(selectedOption) && (
             <Alert>
               <Landmark className="h-4 w-4" />
               <AlertDescription className="text-sm space-y-1">
                 <p>
                   Après validation de votre inscription, vous recevrez les coordonnées bancaires pour
-                  le virement des frais de dossier.
+                  le virement de{" "}
+                  <strong>
+                    {selectedOption === REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL
+                      ? formatPriceEUR(coursePrice)
+                      : formatPriceEUR(FRAIS_DOSSIER_EUR)}
+                  </strong>
+                  .
                 </p>
                 <p className="text-muted-foreground">
                   IBAN : {FLI_BANK_DETAILS.iban} · BIC : {FLI_BANK_DETAILS.bic}
                 </p>
+                {selectedOption === REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT && (
+                  <p className="text-muted-foreground">
+                    Le solde sera réglé par chèque, déposé après la fin de la formation.
+                  </p>
+                )}
               </AlertDescription>
             </Alert>
           )}

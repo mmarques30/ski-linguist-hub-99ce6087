@@ -3,6 +3,7 @@ import {
   createStripeCheckoutSession,
   getInscriptionPaymentFields,
   isValidPaymentOption,
+  normalizePaymentOption,
   REGISTRATION_PAYMENT_OPTIONS,
 } from "../_shared/registration-payments.ts";
 
@@ -33,9 +34,11 @@ Deno.serve(async (req) => {
       );
     }
 
+    const normalizedOption = normalizePaymentOption(paymentOption);
+
     if (
-      paymentOption !== REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE &&
-      paymentOption !== REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL
+      normalizedOption !== REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE &&
+      normalizedOption !== REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL
     ) {
       return new Response(
         JSON.stringify({ success: false, error: "Ce mode de paiement ne nécessite pas Stripe" }),
@@ -91,9 +94,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    const paymentFields = getInscriptionPaymentFields(coursePrice, paymentOption);
+    const paymentFields = getInscriptionPaymentFields(coursePrice, normalizedOption);
     const productName =
-      paymentOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL
+      normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL
         ? `Formation FLI — ${inscription.code}`
         : `Frais de dossier FLI — ${inscription.code}`;
 
@@ -106,7 +109,7 @@ Deno.serve(async (req) => {
       cancelUrl,
       metadata: {
         inscription_id: inscriptionId,
-        payment_option: paymentOption,
+        payment_option: normalizedOption,
         payment_type: paymentFields.paymentType,
         inscription_code: inscription.code || "",
       },

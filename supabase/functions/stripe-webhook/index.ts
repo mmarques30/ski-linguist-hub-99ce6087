@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   getInscriptionPaymentFields,
   isValidPaymentOption,
+  normalizePaymentOption,
   REGISTRATION_PAYMENT_OPTIONS,
 } from "../_shared/registration-payments.ts";
 
@@ -107,7 +108,8 @@ Deno.serve(async (req) => {
     }
 
     const coursePrice = Number(inscription.price) || 0;
-    const paymentFields = getInscriptionPaymentFields(coursePrice, paymentOption);
+    const normalizedOption = normalizePaymentOption(paymentOption);
+    const paymentFields = getInscriptionPaymentFields(coursePrice, normalizedOption);
     const amountPaid = (session.amount_total || 0) / 100;
     const today = new Date().toISOString().split("T")[0];
 
@@ -123,15 +125,14 @@ Deno.serve(async (req) => {
       reference: inscription.code,
       payer_type: "stagiaire",
       notes:
-        paymentOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL
+        normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL
           ? "Paiement intégral inscription en ligne"
           : "Frais de dossier inscription en ligne",
     });
 
-    const depositAmount =
-      paymentOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL ? amountPaid : amountPaid;
+    const depositAmount = amountPaid;
     const balanceAfterDeposit =
-      paymentOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL ? 0 : paymentFields.balanceAfterDeposit;
+      normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL ? 0 : paymentFields.balanceAfterDeposit;
 
     await supabase
       .from("inscriptions")
@@ -141,7 +142,7 @@ Deno.serve(async (req) => {
         deposit_date: today,
         balance_after_deposit: balanceAfterDeposit,
         status:
-          paymentOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL ? "confirmee" : undefined,
+          normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL ? "confirmee" : undefined,
       })
       .eq("id", inscriptionId);
 
