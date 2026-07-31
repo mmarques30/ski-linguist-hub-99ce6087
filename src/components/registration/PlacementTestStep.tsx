@@ -29,8 +29,6 @@ interface PlacementTestStepProps {
   onNext: () => void;
 }
 
-const levels = ["A1", "A2", "B1", "B2", "C1", "C2"];
-
 export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepProps) {
   const [testStarted, setTestStarted] = useState(false);
   const [currentSlope, setCurrentSlope] = useState<SlopeLevel>("verte");
@@ -81,6 +79,7 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
     );
     setResult(testResult);
     onUpdate({
+      hasBeenEvaluated: false,
       testScore: Math.round((testResult.correctAnswers / testResult.totalAnswered) * 100),
       correctAnswers: testResult.correctAnswers,
       currentLevel: testResult.determinedLevel,
@@ -280,93 +279,46 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Test de niveau</CardTitle>
+        <CardTitle>Test de niveau obligatoire</CardTitle>
         <CardDescription>
-          Test adaptatif par pistes (verte → bleue → rouge → noire)
+          Test adaptatif par pistes (verte → bleue → rouge → noire) — requis pour toutes les
+          inscriptions, même si vous connaissez déjà votre niveau CEFR
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-3">
-            <Label>Avez-vous déjà été évalué ?</Label>
-            <RadioGroup
-              value={data.hasBeenEvaluated === undefined ? "" : String(data.hasBeenEvaluated)}
-              onValueChange={(value) => onUpdate({ hasBeenEvaluated: value === "true" })}
-              className="space-y-2"
-            >
-              <div className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-muted/50 transition-colors">
-                <RadioGroupItem value="true" id="evaluated-yes" />
-                <div className="flex-1">
-                  <Label htmlFor="evaluated-yes" className="font-medium cursor-pointer">
-                    Oui, je connais mon niveau CEFR
-                  </Label>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-muted/50 transition-colors">
-                <RadioGroupItem value="false" id="evaluated-no" />
-                <div className="flex-1">
-                  <Label htmlFor="evaluated-no" className="font-medium cursor-pointer">
-                    Non, je souhaite passer le test adaptatif
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Commence par la piste verte — 5 questions par piste, minimum 3 bonnes réponses pour continuer
-                  </p>
-                </div>
-              </div>
-            </RadioGroup>
-          </div>
+        <div className="space-y-6">
+          <Alert>
+            <Mountain className="h-4 w-4" />
+            <AlertDescription>
+              Ce test permet à FLI de placer chaque stagiaire dans le groupe adapté. Il est
+              obligatoire et ne peut pas être remplacé par une auto-évaluation.
+            </AlertDescription>
+          </Alert>
 
-          {data.hasBeenEvaluated === true && (
-            <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
-              <Label>Quel est votre niveau actuel ?</Label>
-              <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-                {levels.map((level) => (
-                  <Button
-                    key={level}
-                    type="button"
-                    variant={data.currentLevel === level ? "default" : "outline"}
-                    onClick={() => onUpdate({ currentLevel: level })}
-                    className="w-full"
-                  >
-                    {level}
-                  </Button>
-                ))}
-              </div>
+          <Alert className="bg-muted/50 border-primary/20">
+            <AlertDescription className="text-sm">
+              Le groupe matin/après-midi sera attribué par l'équipe FLI environ 10 jours avant le
+              début des cours, après validation par Paula.
+            </AlertDescription>
+          </Alert>
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
-          )}
-
-          {data.hasBeenEvaluated === false && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-              <Alert>
-                <Mountain className="h-4 w-4" />
-                <AlertDescription>
-                  Le groupe matin/après-midi sera attribué par l'équipe FLI environ 10 jours avant
-                  le début des cours, après validation par Paula.
-                </AlertDescription>
-              </Alert>
-              {isLoading ? (
-                <div className="flex items-center justify-center py-4">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : (
-                <Button
-                  type="button"
-                  onClick={startTest}
-                  className="w-full"
-                  disabled={allQuestions.length === 0}
-                >
-                  Commencer le test (piste verte)
-                </Button>
-              )}
-            </div>
-          )}
-
-          {data.hasBeenEvaluated === true && data.currentLevel && (
-            <Button type="submit" className="w-full">
-              Continuer vers les attentes
+          ) : allQuestions.length === 0 ? (
+            <Alert variant="destructive">
+              <AlertDescription>
+                Le test n'est pas disponible pour cette langue pour le moment. Merci de contacter
+                FLI à info@fli.fr.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Button type="button" onClick={startTest} className="w-full">
+              Commencer le test (piste verte)
             </Button>
           )}
-        </form>
+        </div>
       </CardContent>
     </Card>
   );

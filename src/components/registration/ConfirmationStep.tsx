@@ -55,7 +55,14 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
     emailSent: boolean;
   } | null>(null);
 
+  const testCompleted = Boolean(data.testAnswers && data.currentLevel);
+
   const handleSubmit = async () => {
+    if (!testCompleted) {
+      toast.error("Le test de niveau est obligatoire avant de soumettre l'inscription.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const submission = await submitRegistration(data);
@@ -231,10 +238,19 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
           </div>
         </div>
 
+        {!testCompleted && (
+          <Alert variant="destructive">
+            <AlertDescription>
+              Le test de niveau adaptatif est obligatoire. Revenez à l'étape « Test de niveau » pour
+              le compléter avant de soumettre.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Button
           onClick={handleSubmit}
           className="w-full"
-          disabled={!accepted || isSubmitting}
+          disabled={!accepted || isSubmitting || !testCompleted}
         >
           {isSubmitting ? (
             <>
