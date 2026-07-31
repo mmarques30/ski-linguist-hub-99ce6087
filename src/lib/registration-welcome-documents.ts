@@ -14,22 +14,22 @@ export const REGISTRATION_WELCOME_DOCUMENTS: RegistrationWelcomeDocument[] = [
   },
   {
     documentType: "CONVENTION",
-    filename: "Convention 2025.dotx",
-    internalFile: "convention-2025.dotx",
-    label: "Convention de formation 2025",
+    filename: "Convention Stage langues Station 2022.dotx",
+    internalFile: "convention-stage-langues-station-2022.dotx",
+    label: "Convention Stage langues Station 2022",
   },
   {
     documentType: "PROGRAMME",
-    filename: "Programme detaille 2025.docx",
-    internalFile: "programme-detaille-2025.docx",
-    label: "Programme détaillé 2025",
+    filename: "Contenu pedagogique Station 2022.dotx",
+    internalFile: "contenu-pedagogique-station-2022.dotx",
+    label: "Contenu pédagogique Station 2022",
   },
 ];
 
 export const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   REGLEMENT: "Critères de prise en charge",
-  CONVENTION: "Convention de formation",
-  PROGRAMME: "Programme détaillé",
+  CONVENTION: "Convention Stage langues Station",
+  PROGRAMME: "Contenu pédagogique Station",
   LIVRET: "Livret",
   CONVOCATION: "Convocation",
   ATTESTATION_PRESENCE: "Attestation de présence",
@@ -56,12 +56,6 @@ export function expectsSkiMonitorWelcomePack(params: {
   courseLocation?: string | null;
   observations?: string | null;
 }): boolean {
-  const isOnline =
-    isOnlineInscription(params.modality) ||
-    (params.courseLocation?.toLowerCase().includes("ligne") ?? false);
-
-  const isSkiInstructor =
-    params.observations?.includes("Moniteur de ski") ?? false;
-
-  return isOnline && isSkiInstructor;
+  // The welcome pack goes to every ski instructor registration (all modalities).
+  return params.observations?.includes("Moniteur de ski") ?? false;
 }
