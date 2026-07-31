@@ -14,15 +14,15 @@ export const SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS: SkiMonitorWelcomeDocument[] =
   },
   {
     documentType: "CONVENTION",
-    filename: "Convention 2025.dotx",
-    internalFile: "convention-2025.dotx",
-    label: "Convention de formation 2025",
+    filename: "Convention Stage langues Station 2022.dotx",
+    internalFile: "convention-stage-langues-station-2022.dotx",
+    label: "Convention Stage langues Station 2022",
   },
   {
     documentType: "PROGRAMME",
-    filename: "Programme detaille 2025.docx",
-    internalFile: "programme-detaille-2025.docx",
-    label: "Programme détaillé 2025",
+    filename: "Contenu pedagogique Station 2022.dotx",
+    internalFile: "contenu-pedagogique-station-2022.dotx",
+    label: "Contenu pédagogique Station 2022",
   },
 ];
 
@@ -39,12 +39,8 @@ export function shouldSendSkiMonitorOnlineWelcomeDocuments(
 ): boolean {
   if (registration.profession !== "ski_instructor") return false;
   if (registration.isCustomFormat || registration.duration === "custom") return false;
-
-  return (
-    registration.modality === "online_individual" ||
-    registration.modality === "online_group" ||
-    registration.location === "online"
-  );
+  // All ski instructor registrations receive the pack, regardless of modality.
+  return true;
 }
 
 function bytesToBase64(bytes: Uint8Array): string {
