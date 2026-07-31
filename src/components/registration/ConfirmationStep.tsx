@@ -29,9 +29,9 @@ const languageLabels: Record<string, string> = {
 };
 
 const modalityLabels: Record<string, string> = {
-  in_person: "Présentiel",
-  online_individual: "En ligne (Individuel)",
-  online_group: "En ligne (Groupe)",
+  in_person: "Présentiel (collectif)",
+  online_individual: "En ligne (individuel)",
+  online_group: "En ligne (groupe)",
 };
 
 const fundingLabels: Record<string, string> = {

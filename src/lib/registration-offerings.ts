@@ -75,7 +75,16 @@ export function uniqueDateOptions(offerings: RegistrationOffering[]): DateOption
 
 export function uniqueDurations(offerings: RegistrationOffering[]) {
   const hours = [...new Set(offerings.map((o) => o.duration_hours))].sort((a, b) => a - b);
-  return hours.map((h) => ({ hours: h, label: `${h} heures` }));
+  const modality = offerings[0]?.modality_key;
+  return hours.map((h) => ({ hours: h, label: formatDurationLabel(h, modality) }));
+}
+
+export function formatDurationLabel(hours: number, modalityKey?: string): string {
+  if (modalityKey === "in_person") {
+    if (hours === 20) return "20 heures — 1 semaine";
+    if (hours === 40) return "40 heures — 2 semaines";
+  }
+  return `${hours} heures`;
 }
 
 export function matchOffering(
