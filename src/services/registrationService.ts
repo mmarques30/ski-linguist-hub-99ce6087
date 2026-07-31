@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { RegistrationData } from "@/pages/register/Index";
+import type { RegistrationPaymentOption } from "@/lib/registration-payments";
 
 export interface RegistrationSubmissionResult {
   inscriptionId: string;
@@ -7,6 +8,7 @@ export interface RegistrationSubmissionResult {
   studentId: string;
   needsAdminCall: boolean;
   emailSent: boolean;
+  paymentFlow: "stripe" | "virement" | "none";
 }
 
 export async function submitRegistration(
@@ -25,4 +27,26 @@ export async function submitRegistration(
   }
 
   return result.data as RegistrationSubmissionResult;
+}
+
+export async function createRegistrationCheckout(params: {
+  inscriptionId: string;
+  paymentOption: RegistrationPaymentOption;
+  email: string;
+  successUrl: string;
+  cancelUrl: string;
+}): Promise<{ checkoutUrl: string }> {
+  const { data: result, error } = await supabase.functions.invoke("create-registration-checkout", {
+    body: params,
+  });
+
+  if (error) {
+    throw new Error(error.message || "Impossible de préparer le paiement en ligne");
+  }
+
+  if (!result?.success) {
+    throw new Error(result?.error || "Impossible de préparer le paiement en ligne");
+  }
+
+  return result.data as { checkoutUrl: string };
 }

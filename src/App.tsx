@@ -27,6 +27,7 @@ import EvaluationsList from "./pages/formateur/EvaluationsList";
 import EvaluationForm from "./pages/formateur/EvaluationForm";
 import EvaluationView from "./pages/formateur/EvaluationView";
 import Register from "./pages/register/Index";
+import { PaymentSuccessPage, PaymentCancelPage } from "./pages/register/PaymentReturn";
 import SatisfactionSurvey from "./pages/survey/SatisfactionSurvey";
 import ContinuousImprovement from "./pages/ContinuousImprovement";
 import SatisfactionStats from "./pages/SatisfactionStats";
@@ -66,6 +67,8 @@ const App = () => (
             {/* Public routes */}
             <Route path="/auth" element={<Auth />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/register/payment-success" element={<PaymentSuccessPage />} />
+            <Route path="/register/payment-cancel" element={<PaymentCancelPage />} />
             <Route path="/survey/:token" element={<SatisfactionSurvey />} />
             
             {/* Protected admin routes */}

@@ -9,8 +9,10 @@ import { PersonalInfoStep } from "@/components/registration/PersonalInfoStep";
 import { ProfessionalProfileStep } from "@/components/registration/ProfessionalProfileStep";
 import { PlacementTestStep } from "@/components/registration/PlacementTestStep";
 import { ExpectationsStep } from "@/components/registration/ExpectationsStep";
+import { PaymentStep } from "@/components/registration/PaymentStep";
 import { ConfirmationStep } from "@/components/registration/ConfirmationStep";
 import { isRegistrationLanguageKey } from "@/lib/registration-languages";
+import type { RegistrationPaymentOption } from "@/lib/registration-payments";
 
 export interface RegistrationData {
   // Informations personnelles
@@ -62,6 +64,9 @@ export interface RegistrationData {
   // Attentes
   expectations: string;
   certification: string;
+
+  // Paiement
+  paymentOption?: RegistrationPaymentOption;
 }
 
 const steps = [
@@ -70,7 +75,8 @@ const steps = [
   { id: 3, name: "Profil professionnel" },
   { id: 4, name: "Test de niveau" },
   { id: 5, name: "Attentes" },
-  { id: 6, name: "Confirmation" },
+  { id: 6, name: "Paiement" },
+  { id: 7, name: "Confirmation" },
 ];
 
 export default function Register() {
@@ -150,6 +156,14 @@ export default function Register() {
           />
         );
       case 6:
+        return (
+          <PaymentStep
+            data={formData}
+            onUpdate={updateFormData}
+            onNext={nextStep}
+          />
+        );
+      case 7:
         return <ConfirmationStep data={formData as RegistrationData} />;
       default:
         return null;
