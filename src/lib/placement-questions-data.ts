@@ -29,7 +29,7 @@ const QUESTION_BANK: Record<string, RawQuestion[]> = {
   italien,
   chinois,
   fle,
-};
+} as unknown as Record<string, RawQuestion[]>;
 
 /** Maps registration form language keys to question bank keys. */
 export const PLACEMENT_QUESTION_LANGUAGE_MAP: Record<string, string> = {

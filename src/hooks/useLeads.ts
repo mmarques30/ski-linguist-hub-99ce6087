@@ -71,7 +71,7 @@ export function useLeads(filters?: {
   return useQuery({
     queryKey: ["leads", filters],
     queryFn: async () => {
-      let query = supabase
+      let query = (supabase as any)
         .from("leads")
         .select("*, partner:partner_id(name)")
         .order("created_at", { ascending: false });
@@ -102,7 +102,7 @@ export function useLeadKPIs(channel?: ExpansionChannel) {
   return useQuery({
     queryKey: ["lead-kpis", channel],
     queryFn: async () => {
-      let query = supabase
+      let query = (supabase as any)
         .from("leads")
         .select("status, estimated_revenue, source, expansion_channel, created_at, updated_at, next_action_date");
 
@@ -171,7 +171,7 @@ export function useCreateLead() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (lead: Partial<Lead> & { contact_name: string }) => {
-      const { data, error } = await supabase.from("leads").insert(lead).select().single();
+      const { data, error } = await (supabase as any).from("leads").insert(lead).select().single();
       if (error) throw error;
       return data;
     },
@@ -186,7 +186,7 @@ export function useUpdateLead() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Lead> & { id: string }) => {
-      const { data, error } = await supabase.from("leads").update(updates).eq("id", id).select().single();
+      const { data, error } = await (supabase as any).from("leads").update(updates).eq("id", id).select().single();
       if (error) throw error;
       return data;
     },
@@ -201,7 +201,7 @@ export function useDeleteLead() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("leads").delete().eq("id", id);
+      const { error } = await (supabase as any).from("leads").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -296,7 +296,7 @@ export function useConvertLead() {
 
       if (inscError) throw inscError;
 
-      const { error: leadError } = await supabase
+      const { error: leadError } = await (supabase as any)
         .from("leads")
         .update({
           status: "converti",
