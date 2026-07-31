@@ -293,6 +293,78 @@ export type Database = {
         }
         Relationships: []
       }
+      course_intakes: {
+        Row: {
+          created_at: string
+          end_date: string
+          hosting_partner_id: string
+          id: string
+          language: string
+          location: string
+          max_places: number | null
+          modality: string | null
+          notes: string | null
+          open_to_other_schools: boolean
+          outreach_sent_at: string | null
+          season_id: string | null
+          start_date: string
+          status: string
+          target_audience: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          hosting_partner_id: string
+          id?: string
+          language: string
+          location: string
+          max_places?: number | null
+          modality?: string | null
+          notes?: string | null
+          open_to_other_schools?: boolean
+          outreach_sent_at?: string | null
+          season_id?: string | null
+          start_date: string
+          status?: string
+          target_audience?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          hosting_partner_id?: string
+          id?: string
+          language?: string
+          location?: string
+          max_places?: number | null
+          modality?: string | null
+          notes?: string | null
+          open_to_other_schools?: boolean
+          outreach_sent_at?: string | null
+          season_id?: string | null
+          start_date?: string
+          status?: string
+          target_audience?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_intakes_hosting_partner_id_fkey"
+            columns: ["hosting_partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_intakes_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "seasons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_sendings: {
         Row: {
           created_at: string
@@ -702,6 +774,7 @@ export type Database = {
           instructor_accommodation_dates: string | null
           instructor_accommodation_notes: string | null
           instructor_id: string | null
+          intake_id: string | null
           language: string
           max_participants: string | null
           modality: string | null
@@ -765,6 +838,7 @@ export type Database = {
           instructor_accommodation_dates?: string | null
           instructor_accommodation_notes?: string | null
           instructor_id?: string | null
+          intake_id?: string | null
           language: string
           max_participants?: string | null
           modality?: string | null
@@ -828,6 +902,7 @@ export type Database = {
           instructor_accommodation_dates?: string | null
           instructor_accommodation_notes?: string | null
           instructor_id?: string | null
+          intake_id?: string | null
           language?: string
           max_participants?: string | null
           modality?: string | null
@@ -855,6 +930,13 @@ export type Database = {
             columns: ["instructor_id"]
             isOneToOne: false
             referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inscriptions_intake_id_fkey"
+            columns: ["intake_id"]
+            isOneToOne: false
+            referencedRelation: "course_intakes"
             referencedColumns: ["id"]
           },
           {
@@ -1241,6 +1323,54 @@ export type Database = {
         }
         Relationships: []
       }
+      intake_outreach_log: {
+        Row: {
+          error_message: string | null
+          id: string
+          intake_id: string
+          recipient_email: string
+          recipient_name: string | null
+          sent_at: string
+          ski_monitor_id: string | null
+          status: string
+        }
+        Insert: {
+          error_message?: string | null
+          id?: string
+          intake_id: string
+          recipient_email: string
+          recipient_name?: string | null
+          sent_at?: string
+          ski_monitor_id?: string | null
+          status?: string
+        }
+        Update: {
+          error_message?: string | null
+          id?: string
+          intake_id?: string
+          recipient_email?: string
+          recipient_name?: string | null
+          sent_at?: string
+          ski_monitor_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intake_outreach_log_intake_id_fkey"
+            columns: ["intake_id"]
+            isOneToOne: false
+            referencedRelation: "course_intakes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intake_outreach_log_ski_monitor_id_fkey"
+            columns: ["ski_monitor_id"]
+            isOneToOne: false
+            referencedRelation: "ski_monitors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount_ht: number
@@ -1582,6 +1712,7 @@ export type Database = {
           contract_end_date: string | null
           contract_start_date: string | null
           created_at: string
+          esf_code: string | null
           id: string
           name: string
           notes: string | null
@@ -1598,6 +1729,7 @@ export type Database = {
           contract_end_date?: string | null
           contract_start_date?: string | null
           created_at?: string
+          esf_code?: string | null
           id?: string
           name: string
           notes?: string | null
@@ -1614,6 +1746,7 @@ export type Database = {
           contract_end_date?: string | null
           contract_start_date?: string | null
           created_at?: string
+          esf_code?: string | null
           id?: string
           name?: string
           notes?: string | null
@@ -2075,6 +2208,74 @@ export type Database = {
           },
         ]
       }
+      registration_offerings: {
+        Row: {
+          base_price: number
+          created_at: string
+          date_label: string | null
+          duration_hours: number
+          end_date: string | null
+          id: string
+          is_active: boolean
+          language_key: string
+          language_label: string
+          location_key: string
+          location_label: string
+          modality_key: string
+          modality_label: string
+          season_id: string | null
+          sort_order: number
+          start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          base_price: number
+          created_at?: string
+          date_label?: string | null
+          duration_hours: number
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          language_key: string
+          language_label: string
+          location_key: string
+          location_label: string
+          modality_key: string
+          modality_label: string
+          season_id?: string | null
+          sort_order?: number
+          start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          base_price?: number
+          created_at?: string
+          date_label?: string | null
+          duration_hours?: number
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          language_key?: string
+          language_label?: string
+          location_key?: string
+          location_label?: string
+          modality_key?: string
+          modality_label?: string
+          season_id?: string | null
+          sort_order?: number
+          start_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registration_offerings_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "seasons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       satisfaction_surveys: {
         Row: {
           completed_at: string | null
@@ -2486,6 +2687,9 @@ export type Database = {
           id: string
           name: string
           observations: string | null
+          partner_id: string | null
+          school_kind: string | null
+          station: string | null
         }
         Insert: {
           created_at?: string
@@ -2494,6 +2698,9 @@ export type Database = {
           id?: string
           name: string
           observations?: string | null
+          partner_id?: string | null
+          school_kind?: string | null
+          station?: string | null
         }
         Update: {
           created_at?: string
@@ -2502,8 +2709,19 @@ export type Database = {
           id?: string
           name?: string
           observations?: string | null
+          partner_id?: string | null
+          school_kind?: string | null
+          station?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ski_schools_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       students: {
         Row: {
