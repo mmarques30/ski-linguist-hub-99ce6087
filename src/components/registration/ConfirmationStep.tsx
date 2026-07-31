@@ -161,7 +161,11 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Durée</span>
-              <span className="font-medium">{data.duration} heures</span>
+              <span className="font-medium text-right max-w-[60%]">
+                {data.isCustomFormat || data.duration === "custom"
+                  ? "Autres formats — devis sur demande"
+                  : `${data.duration} heures`}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Modalité</span>
@@ -179,6 +183,12 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Tarif</span>
                 <span className="font-semibold">{formatPriceEUR(data.price)}</span>
+              </div>
+            )}
+            {(data.isCustomFormat || data.duration === "custom") && data.customFormatDetails && (
+              <div className="pt-2 border-t space-y-1">
+                <span className="text-muted-foreground block">Projet décrit</span>
+                <p className="font-medium whitespace-pre-wrap">{data.customFormatDetails}</p>
               </div>
             )}
             <div className="flex justify-between">

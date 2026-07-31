@@ -42,6 +42,8 @@ export interface RegistrationData {
   startDate?: string;
   endDate?: string;
   price?: number;
+  isCustomFormat?: boolean;
+  customFormatDetails?: string;
 
   // Test de niveau
   hasBeenEvaluated: boolean;

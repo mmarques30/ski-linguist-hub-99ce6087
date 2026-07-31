@@ -123,3 +123,10 @@ function formatDateFr(iso: string): string {
 export function formatPriceEUR(price: number): string {
   return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(price);
 }
+
+/** Valeur spéciale pour « Autres formats — sur devis » */
+export const CUSTOM_FORMAT_DURATION = "custom";
+
+export function isCustomFormatDuration(duration?: string): boolean {
+  return duration === CUSTOM_FORMAT_DURATION;
+}
