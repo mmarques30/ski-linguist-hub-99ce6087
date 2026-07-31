@@ -47,6 +47,7 @@ import { EndPackDialog } from "@/components/endpack/EndPackDialog";
 import { InvoiceCreateDialog } from "@/components/invoices/InvoiceCreateDialog";
 import { ScheduleApprovalDialog } from "@/components/inscriptions/ScheduleApprovalDialog";
 import { PlacementTestSummaryCard } from "@/components/inscriptions/PlacementTestSummaryCard";
+import { InscriptionDocumentsCard } from "@/components/inscriptions/InscriptionDocumentsCard";
 
 const translations = {
   back: { fr: "Retour", "pt-BR": "Voltar", en: "Back" },
@@ -620,15 +621,13 @@ export default function InscriptionDetails() {
 
           {/* Documents Tab */}
           <TabsContent value="documents" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">{t(translations.documents)}</CardTitle>
-                <CardDescription>Documents envoyés pour cette inscription</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">Aucun document envoyé pour le moment.</p>
-              </CardContent>
-            </Card>
+            <InscriptionDocumentsCard
+              inscriptionId={inscription.id}
+              modality={inscription.modality}
+              courseLocation={inscription.course_location}
+              observations={inscription.observations}
+              studentEmail={inscription.student_email}
+            />
           </TabsContent>
         </Tabs>
       </div>
