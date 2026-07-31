@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import fliLogo from "@/assets/fli-logo.png";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
+import { StripeSettingsCard } from "@/components/settings/StripeSettingsCard";
 const translations = {
   title: {
     fr: "Paramètres",
@@ -455,20 +456,7 @@ export default function Settings() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 rounded-lg border">
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
-                      <span className="font-bold text-primary">S</span>
-                    </div>
-                    <div>
-                      <p className="font-medium">Stripe</p>
-                      <p className="text-sm text-muted-foreground">
-                        {t(translations.stripeDesc)}
-                      </p>
-                    </div>
-                  </div>
-                  <Button variant="outline">{t(translations.configure)}</Button>
-                </div>
+                <StripeSettingsCard configureLabel={t(translations.configure)} />
               </CardContent>
             </Card>
 
