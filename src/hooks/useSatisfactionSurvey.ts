@@ -47,50 +47,18 @@ export function useSurveyByToken(token: string | undefined) {
     queryFn: async () => {
       if (!token) throw new Error("Token required");
 
-      // First get the survey
-      const { data: survey, error: surveyError } = await supabase
-        .from("satisfaction_surveys")
-        .select("*")
-        .eq("token", token)
-        .single();
+      const { data, error } = await supabase.rpc("get_satisfaction_survey_context", {
+        p_token: token,
+      });
 
-      if (surveyError) throw surveyError;
+      if (error) throw error;
+      if (!data?.survey) throw new Error("Enquête introuvable");
 
-      // Get inscription data
-      const { data: inscription, error: inscriptionError } = await supabase
-        .from("inscriptions_complete")
-        .select("*")
-        .eq("id", survey.inscription_id)
-        .single();
-
-      if (inscriptionError && inscriptionError.code !== "PGRST116") {
-        console.error("Error fetching inscription:", inscriptionError);
-      }
-
-      // Get student data
-      const { data: student, error: studentError } = await supabase
-        .from("students")
-        .select("id, first_name, last_name, email")
-        .eq("id", survey.student_id)
-        .single();
-
-      if (studentError && studentError.code !== "PGRST116") {
-        console.error("Error fetching student:", studentError);
-      }
-
+      const survey = data.survey as SatisfactionSurvey;
       return {
         ...survey,
-        inscription: inscription ? {
-          id: inscription.id,
-          code: inscription.code,
-          language: inscription.language,
-          start_date: inscription.start_date,
-          end_date: inscription.end_date,
-          duration_hours: inscription.duration_hours,
-          course_location: inscription.course_location,
-          instructor_name: inscription.instructor_name,
-        } : null,
-        student: student || null,
+        inscription: data.inscription ?? null,
+        student: data.student ?? null,
       } as SurveyWithInscription;
     },
     enabled: !!token,
@@ -108,13 +76,13 @@ export function useSubmitSurvey() {
       token: string;
       data: Partial<SatisfactionSurvey>;
     }) => {
-      const { error } = await supabase
-        .from("satisfaction_surveys")
-        .update({
+      const { error } = await supabase.rpc("submit_satisfaction_survey_by_token", {
+        p_token: token,
+        p_data: {
           ...data,
           completed_at: new Date().toISOString(),
-        })
-        .eq("token", token);
+        },
+      });
 
       if (error) throw error;
     },
