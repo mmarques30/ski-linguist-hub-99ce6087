@@ -1,8 +1,15 @@
 -- Données initiales du catalogue inscription (grille tarifaire FLI)
--- Crée une saison courante si aucune n'existe encore
+-- IMPORTANT : pas de sessions présentiel fictives — uniquement en ligne.
+-- Les sessions en station s'ajoutent via admin quand le calendrier est confirmé.
+
 INSERT INTO public.seasons (name, slug, start_date, end_date, status, is_current)
 SELECT 'Saison 2026-2027', '2026-2027', '2026-12-01'::date, '2027-03-31'::date, 'en_cours', true
 WHERE NOT EXISTS (SELECT 1 FROM public.seasons WHERE is_current = true);
+
+-- Désactive d'éventuelles offres présentiel héritées
+UPDATE public.registration_offerings
+SET is_active = false, updated_at = now()
+WHERE modality_key = 'in_person';
 
 INSERT INTO public.registration_offerings (
   season_id, location_key, location_label, language_key, language_label,
@@ -26,25 +33,7 @@ SELECT
 FROM public.seasons s
 CROSS JOIN (
   VALUES
-    -- Présentiel collectif : 20h (1 semaine) = 750 € | 40h (2 semaines) = 1 500 €
-    ('courchevel', 'Courchevel', 'english', 'Anglais', 'in_person', 'Présentiel (collectif)', 20, '2026-12-07', '2026-12-11', 'Semaine 1 — 7-11 déc. 2026 (20h)', 750, 10),
-    ('courchevel', 'Courchevel', 'portuguese', 'Portugais', 'in_person', 'Présentiel (collectif)', 20, '2026-12-07', '2026-12-11', 'Semaine 1 — 7-11 déc. 2026 (20h)', 750, 11),
-    ('courchevel', 'Courchevel', 'english', 'Anglais', 'in_person', 'Présentiel (collectif)', 20, '2026-12-14', '2026-12-18', 'Semaine 2 — 14-18 déc. 2026 (20h)', 750, 12),
-    ('courchevel', 'Courchevel', 'english', 'Anglais', 'in_person', 'Présentiel (collectif)', 40, '2026-12-07', '2026-12-18', '2 semaines — 7-18 déc. 2026 (40h)', 1500, 13),
-    ('courchevel', 'Courchevel', 'german', 'Allemand', 'in_person', 'Présentiel (collectif)', 20, '2027-01-11', '2027-01-15', 'Semaine 3 — 11-15 janv. 2027 (20h)', 750, 14),
-    ('la-rosiere', 'La Rosière', 'english', 'Anglais', 'in_person', 'Présentiel (collectif)', 20, '2027-01-18', '2027-01-22', 'Semaine 4 — 18-22 janv. 2027 (20h)', 750, 20),
-    ('la-rosiere', 'La Rosière', 'spanish', 'Espagnol', 'in_person', 'Présentiel (collectif)', 20, '2027-01-18', '2027-01-22', 'Semaine 4 — 18-22 janv. 2027 (20h)', 750, 21),
-    ('la-rosiere', 'La Rosière', 'english', 'Anglais', 'in_person', 'Présentiel (collectif)', 20, '2027-01-25', '2027-01-29', 'Semaine 5 — 25-29 janv. 2027 (20h)', 750, 22),
-    ('la-rosiere', 'La Rosière', 'english', 'Anglais', 'in_person', 'Présentiel (collectif)', 40, '2027-01-18', '2027-01-29', '2 semaines — 18-29 janv. 2027 (40h)', 1500, 23),
-    ('les-menuires', 'Les Menuires', 'english', 'Anglais', 'in_person', 'Présentiel (collectif)', 20, '2027-02-01', '2027-02-05', 'Semaine 6 — 1-5 fév. 2027 (20h)', 750, 30),
-    ('les-menuires', 'Les Menuires', 'italian', 'Italien', 'in_person', 'Présentiel (collectif)', 20, '2027-02-08', '2027-02-12', 'Semaine 7 — 8-12 fév. 2027 (20h)', 750, 31),
-    ('morzine', 'Morzine', 'english', 'Anglais', 'in_person', 'Présentiel (collectif)', 20, '2027-02-15', '2027-02-19', 'Semaine 8 — 15-19 fév. 2027 (20h)', 750, 40),
-    ('morzine', 'Morzine', 'dutch', 'Néerlandais', 'in_person', 'Présentiel (collectif)', 20, '2027-02-15', '2027-02-19', 'Semaine 8 — 15-19 fév. 2027 (20h)', 750, 41),
-    ('valmorel', 'Valmorel', 'english', 'Anglais', 'in_person', 'Présentiel (collectif)', 20, '2027-03-01', '2027-03-05', 'Semaine 9 — 1-5 mars 2027 (20h)', 750, 50),
-    ('samoens', 'Samoëns', 'english', 'Anglais', 'in_person', 'Présentiel (collectif)', 20, '2027-03-08', '2027-03-12', 'Semaine 10 — 8-12 mars 2027 (20h)', 750, 60),
-    ('samoens', 'Samoëns', 'french', 'Français (FLE)', 'in_person', 'Présentiel (collectif)', 20, '2027-03-08', '2027-03-12', 'Semaine 10 — 8-12 mars 2027 (20h)', 750, 61),
-
-    -- En ligne individuel : 6h=300€ | 12h=600€ | 15h=750€ | 18h=900€ — autres formats sur demande
+    -- En ligne individuel : 6h=300€ | 12h=600€ | 15h=750€ | 18h=900€
     ('online', 'En ligne', 'english', 'Anglais', 'online_individual', 'En ligne (individuel)', 6, NULL, NULL, 'Dates flexibles — autres formats sur demande', 300, 100),
     ('online', 'En ligne', 'english', 'Anglais', 'online_individual', 'En ligne (individuel)', 12, NULL, NULL, 'Dates flexibles — autres formats sur demande', 600, 101),
     ('online', 'En ligne', 'english', 'Anglais', 'online_individual', 'En ligne (individuel)', 15, NULL, NULL, 'Dates flexibles — autres formats sur demande', 750, 102),
@@ -86,4 +75,12 @@ CROSS JOIN (
   modality_key, modality_label, duration_hours, start_date, end_date, date_label,
   base_price, sort_order
 )
-WHERE s.is_current = true;
+WHERE s.is_current = true
+  AND NOT EXISTS (
+    SELECT 1 FROM public.registration_offerings ro
+    WHERE ro.location_key = v.location_key
+      AND ro.language_key = v.language_key
+      AND ro.duration_hours = v.duration_hours
+      AND ro.modality_key = v.modality_key
+      AND ro.is_active = true
+  );

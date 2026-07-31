@@ -204,11 +204,18 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
         </CardTitle>
         <CardDescription>
           Commencez par choisir le lieu du cours — les langues, dates et tarifs s'adaptent à votre
-          sélection
+          sélection. Les sessions en station seront publiées dès que le calendrier est confirmé.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          <Alert className="bg-muted/50">
+            <AlertDescription className="text-sm">
+              <strong>Présentiel en station :</strong> aucune session n'est programmée pour le moment.
+              Choisissez <strong>En ligne</strong> ou l'option <strong>Autres formats — sur devis</strong> pour
+              une formation en station ou un projet personnalisé.
+            </AlertDescription>
+          </Alert>
           {/* 1. Lieu — toujours en premier */}
           <div className="space-y-2">
             <Label>Lieu du cours *</Label>
