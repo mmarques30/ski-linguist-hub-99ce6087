@@ -5,12 +5,22 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, Loader2, Phone, Mountain } from "lucide-react";
+import { CheckCircle, Copy, Loader2, Phone, Mountain, Landmark } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { RegistrationData } from "@/pages/register/Index";
-import { submitRegistration } from "@/services/registrationService";
-import { formatPriceEUR } from "@/lib/registration-offerings";
+import {
+  createRegistrationCheckout,
+  submitRegistration,
+} from "@/services/registrationService";
+import { formatPriceEUR, isCustomFormatDuration } from "@/lib/registration-offerings";
+import {
+  FLI_BANK_DETAILS,
+  getRegistrationPaymentSummary,
+  PAYMENT_OPTION_LABELS,
+  REGISTRATION_PAYMENT_OPTIONS,
+  requiresStripeCheckout,
+} from "@/lib/registration-payments";
 
 interface ConfirmationStepProps {
   data: RegistrationData;
@@ -53,9 +63,28 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
     inscriptionCode: string;
     needsAdminCall: boolean;
     emailSent: boolean;
+    paymentFlow: "stripe" | "virement" | "none";
+    paymentOption?: string;
+    coursePrice?: number;
   } | null>(null);
 
   const testCompleted = Boolean(data.testAnswers && data.currentLevel);
+  const isCustomFormat = data.isCustomFormat || isCustomFormatDuration(data.duration);
+  const coursePrice = data.price ?? 0;
+  const hasPaymentStep = !isCustomFormat && coursePrice > 0;
+  const paymentOption = data.paymentOption ?? REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE;
+  const paymentSummary = hasPaymentStep
+    ? getRegistrationPaymentSummary(coursePrice, paymentOption)
+    : null;
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Copié dans le presse-papiers");
+    } catch {
+      toast.error("Impossible de copier");
+    }
+  };
 
   const handleSubmit = async () => {
     if (!testCompleted) {
@@ -63,13 +92,39 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
       return;
     }
 
+    if (hasPaymentStep && !data.paymentOption) {
+      toast.error("Veuillez choisir un mode de paiement.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const submission = await submitRegistration(data);
+
+      if (
+        submission.paymentFlow === "stripe" &&
+        data.paymentOption &&
+        requiresStripeCheckout(data.paymentOption)
+      ) {
+        const origin = window.location.origin;
+        const checkout = await createRegistrationCheckout({
+          inscriptionId: submission.inscriptionId,
+          paymentOption: data.paymentOption,
+          email: data.email,
+          successUrl: `${origin}/register/payment-success?code=${encodeURIComponent(submission.inscriptionCode)}&session_id={CHECKOUT_SESSION_ID}`,
+          cancelUrl: `${origin}/register/payment-cancel?code=${encodeURIComponent(submission.inscriptionCode)}`,
+        });
+        window.location.href = checkout.checkoutUrl;
+        return;
+      }
+
       setResult({
         inscriptionCode: submission.inscriptionCode,
         needsAdminCall: submission.needsAdminCall,
         emailSent: submission.emailSent,
+        paymentFlow: submission.paymentFlow,
+        paymentOption: data.paymentOption,
+        coursePrice,
       });
     } catch (error) {
       console.error("Registration error:", error);
@@ -103,6 +158,40 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                 Code : {result.inscriptionCode}
               </Badge>
             </div>
+
+            {result.paymentFlow === "virement" && result.coursePrice && result.paymentOption && (
+              <Alert>
+                <Landmark className="h-4 w-4" />
+                <AlertDescription className="text-left space-y-3">
+                  <p className="font-medium">Virement des frais de dossier</p>
+                  <p>
+                    Merci d&apos;effectuer un virement de{" "}
+                    <strong>{formatPriceEUR(getRegistrationPaymentSummary(result.coursePrice, result.paymentOption as typeof paymentOption).amountDueNow)}</strong>{" "}
+                    en indiquant la référence <strong>{result.inscriptionCode}</strong>.
+                  </p>
+                  <div className="text-sm space-y-1">
+                    <p>Bénéficiaire : {FLI_BANK_DETAILS.beneficiary}</p>
+                    <p className="flex items-center gap-2">
+                      IBAN : {FLI_BANK_DETAILS.iban}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => copyToClipboard(FLI_BANK_DETAILS.iban.replace(/\s/g, ""))}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </p>
+                    <p>BIC : {FLI_BANK_DETAILS.bic}</p>
+                  </div>
+                  <p className="text-muted-foreground text-sm">
+                    Le solde sera réglé par chèque, déposé après la fin de la formation.
+                  </p>
+                </AlertDescription>
+              </Alert>
+            )}
+
             <Alert>
               <Mountain className="h-4 w-4" />
               <AlertDescription>
@@ -169,7 +258,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             <div className="flex justify-between">
               <span className="text-muted-foreground">Durée</span>
               <span className="font-medium text-right max-w-[60%]">
-                {data.isCustomFormat || data.duration === "custom"
+                {isCustomFormat
                   ? "Autres formats — devis sur demande"
                   : `${data.duration} heures`}
               </span>
@@ -186,13 +275,13 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                 </span>
               </div>
             )}
-            {data.price != null && data.price > 0 && (
+            {coursePrice > 0 && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Tarif</span>
-                <span className="font-semibold">{formatPriceEUR(data.price)}</span>
+                <span className="font-semibold">{formatPriceEUR(coursePrice)}</span>
               </div>
             )}
-            {(data.isCustomFormat || data.duration === "custom") && data.customFormatDetails && (
+            {isCustomFormat && data.customFormatDetails && (
               <div className="pt-2 border-t space-y-1">
                 <span className="text-muted-foreground block">Projet décrit</span>
                 <p className="font-medium whitespace-pre-wrap">{data.customFormatDetails}</p>
@@ -218,6 +307,39 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             </div>
           </div>
         </div>
+
+        {paymentSummary && (
+          <>
+            <Separator />
+            <div className="space-y-3">
+              <div className="text-sm font-medium">Paiement</div>
+              <div className="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground">Mode choisi</span>
+                  <span className="font-medium text-right max-w-[65%]">
+                    {PAYMENT_OPTION_LABELS[paymentOption]}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Frais de dossier</span>
+                  <span className="font-medium">{formatPriceEUR(paymentSummary.dossierFee)}</span>
+                </div>
+                {paymentSummary.balanceAfterDossier > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Solde (chèque après formation)</span>
+                    <span className="font-medium">
+                      {formatPriceEUR(paymentSummary.balanceAfterDossier)}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between border-t pt-2 font-semibold">
+                  <span>À régler maintenant</span>
+                  <span>{formatPriceEUR(paymentSummary.amountDueNow)}</span>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
 
         <Separator />
 
@@ -255,8 +377,12 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Envoi en cours...
+              {hasPaymentStep && requiresStripeCheckout(paymentOption)
+                ? "Redirection vers le paiement..."
+                : "Envoi en cours..."}
             </>
+          ) : hasPaymentStep && requiresStripeCheckout(paymentOption) ? (
+            "Valider et payer en ligne"
           ) : (
             "Soumettre l'inscription"
           )}

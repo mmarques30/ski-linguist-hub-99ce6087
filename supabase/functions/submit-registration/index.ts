@@ -1,4 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  FRAIS_DOSSIER_EUR,
+  getInscriptionPaymentFields,
+  isValidPaymentOption,
+  REGISTRATION_PAYMENT_OPTIONS,
+} from "../_shared/registration-payments.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -80,6 +86,7 @@ interface RegistrationPayload {
   };
   expectations: string;
   certification: string;
+  paymentOption?: string;
 }
 
 function parseDurationHours(duration?: string): number | null {
@@ -154,6 +161,15 @@ Deno.serve(async (req) => {
     const isCustomFormat = registration.isCustomFormat || registration.duration === "custom";
     const correctAnswers = registration.correctAnswers ?? 0;
     const needsAdminCall = registration.needsAdminCall ?? false;
+
+    if (!isCustomFormat && (registration.price ?? 0) > 0) {
+      if (!registration.paymentOption || !isValidPaymentOption(registration.paymentOption)) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Veuillez choisir un mode de paiement" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
 
     const { data: season } = await supabase
       .from("seasons")
@@ -241,6 +257,22 @@ Deno.serve(async (req) => {
       registration.location ||
       null;
 
+    const paymentFields =
+      !isCustomFormat && price != null && price > 0 && registration.paymentOption &&
+      isValidPaymentOption(registration.paymentOption)
+        ? getInscriptionPaymentFields(price, registration.paymentOption)
+        : null;
+
+    const paymentFlow = paymentFields?.paymentFlow ?? "none";
+
+    const paymentLabels: Record<string, string> = {
+      [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]:
+        "150 € Stripe + solde par chèque après formation",
+      [REGISTRATION_PAYMENT_OPTIONS.VIREMENT]:
+        "150 € virement + solde par chèque après formation",
+      [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]: "Paiement intégral Stripe",
+    };
+
     const { data: inscription, error: inscriptionError } = await supabase
       .from("inscriptions")
       .insert({
@@ -259,6 +291,8 @@ Deno.serve(async (req) => {
         expectations: registration.expectations || null,
         schedule_status: "pending",
         entry_test_score: registration.testAnswers ? String(correctAnswers) : null,
+        payment_method: paymentFields?.paymentMethod ?? null,
+        balance_after_deposit: paymentFields?.balanceAfterDeposit ?? null,
         observations: [
           isCustomFormat
             ? `📋 DEVIS DEMANDÉ — Format personnalisé:\n${registration.customFormatDetails || "(non renseigné)"}`
@@ -273,6 +307,12 @@ Deno.serve(async (req) => {
           registration.testSummary
             ? `Test adaptatif: ${registration.testSummary.passedSlopes.join(" → ") || "vocab ski"}`
             : null,
+          registration.paymentOption
+            ? `Paiement: ${paymentLabels[registration.paymentOption] || registration.paymentOption}`
+            : null,
+          paymentFields && paymentFields.balanceAfterDeposit > 0
+            ? `Frais de dossier: ${FRAIS_DOSSIER_EUR} € · Solde chèque: ${paymentFields.balanceAfterDeposit} €`
+            : null,
         ]
           .filter(Boolean)
           .join("\n"),
@@ -283,6 +323,24 @@ Deno.serve(async (req) => {
       .single();
 
     if (inscriptionError) throw inscriptionError;
+
+    if (
+      paymentFields?.paymentFlow === "virement" &&
+      registration.paymentOption === REGISTRATION_PAYMENT_OPTIONS.VIREMENT
+    ) {
+      await supabase.from("payments").insert({
+        inscription_id: inscription.id,
+        amount: FRAIS_DOSSIER_EUR,
+        payment_type: "acompte",
+        payment_method: "virement",
+        status: "en_attente",
+        payment_date: new Date().toISOString().split("T")[0],
+        reference: inscription.code,
+        payer_type: "stagiaire",
+        payer_name: `${registration.firstName} ${registration.lastName}`,
+        notes: "Frais de dossier — en attente de virement",
+      });
+    }
 
     if (registration.testAnswers) {
       const totalQuestions = registration.testSummary
@@ -406,6 +464,7 @@ Deno.serve(async (req) => {
           studentId,
           needsAdminCall,
           emailSent,
+          paymentFlow,
         },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

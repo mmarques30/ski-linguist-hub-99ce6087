@@ -14,3 +14,9 @@ verify_jwt = false
 
 [functions.submit-registration]
 verify_jwt = false
+
+[functions.create-registration-checkout]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
