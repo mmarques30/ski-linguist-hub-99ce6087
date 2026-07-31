@@ -133,6 +133,16 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (!registration.testAnswers || !registration.currentLevel) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Le test de niveau adaptatif est obligatoire pour finaliser l'inscription",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
