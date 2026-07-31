@@ -2,15 +2,28 @@ export const FRAIS_DOSSIER_EUR = 150;
 
 export const REGISTRATION_PAYMENT_OPTIONS = {
   STRIPE_DEPOSIT_CHEQUE: "stripe_deposit_cheque",
-  VIREMENT: "virement",
+  VIREMENT_DEPOSIT: "virement_deposit",
   STRIPE_FULL: "stripe_full",
+  VIREMENT_FULL: "virement_full",
 } as const;
 
 export type RegistrationPaymentOption =
   (typeof REGISTRATION_PAYMENT_OPTIONS)[keyof typeof REGISTRATION_PAYMENT_OPTIONS];
 
+const LEGACY_VIREMENT = "virement";
+
 export function isValidPaymentOption(value: string): value is RegistrationPaymentOption {
-  return Object.values(REGISTRATION_PAYMENT_OPTIONS).includes(value as RegistrationPaymentOption);
+  return (
+    Object.values(REGISTRATION_PAYMENT_OPTIONS).includes(value as RegistrationPaymentOption) ||
+    value === LEGACY_VIREMENT
+  );
+}
+
+export function normalizePaymentOption(value: string): RegistrationPaymentOption {
+  if (value === LEGACY_VIREMENT) {
+    return REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT;
+  }
+  return value as RegistrationPaymentOption;
 }
 
 export function getInscriptionPaymentFields(
@@ -23,8 +36,11 @@ export function getInscriptionPaymentFields(
   paymentFlow: "stripe" | "virement";
   paymentType: "acompte" | "total";
   stripeAmount: number;
+  virementAmount: number;
 } {
-  if (paymentOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL) {
+  const option = normalizePaymentOption(paymentOption);
+
+  if (option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL) {
     return {
       paymentMethod: "stripe",
       balanceAfterDeposit: 0,
@@ -32,19 +48,33 @@ export function getInscriptionPaymentFields(
       paymentFlow: "stripe",
       paymentType: "total",
       stripeAmount: coursePrice,
+      virementAmount: 0,
+    };
+  }
+
+  if (option === REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL) {
+    return {
+      paymentMethod: "virement",
+      balanceAfterDeposit: 0,
+      depositAmount: null,
+      paymentFlow: "virement",
+      paymentType: "total",
+      stripeAmount: 0,
+      virementAmount: coursePrice,
     };
   }
 
   const balanceAfterDeposit = Math.max(coursePrice - FRAIS_DOSSIER_EUR, 0);
 
-  if (paymentOption === REGISTRATION_PAYMENT_OPTIONS.VIREMENT) {
+  if (option === REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT) {
     return {
       paymentMethod: "virement",
       balanceAfterDeposit,
       depositAmount: null,
       paymentFlow: "virement",
       paymentType: "acompte",
-      stripeAmount: FRAIS_DOSSIER_EUR,
+      stripeAmount: 0,
+      virementAmount: FRAIS_DOSSIER_EUR,
     };
   }
 
@@ -55,6 +85,7 @@ export function getInscriptionPaymentFields(
     paymentFlow: "stripe",
     paymentType: "acompte",
     stripeAmount: FRAIS_DOSSIER_EUR,
+    virementAmount: 0,
   };
 }
 
