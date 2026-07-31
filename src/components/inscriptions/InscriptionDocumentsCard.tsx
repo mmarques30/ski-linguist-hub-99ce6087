@@ -16,16 +16,12 @@ import {
 
 interface InscriptionDocumentsCardProps {
   inscriptionId: string;
-  modality?: string | null;
-  courseLocation?: string | null;
   observations?: string | null;
   studentEmail?: string | null;
 }
 
 export function InscriptionDocumentsCard({
   inscriptionId,
-  modality,
-  courseLocation,
   observations,
   studentEmail,
 }: InscriptionDocumentsCardProps) {
@@ -43,11 +39,7 @@ export function InscriptionDocumentsCard({
     }
   };
 
-  const showWelcomePack = expectsSkiMonitorWelcomePack({
-    modality,
-    courseLocation,
-    observations,
-  });
+  const showWelcomePack = expectsSkiMonitorWelcomePack({ observations });
 
   const sentTypes = new Set(sendings.map((s) => s.document_type));
 
@@ -122,9 +114,9 @@ export function InscriptionDocumentsCard({
       {showWelcomePack && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Pack moniteur de ski — formation en ligne</CardTitle>
+            <CardTitle className="text-base">Pack moniteur de ski</CardTitle>
             <CardDescription>
-              Documents envoyés automatiquement à l&apos;inscription (ou à renvoyer manuellement)
+              Documents Station 2022 et critères 2026 envoyés automatiquement à l&apos;inscription
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">

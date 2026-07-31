@@ -9,8 +9,8 @@ import {
 import {
   buildSkiMonitorWelcomeAttachments,
   getPublicDocumentUrl,
-  shouldSendSkiMonitorOnlineWelcomeDocuments,
-  SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS,
+  shouldSendSkiMonitorWelcomeDocuments,
+  SKI_MONITOR_WELCOME_DOCUMENTS,
 } from "../_shared/ski-monitor-welcome-documents.ts";
 
 const corsHeaders = {
@@ -168,7 +168,7 @@ async function sendSkiMonitorWelcomeDocuments(params: {
   const attachments = await buildSkiMonitorWelcomeAttachments();
   const sent = await sendEmail(resendApiKey, email, subject, html, attachments);
 
-  for (const doc of SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS) {
+  for (const doc of SKI_MONITOR_WELCOME_DOCUMENTS) {
     await supabase.from("document_sendings").insert({
       inscription_id: inscription.id,
       document_type: doc.documentType,
@@ -188,7 +188,7 @@ async function sendSkiMonitorWelcomeDocuments(params: {
     recipient_name: studentName,
     status: sent ? "sent" : "failed",
     inscription_id: inscription.id,
-    variables_used: { ...variables, attachments: SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS.map((d) => d.label) },
+    variables_used: { ...variables, attachments: SKI_MONITOR_WELCOME_DOCUMENTS.map((d) => d.label) },
   });
 
   return sent;
@@ -487,7 +487,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      if (shouldSendSkiMonitorOnlineWelcomeDocuments(registration)) {
+      if (shouldSendSkiMonitorWelcomeDocuments(registration)) {
         try {
           documentsSent = await sendSkiMonitorWelcomeDocuments({
             resendApiKey,

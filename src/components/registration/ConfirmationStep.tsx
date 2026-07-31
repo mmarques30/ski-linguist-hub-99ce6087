@@ -153,7 +153,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             <p className="text-muted-foreground max-w-md mx-auto">
               Merci de vous être inscrit chez France Langues International.
               {result.documentsSent
-                ? " Les documents d'inscription (critères FIFPL, convention et programme) vous ont été envoyés par email."
+                ? " Les documents d'inscription (critères de prise en charge 2026, convention Station 2022 et contenu pédagogique Station 2022) vous ont été envoyés par email."
                 : result.emailSent
                   ? " Un email de confirmation vous a été envoyé."
                   : " Notre équipe vous contactera prochainement."}

@@ -623,8 +623,6 @@ export default function InscriptionDetails() {
           <TabsContent value="documents" className="space-y-4">
             <InscriptionDocumentsCard
               inscriptionId={inscription.id}
-              modality={inscription.modality}
-              courseLocation={inscription.course_location}
               observations={inscription.observations}
               studentEmail={inscription.student_email}
             />

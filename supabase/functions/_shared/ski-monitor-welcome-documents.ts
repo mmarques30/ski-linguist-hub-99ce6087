@@ -5,7 +5,8 @@ export interface SkiMonitorWelcomeDocument {
   label: string;
 }
 
-export const SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS: SkiMonitorWelcomeDocument[] = [
+/** Documents envoyés à chaque moniteur de ski inscrit. */
+export const SKI_MONITOR_WELCOME_DOCUMENTS: SkiMonitorWelcomeDocument[] = [
   {
     documentType: "REGLEMENT",
     filename: "Criteres de prise en charge Moniteurs de ski 2026.pdf",
@@ -14,17 +15,20 @@ export const SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS: SkiMonitorWelcomeDocument[] =
   },
   {
     documentType: "CONVENTION",
-    filename: "Convention 2025.dotx",
-    internalFile: "convention-2025.dotx",
-    label: "Convention de formation 2025",
+    filename: "Convention Stage langues Station 2022.dotx",
+    internalFile: "convention-stage-langues-station-2022.dotx",
+    label: "Convention Stage langues Station 2022",
   },
   {
     documentType: "PROGRAMME",
-    filename: "Programme detaille 2025.docx",
-    internalFile: "programme-detaille-2025.docx",
-    label: "Programme détaillé 2025",
+    filename: "Contenu pedagogique Station 2022.dotx",
+    internalFile: "contenu-pedagogique-station-2022.dotx",
+    label: "Contenu pédagogique Station 2022",
   },
 ];
+
+/** @deprecated use SKI_MONITOR_WELCOME_DOCUMENTS */
+export const SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS = SKI_MONITOR_WELCOME_DOCUMENTS;
 
 export interface RegistrationLike {
   profession?: string;
@@ -34,17 +38,19 @@ export interface RegistrationLike {
   duration?: string;
 }
 
-export function shouldSendSkiMonitorOnlineWelcomeDocuments(
+export function shouldSendSkiMonitorWelcomeDocuments(
   registration: RegistrationLike
 ): boolean {
   if (registration.profession !== "ski_instructor") return false;
   if (registration.isCustomFormat || registration.duration === "custom") return false;
+  return true;
+}
 
-  return (
-    registration.modality === "online_individual" ||
-    registration.modality === "online_group" ||
-    registration.location === "online"
-  );
+/** @deprecated use shouldSendSkiMonitorWelcomeDocuments */
+export function shouldSendSkiMonitorOnlineWelcomeDocuments(
+  registration: RegistrationLike
+): boolean {
+  return shouldSendSkiMonitorWelcomeDocuments(registration);
 }
 
 function bytesToBase64(bytes: Uint8Array): string {
@@ -66,7 +72,7 @@ export async function buildSkiMonitorWelcomeAttachments(): Promise<
 > {
   const attachments: Array<{ filename: string; content: string }> = [];
 
-  for (const doc of SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS) {
+  for (const doc of SKI_MONITOR_WELCOME_DOCUMENTS) {
     const bytes = await loadSkiMonitorWelcomeDocument(doc.internalFile);
     attachments.push({
       filename: doc.filename,
