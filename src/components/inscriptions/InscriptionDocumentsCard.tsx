@@ -122,9 +122,10 @@ export function InscriptionDocumentsCard({
       {showWelcomePack && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Pack moniteur de ski — formation en ligne</CardTitle>
+            <CardTitle className="text-base">Pack moniteur de ski — documents d&apos;inscription</CardTitle>
             <CardDescription>
-              Documents envoyés automatiquement à l&apos;inscription (ou à renvoyer manuellement)
+              Envoyés automatiquement à toute inscription moniteur de ski (hors devis / format
+              personnalisé) — ou à renvoyer manuellement
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
