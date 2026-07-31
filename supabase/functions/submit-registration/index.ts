@@ -6,6 +6,12 @@ import {
   normalizePaymentOption,
   REGISTRATION_PAYMENT_OPTIONS,
 } from "../_shared/registration-payments.ts";
+import {
+  buildSkiMonitorWelcomeAttachments,
+  getPublicDocumentUrl,
+  shouldSendSkiMonitorOnlineWelcomeDocuments,
+  SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS,
+} from "../_shared/ski-monitor-welcome-documents.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -107,7 +113,8 @@ async function sendEmail(
   resendApiKey: string,
   to: string,
   subject: string,
-  html: string
+  html: string,
+  attachments?: Array<{ filename: string; content: string }>
 ): Promise<boolean> {
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -120,10 +127,71 @@ async function sendEmail(
       to: [to],
       subject,
       html,
+      ...(attachments?.length ? { attachments } : {}),
     }),
   });
 
   return response.ok;
+}
+
+async function sendSkiMonitorWelcomeDocuments(params: {
+  resendApiKey: string;
+  supabase: ReturnType<typeof createClient>;
+  registration: RegistrationPayload;
+  inscription: { id: string; code: string | null };
+  language: string;
+  email: string;
+  studentName: string;
+}): Promise<boolean> {
+  const { resendApiKey, supabase, registration, inscription, language, email, studentName } = params;
+  const appBaseUrl = Deno.env.get("APP_BASE_URL") || "https://ski-linguist-hub.lovable.app";
+
+  const { data: template } = await supabase
+    .from("email_templates")
+    .select("subject_fr, body_fr")
+    .eq("slug", "inscription_ski_monitor_welcome")
+    .maybeSingle();
+
+  const variables = {
+    student_name: studentName,
+    language,
+    inscription_code: inscription.code || "",
+  };
+
+  const subject = template
+    ? applyTemplate(template.subject_fr, variables)
+    : `Vos documents d'inscription FLI — ${language}`;
+  const html = template
+    ? applyTemplate(template.body_fr, variables)
+    : `<p>Bonjour ${studentName},</p><p>Veuillez trouver ci-joint vos documents d'inscription FLI.</p>`;
+
+  const attachments = await buildSkiMonitorWelcomeAttachments();
+  const sent = await sendEmail(resendApiKey, email, subject, html, attachments);
+
+  for (const doc of SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS) {
+    await supabase.from("document_sendings").insert({
+      inscription_id: inscription.id,
+      document_type: doc.documentType,
+      sent_to: email,
+      pdf_url: getPublicDocumentUrl(appBaseUrl, doc.internalFile),
+    });
+  }
+
+  await supabase
+    .from("inscriptions")
+    .update({ documents_sent_at: new Date().toISOString() })
+    .eq("id", inscription.id);
+
+  await supabase.from("email_log").insert({
+    template_slug: "inscription_ski_monitor_welcome",
+    recipient_email: email,
+    recipient_name: studentName,
+    status: sent ? "sent" : "failed",
+    inscription_id: inscription.id,
+    variables_used: { ...variables, attachments: SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS.map((d) => d.label) },
+  });
+
+  return sent;
 }
 
 Deno.serve(async (req) => {
@@ -387,6 +455,7 @@ Deno.serve(async (req) => {
     }
 
     let emailSent = false;
+    let documentsSent = false;
     if (resendApiKey) {
       const { data: template } = await supabase
         .from("email_templates")
@@ -416,6 +485,22 @@ Deno.serve(async (req) => {
           inscription_id: inscription.id,
           variables_used: variables,
         });
+      }
+
+      if (shouldSendSkiMonitorOnlineWelcomeDocuments(registration)) {
+        try {
+          documentsSent = await sendSkiMonitorWelcomeDocuments({
+            resendApiKey,
+            supabase,
+            registration,
+            inscription,
+            language,
+            email,
+            studentName,
+          });
+        } catch (docError) {
+          console.error("ski monitor welcome documents error:", docError);
+        }
       }
 
       if (needsAdminCall) {
@@ -471,6 +556,7 @@ Deno.serve(async (req) => {
           needsAdminCall,
           emailSent,
           paymentFlow,
+          documentsSent,
         },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

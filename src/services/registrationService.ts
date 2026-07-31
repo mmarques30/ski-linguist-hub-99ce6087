@@ -9,6 +9,7 @@ export interface RegistrationSubmissionResult {
   needsAdminCall: boolean;
   emailSent: boolean;
   paymentFlow: "stripe" | "virement" | "none";
+  documentsSent?: boolean;
 }
 
 export async function submitRegistration(
