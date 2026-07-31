@@ -64,6 +64,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
     inscriptionCode: string;
     needsAdminCall: boolean;
     emailSent: boolean;
+    documentsSent?: boolean;
     paymentFlow: "stripe" | "virement" | "none";
     paymentOption?: string;
     coursePrice?: number;
@@ -123,6 +124,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
         inscriptionCode: submission.inscriptionCode,
         needsAdminCall: submission.needsAdminCall,
         emailSent: submission.emailSent,
+        documentsSent: submission.documentsSent,
         paymentFlow: submission.paymentFlow,
         paymentOption: data.paymentOption,
         coursePrice,
@@ -150,9 +152,11 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             <h2 className="text-2xl font-bold">Inscription enregistrée</h2>
             <p className="text-muted-foreground max-w-md mx-auto">
               Merci de vous être inscrit chez France Langues International.
-              {result.emailSent
-                ? " Un email de confirmation vous a été envoyé."
-                : " Notre équipe vous contactera prochainement."}
+              {result.documentsSent
+                ? " Les documents d'inscription (critères FIFPL, convention et programme) vous ont été envoyés par email."
+                : result.emailSent
+                  ? " Un email de confirmation vous a été envoyé."
+                  : " Notre équipe vous contactera prochainement."}
             </p>
             <div className="pt-2">
               <Badge variant="outline" className="text-lg px-4 py-2">
