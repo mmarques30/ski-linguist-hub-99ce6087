@@ -700,7 +700,7 @@ export default function InscriptionDetails() {
               student_name: inscription.student_name || "",
               language: inscription.language,
               entry_level: inscription.entry_level,
-              exit_level: inscription.exit_level,
+              exit_level: (inscription as Record<string, unknown>).exit_level as string | null,
               duration_hours: inscription.duration_hours,
               price: inscription.price,
               code: inscription.code,
