@@ -12,12 +12,15 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, MapPin, Calendar, Euro } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2, MapPin, Calendar, Euro, MessageSquare } from "lucide-react";
 import type { RegistrationData } from "@/pages/register/Index";
 import { useRegistrationOfferings } from "@/hooks/useRegistrationOfferings";
 import {
+  CUSTOM_FORMAT_DURATION,
   filterByLocation,
   formatPriceEUR,
+  isCustomFormatDuration,
   matchOffering,
   uniqueDateOptions,
   uniqueDurations,
@@ -75,7 +78,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
   const durations = useMemo(() => uniqueDurations(dateOfferings), [dateOfferings]);
 
   const selectedOffering = useMemo(() => {
-    if (!data.location) return null;
+    if (!data.location || isCustomFormatDuration(data.duration)) return null;
     const durationHours = data.duration ? parseInt(data.duration, 10) : undefined;
     return matchOffering(offerings, {
       locationKey: data.location,
@@ -86,8 +89,17 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
     });
   }, [offerings, data]);
 
+  const isCustomFormat = isCustomFormatDuration(data.duration);
+  const canContinue =
+    !!data.location &&
+    !!data.language &&
+    !!data.fundingType &&
+    (isCustomFormat
+      ? (data.customFormatDetails?.trim().length ?? 0) >= 20
+      : !!data.duration && !!selectedOffering);
+
   useEffect(() => {
-    if (!selectedOffering) return;
+    if (!selectedOffering || isCustomFormatDuration(data.duration)) return;
     onUpdate({
       offeringId: selectedOffering.id,
       price: selectedOffering.base_price,
@@ -100,8 +112,10 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
       language: selectedOffering.language_key,
       location: selectedOffering.location_key,
       locationLabel: selectedOffering.location_label,
+      isCustomFormat: false,
+      customFormatDetails: undefined,
     });
-  }, [selectedOffering?.id]);
+  }, [selectedOffering?.id, data.duration]);
 
   // Auto-sélection de la modalité quand une seule option existe
   useEffect(() => {
@@ -126,12 +140,33 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
       duration: "",
       offeringId: undefined,
       price: undefined,
+      isCustomFormat: false,
+      customFormatDetails: undefined,
+    });
+  };
+
+  const handleDurationChange = (value: string) => {
+    if (value === CUSTOM_FORMAT_DURATION) {
+      onUpdate({
+        duration: value,
+        isCustomFormat: true,
+        offeringId: undefined,
+        price: undefined,
+        dates: "Projet personnalisé — devis sur demande",
+        dateLabel: "Projet personnalisé — devis sur demande",
+      });
+      return;
+    }
+    onUpdate({
+      duration: value,
+      isCustomFormat: false,
+      customFormatDetails: undefined,
     });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedOffering) return;
+    if (!canContinue) return;
     onNext();
   };
 
@@ -210,6 +245,8 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                         duration: "",
                         offeringId: undefined,
                         price: undefined,
+                        isCustomFormat: false,
+                        customFormatDetails: undefined,
                       })
                     }
                     className="grid gap-2 md:grid-cols-3"
@@ -249,6 +286,8 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                         duration: "",
                         offeringId: undefined,
                         price: undefined,
+                        isCustomFormat: false,
+                        customFormatDetails: undefined,
                       })
                     }
                   >
@@ -280,7 +319,14 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                   <Select
                     value={data.dateKey || ""}
                     onValueChange={(value) =>
-                      onUpdate({ dateKey: value, duration: "", offeringId: undefined, price: undefined })
+                      onUpdate({
+                        dateKey: value,
+                        duration: "",
+                        offeringId: undefined,
+                        price: undefined,
+                        isCustomFormat: false,
+                        customFormatDetails: undefined,
+                      })
                     }
                   >
                     <SelectTrigger>
@@ -298,12 +344,12 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
               )}
 
               {/* 5. Durée + prix */}
-              {data.language && (dateOptions.length === 0 || data.dateKey) && durations.length > 0 && (
+              {data.language && (dateOptions.length === 0 || data.dateKey) && (
                 <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
                   <Label>Durée de la formation *</Label>
                   <RadioGroup
                     value={data.duration || ""}
-                    onValueChange={(value) => onUpdate({ duration: value })}
+                    onValueChange={handleDurationChange}
                     className="grid gap-2 md:grid-cols-2 lg:grid-cols-3"
                   >
                     {durations.map((d) => {
@@ -342,12 +388,52 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                         </div>
                       );
                     })}
+
+                    {/* Autres formats — sur devis */}
+                    <div className="flex flex-col rounded-lg border border-dashed p-3 hover:bg-muted/50 transition-colors md:col-span-2 lg:col-span-3">
+                      <RadioGroupItem
+                        value={CUSTOM_FORMAT_DURATION}
+                        id="dur-custom"
+                        className="sr-only"
+                      />
+                      <Label
+                        htmlFor="dur-custom"
+                        className={`cursor-pointer w-full p-2 rounded ${
+                          isCustomFormat ? "bg-primary text-primary-foreground" : ""
+                        }`}
+                      >
+                        <span className="block font-semibold">Autres formats — sur devis</span>
+                        <span className="block text-sm opacity-90 mt-1">
+                          Durée, modalité ou calendrier spécifique — nous vous envoyons une proposition
+                        </span>
+                      </Label>
+                    </div>
                   </RadioGroup>
+
+                  {isCustomFormat && (
+                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                      <Label htmlFor="custom-format-details" className="flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4" />
+                        Décrivez votre projet *
+                      </Label>
+                      <Textarea
+                        id="custom-format-details"
+                        placeholder="Ex. : 10h en visio sur 5 semaines, objectif certification B2, disponibilités le mardi matin, groupe de 3 moniteurs de la même école…"
+                        rows={5}
+                        value={data.customFormatDetails || ""}
+                        onChange={(e) => onUpdate({ customFormatDetails: e.target.value })}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Minimum 20 caractères. Notre équipe étudiera votre demande et vous enverra une
+                        proposition personnalisée.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* Financement */}
-              {selectedOffering && (
+              {(selectedOffering || isCustomFormat) && (
                 <div className="space-y-3 animate-in fade-in slide-in-from-top-2 border-t pt-6">
                   <Label>Mode de financement *</Label>
                   <RadioGroup
@@ -378,7 +464,19 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
               )}
 
               {/* Récap prix */}
-              {selectedOffering && (
+              {isCustomFormat && (
+                <Alert className="bg-muted/50 border-amber-500/30">
+                  <MessageSquare className="h-4 w-4" />
+                  <AlertDescription>
+                    <span className="font-medium">Demande de devis</span>
+                    <span className="text-muted-foreground text-sm block mt-1">
+                      Pas de tarif affiché — vous recevrez une proposition de FLI après étude de votre
+                      projet.
+                    </span>
+                  </AlertDescription>
+                </Alert>
+              )}
+              {selectedOffering && !isCustomFormat && (
                 <Alert className="bg-muted/50 border-primary/20">
                   <Euro className="h-4 w-4" />
                   <AlertDescription className="flex flex-wrap items-center gap-2">
@@ -397,11 +495,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
             </>
           )}
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={!data.location || !data.language || !data.duration || !data.fundingType || !selectedOffering}
-          >
+          <Button type="submit" className="w-full" disabled={!canContinue}>
             Continuer
           </Button>
         </form>

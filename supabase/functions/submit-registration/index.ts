@@ -64,6 +64,8 @@ interface RegistrationPayload {
   startDate?: string;
   endDate?: string;
   price?: number;
+  isCustomFormat?: boolean;
+  customFormatDetails?: string;
   hasBeenEvaluated: boolean;
   currentLevel: string;
   testScore: number;
@@ -138,7 +140,8 @@ Deno.serve(async (req) => {
 
     const email = registration.email.trim().toLowerCase();
     const language = LANGUAGE_MAP[registration.language] || registration.language;
-    const durationHours = parseDurationHours(registration.duration);
+    const durationHours = registration.isCustomFormat ? null : parseDurationHours(registration.duration);
+    const isCustomFormat = registration.isCustomFormat || registration.duration === "custom";
     const correctAnswers = registration.correctAnswers ?? 0;
     const needsAdminCall = registration.needsAdminCall ?? false;
 
@@ -247,6 +250,9 @@ Deno.serve(async (req) => {
         schedule_status: "pending",
         entry_test_score: registration.testAnswers ? String(correctAnswers) : null,
         observations: [
+          isCustomFormat
+            ? `📋 DEVIS DEMANDÉ — Format personnalisé:\n${registration.customFormatDetails || "(non renseigné)"}`
+            : null,
           registration.dateLabel || registration.dates
             ? `Dates: ${registration.dateLabel || registration.dates}`
             : null,
@@ -346,19 +352,36 @@ Deno.serve(async (req) => {
         await sendEmail(resendApiKey, ADMIN_EMAIL, adminSubject, adminHtml);
       }
 
+      if (isCustomFormat) {
+        const adminSubject = `[DEVIS FLI] Format personnalisé — ${studentName}`;
+        const adminHtml = `<p><strong>${studentName}</strong> (${email}) demande un devis pour un format personnalisé.</p>
+          <p>Code inscription: <strong>${inscription.code}</strong></p>
+          <p>Langue: ${language} · Lieu: ${courseLocation || "—"}</p>
+          <p><strong>Projet décrit:</strong></p>
+          <p>${(registration.customFormatDetails || "").replace(/\n/g, "<br>")}</p>`;
+        await sendEmail(resendApiKey, ADMIN_EMAIL, adminSubject, adminHtml);
+      }
+
       const { data: adminUsers } = await supabase
         .from("user_roles")
         .select("user_id")
         .eq("role", "admin");
 
       for (const admin of adminUsers || []) {
+        const notifTitle = isCustomFormat
+          ? `📋 Devis à préparer — ${registration.firstName}`
+          : needsAdminCall
+            ? `⚠️ Inscription — appeler ${registration.firstName}`
+            : `Nouvelle inscription — ${registration.firstName}`;
+        const notifMessage = isCustomFormat
+          ? `Inscription ${inscription.code} — format personnalisé (${language}). Envoyer une proposition.`
+          : `Inscription ${inscription.code} pour ${language}. Niveau: ${registration.currentLevel}. Horaire: en attente de validation.`;
+
         await supabase.from("notifications").insert({
           user_id: admin.user_id,
           type: "inscription",
-          title: needsAdminCall
-            ? `⚠️ Inscription — appeler ${registration.firstName}`
-            : `Nouvelle inscription — ${registration.firstName}`,
-          message: `Inscription ${inscription.code} pour ${language}. Niveau: ${registration.currentLevel}. Horaire: en attente de validation.`,
+          title: notifTitle,
+          message: notifMessage,
           link: `/inscriptions/${inscription.id}`,
         });
       }
