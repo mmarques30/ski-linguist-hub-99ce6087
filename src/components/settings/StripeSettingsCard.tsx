@@ -9,8 +9,10 @@ import { toast } from "sonner";
 import { useStripeConfig } from "@/hooks/useStripeConfig";
 
 const LOVABLE_EDITOR_URL = "https://lovable.dev/projects/34e71e1a-49f7-433e-bb36-fc4d26e86f8e";
-const STRIPE_DASHBOARD_URL = "https://dashboard.stripe.com/test/apikeys";
-const STRIPE_WEBHOOKS_URL = "https://dashboard.stripe.com/test/webhooks";
+const STRIPE_TEST_KEYS_URL = "https://dashboard.stripe.com/test/apikeys";
+const STRIPE_LIVE_KEYS_URL = "https://dashboard.stripe.com/apikeys";
+const STRIPE_TEST_WEBHOOKS_URL = "https://dashboard.stripe.com/test/webhooks";
+const STRIPE_LIVE_WEBHOOKS_URL = "https://dashboard.stripe.com/webhooks";
 
 interface StripeSettingsCardProps {
   configureLabel: string;
@@ -20,9 +22,10 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
   const { data, isLoading, isError, refetch } = useStripeConfig();
   const [isCopying, setIsCopying] = useState(false);
 
-  const isFullyConfigured = Boolean(
-    data?.secretKeyConfigured && data?.webhookSecretConfigured
-  );
+  const isFullyConfigured = Boolean(data?.configured);
+  const isTestMode = data?.mode === "test";
+  const keysUrl = isTestMode === false ? STRIPE_LIVE_KEYS_URL : STRIPE_TEST_KEYS_URL;
+  const webhooksUrl = isTestMode === false ? STRIPE_LIVE_WEBHOOKS_URL : STRIPE_TEST_WEBHOOKS_URL;
 
   const copyText = async (text: string, label: string) => {
     try {
@@ -41,18 +44,23 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex flex-wrap items-center gap-2">
               Stripe
               {isLoading ? (
                 <Badge variant="secondary">Vérification...</Badge>
               ) : isFullyConfigured ? (
-                <Badge className="bg-emerald-600 hover:bg-emerald-600">Configuré</Badge>
+                <Badge className="bg-emerald-600 hover:bg-emerald-600">Opérationnel</Badge>
+              ) : data?.secretKeyConfigured && data?.keyValid ? (
+                <Badge variant="secondary">Webhook manquant</Badge>
               ) : (
                 <Badge variant="destructive">À configurer</Badge>
               )}
+              {data?.mode && (
+                <Badge variant="outline">{data.mode === "test" ? "Mode test" : "Mode live"}</Badge>
+              )}
             </CardTitle>
             <CardDescription>
-              Paiements en ligne pour les inscriptions (/register) — frais de dossier et paiement intégral.
+              Paiements en ligne pour les inscriptions (/register) — frais de dossier (150 €) et paiement intégral.
             </CardDescription>
           </div>
           <div className="h-10 w-10 rounded bg-muted flex items-center justify-center shrink-0">
@@ -70,16 +78,27 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
           </Alert>
         )}
 
+        {data?.secretKeyConfigured && data.keyValid && !data.webhookSecretConfigured && (
+          <Alert>
+            <AlertTitle>Étape suivante : configurer le webhook</AlertTitle>
+            <AlertDescription>
+              La clé Stripe est valide, mais sans <code>STRIPE_WEBHOOK_SECRET</code> les paiements ne seront pas
+              enregistrés automatiquement dans FLI après un checkout.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {data?.secretKeyConfigured && data.keyError && (
+          <Alert variant="destructive">
+            <AlertTitle>Clé Stripe invalide</AlertTitle>
+            <AlertDescription>{data.keyError}</AlertDescription>
+          </Alert>
+        )}
+
         {data && (
           <div className="grid gap-3 sm:grid-cols-2">
-            <StatusRow
-              label="STRIPE_SECRET_KEY"
-              ok={data.secretKeyConfigured}
-            />
-            <StatusRow
-              label="STRIPE_WEBHOOK_SECRET"
-              ok={data.webhookSecretConfigured}
-            />
+            <StatusRow label="STRIPE_SECRET_KEY" ok={data.secretKeyConfigured && data.keyValid} />
+            <StatusRow label="STRIPE_WEBHOOK_SECRET" ok={data.webhookSecretConfigured} />
           </div>
         )}
 
@@ -89,36 +108,21 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
             <ol className="list-decimal pl-5 space-y-2">
               <li>
                 Ouvrez{" "}
-                <a
-                  href={STRIPE_DASHBOARD_URL}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="underline font-medium"
-                >
-                  Stripe → API Keys (mode test)
+                <a href={keysUrl} target="_blank" rel="noreferrer" className="underline font-medium">
+                  Stripe → API Keys
                 </a>{" "}
-                et copiez la <strong>Secret key</strong> (<code>sk_test_...</code>).
+                et copiez la <strong>Secret key</strong> (<code>sk_test_...</code> ou <code>sk_live_...</code>).
               </li>
               <li>
                 Dans{" "}
-                <a
-                  href={LOVABLE_EDITOR_URL}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="underline font-medium"
-                >
+                <a href={LOVABLE_EDITOR_URL} target="_blank" rel="noreferrer" className="underline font-medium">
                   Lovable → Cloud → Secrets
                 </a>
                 , ajoutez <code>STRIPE_SECRET_KEY</code>.
               </li>
               <li>
                 Créez un webhook dans{" "}
-                <a
-                  href={STRIPE_WEBHOOKS_URL}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="underline font-medium"
-                >
+                <a href={webhooksUrl} target="_blank" rel="noreferrer" className="underline font-medium">
                   Stripe → Webhooks
                 </a>{" "}
                 avec l&apos;URL ci-dessous et l&apos;événement{" "}
@@ -129,8 +133,8 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
                 <code>STRIPE_WEBHOOK_SECRET</code> (<code>whsec_...</code>).
               </li>
               <li>
-                Déployez l&apos;application, puis testez une inscription avec la carte{" "}
-                <code>4242 4242 4242 4242</code>.
+                Redéployez l&apos;application, puis testez une inscription avec la carte{" "}
+                <code>4242 4242 4242 4242</code> (mode test).
               </li>
             </ol>
           </AlertDescription>
@@ -166,7 +170,7 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
             </a>
           </Button>
           <Button asChild variant="outline">
-            <a href={STRIPE_DASHBOARD_URL} target="_blank" rel="noreferrer">
+            <a href={keysUrl} target="_blank" rel="noreferrer">
               <ExternalLink className="mr-2 h-4 w-4" />
               Stripe Dashboard
             </a>

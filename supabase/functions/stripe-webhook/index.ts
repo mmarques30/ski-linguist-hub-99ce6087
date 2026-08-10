@@ -5,46 +5,12 @@ import {
   normalizePaymentOption,
   REGISTRATION_PAYMENT_OPTIONS,
 } from "../_shared/registration-payments.ts";
+import { verifyStripeWebhookSignature } from "../_shared/stripe.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
 };
-
-async function verifyStripeSignature(
-  payload: string,
-  signature: string,
-  secret: string
-): Promise<boolean> {
-  const parts = signature.split(",").reduce<Record<string, string>>((acc, part) => {
-    const [key, value] = part.split("=");
-    if (key && value) acc[key] = value;
-    return acc;
-  }, {});
-
-  const timestamp = parts.t;
-  const expectedSig = parts.v1;
-  if (!timestamp || !expectedSig) return false;
-
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const signed = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    encoder.encode(`${timestamp}.${payload}`)
-  );
-  const computed = Array.from(new Uint8Array(signed))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-
-  return computed === expectedSig;
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -60,7 +26,7 @@ Deno.serve(async (req) => {
 
     const signature = req.headers.get("stripe-signature");
     const payload = await req.text();
-    if (!signature || !(await verifyStripeSignature(payload, signature, webhookSecret))) {
+    if (!signature || !(await verifyStripeWebhookSignature(payload, signature, webhookSecret))) {
       return new Response("Invalid signature", { status: 400 });
     }
 
