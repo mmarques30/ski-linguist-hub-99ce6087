@@ -20,9 +20,8 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
   const { data, isLoading, isError, refetch } = useStripeConfig();
   const [isCopying, setIsCopying] = useState(false);
 
-  const isFullyConfigured = Boolean(
-    data?.secretKeyConfigured && data?.webhookSecretConfigured
-  );
+  const isFullyConfigured = Boolean(data?.configured);
+  const webhookMissing = Boolean(data && !data.webhookSecretConfigured);
 
   const copyText = async (text: string, label: string) => {
     try {
@@ -47,8 +46,15 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
                 <Badge variant="secondary">Vérification...</Badge>
               ) : isFullyConfigured ? (
                 <Badge className="bg-emerald-600 hover:bg-emerald-600">Configuré</Badge>
+              ) : webhookMissing ? (
+                <Badge variant="destructive">Webhook manquant</Badge>
               ) : (
                 <Badge variant="destructive">À configurer</Badge>
+              )}
+              {data?.mode && (
+                <Badge variant="outline">
+                  {data.mode === "live" ? "Mode live" : "Mode test"}
+                </Badge>
               )}
             </CardTitle>
             <CardDescription>
@@ -74,13 +80,34 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
           <div className="grid gap-3 sm:grid-cols-2">
             <StatusRow
               label="STRIPE_SECRET_KEY"
-              ok={data.secretKeyConfigured}
+              ok={data.secretKeyConfigured && data.secretKeyValid}
             />
             <StatusRow
               label="STRIPE_WEBHOOK_SECRET"
               ok={data.webhookSecretConfigured}
             />
           </div>
+        )}
+
+        {data?.secretKeyConfigured && !data.secretKeyValid && (
+          <Alert variant="destructive">
+            <AlertTitle>Clé Stripe invalide</AlertTitle>
+            <AlertDescription>
+              {data.secretKeyError || "Stripe a refusé la clé secrète configurée."}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {webhookMissing && (
+          <Alert variant="destructive">
+            <AlertTitle>Webhook manquant</AlertTitle>
+            <AlertDescription>
+              Ajoutez <code>STRIPE_WEBHOOK_SECRET</code> dans les secrets du projet après avoir
+              créé le webhook Stripe avec l&apos;URL ci-dessous et l&apos;événement{" "}
+              <code>checkout.session.completed</code>. Sans ce secret, les paiements ne sont pas
+              enregistrés.
+            </AlertDescription>
+          </Alert>
         )}
 
         <Alert>
