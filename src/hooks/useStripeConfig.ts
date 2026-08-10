@@ -3,7 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface StripeConfigStatus {
   secretKeyConfigured: boolean;
+  secretKeyValid: boolean;
+  secretKeyError: string | null;
+  mode: "test" | "live" | null;
   webhookSecretConfigured: boolean;
+  configured: boolean;
   webhookUrl: string | null;
   checkoutFunction: string;
   webhookFunction: string;
