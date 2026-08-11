@@ -25,9 +25,10 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
   const [isCopying, setIsCopying] = useState(false);
 
   const isFullyConfigured = Boolean(data?.configured);
-  const isTestMode = data?.mode === "test";
-  const keysUrl = isTestMode === false ? STRIPE_LIVE_KEYS_URL : STRIPE_TEST_KEYS_URL;
-  const webhooksUrl = isTestMode === false ? STRIPE_LIVE_WEBHOOKS_URL : STRIPE_TEST_WEBHOOKS_URL;
+  const webhookMissing = Boolean(data?.secretKeyConfigured && data?.secretKeyValid && !data?.webhookSecretConfigured);
+  const isTestMode = data?.mode !== "live";
+  const keysUrl = isTestMode ? STRIPE_TEST_KEYS_URL : STRIPE_LIVE_KEYS_URL;
+  const webhooksUrl = isTestMode ? STRIPE_TEST_WEBHOOKS_URL : STRIPE_LIVE_WEBHOOKS_URL;
 
   const copyText = async (text: string, label: string) => {
     try {
@@ -52,13 +53,15 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
                 <Badge variant="secondary">Vérification...</Badge>
               ) : isFullyConfigured ? (
                 <Badge className="bg-emerald-600 hover:bg-emerald-600">Opérationnel</Badge>
-              ) : data?.secretKeyConfigured && data?.keyValid ? (
-                <Badge variant="secondary">Webhook manquant</Badge>
+              ) : webhookMissing ? (
+                <Badge variant="destructive">Webhook manquant</Badge>
               ) : (
                 <Badge variant="destructive">À configurer</Badge>
               )}
               {data?.mode && (
-                <Badge variant="outline">{data.mode === "test" ? "Mode test" : "Mode live"}</Badge>
+                <Badge variant="outline">
+                  {data.mode === "live" ? "Mode live" : "Mode test"}
+                </Badge>
               )}
             </CardTitle>
             <CardDescription>
@@ -75,37 +78,43 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
           <Alert variant="destructive">
             <AlertTitle>Impossible de vérifier Stripe</AlertTitle>
             <AlertDescription>
-              Déployez la fonction <code>check-stripe-config</code> puis réessayez.
+              Déployez la fonction <code>check-stripe-config</code> depuis GitHub puis réessayez.
             </AlertDescription>
           </Alert>
         )}
 
-        {data?.secretKeyConfigured && data.keyValid && !data.webhookSecretConfigured && (
-          <Alert>
-            <AlertTitle>Étape suivante : configurer le webhook</AlertTitle>
+        {webhookMissing && (
+          <Alert variant="destructive">
+            <AlertTitle>Webhook manquant</AlertTitle>
             <AlertDescription>
-              La clé Stripe est valide, mais sans <code>STRIPE_WEBHOOK_SECRET</code> les paiements ne seront pas
-              enregistrés automatiquement dans FLI après un checkout.
+              Ajoutez <code>STRIPE_WEBHOOK_SECRET</code> dans Supabase Edge Function Secrets après avoir
+              créé le webhook Stripe avec l&apos;URL ci-dessous et l&apos;événement{" "}
+              <code>checkout.session.completed</code>.
             </AlertDescription>
           </Alert>
         )}
 
-        {data?.secretKeyConfigured && data.keyError && (
+        {data?.secretKeyConfigured && !data.secretKeyValid && (
           <Alert variant="destructive">
             <AlertTitle>Clé Stripe invalide</AlertTitle>
-            <AlertDescription>{data.keyError}</AlertDescription>
+            <AlertDescription>
+              {data.secretKeyError || "Stripe a refusé la clé secrète configurée."}
+            </AlertDescription>
           </Alert>
         )}
 
         {data && (
           <div className="grid gap-3 sm:grid-cols-2">
-            <StatusRow label="STRIPE_SECRET_KEY" ok={data.secretKeyConfigured && data.keyValid} />
+            <StatusRow
+              label="STRIPE_SECRET_KEY"
+              ok={data.secretKeyConfigured && data.secretKeyValid}
+            />
             <StatusRow label="STRIPE_WEBHOOK_SECRET" ok={data.webhookSecretConfigured} />
           </div>
         )}
 
         <Alert>
-          <AlertTitle>Étapes de configuration</AlertTitle>
+          <AlertTitle>Étapes de configuration (GitHub + Supabase)</AlertTitle>
           <AlertDescription className="space-y-3 text-sm">
             <ol className="list-decimal pl-5 space-y-2">
               <li>
@@ -113,34 +122,31 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
                 <a href={keysUrl} target="_blank" rel="noreferrer" className="underline font-medium">
                   Stripe → API Keys
                 </a>{" "}
-                et copiez la <strong>Secret key</strong> (<code>sk_test_...</code> ou <code>sk_live_...</code>).
+                et copiez la <strong>Secret key</strong>.
               </li>
               <li>
                 Dans{" "}
                 <a href={SUPABASE_PROJECT_URL} target="_blank" rel="noreferrer" className="underline font-medium">
                   Supabase → Edge Functions → Secrets
                 </a>
-                , ajoutez <code>STRIPE_SECRET_KEY</code> (ou via CLI :{" "}
-                <code>supabase secrets set STRIPE_SECRET_KEY=sk_test_...</code>).
+                , ajoutez <code>STRIPE_SECRET_KEY</code>.
               </li>
               <li>
                 Créez un webhook dans{" "}
                 <a href={webhooksUrl} target="_blank" rel="noreferrer" className="underline font-medium">
                   Stripe → Webhooks
                 </a>{" "}
-                avec l&apos;URL ci-dessous et l&apos;événement{" "}
-                <code>checkout.session.completed</code>.
+                avec l&apos;URL ci-dessous et <code>checkout.session.completed</code>.
               </li>
               <li>
-                Ajoutez le signing secret dans Supabase Edge Function Secrets sous{" "}
-                <code>STRIPE_WEBHOOK_SECRET</code> (<code>whsec_...</code>).
+                Ajoutez <code>STRIPE_WEBHOOK_SECRET</code> (<code>whsec_...</code>) dans Supabase Secrets.
               </li>
               <li>
-                Déployez les fonctions depuis le repo GitHub :{" "}
+                Déployez depuis le repo :{" "}
                 <code>supabase functions deploy stripe-webhook check-stripe-config create-registration-checkout</code>
               </li>
               <li>
-                Testez une inscription avec la carte <code>4242 4242 4242 4242</code> (mode test).
+                Testez avec la carte <code>4242 4242 4242 4242</code>.
               </li>
             </ol>
           </AlertDescription>

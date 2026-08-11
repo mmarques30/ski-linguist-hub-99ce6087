@@ -3,13 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface StripeConfigStatus {
   secretKeyConfigured: boolean;
+  secretKeyValid: boolean;
+  secretKeyError: string | null;
   webhookSecretConfigured: boolean;
-  hasSecretKey?: boolean;
-  hasWebhookSecret?: boolean;
-  keyValid: boolean;
   mode: "test" | "live" | null;
   configured: boolean;
-  keyError?: string;
   webhookUrl: string | null;
   checkoutFunction: string;
   webhookFunction: string;
@@ -30,12 +28,7 @@ export function useStripeConfig() {
         throw new Error(data?.error || "Impossible de vérifier la configuration Stripe");
       }
 
-      const status = data.data as StripeConfigStatus;
-      return {
-        ...status,
-        secretKeyConfigured: status.secretKeyConfigured ?? status.hasSecretKey ?? false,
-        webhookSecretConfigured: status.webhookSecretConfigured ?? status.hasWebhookSecret ?? false,
-      };
+      return data.data as StripeConfigStatus;
     },
     staleTime: 30_000,
   });

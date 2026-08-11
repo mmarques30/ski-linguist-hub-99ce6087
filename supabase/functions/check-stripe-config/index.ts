@@ -1,9 +1,4 @@
-import { getStripeMode, validateStripeSecretKey } from "../_shared/stripe.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { getStripeMode, stripeCorsHeaders as corsHeaders, validateStripeKey } from "../_shared/stripe.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -16,34 +11,20 @@ Deno.serve(async (req) => {
     : null;
 
   const secretKey = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
-  const hasSecretKey = Boolean(secretKey);
-  const hasWebhookSecret = Boolean(Deno.env.get("STRIPE_WEBHOOK_SECRET"));
-
-  let keyValid = false;
-  let mode: "test" | "live" | null = getStripeMode(secretKey);
-  let keyError: string | undefined;
-
-  if (hasSecretKey) {
-    const validation = await validateStripeSecretKey(secretKey);
-    keyValid = validation.valid;
-    mode = validation.mode;
-    keyError = validation.error;
-  }
-
-  const configured = hasSecretKey && hasWebhookSecret && keyValid;
+  const webhookSecretConfigured = Boolean(Deno.env.get("STRIPE_WEBHOOK_SECRET"));
+  const validation = secretKey ? await validateStripeKey(secretKey) : { valid: false, mode: null };
+  const mode = validation.mode ?? getStripeMode(secretKey);
 
   return new Response(
     JSON.stringify({
       success: true,
       data: {
-        secretKeyConfigured: hasSecretKey,
-        webhookSecretConfigured: hasWebhookSecret,
-        hasSecretKey,
-        hasWebhookSecret,
-        keyValid,
+        secretKeyConfigured: Boolean(secretKey),
+        secretKeyValid: validation.valid,
+        secretKeyError: validation.valid ? null : validation.error ?? null,
+        webhookSecretConfigured,
         mode,
-        configured,
-        keyError,
+        configured: Boolean(secretKey) && validation.valid && webhookSecretConfigured,
         webhookUrl,
         checkoutFunction: "create-registration-checkout",
         webhookFunction: "stripe-webhook",
