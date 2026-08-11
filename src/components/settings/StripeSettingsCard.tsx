@@ -8,7 +8,9 @@ import { CheckCircle2, Copy, ExternalLink, Loader2, XCircle } from "lucide-react
 import { toast } from "sonner";
 import { useStripeConfig } from "@/hooks/useStripeConfig";
 
-const LOVABLE_EDITOR_URL = "https://lovable.dev/projects/34e71e1a-49f7-433e-bb36-fc4d26e86f8e";
+const SUPABASE_PROJECT_URL =
+  "https://supabase.com/dashboard/project/nghkrmvakjomzmfwdhbo/settings/functions";
+const GITHUB_REPO_URL = "https://github.com/mmarques30/ski-linguist-hub-99ce6087";
 const STRIPE_TEST_KEYS_URL = "https://dashboard.stripe.com/test/apikeys";
 const STRIPE_LIVE_KEYS_URL = "https://dashboard.stripe.com/apikeys";
 const STRIPE_TEST_WEBHOOKS_URL = "https://dashboard.stripe.com/test/webhooks";
@@ -115,10 +117,11 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
               </li>
               <li>
                 Dans{" "}
-                <a href={LOVABLE_EDITOR_URL} target="_blank" rel="noreferrer" className="underline font-medium">
-                  Lovable → Cloud → Secrets
+                <a href={SUPABASE_PROJECT_URL} target="_blank" rel="noreferrer" className="underline font-medium">
+                  Supabase → Edge Functions → Secrets
                 </a>
-                , ajoutez <code>STRIPE_SECRET_KEY</code>.
+                , ajoutez <code>STRIPE_SECRET_KEY</code> (ou via CLI :{" "}
+                <code>supabase secrets set STRIPE_SECRET_KEY=sk_test_...</code>).
               </li>
               <li>
                 Créez un webhook dans{" "}
@@ -129,12 +132,15 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
                 <code>checkout.session.completed</code>.
               </li>
               <li>
-                Ajoutez le signing secret dans Lovable Cloud Secrets sous{" "}
+                Ajoutez le signing secret dans Supabase Edge Function Secrets sous{" "}
                 <code>STRIPE_WEBHOOK_SECRET</code> (<code>whsec_...</code>).
               </li>
               <li>
-                Redéployez l&apos;application, puis testez une inscription avec la carte{" "}
-                <code>4242 4242 4242 4242</code> (mode test).
+                Déployez les fonctions depuis le repo GitHub :{" "}
+                <code>supabase functions deploy stripe-webhook check-stripe-config create-registration-checkout</code>
+              </li>
+              <li>
+                Testez une inscription avec la carte <code>4242 4242 4242 4242</code> (mode test).
               </li>
             </ol>
           </AlertDescription>
@@ -164,9 +170,15 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
 
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline">
-            <a href={LOVABLE_EDITOR_URL} target="_blank" rel="noreferrer">
+            <a href={SUPABASE_PROJECT_URL} target="_blank" rel="noreferrer">
               <ExternalLink className="mr-2 h-4 w-4" />
               {configureLabel}
+            </a>
+          </Button>
+          <Button asChild variant="outline">
+            <a href={GITHUB_REPO_URL} target="_blank" rel="noreferrer">
+              <ExternalLink className="mr-2 h-4 w-4" />
+              GitHub
             </a>
           </Button>
           <Button asChild variant="outline">
