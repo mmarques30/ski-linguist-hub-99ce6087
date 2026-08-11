@@ -1,16 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { stripeCorsHeaders as corsHeaders, verifyStripeSignature } from "../_shared/stripe.ts";
 import {
   getInscriptionPaymentFields,
   isValidPaymentOption,
   normalizePaymentOption,
   REGISTRATION_PAYMENT_OPTIONS,
 } from "../_shared/registration-payments.ts";
-import { verifyStripeWebhookSignature } from "../_shared/stripe.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
-};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -26,7 +21,7 @@ Deno.serve(async (req) => {
 
     const signature = req.headers.get("stripe-signature");
     const payload = await req.text();
-    if (!signature || !(await verifyStripeWebhookSignature(payload, signature, webhookSecret))) {
+    if (!signature || !(await verifyStripeSignature(payload, signature, webhookSecret))) {
       return new Response("Invalid signature", { status: 400 });
     }
 
