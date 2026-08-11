@@ -34,7 +34,7 @@ import {
   Edit,
   Package,
   Receipt,
-  Trash2
+  Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
@@ -42,6 +42,12 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useDeleteInscription } from "@/hooks/useInscriptions";
 import { toast } from "sonner";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { InscriptionFormDialog } from "@/components/inscriptions/InscriptionFormDialog";
+import { EndPackDialog } from "@/components/endpack/EndPackDialog";
+import { InvoiceCreateDialog } from "@/components/invoices/InvoiceCreateDialog";
+import { ScheduleApprovalDialog } from "@/components/inscriptions/ScheduleApprovalDialog";
+import { PlacementTestSummaryCard } from "@/components/inscriptions/PlacementTestSummaryCard";
+import { InscriptionDocumentsCard } from "@/components/inscriptions/InscriptionDocumentsCard";
 
 const translations = {
   back: { fr: "Retour", "pt-BR": "Voltar", en: "Back" },
@@ -104,6 +110,10 @@ export default function InscriptionDetails() {
   const { canEdit } = useUserPermissions();
   const editable = canEdit("inscriptions");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [endPackOpen, setEndPackOpen] = useState(false);
+  const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const deleteInscription = useDeleteInscription();
   const getDateLocale = () => {
     switch (language) {
@@ -227,15 +237,19 @@ export default function InscriptionDetails() {
           </div>
           {editable && (
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
                 <Edit className="mr-2 h-4 w-4" />
                 {t(translations.editInscription)}
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => setEndPackOpen(true)}>
                 <Package className="mr-2 h-4 w-4" />
                 {t(translations.endPack)}
               </Button>
-              <Button size="sm">
+              <Button variant="outline" size="sm" onClick={() => setScheduleDialogOpen(true)}>
+                <Clock className="mr-2 h-4 w-4" />
+                Horaire
+              </Button>
+              <Button size="sm" onClick={() => setInvoiceDialogOpen(true)}>
                 <Receipt className="mr-2 h-4 w-4" />
                 {t(translations.createInvoice)}
               </Button>
@@ -516,6 +530,11 @@ export default function InscriptionDetails() {
                 </div>
               </CardContent>
             </Card>
+
+            <PlacementTestSummaryCard
+              testId={(inscription as { entry_test_id?: string | null }).entry_test_id}
+              fallbackScore={inscription.entry_test_score}
+            />
           </TabsContent>
 
           {/* Financial Tab */}
@@ -602,15 +621,13 @@ export default function InscriptionDetails() {
 
           {/* Documents Tab */}
           <TabsContent value="documents" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">{t(translations.documents)}</CardTitle>
-                <CardDescription>Documents envoyés pour cette inscription</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">Aucun document envoyé pour le moment.</p>
-              </CardContent>
-            </Card>
+            <InscriptionDocumentsCard
+              inscriptionId={inscription.id}
+              modality={inscription.modality}
+              courseLocation={inscription.course_location}
+              observations={inscription.observations}
+              studentEmail={inscription.student_email}
+            />
           </TabsContent>
         </Tabs>
       </div>
@@ -650,6 +667,67 @@ export default function InscriptionDetails() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {inscription && (
+        <>
+          <InscriptionFormDialog
+            open={editDialogOpen}
+            onOpenChange={setEditDialogOpen}
+            inscription={{
+              id: inscription.id,
+              student_id: inscription.student_id,
+              instructor_id: inscription.instructor_id,
+              ski_school_id: inscription.ski_school_id,
+              language: inscription.language,
+              start_date: inscription.start_date,
+              end_date: inscription.end_date,
+              duration_hours: inscription.duration_hours,
+              price: inscription.price,
+              entry_level: inscription.entry_level,
+              modality: inscription.modality,
+              course_location: inscription.course_location,
+              observations: inscription.observations,
+            }}
+          />
+
+          <EndPackDialog
+            open={endPackOpen}
+            onOpenChange={setEndPackOpen}
+            inscription={{
+              id: inscription.id,
+              student_id: inscription.student_id || "",
+              student_name: inscription.student_name || "",
+              language: inscription.language,
+              entry_level: inscription.entry_level,
+              exit_level: (inscription as Record<string, unknown>).exit_level as string | null,
+              duration_hours: inscription.duration_hours,
+              price: inscription.price,
+              code: inscription.code,
+            }}
+          />
+
+          <InvoiceCreateDialog
+            open={invoiceDialogOpen}
+            onOpenChange={setInvoiceDialogOpen}
+            defaultInscriptionId={inscription.id}
+          />
+
+          <ScheduleApprovalDialog
+            open={scheduleDialogOpen}
+            onOpenChange={setScheduleDialogOpen}
+            inscription={{
+              id: inscription.id,
+              code: inscription.code,
+              student_name: inscription.student_name,
+              language: inscription.language,
+              start_date: inscription.start_date,
+              entry_level: inscription.entry_level,
+              schedule_status: (inscription as { schedule_status?: string }).schedule_status,
+              schedule: (inscription as { schedule?: string }).schedule,
+            }}
+          />
+        </>
+      )}
     </MainLayout>
   );
 }

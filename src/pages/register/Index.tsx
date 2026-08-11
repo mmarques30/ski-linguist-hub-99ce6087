@@ -1,14 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ChevronLeft } from "lucide-react";
 import fliLogo from "@/assets/fli-logo.png";
+import { CourseSelectionStep } from "@/components/registration/CourseSelectionStep";
 import { PersonalInfoStep } from "@/components/registration/PersonalInfoStep";
 import { ProfessionalProfileStep } from "@/components/registration/ProfessionalProfileStep";
-import { TrainingConfigStep } from "@/components/registration/TrainingConfigStep";
 import { PlacementTestStep } from "@/components/registration/PlacementTestStep";
 import { ExpectationsStep } from "@/components/registration/ExpectationsStep";
+import { PaymentStep } from "@/components/registration/PaymentStep";
 import { ConfirmationStep } from "@/components/registration/ConfirmationStep";
+import { isRegistrationLanguageKey } from "@/lib/registration-languages";
+import type { RegistrationPaymentOption } from "@/lib/registration-payments";
 
 export interface RegistrationData {
   // Informations personnelles
@@ -21,41 +25,75 @@ export interface RegistrationData {
   postalCode: string;
   city: string;
   hasHandicap: boolean;
-  
+
   // Profil professionnel
   profession: "ski_instructor" | "other";
   skiSchool: string;
-  
-  // Configuration de la formation
+
+  // Formation (catalogue registration_offerings)
+  offeringId?: string;
   fundingType: string;
   modality: string;
   language: string;
   duration: string;
   location: string;
+  locationLabel?: string;
   dates: string;
-  
+  dateKey?: string;
+  dateLabel?: string;
+  startDate?: string;
+  endDate?: string;
+  price?: number;
+  isCustomFormat?: boolean;
+  customFormatDetails?: string;
+
   // Test de niveau
   hasBeenEvaluated: boolean;
   currentLevel: string;
   testScore: number;
-  
+  correctAnswers?: number;
+  needsAdminCall?: boolean;
+  testAnswers?: Record<string, string>;
+  testSummary?: {
+    slopeResults: Array<{ slope: string; correct: number; total: number; passed: boolean }>;
+    passedSlopes: string[];
+    highestSlopeReached: string;
+    endedAtVocab: boolean;
+  };
+
   // Attentes
   expectations: string;
   certification: string;
+
+  // Paiement
+  paymentOption?: RegistrationPaymentOption;
 }
 
 const steps = [
-  { id: 1, name: "Informations personnelles" },
-  { id: 2, name: "Profil professionnel" },
-  { id: 3, name: "Configuration formation" },
+  { id: 1, name: "Lieu et formation" },
+  { id: 2, name: "Informations personnelles" },
+  { id: 3, name: "Profil professionnel" },
   { id: 4, name: "Test de niveau" },
   { id: 5, name: "Attentes" },
-  { id: 6, name: "Confirmation" },
+  { id: 6, name: "Paiement" },
+  { id: 7, name: "Confirmation" },
 ];
 
 export default function Register() {
+  const [searchParams] = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<Partial<RegistrationData>>({});
+
+  useEffect(() => {
+    const testLang = searchParams.get("test") || searchParams.get("lang");
+    if (testLang && isRegistrationLanguageKey(testLang)) {
+      setFormData((prev) => ({
+        ...prev,
+        language: testLang,
+        hasBeenEvaluated: false,
+      }));
+    }
+  }, [searchParams]);
 
   const progress = (currentStep / steps.length) * 100;
 
@@ -79,7 +117,7 @@ export default function Register() {
     switch (currentStep) {
       case 1:
         return (
-          <PersonalInfoStep
+          <CourseSelectionStep
             data={formData}
             onUpdate={updateFormData}
             onNext={nextStep}
@@ -87,7 +125,7 @@ export default function Register() {
         );
       case 2:
         return (
-          <ProfessionalProfileStep
+          <PersonalInfoStep
             data={formData}
             onUpdate={updateFormData}
             onNext={nextStep}
@@ -95,7 +133,7 @@ export default function Register() {
         );
       case 3:
         return (
-          <TrainingConfigStep
+          <ProfessionalProfileStep
             data={formData}
             onUpdate={updateFormData}
             onNext={nextStep}
@@ -118,6 +156,14 @@ export default function Register() {
           />
         );
       case 6:
+        return (
+          <PaymentStep
+            data={formData}
+            onUpdate={updateFormData}
+            onNext={nextStep}
+          />
+        );
+      case 7:
         return <ConfirmationStep data={formData as RegistrationData} />;
       default:
         return null;

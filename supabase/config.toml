@@ -8,3 +8,18 @@ verify_jwt = false
 
 [functions.create-user]
 verify_jwt = false
+
+[functions.import-ski-monitors]
+verify_jwt = false
+
+[functions.submit-registration]
+verify_jwt = false
+
+[functions.create-registration-checkout]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.check-stripe-config]
+verify_jwt = false
