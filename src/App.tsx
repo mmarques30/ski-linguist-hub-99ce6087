@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { StudentProtectedRoute } from "@/components/auth/StudentProtectedRoute";
 import { LanguageProvider } from "@/contexts/LanguageContext";
@@ -14,7 +14,6 @@ import Invoices from "./pages/Invoices";
 import Students from "./pages/Students";
 import StudentDetails from "./pages/students/StudentDetails";
 import PlacementTests from "./pages/PlacementTests";
-import Classes from "./pages/Classes";
 import Sessions from "./pages/Sessions";
 import Documents from "./pages/Documents";
 import Settings from "./pages/Settings";
@@ -28,6 +27,7 @@ import EvaluationsList from "./pages/formateur/EvaluationsList";
 import EvaluationForm from "./pages/formateur/EvaluationForm";
 import EvaluationView from "./pages/formateur/EvaluationView";
 import Register from "./pages/register/Index";
+import { PaymentSuccessPage, PaymentCancelPage } from "./pages/register/PaymentReturn";
 import SatisfactionSurvey from "./pages/survey/SatisfactionSurvey";
 import ContinuousImprovement from "./pages/ContinuousImprovement";
 import SatisfactionStats from "./pages/SatisfactionStats";
@@ -51,6 +51,7 @@ import StudentDocuments from "./pages/student/StudentDocuments";
 import StudentEvaluation from "./pages/student/StudentEvaluation";
 import StudentPlanning from "./pages/student/StudentPlanning";
 import CommercialDashboard from "./pages/commercial/CommercialDashboard";
+import MoniteursSki from "./pages/moniteurs/MoniteursSki";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +67,8 @@ const App = () => (
             {/* Public routes */}
             <Route path="/auth" element={<Auth />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/register/payment-success" element={<PaymentSuccessPage />} />
+            <Route path="/register/payment-cancel" element={<PaymentCancelPage />} />
             <Route path="/survey/:token" element={<SatisfactionSurvey />} />
             
             {/* Protected admin routes */}
@@ -77,6 +80,7 @@ const App = () => (
             <Route path="/finance/payments" element={<ProtectedRoute><FinancePayments /></ProtectedRoute>} />
             <Route path="/finance/charges-fixes" element={<ProtectedRoute><FinanceChargesFixes /></ProtectedRoute>} />
             <Route path="/gestion/commercial" element={<ProtectedRoute><CommercialDashboard /></ProtectedRoute>} />
+            <Route path="/gestion/moniteurs" element={<ProtectedRoute><MoniteursSki /></ProtectedRoute>} />
             <Route path="/gestion/partenaires" element={<ProtectedRoute><PartnersList /></ProtectedRoute>} />
             <Route path="/gestion/partenaires/:id" element={<ProtectedRoute><PartnerDetails /></ProtectedRoute>} />
             <Route path="/inscriptions" element={<ProtectedRoute><Inscriptions /></ProtectedRoute>} />
@@ -85,7 +89,7 @@ const App = () => (
             <Route path="/students" element={<ProtectedRoute><Students /></ProtectedRoute>} />
             <Route path="/students/:id" element={<ProtectedRoute><StudentDetails /></ProtectedRoute>} />
             <Route path="/tests" element={<ProtectedRoute><PlacementTests /></ProtectedRoute>} />
-            <Route path="/classes" element={<ProtectedRoute><Classes /></ProtectedRoute>} />
+            <Route path="/classes" element={<Navigate to="/formation/sessions" replace />} />
             <Route path="/formation/sessions" element={<ProtectedRoute><Sessions /></ProtectedRoute>} />
             <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />

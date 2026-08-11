@@ -6,13 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Building2, MapPin, Mail, Phone, Users } from "lucide-react";
+import { Plus, Search, Building2, MapPin, Mail, Phone, Users, Upload } from "lucide-react";
 import { usePartners, usePartnerStats } from "@/hooks/usePartners";
 import { PartnerFormDialog } from "@/components/partners/PartnerFormDialog";
+import { EsfDirectorsImportDialog } from "@/components/partners/EsfDirectorsImportDialog";
 import { StatCard } from "@/components/dashboard/StatCard";
 
 const TYPE_LABELS: Record<string, string> = {
   esf: "ESF",
+  ecole_ski: "École de ski",
   hotel: "Hôtel",
   remontees_mecaniques: "Remontées méc.",
   office_tourisme: "Office tourisme",
@@ -31,6 +33,7 @@ export default function PartnersList() {
   const [typeFilter, setTypeFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const { data: partners = [], isLoading } = usePartners({
     type: typeFilter || undefined,
@@ -47,9 +50,14 @@ export default function PartnersList() {
             <h1 className="text-2xl font-bold text-foreground">Partenaires</h1>
             <p className="text-muted-foreground">Gestion des partenariats ESF et autres</p>
           </div>
-          <Button onClick={() => setFormOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" /> Nouveau partenaire
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <Upload className="h-4 w-4 mr-2" /> BD ESF
+            </Button>
+            <Button onClick={() => setFormOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" /> Nouveau partenaire
+            </Button>
+          </div>
         </div>
 
         {/* KPIs */}
@@ -92,6 +100,7 @@ export default function PartnersList() {
             <SelectContent>
               <SelectItem value="all">Tous les types</SelectItem>
               <SelectItem value="esf">ESF</SelectItem>
+              <SelectItem value="ecole_ski">École de ski</SelectItem>
               <SelectItem value="hotel">Hôtel</SelectItem>
               <SelectItem value="remontees_mecaniques">Remontées méc.</SelectItem>
               <SelectItem value="office_tourisme">Office tourisme</SelectItem>
@@ -155,6 +164,7 @@ export default function PartnersList() {
       </div>
 
       <PartnerFormDialog open={formOpen} onOpenChange={setFormOpen} />
+      <EsfDirectorsImportDialog open={importOpen} onOpenChange={setImportOpen} />
     </MainLayout>
   );
 }

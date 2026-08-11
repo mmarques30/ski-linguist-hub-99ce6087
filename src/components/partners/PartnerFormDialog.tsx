@@ -15,6 +15,7 @@ interface Props {
 
 const TYPES = [
   { value: "esf", label: "ESF" },
+  { value: "ecole_ski", label: "École de ski (non-ESF)" },
   { value: "hotel", label: "Hôtel" },
   { value: "remontees_mecaniques", label: "Remontées mécaniques" },
   { value: "office_tourisme", label: "Office de tourisme" },

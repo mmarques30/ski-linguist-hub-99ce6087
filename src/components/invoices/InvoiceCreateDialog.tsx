@@ -26,6 +26,7 @@ import { useQuery } from "@tanstack/react-query";
 interface InvoiceCreateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  defaultInscriptionId?: string;
 }
 
 interface InscriptionOption {
@@ -37,7 +38,7 @@ interface InscriptionOption {
   price: number | null;
 }
 
-export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogProps) {
+export function InvoiceCreateDialog({ open, onOpenChange, defaultInscriptionId }: InvoiceCreateDialogProps) {
   const [formData, setFormData] = useState({
     inscription_id: "",
     invoice_date: new Date().toISOString().split("T")[0],
@@ -103,7 +104,7 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
       dueDate.setDate(dueDate.getDate() + 30);
 
       setFormData({
-        inscription_id: "",
+        inscription_id: defaultInscriptionId || "",
         invoice_date: today.toISOString().split("T")[0],
         due_date: dueDate.toISOString().split("T")[0],
         invoice_type: "formation",
@@ -114,7 +115,7 @@ export function InvoiceCreateDialog({ open, onOpenChange }: InvoiceCreateDialogP
         notes: "",
       });
     }
-  }, [open]);
+  }, [open, defaultInscriptionId]);
 
   // Mettre à jour le taux de TVA selon le type de facture
   useEffect(() => {

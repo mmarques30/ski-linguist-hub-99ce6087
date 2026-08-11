@@ -18,14 +18,14 @@
 ### Teste de Login
 1. Acesse `/auth`
 2. Insira credenciais válidas
-3. ✅ Deve redirecionar para Dashboard
+3. ✅ Deve redirecionar para Dashboard (`/`)
 
 ### Teste de Logout
 1. Clique no botão de logout no Sidebar
 2. ✅ Deve redirecionar para `/auth`
 
 ### Rota Protegida
-1. Sem login, acesse `/dashboard`
+1. Sem login, acesse `/inscriptions`
 2. ✅ Deve redirecionar para `/auth`
 
 ---
@@ -81,8 +81,13 @@
 ## 📊 Testes de Posicionamento
 
 ### Visualizar Testes
-1. Vá para `/placement-tests`
-2. ✅ Lista de testes com estatísticas
+1. Vá para `/tests`
+2. ✅ Lista de testes com links públicos
+
+### Inscrição Pública
+1. Acesse `/register`
+2. Preencha todas as etapas incluindo teste de 20 questões
+3. ✅ Inscrição salva com código FLI e aparece em `/inscriptions`
 
 ---
 
@@ -115,7 +120,7 @@
 ## 💹 Finanças
 
 ### Dashboard Financeiro
-1. Vá para `/finance/dashboard`
+1. Vá para `/finance`
 2. ✅ KPIs atualizados
 
 ### Charges Fixes
@@ -131,7 +136,44 @@
 
 ## 📧 Relances Automáticas
 
-### Teste Dry-Run (sem enviar emails)
+### Alertas de validação de horários (J-10)
+
+Envia email para Paula (`info@fli.fr`) quando inscrições com `schedule_status = pending` começam em 10 dias.
+
+#### Teste Dry-Run
+
+```bash
+curl -X POST "https://nghkrmvakjomzmfwdhbo.supabase.co/functions/v1/process-schedule-reminders?dry_run=true" \
+  -H "Authorization: Bearer <SUPABASE_ANON_KEY>"
+```
+
+#### Resposta esperada (sem inscrições elegíveis)
+
+```json
+{
+  "success": true,
+  "results": {
+    "dryRun": true,
+    "targetDate": "2026-08-07",
+    "totalPending": 0,
+    "emailSent": false
+  },
+  "summary": "No inscriptions to process"
+}
+```
+
+#### Preparar dados de teste
+
+```sql
+UPDATE inscriptions
+SET start_date = CURRENT_DATE + INTERVAL '10 days',
+    schedule_status = 'pending',
+    schedule_reminder_sent_at = NULL,
+    status = 'confirmee'
+WHERE id = 'SEU_INSCRIPTION_ID';
+```
+
+### Relances de faturas
 
 #### Via Terminal:
 ```bash
