@@ -1,5 +1,4 @@
 import { Euro, Percent, Target, UserPlus } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { tx } from "./translations";
 import { DeltaBadge, GoalGauge } from "./primitives";
@@ -144,17 +143,6 @@ export function KpiBand() {
           </div>
         </div>
       </KpiShell>
-    </div>
-  );
-}
-
-/** Shared grid wrapper so the band can be reused at other breakpoints. */
-export function KpiBandSkeletonGrid({ className }: { className?: string }) {
-  return (
-    <div className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4", className)}>
-      {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="h-32 animate-pulse rounded-2xl border border-border bg-muted/40" />
-      ))}
     </div>
   );
 }
