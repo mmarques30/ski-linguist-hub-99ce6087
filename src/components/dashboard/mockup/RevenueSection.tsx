@@ -44,9 +44,10 @@ function RevenueMixCard() {
       description={t(tx.revenueMixDesc)}
       icon={<PieIcon className="h-[18px] w-[18px]" />}
       className="lg:col-span-2"
+      contentClassName="flex items-center"
     >
       {/* Donut and legend sit side by side from `sm` up, stacked on phones. */}
-      <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-6">
+      <div className="flex w-full flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-6">
         <div className="relative h-[196px] w-[196px] shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -60,6 +61,7 @@ function RevenueMixCard() {
                 stroke="none"
                 startAngle={90}
                 endAngle={-270}
+                isAnimationActive={false}
               >
                 {data.map((slice) => (
                   <Cell key={slice.key} fill={`hsl(${slice.color})`} />
@@ -172,19 +174,9 @@ function MarginTrendCard() {
         <DeltaBadge value={9.7} trend="up" />
       </div>
 
-      <div className="mt-3 h-[132px] w-full">
+      <div className="mt-3 h-[148px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={revenueVsCosts} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
-            <defs>
-              <linearGradient id="fli-revenue-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="hsl(var(--fli-yellow))" stopOpacity={0.45} />
-                <stop offset="100%" stopColor="hsl(var(--fli-yellow))" stopOpacity={0.02} />
-              </linearGradient>
-              <linearGradient id="fli-costs-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="hsl(var(--fli-blue))" stopOpacity={0.28} />
-                <stop offset="100%" stopColor="hsl(var(--fli-blue))" stopOpacity={0.02} />
-              </linearGradient>
-            </defs>
+          <AreaChart data={revenueVsCosts}>
             <XAxis
               dataKey="month"
               tickLine={false}
@@ -192,7 +184,7 @@ function MarginTrendCard() {
               tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
               interval="preserveStartEnd"
             />
-            <YAxis hide />
+            <YAxis hide domain={[0, "dataMax"]} />
             <Tooltip
               contentStyle={{
                 borderRadius: 12,
@@ -206,12 +198,23 @@ function MarginTrendCard() {
                 key === "revenue" ? t(tx.legendRevenue) : t(tx.legendCosts),
               ]}
             />
+            <defs>
+              <linearGradient id="fli-revenue-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="hsl(var(--fli-yellow))" stopOpacity={0.45} />
+                <stop offset="100%" stopColor="hsl(var(--fli-yellow))" stopOpacity={0.02} />
+              </linearGradient>
+              <linearGradient id="fli-costs-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="hsl(var(--fli-blue))" stopOpacity={0.28} />
+                <stop offset="100%" stopColor="hsl(var(--fli-blue))" stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
             <Area
               type="monotone"
               dataKey="costs"
               stroke="hsl(var(--fli-blue))"
               strokeWidth={2}
               fill="url(#fli-costs-fill)"
+              isAnimationActive={false}
             />
             <Area
               type="monotone"
@@ -219,6 +222,7 @@ function MarginTrendCard() {
               stroke="hsl(var(--fli-yellow))"
               strokeWidth={2.5}
               fill="url(#fli-revenue-fill)"
+              isAnimationActive={false}
             />
           </AreaChart>
         </ResponsiveContainer>

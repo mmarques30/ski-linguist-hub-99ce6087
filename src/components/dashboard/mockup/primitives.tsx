@@ -93,7 +93,10 @@ export function SectionCard({
             </span>
           )}
           <div className="min-w-0">
-            <h2 className="truncate text-base font-semibold tracking-tight sm:text-lg">{title}</h2>
+            {/* Wraps rather than truncates: these titles are long in French. */}
+            <h2 className="text-base font-semibold leading-snug tracking-tight sm:text-lg">
+              {title}
+            </h2>
             {description && (
               <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">{description}</p>
             )}

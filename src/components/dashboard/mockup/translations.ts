@@ -41,6 +41,7 @@ export const tx = {
   kpiMarginHint: { fr: "Après coûts directs", "pt-BR": "Após custos diretos", en: "After direct costs" },
   kpiGoal: { fr: "Objectif de saison", "pt-BR": "Meta da temporada", en: "Season goal" },
   kpiGoalHint: { fr: "Objectif", "pt-BR": "Meta", en: "Target" },
+  kpiGoalRemaining: { fr: "Reste à réaliser", "pt-BR": "Falta realizar", en: "Remaining" },
   kpiInscriptions: { fr: "Nouvelles inscriptions", "pt-BR": "Novas inscrições", en: "New enrolments" },
   kpiInscriptionsHint: { fr: "confirmées", "pt-BR": "confirmadas", en: "confirmed" },
   pendingShort: { fr: "en attente", "pt-BR": "pendentes", en: "pending" },
@@ -81,6 +82,8 @@ export const tx = {
   funnelInvoiced: { fr: "Facturées", "pt-BR": "Faturadas", en: "Invoiced" },
   funnelPaid: { fr: "Encaissées", "pt-BR": "Recebidas", en: "Collected" },
   globalConversion: { fr: "Conversion globale", "pt-BR": "Conversão global", en: "End-to-end conversion" },
+  ofEntry: { fr: "du volume initial", "pt-BR": "do volume inicial", en: "of entry volume" },
+  stepConversion: { fr: "Conversion vers l'étape suivante", "pt-BR": "Conversão para a etapa seguinte", en: "Conversion to next stage" },
 
   // Inscriptions table
   tableTitle: { fr: "Inscriptions récentes", "pt-BR": "Inscrições recentes", en: "Recent enrolments" },

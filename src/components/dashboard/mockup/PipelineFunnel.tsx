@@ -77,7 +77,7 @@ export function PipelineFunnel() {
                 </div>
 
                 <p className="mt-1.5 text-[11px] tabular-nums text-muted-foreground">
-                  {share.toFixed(0)}% {t(tx.funnelLeads).toLowerCase()}
+                  {share.toFixed(0)}% {t(tx.ofEntry)}
                 </p>
               </Link>
 
@@ -85,7 +85,7 @@ export function PipelineFunnel() {
               {conversion !== null && (
                 <span
                   className="mt-1 inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold tabular-nums text-muted-foreground lg:absolute lg:-right-1 lg:top-9 lg:z-10 lg:mt-0 lg:border lg:border-border lg:bg-card"
-                  title={t(tx.globalConversion)}
+                  title={t(tx.stepConversion)}
                 >
                   <ChevronRight className="h-3 w-3" aria-hidden />
                   {conversion.toFixed(0)}%

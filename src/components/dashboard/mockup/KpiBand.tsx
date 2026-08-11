@@ -93,7 +93,7 @@ export function KpiBand() {
       {/* Season goal — gauge, mirroring the reference's revenue-goal card */}
       <KpiShell
         label={t(tx.kpiGoal)}
-        hint={`${t(tx.kpiGoalHint)}: ${f.currency(seasonGoal.target, true)}`}
+        hint={t(tx.kpiGoalHint)}
         icon={<Target className="h-[18px] w-[18px]" />}
         accent="var(--fli-orange)"
       >
@@ -105,10 +105,13 @@ export function KpiBand() {
           </GoalGauge>
           <div className="min-w-0 space-y-1">
             <p className="truncate text-sm font-semibold tabular-nums">
-              {f.currency(seasonGoal.achieved, true)}
+              {f.currency(seasonGoal.achieved, true)} / {f.currency(seasonGoal.target, true)}
             </p>
             <p className="text-xs text-muted-foreground">
-              / {f.currency(seasonGoal.target, true)}
+              {t(tx.kpiGoalRemaining)}:{" "}
+              <span className="font-medium tabular-nums text-[hsl(var(--fli-orange))]">
+                {f.currency(seasonGoal.target - seasonGoal.achieved, true)}
+              </span>
             </p>
           </div>
         </div>
