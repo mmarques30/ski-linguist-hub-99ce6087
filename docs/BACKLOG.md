@@ -2,7 +2,7 @@
 
 Règle : noter ici, **ne pas corriger** tant que le point courant n’est pas validé et que Paula n’a pas ouvert le sujet.
 
-Dernière mise à jour : 2026-09-09 (pendant le point 2 — exercice fiscal / numérotation).
+Dernière mise à jour : 2026-09-09 (point 2 validé ; complément historique + plancher séquence).
 
 ## Ouvert
 
@@ -31,5 +31,6 @@ Dernière mise à jour : 2026-09-09 (pendant le point 2 — exercice fiscal / nu
 | Point | Statut |
 |-------|--------|
 | 1 — Import sécurisé | Validé Paula 2026-09-09 (audit général reporté) |
-| 2 — Exercice + numérotation | En attente validation |
-| 3–10 | Non démarrés |
+| 2 — Exercice + numérotation | Validé Paula 2026-09-09 (complément dates oct–sep + Fact FLI documenté) |
+| 3 — Import formateur·rices | En cours |
+| 4–10 | Non démarrés |

@@ -61,7 +61,8 @@ BEGIN
   END IF;
 
   IF NEW.invoice_number IS NULL THEN
-    SELECT COALESCE(MAX(sequence_number), 14297)
+    -- Plancher Excel 14297 même si des historiques importés ont une séquence plus basse
+    SELECT GREATEST(COALESCE(MAX(sequence_number), 0), 14297)
       INTO max_seq
       FROM public.invoices;
 
