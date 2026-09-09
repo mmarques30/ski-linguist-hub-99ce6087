@@ -208,7 +208,11 @@ export function useFliInscriptionsImport() {
                 instructor_accommodation_dates: row.instructor_accommodation_dates,
                 instructor_accommodation_address: row.instructor_accommodation_address,
                 instructor_accommodation_notes: row.instructor_accommodation_notes,
-              })
+                // Libellé Excel conservé pour rapprochement manuel (Paula) avant rattachement
+                formateur: row.instructor_name,
+                formateur_email: row.instructor_email,
+                formateur_telephone: row.instructor_phone,
+              } as any)
               .select("id, code")
               .single();
 

@@ -519,6 +519,21 @@ export default function Import() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {selectedTable === "instructors" && (
+              <Alert className="mb-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Formateur·rices — colonnes FR acceptées</AlertTitle>
+                <AlertDescription className="text-sm">
+                  Nom, Prénom, Civilité, Email, Téléphone, Langues, Statut (
+                  actif / inactif / candidat), Statut administratif, SIRET,
+                  Identifiant étranger, Assujetti TVA, Adresse, CP, Ville, Pays,
+                  Date de naissance, CV (lien), Formulaire 2026, Consentements,
+                  Alias. Statuts DB : actif | inactif | candidat. Les
+                  inactif·ves / candidat·es sont exclus des sélecteurs
+                  d&apos;affectation. Aucune liaison auto aux inscriptions.
+                </AlertDescription>
+              </Alert>
+            )}
             <div
               onClick={() => fileInputRef.current?.click()}
               className="flex cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed p-8 transition-colors hover:bg-muted/50"

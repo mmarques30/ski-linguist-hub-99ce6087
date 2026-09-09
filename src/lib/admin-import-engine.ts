@@ -70,6 +70,94 @@ function requireField(row: CsvRow, key: string, label: string): string {
   return v.trim();
 }
 
+/** Normalise une clé d'en-tête pour comparaison (minuscule, sans accents). */
+function normKey(key: string): string {
+  return key
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+/** Lit une cellule par liste de noms de colonnes (FR/EN, accents ignorés). */
+function cell(row: CsvRow, ...candidates: string[]): string {
+  for (const c of candidates) {
+    if (row[c] !== undefined && !isEmpty(row[c])) return row[c].trim();
+  }
+  const wanted = candidates.map(normKey);
+  for (const [k, v] of Object.entries(row)) {
+    if (wanted.includes(normKey(k)) && !isEmpty(v)) return v.trim();
+  }
+  return "";
+}
+
+/**
+ * Statut instructors (CHECK DB : actif | inactif | candidat).
+ * Passage candidat → actif = action explicite Paula (hors import).
+ */
+function mapInstructorStatus(raw: string): {
+  status: "actif" | "inactif" | "candidat";
+  is_active: boolean;
+} {
+  const s = raw.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (s === "candidat" || s === "candidate") {
+    return { status: "candidat", is_active: false };
+  }
+  if (!s || ["actif", "active", "1", "true", "oui"].includes(s)) {
+    return { status: "actif", is_active: true };
+  }
+  return { status: "inactif", is_active: false };
+}
+
+/** Consentements RGPD : oui | oui avec relecture | non | null (vide). */
+function mapConsentement(raw: string): string | null {
+  if (isEmpty(raw)) return null;
+  const s = raw.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (s === "non" || s === "no" || s === "false" || s === "0") return "non";
+  if (s.includes("relire") || s.includes("relecture")) return "oui avec relecture";
+  if (s.startsWith("oui") || s === "yes" || s === "true" || s === "1") return "oui";
+  throw new Error(`Consentement invalide : ${raw} (attendu : oui | oui avec relecture | non | vide)`);
+}
+
+function mapOuiNonBool(raw: string): boolean | null {
+  if (isEmpty(raw)) return null;
+  const s = raw.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (["oui", "yes", "true", "1"].includes(s)) return true;
+  if (["non", "no", "false", "0"].includes(s)) return false;
+  throw new Error(`Valeur oui/non invalide : ${raw}`);
+}
+
+function parseFrenchDate(raw: string): string | null {
+  if (isEmpty(raw)) return null;
+  const s = raw.trim();
+  // YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // DD/MM/YYYY
+  const m = s.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/);
+  if (m) {
+    const dd = m[1].padStart(2, "0");
+    const mm = m[2].padStart(2, "0");
+    return `${m[3]}-${mm}-${dd}`;
+  }
+  throw new Error(`Date invalide : ${raw}`);
+}
+
+function mapAlias(raw: string, firstName: string | null, lastName: string): string[] | null {
+  const aliases: string[] = [];
+  if (!isEmpty(raw)) {
+    for (const part of raw.split(/[|/]/)) {
+      const t = part.trim();
+      if (t) aliases.push(t);
+    }
+  }
+  // Toujours inclure "Prénom Nom" et "Nom" pour le rapprochement
+  const full = `${firstName || ""} ${lastName}`.trim();
+  if (full && !aliases.some((a) => a.toLowerCase() === full.toLowerCase())) {
+    aliases.push(full);
+  }
+  return aliases.length > 0 ? aliases : null;
+}
+
 function mapInscriptionStatus(status: string): string {
   const statusMap: Record<string, string> = {
     invoiced: "facturee",
@@ -88,44 +176,97 @@ function mapInscriptionStatus(status: string): string {
 }
 
 function mapInstructorRow(row: CsvRow): Record<string, unknown> {
-  const fullName = row.full_name || `${row.first_name || ""} ${row.last_name || ""}`.trim();
-  if (isEmpty(fullName) && isEmpty(row.last_name)) {
-    throw new Error("Nom manquant (full_name ou last_name)");
+  const lastName =
+    cell(row, "last_name", "Nom", "nom") ||
+    (cell(row, "full_name") ? cell(row, "full_name").split(/\s+/).slice(-1)[0] : "");
+  let firstName = cell(row, "first_name", "Prénom", "Prenom", "prenom") || null;
+  const fullName = cell(row, "full_name");
+
+  if (isEmpty(lastName) && isEmpty(fullName)) {
+    throw new Error("Nom manquant (colonne Nom / last_name / full_name)");
   }
 
-  let firstName = row.first_name?.trim() || null;
-  let lastName = row.last_name?.trim() || null;
-  if ((!firstName || !lastName) && !isEmpty(row.full_name)) {
-    const parts = row.full_name.trim().split(/\s+/);
-    firstName = parts.slice(0, -1).join(" ") || firstName || "—";
-    lastName = parts[parts.length - 1] || lastName || row.full_name;
+  let resolvedLast = lastName || "Inconnu";
+  if ((!firstName || isEmpty(resolvedLast) || resolvedLast === "Inconnu") && !isEmpty(fullName)) {
+    const parts = fullName.split(/\s+/);
+    firstName = firstName || parts.slice(0, -1).join(" ") || "—";
+    resolvedLast = parts[parts.length - 1] || fullName;
   }
 
-  const sanitizedId = sanitizeUUID(row.id || "");
-  const languagesRaw = row.languages || row.langues || "";
+  const sanitizedId = sanitizeUUID(cell(row, "id"));
+  const languagesRaw = cell(row, "languages", "langues", "Langues");
   const languages = isEmpty(languagesRaw)
     ? null
-    : languagesRaw.split(/[,;|]/).map((l) => l.trim()).filter(Boolean);
+    : languagesRaw.split(/[,|]/).map((l) => l.trim()).filter(Boolean);
 
-  const statusRaw = (row.status || row.statut || "active").toLowerCase();
-  const isActive = !["inactive", "inactif", "0", "false", "non"].includes(statusRaw);
-  const entryDate = row.start_date || row.date_entree || "";
-  // Pas de colonne start_date sur instructors : conserver la date d'entrée dans status_notes
-  const statusNotes = !isEmpty(entryDate)
-    ? `Date d'entrée : ${entryDate.trim()}`
-    : null;
+  const statusMapped = mapInstructorStatus(cell(row, "status", "statut", "Statut") || "actif");
+
+  const emailRaw = cell(row, "email", "Email");
+  const email = isEmpty(emailRaw) ? null : emailRaw.toLowerCase();
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error(`Email invalide : ${emailRaw}`);
+  }
+
+  const aliasRaw = cell(row, "Alias", "alias");
+  const statutAdmin = cell(row, "Statut administratif", "statut_administratif");
+  const entryDate = cell(row, "start_date", "date_entree", "Date d'entrée");
+  const statusNotes = !isEmpty(entryDate) ? `Date d'entrée : ${entryDate}` : null;
 
   return {
     ...(sanitizedId && { id: sanitizedId }),
     first_name: firstName,
-    last_name: lastName || "Inconnu",
-    email: isEmpty(row.email) ? null : row.email.trim().toLowerCase(),
-    phone: isEmpty(row.phone || row.telephone) ? null : (row.phone || row.telephone).trim(),
+    last_name: resolvedLast,
+    email,
+    phone: (() => {
+      const p = cell(row, "phone", "telephone", "Téléphone", "Telephone");
+      return isEmpty(p) ? null : p;
+    })(),
     languages,
-    is_active: isActive,
-    status: isActive ? "active" : "inactive",
-    siret: isEmpty(row.siret) ? null : row.siret.trim(),
-    address: isEmpty(row.address || row.adresse) ? null : (row.address || row.adresse).trim(),
+    is_active: statusMapped.is_active,
+    status: statusMapped.status,
+    civilite: (() => {
+      const c = cell(row, "civility", "Civilité", "Civilite", "civilite");
+      return isEmpty(c) ? null : c;
+    })(),
+    siret: (() => {
+      const s = cell(row, "siret", "SIRET");
+      return isEmpty(s) ? null : s;
+    })(),
+    identifiant_etranger: (() => {
+      const s = cell(row, "Identifiant étranger", "Identifiant etranger", "identifiant_etranger");
+      return isEmpty(s) ? null : s;
+    })(),
+    statut_administratif: isEmpty(statutAdmin) ? null : statutAdmin,
+    assujetti_tva: mapOuiNonBool(cell(row, "Assujetti TVA", "assujetti_tva")),
+    address: (() => {
+      const a = cell(row, "address", "adresse", "Adresse");
+      return isEmpty(a) ? null : a;
+    })(),
+    postal_code: (() => {
+      const c = cell(row, "postal_code", "CP", "cp", "code_postal");
+      return isEmpty(c) ? null : c;
+    })(),
+    city: (() => {
+      const c = cell(row, "city", "Ville", "ville");
+      return isEmpty(c) ? null : c;
+    })(),
+    pays: (() => {
+      const p = cell(row, "Pays", "country", "pays");
+      return isEmpty(p) ? null : p;
+    })(),
+    date_naissance: parseFrenchDate(cell(row, "Date de naissance", "birth_date", "date_naissance")),
+    cv_url: (() => {
+      const u = cell(row, "CV (lien)", "cv", "cv_url");
+      return isEmpty(u) ? null : u;
+    })(),
+    formulaire_2026: mapOuiNonBool(cell(row, "Formulaire 2026", "formulaire_2026")),
+    consentement_temoignage: mapConsentement(
+      cell(row, "Consentement témoignage", "Consentement temoignage", "consentement_temoignage")
+    ),
+    consentement_photo: mapConsentement(
+      cell(row, "Consentement photo", "consentement_photo")
+    ),
+    alias: mapAlias(aliasRaw, firstName, resolvedLast),
     status_notes: statusNotes,
   };
 }

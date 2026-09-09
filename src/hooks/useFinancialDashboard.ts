@@ -357,7 +357,7 @@ export function useInstructorBalance() {
       const { data: instructors } = await supabase
         .from('instructors')
         .select('id, first_name, last_name, email')
-        .eq('is_active', true);
+        .eq('status', 'actif');
       
       // Get costs by instructor
       const { data: costs } = await supabase
