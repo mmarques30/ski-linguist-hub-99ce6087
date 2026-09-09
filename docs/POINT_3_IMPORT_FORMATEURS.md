@@ -2,7 +2,7 @@
 
 **Branche :** `cursor/point3-complement-backfill-7435`  
 **Date :** 2026-09-09  
-**Statut :** A fait · B écrit (837) · C écrit (805 `instructor_id`) · B2 partiel (31/32 doublons + 35 créations) · paire 27 en attente
+**Statut :** **CLÔTURÉ** (C 805 · B2 doublons 34 · 35 créations · Exception Courchevel en attente décision)
 
 > **Confidentialité :** aucun nom de personne dans `docs/`. Listes nominatives → `/opt/cursor/artifacts/` uniquement.
 
@@ -40,3 +40,17 @@ Détails nominatifs : artifacts `point3_C_*`, `point3_B2_*`.
 2. Écriture formateur des **21** matches dry-run facturée (si validé)  
 3. Traitement des **4** unmatched restants (Felix, clones encodage Sofie, Exception Courchevel)  
 4. Prochains imports massifs via `/admin/import`  
+
+
+## Clôture 2026-09-09
+
+| Métrique | n |
+|----------|---|
+| Inscriptions | **907** |
+| Avec formateur | **861** |
+| Avec instructor_id | **840** |
+| Doublons encodage supprimés | **34** |
+| Orphelines créées | **35** |
+
+Détail hors dépôt : `/opt/cursor/artifacts/point3_cloture.md`.  
+Restant : fiche Courchevel `Exception` (décision Paula).

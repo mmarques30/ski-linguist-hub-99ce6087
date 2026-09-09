@@ -67,6 +67,12 @@ export function fixMacRomanMojibake(s: string | null | undefined): string {
   let out = "";
   for (const ch of s) {
     const o = ch.charCodeAt(0);
+    // 0x8D is unused in classic MacRoman; in FLI dumps it often stands for é (0x8E)
+    // inside « brésilien » — map to é so code/language norms align with UTF-8 CSV.
+    if (o === 0x8d) {
+      out += "é";
+      continue;
+    }
     if (o >= 0x80 && o <= 0xff) {
       out += MAC_ROMAN_HIGH[o - 0x80] || ch;
     } else {
