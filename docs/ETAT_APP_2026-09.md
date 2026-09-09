@@ -16,14 +16,16 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 | Point 2 — exercice fiscal + numérotation | #11 | `d84b056` |
 | Point 3 — formateur·rices (import, candidat, matching) | #11 | `d84b056` |
 
-**SHA `main` au moment du rapport :** `d406a8d` (ce document) ; points 1–4A + certificat fusionnés via #10/#11 (`d84b056`).
+**SHA `main` au moment du rapport :** `1c59712` (merge #13) ; points 1–4A + certificat fusionnés via #10/#11 (`d84b056`).
 
 ### Déploiement app publiée
 
 | Statut | Détail |
 |--------|--------|
-| **Non déployé confirmé** | MCP Lovable `needsAuth` — `deploy_project` impossible depuis cet agent |
-| Conséquence | Points 1–4A + certificat = **sur main non déployé** (pas encore « livré » au sens Paula) |
+| **Livré (main + déployé)** | Lovable `deploy_project` sur `34e71e1a-49f7-433e-bb36-fc4d26e86f8e` — **https://ski-linguist-hub.lovable.app** (HTTP 200, `x-deployment-id` `57a31204-49e7-4bee-8c1a-4f90ab80e18a`) |
+| Lovable commit publié | `1c597124` (= `main` post-#13) |
+| Points 1–4A + certificat | **livré** (code sur `main` + app publiée) |
+| Migration certificat DB | **appliquée live** — vue `inscriptions_complete` recréée avec colonnes bilan ; backfill déjà fait (435 `niveau_general_entree`) ; entrée `audit_log` `certificat_bilan` sans PII |
 
 ### Branches non fusionnées (reste)
 
@@ -43,11 +45,13 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 | Champ | Valeur |
 |-------|--------|
 | Dépôt | `mmarques30/ski-linguist-hub-99ce6087` |
-| Branche de référence | `main` @ `d84b056` |
+| Branche de référence | `main` @ `1c59712` |
 | App | SPA Vite + React 18 + TypeScript « FLI Formation » (Lovable) |
+| Projet Lovable | `34e71e1a-49f7-433e-bb36-fc4d26e86f8e` (Ski School Connect / ski-linguist-hub) |
 | Backend | Supabase hébergé `nghkrmvakjomzmfwdhbo` — `https://nghkrmvakjomzmfwdhbo.supabase.co` |
-| App publiée (URL) | **Inconnue / non confirmée** (publish Lovable non exécuté ce jour) |
-| Dernier déploiement | **Non confirmé** (bloqué auth MCP) |
+| App publiée (URL) | **https://ski-linguist-hub.lovable.app** |
+| Preview Lovable | https://id-preview--34e71e1a-49f7-433e-bb36-fc4d26e86f8e.lovable.app |
+| Dernier déploiement | **09/09/2026** via Lovable MCP `deploy_project` |
 | Package manager | npm (`package-lock.json` ; bun.lock aussi présent) |
 
 ---
@@ -153,15 +157,32 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 ## 4. Modèle de données
 
 **Source colonnes :** `src/integrations/supabase/types.ts` (52 tables).  
-**DDL complet :** livrable 3 `/opt/cursor/artifacts/ETAT_APP_2026-09_schema.sql` (concat migrations).  
-**Comptes de lignes :** **non disponibles** ce jour (MCP Lovable déauth + pas de service-role). TSV colonnes : `ETAT_APP_2026-09_tables_types.tsv`.
+**DDL complet :** `/opt/cursor/artifacts/ETAT_APP_2026-09_schema.sql` (dump live pg_catalog via Lovable `query_database`, 09/09/2026). Companions : `ETAT_APP_2026-09_columns.json`, `ETAT_APP_2026-09_policies.json`.  
+**Comptes de lignes :** Lovable `query_database` `COUNT(*)` — snapshot **09/09/2026** (sans PII). TSV : `/opt/cursor/artifacts/ETAT_APP_2026-09_row_counts.tsv` ; meta JSON : `ETAT_APP_2026-09_live_meta.json`.
+
+### Comptes de lignes (live, highlights)
+
+| Table / vue | Lignes |
+|-------------|--------|
+| `ski_monitors` | 4047 |
+| `audit_log` | 5194 |
+| `partners` | 1032 |
+| `inscriptions` / `inscriptions_complete` | 906 |
+| `students` | 667 |
+| `placement_tests` | 596 |
+| `partner_contacts` | 209 |
+| `instructors` | 71 |
+| `registration_offerings` | 52 |
+| `user_permissions` | 14 |
+| `user_roles` / `profiles` | 3 |
+| Tables vides (ex.) | `invoices`, `sessions`, `certificates`, `test_bookings` → 0 |
 
 ### Tables (nom · n colonnes typées)
 
 `accommodations` 6 · `app_settings` 6 · `audit_log` 9 · `availability_requests` 11 · `certificates` 11 · `continuous_improvement` 11 · `cost_templates` 6 · `course_intakes` 16 · `document_sendings` 8 · `email_log` 10 · `email_templates` 12 · `fixed_costs` 9 · `formation_costs` 12 · `funding_documents` 6 · `funding_requests` 19 · `inscriptions` 78 · `instructor_availabilities` 10 · `instructor_contracts` 18 · `instructor_payments` 12 · `instructor_sessions` 11 · `intake_outreach_log` 8 · `invoices` 24 · `leads` 20 · `notifications` 8 · `partner_contacts` 8 · `partner_contracts` 11 · `partners` 15 · `payment_reminders` 9 · `payments` 22 · `placement_test_questions` 11 · `placement_tests` 12 · `pricing_rules` 12 · `profiles` 6 · `prospects` 13 · `qualiopi_indicators` 14 · `registration_offerings` 17 · `satisfaction_surveys` 18 · `scheduled_reminders` 8 · `schools_invoice_policy` 5 · `seasons` 11 · `session_enrollments` 7 · `sessions` 18 · `ski_monitors` 12 · `ski_schools` 9 · `students` 13 · `test_bookings` 14 · `test_candidates` 12 · `test_criteria` 8 · `test_evaluations` 29 · `test_phrases` 13 · `user_permissions` 6 · `user_roles` 3
 
 ### Vues
-- `inscriptions_complete` — jointure stagiaire / formateur / école (**migration certificat à réappliquer pour colonnes bilan**)
+- `inscriptions_complete` — jointure stagiaire / formateur / école ; **colonnes bilan Entrée/Sortie exposées** (live confirmé : `niveau_general_entree`, `niveau_technique_sortie`, `objectif_atteint`, etc.)
 - `test_bookings_complete`
 
 ### RPC / fonctions SQL (signatures utiles)
