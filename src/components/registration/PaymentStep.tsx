@@ -7,6 +7,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CreditCard, Landmark, Receipt } from "lucide-react";
 import type { RegistrationData } from "@/pages/register/Index";
 import {
+  CHEQUE_BALANCE_INSTRUCTION,
+  CHEQUE_BALANCE_SUMMARY_LABEL,
   FRAIS_DOSSIER_EUR,
   FLI_BANK_DETAILS,
   getRegistrationPaymentSummary,
@@ -105,7 +107,7 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
               </div>
               {summary.balanceAfterDossier > 0 && hasChequeBalance(selectedOption) && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Solde (chèque après formation)</span>
+                  <span className="text-muted-foreground">{CHEQUE_BALANCE_SUMMARY_LABEL}</span>
                   <span className="font-medium">{formatPriceEUR(summary.balanceAfterDossier)}</span>
                 </div>
               )}
@@ -145,6 +147,18 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
             </RadioGroup>
           </div>
 
+          {summary && summary.balanceAfterDossier > 0 && hasChequeBalance(selectedOption) && (
+            <Alert>
+              <Receipt className="h-4 w-4" />
+              <AlertDescription className="text-sm space-y-1">
+                <p className="font-medium">
+                  Chèque de {formatPriceEUR(summary.balanceAfterDossier)} à envoyer avec votre inscription
+                </p>
+                <p className="text-muted-foreground">{CHEQUE_BALANCE_INSTRUCTION}</p>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {requiresVirementInstructions(selectedOption) && (
             <Alert>
               <Landmark className="h-4 w-4" />
@@ -162,11 +176,6 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
                 <p className="text-muted-foreground">
                   IBAN : {FLI_BANK_DETAILS.iban} · BIC : {FLI_BANK_DETAILS.bic}
                 </p>
-                {selectedOption === REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT && (
-                  <p className="text-muted-foreground">
-                    Le solde sera réglé par chèque, déposé après la fin de la formation.
-                  </p>
-                )}
               </AlertDescription>
             </Alert>
           )}
