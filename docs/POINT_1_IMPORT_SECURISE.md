@@ -2,7 +2,7 @@
 
 **Branche :** `cursor/secure-admin-import-7435`  
 **Date :** 2026-09-09  
-**Statut :** en attente de validation Paula
+**Statut :** validé Paula 2026-09-09
 
 ## Objectif
 
