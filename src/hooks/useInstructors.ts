@@ -26,9 +26,22 @@ export interface Instructor {
   photo_url: string | null;
   rating_average: number | null;
   certifications: any[] | null;
+  alias: string[] | null;
+  civilite: string | null;
+  pays: string | null;
+  statut_administratif: string | null;
+  identifiant_etranger: string | null;
+  assujetti_tva: boolean | null;
+  consentement_temoignage: string | null;
+  consentement_photo: string | null;
+  cv_url: string | null;
+  formulaire_2026: boolean | null;
+  date_naissance: string | null;
   created_at: string;
   updated_at: string | null;
 }
+
+export type InstructorStatusFilter = "actif" | "inactif" | "candidat" | "all";
 
 export interface InstructorSession {
   id: string;
@@ -48,6 +61,8 @@ interface InstructorFilters {
   language?: string;
   availability?: string;
   search?: string;
+  /** Défaut liste métier : actif. Sélecteurs d'affectation : actif uniquement. */
+  status?: InstructorStatusFilter;
 }
 
 export function useInstructors(filters?: InstructorFilters) {
@@ -55,6 +70,11 @@ export function useInstructors(filters?: InstructorFilters) {
     queryKey: ["instructors", filters],
     queryFn: async () => {
       let query = supabase.from("instructors").select("*").order("last_name");
+
+      const statusFilter = filters?.status ?? "actif";
+      if (statusFilter !== "all") {
+        query = query.eq("status", statusFilter);
+      }
 
       if (filters?.search) {
         query = query.or(

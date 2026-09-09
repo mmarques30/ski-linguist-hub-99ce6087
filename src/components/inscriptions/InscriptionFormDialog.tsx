@@ -314,7 +314,7 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
       const { data, error } = await supabase
         .from("instructors")
         .select("id, first_name, last_name, email")
-        .eq("is_active", true)
+        .eq("status", "actif")
         .order("last_name");
       if (error) throw error;
       return data;

@@ -66,7 +66,7 @@ export function SessionFormDialog({ open, onOpenChange, session, defaultStart }:
       const { data } = await supabase
         .from("instructors")
         .select("id, first_name, last_name")
-        .eq("is_active", true)
+        .eq("status", "actif")
         .order("last_name");
       return data || [];
     },

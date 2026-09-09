@@ -524,13 +524,13 @@ export default function Import() {
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Formateur·rices — colonnes FR acceptées</AlertTitle>
                 <AlertDescription className="text-sm">
-                  Nom, Prénom, Email, Téléphone, Langues, Statut (actif / inactif
-                  / candidat), SIRET, Adresse, CP, Ville, Statut administratif,
-                  etc. Statuts DB : ACTIF / INACTIF / A_EVITER.{" "}
-                  <code className="text-xs">candidat</code> → INACTIF + note
-                  (en attente décision). Champs hors schéma (civilité, pays,
-                  consentements…) → <code className="text-xs">status_notes</code>
-                  . Aucune liaison auto aux inscriptions.
+                  Nom, Prénom, Civilité, Email, Téléphone, Langues, Statut (
+                  actif / inactif / candidat), Statut administratif, SIRET,
+                  Identifiant étranger, Assujetti TVA, Adresse, CP, Ville, Pays,
+                  Date de naissance, CV (lien), Formulaire 2026, Consentements,
+                  Alias. Statuts DB : actif | inactif | candidat. Les
+                  inactif·ves / candidat·es sont exclus des sélecteurs
+                  d&apos;affectation. Aucune liaison auto aux inscriptions.
                 </AlertDescription>
               </Alert>
             )}

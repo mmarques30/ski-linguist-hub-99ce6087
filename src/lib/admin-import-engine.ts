@@ -91,34 +91,71 @@ function cell(row: CsvRow, ...candidates: string[]): string {
   return "";
 }
 
-function appendNote(parts: string[], label: string, value: string) {
-  if (!isEmpty(value)) parts.push(`${label} : ${value.trim()}`);
-}
-
 /**
- * Statut instructors (CHECK DB : ACTIF | INACTIF | A_EVITER).
- * `candidat` → INACTIF + note (pas de valeur CHECK dédiée — décision Paula).
+ * Statut instructors (CHECK DB : actif | inactif | candidat).
+ * Passage candidat → actif = action explicite Paula (hors import).
  */
 function mapInstructorStatus(raw: string): {
-  status: "ACTIF" | "INACTIF" | "A_EVITER";
+  status: "actif" | "inactif" | "candidat";
   is_active: boolean;
-  sourceNote: string | null;
 } {
   const s = raw.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  if (!s || ["actif", "active", "1", "true", "oui"].includes(s)) {
-    return { status: "ACTIF", is_active: true, sourceNote: null };
-  }
-  if (["a_eviter", "aeviter", "eviter", "avoid"].includes(s.replace(/\s+/g, "_")) || s.includes("eviter")) {
-    return { status: "A_EVITER", is_active: false, sourceNote: null };
-  }
   if (s === "candidat" || s === "candidate") {
-    return {
-      status: "INACTIF",
-      is_active: false,
-      sourceNote: "Statut import : candidat (mappé INACTIF — pas de valeur CHECK CANDIDAT)",
-    };
+    return { status: "candidat", is_active: false };
   }
-  return { status: "INACTIF", is_active: false, sourceNote: null };
+  if (!s || ["actif", "active", "1", "true", "oui"].includes(s)) {
+    return { status: "actif", is_active: true };
+  }
+  return { status: "inactif", is_active: false };
+}
+
+/** Consentements RGPD : oui | oui avec relecture | non | null (vide). */
+function mapConsentement(raw: string): string | null {
+  if (isEmpty(raw)) return null;
+  const s = raw.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (s === "non" || s === "no" || s === "false" || s === "0") return "non";
+  if (s.includes("relire") || s.includes("relecture")) return "oui avec relecture";
+  if (s.startsWith("oui") || s === "yes" || s === "true" || s === "1") return "oui";
+  throw new Error(`Consentement invalide : ${raw} (attendu : oui | oui avec relecture | non | vide)`);
+}
+
+function mapOuiNonBool(raw: string): boolean | null {
+  if (isEmpty(raw)) return null;
+  const s = raw.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (["oui", "yes", "true", "1"].includes(s)) return true;
+  if (["non", "no", "false", "0"].includes(s)) return false;
+  throw new Error(`Valeur oui/non invalide : ${raw}`);
+}
+
+function parseFrenchDate(raw: string): string | null {
+  if (isEmpty(raw)) return null;
+  const s = raw.trim();
+  // YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // DD/MM/YYYY
+  const m = s.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/);
+  if (m) {
+    const dd = m[1].padStart(2, "0");
+    const mm = m[2].padStart(2, "0");
+    return `${m[3]}-${mm}-${dd}`;
+  }
+  throw new Error(`Date invalide : ${raw}`);
+}
+
+function mapAlias(raw: string, firstName: string | null, lastName: string): string[] | null {
+  const aliases: string[] = [];
+  if (!isEmpty(raw)) {
+    for (const part of raw.split(/[|/]/)) {
+      const t = part.trim();
+      if (t) aliases.push(t);
+    }
+  }
+  // Toujours inclure "Prénom Nom" et "Nom" pour le rapprochement
+  const full = `${firstName || ""} ${lastName}`.trim();
+  if (full && !aliases.some((a) => a.toLowerCase() === full.toLowerCase())) {
+    aliases.push(full);
+  }
+  return aliases.length > 0 ? aliases : null;
 }
 
 function mapInscriptionStatus(status: string): string {
@@ -164,29 +201,16 @@ function mapInstructorRow(row: CsvRow): Record<string, unknown> {
 
   const statusMapped = mapInstructorStatus(cell(row, "status", "statut", "Statut") || "actif");
 
-  const noteParts: string[] = [];
-  if (statusMapped.sourceNote) noteParts.push(statusMapped.sourceNote);
-  appendNote(noteParts, "Civilité", cell(row, "civility", "Civilité", "Civilite"));
-  appendNote(noteParts, "Statut administratif", cell(row, "Statut administratif", "tax_status_detail"));
-  appendNote(noteParts, "Identifiant étranger", cell(row, "Identifiant étranger", "Identifiant etranger"));
-  appendNote(noteParts, "Assujetti TVA", cell(row, "Assujetti TVA"));
-  appendNote(noteParts, "Pays", cell(row, "Pays", "country"));
-  appendNote(noteParts, "Date de naissance", cell(row, "Date de naissance", "birth_date", "date_naissance"));
-  appendNote(noteParts, "CV", cell(row, "CV (lien)", "cv", "cv_url"));
-  appendNote(noteParts, "Formulaire 2026", cell(row, "Formulaire 2026"));
-  appendNote(noteParts, "Consentement témoignage", cell(row, "Consentement témoignage", "Consentement temoignage"));
-  appendNote(noteParts, "Consentement photo", cell(row, "Consentement photo"));
-  appendNote(noteParts, "Alias", cell(row, "Alias", "alias"));
-  appendNote(noteParts, "Date d'entrée", cell(row, "start_date", "date_entree", "Date d'entrée"));
-
   const emailRaw = cell(row, "email", "Email");
   const email = isEmpty(emailRaw) ? null : emailRaw.toLowerCase();
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     throw new Error(`Email invalide : ${emailRaw}`);
   }
 
-  const adminStatut = cell(row, "Statut administratif");
-  const taxStatus = !isEmpty(adminStatut) ? adminStatut.slice(0, 120) : null;
+  const aliasRaw = cell(row, "Alias", "alias");
+  const statutAdmin = cell(row, "Statut administratif", "statut_administratif");
+  const entryDate = cell(row, "start_date", "date_entree", "Date d'entrée");
+  const statusNotes = !isEmpty(entryDate) ? `Date d'entrée : ${entryDate}` : null;
 
   return {
     ...(sanitizedId && { id: sanitizedId }),
@@ -200,10 +224,20 @@ function mapInstructorRow(row: CsvRow): Record<string, unknown> {
     languages,
     is_active: statusMapped.is_active,
     status: statusMapped.status,
+    civilite: (() => {
+      const c = cell(row, "civility", "Civilité", "Civilite", "civilite");
+      return isEmpty(c) ? null : c;
+    })(),
     siret: (() => {
       const s = cell(row, "siret", "SIRET");
       return isEmpty(s) ? null : s;
     })(),
+    identifiant_etranger: (() => {
+      const s = cell(row, "Identifiant étranger", "Identifiant etranger", "identifiant_etranger");
+      return isEmpty(s) ? null : s;
+    })(),
+    statut_administratif: isEmpty(statutAdmin) ? null : statutAdmin,
+    assujetti_tva: mapOuiNonBool(cell(row, "Assujetti TVA", "assujetti_tva")),
     address: (() => {
       const a = cell(row, "address", "adresse", "Adresse");
       return isEmpty(a) ? null : a;
@@ -216,12 +250,24 @@ function mapInstructorRow(row: CsvRow): Record<string, unknown> {
       const c = cell(row, "city", "Ville", "ville");
       return isEmpty(c) ? null : c;
     })(),
-    tax_status: taxStatus,
-    specialty_details: (() => {
-      const a = cell(row, "Alias", "alias");
-      return isEmpty(a) ? null : a;
+    pays: (() => {
+      const p = cell(row, "Pays", "country", "pays");
+      return isEmpty(p) ? null : p;
     })(),
-    status_notes: noteParts.length > 0 ? noteParts.join("\n") : null,
+    date_naissance: parseFrenchDate(cell(row, "Date de naissance", "birth_date", "date_naissance")),
+    cv_url: (() => {
+      const u = cell(row, "CV (lien)", "cv", "cv_url");
+      return isEmpty(u) ? null : u;
+    })(),
+    formulaire_2026: mapOuiNonBool(cell(row, "Formulaire 2026", "formulaire_2026")),
+    consentement_temoignage: mapConsentement(
+      cell(row, "Consentement témoignage", "Consentement temoignage", "consentement_temoignage")
+    ),
+    consentement_photo: mapConsentement(
+      cell(row, "Consentement photo", "consentement_photo")
+    ),
+    alias: mapAlias(aliasRaw, firstName, resolvedLast),
+    status_notes: statusNotes,
   };
 }
 
