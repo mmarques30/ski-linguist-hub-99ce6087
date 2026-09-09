@@ -30,6 +30,32 @@ export async function submitRegistration(
   return result.data as RegistrationSubmissionResult;
 }
 
+export interface VerifyRegistrationCheckoutResult {
+  paymentStatus: string;
+  recorded: boolean;
+  duplicate?: boolean;
+  inscriptionCode?: string | null;
+  amountPaid?: number;
+}
+
+export async function verifyRegistrationCheckout(
+  sessionId: string
+): Promise<VerifyRegistrationCheckoutResult> {
+  const { data: result, error } = await supabase.functions.invoke("verify-registration-checkout", {
+    body: { sessionId },
+  });
+
+  if (error) {
+    throw new Error(error.message || "Impossible de vérifier le paiement");
+  }
+
+  if (!result?.success) {
+    throw new Error(result?.error || "Impossible de vérifier le paiement");
+  }
+
+  return result.data as VerifyRegistrationCheckoutResult;
+}
+
 export async function createRegistrationCheckout(params: {
   inscriptionId: string;
   paymentOption: RegistrationPaymentOption;

@@ -27,6 +27,7 @@ Deno.serve(async (req) => {
         configured: Boolean(secretKey) && validation.valid && webhookSecretConfigured,
         webhookUrl,
         checkoutFunction: "create-registration-checkout",
+        verifyCheckoutFunction: "verify-registration-checkout",
         webhookFunction: "stripe-webhook",
         requiredEvents: ["checkout.session.completed"],
       },

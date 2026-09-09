@@ -48,7 +48,7 @@ supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
 git clone https://github.com/mmarques30/ski-linguist-hub-99ce6087.git
 cd ski-linguist-hub-99ce6087
 supabase link --project-ref nghkrmvakjomzmfwdhbo
-supabase functions deploy stripe-webhook check-stripe-config create-registration-checkout submit-registration
+supabase functions deploy stripe-webhook verify-registration-checkout check-stripe-config create-registration-checkout submit-registration
 ```
 
 ---
@@ -114,6 +114,8 @@ LIMIT 5;
 | Problème | Solution |
 |----------|----------|
 | « Paiement en ligne non configuré » | `STRIPE_SECRET_KEY` manquant dans Supabase Secrets |
-| Checkout OK mais pas de paiement en BD | Configurer `STRIPE_WEBHOOK_SECRET` + redéployer `stripe-webhook` |
+| Checkout OK mais pas de paiement en BD | Configurer `STRIPE_WEBHOOK_SECRET` + redéployer `stripe-webhook` et `verify-registration-checkout` |
+| Paiement confirmé mais rien sur Stripe / carte | Vérifier le **mode test** ([dashboard test](https://dashboard.stripe.com/test/payments)) ; carte test `4242…` = pas de débit réel |
+| Page « Paiement confirmé » sans trace | La page vérifie désormais la session Stripe ; sans `session_id` valide, le paiement n'est pas confirmé |
 | « Invalid signature » | Vérifier que le `whsec_` correspond au bon mode test/live |
 | Fonction introuvable | `supabase functions deploy` depuis la branche `main` GitHub |
