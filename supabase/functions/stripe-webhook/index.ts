@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { stripeCorsHeaders as corsHeaders, verifyStripeSignature } from "../_shared/stripe.ts";
 import { isValidPaymentOption } from "../_shared/registration-payments.ts";
 import { recordStripeCheckoutPayment } from "../_shared/record-stripe-checkout-payment.ts";
+import { getStripeWebhookSecret } from "../_shared/stripe-webhook-secret.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -10,9 +11,17 @@ Deno.serve(async (req) => {
 
   try {
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
-    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-    if (!stripeSecretKey || !webhookSecret) {
+    if (!stripeSecretKey) {
       return new Response("Stripe not configured", { status: 503 });
+    }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+    const webhookSecret = await getStripeWebhookSecret(supabase);
+    if (!webhookSecret) {
+      return new Response("Stripe webhook secret not configured", { status: 503 });
     }
 
     const signature = req.headers.get("stripe-signature");
@@ -34,11 +43,6 @@ Deno.serve(async (req) => {
     if (!session.metadata?.inscription_id || !paymentOption || !isValidPaymentOption(paymentOption)) {
       return new Response("Missing metadata", { status: 400 });
     }
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
 
     const result = await recordStripeCheckoutPayment(supabase, session);
 

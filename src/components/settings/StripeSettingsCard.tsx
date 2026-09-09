@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle2, Copy, ExternalLink, Loader2, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import { useStripeConfig } from "@/hooks/useStripeConfig";
+import { useProvisionStripeWebhook, useStripeConfig } from "@/hooks/useStripeConfig";
 
 const SUPABASE_PROJECT_URL =
   "https://supabase.com/dashboard/project/nghkrmvakjomzmfwdhbo/settings/functions";
@@ -22,6 +22,7 @@ interface StripeSettingsCardProps {
 
 export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) {
   const { data, isLoading, isError, refetch } = useStripeConfig();
+  const provisionWebhook = useProvisionStripeWebhook();
   const [isCopying, setIsCopying] = useState(false);
 
   const isFullyConfigured = Boolean(data?.configured);
@@ -86,10 +87,44 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
         {webhookMissing && (
           <Alert variant="destructive">
             <AlertTitle>Webhook manquant</AlertTitle>
+            <AlertDescription className="space-y-3">
+              <p>
+                Les paiements Stripe ne sont pas enregistrés dans FLI tant que le webhook n&apos;est pas
+                configuré (<code>checkout.session.completed</code>).
+              </p>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={provisionWebhook.isPending || !data?.secretKeyValid}
+                onClick={() =>
+                  provisionWebhook.mutate(undefined, {
+                    onSuccess: (result) => toast.success(result.message),
+                    onError: (error) =>
+                      toast.error(
+                        error instanceof Error ? error.message : "Configuration webhook échouée"
+                      ),
+                  })
+                }
+              >
+                {provisionWebhook.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
+                Configurer le webhook automatiquement
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                Crée le endpoint Stripe et enregistre le secret. Déployez d&apos;abord la fonction{" "}
+                <code>provision-stripe-webhook</code> si le bouton échoue.
+              </p>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {data?.webhookSecretConfigured && data.webhookSecretFromSettings && (
+          <Alert>
+            <AlertTitle>Webhook configuré via l&apos;application</AlertTitle>
             <AlertDescription>
-              Ajoutez <code>STRIPE_WEBHOOK_SECRET</code> dans Supabase Edge Function Secrets après avoir
-              créé le webhook Stripe avec l&apos;URL ci-dessous et l&apos;événement{" "}
-              <code>checkout.session.completed</code>.
+              Le signing secret est stocké de façon sécurisée. Vous pouvez aussi le copier dans
+              Supabase Secrets (<code>STRIPE_WEBHOOK_SECRET</code>) pour une config classique.
             </AlertDescription>
           </Alert>
         )}
@@ -142,8 +177,12 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
                 Ajoutez <code>STRIPE_WEBHOOK_SECRET</code> (<code>whsec_...</code>) dans Supabase Secrets.
               </li>
               <li>
+                Cliquez sur <strong>Configurer le webhook automatiquement</strong> ci-dessus, ou exécutez{" "}
+                <code>scripts/setup-stripe-webhook.sh</code> avec <code>STRIPE_SECRET_KEY</code>.
+              </li>
+              <li>
                 Déployez depuis le repo :{" "}
-                <code>supabase functions deploy stripe-webhook check-stripe-config create-registration-checkout</code>
+                <code>supabase functions deploy stripe-webhook provision-stripe-webhook verify-registration-checkout</code>
               </li>
               <li>
                 Testez avec la carte <code>4242 4242 4242 4242</code>.
