@@ -48,6 +48,7 @@ import { InvoiceCreateDialog } from "@/components/invoices/InvoiceCreateDialog";
 import { ScheduleApprovalDialog } from "@/components/inscriptions/ScheduleApprovalDialog";
 import { PlacementTestSummaryCard } from "@/components/inscriptions/PlacementTestSummaryCard";
 import { InscriptionDocumentsCard } from "@/components/inscriptions/InscriptionDocumentsCard";
+import { InscriptionClientAccessCard } from "@/components/inscriptions/InscriptionClientAccessCard";
 
 const translations = {
   back: { fr: "Retour", "pt-BR": "Voltar", en: "Back" },
@@ -58,6 +59,7 @@ const translations = {
   training: { fr: "Formation", "pt-BR": "Formação", en: "Training" },
   financial: { fr: "Financier", "pt-BR": "Financeiro", en: "Financial" },
   documents: { fr: "Documents", "pt-BR": "Documentos", en: "Documents" },
+  clientAccess: { fr: "Accès client", "pt-BR": "Acesso cliente", en: "Client access" },
   student: { fr: "Stagiaire", "pt-BR": "Estagiário", en: "Student" },
   instructor: { fr: "Formateur", "pt-BR": "Formador", en: "Instructor" },
   skiSchool: { fr: "École de ski", "pt-BR": "Escola de ski", en: "Ski School" },
@@ -271,6 +273,7 @@ export default function InscriptionDetails() {
             <TabsTrigger value="general">{t(translations.generalInfo)}</TabsTrigger>
             <TabsTrigger value="training">{t(translations.training)}</TabsTrigger>
             <TabsTrigger value="financial">{t(translations.financial)}</TabsTrigger>
+            <TabsTrigger value="access">{t(translations.clientAccess)}</TabsTrigger>
             <TabsTrigger value="documents">{t(translations.documents)}</TabsTrigger>
           </TabsList>
 
@@ -617,6 +620,20 @@ export default function InscriptionDetails() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          {/* Client Access Tab */}
+          <TabsContent value="access" className="space-y-4">
+            <InscriptionClientAccessCard
+              inscriptionId={inscription.id}
+              studentId={inscription.student_id}
+              inscriptionCode={inscription.code}
+              language={inscription.language}
+              studentEmail={inscription.student_email}
+              studentName={inscription.student_name}
+              status={inscription.status}
+              paymentMethod={inscription.payment_method}
+            />
           </TabsContent>
 
           {/* Documents Tab */}
