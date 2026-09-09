@@ -2,7 +2,7 @@
 
 Règle : noter ici, **ne pas corriger** tant que le point courant n’est pas validé et que Paula n’a pas ouvert le sujet.
 
-Dernière mise à jour : 2026-09-09 (point 3 validé + compléments ; point 4 ouvert).
+Dernière mise à jour : 2026-09-09 (point 3 clôturé incl. Exception Courchevel ; point 4 ouvert).
 
 ## Ouvert
 
@@ -22,6 +22,7 @@ Dernière mise à jour : 2026-09-09 (point 3 validé + compléments ; point 4 ou
 | BL-015 | Backfill `inscriptions.formateur` depuis CSV Excel (libellés perdus à l’import histo.) | inscriptions | **Avant rattachement** |
 | BL-016 | `date_entree` formateur absente | instructors | Si BPF |
 | BL-017 | Import point 3 écrit hors UI `/admin/import` | ops | Respecter UI avant point 9 |
+| BL-019 | Validation J-10 : horaires FLI exacts = `Groupe 1 matin 8h30-12h30` · `Groupe 2 après-midi 13h30-17h30` · `Individuel (à définir formateur·rice / stagiaire)` · `Exception (texte libre obligatoire)`. **Ne pas** générer de code d’inscription à partir des horaires. | `ScheduleValidation.tsx` / point 10 | **Point 10** |
 
 ## Clos
 
@@ -37,6 +38,7 @@ Dernière mise à jour : 2026-09-09 (point 3 validé + compléments ; point 4 ou
 |-------|--------|
 | 1 — Import sécurisé | Validé Paula ; **à respecter avant point 9** (BL-001, BL-017) |
 | 2 — Exercice + numérotation | Validé Paula |
-| 3 — Import formateur·rices | Validé 69/colonnes/filtre ; rapport dry-run+audit OK ; **rapprochement bloqué** (CSV Formateur) |
+| 3 — Import formateur·rices | **Clôturé** (C 805 · B2 35 dedup · 35 créations · Exception Courchevel traitée) |
 | 4 — CECRL hors UI stagiaire | En cours |
-| 5–10 | Non démarrés |
+| 5–9 | Non démarrés |
+| 10 — Validation J-10 / horaires | Non démarré · **BL-018** (valeurs horaires FLI + pas de code depuis horaires) |
