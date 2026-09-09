@@ -15,14 +15,15 @@ This is a single-package **Vite + React 18 + TypeScript** SPA (Lovable-generated
   cloud (running them locally requires the Supabase CLI + Deno and is optional).
 
 ### Standard commands (see `package.json`)
-- Install: `npm i` (npm is the package manager used here; `package-lock.json` is committed).
+- Install: `npm install --legacy-peer-deps` (use this flag; plain `npm i` / `npm ci` can fail with
+  Arborist `edgesOut` / incomplete optional bindings in the committed lockfile).
 - Dev server: `npm run dev` (http://localhost:8080).
 - Build: `npm run build` (prod) or `npm run build:dev`.
+- Unit tests: `npm test` (Vitest).
 - Lint: `npm run lint` (ESLint 9 flat config, `eslint.config.js`).
 
 ### Non-obvious caveats
-- **No automated test runner** is configured (no Vitest/Jest/Playwright). Testing is manual;
-  see `docs/TESTING_GUIDE.md` and the in-app checklist at route `/admin/testing`.
+- Manual product testing: see `docs/TESTING_GUIDE.md` and the in-app checklist at `/admin/testing`.
 - `npm run lint` currently reports pre-existing errors in the app code (mostly
   `@typescript-eslint/no-explicit-any`). These are repo issues, not environment problems.
 - **Signups are disabled** on the hosted Supabase instance, so you cannot self-register an
