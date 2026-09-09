@@ -3,9 +3,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Eye, UserCheck, UserX, ExternalLink } from "lucide-react";
+import { Eye, UserCheck, UserX, ExternalLink, Mail, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { CopyLinkRow } from "@/components/shared/CopyLinkRow";
 import { buildStudentPortalPreviewUrl } from "@/lib/client-links";
+import { useInviteStudentPortal } from "@/hooks/useInviteStudentPortal";
 
 interface StudentPortalAccessCardProps {
   studentId: string;
@@ -23,6 +25,28 @@ export function StudentPortalAccessCard({
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const previewUrl = buildStudentPortalPreviewUrl(origin, studentId);
   const hasPortalAccount = Boolean(authUserId);
+  const invitePortal = useInviteStudentPortal();
+
+  const handleInvite = async () => {
+    if (!email) {
+      toast.error("Email manquant pour ce stagiaire");
+      return;
+    }
+
+    try {
+      const result = await invitePortal.mutateAsync({
+        studentIds: [studentId],
+        sendEmail: true,
+      });
+      if (result.succeeded) {
+        toast.success("Invitation portail envoyée par email");
+      } else {
+        toast.error(result.results[0]?.error || "Échec de l'invitation");
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erreur lors de l'invitation");
+    }
+  };
 
   return (
     <Card>
@@ -47,15 +71,47 @@ export function StudentPortalAccessCard({
           {email && <Badge variant="secondary">{email}</Badge>}
         </div>
 
-        {!hasPortalAccount && (
+        {!hasPortalAccount && email && (
           <Alert>
-            <AlertTitle>Invitation portail — bientôt disponible</AlertTitle>
-            <AlertDescription>
-              Le stagiaire n&apos;a pas encore de compte portail. Utilisez la prévisualisation admin pour
-              voir l&apos;espace tel qu&apos;il apparaîtra une fois le compte créé (prévu après le 30
-              septembre).
+            <AlertTitle>Inviter au portail</AlertTitle>
+            <AlertDescription className="space-y-3">
+              <p>
+                Un email avec lien de connexion sécurisé sera envoyé à {email}. Le stagiaire accède
+                ensuite à son espace personnel.
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                disabled={invitePortal.isPending}
+                onClick={handleInvite}
+              >
+                {invitePortal.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Mail className="mr-2 h-4 w-4" />
+                )}
+                Envoyer l&apos;invitation
+              </Button>
             </AlertDescription>
           </Alert>
+        )}
+
+        {hasPortalAccount && email && (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={invitePortal.isPending}
+            onClick={handleInvite}
+          >
+            {invitePortal.isPending ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Mail className="mr-2 h-4 w-4" />
+            )}
+            Renvoyer le lien de connexion
+          </Button>
         )}
 
         <CopyLinkRow

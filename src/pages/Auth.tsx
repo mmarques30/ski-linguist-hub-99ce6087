@@ -1,18 +1,37 @@
 import { useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { AuthCard } from "@/components/auth/AuthCard";
+import { StudentAuthCard } from "@/components/auth/StudentAuthCard";
 import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import authBg from "@/assets/fli-auth-bg.png";
 
 export default function Auth() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isStudentMode = searchParams.get("mode") === "student";
+
+  const { data: role, isLoading: roleLoading } = useQuery({
+    queryKey: ["user-role-check", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return data?.role ?? null;
+    },
+    enabled: !!user,
+  });
 
   useEffect(() => {
-    if (!loading && user) {
-      navigate("/", { replace: true });
+    if (!loading && !roleLoading && user) {
+      navigate(role === "student" ? "/student/dashboard" : "/", { replace: true });
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, roleLoading, role, navigate]);
 
   if (loading) {
     return (
@@ -34,14 +53,30 @@ export default function Auth() {
 
       {/* Content */}
       <div className="relative z-10 w-full flex flex-col items-center">
-        <AuthCard />
-        
-        <div className="mt-8 text-center">
-          <Link 
-            to="/register" 
-            className="text-sm text-white/80 hover:text-white transition-colors"
+        {isStudentMode ? <StudentAuthCard /> : <AuthCard />}
+
+        <div className="mt-8 text-center space-y-2">
+          {!isStudentMode && (
+            <Link
+              to="/auth?mode=student"
+              className="block text-sm text-white/80 hover:text-white transition-colors"
+            >
+              Espace stagiaire
+            </Link>
+          )}
+          {isStudentMode && (
+            <Link
+              to="/auth"
+              className="block text-sm text-white/80 hover:text-white transition-colors"
+            >
+              Connexion administrateur
+            </Link>
+          )}
+          <Link
+            to="/register"
+            className="block text-sm text-white/80 hover:text-white transition-colors"
           >
-            Formulaire d'inscription publique
+            Formulaire d&apos;inscription publique
           </Link>
         </div>
       </div>

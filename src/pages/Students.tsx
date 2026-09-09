@@ -22,6 +22,7 @@ import { StudentFormDialog } from "@/components/students/StudentFormDialog";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { ListSkeleton } from "@/components/common/ListSkeleton";
 import { EmptyState } from "@/components/common/EmptyState";
+import { PortalInvitesBulkCard } from "@/components/students/PortalInvitesBulkCard";
 
 // Translations for the Students page
 const translations = {
@@ -205,6 +206,8 @@ export default function Students() {
             )}
           </div>
         </div>
+
+        {editable && <PortalInvitesBulkCard />}
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-4 rounded-lg border bg-card p-4">

@@ -49,6 +49,7 @@ import { ScheduleApprovalDialog } from "@/components/inscriptions/ScheduleApprov
 import { PlacementTestSummaryCard } from "@/components/inscriptions/PlacementTestSummaryCard";
 import { InscriptionDocumentsCard } from "@/components/inscriptions/InscriptionDocumentsCard";
 import { InscriptionClientAccessCard } from "@/components/inscriptions/InscriptionClientAccessCard";
+import { InscriptionTimelineCard } from "@/components/inscriptions/InscriptionTimelineCard";
 
 const translations = {
   back: { fr: "Retour", "pt-BR": "Voltar", en: "Back" },
@@ -60,6 +61,7 @@ const translations = {
   financial: { fr: "Financier", "pt-BR": "Financeiro", en: "Financial" },
   documents: { fr: "Documents", "pt-BR": "Documentos", en: "Documents" },
   clientAccess: { fr: "Accès client", "pt-BR": "Acesso cliente", en: "Client access" },
+  timeline: { fr: "Historique", "pt-BR": "Histórico", en: "Timeline" },
   student: { fr: "Stagiaire", "pt-BR": "Estagiário", en: "Student" },
   instructor: { fr: "Formateur", "pt-BR": "Formador", en: "Instructor" },
   skiSchool: { fr: "École de ski", "pt-BR": "Escola de ski", en: "Ski School" },
@@ -274,6 +276,7 @@ export default function InscriptionDetails() {
             <TabsTrigger value="training">{t(translations.training)}</TabsTrigger>
             <TabsTrigger value="financial">{t(translations.financial)}</TabsTrigger>
             <TabsTrigger value="access">{t(translations.clientAccess)}</TabsTrigger>
+            <TabsTrigger value="timeline">{t(translations.timeline)}</TabsTrigger>
             <TabsTrigger value="documents">{t(translations.documents)}</TabsTrigger>
           </TabsList>
 
@@ -634,6 +637,11 @@ export default function InscriptionDetails() {
               status={inscription.status}
               paymentMethod={inscription.payment_method}
             />
+          </TabsContent>
+
+          {/* Timeline Tab */}
+          <TabsContent value="timeline" className="space-y-4">
+            <InscriptionTimelineCard inscriptionId={inscription.id} />
           </TabsContent>
 
           {/* Documents Tab */}
