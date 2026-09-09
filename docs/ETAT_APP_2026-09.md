@@ -16,7 +16,7 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 | Point 2 — exercice fiscal + numérotation | #11 | `d84b056` |
 | Point 3 — formateur·rices (import, candidat, matching) | #11 | `d84b056` |
 
-**SHA `main` au moment du rapport :** `d84b05623233ed518b1ea172b7514a972439b131`
+**SHA `main` au moment du rapport :** `d406a8d` (ce document) ; points 1–4A + certificat fusionnés via #10/#11 (`d84b056`).
 
 ### Déploiement app publiée
 
