@@ -41,4 +41,4 @@ Dernière mise à jour : 2026-09-09 (point 3 clôturé incl. Exception Courcheve
 | 3 — Import formateur·rices | **Clôturé** (C 805 · B2 35 dedup · 35 créations · Exception Courchevel traitée) |
 | 4 — CECRL hors UI stagiaire | En cours |
 | 5–9 | Non démarrés |
-| 10 — Validation J-10 / horaires | Non démarré · **BL-018** (valeurs horaires FLI + pas de code depuis horaires) |
+| 10 — Validation J-10 / horaires | Non démarré · **BL-019** (valeurs horaires FLI + pas de code depuis horaires) |
