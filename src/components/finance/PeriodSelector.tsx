@@ -4,9 +4,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
-import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, subYears } from "date-fns";
+import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear } from "date-fns";
 import { fr } from "date-fns/locale";
-import { getCurrentSaison, getDebutSaison, getFinSaison, getSaison } from "@/hooks/useFinancialDashboard";
+import {
+  getCurrentFiscalYear,
+  getDebutSaison,
+  getFinSaison,
+  getPreviousFiscalYear,
+} from "@/hooks/useFinancialDashboard";
 
 type Period = 'this-month' | 'last-month' | 'this-season' | 'last-season' | 'this-year' | 'custom';
 
@@ -36,16 +41,18 @@ export function PeriodSelector({ startDate, endDate, onPeriodChange }: PeriodSel
         start = startOfMonth(subMonths(today, 1));
         end = endOfMonth(subMonths(today, 1));
         break;
-      case 'this-season':
-        const currentSaison = getCurrentSaison();
-        start = getDebutSaison(currentSaison);
-        end = getFinSaison(currentSaison);
+      case 'this-season': {
+        const currentExercice = getCurrentFiscalYear();
+        start = getDebutSaison(currentExercice);
+        end = getFinSaison(currentExercice);
         break;
-      case 'last-season':
-        const lastSaison = getSaison(subYears(today, 1));
-        start = getDebutSaison(lastSaison);
-        end = getFinSaison(lastSaison);
+      }
+      case 'last-season': {
+        const lastExercice = getPreviousFiscalYear(getCurrentFiscalYear());
+        start = getDebutSaison(lastExercice);
+        end = getFinSaison(lastExercice);
         break;
+      }
       case 'this-year':
         start = startOfYear(today);
         end = endOfYear(today);
@@ -70,9 +77,9 @@ export function PeriodSelector({ startDate, endDate, onPeriodChange }: PeriodSel
   const periods: { value: Period; label: string }[] = [
     { value: 'this-month', label: 'Ce mois' },
     { value: 'last-month', label: 'Mois dernier' },
-    { value: 'this-season', label: 'Cette saison' },
-    { value: 'last-season', label: 'Saison dernière' },
-    { value: 'this-year', label: 'Cette année' },
+    { value: 'this-season', label: 'Cet exercice' },
+    { value: 'last-season', label: 'Exercice précédent' },
+    { value: 'this-year', label: 'Cette année civile' },
     { value: 'custom', label: 'Personnalisé' },
   ];
 
