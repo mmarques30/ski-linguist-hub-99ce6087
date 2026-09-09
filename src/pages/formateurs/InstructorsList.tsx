@@ -25,12 +25,14 @@ export default function InstructorsList() {
   const [search, setSearch] = useState("");
   const [langFilter, setLangFilter] = useState("all");
   const [availFilter, setAvailFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<"actif" | "inactif" | "candidat" | "all">("actif");
   const [showForm, setShowForm] = useState(false);
 
   const { data: instructors = [], isLoading } = useInstructors({
     search,
     language: langFilter !== "all" ? langFilter : undefined,
     availability: availFilter !== "all" ? availFilter : undefined,
+    status: statusFilter,
   });
 
   return (
@@ -71,6 +73,17 @@ export default function InstructorsList() {
               <SelectItem value="Portugais">Portugais</SelectItem>
               <SelectItem value="Russe">Russe</SelectItem>
               <SelectItem value="Néerlandais">Néerlandais</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Statut" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="actif">Actif·ves</SelectItem>
+              <SelectItem value="inactif">Inactif·ves</SelectItem>
+              <SelectItem value="candidat">Candidat·es</SelectItem>
+              <SelectItem value="all">Tous</SelectItem>
             </SelectContent>
           </Select>
           <Select value={availFilter} onValueChange={setAvailFilter}>

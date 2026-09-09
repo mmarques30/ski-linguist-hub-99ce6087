@@ -36,6 +36,12 @@ import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { ListSkeleton } from "@/components/common/ListSkeleton";
+import {
+  getCurrentFiscalYear,
+  getDebutSaison,
+  getFinSaison,
+  getPreviousFiscalYear,
+} from "@/lib/fiscal-year";
 
 const translations = {
   title: {
@@ -279,14 +285,14 @@ const translations = {
     en: "Last year",
   },
   periodThisSeason: {
-    fr: "Cette saison",
+    fr: "Cet exercice",
     "pt-BR": "Esta temporada",
-    en: "This season",
+    en: "This fiscal year",
   },
   periodLastSeason: {
-    fr: "Saison dernière",
+    fr: "Exercice précédent",
     "pt-BR": "Temporada passada",
-    en: "Last season",
+    en: "Previous fiscal year",
   },
 };
 
@@ -311,18 +317,23 @@ export default function Invoices() {
   const { canEdit } = useUserPermissions();
   const editable = canEdit("invoices");
 
-  // Calculate date range based on period filter
+  // Bornes d'exercice fiscal FLI (libellé AA-AA)
   const getSeasonDates = (offset: number = 0) => {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
-    // Season runs from July 1 to June 30
-    let seasonStartYear = currentMonth >= 6 ? currentYear : currentYear - 1;
-    seasonStartYear += offset;
-    return {
-      start: new Date(seasonStartYear, 6, 1), // July 1
-      end: new Date(seasonStartYear + 1, 5, 30), // June 30
+    let label = getCurrentFiscalYear();
+    if (offset === -1) {
+      label = getPreviousFiscalYear(label);
+    } else if (offset !== 0) {
+      let l = getCurrentFiscalYear();
+      for (let i = 0; i < Math.abs(offset); i++) {
+        l = getPreviousFiscalYear(l);
+      }
+      label = l;
+    }
+    const { start, end } = {
+      start: getDebutSaison(label),
+      end: getFinSaison(label),
     };
+    return { start, end };
   };
 
   const dateRange = useMemo(() => {

@@ -58,31 +58,17 @@ export interface CostTemplate {
   actif: boolean;
 }
 
-// Saison helpers
-export function getSaison(date: Date): string {
-  const mois = date.getMonth();
-  const annee = date.getFullYear();
-  
-  if (mois >= 6) {
-    return `${annee}-${annee + 1}`;
-  } else {
-    return `${annee - 1}-${annee}`;
-  }
-}
-
-export function getDebutSaison(saison: string): Date {
-  const anneeDebut = parseInt(saison.split('-')[0]);
-  return new Date(anneeDebut, 6, 1);
-}
-
-export function getFinSaison(saison: string): Date {
-  const anneeFin = parseInt(saison.split('-')[1]);
-  return new Date(anneeFin, 5, 30);
-}
-
-export function getCurrentSaison(): string {
-  return getSaison(new Date());
-}
+// Exercice fiscal FLI (libellé AA-AA) — voir src/lib/fiscal-year.ts
+export {
+  getFiscalYear,
+  getCurrentFiscalYear,
+  getPreviousFiscalYear,
+  getFiscalYearBounds,
+  getSaison,
+  getDebutSaison,
+  getFinSaison,
+  getCurrentSaison,
+} from "@/lib/fiscal-year";
 
 // Hooks
 export function useFinancialKPIs(startDate: string, endDate: string, withComparison = false) {
@@ -371,7 +357,7 @@ export function useInstructorBalance() {
       const { data: instructors } = await supabase
         .from('instructors')
         .select('id, first_name, last_name, email')
-        .eq('is_active', true);
+        .eq('status', 'actif');
       
       // Get costs by instructor
       const { data: costs } = await supabase
