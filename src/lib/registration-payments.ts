@@ -56,20 +56,28 @@ export function getRegistrationPaymentSummary(
   };
 }
 
+/** Libellé du solde chèque dans le récapitulatif paiement */
+export const CHEQUE_BALANCE_SUMMARY_LABEL =
+  "Solde par chèque (à envoyer à l'inscription)";
+
+/** Instruction affichée lorsque le solde est réglé par chèque */
+export const CHEQUE_BALANCE_INSTRUCTION =
+  "Le chèque pour le solde est à envoyer lors de l'inscription. Il sera encaissé uniquement après la clôture de votre dossier.";
+
 export const PAYMENT_OPTION_LABELS: Record<RegistrationPaymentOption, string> = {
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]:
-    "150 € en ligne (Stripe) + solde par chèque après la formation",
+    "150 € en ligne (Stripe) + solde par chèque à l'inscription",
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]:
-    "150 € par virement bancaire + solde par chèque après la formation",
+    "150 € par virement bancaire + solde par chèque à l'inscription",
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]: "Paiement intégral en ligne (Stripe)",
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]: "Paiement intégral par virement bancaire",
 };
 
 export const PAYMENT_OPTION_DESCRIPTIONS: Record<RegistrationPaymentOption, string> = {
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]:
-    "Réglez les frais de dossier maintenant par carte. Le solde sera réglé par chèque, déposé après la fin du cours.",
+    `Réglez les frais de dossier maintenant par carte. ${CHEQUE_BALANCE_INSTRUCTION}`,
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]:
-    "Effectuez un virement de 150 € pour les frais de dossier. Le solde sera réglé par chèque, déposé après la fin du cours.",
+    `Effectuez un virement de 150 € pour les frais de dossier. ${CHEQUE_BALANCE_INSTRUCTION}`,
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]:
     "Réglez la totalité du tarif formation en une seule fois par carte bancaire.",
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]:
@@ -83,7 +91,9 @@ export function formatPaymentBreakdown(summary: RegistrationPaymentSummary): str
   ];
 
   if (summary.balanceAfterDossier > 0) {
-    lines.push(`Solde restant (chèque après formation) : ${formatPriceEUR(summary.balanceAfterDossier)}`);
+    lines.push(
+      `${CHEQUE_BALANCE_SUMMARY_LABEL} : ${formatPriceEUR(summary.balanceAfterDossier)} (encaissement après clôture du dossier)`
+    );
   }
 
   lines.push(`À régler maintenant : ${formatPriceEUR(summary.amountDueNow)}`);

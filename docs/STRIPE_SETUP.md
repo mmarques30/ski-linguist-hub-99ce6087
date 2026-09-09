@@ -93,7 +93,7 @@ LIMIT 5;
 
 | Option | Montant Stripe | Solde |
 |--------|----------------|-------|
-| Acompte Stripe + chèque | 150 € | Solde après formation |
+| Acompte Stripe + chèque | 150 € | Solde chèque à envoyer à l'inscription (encaissement après clôture du dossier) |
 | Paiement intégral Stripe | Prix total | 0 € |
 | Virement | — | Pas de Stripe |
 

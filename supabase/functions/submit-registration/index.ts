@@ -336,12 +336,13 @@ Deno.serve(async (req) => {
 
     const paymentLabels: Record<string, string> = {
       [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]:
-        "150 € Stripe + solde par chèque après formation",
+        "150 € Stripe + solde chèque à l'inscription (encaissement après clôture dossier)",
       [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]:
-        "150 € virement + solde par chèque après formation",
+        "150 € virement + solde chèque à l'inscription (encaissement après clôture dossier)",
       [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]: "Paiement intégral Stripe",
       [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]: "Paiement intégral virement",
-      virement: "150 € virement + solde par chèque après formation",
+      virement:
+        "150 € virement + solde chèque à l'inscription (encaissement après clôture dossier)",
     };
 
     const { data: inscription, error: inscriptionError } = await supabase
@@ -382,7 +383,7 @@ Deno.serve(async (req) => {
             ? `Paiement: ${paymentLabels[registration.paymentOption] || registration.paymentOption}`
             : null,
           paymentFields && paymentFields.balanceAfterDeposit > 0
-            ? `Frais de dossier: ${FRAIS_DOSSIER_EUR} € · Solde chèque: ${paymentFields.balanceAfterDeposit} €`
+            ? `Frais de dossier: ${FRAIS_DOSSIER_EUR} € · Solde chèque: ${paymentFields.balanceAfterDeposit} € (à envoyer à l'inscription, encaissement après clôture dossier)`
             : paymentFields?.paymentType === "total" && paymentFields.paymentFlow === "virement"
               ? `Paiement intégral par virement: ${price} €`
               : null,
@@ -413,6 +414,23 @@ Deno.serve(async (req) => {
         notes: isFullTransfer
           ? "Paiement intégral — en attente de virement"
           : "Frais de dossier — en attente de virement",
+      });
+    }
+
+    if (paymentFields && paymentFields.balanceAfterDeposit > 0) {
+      await supabase.from("payments").insert({
+        inscription_id: inscription.id,
+        amount: paymentFields.balanceAfterDeposit,
+        payment_type: "partial",
+        payment_method: "cheque",
+        status: "en_attente",
+        payment_date: new Date().toISOString().split("T")[0],
+        reference: inscription.code,
+        payer_type: "stagiaire",
+        payer_name: `${registration.firstName} ${registration.lastName}`,
+        notes:
+          "Chèque à envoyer à l'inscription — encaissement après clôture du dossier",
+        cheque_deposited: false,
       });
     }
 

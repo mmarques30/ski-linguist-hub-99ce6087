@@ -15,6 +15,8 @@ import {
 } from "@/services/registrationService";
 import { formatPriceEUR, isCustomFormatDuration } from "@/lib/registration-offerings";
 import {
+  CHEQUE_BALANCE_INSTRUCTION,
+  CHEQUE_BALANCE_SUMMARY_LABEL,
   FLI_BANK_DETAILS,
   getRegistrationPaymentSummary,
   hasChequeBalance,
@@ -113,7 +115,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
           inscriptionId: submission.inscriptionId,
           paymentOption: data.paymentOption,
           email: data.email,
-          successUrl: `${origin}/register/payment-success?code=${encodeURIComponent(submission.inscriptionCode)}&session_id={CHECKOUT_SESSION_ID}`,
+          successUrl: `${origin}/register/payment-success?code=${encodeURIComponent(submission.inscriptionCode)}&session_id={CHECKOUT_SESSION_ID}&option=${encodeURIComponent(data.paymentOption)}`,
           cancelUrl: `${origin}/register/payment-cancel?code=${encodeURIComponent(submission.inscriptionCode)}`,
         });
         window.location.href = checkout.checkoutUrl;
@@ -201,14 +203,33 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                     </p>
                     <p>BIC : {FLI_BANK_DETAILS.bic}</p>
                   </div>
-                  {result.paymentOption === REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT && (
-                    <p className="text-muted-foreground text-sm">
-                      Le solde sera réglé par chèque, déposé après la fin de la formation.
-                    </p>
-                  )}
                 </AlertDescription>
               </Alert>
             )}
+
+            {result.coursePrice &&
+              result.paymentOption &&
+              hasChequeBalance(result.paymentOption as typeof paymentOption) &&
+              getRegistrationPaymentSummary(
+                result.coursePrice,
+                result.paymentOption as typeof paymentOption
+              ).balanceAfterDossier > 0 && (
+                <Alert>
+                  <AlertDescription className="text-left space-y-2">
+                    <p className="font-medium">
+                      Chèque de{" "}
+                      {formatPriceEUR(
+                        getRegistrationPaymentSummary(
+                          result.coursePrice,
+                          result.paymentOption as typeof paymentOption
+                        ).balanceAfterDossier
+                      )}{" "}
+                      à envoyer avec votre inscription
+                    </p>
+                    <p className="text-muted-foreground text-sm">{CHEQUE_BALANCE_INSTRUCTION}</p>
+                  </AlertDescription>
+                </Alert>
+              )}
 
             <Alert>
               <Mountain className="h-4 w-4" />
@@ -344,7 +365,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                 </div>
                 {paymentSummary.balanceAfterDossier > 0 && hasChequeBalance(paymentOption) && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Solde (chèque après formation)</span>
+                    <span className="text-muted-foreground">{CHEQUE_BALANCE_SUMMARY_LABEL}</span>
                     <span className="font-medium">
                       {formatPriceEUR(paymentSummary.balanceAfterDossier)}
                     </span>
