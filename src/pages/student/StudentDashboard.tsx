@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   pisteLabelFromPlacementAnswers,
+  studentFacingCertificateLabel,
   studentFacingPisteFromCecrl,
 } from "@/lib/placement-test-engine";
 
@@ -202,16 +203,19 @@ export default function StudentDashboard() {
                 {certificates && certificates.length > 0 && (
                   <div className="border-t pt-2 mt-2">
                     <p className="font-medium mb-1">Certificats</p>
-                    {certificates.map((c) => (
-                      <div key={c.id} className="flex items-center justify-between">
-                        <span className="text-muted-foreground">
-                          Niveau {c.level_achieved}
-                        </span>
-                        <span className="text-xs">
-                          {format(new Date(c.issue_date), "dd/MM/yyyy")}
-                        </span>
-                      </div>
-                    ))}
+                    {certificates.map((c) => {
+                      const piste = studentFacingCertificateLabel(c.level_achieved);
+                      return (
+                        <div key={c.id} className="flex items-center justify-between">
+                          <span className="text-muted-foreground">
+                            {piste ? `Certificat — ${piste}` : "Certificat"}
+                          </span>
+                          <span className="text-xs">
+                            {format(new Date(c.issue_date), "dd/MM/yyyy")}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

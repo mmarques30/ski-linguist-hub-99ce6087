@@ -30,6 +30,7 @@ import { buildSurveyUrl } from "@/lib/client-links";
 import { CopyLinkRow } from "@/components/shared/CopyLinkRow";
 import {
   pisteLabelFromPlacementAnswers,
+  studentFacingCertificateLabel,
   studentFacingPisteFromCecrl,
 } from "@/lib/placement-test-engine";
 
@@ -219,12 +220,17 @@ export default function StudentPortalPreview() {
                         </p>
                       </div>
                     ))}
-                    {certificates?.map((cert) => (
-                      <div key={cert.id} className="rounded-lg border p-3 text-sm">
-                        <p className="font-medium">Certificat</p>
-                        <p className="text-muted-foreground">Niveau {cert.level_achieved}</p>
-                      </div>
-                    ))}
+                    {certificates?.map((cert) => {
+                      const piste = studentFacingCertificateLabel(cert.level_achieved);
+                      return (
+                        <div key={cert.id} className="rounded-lg border p-3 text-sm">
+                          <p className="font-medium">Certificat</p>
+                          {piste && (
+                            <p className="text-muted-foreground">{piste}</p>
+                          )}
+                        </div>
+                      );
+                    })}
                   </>
                 )}
               </CardContent>

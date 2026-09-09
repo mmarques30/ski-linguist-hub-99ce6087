@@ -9,6 +9,7 @@ import {
   useStudentCertificates,
 } from "@/hooks/useStudentPortal";
 import { format } from "date-fns";
+import { studentFacingCertificateLabel } from "@/lib/placement-test-engine";
 
 const docTypeLabels: Record<string, string> = {
   convention: "Convention de formation",
@@ -56,7 +57,10 @@ export default function StudentDocuments() {
                     >
                       <div>
                         <p className="font-medium">
-                          Certificat — Niveau {c.level_achieved}
+                          {(() => {
+                            const piste = studentFacingCertificateLabel(c.level_achieved);
+                            return piste ? `Certificat — ${piste}` : "Certificat";
+                          })()}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Délivré le {format(new Date(c.issue_date), "dd/MM/yyyy")}

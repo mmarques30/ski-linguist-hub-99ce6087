@@ -17,13 +17,13 @@ Dernière mise à jour : 2026-09-09 (point 4 — pistes UI stagiaire).
 | BL-014 | UI candidat → actif | formateurs | Recrutement |
 | BL-015 | Backfill `inscriptions.formateur` (CSV) | inscriptions | Avant rattachement |
 | BL-017 | Import point 3 hors UI `/admin/import` | ops | Avant point 9 |
-| BL-018 | Certificats portail affichent encore `level_achieved` CECRL | StudentDocuments / Dashboard / preview | Décision Paula : (a) CECRL (b) piste (c) neutre |
 
-## Clos (sur cette branche : partiel)
+## Clos (sur cette branche)
 
 | ID | Note |
 |----|------|
-| BL-005 | CECRL retiré des écrans placement + portail test/dashboard — certificats en attente BL-018 |
+| BL-005 | CECRL retiré placement + portail + certificats stagiaire (piste) |
+| BL-018 | Certificats : `studentFacingCertificateLabel` (piste / omit) |
 
 ## Validations points
 
@@ -31,6 +31,6 @@ Dernière mise à jour : 2026-09-09 (point 4 — pistes UI stagiaire).
 |-------|--------|
 | 1 | Validé ; respecter UI avant point 9 |
 | 2 | Validé |
-| 3 | Validé 69 ; rapprochement bloqué (CSV Formateur) |
-| 4 | En attente validation |
+| 3 | Clôturé (voir branche point3) |
+| 4 | Prêt validation (pistes + certificats) |
 | 5–10 | Non démarrés |

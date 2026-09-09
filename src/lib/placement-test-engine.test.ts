@@ -6,6 +6,7 @@ import {
   getNextSlopeAfterSlope,
   needsAdminCallFromResults,
   studentFacingPisteFromCecrl,
+  studentFacingCertificateLabel,
   studentFacingPisteLabel,
   type PlacementQuestion,
   type SlopeResult,
@@ -68,6 +69,13 @@ describe("placement-test-engine", () => {
     for (const label of samples) {
       expect(label).not.toMatch(cecrl);
     }
+  });
+
+  it("studentFacingCertificateLabel maps CECRL to piste or omits", () => {
+    expect(studentFacingCertificateLabel("B2")).toBe("Piste rouge");
+    expect(studentFacingCertificateLabel("A1")).toBe("Début de parcours");
+    expect(studentFacingCertificateLabel("unknown")).toBeNull();
+    expect(studentFacingCertificateLabel(null)).toBeNull();
   });
 
   it("getNextSlopeAfterSlope routes failed slope to vocab", () => {

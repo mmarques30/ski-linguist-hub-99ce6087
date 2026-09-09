@@ -115,6 +115,19 @@ export function studentFacingPisteFromCecrl(cecrl: string | null | undefined): s
   return map[key] || "À déterminer";
 }
 
+/**
+ * Libellé certificat côté stagiaire : piste si CECRL connu, sinon null
+ * (l’UI affiche seulement « Certificat » — jamais A1–C2 brut).
+ */
+export function studentFacingCertificateLabel(
+  levelAchieved: string | null | undefined
+): string | null {
+  if (!levelAchieved || !String(levelAchieved).trim()) return null;
+  const key = String(levelAchieved).trim().toUpperCase();
+  if (!/^(A1|A2|B1|B2|C1|C2)$/.test(key)) return null;
+  return studentFacingPisteFromCecrl(key);
+}
+
 export function pisteLabelFromPlacementAnswers(answers: unknown): string | null {
   if (!answers || typeof answers !== "object") return null;
   const summary = (answers as { summary?: Record<string, unknown> }).summary;
