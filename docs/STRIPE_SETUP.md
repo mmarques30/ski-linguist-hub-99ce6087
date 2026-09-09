@@ -25,7 +25,23 @@ supabase secrets set STRIPE_SECRET_KEY=sk_test_...
 
 ---
 
-## Étape 2 — Créer le webhook (à faire)
+## Étape 2 — Créer le webhook
+
+### Option A — Automatique (recommandé)
+
+1. Déployer les fonctions (voir ci-dessous)
+2. Dans l'app : **Settings → Intégration de paiement** → **Configurer le webhook automatiquement**
+3. Le secret est enregistré dans `app_settings` (lecture réservée aux edge functions + admins)
+
+### Option B — Script CLI
+
+```bash
+export STRIPE_SECRET_KEY=sk_test_...   # depuis Stripe Dashboard
+export SUPABASE_ACCESS_TOKEN=...     # optionnel — enregistre le secret + déploie
+./scripts/setup-stripe-webhook.sh
+```
+
+### Option C — Manuel
 
 1. [Stripe → Webhooks (test)](https://dashboard.stripe.com/test/webhooks) → **Add endpoint**
 2. URL :

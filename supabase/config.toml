@@ -23,3 +23,9 @@ verify_jwt = false
 
 [functions.check-stripe-config]
 verify_jwt = false
+
+[functions.verify-registration-checkout]
+verify_jwt = false
+
+[functions.provision-stripe-webhook]
+verify_jwt = true
