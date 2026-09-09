@@ -17,7 +17,7 @@ Dernière mise à jour : 2026-09-09 (point 4 — pistes UI stagiaire).
 | BL-014 | UI candidat → actif | formateurs | Recrutement |
 | BL-015 | Backfill `inscriptions.formateur` (CSV) | inscriptions | Avant rattachement |
 | BL-017 | Import point 3 hors UI `/admin/import` | ops | Avant point 9 |
-| BL-018 | Certificats portail affichent encore `level_achieved` CECRL | StudentDocuments / Dashboard | Décision Paula (point 4) |
+| BL-018 | Certificats portail affichent encore `level_achieved` CECRL | StudentDocuments / Dashboard / preview | Décision Paula : (a) CECRL (b) piste (c) neutre |
 
 ## Clos (sur cette branche : partiel)
 
