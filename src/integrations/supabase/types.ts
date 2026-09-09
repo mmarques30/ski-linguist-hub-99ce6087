@@ -1249,7 +1249,17 @@ export type Database = {
         ]
       }
       instructors: {
-        Row: {
+          alias: string[] | null
+          civilite: string | null
+          pays: string | null
+          statut_administratif: string | null
+          identifiant_etranger: string | null
+          assujetti_tva: boolean | null
+          consentement_temoignage: string | null
+          consentement_photo: string | null
+          cv_url: string | null
+          formulaire_2026: boolean | null
+          date_naissance: string | null
           address: string | null
           availability_status: string | null
           bio: string | null
@@ -1277,6 +1287,17 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          alias?: string[] | null
+          civilite?: string | null
+          pays?: string | null
+          statut_administratif?: string | null
+          identifiant_etranger?: string | null
+          assujetti_tva?: boolean | null
+          consentement_temoignage?: string | null
+          consentement_photo?: string | null
+          cv_url?: string | null
+          formulaire_2026?: boolean | null
+          date_naissance?: string | null
           address?: string | null
           availability_status?: string | null
           bio?: string | null
@@ -1304,6 +1325,17 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          alias?: string[] | null
+          civilite?: string | null
+          pays?: string | null
+          statut_administratif?: string | null
+          identifiant_etranger?: string | null
+          assujetti_tva?: boolean | null
+          consentement_temoignage?: string | null
+          consentement_photo?: string | null
+          cv_url?: string | null
+          formulaire_2026?: boolean | null
+          date_naissance?: string | null
           address?: string | null
           availability_status?: string | null
           bio?: string | null

@@ -2,61 +2,75 @@
 
 **Branche :** `cursor/import-formateurs-7435` (basée sur point 1)  
 **Date :** 2026-09-09  
-**Statut :** en attente de validation Paula (dry-run OK — **aucune écriture DB**)  
+**Statut :** en attente de validation Paula (données **écrites**)  
 **Fichier source :** `formateurs_FLI_import_3c13.csv` (upload agent — **non commité**, données perso)
 
-## Objectif
+## Décisions Paula (2026-09-09)
 
-Importer le fichier formateur·rices via `/admin/import` sécurisé (point 1), avec mapping des en-têtes français et statuts compatibles CHECK DB.
+1. Importer les **69** (dont 40 inactif·ves) — nécessaires au rattachement historique / BPF  
+2. Statut dédié **`candidat`** — trois valeurs : `actif` | `inactif` | `candidat` ; passage candidat→actif = action explicite Paula  
+3. **Colonnes dédiées** pour tous les champs (pas de perte en `status_notes`)
 
-## Fait (code)
+## Migration
 
-### Mapping (`src/lib/admin-import-engine.ts`)
+Fichier : `supabase/migrations/20260909150000_instructors_candidat_and_columns.sql` (réversible, section DOWN)  
+**Appliquée en live** le 2026-09-09.
 
-- En-têtes FR/EN (accents ignorés) : Nom, Prénom, Email, Téléphone, Langues, Statut, SIRET, Adresse, CP, Ville, etc.
-- **Statuts DB** (contrainte `instructors_status_check`) : `ACTIF` | `INACTIF` | `A_EVITER`
-  - Correctif : l’ancien mapping écrivait `active`/`inactive` → **rejeté** par le CHECK
-  - `candidat` → `INACTIF` + note explicite (pas de valeur CHECK `CANDIDAT`)
-- Champs hors schéma (civilité, pays, date de naissance, CV, formulaire 2026, consentements, identifiant étranger…) → lignes dans `status_notes`
-- `Alias` → aussi `specialty_details`
-- `Statut administratif` → `tax_status` (tronqué 120 car.) + note
-- Email vide → `null` (UNIQUE email OK pour plusieurs NULL)
-- **Pas** de liaison automatique aux inscriptions
+### Statut
 
-### UI
+CHECK remplacé : `actif` | `inactif` | `candidat` (suppression de `ACTIF`/`INACTIF`/`A_EVITER`).  
+`is_active` synchronisé : `true` seulement si `status = 'actif'`.
 
-Aide contextuelle sur `/admin/import` quand la table `instructors` est sélectionnée.
+### Colonnes ajoutées
 
-## Dry-run (fichier Paula, 2026-09-09)
+| Colonne | Type | Usage |
+|---------|------|--------|
+| `alias` | `text[]` | Rapprochement `inscriptions.formateur` / CSV facturation |
+| `civilite` | `text` | Civilité |
+| `pays` | `text` | Pays |
+| `statut_administratif` | `text` | Qualiopi indicateur 27 |
+| `identifiant_etranger` | `text` | Qualiopi 27 (hors SIRET) |
+| `assujetti_tva` | `boolean` | Sous-traitance / TVA |
+| `consentement_temoignage` | `text` | RGPD : `oui` \| `oui avec relecture` \| `non` \| NULL |
+| `consentement_photo` | `text` | idem |
+| `cv_url` | `text` | Dossier formateur |
+| `formulaire_2026` | `boolean` | Formulaire saison |
+| `date_naissance` | `date` | Dossier formateur |
 
-| Métrique | Valeur |
-|----------|--------|
-| Lignes | 69 |
-| Acceptées | **69** |
-| Rejetées | **0** |
-| BOM | UTF-8 retiré |
-| ACTIF | 27 |
-| INACTIF | 42 (dont 2 candidats mappés) |
-| Sans email | 12 (surtout inactifs) |
-| Sans langues | 40 (surtout inactifs) |
+`siret` existait déjà.
 
-Candidats mappés INACTIF + note : Langer Dominique, Resende Carolina.
+## Mapping / UI
 
-**Table `instructors` en base :** 0 ligne — aucune écriture effectuée.
+- En-têtes FR acceptés dans `admin-import-engine.ts`
+- Liste `/formateurs` : filtre statut **défaut = actif** (consultable : inactif / candidat / tous)
+- Sélecteurs d’affectation (inscriptions, sessions, coûts) : `status = 'actif'` uniquement
+- Cartes : badge de statut
 
-## Décisions demandées avant écriture
+## Import effectué
 
-1. **Périmètre** : importer les **69** lignes, ou **actifs seulement** (27), ou actifs + candidats ?
-2. **`candidat`** : garder le mapping INACTIF + note, ou migration CHECK pour ajouter `CANDIDAT` ?
-3. **Colonnes hors schéma** (civilité, pays, DOB, consentements, CV…) : OK en `status_notes` pour le cutover, ou colonnes dédiées plus tard (BL-003 élargi) ?
-4. Confirmation écrite : **« OK pour écrire les formateur·rices en base »** (sinon on reste en dry-run).
+| Statut | Lignes |
+|--------|--------|
+| actif | 27 |
+| inactif | 40 |
+| candidat | 2 |
+| **total** | **69** |
 
-## Hors scope
+- Toutes les lignes ont au moins un `alias` (variantes CSV + « Prénom Nom »)
+- Journal `audit_log` : `action = import`, `table_name = instructors`, source CSV point 3
+- CSV source **non** versionné dans git
 
-- Lien auto formateur ↔ inscriptions / missions
-- Purge de `instructors` (table déjà vide)
-- Commit du CSV source (données personnelles)
+## Hors scope (volontaire)
+
+- Module recrutement candidat (parcours formulaire / observation / cours d’essai)
+- Action UI « passer candidat → actif » (à faire quand le module recrutement démarre — en attendant : update SQL / fiche)
+- Liaison auto aux inscriptions historiques (prochain rapprochement)
+- Colonne `inscriptions.formateur` texte (si absente) — pour le matching futur
 
 ## Validation demandée
 
-Paula, merci de répondre aux 4 décisions ci-dessus. Dès ton OK écriture, on lance l’import via l’UI sécurisée (ou SQL batch équivalent journalisé) sur la table vide.
+Paula, merci de confirmer :
+
+1. Les 69 en base (27/40/2) OK  
+2. Colonnes + consentements OK  
+3. Filtrage listes/sélecteurs OK  
+4. On peut enchaîner sur le **point 4** (CECRL hors UI stagiaire)  

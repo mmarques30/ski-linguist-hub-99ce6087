@@ -10,6 +10,18 @@ const availabilityStyles: Record<string, string> = {
   indisponible: "bg-red-100 text-red-800",
 };
 
+const statusStyles: Record<string, string> = {
+  actif: "bg-emerald-100 text-emerald-800",
+  inactif: "bg-slate-100 text-slate-700",
+  candidat: "bg-sky-100 text-sky-800",
+};
+
+const statusLabels: Record<string, string> = {
+  actif: "Actif·ve",
+  inactif: "Inactif·ve",
+  candidat: "Candidat·e",
+};
+
 const languageColors: Record<string, string> = {
   anglais: "bg-blue-100 text-blue-800",
   portugais: "bg-green-100 text-green-800",
@@ -37,18 +49,27 @@ export function InstructorCard({ instructor, onClick }: Props) {
           <AvatarFallback>{initials.toUpperCase()}</AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0 space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <h3 className="font-semibold truncate">
               {instructor.first_name} {instructor.last_name}
             </h3>
-            <Badge
-              className={
-                availabilityStyles[instructor.availability_status || "disponible"] ||
-                availabilityStyles.disponible
-              }
-            >
-              {instructor.availability_status || "disponible"}
-            </Badge>
+            <div className="flex shrink-0 gap-1">
+              {instructor.status && (
+                <Badge className={statusStyles[instructor.status] || statusStyles.inactif}>
+                  {statusLabels[instructor.status] || instructor.status}
+                </Badge>
+              )}
+              {instructor.status === "actif" && (
+                <Badge
+                  className={
+                    availabilityStyles[instructor.availability_status || "disponible"] ||
+                    availabilityStyles.disponible
+                  }
+                >
+                  {instructor.availability_status || "disponible"}
+                </Badge>
+              )}
+            </div>
           </div>
           <div className="flex flex-wrap gap-1">
             {(instructor.languages || []).map((l) => (
