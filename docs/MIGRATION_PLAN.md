@@ -32,12 +32,12 @@ Ce document décrit comment passer du fonctionnement actuel (Excel + imports par
 
 ## Calendrier
 
-### Phase 1 — Maintenant → 29/09/2026 (Onda A en cours)
+### Phase 1 — Maintenant → 29/09/2026 (Onda A — terminée)
 
 - [x] Tab **Accès client** sur chaque inscription (liens, emails, survey, preview portal)
 - [x] Tab **Documents** connectée à `document_sendings`
 - [x] **Voir comme le stagiaire** (`/students/:id/portal-preview`)
-- [ ] Stripe webhook configuré (paiements nouveaux)
+- [ ] Stripe webhook configuré (paiements nouveaux) — en attente accès Supabase Owner
 - [ ] Fichier Excel « delta » tenu à jour (inscriptions/factures hors système)
 
 ### Phase 2 — Semaine du 22/09/2026 (préparation)
@@ -60,11 +60,12 @@ Ce document décrit comment passer du fonctionnement actuel (Excel + imports par
 | 14h00 | Équipe formée sur nouveau flux (register, documents, preview portal) |
 | 16h00 | Go-live facturation dans le système (si pas déjà fait) |
 
-### Phase 4 — Octobre 2026 (Onda B)
+### Phase 4 — Octobre 2026 (Onda B — livrée)
 
-- Convites portail stagiaire en masse (après import)
-- Timeline inscription
-- Vue J-10 horaires en lot
+- [x] Invitations portail stagiaire en masse (`/students` + fiche stagiaire, magic link)
+- [x] Tab **Historique** sur chaque inscription (timeline emails, paiements, documents, horaires)
+- [x] Vue J-10 horaires en lot (`/inscriptions/schedule-validation`, validation matin/après-midi en lot)
+- [ ] Déployer edge function `invite-student-portal` sur Supabase
 
 ---
 

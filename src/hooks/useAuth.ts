@@ -48,6 +48,15 @@ export function useAuth() {
     return { error };
   };
 
+  const signInWithMagicLink = async (email: string) => {
+    const redirectTo = `${window.location.origin}/student/dashboard`;
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: redirectTo },
+    });
+    return { error };
+  };
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     return { error };
@@ -59,6 +68,7 @@ export function useAuth() {
     loading,
     signIn,
     signUp,
+    signInWithMagicLink,
     signOut,
   };
 }

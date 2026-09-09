@@ -249,7 +249,7 @@ Deno.serve(async (req) => {
             type: "schedule_validation",
             title: `⏰ J-10 — ${pending.length} horaire(s) à valider`,
             message: `Formations du ${formattedDate} : ${pending.length} inscription(s) en attente de validation matin/après-midi.`,
-            link: "/inscriptions",
+            link: "/inscriptions/schedule-validation",
           });
         }
       }

@@ -101,7 +101,15 @@ const navigationGroups: NavGroup[] = [
       { name: "Commercial", href: "/gestion/commercial", icon: TrendingUp },
       { name: "Moniteurs ski", href: "/gestion/moniteurs", icon: Users },
       { name: "Partenaires", href: "/gestion/partenaires", icon: Briefcase },
-      { name: "Inscriptions", href: "/inscriptions", icon: ClipboardList },
+      {
+        name: "Inscriptions",
+        href: "/inscriptions",
+        icon: ClipboardList,
+        subItems: [
+          { name: "Liste", href: "/inscriptions" },
+          { name: "Horaires J-10", href: "/inscriptions/schedule-validation" },
+        ],
+      },
       { name: "Factures", href: "/invoices", icon: Receipt },
       { name: "Stagiaires", href: "/students", icon: Users },
     ],
