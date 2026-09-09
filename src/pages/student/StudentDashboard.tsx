@@ -196,7 +196,7 @@ export default function StudentDashboard() {
                     {certificates.map((c) => (
                       <div key={c.id} className="flex items-center justify-between">
                         <span className="text-muted-foreground">
-                          Niveau {c.level_achieved}
+                          Certificat de fin de formation
                         </span>
                         <span className="text-xs">
                           {format(new Date(c.issue_date), "dd/MM/yyyy")}

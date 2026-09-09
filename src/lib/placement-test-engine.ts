@@ -79,6 +79,43 @@ export function needsAdminCallFromResults(slopeResults: SlopeResult[]): boolean 
   return !!verte && !verte.passed && verte.correct <= 1;
 }
 
+/**
+ * Libellé piste (placement) pour le niveau général d'entrée du bilan formateur.
+ * Ne sert pas de niveau final sur le certificat.
+ */
+export function studentFacingPisteLabel(input: {
+  passedSlopes?: SlopeLevel[] | string[] | null;
+  highestSlopeReached?: SlopeLevel | string | null;
+  endedAtVocab?: boolean | null;
+}): string {
+  const passed = (input.passedSlopes || []).filter((s): s is SlopeLevel =>
+    ["verte", "bleue", "rouge", "noire"].includes(String(s))
+  );
+  if (passed.length > 0) {
+    const order = ["verte", "bleue", "rouge", "noire"] as SlopeLevel[];
+    let best: SlopeLevel = passed[0];
+    for (const s of passed) {
+      if (order.indexOf(s) > order.indexOf(best)) best = s;
+    }
+    return SLOPE_LABELS[best];
+  }
+  if (input.endedAtVocab) return SLOPE_LABELS.vocab_ski;
+  const high = input.highestSlopeReached;
+  if (high && high in SLOPE_LABELS) return SLOPE_LABELS[high as SlopeLevel];
+  return "Début de parcours";
+}
+
+export function pisteLabelFromPlacementAnswers(answers: unknown): string | null {
+  if (!answers || typeof answers !== "object") return null;
+  const summary = (answers as { summary?: Record<string, unknown> }).summary;
+  if (!summary) return null;
+  return studentFacingPisteLabel({
+    passedSlopes: summary.passedSlopes as string[] | undefined,
+    highestSlopeReached: summary.highestSlopeReached as string | undefined,
+    endedAtVocab: summary.endedAtVocab as boolean | undefined,
+  });
+}
+
 export function buildAdaptiveTestResult(
   questions: PlacementQuestion[],
   answers: Record<string, string>,

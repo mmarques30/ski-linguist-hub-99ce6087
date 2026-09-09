@@ -529,11 +529,14 @@ export default function Inscriptions() {
                                     student_id: inscription.student_id,
                                     student_name: inscription.student_name,
                                     language: inscription.language,
-                                    entry_level: inscription.entry_level,
-                                    exit_level: inscription.exit_level,
+                                    start_date: inscription.start_date,
+                                    end_date: inscription.end_date,
                                     duration_hours: inscription.duration_hours,
                                     price: inscription.price,
                                     code: inscription.code,
+                                    course_location: inscription.course_location,
+                                    modality: inscription.modality,
+                                    formateur: inscription.instructor_name,
                                   })}
                                 >
                                   <Package className="mr-2 h-4 w-4" />

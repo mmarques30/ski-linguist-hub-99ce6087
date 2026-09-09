@@ -140,6 +140,26 @@ export function useAutoIndicators() {
         certRate = Math.round((passed / inscriptions.length) * 100);
       }
 
+      // PROC-026 — progression Entrée/Sortie (formulaire de sortie complet)
+      const { data: endedInscriptions } = await supabase
+        .from("inscriptions")
+        .select(
+          "niveau_general_sortie, niveau_technique_sortie, objectif_atteint, commentaire_sortie, status"
+        )
+        .in("status", ["terminee", "facturee"]);
+
+      let progressionRate = 0;
+      if (endedInscriptions && endedInscriptions.length > 0) {
+        const complete = endedInscriptions.filter(
+          (row) =>
+            !!row.niveau_general_sortie?.trim() &&
+            !!row.niveau_technique_sortie?.trim() &&
+            !!row.objectif_atteint &&
+            !!row.commentaire_sortie?.trim()
+        ).length;
+        progressionRate = Math.round((complete / endedInscriptions.length) * 100);
+      }
+
       // Continuous improvement count
       const { count: improvementCount } = await supabase
         .from("continuous_improvement")
@@ -162,6 +182,7 @@ export function useAutoIndicators() {
       return {
         satisfactionRate,
         certRate,
+        progressionRate,
         improvementCount: improvementCount || 0,
         evalCompletionRate,
         totalSurveys: totalSurveys || 0,

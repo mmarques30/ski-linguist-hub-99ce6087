@@ -212,8 +212,10 @@ export default function StudentPortalPreview() {
                     ))}
                     {certificates?.map((cert) => (
                       <div key={cert.id} className="rounded-lg border p-3 text-sm">
-                        <p className="font-medium">Certificat</p>
-                        <p className="text-muted-foreground">Niveau {cert.level_achieved}</p>
+                        <p className="font-medium">Certificat de fin de formation</p>
+                        <p className="text-muted-foreground">
+                          Délivré le {format(new Date(cert.issue_date), "dd/MM/yyyy")}
+                        </p>
                       </div>
                     ))}
                   </>

@@ -50,6 +50,16 @@ import { PlacementTestSummaryCard } from "@/components/inscriptions/PlacementTes
 import { InscriptionDocumentsCard } from "@/components/inscriptions/InscriptionDocumentsCard";
 import { InscriptionClientAccessCard } from "@/components/inscriptions/InscriptionClientAccessCard";
 import { InscriptionTimelineCard } from "@/components/inscriptions/InscriptionTimelineCard";
+import { FormateurEntryFormDialog } from "@/components/inscriptions/FormateurEntryFormDialog";
+import { FormateurExitFormDialog } from "@/components/inscriptions/FormateurExitFormDialog";
+import { useInscriptionProgression } from "@/hooks/useInscriptionProgression";
+import { pisteLabelFromPlacementAnswers } from "@/lib/placement-test-engine";
+import {
+  isEntryFormComplete,
+  isExitFormComplete,
+  OBJECTIF_ATTEINT_LABELS,
+  type ObjectifAtteint,
+} from "@/lib/certificate-progression";
 
 const translations = {
   back: { fr: "Retour", "pt-BR": "Voltar", en: "Back" },
@@ -118,6 +128,8 @@ export default function InscriptionDetails() {
   const [endPackOpen, setEndPackOpen] = useState(false);
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [entryFormOpen, setEntryFormOpen] = useState(false);
+  const [exitFormOpen, setExitFormOpen] = useState(false);
   const deleteInscription = useDeleteInscription();
   const getDateLocale = () => {
     switch (language) {
@@ -140,6 +152,24 @@ export default function InscriptionDetails() {
       return data;
     },
     enabled: !!id,
+  });
+
+  const { data: progression } = useInscriptionProgression(id);
+
+  const { data: placementSuggestion } = useQuery({
+    queryKey: ["inscription-placement-piste", id, inscription?.entry_test_id],
+    queryFn: async () => {
+      const testId = (inscription as { entry_test_id?: string | null } | null)?.entry_test_id;
+      if (!testId) return null;
+      const { data, error } = await supabase
+        .from("placement_tests")
+        .select("answers, determined_level")
+        .eq("id", testId)
+        .maybeSingle();
+      if (error) throw error;
+      return pisteLabelFromPlacementAnswers(data?.answers) || null;
+    },
+    enabled: !!id && !!(inscription as { entry_test_id?: string | null } | null)?.entry_test_id,
   });
 
   const { data: invoices } = useQuery({
@@ -507,33 +537,97 @@ export default function InscriptionDetails() {
               </Card>
             </div>
 
-            {/* Levels */}
+            {/* Bilan Entrée / Sortie */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <GraduationCap className="h-4 w-4" />
-                  Niveaux CECRL
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center p-4 bg-muted rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-1">{t(translations.entryLevel)}</p>
-                    <p className="text-2xl font-bold">{inscription.entry_level || "-"}</p>
-                  </div>
-                  <div className="text-center p-4 bg-muted rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-1">{t(translations.exitLevel)}</p>
-                    <p className="text-2xl font-bold">{inscription.final_general_level || inscription.final_specific_level || "-"}</p>
-                  </div>
-                  <div className="text-center p-4 bg-muted rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-1">{t(translations.certification)}</p>
-                    <p className="text-2xl font-bold">{inscription.certification_result || "-"}</p>
-                  </div>
-                  <div className="text-center p-4 bg-muted rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-1">Test d'entrée</p>
-                    <p className="text-lg font-medium">{inscription.entry_test_score || "-"}</p>
-                  </div>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <GraduationCap className="h-4 w-4" />
+                    Bilan de progression
+                  </CardTitle>
+                  {editable && (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEntryFormOpen(true)}
+                      >
+                        Formulaire entrée
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setExitFormOpen(true)}
+                      >
+                        Formulaire sortie
+                      </Button>
+                    </div>
+                  )}
                 </div>
+                <CardDescription>
+                  Entrée = piste / observation formateur · Sortie = CECRL formateur
+                  (jamais SNMSF/DSF sur le certificat)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr className="bg-muted/50">
+                        <th className="border p-2 text-left" />
+                        <th className="border p-2 text-left">Entrée</th>
+                        <th className="border p-2 text-left">Sortie</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="border p-2 font-medium">Niveau général</td>
+                        <td className="border p-2">
+                          {progression?.niveau_general_entree ||
+                            inscription.entry_level ||
+                            "—"}
+                        </td>
+                        <td className="border p-2">
+                          {progression?.niveau_general_sortie || "—"}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="border p-2 font-medium">Niveau technique</td>
+                        <td className="border p-2">
+                          {progression?.niveau_technique_entree || "—"}
+                        </td>
+                        <td className="border p-2">
+                          {progression?.niveau_technique_sortie || "—"}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2 text-sm">
+                  <p>
+                    <span className="text-muted-foreground">Objectif atteint : </span>
+                    {progression?.objectif_atteint
+                      ? OBJECTIF_ATTEINT_LABELS[
+                          progression.objectif_atteint as ObjectifAtteint
+                        ] || progression.objectif_atteint
+                      : "—"}
+                  </p>
+                  <p>
+                    <span className="text-muted-foreground">Formulaires : </span>
+                    {progression && isEntryFormComplete(progression)
+                      ? "Entrée OK"
+                      : "Entrée manquant"}
+                    {" · "}
+                    {progression && isExitFormComplete(progression)
+                      ? "Sortie OK"
+                      : "Sortie manquant"}
+                  </p>
+                </div>
+                {progression?.commentaire_sortie && (
+                  <p className="text-sm whitespace-pre-wrap border-l-2 border-primary/30 pl-3">
+                    {progression.commentaire_sortie}
+                  </p>
+                )}
               </CardContent>
             </Card>
 
@@ -723,12 +817,67 @@ export default function InscriptionDetails() {
               student_id: inscription.student_id || "",
               student_name: inscription.student_name || "",
               language: inscription.language,
-              entry_level: inscription.entry_level,
-              exit_level: (inscription as Record<string, unknown>).exit_level as string | null,
+              start_date: inscription.start_date,
+              end_date: inscription.end_date,
               duration_hours: inscription.duration_hours,
+              hours_followed: progression?.hours_followed ?? null,
               price: inscription.price,
               code: inscription.code,
+              course_location: inscription.course_location,
+              modality: inscription.modality,
+              formateur:
+                (inscription as { formateur?: string | null }).formateur ||
+                inscription.instructor_name,
+              niveau_general_entree: progression?.niveau_general_entree ?? null,
+              niveau_technique_entree: progression?.niveau_technique_entree ?? null,
+              niveau_general_sortie: progression?.niveau_general_sortie ?? null,
+              niveau_technique_sortie: progression?.niveau_technique_sortie ?? null,
+              objectif_atteint: progression?.objectif_atteint ?? null,
+              commentaire_sortie: progression?.commentaire_sortie ?? null,
             }}
+          />
+
+          <FormateurEntryFormDialog
+            open={entryFormOpen}
+            onOpenChange={setEntryFormOpen}
+            inscriptionId={inscription.id}
+            suggestedGeneralEntry={placementSuggestion}
+            initial={
+              progression
+                ? {
+                    niveau_general_entree: progression.niveau_general_entree,
+                    niveau_technique_entree: progression.niveau_technique_entree,
+                    remarques_entree: progression.remarques_entree,
+                  }
+                : null
+            }
+          />
+
+          <FormateurExitFormDialog
+            open={exitFormOpen}
+            onOpenChange={setExitFormOpen}
+            inscriptionId={inscription.id}
+            durationHours={inscription.duration_hours}
+            hoursFollowed={progression?.hours_followed}
+            initial={
+              progression
+                ? {
+                    niveau_general_sortie: progression.niveau_general_sortie,
+                    niveau_technique_sortie: progression.niveau_technique_sortie,
+                    objectif_atteint: progression.objectif_atteint,
+                    commentaire_sortie: progression.commentaire_sortie,
+                  }
+                : null
+            }
+            existingEntry={
+              progression
+                ? {
+                    niveau_general_entree: progression.niveau_general_entree,
+                    niveau_technique_entree: progression.niveau_technique_entree,
+                    remarques_entree: progression.remarques_entree,
+                  }
+                : null
+            }
           />
 
           <InvoiceCreateDialog
