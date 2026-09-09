@@ -2,7 +2,7 @@
 
 **Branche :** `cursor/point3-complement-backfill-7435` (suite de `import-formateurs-7435`)  
 **Date :** 2026-09-09  
-**Statut :** A complété (71 formateur·rices) · B dry-run en attente validation · C bloqué
+**Statut :** A fait · B écrit (837) · B2 dry-run en attente · C table livrée (pas d`instructor_id`)
 
 ## 1. Rapport dry-run (moteur `prepareImport`)
 
@@ -142,49 +142,68 @@ UI `/admin/import` : mode **Complément instructors** branché (`classifyInstruc
 
 > Note chemin d’écriture A : même moteur que l’UI (`prepareImport` + classification) + `audit_log` dry-run puis import. Pas de session admin navigateur dans l’agent cloud → inserts journalisés via le runner SQL partagé (pas de purge, pas d’INSERT hors payloads validés). Les prochains compléments pourront passer le bouton UI.
 
-### B — Backfill formateur (dry-run uniquement — **attente validation**)
+### B — Backfill formateur (**écrit** — 837 uniquement)
 
-**Fichier source :** upload `inscriptions_FLI_2026_09_09.csv` (878 × 59).  
-**Moteur :** `src/lib/formateur-backfill-match.ts` + mode UI **Backfill formateur**.
+Paula a validé l’écriture des 3 colonnes sur les **837** correspondances 1↔1 uniquement.
 
-| Métrique | Valeur | Attendu |
-|----------|--------|---------|
-| DB / CSV | 906 / 878 | 906 / 878 |
-| Rapprochées 1↔1 | **837** | ~878 |
-| DB sans match | **69** (dont **32** doublons d’encodage MacRoman) → **≈37 vrais restes** | ~28 |
-| CSV sans match | **41** | ~0 |
-| Multiples | **2** | 0 |
-| Dont Formateur non vide | 805 | — |
+| Contrôle | Valeur |
+|----------|--------|
+| Lignes mises à jour | **837** |
+| dont Formateur non vide | **805** |
+| dont Formateur vide (CSV) | **32** |
+| Inscriptions DB avec formateur rempli après | **805** |
+| Inscriptions DB encore vides | **101** (= 32 + 69 non rapprochées) |
+| Colonnes touchées | `formateur`, `formateur_email`, `formateur_telephone` uniquement |
+| Non écrits | 69 DB sans match · 41 CSV orphelines · 2 multiples |
 
-Méthodes : `code_unique` 776 · `code+name_dup` 50 · `code+name` 5 · `fallback_dup` 4 · `fallback` 2.
+Journal :
 
-**Vrais DB sans match par statut :** facturee 25 · annulee 9 · en_attente 3 (tests FLI-*).
+```
+audit_log import_dry_run = aaa4c1c8-fd04-489f-a6b8-ba29f26b1ceb  (point=3B, matched=837)
+audit_log import         = e06e5f44-68ec-455d-95b8-39fd0ddf9620  (mode=formateur_backfill, updated=837)
+created_at import        = 2026-09-09 12:32:07+00
+```
 
-**Écarts principaux vs Excel :**
-- Doublons DB (même inscription, code MacRoman corrompu + version propre) — 32.
-- Groupes Méribel / Courchevel (déc. 2025 – janv. 2026) : CSV avec prénoms seuls ou effectifs absents de la base ; codes de groupe partagés.
-- Quelques typos / renommages (Maure/Maire, Yohann/Yoann, etc.) déjà en partie couverts par le fallback.
+Dry-run de rapprochement (listes) : `docs/POINT_3_RAPPORT_B_DRY_RUN.md`.
 
-Rapport détaillé (listes) : `/opt/cursor/artifacts/point3_rapport_B_dry_run.md`.
+### B2 — Dry-run post-B (aucune suppression)
 
-**Aucune écriture des 3 colonnes** tant que Paula n’a pas validé B.  
-Après OK : mode UI backfill → UPDATE `formateur` / `formateur_email` / `formateur_telephone` uniquement + `audit_log`.
+Rapport : `docs/POINT_3_RAPPORT_B2_DRY_RUN.md`.
 
-### C — Rapprochement formateur → instructors
+1. **32 doublons d’encodage** — plan keep/delete + réaffectation `placement_tests` / `payments` / `document_sendings` (totaux côté delete : PT=12, pay=0, docs=0). **Attente accord Paula.**
+2. **25 facturée** sans CSV — liste nom / date / langue / école pour arbitrage.
+3. **2 multiples** — Sofie = doublon encodage ; Lana Couvez = collision (candidats Julie Moret).
+4. **41 CSV orphelines** — **pas exclusivement** groupes école : 37 `effectif>1`, 1 attention facture, 3 individuel/autre. Rien créé.
 
-**Bloqué jusqu’à validation + écriture de B.**  
-Script prêt : `scripts/build-formateur-rapprochement.ts` (aucune écriture `instructor_id`).  
-Référence Paula sur 878 lignes Excel : 719 email / 96 alias / 35 sans formateur / 0 ambigu — à comparer ligne à ligne après backfill.
+### C — Rapprochement formateur → instructors (fait, aucun `instructor_id`)
 
-### Code livré pour A/B
+Script : `scripts/build-formateur-rapprochement.ts`  
+Rapport : `docs/POINT_3_RAPPORT_C_RAPPROCHEMENT.md`
+
+| Méthode (DB, 805 avec formateur) | n | Réf. Paula (878 CSV) |
+|----------------------------------|---|----------------------|
+| email | **707** | 719 |
+| alias (exact) | **65** | 96 |
+| alias_fuzzy | **33** | (inclus alias) |
+| alias_ambiguous | **0** | 0 |
+| unmatched | **0** | — |
+| sans formateur (DB) | **101** | 35 (CSV) |
+
+**Alias(+fuzzy) = 98** (Δ +2 vs 96). **Ambigu = 0.**  
+Écart email (−12) : typos / anciens mails classés en alias (`johnwenireb@…`, `clairelaplagne@neuf.fr`, `nathalie.raguin@bbox.fr`, `nikkivanrijswijk1@…`) — détail dans le rapport C.
+
+Table de proposition : 29 libellés distincts → instructor proposé. **Aucun `instructor_id` écrit.**
+
+### Code livré pour A/B/C
 
 - `classifyInstructorComplement`, `prepareFormateurBackfill` — `src/lib/admin-import-engine.ts`
 - `matchInscriptionsFormateur` — `src/lib/formateur-backfill-match.ts`
 - Modes d’écriture dans `src/pages/admin/Import.tsx` : insert | complément | backfill formateur
+- Script C enrichi (comptages méthode + JSON local)
 
 ## Validation restante
 
-1. **Valider B** (listes unmatched / multiples / écarts Méribel)  
-2. Autoriser l’écriture backfill formateur  
-3. Lancer **C** et valider la table de proposition vs 719/96/35/0  
+1. Accuser réception écriture B + audit  
+2. **Arbitrer B2** (dédoublonnage 32, 25 facturées, orphelines) — aucune suppression avant accord  
+3. Valider table C avant toute écriture `instructor_id`  
 4. Confirmer que les prochains imports massifs passeront le bouton `/admin/import`  
