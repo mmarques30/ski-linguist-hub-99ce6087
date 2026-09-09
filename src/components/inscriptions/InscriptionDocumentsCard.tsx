@@ -3,16 +3,25 @@ import { fr, ptBR, enUS } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Download, ExternalLink, FileText, Loader2, Mail } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Download, ExternalLink, FileText, Loader2, Mail, AlertTriangle } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useInscriptionDocuments } from "@/hooks/useInscriptionDocuments";
+import {
+  useInscriptionCertificates,
+  useInscriptionProgression,
+} from "@/hooks/useInscriptionProgression";
 import {
   DOCUMENT_TYPE_LABELS,
   expectsSkiMonitorWelcomePack,
   getRegistrationDocumentPublicUrl,
   REGISTRATION_WELCOME_DOCUMENTS,
 } from "@/lib/registration-welcome-documents";
+import {
+  isEntryFormComplete,
+  isExitFormComplete,
+  listMissingFormationDocuments,
+} from "@/lib/certificate-progression";
 
 interface InscriptionDocumentsCardProps {
   inscriptionId: string;
@@ -31,9 +40,29 @@ export function InscriptionDocumentsCard({
 }: InscriptionDocumentsCardProps) {
   const { language } = useLanguage();
   const { data: sendings = [], isLoading } = useInscriptionDocuments(inscriptionId);
+  const { data: progression } = useInscriptionProgression(inscriptionId);
+  const { data: certificates = [] } = useInscriptionCertificates(inscriptionId);
 
   const dateLocale = language === "pt-BR" ? ptBR : language === "en" ? enUS : fr;
   const latestSentAt = sendings[0]?.sent_at ?? null;
+
+  const expectExitDocuments = (() => {
+    if (!progression) return false;
+    if (["terminee", "facturee"].includes(progression.status)) return true;
+    if (progression.end_date) {
+      return new Date(progression.end_date) <= new Date();
+    }
+    return false;
+  })();
+
+  const missingDocs = progression
+    ? listMissingFormationDocuments({
+        entryFormComplete: isEntryFormComplete(progression),
+        exitFormComplete: isExitFormComplete(progression),
+        hasCertificate: certificates.length > 0,
+        expectExitDocuments,
+      })
+    : [];
 
   const formatSentAt = (value: string) => {
     try {
@@ -63,6 +92,24 @@ export function InscriptionDocumentsCard({
 
   return (
     <div className="space-y-4">
+      {missingDocs.length > 0 && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Documents manquants</AlertTitle>
+          <AlertDescription>
+            <ul className="mt-2 list-disc pl-4 space-y-1">
+              {missingDocs.map((doc) => (
+                <li key={doc.code}>
+                  <span className="font-medium">{doc.label}</span>
+                  {" — "}
+                  {doc.reason}
+                </li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {latestSentAt && (
         <Alert>
           <Mail className="h-4 w-4" />

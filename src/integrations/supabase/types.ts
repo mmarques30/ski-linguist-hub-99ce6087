@@ -173,31 +173,40 @@ export type Database = {
         Row: {
           attendance_rate: number | null
           created_at: string
+          hours_followed: number | null
+          hours_planned: number | null
           id: string
           inscription_id: string
           issue_date: string
           level_achieved: string
           pdf_url: string | null
+          progression_snapshot: Json | null
           student_id: string
         }
         Insert: {
           attendance_rate?: number | null
           created_at?: string
+          hours_followed?: number | null
+          hours_planned?: number | null
           id?: string
           inscription_id: string
           issue_date?: string
           level_achieved: string
           pdf_url?: string | null
+          progression_snapshot?: Json | null
           student_id: string
         }
         Update: {
           attendance_rate?: number | null
           created_at?: string
+          hours_followed?: number | null
+          hours_planned?: number | null
           id?: string
           inscription_id?: string
           issue_date?: string
           level_achieved?: string
           pdf_url?: string | null
+          progression_snapshot?: Json | null
           student_id?: string
         }
         Relationships: [
@@ -755,19 +764,25 @@ export type Database = {
           duration_hours: number | null
           end_date: string
           end_pack_sent_at: string | null
+          entry_form_completed_at: string | null
           entry_level: string | null
           entry_test_id: string | null
           entry_test_score: string | null
+          exit_form_completed_at: string | null
           exit_level: string | null
           exit_test_id: string | null
           expectations: string | null
           final_general_level: string | null
           final_specific_level: string | null
           final_status: string | null
+          formateur: string | null
+          formateur_email: string | null
+          formateur_telephone: string | null
           funding_details: string | null
           funding_organization: string | null
           group_name: string | null
           group_size: number | null
+          hours_followed: number | null
           hours_per_day: number | null
           id: string
           instructor_accommodation_address: string | null
@@ -778,6 +793,11 @@ export type Database = {
           language: string
           max_participants: string | null
           modality: string | null
+          niveau_general_entree: string | null
+          niveau_general_sortie: string | null
+          niveau_technique_entree: string | null
+          niveau_technique_sortie: string | null
+          objectif_atteint: string | null
           observations: string | null
           partner_id: string | null
           payment_method: string | null
@@ -785,6 +805,8 @@ export type Database = {
           price: number | null
           progression: string | null
           qualiopi_status: string | null
+          remarques_entree: string | null
+          commentaire_sortie: string | null
           rhythm: string | null
           schedule: string | null
           schedule_approved_at: string | null
@@ -822,20 +844,33 @@ export type Database = {
           duration_hours?: number | null
           end_date: string
           end_pack_sent_at?: string | null
+          entry_form_completed_at?: string | null
           entry_level?: string | null
           entry_test_id?: string | null
           entry_test_score?: string | null
+          exit_form_completed_at?: string | null
           exit_level?: string | null
           exit_test_id?: string | null
           expectations?: string | null
           final_general_level?: string | null
           final_specific_level?: string | null
           final_status?: string | null
+          formateur?: string | null
+          formateur_email?: string | null
+          formateur_telephone?: string | null
           funding_details?: string | null
           funding_organization?: string | null
           group_name?: string | null
           group_size?: number | null
+          hours_followed?: number | null
           hours_per_day?: number | null
+          niveau_general_entree?: string | null
+          niveau_general_sortie?: string | null
+          niveau_technique_entree?: string | null
+          niveau_technique_sortie?: string | null
+          objectif_atteint?: string | null
+          remarques_entree?: string | null
+          commentaire_sortie?: string | null
           id?: string
           instructor_accommodation_address?: string | null
           instructor_accommodation_dates?: string | null
@@ -889,20 +924,33 @@ export type Database = {
           duration_hours?: number | null
           end_date?: string
           end_pack_sent_at?: string | null
+          entry_form_completed_at?: string | null
           entry_level?: string | null
           entry_test_id?: string | null
           entry_test_score?: string | null
+          exit_form_completed_at?: string | null
           exit_level?: string | null
           exit_test_id?: string | null
           expectations?: string | null
           final_general_level?: string | null
           final_specific_level?: string | null
           final_status?: string | null
+          formateur?: string | null
+          formateur_email?: string | null
+          formateur_telephone?: string | null
           funding_details?: string | null
           funding_organization?: string | null
           group_name?: string | null
           group_size?: number | null
+          hours_followed?: number | null
           hours_per_day?: number | null
+          niveau_general_entree?: string | null
+          niveau_general_sortie?: string | null
+          niveau_technique_entree?: string | null
+          niveau_technique_sortie?: string | null
+          objectif_atteint?: string | null
+          remarques_entree?: string | null
+          commentaire_sortie?: string | null
           id?: string
           instructor_accommodation_address?: string | null
           instructor_accommodation_dates?: string | null

@@ -11,6 +11,10 @@ import {
 } from "@/hooks/useStudentPortal";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import {
+  pisteLabelFromPlacementAnswers,
+  studentFacingPisteFromCecrl,
+} from "@/lib/placement-test-engine";
 
 const statusLabels: Record<string, string> = {
   brouillon: "Brouillon",
@@ -44,6 +48,11 @@ export default function StudentDashboard() {
     .slice(0, 3);
 
   const latestTest = tests?.[0];
+  const pisteFromTest = pisteLabelFromPlacementAnswers(latestTest?.answers);
+  const niveauAffiche =
+    pisteFromTest ||
+    studentFacingPisteFromCecrl(latestTest?.determined_level) ||
+    studentFacingPisteFromCecrl(activeInscription?.entry_level);
 
   return (
     <StudentLayout>
@@ -81,8 +90,8 @@ export default function StudentDashboard() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Niveau</span>
-                    <Badge>{activeInscription.entry_level || "À déterminer"}</Badge>
+                    <span className="text-muted-foreground">Piste / groupe</span>
+                    <Badge>{niveauAffiche}</Badge>
                   </div>
                   {activeInscription.instructor_name && (
                     <div className="flex items-center justify-between">
@@ -173,10 +182,10 @@ export default function StudentDashboard() {
                         {latestTest.status === "completed" ? "Complété" : "En cours"}
                       </Badge>
                     </div>
-                    {latestTest.determined_level && (
+                    {niveauAffiche && niveauAffiche !== "À déterminer" && (
                       <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Niveau déterminé</span>
-                        <Badge>{latestTest.determined_level}</Badge>
+                        <span className="text-muted-foreground">Piste atteinte</span>
+                        <Badge>{niveauAffiche}</Badge>
                       </div>
                     )}
                     {latestTest.score_percentage != null && (
@@ -196,7 +205,7 @@ export default function StudentDashboard() {
                     {certificates.map((c) => (
                       <div key={c.id} className="flex items-center justify-between">
                         <span className="text-muted-foreground">
-                          Niveau {c.level_achieved}
+                          Certificat de fin de formation
                         </span>
                         <span className="text-xs">
                           {format(new Date(c.issue_date), "dd/MM/yyyy")}

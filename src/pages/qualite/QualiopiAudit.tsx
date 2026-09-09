@@ -87,6 +87,13 @@ export default function QualiopiAudit() {
       icon: Award,
     },
     {
+      label: "PROC-026 progression Entrée/Sortie",
+      value: auto?.progressionRate ?? 0,
+      target: 100,
+      unit: "%",
+      icon: TrendingUp,
+    },
+    {
       label: "Taux de complétion évaluations",
       value: auto?.evalCompletionRate ?? 0,
       target: 90,

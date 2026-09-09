@@ -5,6 +5,9 @@ import {
   evaluateSlope,
   getNextSlopeAfterSlope,
   needsAdminCallFromResults,
+  studentFacingPisteFromCecrl,
+  studentFacingCertificateLabel,
+  studentFacingPisteLabel,
   type PlacementQuestion,
   type SlopeResult,
 } from "./placement-test-engine";
@@ -42,6 +45,37 @@ describe("placement-test-engine", () => {
     expect(determineLevelFromSlopes(["rouge"])).toBe("B2");
     expect(determineLevelFromSlopes(["noire"])).toBe("C1");
     expect(determineLevelFromSlopes([])).toBe("A1");
+  });
+
+  it("studentFacingPisteLabel never exposes CECRL codes", () => {
+    const cecrl = /^(A1|A2|B1|B2|C1|C2)$/i;
+    const samples = [
+      studentFacingPisteLabel({
+        passedSlopes: ["verte", "bleue"],
+        highestSlopeReached: "bleue",
+      }),
+      studentFacingPisteLabel({ endedAtVocab: true, passedSlopes: [] }),
+      studentFacingPisteLabel({ passedSlopes: [] }),
+      studentFacingPisteFromCecrl("B1"),
+      studentFacingPisteFromCecrl("A1"),
+      studentFacingPisteFromCecrl("C2"),
+      studentFacingPisteFromCecrl(null),
+    ];
+    expect(samples[0]).toBe("Piste bleue");
+    expect(samples[1]).toBe("Vocabulaire ski");
+    expect(samples[2]).toBe("Début de parcours");
+    expect(samples[3]).toBe("Piste bleue");
+    expect(samples[4]).toBe("Début de parcours");
+    for (const label of samples) {
+      expect(label).not.toMatch(cecrl);
+    }
+  });
+
+  it("studentFacingCertificateLabel maps CECRL to piste or omits", () => {
+    expect(studentFacingCertificateLabel("B2")).toBe("Piste rouge");
+    expect(studentFacingCertificateLabel("A1")).toBe("Début de parcours");
+    expect(studentFacingCertificateLabel("unknown")).toBeNull();
+    expect(studentFacingCertificateLabel(null)).toBeNull();
   });
 
   it("getNextSlopeAfterSlope routes failed slope to vocab", () => {

@@ -56,16 +56,14 @@ export default function StudentDocuments() {
                     >
                       <div>
                         <p className="font-medium">
-                          Certificat — Niveau {c.level_achieved}
+                          Certificat de fin de formation
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Délivré le {format(new Date(c.issue_date), "dd/MM/yyyy")}
                         </p>
-                        {c.attendance_rate && (
-                          <p className="text-xs text-muted-foreground">
-                            Taux de présence : {c.attendance_rate}%
-                          </p>
-                        )}
+                        <p className="text-xs text-muted-foreground">
+                          Bilan de progression Entrée / Sortie
+                        </p>
                       </div>
                       {c.pdf_url && (
                         <Button size="sm" variant="outline" asChild>

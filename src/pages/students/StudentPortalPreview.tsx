@@ -28,6 +28,10 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { buildSurveyUrl } from "@/lib/client-links";
 import { CopyLinkRow } from "@/components/shared/CopyLinkRow";
+import {
+  pisteLabelFromPlacementAnswers,
+  studentFacingPisteFromCecrl,
+} from "@/lib/placement-test-engine";
 
 export default function StudentPortalPreview() {
   const { id: studentId } = useParams<{ id: string }>();
@@ -147,12 +151,17 @@ export default function StudentPortalPreview() {
                     <p className="text-sm text-muted-foreground">Aucun test</p>
                   ) : (
                     <ul className="space-y-2 text-sm">
-                      {tests.slice(0, 3).map((test) => (
-                        <li key={test.id}>
-                          Niveau {test.determined_level || "—"} ·{" "}
-                          {format(new Date(test.created_at), "dd/MM/yyyy")}
-                        </li>
-                      ))}
+                      {tests.slice(0, 3).map((test) => {
+                        const piste =
+                          pisteLabelFromPlacementAnswers(test.answers) ||
+                          studentFacingPisteFromCecrl(test.determined_level);
+                        return (
+                          <li key={test.id}>
+                            {piste} ·{" "}
+                            {format(new Date(test.created_at), "dd/MM/yyyy")}
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
                 </CardContent>
@@ -212,8 +221,10 @@ export default function StudentPortalPreview() {
                     ))}
                     {certificates?.map((cert) => (
                       <div key={cert.id} className="rounded-lg border p-3 text-sm">
-                        <p className="font-medium">Certificat</p>
-                        <p className="text-muted-foreground">Niveau {cert.level_achieved}</p>
+                        <p className="font-medium">Certificat de fin de formation</p>
+                        <p className="text-muted-foreground">
+                          Délivré le {format(new Date(cert.issue_date), "dd/MM/yyyy")}
+                        </p>
                       </div>
                     ))}
                   </>
