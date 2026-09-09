@@ -425,7 +425,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                       </Label>
                       <Textarea
                         id="custom-format-details"
-                        placeholder="Ex. : 10h en visio sur 5 semaines, objectif certification B2, disponibilités le mardi matin, groupe de 3 moniteurs de la même école…"
+                        placeholder="Ex. : 10h en visio sur 5 semaines, objectif certification, disponibilités le mardi matin, groupe de 3 moniteurs de la même école…"
                         rows={5}
                         value={data.customFormatDetails || ""}
                         onChange={(e) => onUpdate({ customFormatDetails: e.target.value })}

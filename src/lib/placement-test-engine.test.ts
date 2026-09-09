@@ -5,6 +5,8 @@ import {
   evaluateSlope,
   getNextSlopeAfterSlope,
   needsAdminCallFromResults,
+  studentFacingPisteFromCecrl,
+  studentFacingPisteLabel,
   type PlacementQuestion,
   type SlopeResult,
 } from "./placement-test-engine";
@@ -42,6 +44,18 @@ describe("placement-test-engine", () => {
     expect(determineLevelFromSlopes(["rouge"])).toBe("B2");
     expect(determineLevelFromSlopes(["noire"])).toBe("C1");
     expect(determineLevelFromSlopes([])).toBe("A1");
+  });
+
+  it("studentFacingPisteLabel never exposes CECRL codes", () => {
+    expect(
+      studentFacingPisteLabel({ passedSlopes: ["verte", "bleue"], highestSlopeReached: "bleue" })
+    ).toBe("Piste bleue");
+    expect(studentFacingPisteLabel({ endedAtVocab: true, passedSlopes: [] })).toBe(
+      "Vocabulaire ski"
+    );
+    expect(studentFacingPisteLabel({ passedSlopes: [] })).toBe("Début de parcours");
+    expect(studentFacingPisteFromCecrl("B1")).toBe("Piste bleue");
+    expect(studentFacingPisteFromCecrl("A1")).toBe("Début de parcours");
   });
 
   it("getNextSlopeAfterSlope routes failed slope to vocab", () => {

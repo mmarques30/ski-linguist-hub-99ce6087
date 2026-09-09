@@ -24,6 +24,10 @@ import {
   REGISTRATION_PAYMENT_OPTIONS,
   requiresStripeCheckout,
 } from "@/lib/registration-payments";
+import {
+  studentFacingPisteFromCecrl,
+  studentFacingPisteLabel,
+} from "@/lib/placement-test-engine";
 
 interface ConfirmationStepProps {
   data: RegistrationData;
@@ -331,8 +335,16 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
               <span className="font-medium">{fundingLabels[data.fundingType] || data.fundingType}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Niveau</span>
-              <Badge>{data.currentLevel}</Badge>
+              <span className="text-muted-foreground">Piste atteinte</span>
+              <Badge>
+                {data.testSummary
+                  ? studentFacingPisteLabel({
+                      passedSlopes: data.testSummary.passedSlopes,
+                      highestSlopeReached: data.testSummary.highestSlopeReached,
+                      endedAtVocab: data.testSummary.endedAtVocab,
+                    })
+                  : studentFacingPisteFromCecrl(data.currentLevel)}
+              </Badge>
             </div>
             {data.correctAnswers !== undefined && (
               <div className="flex justify-between">

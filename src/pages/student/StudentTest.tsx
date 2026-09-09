@@ -5,6 +5,10 @@ import { Button } from "@/components/ui/button";
 import { ClipboardList, CheckCircle, Clock } from "lucide-react";
 import { useStudentProfile, useStudentTests } from "@/hooks/useStudentPortal";
 import { format } from "date-fns";
+import {
+  pisteLabelFromPlacementAnswers,
+  studentFacingPisteFromCecrl,
+} from "@/lib/placement-test-engine";
 
 export default function StudentTest() {
   const { data: student } = useStudentProfile();
@@ -12,6 +16,10 @@ export default function StudentTest() {
 
   const completedTests = tests?.filter((t) => t.status === "completed") || [];
   const pendingTests = tests?.filter((t) => t.status !== "completed") || [];
+
+  const pisteFor = (t: (typeof completedTests)[number]) =>
+    pisteLabelFromPlacementAnswers(t.answers) ||
+    studentFacingPisteFromCecrl(t.determined_level);
 
   return (
     <StudentLayout>
@@ -80,9 +88,7 @@ export default function StudentTest() {
                         </p>
                       </div>
                       <div className="text-right">
-                        {t.determined_level && (
-                          <Badge className="mb-1">{t.determined_level}</Badge>
-                        )}
+                        <Badge className="mb-1">{pisteFor(t)}</Badge>
                         {t.score_percentage != null && (
                           <p className="text-xs text-muted-foreground">
                             Score : {t.score_percentage}%
