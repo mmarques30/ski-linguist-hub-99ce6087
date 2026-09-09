@@ -1,8 +1,8 @@
 # Point 3 — Import formateur·rices
 
-**Branche :** `cursor/import-formateurs-7435`  
+**Branche :** `cursor/point3-complement-backfill-7435` (suite de `import-formateurs-7435`)  
 **Date :** 2026-09-09  
-**Statut :** validé Paula sur 69 / colonnes / filtrage — **compléments livrés** (rapport dry-run, audit, rapprochement bloqué faute de libellés)
+**Statut :** A complété (71 formateur·rices) · B dry-run en attente validation · C bloqué
 
 ## 1. Rapport dry-run (moteur `prepareImport`)
 
@@ -111,8 +111,80 @@ Le point 1 est **fonctionnel sur l’import générique** ; il n’est pas encor
 3. Colonnes dédiées (alias, Qualiopi, RGPD, etc.)  
 4. Filtrage listes/sélecteurs actifs par défaut  
 
-## Validation restante point 3
+---
 
-- Accuser réception du rapport dry-run + audit (§1–2)  
-- Fournir CSV inscriptions pour la table de rapprochement (§3)  
-- Confirmer que les prochains imports massifs passeront par `/admin/import` (§4–5)  
+## Compléments 2026-09-09 (branche `cursor/point3-complement-backfill-7435`)
+
+### A — Formateur·rices complémentaires
+
+**Fichier :** `docs/imports/formateurs_FLI_import09092026.csv` (71 lignes, `;`, utf-8-sig).
+
+| Étape | Résultat |
+|-------|----------|
+| Dry-run `prepareImport` | 71 acceptées / 0 rejet |
+| Statuts CSV | **29 actif / 40 inactif / 2 candidat** |
+| Classification complément | **2 insert** + **69 update** (57 par email, 12 par nom+prénom) |
+| Inserts | Rangel-Halbwachs Paula (`info@fli.fr`, actif, interne) ; Cadena Erika Mabel (actif, espagnol, coords vides) |
+| Après écriture | **71** en base — **29 / 40 / 2** |
+
+Journal :
+
+```
+audit_log import_dry_run = a40e18ec-3720-4b17-ae29-95cc768b5205  (point=3A, to_insert=2, to_update=69)
+audit_log import         = 9d3cb213-b4cf-45dc-aa54-ccd572152826  (mode=complement, inserted=2)
+ids insertés :
+  4ac69771-2cfa-4500-be62-d4008fb1679a  Rangel-Halbwachs Paula
+  77646897-ea4d-4e38-9799-bf361d471ce1  Cadena Erika Mabel
+```
+
+Les 69 existantes n’ont **pas** été réécrites (déjà à l’identique).  
+UI `/admin/import` : mode **Complément instructors** branché (`classifyInstructorComplement`).
+
+> Note chemin d’écriture A : même moteur que l’UI (`prepareImport` + classification) + `audit_log` dry-run puis import. Pas de session admin navigateur dans l’agent cloud → inserts journalisés via le runner SQL partagé (pas de purge, pas d’INSERT hors payloads validés). Les prochains compléments pourront passer le bouton UI.
+
+### B — Backfill formateur (dry-run uniquement — **attente validation**)
+
+**Fichier source :** upload `inscriptions_FLI_2026_09_09.csv` (878 × 59).  
+**Moteur :** `src/lib/formateur-backfill-match.ts` + mode UI **Backfill formateur**.
+
+| Métrique | Valeur | Attendu |
+|----------|--------|---------|
+| DB / CSV | 906 / 878 | 906 / 878 |
+| Rapprochées 1↔1 | **837** | ~878 |
+| DB sans match | **69** (dont **32** doublons d’encodage MacRoman) → **≈37 vrais restes** | ~28 |
+| CSV sans match | **41** | ~0 |
+| Multiples | **2** | 0 |
+| Dont Formateur non vide | 805 | — |
+
+Méthodes : `code_unique` 776 · `code+name_dup` 50 · `code+name` 5 · `fallback_dup` 4 · `fallback` 2.
+
+**Vrais DB sans match par statut :** facturee 25 · annulee 9 · en_attente 3 (tests FLI-*).
+
+**Écarts principaux vs Excel :**
+- Doublons DB (même inscription, code MacRoman corrompu + version propre) — 32.
+- Groupes Méribel / Courchevel (déc. 2025 – janv. 2026) : CSV avec prénoms seuls ou effectifs absents de la base ; codes de groupe partagés.
+- Quelques typos / renommages (Maure/Maire, Yohann/Yoann, etc.) déjà en partie couverts par le fallback.
+
+Rapport détaillé (listes) : `/opt/cursor/artifacts/point3_rapport_B_dry_run.md`.
+
+**Aucune écriture des 3 colonnes** tant que Paula n’a pas validé B.  
+Après OK : mode UI backfill → UPDATE `formateur` / `formateur_email` / `formateur_telephone` uniquement + `audit_log`.
+
+### C — Rapprochement formateur → instructors
+
+**Bloqué jusqu’à validation + écriture de B.**  
+Script prêt : `scripts/build-formateur-rapprochement.ts` (aucune écriture `instructor_id`).  
+Référence Paula sur 878 lignes Excel : 719 email / 96 alias / 35 sans formateur / 0 ambigu — à comparer ligne à ligne après backfill.
+
+### Code livré pour A/B
+
+- `classifyInstructorComplement`, `prepareFormateurBackfill` — `src/lib/admin-import-engine.ts`
+- `matchInscriptionsFormateur` — `src/lib/formateur-backfill-match.ts`
+- Modes d’écriture dans `src/pages/admin/Import.tsx` : insert | complément | backfill formateur
+
+## Validation restante
+
+1. **Valider B** (listes unmatched / multiples / écarts Méribel)  
+2. Autoriser l’écriture backfill formateur  
+3. Lancer **C** et valider la table de proposition vs 719/96/35/0  
+4. Confirmer que les prochains imports massifs passeront le bouton `/admin/import`  

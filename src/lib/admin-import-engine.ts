@@ -467,3 +467,130 @@ export function prepareImport(
     totalRows: rows.length,
   };
 }
+
+/** Normalise nom+prénom pour clé de rapprochement instructors. */
+export function instructorNameKey(
+  firstName: string | null | undefined,
+  lastName: string | null | undefined
+): string {
+  return `${firstName || ""}|${lastName || ""}`
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9|]+/g, "");
+}
+
+export type InstructorExisting = {
+  id: string;
+  email: string | null;
+  first_name: string | null;
+  last_name: string;
+  status: string | null;
+};
+
+export type InstructorComplementAction =
+  | {
+      action: "insert";
+      record: Record<string, unknown>;
+    }
+  | {
+      action: "update";
+      id: string;
+      matchKey: "email" | "nom_prenom";
+      record: Record<string, unknown>;
+      existingStatus: string | null;
+    };
+
+/**
+ * Classifie un complément formateur·rices : insert vs update.
+ * Clé = email si présent, sinon nom + prénom (insensible casse/accents).
+ */
+export function classifyInstructorComplement(
+  prepared: Record<string, unknown>[],
+  existing: InstructorExisting[]
+): {
+  inserts: Record<string, unknown>[];
+  updates: InstructorComplementAction[];
+  actions: InstructorComplementAction[];
+} {
+  const byEmail = new Map<string, InstructorExisting>();
+  const byName = new Map<string, InstructorExisting>();
+  for (const row of existing) {
+    if (row.email) byEmail.set(row.email.toLowerCase(), row);
+    byName.set(instructorNameKey(row.first_name, row.last_name), row);
+  }
+
+  const inserts: Record<string, unknown>[] = [];
+  const updates: InstructorComplementAction[] = [];
+  const actions: InstructorComplementAction[] = [];
+
+  for (const record of prepared) {
+    const emailRaw = record.email;
+    const email =
+      typeof emailRaw === "string" && emailRaw.trim()
+        ? emailRaw.trim().toLowerCase()
+        : null;
+    const nameKey = instructorNameKey(
+      record.first_name as string | null,
+      record.last_name as string | null
+    );
+
+    let match = email ? byEmail.get(email) : undefined;
+    let matchKey: "email" | "nom_prenom" = "email";
+    if (!match) {
+      match = byName.get(nameKey);
+      matchKey = "nom_prenom";
+    }
+
+    if (!match) {
+      const action: InstructorComplementAction = { action: "insert", record };
+      inserts.push(record);
+      actions.push(action);
+    } else {
+      const action: InstructorComplementAction = {
+        action: "update",
+        id: match.id,
+        matchKey,
+        record,
+        existingStatus: match.status,
+      };
+      updates.push(action);
+      actions.push(action);
+    }
+  }
+
+  return { inserts, updates, actions };
+}
+
+/** Payload d'une mise à jour formateur-only sur inscriptions (backfill). */
+export type FormateurBackfillRow = {
+  id: string;
+  formateur: string | null;
+  formateur_email: string | null;
+  formateur_telephone: string | null;
+  match_method: string;
+};
+
+/**
+ * Prépare le dry-run / écriture backfill : uniquement les 3 colonnes formateur.
+ * `matches` vient du rapprochement CSV↔DB (hors de ce module).
+ */
+export function prepareFormateurBackfill(
+  matches: FormateurBackfillRow[]
+): PreparedImport {
+  const accepted = matches.map((m) => ({
+    id: m.id,
+    formateur: m.formateur,
+    formateur_email: m.formateur_email,
+    formateur_telephone: m.formateur_telephone,
+    _match_method: m.match_method,
+  }));
+  return {
+    table: "inscriptions",
+    accepted,
+    rejections: [],
+    acceptedCount: accepted.length,
+    rejectedCount: 0,
+    totalRows: matches.length,
+  };
+}

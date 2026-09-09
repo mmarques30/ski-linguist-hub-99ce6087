@@ -44,10 +44,16 @@ import {
 } from "@/lib/csv-import-parser";
 import {
   IMPORT_TABLE_LABELS,
+  classifyInstructorComplement,
+  prepareFormateurBackfill,
   prepareImport,
   type ImportTableType,
+  type InstructorComplementAction,
   type PreparedImport,
 } from "@/lib/admin-import-engine";
+import { matchInscriptionsFormateur } from "@/lib/formateur-backfill-match";
+
+type WriteMode = "insert" | "complement" | "formateur_backfill";
 
 interface TableCounts {
   instructors: number;
@@ -100,6 +106,19 @@ export default function Import() {
   const [allRows, setAllRows] = useState<CsvRow[]>([]);
   const [encodingNotes, setEncodingNotes] = useState<string[]>([]);
   const [selectedTable, setSelectedTable] = useState<ImportTableType>("instructors");
+  const [writeMode, setWriteMode] = useState<WriteMode>("complement");
+  const [complementSummary, setComplementSummary] = useState<{
+    inserts: number;
+    updates: number;
+    actions: InstructorComplementAction[];
+  } | null>(null);
+  const [backfillSummary, setBackfillSummary] = useState<{
+    matched: number;
+    unmatchedDb: number;
+    unmatchedCsv: number;
+    multiples: number;
+    encodingDups: number;
+  } | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [isPurging, setIsPurging] = useState(false);
   const [isDryRunning, setIsDryRunning] = useState(false);
@@ -150,6 +169,8 @@ export default function Import() {
     setDryRunDone(false);
     setImportResult(null);
     setProgress(0);
+    setComplementSummary(null);
+    setBackfillSummary(null);
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,11 +205,106 @@ export default function Import() {
   const handleDryRun = async () => {
     if (allRows.length === 0 || !file) return;
     setIsDryRunning(true);
+    setComplementSummary(null);
+    setBackfillSummary(null);
     try {
+      if (writeMode === "formateur_backfill") {
+        if (selectedTable !== "inscriptions") {
+          throw new Error("Le backfill formateur s'applique à la table inscriptions.");
+        }
+        const { data: dbRows, error: dbErr } = await supabase
+          .from("inscriptions")
+          .select("id, code, start_date, language, status, student_id, students(first_name, last_name)");
+        if (dbErr) throw dbErr;
+
+        const flat = (dbRows || []).map((row) => {
+          const students = row.students as
+            | { first_name: string | null; last_name: string | null }
+            | { first_name: string | null; last_name: string | null }[]
+            | null;
+          const st = Array.isArray(students) ? students[0] : students;
+          return {
+            id: row.id as string,
+            code: (row.code as string | null) ?? null,
+            start_date: (row.start_date as string | null) ?? null,
+            language: (row.language as string | null) ?? null,
+            status: (row.status as string | null) ?? null,
+            first_name: st?.first_name ?? null,
+            last_name: st?.last_name ?? null,
+          };
+        });
+
+        const report = matchInscriptionsFormateur(flat, allRows);
+        const result = prepareFormateurBackfill(
+          report.matched.map((m) => ({
+            id: m.dbId,
+            formateur: m.formateur,
+            formateur_email: m.formateur_email,
+            formateur_telephone: m.formateur_telephone,
+            match_method: m.method,
+          }))
+        );
+        setPrepared(result);
+        setDryRunDone(true);
+        setImportResult(null);
+        setBackfillSummary({
+          matched: report.matched.length,
+          unmatchedDb: report.unmatchedDb.length,
+          unmatchedCsv: report.unmatchedCsv.length,
+          multiples: report.multiples.length,
+          encodingDups: report.unmatchedDb.filter((u) => u.isEncodingDup).length,
+        });
+
+        await writeAuditLog({
+          userId: user?.id,
+          action: "import_dry_run",
+          tableName: "inscriptions",
+          newValues: {
+            filename: file.name,
+            mode: "formateur_backfill",
+            total_rows: allRows.length,
+            matched: report.matched.length,
+            unmatched_db: report.unmatchedDb.length,
+            unmatched_csv: report.unmatchedCsv.length,
+            multiples: report.multiples.length,
+            encoding_dups_db: report.unmatchedDb.filter((u) => u.isEncodingDup).length,
+            columns: ["formateur", "formateur_email", "formateur_telephone"],
+          },
+        });
+
+        toast({
+          title: "Dry-run backfill formateur",
+          description: `${report.matched.length} rapprochement(s) 1↔1 — aucune écriture.`,
+        });
+        return;
+      }
+
       const result = prepareImport(allRows, selectedTable);
       setPrepared(result);
       setDryRunDone(true);
       setImportResult(null);
+
+      let complementMeta: Record<string, unknown> = {};
+      if (selectedTable === "instructors" && writeMode === "complement") {
+        const { data: existing, error: exErr } = await supabase
+          .from("instructors")
+          .select("id, email, first_name, last_name, status");
+        if (exErr) throw exErr;
+        const classified = classifyInstructorComplement(
+          result.accepted,
+          existing || []
+        );
+        setComplementSummary({
+          inserts: classified.inserts.length,
+          updates: classified.updates.length,
+          actions: classified.actions,
+        });
+        complementMeta = {
+          mode: "complement",
+          to_insert: classified.inserts.length,
+          to_update: classified.updates.length,
+        };
+      }
 
       await writeAuditLog({
         userId: user?.id,
@@ -196,6 +312,7 @@ export default function Import() {
         tableName: selectedTable,
         newValues: {
           filename: file.name,
+          write_mode: writeMode,
           total_rows: result.totalRows,
           accepted: result.acceptedCount,
           rejected: result.rejectedCount,
@@ -203,6 +320,7 @@ export default function Import() {
             line: r.lineNumber,
             reason: r.reason,
           })),
+          ...complementMeta,
         },
       });
 
@@ -247,36 +365,128 @@ export default function Import() {
     const errors: string[] = [];
     let imported = 0;
     const batchSize = 50;
-    const records = prepared.accepted;
-
-    for (let i = 0; i < records.length; i += batchSize) {
-      const batch = records.slice(i, i + batchSize);
-      const { error } = await supabase.from(selectedTable).insert(batch as never[]);
-      if (error) {
-        errors.push(`Lot ${Math.floor(i / batchSize) + 1}: ${error.message}`);
-      } else {
-        imported += batch.length;
-      }
-      setProgress(Math.round(((i + batch.length) / records.length) * 100));
-    }
 
     try {
-      await writeAuditLog({
-        userId: user?.id,
-        action: "import",
-        tableName: selectedTable,
-        newValues: {
-          filename: file.name,
-          total_rows: prepared.totalRows,
-          accepted_at_dry_run: prepared.acceptedCount,
-          rejected_at_dry_run: prepared.rejectedCount,
-          imported,
-          write_errors: errors,
-        },
-      });
+      if (writeMode === "formateur_backfill") {
+        const records = prepared.accepted;
+        for (let i = 0; i < records.length; i += batchSize) {
+          const batch = records.slice(i, i + batchSize);
+          for (const row of batch) {
+            const { id, formateur, formateur_email, formateur_telephone } = row as {
+              id: string;
+              formateur: string | null;
+              formateur_email: string | null;
+              formateur_telephone: string | null;
+            };
+            const { error } = await supabase
+              .from("inscriptions")
+              .update({ formateur, formateur_email, formateur_telephone })
+              .eq("id", id);
+            if (error) errors.push(`${id}: ${error.message}`);
+            else imported += 1;
+          }
+          setProgress(Math.round(((i + batch.length) / records.length) * 100));
+        }
+
+        await writeAuditLog({
+          userId: user?.id,
+          action: "import",
+          tableName: "inscriptions",
+          newValues: {
+            filename: file.name,
+            mode: "formateur_backfill",
+            source: file.name,
+            updated: imported,
+            columns: ["formateur", "formateur_email", "formateur_telephone"],
+            write_errors: errors,
+          },
+        });
+      } else if (selectedTable === "instructors" && writeMode === "complement") {
+        const { data: existing, error: exErr } = await supabase
+          .from("instructors")
+          .select("id, email, first_name, last_name, status");
+        if (exErr) throw exErr;
+        const classified = classifyInstructorComplement(
+          prepared.accepted,
+          existing || []
+        );
+
+        for (let i = 0; i < classified.inserts.length; i += batchSize) {
+          const batch = classified.inserts.slice(i, i + batchSize);
+          const { error } = await supabase.from("instructors").insert(batch as never[]);
+          if (error) errors.push(`Insert lot: ${error.message}`);
+          else imported += batch.length;
+          setProgress(
+            Math.round(
+              ((i + batch.length) / Math.max(classified.actions.length, 1)) * 50
+            )
+          );
+        }
+
+        for (let i = 0; i < classified.updates.length; i++) {
+          const u = classified.updates[i];
+          if (u.action !== "update") continue;
+          const { error } = await supabase
+            .from("instructors")
+            .update(u.record as never)
+            .eq("id", u.id);
+          if (error) errors.push(`Update ${u.id}: ${error.message}`);
+          else imported += 1;
+          setProgress(
+            50 +
+              Math.round(
+                ((i + 1) / Math.max(classified.updates.length, 1)) * 50
+              )
+          );
+        }
+
+        await writeAuditLog({
+          userId: user?.id,
+          action: "import",
+          tableName: "instructors",
+          newValues: {
+            filename: file.name,
+            mode: "complement",
+            source: file.name,
+            inserted: classified.inserts.length,
+            updated: classified.updates.length,
+            written: imported,
+            write_errors: errors,
+          },
+        });
+      } else {
+        const records = prepared.accepted;
+        for (let i = 0; i < records.length; i += batchSize) {
+          const batch = records.slice(i, i + batchSize);
+          const { error } = await supabase
+            .from(selectedTable)
+            .insert(batch as never[]);
+          if (error) {
+            errors.push(`Lot ${Math.floor(i / batchSize) + 1}: ${error.message}`);
+          } else {
+            imported += batch.length;
+          }
+          setProgress(Math.round(((i + batch.length) / records.length) * 100));
+        }
+
+        await writeAuditLog({
+          userId: user?.id,
+          action: "import",
+          tableName: selectedTable,
+          newValues: {
+            filename: file.name,
+            write_mode: writeMode,
+            total_rows: prepared.totalRows,
+            accepted_at_dry_run: prepared.acceptedCount,
+            rejected_at_dry_run: prepared.rejectedCount,
+            imported,
+            write_errors: errors,
+          },
+        });
+      }
     } catch (auditError) {
       errors.push(
-        auditError instanceof Error ? auditError.message : "Erreur audit_log"
+        auditError instanceof Error ? auditError.message : "Erreur écriture/audit"
       );
     }
 
@@ -286,7 +496,7 @@ export default function Import() {
 
     toast({
       title: "Import terminé",
-      description: `${imported} enregistrement(s) écrit(s) dans ${selectedTable}.`,
+      description: `${imported} enregistrement(s) traité(s) dans ${selectedTable}.`,
     });
   };
 
@@ -433,6 +643,29 @@ export default function Import() {
                       </SelectItem>
                     )
                   )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-1 space-y-2">
+              <Label>Mode d&apos;écriture</Label>
+              <Select
+                value={writeMode}
+                onValueChange={(v) => {
+                  setWriteMode(v as WriteMode);
+                  resetImportState();
+                }}
+              >
+                <SelectTrigger className="w-full max-w-md">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="insert">Insert pur (nouvelles lignes)</SelectItem>
+                  <SelectItem value="complement">
+                    Complément instructors (insert + update, clé email / nom)
+                  </SelectItem>
+                  <SelectItem value="formateur_backfill">
+                    Backfill formateur sur inscriptions (3 colonnes)
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -695,6 +928,39 @@ export default function Import() {
                   <p className="text-sm text-muted-foreground">Table cible</p>
                 </div>
               </div>
+
+              {complementSummary && (
+                <Alert>
+                  <AlertTitle>Complément instructors</AlertTitle>
+                  <AlertDescription>
+                    {complementSummary.inserts} insertion(s),{" "}
+                    {complementSummary.updates} mise(s) à jour (clé email ou
+                    nom+prénom). Mode : {writeMode}.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {backfillSummary && (
+                <Alert>
+                  <AlertTitle>Backfill formateur (rapprochement)</AlertTitle>
+                  <AlertDescription className="space-y-1 text-sm">
+                    <p>
+                      Rapprochées 1↔1 : <strong>{backfillSummary.matched}</strong>
+                    </p>
+                    <p>
+                      DB sans correspondance : {backfillSummary.unmatchedDb}{" "}
+                      (dont {backfillSummary.encodingDups} doublons
+                      d&apos;encodage)
+                    </p>
+                    <p>CSV sans correspondance : {backfillSummary.unmatchedCsv}</p>
+                    <p>Correspondances multiples : {backfillSummary.multiples}</p>
+                    <p>
+                      Écriture limitée à formateur / formateur_email /
+                      formateur_telephone.
+                    </p>
+                  </AlertDescription>
+                </Alert>
+              )}
 
               {prepared.rejections.length > 0 && (
                 <>
