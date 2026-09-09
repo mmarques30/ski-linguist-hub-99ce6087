@@ -354,8 +354,12 @@ Intégré depuis `docs/BACKLOG.md` :
 | `/opt/cursor/artifacts/ETAT_APP_2026-09_code.txt` | Bundle source concaténé — **374 fichiers**, **≈ 2,27 Mo** (sous 3 Mo, **1 partie**) |
 | `/opt/cursor/artifacts/ETAT_APP_2026-09_schema.sql` | DDL live enrichi (pg_catalog via Lovable) — sans PII |
 | `/opt/cursor/artifacts/ETAT_APP_2026-09_live_schema.sql` | DDL live (`information_schema` + `pg_get_viewdef`) — sans données |
+| `/opt/cursor/artifacts/ETAT_APP_2026-09_columns.json` | Colonnes live (catalog) |
+| `/opt/cursor/artifacts/ETAT_APP_2026-09_policies.json` | Policies RLS live |
 | `/opt/cursor/artifacts/ETAT_APP_2026-09_row_counts.tsv` | COUNT(*) tables + vues (pas de PII) |
 | `/opt/cursor/artifacts/ETAT_APP_2026-09_live_meta.json` | Meta deploy + agrégats bilan |
+| `/opt/cursor/artifacts/ETAT_APP_2026-09_deploy.txt` | Trace `deploy_project` + URL |
+| `/opt/cursor/artifacts/etat_deploy_verify.log` | Headers HTTP publiés |
 | `/opt/cursor/artifacts/ETAT_APP_2026-09_tables_types.tsv` | Colonnes/types depuis `types.ts` |
 | `/opt/cursor/artifacts/etat_vitest.log` / `etat_lint.log` | Sorties brutes qualité |
 
