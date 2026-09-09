@@ -17,6 +17,7 @@ import {
   QUESTIONS_PER_SLOPE,
   SLOPE_COLORS,
   SLOPE_LABELS,
+  studentFacingPisteLabel,
   type AdaptiveTestResult,
   type PlacementQuestion,
   type SlopeLevel,
@@ -178,8 +179,14 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
         <CardContent className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="text-center p-4 rounded-lg bg-muted/50">
-              <p className="text-sm text-muted-foreground mb-2">Niveau estimé</p>
-              <Badge className="text-xl px-4 py-1">{result.determinedLevel}</Badge>
+              <p className="text-sm text-muted-foreground mb-2">Piste atteinte</p>
+              <Badge className="text-xl px-4 py-1">
+                {studentFacingPisteLabel({
+                  passedSlopes: result.passedSlopes,
+                  highestSlopeReached: result.highestSlopeReached,
+                  endedAtVocab: result.endedAtVocab,
+                })}
+              </Badge>
             </div>
             <div className="text-center p-4 rounded-lg bg-muted/50">
               <p className="text-sm text-muted-foreground mb-2">Score global</p>
@@ -282,7 +289,7 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
         <CardTitle>Test de niveau obligatoire</CardTitle>
         <CardDescription>
           Test adaptatif par pistes (verte → bleue → rouge → noire) — requis pour toutes les
-          inscriptions, même si vous connaissez déjà votre niveau CEFR
+          inscriptions, même si vous connaissez déjà votre niveau
         </CardDescription>
       </CardHeader>
       <CardContent>
