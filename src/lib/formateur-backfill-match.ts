@@ -80,14 +80,35 @@ function stripAccents(s: string): string {
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
+/** Espaces (y compris NBSP) → un seul espace ; casse/accents ignorés. */
+export function normalizeSpaces(s: string): string {
+  return (s || "")
+    .replace(/[\u00a0\u202f\u2007\u2009\ufeff]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function normCode(s: string): string {
   if (!s) return "";
-  return stripAccents(s.trim().toLowerCase()).replace(/\s+/g, " ").trim();
+  return stripAccents(normalizeSpaces(s).toLowerCase());
 }
 
 function alnum(s: string): string {
   if (!s) return "";
-  return stripAccents(s.trim().toLowerCase()).replace(/[^a-z0-9]+/g, "");
+  return stripAccents(normalizeSpaces(s).toLowerCase()).replace(/[^a-z0-9]+/g, "");
+}
+
+/** Tokens alphabétiques pour matching de nom ordre-indépendant. */
+function nameTokens(s: string): Set<string> {
+  const n = normCode(s);
+  if (!n) return new Set();
+  return new Set(n.split(" ").filter((t) => t.length >= 2));
+}
+
+function tokenSetsEqual(a: Set<string>, b: Set<string>): boolean {
+  if (a.size === 0 || b.size === 0 || a.size !== b.size) return false;
+  for (const x of a) if (!b.has(x)) return false;
+  return true;
 }
 
 function variants(s: string | null | undefined): string[] {
@@ -153,6 +174,13 @@ function dbNameKeys(d: DbInscriptionForMatch): Set<string> {
   return keys;
 }
 
+function dbNameTokenSets(d: DbInscriptionForMatch): Set<string>[] {
+  const fn = d.first_name || "";
+  const ln = d.last_name || "";
+  const full = normalizeSpaces(`${fn} ${ln}`);
+  return [nameTokens(full), nameTokens(`${ln} ${fn}`)];
+}
+
 function namesMatch(a: Set<string>, b: Set<string>): boolean {
   if (!a.size || !b.size) return false;
   for (const x of a) {
@@ -162,6 +190,18 @@ function namesMatch(a: Set<string>, b: Set<string>): boolean {
     }
   }
   return false;
+}
+
+function namesMatchTokens(
+  dbTokens: Set<string>[],
+  csvName: string,
+  csvAlnum: Set<string>,
+  dbAlnum: Set<string>
+): boolean {
+  if (namesMatch(dbAlnum, csvAlnum)) return true;
+  const csvTok = nameTokens(csvName);
+  if (csvTok.size === 0) return false;
+  return dbTokens.some((t) => tokenSetsEqual(t, csvTok));
 }
 
 function cell(row: CsvInscriptionRow, ...keys: string[]): string {
@@ -183,6 +223,7 @@ export function matchInscriptionsFormateur(
     _i: number;
     _codes: Set<string>;
     _names: Set<string>;
+    _nameTokens: Set<string>[];
     _date: string;
     _langs: Set<string>;
     _score: number;
@@ -191,6 +232,7 @@ export function matchInscriptionsFormateur(
     _i: number;
     _codes: Set<string>;
     _names: Set<string>;
+    _csvName: string;
     _date: string;
     _langs: Set<string>;
   };
@@ -200,19 +242,24 @@ export function matchInscriptionsFormateur(
     _i: i,
     _codes: allCodeNorms(d.code),
     _names: dbNameKeys(d),
+    _nameTokens: dbNameTokenSets(d),
     _date: parseDate(d.start_date),
-    _langs: allAlnum(d.language),
+    _langs: allAlnum(fixMacRomanMojibake(d.language) || d.language),
     _score: mojibakeScore(d.code),
   }));
 
-  const csv: CsvEnrich[] = csvRows.map((r, i) => ({
-    ...r,
-    _i: i,
-    _codes: allCodeNorms(cell(r, "Code")),
-    _names: allAlnum(cell(r, "Nom et Prénom", "Nom")),
-    _date: parseDate(cell(r, "Date début", "start_date")),
-    _langs: allAlnum(cell(r, "Langue", "language")),
-  }));
+  const csv: CsvEnrich[] = csvRows.map((r, i) => {
+    const csvName = cell(r, "Nom et Prénom", "Nom");
+    return {
+      ...r,
+      _i: i,
+      _codes: allCodeNorms(cell(r, "Code")),
+      _names: allAlnum(csvName),
+      _csvName: csvName,
+      _date: parseDate(cell(r, "Date début", "start_date")),
+      _langs: allAlnum(cell(r, "Langue", "language")),
+    };
+  });
 
   const codeToDb = new Map<string, number[]>();
   for (const d of db) {
@@ -229,6 +276,22 @@ export function matchInscriptionsFormateur(
       arr.push(r._i);
       codeToCsv.set(c, arr);
     }
+  }
+
+  /** Codes tronqués en base : préfixe commun ≥ 40 chars. */
+  function softCodeDbHits(r: CsvEnrich): number[] {
+    const hits = new Set<number>();
+    for (const c of r._codes) {
+      for (const i of codeToDb.get(c) || []) hits.add(i);
+      if (c.length < 40) continue;
+      for (const [dc, idxs] of codeToDb) {
+        if (dc.length < 40) continue;
+        if (dc.startsWith(c) || c.startsWith(dc)) {
+          for (const i of idxs) hits.add(i);
+        }
+      }
+    }
+    return [...hits];
   }
 
   const usedDb = new Set<number>();
@@ -254,27 +317,56 @@ export function matchInscriptionsFormateur(
     });
   };
 
-  // Pass 1 — code unique des deux côtés
+  const pickBestDup = (idxs: number[]): number => {
+    const sorted = [...idxs].sort(
+      (a, b) => db[a]._score - db[b]._score || db[a].id.localeCompare(db[b].id)
+    );
+    return sorted[0];
+  };
+
+  // Pass 1 — code unique des deux côtés (sinon doublon d'encodage DB → garder le plus propre)
   for (const r of csv) {
     if (usedCsv.has(r._i)) continue;
-    const cands = new Set<number>();
-    for (const c of r._codes) for (const i of codeToDb.get(c) || []) if (!usedDb.has(i)) cands.add(i);
-    if (cands.size !== 1) continue;
-    const di = [...cands][0];
+    const cands = new Set(softCodeDbHits(r).filter((i) => !usedDb.has(i)));
+    if (cands.size === 0) continue;
+    let di: number | null = null;
+    if (cands.size === 1) {
+      di = [...cands][0];
+    } else {
+      const arr = [...cands];
+      const samePerson = arr.every(
+        (i) =>
+          namesMatchTokens(db[i]._nameTokens, db[arr[0]].first_name + " " + db[arr[0]].last_name, db[arr[0]]._names, db[i]._names) ||
+          namesMatch(db[i]._names, db[arr[0]]._names)
+      );
+      const sameDate = arr.every((i) => db[i]._date === db[arr[0]]._date);
+      if (samePerson && sameDate) di = pickBestDup(arr);
+    }
+    if (di == null) continue;
     const rivals = new Set<number>();
     for (const c of db[di]._codes)
       for (const i of codeToCsv.get(c) || []) if (!usedCsv.has(i)) rivals.add(i);
-    if (rivals.size === 1 && rivals.has(r._i)) take(di, r._i, "code_unique");
+    // soft rivals
+    for (const c of db[di]._codes) {
+      if (c.length < 40) continue;
+      for (const row of csv) {
+        if (usedCsv.has(row._i)) continue;
+        for (const rc of row._codes) {
+          if (rc.length >= 40 && (rc.startsWith(c) || c.startsWith(rc))) rivals.add(row._i);
+        }
+      }
+    }
+    if (rivals.size === 1 && rivals.has(r._i)) take(di, r._i, cands.size > 1 ? "code_unique_dup" : "code_unique");
   }
 
-  // Pass 2 — code + nom
+  // Pass 2 — code + nom (tokens ordre-indépendants)
   for (const r of csv) {
     if (usedCsv.has(r._i)) continue;
-    const cands = [...new Set(
-      [...r._codes].flatMap((c) => codeToDb.get(c) || []).filter((i) => !usedDb.has(i))
-    )];
+    const cands = softCodeDbHits(r).filter((i) => !usedDb.has(i));
     if (!cands.length) continue;
-    const named = cands.filter((i) => namesMatch(db[i]._names, r._names));
+    const named = cands.filter((i) =>
+      namesMatchTokens(db[i]._nameTokens, r._csvName, r._names, db[i]._names)
+    );
     if (named.length === 1) {
       take(named[0], r._i, "code+name");
     } else if (named.length > 1) {
@@ -323,7 +415,7 @@ export function matchInscriptionsFormateur(
             !usedDb.has(d._i) &&
             d._date === r._date &&
             [...d._langs].some((l) => r._langs.has(l)) &&
-            namesMatch(d._names, r._names)
+            namesMatchTokens(d._nameTokens, r._csvName, r._names, d._names)
         )
         .map((d) => d._i);
     }
@@ -348,11 +440,16 @@ export function matchInscriptionsFormateur(
   // Pass 4 — code exclusif restant (facture « à l'attention de »)
   for (const r of csv) {
     if (usedCsv.has(r._i)) continue;
-    const cands = [...new Set(
-      [...r._codes].flatMap((c) => codeToDb.get(c) || []).filter((i) => !usedDb.has(i))
-    )];
+    const cands = softCodeDbHits(r).filter((i) => !usedDb.has(i));
     if (cands.length !== 1) {
       if (cands.length > 1) {
+        const arr = cands;
+        const samePerson = arr.every((i) => namesMatch(db[i]._names, db[arr[0]]._names));
+        const sameDate = arr.every((i) => db[i]._date === db[arr[0]]._date);
+        if (samePerson && sameDate) {
+          take(pickBestDup(arr), r._i, "code_exclusive_dup");
+          continue;
+        }
         multiples.push({
           csv: cell(r, "Nom et Prénom"),
           code: cell(r, "Code").slice(0, 60),
@@ -367,6 +464,7 @@ export function matchInscriptionsFormateur(
     for (const c of db[di]._codes)
       for (const i of codeToCsv.get(c) || []) if (!usedCsv.has(i)) rivals.add(i);
     if (rivals.size === 1 && rivals.has(r._i)) take(di, r._i, "code_exclusive");
+    else if (rivals.size === 0) take(di, r._i, "code_exclusive");
   }
 
   const matchedKeys = new Set(

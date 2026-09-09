@@ -13,6 +13,9 @@
 import { createClient } from "@supabase/supabase-js";
 import { writeFileSync } from "fs";
 
+/** Floor for automatic alias_fuzzy; below this requires Paula validation. */
+export const ALIAS_FUZZY_MIN_SCORE = 0.5;
+
 function norm(s: string): string {
   return s
     .normalize("NFD")
@@ -20,6 +23,16 @@ function norm(s: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
+}
+
+/** Jaccard sur tokens (libellé vs alias). */
+function tokenJaccard(a: string, b: string): number {
+  const ta = new Set(norm(a).split(/\s+/).filter(Boolean));
+  const tb = new Set(norm(b).split(/\s+/).filter(Boolean));
+  if (ta.size === 0 || tb.size === 0) return 0;
+  let inter = 0;
+  for (const t of ta) if (tb.has(t)) inter++;
+  return inter / (ta.size + tb.size - inter);
 }
 
 type Instructor = {
@@ -88,20 +101,42 @@ function propose(row: Inscription, idx: ReturnType<typeof buildAliasIndex>) {
   if (exact.length > 1) {
     return { confidence: "alias_ambiguous", proposed: null, candidates: exact };
   }
-  // Fuzzy contains
-  const fuzzy: Instructor[] = [];
+  // Fuzzy contains — score Jaccard ; rejet auto sous ALIAS_FUZZY_MIN_SCORE (0,5)
+  type Scored = { instructor: Instructor; score: number; alias: string };
+  const scored: Scored[] = [];
   for (const [alias, list] of idx.byAlias) {
-    if (alias.includes(key) || key.includes(alias)) {
-      for (const i of list) {
-        if (!fuzzy.some((x) => x.id === i.id)) fuzzy.push(i);
+    if (!(alias.includes(key) || key.includes(alias))) continue;
+    const score = tokenJaccard(key, alias);
+    if (score < ALIAS_FUZZY_MIN_SCORE) continue;
+    for (const i of list) {
+      const prev = scored.find((x) => x.instructor.id === i.id);
+      if (!prev || score > prev.score) {
+        if (prev) {
+          prev.score = score;
+          prev.alias = alias;
+        } else {
+          scored.push({ instructor: i, score, alias });
+        }
       }
     }
   }
+  scored.sort((a, b) => b.score - a.score);
+  const fuzzy = scored.map((s) => s.instructor);
   if (fuzzy.length === 1) {
-    return { confidence: "alias_fuzzy", proposed: fuzzy[0], candidates: fuzzy };
+    return {
+      confidence: "alias_fuzzy",
+      proposed: fuzzy[0],
+      candidates: fuzzy,
+      score: scored[0].score,
+    };
   }
   if (fuzzy.length > 1) {
-    return { confidence: "alias_ambiguous", proposed: null, candidates: fuzzy };
+    return {
+      confidence: "alias_ambiguous",
+      proposed: null,
+      candidates: fuzzy,
+      score: scored[0]?.score,
+    };
   }
   return { confidence: "unmatched", proposed: null, candidates: [] };
 }
