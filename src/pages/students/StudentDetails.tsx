@@ -30,6 +30,7 @@ import {
   Languages,
 } from "lucide-react";
 import { useStudentDetails } from "@/hooks/useStudentDetails";
+import { StudentPortalAccessCard } from "@/components/students/StudentPortalAccessCard";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -171,6 +172,13 @@ export default function StudentDetails() {
             </Button>
           </div>
         </div>
+
+        <StudentPortalAccessCard
+          studentId={student.id}
+          studentName={`${student.first_name} ${student.last_name}`}
+          email={student.email}
+          authUserId={student.auth_user_id}
+        />
 
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

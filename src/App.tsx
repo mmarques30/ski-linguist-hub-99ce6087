@@ -13,6 +13,7 @@ import InscriptionDetails from "./pages/inscriptions/InscriptionDetails";
 import Invoices from "./pages/Invoices";
 import Students from "./pages/Students";
 import StudentDetails from "./pages/students/StudentDetails";
+import StudentPortalPreview from "./pages/students/StudentPortalPreview";
 import PlacementTests from "./pages/PlacementTests";
 import Sessions from "./pages/Sessions";
 import Documents from "./pages/Documents";
@@ -92,6 +93,7 @@ const App = () => (
             <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
             <Route path="/students" element={<ProtectedRoute><Students /></ProtectedRoute>} />
             <Route path="/students/:id" element={<ProtectedRoute><StudentDetails /></ProtectedRoute>} />
+            <Route path="/students/:id/portal-preview" element={<ProtectedRoute><StudentPortalPreview /></ProtectedRoute>} />
             <Route path="/tests" element={<ProtectedRoute><PlacementTests /></ProtectedRoute>} />
             <Route path="/classes" element={<Navigate to="/formation/sessions" replace />} />
             <Route path="/formation/sessions" element={<ProtectedRoute><Sessions /></ProtectedRoute>} />
