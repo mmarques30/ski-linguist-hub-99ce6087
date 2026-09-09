@@ -93,7 +93,7 @@ COMMENT ON FUNCTION public.get_fiscal_year(date) IS
   'Exercice fiscal FLI AA-AA. Transition 2025-10-01..2026-06-30 = 25-26 ; avant = oct-sep ; après 2026-07-01 = juil-juin.';
 
 COMMENT ON FUNCTION public.before_invoice_insert() IS
-  'Numérotation FLI {exercice}.{séquence} globale continue ; reprise après Excel 14297 → prochaine 14298.';
+  'Numérotation FLI {exercice}.{séquence} globale ; plancher auto GREATEST(max,14297)+1 ; Fact FLI fourni conservé.';
 
 -- =============================================================================
 -- DOWN (réversible — ne pas exécuter en prod sans validation)
