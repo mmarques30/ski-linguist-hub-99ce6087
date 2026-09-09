@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,205 +7,323 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Upload, FileSpreadsheet, CheckCircle2, XCircle, AlertTriangle, Loader2, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Upload,
+  FileSpreadsheet,
+  CheckCircle2,
+  AlertTriangle,
+  Loader2,
+  Trash2,
+  Download,
+  Play,
+  ShieldAlert,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { FliInscriptionsImportCard } from "@/components/admin/FliInscriptionsImportCard";
 import { FliFormResponsesImportCard } from "@/components/admin/FliFormResponsesImportCard";
+import {
+  buildRejectionCsv,
+  downloadTextFile,
+  parseCsvText,
+  readCsvFileAsText,
+  type CsvRow,
+} from "@/lib/csv-import-parser";
+import {
+  IMPORT_TABLE_LABELS,
+  prepareImport,
+  type ImportTableType,
+  type PreparedImport,
+} from "@/lib/admin-import-engine";
 
-type TableType = "instructors" | "ski_schools" | "students" | "inscriptions" | "invoices";
-
-interface CSVRow {
-  [key: string]: string;
+interface TableCounts {
+  instructors: number;
+  ski_schools: number;
+  students: number;
+  inscriptions: number;
+  invoices: number;
 }
 
-interface ImportStats {
-  totalRows: number;
-  imported: number;
-  errors: string[];
-}
-
-// Column mappings for each table type
-const COLUMN_MAPPINGS: Record<TableType, Record<string, string>> = {
-  instructors: {
-    id: "id",
-    full_name: "full_name",
-    email: "email",
-    phone: "phone",
-    languages: "languages",
-    hourly_rate: "hourly_rate",
-    status: "status",
-  },
-  ski_schools: {
-    id: "id",
-    name: "name",
-    director_name: "director_name",
-    director_phone: "director_phone",
-    address: "address",
-    email: "email",
-    contact_notes: "contact_notes",
-  },
-  students: {
-    id: "id",
-    email: "email",
-    first_name: "first_name",
-    last_name: "last_name",
-    full_name: "full_name",
-    gender: "gender",
-    phone: "phone",
-    address: "address",
-    postal_code: "postal_code",
-    city: "city",
-    company: "company",
-  },
-  inscriptions: {
-    id: "id",
-    code: "code",
-    student_id: "student_id",
-    instructor_id: "instructor_id",
-    ski_school_id: "ski_school_id",
-    modality: "modality",
-    type: "type",
-    language: "language",
-    location: "location",
-    start_date: "start_date",
-    end_date: "end_date",
-    duration_hours: "duration_hours",
-    price_ht: "price_ht",
-    deposit: "deposit",
-    deposit_date: "deposit_date",
-    payment_mode: "payment_mode",
-    level_entry: "level_entry",
-    level_exit_general: "level_exit_general",
-    level_exit_specific: "level_exit_specific",
-    certification: "certification",
-    certification_date: "certification_date",
-    certification_result: "certification_result",
-    status: "status",
-    status_original: "status_original",
-    observations: "observations",
-  },
-  invoices: {
-    invoice_number: "invoice_number",
-    invoice_date: "invoice_date",
-    due_date: "due_date",
-    invoice_type: "invoice_type",
-    payment_type: "payment_type",
-    amount_ht: "amount_ht",
-    tva_rate: "tva_rate",
-    amount_ttc: "amount_ttc",
-    status: "status",
-    payment_date: "payment_date",
-    payment_method: "payment_method",
-    notes: "notes",
-    inscription_id: "inscription_id",
-    related_invoice_id: "related_invoice_id",
-  },
+const EMPTY_COUNTS: TableCounts = {
+  instructors: 0,
+  ski_schools: 0,
+  students: 0,
+  inscriptions: 0,
+  invoices: 0,
 };
 
-// Parse CSV with comma separator
-function parseCSV(text: string): CSVRow[] {
-  const lines = text.split('\n').filter(line => line.trim());
-  if (lines.length === 0) return [];
-  
-  // Remove BOM if present
-  let headerLine = lines[0];
-  if (headerLine.charCodeAt(0) === 0xFEFF) {
-    headerLine = headerLine.slice(1);
-  }
-  
-  const headers = headerLine.split(',').map(h => h.trim());
-  const rows: CSVRow[] = [];
-  
-  for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(',');
-    if (values.length < 2) continue;
-    
-    const row: CSVRow = {};
-    headers.forEach((header, index) => {
-      row[header] = values[index]?.trim() || '';
-    });
-    rows.push(row);
-  }
-  
-  return rows;
+async function countTable(table: ImportTableType): Promise<number> {
+  const { count, error } = await supabase
+    .from(table)
+    .select("*", { count: "exact", head: true });
+  if (error) throw error;
+  return count ?? 0;
 }
 
-function isEmpty(value: string): boolean {
-  return !value || value === '-' || value === 'N/A' || value.trim() === '';
-}
-
-// Validate UUID format (8-4-4-4-12 hex characters)
-function isValidUUID(id: string): boolean {
-  if (!id) return false;
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(id);
-}
-
-// Convert invalid UUIDs to valid ones by replacing non-hex first character
-function sanitizeUUID(id: string): string | null {
-  if (!id || isEmpty(id)) return null;
-  
-  // If already valid, return as-is
-  if (isValidUUID(id)) return id;
-  
-  // Try to fix common issues: replace non-hex first character with 'a'
-  let sanitized = id;
-  if (!/^[0-9a-f]/i.test(id[0])) {
-    sanitized = 'a' + id.slice(1);
+async function writeAuditLog(params: {
+  userId: string | undefined;
+  action: string;
+  tableName: string;
+  newValues: Record<string, unknown>;
+  oldValues?: Record<string, unknown> | null;
+}) {
+  const { error } = await supabase.from("audit_log").insert({
+    user_id: params.userId ?? null,
+    action: params.action,
+    table_name: params.tableName,
+    record_id: null,
+    new_values: params.newValues as unknown as import("@/integrations/supabase/types").Json,
+    old_values: (params.oldValues ?? null) as unknown as import("@/integrations/supabase/types").Json,
+  });
+  if (error) {
+    console.error("audit_log insert failed", error);
+    throw new Error(`Journalisation audit_log échouée : ${error.message}`);
   }
-  
-  // If still not valid, return null (let DB generate)
-  return isValidUUID(sanitized) ? sanitized : null;
 }
 
 export default function Import() {
   const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<CSVRow[]>([]);
-  const [allRows, setAllRows] = useState<CSVRow[]>([]);
-  const [selectedTable, setSelectedTable] = useState<TableType>("instructors");
+  const [preview, setPreview] = useState<CsvRow[]>([]);
+  const [allRows, setAllRows] = useState<CsvRow[]>([]);
+  const [encodingNotes, setEncodingNotes] = useState<string[]>([]);
+  const [selectedTable, setSelectedTable] = useState<ImportTableType>("instructors");
   const [isImporting, setIsImporting] = useState(false);
   const [isPurging, setIsPurging] = useState(false);
+  const [isDryRunning, setIsDryRunning] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [stats, setStats] = useState<ImportStats | null>(null);
+  const [prepared, setPrepared] = useState<PreparedImport | null>(null);
+  const [dryRunDone, setDryRunDone] = useState(false);
+  const [importResult, setImportResult] = useState<{
+    imported: number;
+    errors: string[];
+  } | null>(null);
+  const [counts, setCounts] = useState<TableCounts>(EMPTY_COUNTS);
+  const [countsLoading, setCountsLoading] = useState(true);
+  const [purgeOpen, setPurgeOpen] = useState(false);
+  const [purgeConfirmText, setPurgeConfirmText] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  const refreshCounts = useCallback(async () => {
+    setCountsLoading(true);
+    try {
+      const [instructors, ski_schools, students, inscriptions, invoices] =
+        await Promise.all([
+          countTable("instructors"),
+          countTable("ski_schools"),
+          countTable("students"),
+          countTable("inscriptions"),
+          countTable("invoices"),
+        ]);
+      setCounts({ instructors, ski_schools, students, inscriptions, invoices });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Impossible de compter les lignes",
+        description: error instanceof Error ? error.message : "Erreur inconnue",
+      });
+    } finally {
+      setCountsLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    void refreshCounts();
+  }, [refreshCounts]);
+
+  const resetImportState = () => {
+    setPrepared(null);
+    setDryRunDone(false);
+    setImportResult(null);
+    setProgress(0);
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
     setFile(selectedFile);
-    setStats(null);
-    setProgress(0);
+    resetImportState();
 
-    const text = await selectedFile.text();
-    const rows = parseCSV(text);
-    setAllRows(rows);
-    setPreview(rows.slice(0, 10));
+    try {
+      const text = await readCsvFileAsText(selectedFile);
+      const { rows, encodingNotes: notes } = parseCsvText(text, ";");
+      setAllRows(rows);
+      setPreview(rows.slice(0, 10));
+      setEncodingNotes(notes);
+      if (rows.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "Fichier vide ou illisible",
+          description: "Vérifiez le délimiteur point-virgule et l'encodage UTF-8.",
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Lecture du fichier impossible",
+        description: error instanceof Error ? error.message : "Erreur inconnue",
+      });
+    }
   };
 
-  const handlePurgeData = async () => {
-    setIsPurging(true);
+  const handleDryRun = async () => {
+    if (allRows.length === 0 || !file) return;
+    setIsDryRunning(true);
     try {
-      // Delete in reverse order to respect foreign keys
-      const { error: inscError } = await supabase.from('inscriptions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      if (inscError) throw new Error(`Inscriptions: ${inscError.message}`);
+      const result = prepareImport(allRows, selectedTable);
+      setPrepared(result);
+      setDryRunDone(true);
+      setImportResult(null);
 
-      const { error: studError } = await supabase.from('students').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      if (studError) throw new Error(`Students: ${studError.message}`);
-
-      const { error: schoolError } = await supabase.from('ski_schools').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      if (schoolError) throw new Error(`Ski Schools: ${schoolError.message}`);
-
-      const { error: instrError } = await supabase.from('instructors').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      if (instrError) throw new Error(`Instructors: ${instrError.message}`);
+      await writeAuditLog({
+        userId: user?.id,
+        action: "import_dry_run",
+        tableName: selectedTable,
+        newValues: {
+          filename: file.name,
+          total_rows: result.totalRows,
+          accepted: result.acceptedCount,
+          rejected: result.rejectedCount,
+          first_errors: result.rejections.slice(0, 20).map((r) => ({
+            line: r.lineNumber,
+            reason: r.reason,
+          })),
+        },
+      });
 
       toast({
-        title: "Données purgées",
-        description: "Toutes les données ont été supprimées avec succès.",
+        title: "Dry-run terminé",
+        description: `${result.acceptedCount} acceptée(s), ${result.rejectedCount} rejetée(s). Aucune écriture en base.`,
       });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Échec du dry-run",
+        description: error instanceof Error ? error.message : "Erreur inconnue",
+      });
+    } finally {
+      setIsDryRunning(false);
+    }
+  };
+
+  const handleDownloadRejections = () => {
+    if (!prepared || prepared.rejections.length === 0) return;
+    const csv = buildRejectionCsv(prepared.rejections);
+    const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+    downloadTextFile(
+      `rejets-import-${selectedTable}-${stamp}.csv`,
+      csv
+    );
+  };
+
+  const handleImport = async () => {
+    if (!prepared || !dryRunDone || !file) return;
+    if (prepared.acceptedCount === 0) {
+      toast({
+        variant: "destructive",
+        title: "Rien à importer",
+        description: "Le dry-run n'a accepté aucune ligne.",
+      });
+      return;
+    }
+
+    setIsImporting(true);
+    setProgress(0);
+    const errors: string[] = [];
+    let imported = 0;
+    const batchSize = 50;
+    const records = prepared.accepted;
+
+    for (let i = 0; i < records.length; i += batchSize) {
+      const batch = records.slice(i, i + batchSize);
+      const { error } = await supabase.from(selectedTable).insert(batch as never[]);
+      if (error) {
+        errors.push(`Lot ${Math.floor(i / batchSize) + 1}: ${error.message}`);
+      } else {
+        imported += batch.length;
+      }
+      setProgress(Math.round(((i + batch.length) / records.length) * 100));
+    }
+
+    try {
+      await writeAuditLog({
+        userId: user?.id,
+        action: "import",
+        tableName: selectedTable,
+        newValues: {
+          filename: file.name,
+          total_rows: prepared.totalRows,
+          accepted_at_dry_run: prepared.acceptedCount,
+          rejected_at_dry_run: prepared.rejectedCount,
+          imported,
+          write_errors: errors,
+        },
+      });
+    } catch (auditError) {
+      errors.push(
+        auditError instanceof Error ? auditError.message : "Erreur audit_log"
+      );
+    }
+
+    setImportResult({ imported, errors });
+    setIsImporting(false);
+    await refreshCounts();
+
+    toast({
+      title: "Import terminé",
+      description: `${imported} enregistrement(s) écrit(s) dans ${selectedTable}.`,
+    });
+  };
+
+  const selectedCount = counts[selectedTable];
+  const purgeConfirmOk =
+    purgeConfirmText.trim() === selectedTable && selectedCount > 0;
+
+  const handlePurgeSelectedTable = async () => {
+    if (!purgeConfirmOk) return;
+    setIsPurging(true);
+    try {
+      const beforeCount = selectedCount;
+      const { error } = await supabase
+        .from(selectedTable)
+        .delete()
+        .neq("id", "00000000-0000-0000-0000-000000000000");
+      if (error) throw error;
+
+      await writeAuditLog({
+        userId: user?.id,
+        action: "purge",
+        tableName: selectedTable,
+        oldValues: { row_count_before: beforeCount },
+        newValues: {
+          row_count_deleted: beforeCount,
+          filename: null,
+          confirmed_table_name: selectedTable,
+        },
+      });
+
+      toast({
+        title: "Purge effectuée",
+        description: `Table ${selectedTable} : ${beforeCount} ligne(s) supprimée(s).`,
+      });
+      setPurgeOpen(false);
+      setPurgeConfirmText("");
+      await refreshCounts();
     } catch (error) {
       toast({
         variant: "destructive",
@@ -217,197 +335,7 @@ export default function Import() {
     }
   };
 
-  const handleImport = async () => {
-    if (allRows.length === 0) return;
-
-    setIsImporting(true);
-    setProgress(0);
-
-    const importStats: ImportStats = {
-      totalRows: allRows.length,
-      imported: 0,
-      errors: [],
-    };
-
-    const batchSize = 50;
-    const batches = [];
-    
-    for (let i = 0; i < allRows.length; i += batchSize) {
-      batches.push(allRows.slice(i, i + batchSize));
-    }
-
-    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
-      const batch = batches[batchIndex];
-      const records = batch.map((row, rowIndex) => {
-        const globalIndex = batchIndex * batchSize + rowIndex;
-        try {
-          return mapRowToRecord(row, selectedTable);
-        } catch (error) {
-          importStats.errors.push(`Ligne ${globalIndex + 2}: ${error}`);
-          return null;
-        }
-      }).filter(Boolean);
-
-      if (records.length > 0) {
-        const { error } = await supabase.from(selectedTable).insert(records as any[]);
-        
-        if (error) {
-          importStats.errors.push(`Batch ${batchIndex + 1}: ${error.message}`);
-        } else {
-          importStats.imported += records.length;
-        }
-      }
-
-      setProgress(Math.round(((batchIndex + 1) / batches.length) * 100));
-    }
-
-    setStats(importStats);
-    setIsImporting(false);
-    
-    toast({
-      title: "Import terminé",
-      description: `${importStats.imported} enregistrements importés dans ${selectedTable}.`,
-    });
-  };
-
-  const mapRowToRecord = (row: CSVRow, table: TableType) => {
-    switch (table) {
-      case "instructors": {
-        const nameParts = (row.full_name || '').split(' ');
-        const firstName = nameParts.slice(0, -1).join(' ') || '';
-        const lastName = nameParts[nameParts.length - 1] || row.full_name || 'Inconnu';
-        
-        const sanitizedId = sanitizeUUID(row.id);
-        return {
-          ...(sanitizedId && { id: sanitizedId }),
-          first_name: firstName || null,
-          last_name: lastName,
-          email: isEmpty(row.email) ? null : row.email,
-          phone: isEmpty(row.phone) ? null : row.phone,
-          languages: isEmpty(row.languages) ? null : row.languages.split(',').map(l => l.trim()),
-          is_active: row.status === 'active',
-        };
-      }
-      
-      case "ski_schools": {
-        const sanitizedId = sanitizeUUID(row.id);
-        return {
-          ...(sanitizedId && { id: sanitizedId }),
-          name: row.name || 'Inconnu',
-          director_name: isEmpty(row.director_name) ? null : row.director_name,
-          director_phone: isEmpty(row.director_phone) ? null : row.director_phone,
-          observations: isEmpty(row.contact_notes) ? null : row.contact_notes,
-        };
-      }
-      
-      case "students": {
-        const sanitizedId = sanitizeUUID(row.id);
-        return {
-          ...(sanitizedId && { id: sanitizedId }),
-          email: row.email || `unknown-${Date.now()}@placeholder.com`,
-          first_name: row.first_name || 'Inconnu',
-          last_name: row.last_name || 'Inconnu',
-          civility: isEmpty(row.gender) ? null : row.gender,
-          phone: isEmpty(row.phone) ? null : row.phone,
-          street_address: isEmpty(row.address) ? null : row.address,
-          postal_code: isEmpty(row.postal_code) ? null : row.postal_code,
-          city: isEmpty(row.city) ? null : row.city,
-          company: isEmpty(row.company) ? null : row.company,
-        };
-      }
-      
-      case "inscriptions": {
-        const sanitizedId = sanitizeUUID(row.id);
-        const sanitizedStudentId = sanitizeUUID(row.student_id);
-        const sanitizedInstructorId = sanitizeUUID(row.instructor_id);
-        const sanitizedSkiSchoolId = sanitizeUUID(row.ski_school_id);
-        
-        return {
-          ...(sanitizedId && { id: sanitizedId }),
-          code: isEmpty(row.code) ? null : row.code,
-          student_id: sanitizedStudentId || row.student_id, // Required field
-          instructor_id: sanitizedInstructorId,
-          ski_school_id: sanitizedSkiSchoolId,
-          modality: isEmpty(row.modality) ? null : row.modality,
-          course_type: isEmpty(row.type) ? null : row.type,
-          language: row.language || 'Non spécifié',
-          course_location: isEmpty(row.location) ? null : row.location,
-          start_date: row.start_date,
-          end_date: row.end_date,
-          duration_hours: isEmpty(row.duration_hours) ? null : parseFloat(row.duration_hours),
-          price: isEmpty(row.price_ht) ? null : parseFloat(row.price_ht),
-          deposit_amount: isEmpty(row.deposit) ? null : parseFloat(row.deposit),
-          deposit_date: isEmpty(row.deposit_date) ? null : row.deposit_date,
-          payment_method: isEmpty(row.payment_mode) ? null : row.payment_mode,
-          entry_level: isEmpty(row.level_entry) ? null : row.level_entry,
-          final_general_level: isEmpty(row.level_exit_general) ? null : row.level_exit_general,
-          final_specific_level: isEmpty(row.level_exit_specific) ? null : row.level_exit_specific,
-          certification_type: isEmpty(row.certification) ? null : row.certification,
-          certification_date: isEmpty(row.certification_date) ? null : row.certification_date,
-          certification_result: isEmpty(row.certification_result) ? null : row.certification_result,
-          status: mapStatus(row.status),
-          observations: isEmpty(row.observations) ? null : row.observations,
-        };
-      }
-      
-      case "invoices": {
-        const invoiceType = (row.invoice_type || 'formation').toLowerCase();
-        const validTypes = ['formation', 'test', 'soustraitance'];
-        const type = validTypes.includes(invoiceType) ? invoiceType : 'formation';
-        
-        const statusVal = (row.status || 'draft').toLowerCase();
-        const validStatuses = ['draft', 'sent', 'paid', 'cancelled'];
-        const status = validStatuses.includes(statusVal) ? statusVal : 'draft';
-        
-        const paymentTypeVal = (row.payment_type || 'integral').toLowerCase();
-        const validPaymentTypes = ['adiantamento', 'saldo', 'integral'];
-        const paymentType = validPaymentTypes.includes(paymentTypeVal) ? paymentTypeVal : 'integral';
-        
-        const sanitizedInscriptionId = sanitizeUUID(row.inscription_id);
-        const sanitizedRelatedInvoiceId = sanitizeUUID(row.related_invoice_id);
-        
-        return {
-          invoice_number: isEmpty(row.invoice_number) ? null : row.invoice_number,
-          invoice_date: isEmpty(row.invoice_date) ? new Date().toISOString().split('T')[0] : row.invoice_date,
-          due_date: isEmpty(row.due_date) ? null : row.due_date,
-          invoice_type: type,
-          payment_type: paymentType,
-          amount_ht: isEmpty(row.amount_ht) ? 0 : parseFloat(row.amount_ht),
-          tva_rate: isEmpty(row.tva_rate) ? (type === 'formation' ? 0 : 20) : parseFloat(row.tva_rate),
-          // amount_ttc is computed by the database, don't include it
-          status: status,
-          payment_date: isEmpty(row.payment_date) ? null : row.payment_date,
-          payment_method: isEmpty(row.payment_method) ? null : row.payment_method,
-          notes: isEmpty(row.notes) ? null : row.notes,
-          inscription_id: sanitizedInscriptionId,
-          related_invoice_id: sanitizedRelatedInvoiceId,
-        };
-      }
-      
-      default:
-        throw new Error(`Table non supportée: ${table}`);
-    }
-  };
-
-  const mapStatus = (status: string): string => {
-    const statusMap: Record<string, string> = {
-      'invoiced': 'Facturé',
-      'completed': 'Terminé',
-      'in_progress': 'En cours',
-      'cancelled': 'Annulé',
-    };
-    return statusMap[status] || status || 'En cours';
-  };
-
   const headers = preview.length > 0 ? Object.keys(preview[0]).slice(0, 10) : [];
-
-  const tableLabels: Record<TableType, string> = {
-    instructors: "1. Formateurs (instructors)",
-    ski_schools: "2. Écoles de ski (ski_schools)",
-    students: "3. Stagiaires (students)",
-    inscriptions: "4. Inscriptions (inscriptions)",
-    invoices: "5. Factures (invoices)",
-  };
 
   return (
     <MainLayout>
@@ -415,123 +343,230 @@ export default function Import() {
         <FliInscriptionsImportCard />
         <FliFormResponsesImportCard />
 
-        {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold">Import de données CSV</h1>
             <p className="text-muted-foreground">
-              Importez vos données propres table par table
+              Délimiteur point-virgule · UTF-8 · dry-run obligatoire avant écriture
             </p>
           </div>
-
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" disabled={isPurging}>
-                {isPurging ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Trash2 className="mr-2 h-4 w-4" />
-                )}
-                Purger toutes les données
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Confirmer la purge des données</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Cette action va supprimer TOUTES les données des tables suivantes dans l'ordre :
-                  <ul className="list-disc list-inside mt-2 space-y-1">
-                    <li>inscriptions</li>
-                    <li>students</li>
-                    <li>ski_schools</li>
-                    <li>instructors</li>
-                  </ul>
-                  <br />
-                  <strong className="text-destructive">Cette action est irréversible.</strong>
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Annuler</AlertDialogCancel>
-                <AlertDialogAction onClick={handlePurgeData} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                  Confirmer la purge
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <Button
+            variant="outline"
+            onClick={() => void refreshCounts()}
+            disabled={countsLoading}
+          >
+            {countsLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : null}
+            Actualiser les comptes
+          </Button>
         </div>
 
-        {/* Table Selection */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Sélection de la table</CardTitle>
-            <CardDescription>
-              Importez les tables dans l'ordre : 1. Formateurs → 2. Écoles → 3. Stagiaires → 4. Inscriptions
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Select value={selectedTable} onValueChange={(v) => setSelectedTable(v as TableType)}>
-              <SelectTrigger className="w-[400px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(tableLabels).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </CardContent>
-        </Card>
+        <Alert>
+          <ShieldAlert className="h-4 w-4" />
+          <AlertTitle>Sécurité import</AlertTitle>
+          <AlertDescription className="space-y-1 text-sm">
+            <p>
+              Toute écriture est précédée d&apos;un dry-run. Toute purge demande le
+              nom exact de la table et affiche le nombre de lignes concernées.
+              Chaque action est journalisée dans <code>audit_log</code>.
+            </p>
+            <p className="text-muted-foreground">
+              Ne purgez jamais de données réelles sans validation métier
+              préalable.
+            </p>
+          </AlertDescription>
+        </Alert>
 
-        {/* Upload Card */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileSpreadsheet className="h-5 w-5" />
-              Fichier CSV - {tableLabels[selectedTable]}
-            </CardTitle>
+            <CardTitle>Volumes actuels</CardTitle>
             <CardDescription>
-              Format attendu : CSV avec séparateur virgule (,)
+              Comptes live (lecture seule) — base de confirmation pour les purges
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="flex flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed p-8 cursor-pointer hover:bg-muted/50 transition-colors"
-              >
-                <Upload className="h-10 w-10 text-muted-foreground" />
-                <div className="text-center">
-                  <p className="font-medium">
-                    {file ? file.name : "Cliquez pour sélectionner un fichier"}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {file ? `${allRows.length} enregistrements trouvés` : "CSV avec séparateur virgule (,)"}
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+              {(Object.keys(IMPORT_TABLE_LABELS) as ImportTableType[]).map((key) => (
+                <div
+                  key={key}
+                  className={`rounded-lg border p-3 ${
+                    key === selectedTable ? "border-primary bg-primary/5" : ""
+                  }`}
+                >
+                  <p className="text-xs text-muted-foreground">{key}</p>
+                  <p className="text-2xl font-bold tabular-nums">
+                    {countsLoading ? "…" : counts[key]}
                   </p>
                 </div>
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".csv"
-                onChange={handleFileChange}
-                className="hidden"
-              />
+              ))}
             </div>
           </CardContent>
         </Card>
 
-        {/* Preview */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Table cible</CardTitle>
+            <CardDescription>
+              Ordre conseillé : instructors → ski_schools → students →
+              inscriptions → invoices
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-end">
+            <div className="flex-1 space-y-2">
+              <Label>Table</Label>
+              <Select
+                value={selectedTable}
+                onValueChange={(v) => {
+                  setSelectedTable(v as ImportTableType);
+                  resetImportState();
+                }}
+              >
+                <SelectTrigger className="w-full max-w-md">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.entries(IMPORT_TABLE_LABELS) as [ImportTableType, string][]).map(
+                    ([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label} ({counts[key]})
+                      </SelectItem>
+                    )
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              variant="destructive"
+              disabled={countsLoading || selectedCount === 0}
+              onClick={() => {
+                setPurgeConfirmText("");
+                setPurgeOpen(true);
+              }}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Purger {selectedTable}
+            </Button>
+          </CardContent>
+        </Card>
+
+        <AlertDialog open={purgeOpen} onOpenChange={setPurgeOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmer la purge</AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-3 text-sm text-muted-foreground">
+                  <p>
+                    Vous allez supprimer{" "}
+                    <strong className="text-destructive">{selectedCount}</strong>{" "}
+                    ligne(s) de la table{" "}
+                    <strong className="text-foreground">{selectedTable}</strong>.
+                  </p>
+                  <p>
+                    Table : <code className="text-foreground">{selectedTable}</code>
+                    <br />
+                    Lignes concernées :{" "}
+                    <strong className="text-foreground">{selectedCount}</strong>
+                  </p>
+                  <p className="text-destructive font-medium">
+                    Action irréversible. Aucune suppression sans validation
+                    métier.
+                  </p>
+                  <div className="space-y-2 pt-2">
+                    <Label htmlFor="purge-confirm">
+                      Tapez le nom exact de la table pour confirmer :{" "}
+                      <code>{selectedTable}</code>
+                    </Label>
+                    <Input
+                      id="purge-confirm"
+                      value={purgeConfirmText}
+                      onChange={(e) => setPurgeConfirmText(e.target.value)}
+                      placeholder={selectedTable}
+                      autoComplete="off"
+                    />
+                  </div>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isPurging}>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={!purgeConfirmOk || isPurging}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={(e) => {
+                  e.preventDefault();
+                  void handlePurgeSelectedTable();
+                }}
+              >
+                {isPurging ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
+                Supprimer {selectedCount} ligne(s)
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="h-5 w-5" />
+              Fichier CSV — {IMPORT_TABLE_LABELS[selectedTable]}
+            </CardTitle>
+            <CardDescription>
+              Format : CSV séparateur <strong>;</strong>, encodage UTF-8 (BOM
+              accepté), décimales à virgule, milliers avec espace / NBSP
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="flex cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed p-8 transition-colors hover:bg-muted/50"
+            >
+              <Upload className="h-10 w-10 text-muted-foreground" />
+              <div className="text-center">
+                <p className="font-medium">
+                  {file ? file.name : "Cliquez pour sélectionner un fichier"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {file
+                    ? `${allRows.length} ligne(s) de données`
+                    : "CSV ; utf-8-sig"}
+                </p>
+              </div>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              onChange={(e) => void handleFileChange(e)}
+              className="hidden"
+            />
+            {encodingNotes.length > 0 && (
+              <Alert className="mt-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Notes de lecture</AlertTitle>
+                <AlertDescription>
+                  <ul className="list-disc space-y-1 pl-4 text-sm">
+                    {encodingNotes.map((n) => (
+                      <li key={n}>{n}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+
         {preview.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Aperçu (10 premiers enregistrements)</CardTitle>
+              <CardTitle>Aperçu (10 premières lignes)</CardTitle>
               <CardDescription>
-                Vérifiez que les données sont correctement lues avant d'importer
+                Vérifiez les colonnes avant le dry-run
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -547,7 +582,10 @@ export default function Import() {
                     {preview.map((row, index) => (
                       <TableRow key={index}>
                         {headers.map((header) => (
-                          <TableCell key={header} className="max-w-[200px] truncate">
+                          <TableCell
+                            key={header}
+                            className="max-w-[200px] truncate"
+                          >
                             {row[header]}
                           </TableCell>
                         ))}
@@ -557,74 +595,151 @@ export default function Import() {
                 </Table>
               </div>
 
-              <div className="mt-6 flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-3">
                 <Button
-                  onClick={handleImport}
-                  disabled={isImporting}
+                  onClick={() => void handleDryRun()}
+                  disabled={isDryRunning || allRows.length === 0}
+                  size="lg"
+                  variant="secondary"
+                >
+                  {isDryRunning ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Play className="mr-2 h-4 w-4" />
+                  )}
+                  Lancer le dry-run ({allRows.length} lignes)
+                </Button>
+
+                <Button
+                  onClick={() => void handleImport()}
+                  disabled={
+                    !dryRunDone ||
+                    isImporting ||
+                    !prepared ||
+                    prepared.acceptedCount === 0
+                  }
                   size="lg"
                 >
                   {isImporting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Import en cours...
-                    </>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
-                    <>
-                      <Upload className="mr-2 h-4 w-4" />
-                      Importer {allRows.length} enregistrements dans {selectedTable}
-                    </>
+                    <Upload className="mr-2 h-4 w-4" />
                   )}
+                  Écrire en base
+                  {prepared ? ` (${prepared.acceptedCount})` : ""}
                 </Button>
 
-                {isImporting && (
-                  <div className="flex-1">
-                    <Progress value={progress} className="h-2" />
-                    <p className="text-sm text-muted-foreground mt-1">{progress}% terminé</p>
-                  </div>
+                {!dryRunDone && (
+                  <Badge variant="outline">Dry-run requis avant écriture</Badge>
                 )}
               </div>
+
+              {isImporting && (
+                <div>
+                  <Progress value={progress} className="h-2" />
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {progress}% terminé
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
 
-        {/* Results */}
-        {stats && (
+        {prepared && dryRunDone && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle2 className="h-5 w-5 text-green-600" />
-                Résultat de l'import
+                Résultat du dry-run
               </CardTitle>
+              <CardDescription>
+                Aucune écriture en base — journalisé dans audit_log
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <div className="rounded-lg border p-4">
-                  <p className="text-2xl font-bold">{stats.totalRows}</p>
-                  <p className="text-sm text-muted-foreground">Total lignes</p>
+                  <p className="text-2xl font-bold">{prepared.totalRows}</p>
+                  <p className="text-sm text-muted-foreground">Lignes lues</p>
                 </div>
                 <div className="rounded-lg border p-4">
-                  <p className="text-2xl font-bold text-green-600">{stats.imported}</p>
-                  <p className="text-sm text-muted-foreground">Importés</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {prepared.acceptedCount}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Acceptées</p>
                 </div>
                 <div className="rounded-lg border p-4">
-                  <p className="text-2xl font-bold text-red-600">{stats.errors.length}</p>
-                  <p className="text-sm text-muted-foreground">Erreurs</p>
+                  <p className="text-2xl font-bold text-red-600">
+                    {prepared.rejectedCount}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Rejetées</p>
+                </div>
+                <div className="rounded-lg border p-4">
+                  <p className="text-2xl font-bold">{selectedTable}</p>
+                  <p className="text-sm text-muted-foreground">Table cible</p>
                 </div>
               </div>
 
-              {stats.errors.length > 0 && (
+              {prepared.rejections.length > 0 && (
+                <>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium">
+                      20 premières erreurs (sur {prepared.rejectedCount})
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDownloadRejections}
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Télécharger le CSV des rejets
+                    </Button>
+                  </div>
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Erreurs de validation</AlertTitle>
+                    <AlertDescription>
+                      <div className="mt-2 max-h-[240px] space-y-1 overflow-y-auto text-sm">
+                        {prepared.rejections.slice(0, 20).map((r) => (
+                          <p key={`${r.lineNumber}-${r.reason}`}>
+                            • Ligne {r.lineNumber} : {r.reason}
+                          </p>
+                        ))}
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                </>
+              )}
+
+              {prepared.rejections.length === 0 && (
+                <Button variant="outline" size="sm" disabled>
+                  Aucun rejet à télécharger
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {importResult && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Résultat de l&apos;écriture</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p>
+                <strong>{importResult.imported}</strong> ligne(s) insérée(s) dans{" "}
+                <code>{selectedTable}</code>.
+              </p>
+              {importResult.errors.length > 0 && (
                 <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Erreurs d'import ({stats.errors.length})</AlertTitle>
+                  <AlertTitle>Erreurs d&apos;écriture</AlertTitle>
                   <AlertDescription>
-                    <div className="max-h-[200px] overflow-y-auto mt-2 space-y-1 text-sm">
-                      {stats.errors.slice(0, 50).map((error, i) => (
-                        <p key={i}>• {error}</p>
+                    <ul className="mt-2 list-disc space-y-1 pl-4 text-sm">
+                      {importResult.errors.map((err) => (
+                        <li key={err}>{err}</li>
                       ))}
-                      {stats.errors.length > 50 && (
-                        <p className="font-medium">... et {stats.errors.length - 50} autres erreurs</p>
-                      )}
-                    </div>
+                    </ul>
                   </AlertDescription>
                 </Alert>
               )}
@@ -632,22 +747,32 @@ export default function Import() {
           </Card>
         )}
 
-        {/* Instructions */}
         <Card>
           <CardHeader>
-            <CardTitle>Instructions d'import</CardTitle>
+            <CardTitle>Mode d&apos;emploi</CardTitle>
           </CardHeader>
-          <CardContent className="prose prose-sm max-w-none">
-            <ol className="space-y-2">
-              <li><strong>Purger d'abord</strong> toutes les données existantes avec le bouton rouge</li>
-              <li>Importer <strong>instructors.csv</strong> (26 formateurs)</li>
-              <li>Importer <strong>ski_schools.csv</strong> (16 écoles)</li>
-              <li>Importer <strong>students.csv</strong> (582 stagiaires)</li>
-              <li>Importer <strong>inscriptions.csv</strong> (871 inscriptions)</li>
+          <CardContent className="prose prose-sm max-w-none text-sm text-muted-foreground">
+            <ol className="list-decimal space-y-2 pl-4">
+              <li>Choisir la table cible et vérifier le volume affiché.</li>
+              <li>
+                Déposer un CSV <strong>;</strong> en UTF-8 (utf-8-sig accepté).
+              </li>
+              <li>
+                Lancer le <strong>dry-run</strong> : contrôle des lignes
+                acceptées / rejetées (20 premières erreurs à l&apos;écran).
+              </li>
+              <li>
+                Télécharger le rapport CSV des rejets si besoin, corriger le
+                fichier, recommencer le dry-run.
+              </li>
+              <li>
+                Seulement ensuite : <strong>Écrire en base</strong> (journalisé).
+              </li>
+              <li>
+                Purge : uniquement table par table, en tapant le nom exact, avec
+                le nombre de lignes affiché.
+              </li>
             </ol>
-            <p className="text-muted-foreground mt-4">
-              Les colonnes sont mappées automatiquement. Les UUIDs dans les fichiers correspondent aux références entre tables.
-            </p>
           </CardContent>
         </Card>
       </div>
