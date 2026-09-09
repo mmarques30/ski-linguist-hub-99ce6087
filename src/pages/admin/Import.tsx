@@ -519,6 +519,21 @@ export default function Import() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {selectedTable === "instructors" && (
+              <Alert className="mb-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Formateur·rices — colonnes FR acceptées</AlertTitle>
+                <AlertDescription className="text-sm">
+                  Nom, Prénom, Email, Téléphone, Langues, Statut (actif / inactif
+                  / candidat), SIRET, Adresse, CP, Ville, Statut administratif,
+                  etc. Statuts DB : ACTIF / INACTIF / A_EVITER.{" "}
+                  <code className="text-xs">candidat</code> → INACTIF + note
+                  (en attente décision). Champs hors schéma (civilité, pays,
+                  consentements…) → <code className="text-xs">status_notes</code>
+                  . Aucune liaison auto aux inscriptions.
+                </AlertDescription>
+              </Alert>
+            )}
             <div
               onClick={() => fileInputRef.current?.click()}
               className="flex cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed p-8 transition-colors hover:bg-muted/50"

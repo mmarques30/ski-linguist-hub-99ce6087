@@ -70,6 +70,57 @@ function requireField(row: CsvRow, key: string, label: string): string {
   return v.trim();
 }
 
+/** Normalise une clé d'en-tête pour comparaison (minuscule, sans accents). */
+function normKey(key: string): string {
+  return key
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+/** Lit une cellule par liste de noms de colonnes (FR/EN, accents ignorés). */
+function cell(row: CsvRow, ...candidates: string[]): string {
+  for (const c of candidates) {
+    if (row[c] !== undefined && !isEmpty(row[c])) return row[c].trim();
+  }
+  const wanted = candidates.map(normKey);
+  for (const [k, v] of Object.entries(row)) {
+    if (wanted.includes(normKey(k)) && !isEmpty(v)) return v.trim();
+  }
+  return "";
+}
+
+function appendNote(parts: string[], label: string, value: string) {
+  if (!isEmpty(value)) parts.push(`${label} : ${value.trim()}`);
+}
+
+/**
+ * Statut instructors (CHECK DB : ACTIF | INACTIF | A_EVITER).
+ * `candidat` → INACTIF + note (pas de valeur CHECK dédiée — décision Paula).
+ */
+function mapInstructorStatus(raw: string): {
+  status: "ACTIF" | "INACTIF" | "A_EVITER";
+  is_active: boolean;
+  sourceNote: string | null;
+} {
+  const s = raw.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (!s || ["actif", "active", "1", "true", "oui"].includes(s)) {
+    return { status: "ACTIF", is_active: true, sourceNote: null };
+  }
+  if (["a_eviter", "aeviter", "eviter", "avoid"].includes(s.replace(/\s+/g, "_")) || s.includes("eviter")) {
+    return { status: "A_EVITER", is_active: false, sourceNote: null };
+  }
+  if (s === "candidat" || s === "candidate") {
+    return {
+      status: "INACTIF",
+      is_active: false,
+      sourceNote: "Statut import : candidat (mappé INACTIF — pas de valeur CHECK CANDIDAT)",
+    };
+  }
+  return { status: "INACTIF", is_active: false, sourceNote: null };
+}
+
 function mapInscriptionStatus(status: string): string {
   const statusMap: Record<string, string> = {
     invoiced: "facturee",
@@ -88,45 +139,89 @@ function mapInscriptionStatus(status: string): string {
 }
 
 function mapInstructorRow(row: CsvRow): Record<string, unknown> {
-  const fullName = row.full_name || `${row.first_name || ""} ${row.last_name || ""}`.trim();
-  if (isEmpty(fullName) && isEmpty(row.last_name)) {
-    throw new Error("Nom manquant (full_name ou last_name)");
+  const lastName =
+    cell(row, "last_name", "Nom", "nom") ||
+    (cell(row, "full_name") ? cell(row, "full_name").split(/\s+/).slice(-1)[0] : "");
+  let firstName = cell(row, "first_name", "Prénom", "Prenom", "prenom") || null;
+  const fullName = cell(row, "full_name");
+
+  if (isEmpty(lastName) && isEmpty(fullName)) {
+    throw new Error("Nom manquant (colonne Nom / last_name / full_name)");
   }
 
-  let firstName = row.first_name?.trim() || null;
-  let lastName = row.last_name?.trim() || null;
-  if ((!firstName || !lastName) && !isEmpty(row.full_name)) {
-    const parts = row.full_name.trim().split(/\s+/);
-    firstName = parts.slice(0, -1).join(" ") || firstName || "—";
-    lastName = parts[parts.length - 1] || lastName || row.full_name;
+  let resolvedLast = lastName || "Inconnu";
+  if ((!firstName || isEmpty(resolvedLast) || resolvedLast === "Inconnu") && !isEmpty(fullName)) {
+    const parts = fullName.split(/\s+/);
+    firstName = firstName || parts.slice(0, -1).join(" ") || "—";
+    resolvedLast = parts[parts.length - 1] || fullName;
   }
 
-  const sanitizedId = sanitizeUUID(row.id || "");
-  const languagesRaw = row.languages || row.langues || "";
+  const sanitizedId = sanitizeUUID(cell(row, "id"));
+  const languagesRaw = cell(row, "languages", "langues", "Langues");
   const languages = isEmpty(languagesRaw)
     ? null
-    : languagesRaw.split(/[,;|]/).map((l) => l.trim()).filter(Boolean);
+    : languagesRaw.split(/[,|]/).map((l) => l.trim()).filter(Boolean);
 
-  const statusRaw = (row.status || row.statut || "active").toLowerCase();
-  const isActive = !["inactive", "inactif", "0", "false", "non"].includes(statusRaw);
-  const entryDate = row.start_date || row.date_entree || "";
-  // Pas de colonne start_date sur instructors : conserver la date d'entrée dans status_notes
-  const statusNotes = !isEmpty(entryDate)
-    ? `Date d'entrée : ${entryDate.trim()}`
-    : null;
+  const statusMapped = mapInstructorStatus(cell(row, "status", "statut", "Statut") || "actif");
+
+  const noteParts: string[] = [];
+  if (statusMapped.sourceNote) noteParts.push(statusMapped.sourceNote);
+  appendNote(noteParts, "Civilité", cell(row, "civility", "Civilité", "Civilite"));
+  appendNote(noteParts, "Statut administratif", cell(row, "Statut administratif", "tax_status_detail"));
+  appendNote(noteParts, "Identifiant étranger", cell(row, "Identifiant étranger", "Identifiant etranger"));
+  appendNote(noteParts, "Assujetti TVA", cell(row, "Assujetti TVA"));
+  appendNote(noteParts, "Pays", cell(row, "Pays", "country"));
+  appendNote(noteParts, "Date de naissance", cell(row, "Date de naissance", "birth_date", "date_naissance"));
+  appendNote(noteParts, "CV", cell(row, "CV (lien)", "cv", "cv_url"));
+  appendNote(noteParts, "Formulaire 2026", cell(row, "Formulaire 2026"));
+  appendNote(noteParts, "Consentement témoignage", cell(row, "Consentement témoignage", "Consentement temoignage"));
+  appendNote(noteParts, "Consentement photo", cell(row, "Consentement photo"));
+  appendNote(noteParts, "Alias", cell(row, "Alias", "alias"));
+  appendNote(noteParts, "Date d'entrée", cell(row, "start_date", "date_entree", "Date d'entrée"));
+
+  const emailRaw = cell(row, "email", "Email");
+  const email = isEmpty(emailRaw) ? null : emailRaw.toLowerCase();
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error(`Email invalide : ${emailRaw}`);
+  }
+
+  const adminStatut = cell(row, "Statut administratif");
+  const taxStatus = !isEmpty(adminStatut) ? adminStatut.slice(0, 120) : null;
 
   return {
     ...(sanitizedId && { id: sanitizedId }),
     first_name: firstName,
-    last_name: lastName || "Inconnu",
-    email: isEmpty(row.email) ? null : row.email.trim().toLowerCase(),
-    phone: isEmpty(row.phone || row.telephone) ? null : (row.phone || row.telephone).trim(),
+    last_name: resolvedLast,
+    email,
+    phone: (() => {
+      const p = cell(row, "phone", "telephone", "Téléphone", "Telephone");
+      return isEmpty(p) ? null : p;
+    })(),
     languages,
-    is_active: isActive,
-    status: isActive ? "active" : "inactive",
-    siret: isEmpty(row.siret) ? null : row.siret.trim(),
-    address: isEmpty(row.address || row.adresse) ? null : (row.address || row.adresse).trim(),
-    status_notes: statusNotes,
+    is_active: statusMapped.is_active,
+    status: statusMapped.status,
+    siret: (() => {
+      const s = cell(row, "siret", "SIRET");
+      return isEmpty(s) ? null : s;
+    })(),
+    address: (() => {
+      const a = cell(row, "address", "adresse", "Adresse");
+      return isEmpty(a) ? null : a;
+    })(),
+    postal_code: (() => {
+      const c = cell(row, "postal_code", "CP", "cp", "code_postal");
+      return isEmpty(c) ? null : c;
+    })(),
+    city: (() => {
+      const c = cell(row, "city", "Ville", "ville");
+      return isEmpty(c) ? null : c;
+    })(),
+    tax_status: taxStatus,
+    specialty_details: (() => {
+      const a = cell(row, "Alias", "alias");
+      return isEmpty(a) ? null : a;
+    })(),
+    status_notes: noteParts.length > 0 ? noteParts.join("\n") : null,
   };
 }
 
