@@ -33,6 +33,19 @@ This is a single-package **Vite + React 18 + TypeScript** SPA (Lovable-generated
   registration form at `/register`** and the student portal login are reachable without
   admin credentials. Note the `/register` confirmation step is currently client-only (it
   does not persist to the DB).
+- The **student portal login** at `/auth?mode=student` offers **magic link only** — there is
+  no password field (`StudentAuthCard`). To sign a student account in with a password, use the
+  admin card at `/auth`: `Auth.tsx` reads the role afterwards and redirects any `student`
+  to `/student/dashboard`.
+- Creating synthetic **test accounts** directly in `auth.users` has two undocumented
+  prerequisites, or sign-in fails with `Database error querying schema` (or HTTP 500):
+  a matching `auth.identities` row is mandatory, and the token columns
+  (`confirmation_token`, `recovery_token`, `email_change*`, `phone_change*`,
+  `reauthentication_token`) must be **empty strings, not `NULL`**. Hash passwords with
+  `crypt(…, gen_salt('bf'))` (pgcrypto is installed).
+- Deleting from `storage.objects` in SQL is blocked by the `storage.protect_delete()` trigger.
+  Use the Storage HTTP API, or wrap the delete in `set local session_replication_role = replica;`
+  then restore `origin`.
 - Don't run `npm run lint` and `npm run build` at the same time: the Vite build writes a
   transient `vite.config.ts.timestamp-*.mjs` file that ESLint may try to read and then fail
   with an `ENOENT` on that temp file. Run them separately.
