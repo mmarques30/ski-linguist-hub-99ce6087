@@ -29,10 +29,11 @@ RGPD, à jusqu'à 2 838 personnes. Le filtre `status = 'active'` protégeait les
 ### 2.1 Envoi — variable d'environnement bloquante
 
 `process-intake-outreach` refuse tout appel tant que
-`OUTREACH_MONITEURS_ENABLED` ne vaut pas exactement `true` (variable absente,
-vide ou toute autre valeur = gelé). Le refus intervient **avant toute lecture de
-la base moniteurs**, et couvre aussi `?dry_run=true` : une simulation renvoyait
-la liste nominative complète des destinataires.
+`OUTREACH_MONITEURS_ENABLED` ne vaut pas exactement `true`. La comparaison est
+stricte : `True`, `TRUE`, `true ` ou toute autre valeur maintiennent le gel — un
+interrupteur de sécurité doit échouer du côté fermé. Le refus intervient **avant
+toute lecture de la base moniteurs**, et couvre aussi `?dry_run=true` : une
+simulation renvoyait la liste nominative complète des destinataires.
 
 Réponse : `HTTP 403`, `{"success": false, "frozen": true, "error": "..."}`.
 
@@ -53,12 +54,13 @@ Logique dans `supabase/functions/_shared/outreach-freeze.ts`, couverte par
 `ski_monitors` et `partners` sont gelées en écriture par trois couches :
 
 1. **Déclencheur `prospection_gelee()`** en `BEFORE INSERT OR UPDATE OR DELETE`
-   sur les deux tables. C'est la seule couche qui s'applique aussi à la clé
-   **service-role** — laquelle contourne la RLS. Toute écriture, y compris depuis
-   une edge function ou un script d'import, lève `P0001`.
+   (par ligne) et en `BEFORE TRUNCATE` (par instruction, car `TRUNCATE` ne
+   déclenche pas les déclencheurs par ligne). C'est la seule couche qui
+   s'applique aussi à la clé **service-role** — laquelle contourne la RLS. Toute
+   écriture, y compris depuis une edge function ou un script d'import, lève `P0001`.
 2. **Politiques RLS** : `rls_*_insert`, `rls_*_update`, `rls_*_delete` supprimées.
    Seule la lecture staff (`rls_*_select`) subsiste.
-3. **Droits** : `REVOKE INSERT, UPDATE, DELETE ... FROM anon, authenticated`.
+3. **Droits** : `REVOKE INSERT, UPDATE, DELETE, TRUNCATE ... FROM anon, authenticated`.
 
 La **lecture reste ouverte au staff** : le gel interdit d'écrire et d'envoyer,
 pas de consulter. Une demande d'accès ou d'effacement RGPD reste traitable, par
@@ -133,11 +135,13 @@ Ce que la réouverture suppose, en plus de la levée technique :
 -- 1. Lever le garde-fou d'écriture
 DROP TRIGGER IF EXISTS gel_prospection_ski_monitors ON public.ski_monitors;
 DROP TRIGGER IF EXISTS gel_prospection_partners ON public.partners;
+DROP TRIGGER IF EXISTS gel_prospection_truncate_ski_monitors ON public.ski_monitors;
+DROP TRIGGER IF EXISTS gel_prospection_truncate_partners ON public.partners;
 DROP FUNCTION IF EXISTS public.prospection_gelee();
 
 -- 2. Rétablir les droits
-GRANT INSERT, UPDATE, DELETE ON public.ski_monitors TO authenticated;
-GRANT INSERT, UPDATE, DELETE ON public.partners TO authenticated;
+GRANT INSERT, UPDATE, DELETE, TRUNCATE ON public.ski_monitors TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE, TRUNCATE ON public.partners TO anon, authenticated;
 
 -- 3. Rétablir les politiques d'écriture
 CREATE POLICY "rls_ski_monitors_insert" ON public.ski_monitors

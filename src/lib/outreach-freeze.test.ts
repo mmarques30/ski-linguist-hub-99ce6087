@@ -23,15 +23,12 @@ describe("gel de la prospection — variable d'environnement bloquante", () => {
     expect(outreachFreezeState(env({ [OUTREACH_ENABLED_ENV]: "" })).frozen).toBe(true);
   });
 
-  it.each(["false", "0", "1", "oui", "yes", "TRUE ", "vrai", "enabled"])(
+  // Un interrupteur de sécurité échoue du côté fermé : la casse et les espaces
+  // ne sont pas tolérés.
+  it.each(["false", "0", "1", "oui", "yes", "vrai", "enabled", "True", "TRUE", "true ", " true"])(
     "gèle quand la variable vaut %o",
     (valeur) => {
-      const state = outreachFreezeState(env({ [OUTREACH_ENABLED_ENV]: valeur }));
-      if (valeur.trim().toLowerCase() === "true") {
-        expect(state.frozen).toBe(false);
-      } else {
-        expect(state.frozen).toBe(true);
-      }
+      expect(outreachFreezeState(env({ [OUTREACH_ENABLED_ENV]: valeur })).frozen).toBe(true);
     }
   );
 

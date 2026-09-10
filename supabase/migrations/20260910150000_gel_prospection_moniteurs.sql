@@ -53,6 +53,18 @@ CREATE TRIGGER gel_prospection_partners
   BEFORE INSERT OR UPDATE OR DELETE ON public.partners
   FOR EACH ROW EXECUTE FUNCTION public.prospection_gelee();
 
+-- TRUNCATE ne déclenche pas les déclencheurs FOR EACH ROW : il lui faut son
+-- propre garde-fou, au niveau instruction.
+DROP TRIGGER IF EXISTS gel_prospection_truncate_ski_monitors ON public.ski_monitors;
+CREATE TRIGGER gel_prospection_truncate_ski_monitors
+  BEFORE TRUNCATE ON public.ski_monitors
+  FOR EACH STATEMENT EXECUTE FUNCTION public.prospection_gelee();
+
+DROP TRIGGER IF EXISTS gel_prospection_truncate_partners ON public.partners;
+CREATE TRIGGER gel_prospection_truncate_partners
+  BEFORE TRUNCATE ON public.partners
+  FOR EACH STATEMENT EXECUTE FUNCTION public.prospection_gelee();
+
 -- ---------------------------------------------------------------------------
 -- 2. Lecture seule au niveau RLS et au niveau des droits
 --
@@ -69,8 +81,10 @@ DROP POLICY IF EXISTS "rls_partners_insert" ON public.partners;
 DROP POLICY IF EXISTS "rls_partners_update" ON public.partners;
 DROP POLICY IF EXISTS "rls_partners_delete" ON public.partners;
 
-REVOKE INSERT, UPDATE, DELETE ON public.ski_monitors FROM anon, authenticated;
-REVOKE INSERT, UPDATE, DELETE ON public.partners FROM anon, authenticated;
+-- TRUNCATE est retiré aussi : il ne déclenche pas les déclencheurs FOR EACH ROW
+-- et passerait donc à travers le garde-fou du point 1.
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON public.ski_monitors FROM anon, authenticated;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON public.partners FROM anon, authenticated;
 
 -- ---------------------------------------------------------------------------
 -- 3. Suppression de tout déclenchement d'envoi

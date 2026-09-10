@@ -3,7 +3,8 @@
  *
  * La prospection est gelée par défaut. `process-intake-outreach` refuse tout appel
  * — y compris en `dry_run` — tant que la variable d'environnement
- * OUTREACH_MONITEURS_ENABLED ne vaut pas exactement « true ».
+ * OUTREACH_MONITEURS_ENABLED ne vaut pas exactement « true » : toute autre valeur,
+ * y compris « True » ou « TRUE », maintient le gel.
  *
  * Deux conditions cumulatives pour rouvrir la prospection :
  *   1. validation écrite de la direction, matérialisée par la pose de la variable
@@ -35,9 +36,13 @@ export interface FreezeState {
   message: string;
 }
 
+/**
+ * Comparaison stricte : toute valeur autre que « true » exactement — casse ou
+ * espace compris — maintient le gel. Un interrupteur de sécurité doit échouer
+ * du côté fermé.
+ */
 export function outreachFreezeState(env: EnvLike): FreezeState {
-  const value = (env.get(OUTREACH_ENABLED_ENV) ?? "").trim().toLowerCase();
-  if (value === "true") {
+  if (env.get(OUTREACH_ENABLED_ENV) === "true") {
     return { frozen: false, message: "" };
   }
   return { frozen: true, message: OUTREACH_FREEZE_MESSAGE };
