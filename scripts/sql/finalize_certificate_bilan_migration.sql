@@ -1,4 +1,8 @@
 -- Ops : finaliser migration certificat bilan (vue + rapport backfill + audit)
+-- Statut 09/09/2026 : APPLIQUÉ en live (Lovable query_database).
+-- Vue inscriptions_complete expose les colonnes bilan ; backfill need_*=0 ;
+-- audit_log point=certificat_bilan / mode=legacy_levels_backfill_and_view (sans PII).
+-- Script conservé pour ré-idempotence / environnement hors prod.
 -- À exécuter avec service-role / Lovable query_database
 
 -- 1) Colonnes (idempotent)

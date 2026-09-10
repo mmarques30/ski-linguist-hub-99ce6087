@@ -16,14 +16,16 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 | Point 2 — exercice fiscal + numérotation | #11 | `d84b056` |
 | Point 3 — formateur·rices (import, candidat, matching) | #11 | `d84b056` |
 
-**SHA `main` au moment du rapport :** `d406a8d` (ce document) ; points 1–4A + certificat fusionnés via #10/#11 (`d84b056`).
+**SHA `main` au moment du rapport :** `1c59712` (merge #13) ; points 1–4A + certificat fusionnés via #10/#11 (`d84b056`).
 
 ### Déploiement app publiée
 
 | Statut | Détail |
 |--------|--------|
-| **Non déployé confirmé** | MCP Lovable `needsAuth` — `deploy_project` impossible depuis cet agent |
-| Conséquence | Points 1–4A + certificat = **sur main non déployé** (pas encore « livré » au sens Paula) |
+| **Livré (main + déployé)** | Lovable `deploy_project` sur `34e71e1a-49f7-433e-bb36-fc4d26e86f8e` — **https://ski-linguist-hub.lovable.app** (HTTP 200, `x-deployment-id` `57a31204-49e7-4bee-8c1a-4f90ab80e18a`) |
+| Lovable commit publié | `1c597124` (= `main` post-#13) |
+| Points 1–4A + certificat | **livré** (code sur `main` + app publiée) |
+| Migration certificat DB | **appliquée live** — vue `inscriptions_complete` recréée avec colonnes bilan ; backfill déjà fait (435 `niveau_general_entree`) ; entrée `audit_log` `certificat_bilan` sans PII |
 
 ### Branches non fusionnées (reste)
 
@@ -43,11 +45,13 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 | Champ | Valeur |
 |-------|--------|
 | Dépôt | `mmarques30/ski-linguist-hub-99ce6087` |
-| Branche de référence | `main` @ `d84b056` |
+| Branche de référence | `main` @ `1c59712` |
 | App | SPA Vite + React 18 + TypeScript « FLI Formation » (Lovable) |
+| Projet Lovable | `34e71e1a-49f7-433e-bb36-fc4d26e86f8e` (Ski School Connect / ski-linguist-hub) |
 | Backend | Supabase hébergé `nghkrmvakjomzmfwdhbo` — `https://nghkrmvakjomzmfwdhbo.supabase.co` |
-| App publiée (URL) | **Inconnue / non confirmée** (publish Lovable non exécuté ce jour) |
-| Dernier déploiement | **Non confirmé** (bloqué auth MCP) |
+| App publiée (URL) | **https://ski-linguist-hub.lovable.app** |
+| Preview Lovable | https://id-preview--34e71e1a-49f7-433e-bb36-fc4d26e86f8e.lovable.app |
+| Dernier déploiement | **09/09/2026** via Lovable MCP `deploy_project` |
 | Package manager | npm (`package-lock.json` ; bun.lock aussi présent) |
 
 ---
@@ -152,20 +156,47 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 
 ## 4. Modèle de données
 
-**Source colonnes :** `src/integrations/supabase/types.ts` (52 tables).  
-**DDL complet :** livrable 3 `/opt/cursor/artifacts/ETAT_APP_2026-09_schema.sql` (concat migrations).  
-**Comptes de lignes :** **non disponibles** ce jour (MCP Lovable déauth + pas de service-role). TSV colonnes : `ETAT_APP_2026-09_tables_types.tsv`.
+**Source colonnes live :** Lovable `query_database` / `information_schema` (**53 tables** + 2 vues).  
+**DDL live :** `/opt/cursor/artifacts/ETAT_APP_2026-09_live_schema.sql` (+ dump enrichi `ETAT_APP_2026-09_schema.sql`, `columns.json`, `policies.json`).  
+**Comptes de lignes :** `COUNT(*)` snapshot **09/09/2026** (sans PII) — `/opt/cursor/artifacts/ETAT_APP_2026-09_row_counts.tsv` ; meta : `ETAT_APP_2026-09_live_meta.json`.  
+**Référence repo :** `src/integrations/supabase/types.ts`.
 
-### Tables (nom · n colonnes typées)
+### Comptes de lignes (live, highlights)
 
-`accommodations` 6 · `app_settings` 6 · `audit_log` 9 · `availability_requests` 11 · `certificates` 11 · `continuous_improvement` 11 · `cost_templates` 6 · `course_intakes` 16 · `document_sendings` 8 · `email_log` 10 · `email_templates` 12 · `fixed_costs` 9 · `formation_costs` 12 · `funding_documents` 6 · `funding_requests` 19 · `inscriptions` 78 · `instructor_availabilities` 10 · `instructor_contracts` 18 · `instructor_payments` 12 · `instructor_sessions` 11 · `intake_outreach_log` 8 · `invoices` 24 · `leads` 20 · `notifications` 8 · `partner_contacts` 8 · `partner_contracts` 11 · `partners` 15 · `payment_reminders` 9 · `payments` 22 · `placement_test_questions` 11 · `placement_tests` 12 · `pricing_rules` 12 · `profiles` 6 · `prospects` 13 · `qualiopi_indicators` 14 · `registration_offerings` 17 · `satisfaction_surveys` 18 · `scheduled_reminders` 8 · `schools_invoice_policy` 5 · `seasons` 11 · `session_enrollments` 7 · `sessions` 18 · `ski_monitors` 12 · `ski_schools` 9 · `students` 13 · `test_bookings` 14 · `test_candidates` 12 · `test_criteria` 8 · `test_evaluations` 29 · `test_phrases` 13 · `user_permissions` 6 · `user_roles` 3
+| Table / vue | Lignes |
+|-------------|--------|
+| `ski_monitors` | 4047 |
+| `audit_log` | 5194 |
+| `partners` | 1032 |
+| `inscriptions` / `inscriptions_complete` | 906 |
+| `students` | 667 |
+| `placement_tests` | 596 |
+| `partner_contacts` | 209 |
+| `instructors` | 71 |
+| `registration_offerings` | 52 |
+| `user_permissions` | 14 |
+| `user_roles` / `profiles` | 3 |
+| Tables vides (ex.) | `invoices`, `sessions`, `certificates`, `test_bookings` → 0 |
+
+### Tables (nom · n colonnes live / lignes)
+
+`accommodations` 6/0 · `app_settings` 6/1 · `audit_log` 9/5194 · `availability_requests` 11/0 · `certificates` 11/0 · `continuous_improvement` 11/0 · `cost_templates` 6/0 · `course_intakes` 16/0 · `document_sendings` 8/0 · `email_log` 10/0 · `email_templates` 12/1 · `fixed_costs` 9/0 · `formation_costs` 12/0 · `funding_documents` 6/0 · `funding_requests` 19/0 · `inscriptions` 79/906 · `instructor_availabilities` 10/0 · `instructor_contracts` 18/0 · `instructor_payments` 12/0 · `instructor_sessions` 11/0 · `instructors` 36/71 · `intake_outreach_log` 8/0 · `invoices` 24/0 · `leads` 20/0 · `notifications` 8/0 · `partner_contacts` 8/209 · `partner_contracts` 11/0 · `partners` 15/1032 · `payment_reminders` 9/0 · `payments` 22/1 · `placement_test_questions` 11/0 · `placement_tests` 12/596 · `pricing_rules` 12/0 · `profiles` 6/3 · `prospects` 13/0 · `qualiopi_indicators` 14/1 · `registration_offerings` 17/52 · `satisfaction_surveys` 18/0 · `scheduled_reminders` 8/0 · `schools_invoice_policy` 5/0 · `seasons` 11/1 · `session_enrollments` 7/0 · `sessions` 18/0 · `ski_monitors` 12/4047 · `ski_schools` 9/15 · `students` 13/667 · `test_bookings` 14/0 · `test_candidates` 12/0 · `test_criteria` 8/0 · `test_evaluations` 29/0 · `test_phrases` 13/0 · `user_permissions` 6/14 · `user_roles` 3/3
 
 ### Vues
-- `inscriptions_complete` — jointure stagiaire / formateur / école (**migration certificat à réappliquer pour colonnes bilan**)
-- `test_bookings_complete`
+- `inscriptions_complete` (906) — jointure stagiaire / formateur / école + **colonnes bilan** (`niveau_*_entree/sortie`, `objectif_atteint`, `commentaire_sortie`, horodatages formulaires, champs formateur texte) — **OK en live**
+- `test_bookings_complete` (0)
 
-### RPC / fonctions SQL (signatures utiles)
-`activate_season` · `generate_inscription_code` · `get_fiscal_year(date)` · `get_instructor_contract_by_signature_token` · `get_my_student_id` · `get_satisfaction_survey_context` · `get_user_role` · `has_role` · `is_admin` · `is_staff` · `is_student` · `sign_instructor_contract_by_token` · `submit_satisfaction_survey_by_token`
+### Bilan certificat (agrégats live uniquement)
+| Mesure | Valeur |
+|--------|--------|
+| Backfill legacy → bilan | **fait** (`need_*_backfill` = 0) |
+| `niveau_general_entree` renseigné | 435 / 906 |
+| `niveau_technique_sortie` renseigné | 13 / 906 |
+| Audit | `point=certificat_bilan`, `mode=legacy_levels_backfill_and_view`, `rows_updated=0` — **sans noms personnels** |
+| Qualiopi PROC-026 | seed présent (`status=en_cours`) |
+
+### RPC / fonctions SQL (signatures utiles live)
+`activate_season` · `audit_trigger_func` · `before_invoice_insert` · `check_invoice_payment_status` · `generate_contract_number` · `generate_inscription_code` · `get_fiscal_year(date)` · `get_instructor_contract_by_signature_token` · `get_my_student_id` · `get_satisfaction_survey_context` · `get_user_role` · `handle_new_user` · `has_role` · `is_admin` · `is_staff` · `is_student` · `match_candidate_to_student` · `on_funding_status_change` · `set_inscription_code` · `sign_instructor_contract_by_token` · `submit_satisfaction_survey_by_token` · `update_test_phrases_updated_at` · `update_updated_at_column` · `validate_inscription_status_transition`
 
 ### RLS
 Activée sur les tables métier (migrations 20260406 / 20260412 / 20260731). Politiques staff via `is_staff()` / admin via `is_admin()` / stagiaire via `is_student()` + `get_my_student_id()`.
@@ -233,7 +264,7 @@ Déclarés dans migrations (`pg_cron` + `pg_net` vers edge) :
 | Formateur·rices | CRUD, candidat, import 69, matching | UI candidat→actif (BL-014) ; rattachement ligne à ligne | Portail formateur bilan (admin only) |
 | Placement | Test adaptatif pistes, admin CECRL | — | — |
 | Évaluations SNMSF | Formulaire + PDF + phrases | Prix test non unifié | — |
-| Certificats | Bilan Entrée/Sortie, garde sortie, PDF | Vue `inscriptions_complete` à finaliser ; PDF storage policies | Lien email formateur |
+| Certificats | Bilan Entrée/Sortie, garde sortie, PDF, vue live OK | PDF storage policies (reste BL-020 partiel) | Lien email formateur |
 | Facturation | CRUD, TVA, numérotation fiscale | Import historique point 9 | — |
 | Paiements | Stripe + chèques/virements | — | — |
 | Finance | Dashboards, rentabilité, charges | — | — |
@@ -276,7 +307,7 @@ Fichiers clés : `src/pages/**`, `src/hooks/**`, `src/lib/**`, `supabase/functio
 | `npm run build` | **OK** |
 | `npm run lint` | **FAIL** — 102 errors / 16 warnings (surtout `@typescript-eslint/no-explicit-any`) — préexistant (AGENTS.md) |
 | Dépendances majeures | React 18.3 · Vite 5.4 · Supabase-js 2.90 · TanStack Query 5.83 · Vitest 4.1 · jspdf 4 · Tailwind 3.4 |
-| Dette | Voir §11 + BL-* ; `/documents` maquette ; Settings partiel ; vue certificat incomplete en live |
+| Dette | Voir §11 + BL-* ; `/documents` maquette ; Settings partiel ; policies storage certificats |
 
 ---
 
@@ -284,15 +315,15 @@ Fichiers clés : `src/pages/**`, `src/hooks/**`, `src/lib/**`, `supabase/functio
 
 Intégré depuis `docs/BACKLOG.md` :
 
-**Ouvert :** BL-001, 002, 006, 007, 008, 009, 010, 011, 014, 015, 017, 019, 020.
+**Ouvert :** BL-001, 002, 006, 007, 008, 009, 010, 011, 014, 015, 017, 019, 020 (reste policies storage).
 
 | Point | État |
 |-------|------|
-| 1 Import sécurisé | **Sur main non déployé** |
-| 2 Fiscal | **Sur main non déployé** |
-| 3 Formateurs | **Sur main non déployé** |
-| 4A Pistes | **Sur main non déployé** |
-| Certificat bilan | **Sur main non déployé** |
+| 1 Import sécurisé | **Livré** (main + déployé) |
+| 2 Fiscal | **Livré** |
+| 3 Formateurs | **Livré** |
+| 4A Pistes | **Livré** |
+| Certificat bilan | **Livré** (vue + colonnes + backfill live OK) |
 | 5 Outreach | Non démarré |
 | 6 Stripe docs | Non démarré |
 | 7 Phrases | Non démarré |
@@ -312,7 +343,7 @@ Intégré depuis `docs/BACKLOG.md` :
 | Dépôt | GitHub privé/équipe (accès agent limité en écriture PR) |
 | Exposition | Anon key dans `.env` commitée (normal Supabase) ; service-role **ne doit pas** être front |
 | Signups | Désactivés ; users via `create-user` |
-| Incidents connus | Crons `pg_net` (BL-007) ; vue certificat partielle ; MCP Lovable auth coupée le 09/09 |
+| Incidents connus | Crons `pg_net` (BL-007) ; MCP Lovable rétabli le 09/09 (counts + deploy OK) |
 
 ---
 
@@ -321,7 +352,14 @@ Intégré depuis `docs/BACKLOG.md` :
 | Fichier | Contenu |
 |---------|---------|
 | `/opt/cursor/artifacts/ETAT_APP_2026-09_code.txt` | Bundle source concaténé — **374 fichiers**, **≈ 2,27 Mo** (sous 3 Mo, **1 partie**) |
-| `/opt/cursor/artifacts/ETAT_APP_2026-09_schema.sql` | DDL via concat migrations — **≈ 215 Ko**, 49 migrations |
+| `/opt/cursor/artifacts/ETAT_APP_2026-09_schema.sql` | DDL live enrichi (pg_catalog via Lovable) — sans PII |
+| `/opt/cursor/artifacts/ETAT_APP_2026-09_live_schema.sql` | DDL live (`information_schema` + `pg_get_viewdef`) — sans données |
+| `/opt/cursor/artifacts/ETAT_APP_2026-09_columns.json` | Colonnes live (catalog) |
+| `/opt/cursor/artifacts/ETAT_APP_2026-09_policies.json` | Policies RLS live |
+| `/opt/cursor/artifacts/ETAT_APP_2026-09_row_counts.tsv` | COUNT(*) tables + vues (pas de PII) |
+| `/opt/cursor/artifacts/ETAT_APP_2026-09_live_meta.json` | Meta deploy + agrégats bilan |
+| `/opt/cursor/artifacts/ETAT_APP_2026-09_deploy.txt` | Trace `deploy_project` + URL |
+| `/opt/cursor/artifacts/etat_deploy_verify.log` | Headers HTTP publiés |
 | `/opt/cursor/artifacts/ETAT_APP_2026-09_tables_types.tsv` | Colonnes/types depuis `types.ts` |
 | `/opt/cursor/artifacts/etat_vitest.log` / `etat_lint.log` | Sorties brutes qualité |
 
@@ -329,4 +367,4 @@ Exclusions bundle : `node_modules`, `dist`, `.env`, images/binaires, CSV/JSON de
 
 ---
 
-*Fin du rapport d’état — 09/09/2026.*
+*Fin du rapport d’état — 09/09/2026 (rafraîchi : counts live + déploiement).*

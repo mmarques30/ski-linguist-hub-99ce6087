@@ -2,7 +2,7 @@
 
 Règle : noter ici, **ne pas corriger** tant que le point courant n’est pas validé.
 
-Dernière mise à jour : 2026-09-09 (rapport d’état + fusion points validés).
+Dernière mise à jour : 2026-09-09 (deploy live + counts Lovable).
 
 ## Ouvert
 
@@ -20,7 +20,7 @@ Dernière mise à jour : 2026-09-09 (rapport d’état + fusion points validés)
 | BL-015 | Backfill formateur CSV (si restes) | Avant rattachement |
 | BL-017 | Imports massifs hors UI | Avant point 9 |
 | BL-019 | J-10 horaires FLI exacts + pas de code depuis horaires | Point 10 |
-| BL-020 | Vue `inscriptions_complete` + policies storage certificats | Ops |
+| BL-020 | Policies storage certificats (vue `inscriptions_complete` OK live) | Ops |
 
 ## Clos / remplacé
 
@@ -36,9 +36,9 @@ Dernière mise à jour : 2026-09-09 (rapport d’état + fusion points validés)
 
 | Point | Statut livré (= main + déployé) |
 |-------|----------------------------------|
-| 1 — Import sécurisé | Voir en-tête `ETAT_APP_2026-09.md` |
-| 2 — Fiscal | idem |
-| 3 — Formateurs | idem |
-| 4A — Pistes | Sur main (PR #10) |
-| Certificat bilan | Sur main (PR #10) |
+| 1 — Import sécurisé | **Livré** — `https://ski-linguist-hub.lovable.app` |
+| 2 — Fiscal | **Livré** |
+| 3 — Formateurs | **Livré** |
+| 4A — Pistes | **Livré** |
+| Certificat bilan | **Livré** (vue + backfill live OK) |
 | 5–10 | Non démarrés |
