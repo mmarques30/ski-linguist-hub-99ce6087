@@ -76,6 +76,27 @@ Lecture en tant que compte stagiaire A (`request.jwt.claims.sub` + `role authent
 Compte stagiaire B : ne voit que sa propre évaluation.
 Compte staff : 3 évaluations, 3 réservations, 3 candidats, 2 objets de certificat.
 
+### Vérification après déploiement (2026-09-10, commit `e0f90ab7`)
+
+Contrôle refait sur <https://ski-linguist-hub.lovable.app> avec des comptes réels
+(mot de passe bcrypt, connexion par l'API auth), supprimés après contrôle :
+
+| Acteur | Opération | Résultat |
+|--------|-----------|----------|
+| anonyme | `GET /object/public/certificates/…` | `400 NoSuchBucket` — les URL publiques historiques sont mortes |
+| staff | dépôt d'un PDF de certificat | `200` |
+| stagiaire A | dépôt dans son propre dossier | `403`, violation de politique RLS |
+| stagiaire A | `POST /object/sign/…` sur **son** certificat | `200` + `signedURL` |
+| stagiaire A | téléchargement par l'URL signée | `200`, PDF identique à l'original |
+| stagiaire A | `POST /object/sign/…` sur le certificat de **B** | refus `NoSuchKey` |
+| anonyme | `POST /object/sign/…` | refus `NoSuchKey` |
+
+Le même parcours a été rejoué depuis le portail stagiaire : `/student/documents`,
+bouton « Télécharger », ouverture de l'URL signée
+`/storage/v1/object/sign/certificates/<student_id>/…?token=…` et affichage du PDF.
+Le refus sur le certificat d'un autre stagiaire ne révèle pas l'existence du fichier :
+la politique le masque, donc l'API de signature ne le trouve pas.
+
 ## 5. Retour arrière (down)
 
 ```sql

@@ -120,6 +120,19 @@ Contrôles négatifs en écriture :
 
 Le stagiaire ne dépose pas lui-même : le dépôt est réservé au staff et à l'edge function.
 
+### Contrôle au niveau HTTP (API Storage réelle, et non plus seulement la RLS en SQL)
+
+| Requête | Réponse |
+|---------|---------|
+| `GET /storage/v1/object/public/documents/…` | `400` `{"statusCode":"404","error":"Bucket not found","code":"NoSuchBucket"}` |
+| `GET /storage/v1/object/public/funding-documents/…` | idem |
+| `GET /storage/v1/object/public/certificates/…` | idem |
+| `POST /storage/v1/object/list/documents` (clé anon) | `[]` |
+| `POST /storage/v1/object/documents/<fichier>` (clé anon) | `400` `{"statusCode":"403","message":"new row violates row-level security policy"}` |
+
+Le point de terminaison « public » ne connaît plus ces buckets : toute URL publique
+diffusée par le passé est inopérante, et le dépôt anonyme est refusé par la RLS.
+
 Nettoyage vérifié : 0 objet, 0 compte et 0 stagiaire `ZZDOC` restants,
 `students` revenu à 669 lignes.
 
