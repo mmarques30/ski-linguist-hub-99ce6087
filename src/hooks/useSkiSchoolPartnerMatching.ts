@@ -7,6 +7,7 @@ import {
   buildPartnerPayloadFromSchool,
   suggestSchoolPartnerMatches,
 } from "@/lib/ski-school-partner-match";
+import { assertProspectionNonGelee } from "@/lib/prospection-gel";
 
 export function useSkiSchoolPartnerMatching() {
   const qc = useQueryClient();
@@ -71,6 +72,7 @@ export function useSkiSchoolPartnerMatching() {
 
   const createAndLink = useMutation({
     mutationFn: async (preview: SkiSchoolMatchPreview) => {
+      assertProspectionNonGelee();
       const payload = buildPartnerPayloadFromSchool(preview.school, preview.school_kind, preview.station);
       const { data: partner, error: partnerError } = await supabase
         .from("partners")
@@ -100,6 +102,7 @@ export function useSkiSchoolPartnerMatching() {
 
   const runAutoMatching = useMutation({
     mutationFn: async () => {
+      assertProspectionNonGelee();
       if (!schoolsQuery.data || !partnersQuery.data) return { linked: 0, created: 0, skipped: 0 };
 
       let linked = 0;
