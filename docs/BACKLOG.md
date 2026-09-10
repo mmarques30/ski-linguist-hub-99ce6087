@@ -2,7 +2,7 @@
 
 Règle : noter ici, **ne pas corriger** tant que le point courant n’est pas validé.
 
-Dernière mise à jour : 2026-09-09 (deploy live + counts Lovable).
+Dernière mise à jour : 2026-09-10 (point A — RLS test_evaluations + bucket certificats privé).
 
 ## Ouvert
 
@@ -21,6 +21,7 @@ Dernière mise à jour : 2026-09-09 (deploy live + counts Lovable).
 | BL-017 | Imports massifs hors UI | Avant point 9 |
 | BL-019 | J-10 horaires FLI exacts + pas de code depuis horaires | Point 10 |
 | BL-020 | Policies storage certificats (vue `inscriptions_complete` OK live) | Ops |
+| BL-021 | Bucket `documents` public en lecture **et** en dépôt (`Anyone can view/upload documents`) — porte les pièces d'inscription | Sécurité, hors point A |
 
 ## Clos / remplacé
 

@@ -9,6 +9,10 @@ import {
   type ObjectifAtteint,
 } from "@/lib/certificate-progression";
 import { buildCertificatePdfBlob } from "@/lib/certificate-pdf";
+import {
+  CERTIFICATE_BUCKET,
+  buildCertificatePath,
+} from "@/lib/certificateStorage";
 
 interface EndPackData {
   inscriptionId: string;
@@ -44,22 +48,29 @@ interface EndPackResult {
   certificateSkippedReason?: string;
 }
 
+/**
+ * Dépose le PDF dans le bucket privé et renvoie son chemin de stockage.
+ * Le premier segment doit être le student_id : la politique de lecture du
+ * stagiaire s'appuie dessus.
+ */
 async function uploadCertificatePdf(
+  studentId: string,
   inscriptionId: string,
   certificateId: string,
   blob: Blob
 ): Promise<string | null> {
-  const path = `certificates/${inscriptionId}/${certificateId}.pdf`;
-  const { error } = await supabase.storage.from("documents").upload(path, blob, {
-    contentType: "application/pdf",
-    upsert: true,
-  });
+  const path = buildCertificatePath(studentId, inscriptionId, certificateId);
+  const { error } = await supabase.storage
+    .from(CERTIFICATE_BUCKET)
+    .upload(path, blob, {
+      contentType: "application/pdf",
+      upsert: true,
+    });
   if (error) {
     console.error("Certificate PDF upload failed:", error);
     return null;
   }
-  const { data } = supabase.storage.from("documents").getPublicUrl(path);
-  return data.publicUrl;
+  return path;
 }
 
 export function useGenerateEndPack() {
@@ -191,22 +202,23 @@ export function useGenerateEndPack() {
 
           const pdfBlob =
             data.certificatePdfBlob || buildCertificatePdfBlob(bilan);
-          const publicUrl = await uploadCertificatePdf(
+          const storagePath = await uploadCertificatePdf(
+            data.studentId,
             data.inscriptionId,
             certificate.id,
             pdfBlob
           );
-          if (publicUrl) {
+          if (storagePath) {
             await supabase
               .from("certificates")
-              .update({ pdf_url: publicUrl })
+              .update({ pdf_url: storagePath })
               .eq("id", certificate.id);
 
             await supabase.from("document_sendings").insert({
               inscription_id: data.inscriptionId,
               document_type: "CERTIFICAT",
               sent_to: "portail-stagiaire",
-              pdf_url: publicUrl,
+              pdf_url: storagePath,
             } as never);
           }
         } else {

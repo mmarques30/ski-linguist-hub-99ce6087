@@ -1,8 +1,8 @@
 import { StudentLayout } from "@/components/layout/StudentLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { FileText, Download, Award } from "lucide-react";
+import { FileText, Award } from "lucide-react";
+import { CertificatePdfButton } from "@/components/certificates/CertificatePdfButton";
 import {
   useStudentProfile,
   useStudentDocuments,
@@ -66,16 +66,7 @@ export default function StudentDocuments() {
                         </p>
                       </div>
                       {c.pdf_url && (
-                        <Button size="sm" variant="outline" asChild>
-                          <a
-                            href={c.pdf_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <Download className="h-3.5 w-3.5 mr-1" />
-                            Télécharger
-                          </a>
-                        </Button>
+                        <CertificatePdfButton pathOrUrl={c.pdf_url} />
                       )}
                     </div>
                   ))}
@@ -116,16 +107,10 @@ export default function StudentDocuments() {
                             </Badge>
                           )}
                           {d.pdf_url && (
-                            <Button size="sm" variant="outline" asChild>
-                              <a
-                                href={d.pdf_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                <Download className="h-3.5 w-3.5 mr-1" />
-                                PDF
-                              </a>
-                            </Button>
+                            <CertificatePdfButton
+                              pathOrUrl={d.pdf_url}
+                              label="PDF"
+                            />
                           )}
                         </div>
                       </div>

@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Download, ExternalLink, FileText, Loader2, Mail, AlertTriangle } from "lucide-react";
+import { ExternalLink, FileText, Loader2, Mail, AlertTriangle } from "lucide-react";
+import { CertificatePdfButton } from "@/components/certificates/CertificatePdfButton";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useInscriptionDocuments } from "@/hooks/useInscriptionDocuments";
 import {
@@ -152,12 +153,7 @@ export function InscriptionDocumentsCard({
                     </p>
                   </div>
                   {doc.pdf_url && (
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={doc.pdf_url} target="_blank" rel="noreferrer">
-                        <Download className="mr-2 h-4 w-4" />
-                        Télécharger
-                      </a>
-                    </Button>
+                    <CertificatePdfButton pathOrUrl={doc.pdf_url} />
                   )}
                 </div>
               ))}
