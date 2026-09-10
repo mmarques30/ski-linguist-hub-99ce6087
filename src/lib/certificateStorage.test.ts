@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CERTIFICATE_BUCKET,
+  DOCUMENTS_BUCKET,
   buildCertificatePath,
   isLegacyPublicUrl,
 } from "./certificateStorage";
@@ -8,6 +9,7 @@ import {
 describe("certificateStorage", () => {
   it("cible le bucket privé", () => {
     expect(CERTIFICATE_BUCKET).toBe("certificates");
+    expect(DOCUMENTS_BUCKET).toBe("documents");
   });
 
   it("place le student_id en premier segment (clé de la politique de lecture)", () => {

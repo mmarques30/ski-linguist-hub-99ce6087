@@ -10,12 +10,13 @@ import {
 } from "@/lib/certificateStorage";
 
 async function getCertificateDownloadUrl(
-  pathOrUrl: string
+  pathOrUrl: string,
+  bucket: string
 ): Promise<string | null> {
   if (isLegacyPublicUrl(pathOrUrl)) return pathOrUrl;
 
   const { data, error } = await supabase.storage
-    .from(CERTIFICATE_BUCKET)
+    .from(bucket)
     .createSignedUrl(pathOrUrl, CERTIFICATE_SIGNED_URL_TTL_SECONDS);
 
   if (error) {
@@ -29,17 +30,19 @@ interface CertificatePdfButtonProps {
   /** Chemin dans le bucket privé, ou URL publique historique. */
   pathOrUrl: string;
   label?: string;
+  bucket?: string;
 }
 
 export function CertificatePdfButton({
   pathOrUrl,
   label = "Télécharger",
+  bucket = CERTIFICATE_BUCKET,
 }: CertificatePdfButtonProps) {
   const [loading, setLoading] = useState(false);
 
   const handleClick = async () => {
     setLoading(true);
-    const url = await getCertificateDownloadUrl(pathOrUrl);
+    const url = await getCertificateDownloadUrl(pathOrUrl, bucket);
     setLoading(false);
 
     if (!url) {

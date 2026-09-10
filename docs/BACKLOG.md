@@ -2,7 +2,7 @@
 
 Règle : noter ici, **ne pas corriger** tant que le point courant n’est pas validé.
 
-Dernière mise à jour : 2026-09-10 (point A — RLS test_evaluations + bucket certificats privé).
+Dernière mise à jour : 2026-09-10 (point A2 — buckets `documents` et `funding-documents` privés).
 
 ## Ouvert
 
@@ -21,7 +21,7 @@ Dernière mise à jour : 2026-09-10 (point A — RLS test_evaluations + bucket c
 | BL-017 | Imports massifs hors UI | Avant point 9 |
 | BL-019 | J-10 horaires FLI exacts + pas de code depuis horaires | Point 10 |
 | BL-020 | Policies storage certificats (vue `inscriptions_complete` OK live) | Ops |
-| BL-021 | Bucket `documents` public en lecture **et** en dépôt (`Anyone can view/upload documents`) — porte les pièces d'inscription | Sécurité, hors point A |
+| BL-022 | `instructors.cv_url` : 16 liens `drive.google.com`, hors Supabase Storage — rapatriement à cadrer | Faible |
 
 ## Clos / remplacé
 
@@ -32,6 +32,7 @@ Dernière mise à jour : 2026-09-10 (point A — RLS test_evaluations + bucket c
 | BL-005 | CECRL hors UI stagiaire (pistes) — point 4 |
 | BL-013 | Statut `candidat` |
 | BL-018 | Mapping certificat→piste remplacé par bilan Entrée/Sortie |
+| BL-021 | Bucket `documents` privé — point A2, `docs/SECURITE_A2_BUCKET_DOCUMENTS.md` |
 
 ## Validations points
 
