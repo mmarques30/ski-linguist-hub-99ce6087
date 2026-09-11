@@ -2,7 +2,7 @@
 
 Règle : noter ici, **ne pas corriger** tant que le point courant n’est pas validé.
 
-Dernière mise à jour : 2026-09-11 (gel + RGPD sur main ; 8-minimal emails, attente clé Resend).
+Dernière mise à jour : 2026-09-11 (C.1 fusionné main ; fonctions Edge gel/emails à déployer).
 
 ## Ouvert
 
@@ -45,6 +45,9 @@ Dernière mise à jour : 2026-09-11 (gel + RGPD sur main ; 8-minimal emails, att
 | Certificat bilan | **Livré** (vue + backfill live OK) |
 | A — `test_evaluations` + certificats | **Livré** — `docs/SECURITE_A_TEST_EVALUATIONS.md` |
 | A2 — buckets privés | **Livré** — `docs/SECURITE_A2_BUCKET_DOCUMENTS.md` |
-| 5 — Gel prospection moniteurs | Fusionné main (PR #18) — `docs/GEL_PROSPECTION_MONITEURS.md` |
-| 8-minimal emails | Préparé, attente `RESEND_API_KEY` |
-| 6, 7, 9, 10 | Non démarrés |
+| 5 — Gel prospection moniteurs | Fusionné main (PR #18) — `docs/GEL_PROSPECTION_MONITEURS.md` ; fonction Edge à déployer |
+| 8-minimal emails | Fusionné main (PR #20) — attente `RESEND_API_KEY` + déploiement `send-test-email` — `docs/EMAILS_8_MINIMAL.md` |
+| Kit ZZTEST | Fusionné main (PR #21) |
+| C.1 — rôle formateur | Fusionné main (PR #22) — front SHA `9a14475` — `docs/POINT_C1_ROLE_FORMATEUR.md` |
+| C.2–C.6 | Non démarrés (attente validation écrite C.1) |
+| 6, 7, 9, 10 | Non démarrés. Confirmation email (lieu, modalité, piste, paiement) : texte au point 8 complet |
