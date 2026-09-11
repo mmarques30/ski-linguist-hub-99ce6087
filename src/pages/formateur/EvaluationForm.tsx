@@ -263,6 +263,28 @@ export default function EvaluationForm() {
 
   const isLoading = bookingLoading || evalLoading;
   const isSaving = createMutation.isPending || updateMutation.isPending;
+  const draftDisabled =
+    isSaving || !adjustmentOk || (methodoRequired && !noteMethodologique.trim());
+  const actionButtons = (
+    <div className="flex flex-wrap gap-4 bg-background p-4 border rounded-lg shadow-sm">
+      <Button
+        variant="outline"
+        onClick={() => handleSave(false)}
+        disabled={draftDisabled}
+      >
+        <Save className="h-4 w-4 mr-2" />
+        Enregistrer brouillon
+      </Button>
+      <Button
+        onClick={() => handleSave(true)}
+        disabled={isSaving || !canSubmit}
+        className="flex-1"
+      >
+        <CheckCircle2 className="h-4 w-4 mr-2" />
+        Soumettre pour vérification
+      </Button>
+    </div>
+  );
   const alreadySubmitted =
     existingEvaluation &&
     existingEvaluation.status !== "brouillon" &&
@@ -301,7 +323,14 @@ export default function EvaluationForm() {
           <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold mb-2">Évaluation déjà soumise</h2>
           <p className="text-muted-foreground mb-4">
-            Statut : {existingEvaluation.status}. Score général : {existingEvaluation.score_general}
+            Statut :{" "}
+            {{
+              brouillon: "Brouillon",
+              a_verifier: "À vérifier",
+              valide: "Validée",
+              envoye: "Envoyée",
+            }[existingEvaluation.status] ?? existingEvaluation.status}
+            . Score général : {existingEvaluation.score_general}
           </p>
           <Button variant="outline" onClick={() => navigate("/formateur/evaluations")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -374,7 +403,7 @@ export default function EvaluationForm() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6 pb-28">
+          <div className="lg:col-span-2 space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>1. Cinq notes (sur 5)</CardTitle>
@@ -445,6 +474,8 @@ export default function EvaluationForm() {
               </CardContent>
             </Card>
 
+            {actionButtons}
+
             {BLOC_CATEGORIES.map((category) => (
               <PhraseSelector
                 key={category}
@@ -459,24 +490,7 @@ export default function EvaluationForm() {
               />
             ))}
 
-            <div className="flex gap-4 sticky bottom-4 bg-background p-4 border rounded-lg shadow-lg">
-              <Button
-                variant="outline"
-                onClick={() => handleSave(false)}
-                disabled={isSaving || !adjustmentOk || (methodoRequired && !noteMethodologique.trim())}
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Enregistrer brouillon
-              </Button>
-              <Button
-                onClick={() => handleSave(true)}
-                disabled={isSaving || !canSubmit}
-                className="flex-1"
-              >
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-                Soumettre pour vérification
-              </Button>
-            </div>
+            {actionButtons}
           </div>
 
           <div className="hidden lg:block">

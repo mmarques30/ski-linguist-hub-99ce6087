@@ -27,6 +27,10 @@ import {
 } from "lucide-react";
 import { useTestBookingsToEvaluate } from "@/hooks/useTestEvaluations";
 import { LANGUAGE_FLAGS, LANGUAGE_LABELS } from "@/lib/evaluation-utils";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { SurveyQRCodeDialog } from "@/components/survey/SurveyQRCodeDialog";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 
 const EVAL_STATUS_LABEL: Record<string, string> = {
   brouillon: "Brouillon",
@@ -34,10 +38,6 @@ const EVAL_STATUS_LABEL: Record<string, string> = {
   valide: "Validée",
   envoye: "Envoyée",
 };
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-import { SurveyQRCodeDialog } from "@/components/survey/SurveyQRCodeDialog";
-import { useUserPermissions } from "@/hooks/useUserPermissions";
 
 export default function EvaluationsList() {
   const navigate = useNavigate();
