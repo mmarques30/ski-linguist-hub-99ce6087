@@ -2,9 +2,9 @@
 
 Migrations :
 
-- `supabase/migrations/20260911100000_app_role_formateur.sql` (enum, transaction isolée)
-- `supabase/migrations/20260911101000_role_formateur_rls.sql`
-- `supabase/migrations/20260911102000_j10_subject_fr.sql` (sujet J-10 FR, indépendant)
+- `supabase/migrations/20260911110000_app_role_formateur.sql` (enum, transaction isolée)
+- `supabase/migrations/20260911111000_role_formateur_rls.sql`
+- `supabase/migrations/20260911112000_j10_subject_fr.sql` (sujet J-10 FR, indépendant)
 
 Journal : `audit_log.action = 'c1_role_formateur_rls'` (aucune donnée personnelle)
 

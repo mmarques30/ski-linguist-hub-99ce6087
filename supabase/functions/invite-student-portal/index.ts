@@ -1,29 +1,8 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { adminCorsHeaders, requireAdmin } from "../_shared/admin-auth.ts";
+import { applyEmailTemplate, sendFliEmail } from "../_shared/fli-email.ts";
 
 const APP_URL = Deno.env.get("APP_URL") || "https://ski-linguist-hub.lovable.app";
-
-async function sendEmail(
-  resendApiKey: string,
-  to: string,
-  subject: string,
-  html: string
-): Promise<boolean> {
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${resendApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: "FLI Formation <noreply@fli.fr>",
-      to: [to],
-      subject,
-      html,
-    }),
-  });
-  return response.ok;
-}
 
 async function ensureStudentAuthUser(
   adminClient: SupabaseClient,
@@ -161,20 +140,37 @@ Deno.serve(async (req) => {
         const studentName = `${student.first_name} ${student.last_name}`.trim();
         let emailSent = false;
 
-        if (shouldSendEmail && resendApiKey) {
-          const subject = "Votre espace stagiaire — France Langues International";
-          const html = `<p>Bonjour ${studentName},</p>
-            <p>Votre espace stagiaire FLI est prêt. Cliquez sur le lien ci-dessous pour y accéder :</p>
-            <p><a href="${actionLink}">Accéder à mon espace stagiaire</a></p>
-            <p>Ce lien est personnel et sécurisé. Si vous n'avez pas demandé cet accès, ignorez ce message.</p>
-            <p>France Langues International</p>`;
-          emailSent = await sendEmail(resendApiKey, student.email, subject, html);
+        if (shouldSendEmail) {
+          const { data: template } = await adminClient
+            .from("email_templates")
+            .select("subject_fr, body_fr")
+            .eq("slug", "student_portal_invite")
+            .maybeSingle();
+
+          const variables = {
+            student_name: studentName,
+            magic_link: actionLink,
+          };
+          const subject = template
+            ? applyEmailTemplate(template.subject_fr, variables)
+            : "Accès à votre espace stagiaire — France Langues International";
+          const html = template
+            ? applyEmailTemplate(template.body_fr, variables)
+            : `<p>Bonjour ${studentName},</p><p><a href="${actionLink}">Accéder à mon espace stagiaire</a></p>`;
+
+          const sent = await sendFliEmail({
+            resendApiKey,
+            to: student.email,
+            subject,
+            html,
+          });
+          emailSent = sent.ok;
 
           await adminClient.from("email_log").insert({
             template_slug: "student_portal_invite",
             recipient_email: student.email,
             recipient_name: studentName,
-            status: emailSent ? "sent" : "failed",
+            status: sent.skipped ? "skipped" : emailSent ? "sent" : "failed",
             variables_used: { student_id: student.id },
           });
         }

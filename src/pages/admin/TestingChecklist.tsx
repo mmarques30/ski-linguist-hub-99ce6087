@@ -18,6 +18,8 @@ import {
   ChevronUp
 } from "lucide-react";
 import { toast } from "sonner";
+import { Emails8MinimalCard } from "@/components/admin/Emails8MinimalCard";
+import { CleanupZztestCard } from "@/components/admin/CleanupZztestCard";
 
 interface TestItem {
   id: string;
@@ -288,10 +290,11 @@ export default function TestingChecklist() {
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
               <ClipboardList className="h-8 w-8" />
-              Checklist de Testes
+              Tests QA
             </h1>
             <p className="text-muted-foreground mt-1">
-              Validação completa das funcionalidades do sistema FLI
+              Scénario du lundi 14/09 : voir docs/TESTING_GUIDE.md. Convention : nom ZZTEST
+              et email @example.invalid.
             </p>
           </div>
           <div className="flex gap-2">
@@ -305,6 +308,9 @@ export default function TestingChecklist() {
             </Button>
           </div>
         </div>
+
+        <Emails8MinimalCard />
+        <CleanupZztestCard />
 
         {/* Summary Card */}
         <Card>

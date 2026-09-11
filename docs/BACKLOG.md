@@ -2,7 +2,7 @@
 
 Règle : noter ici, **ne pas corriger** tant que le point courant n’est pas validé.
 
-Dernière mise à jour : 2026-09-11 (C.1 rôle formateur ouvert).
+Dernière mise à jour : 2026-09-11 (emails + kit sur main ; C.1 rôle formateur ouvert).
 
 ## Ouvert
 
@@ -45,8 +45,8 @@ Dernière mise à jour : 2026-09-11 (C.1 rôle formateur ouvert).
 | Certificat bilan | **Livré** (vue + backfill live OK) |
 | A — `test_evaluations` + certificats | **Livré** — `docs/SECURITE_A_TEST_EVALUATIONS.md` |
 | A2 — buckets privés | **Livré** — `docs/SECURITE_A2_BUCKET_DOCUMENTS.md` |
-| 5 — Gel prospection moniteurs | Fusionné main (PR #18) — déploiement fonction Edge à confirmer |
-| 8-minimal — emails | Validé, PR #20 à fusionner — `docs/EMAILS_8_MINIMAL.md` sur la branche |
-| Kit ZZTEST | Validé, PR #21 à fusionner |
+| 5 — Gel prospection moniteurs | Fusionné main (PR #18) — `docs/GEL_PROSPECTION_MONITEURS.md` ; fonction Edge à déployer |
+| 8-minimal emails | Fusionné main (PR #20) — attente `RESEND_API_KEY` — `docs/EMAILS_8_MINIMAL.md` |
+| Kit ZZTEST | Fusionné main (PR #21) |
 | C.1 — rôle formateur | Ouvert — `docs/POINT_C1_ROLE_FORMATEUR.md` |
-| 6–10 | Non démarrés. Confirmation email (lieu, modalité, piste, paiement) : texte au point 8 complet |
+| 6, 7, 9, 10 | Non démarrés. Confirmation email (lieu, modalité, piste, paiement) : texte au point 8 complet |

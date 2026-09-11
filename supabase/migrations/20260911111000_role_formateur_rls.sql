@@ -234,7 +234,7 @@ VALUES (
   'c1_role_formateur_rls',
   'instructors',
   jsonb_build_object(
-    'migration', '20260911101000_role_formateur_rls',
+    'migration', '20260911111000_role_formateur_rls',
     'point', 'C.1',
     'is_staff', 'admin|user only (formateur excluded)',
     'auth_user_id', 'instructors.auth_user_id',
