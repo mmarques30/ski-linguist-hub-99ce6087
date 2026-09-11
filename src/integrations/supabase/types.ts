@@ -233,6 +233,21 @@ export type Database = {
           },
         ]
       }
+      cecrl_scale: {
+        Row: {
+          cecrl_label: string
+          score: number
+        }
+        Insert: {
+          cecrl_label: string
+          score: number
+        }
+        Update: {
+          cecrl_label?: string
+          score?: number
+        }
+        Relationships: []
+      }
       continuous_improvement: {
         Row: {
           action: string
@@ -2877,6 +2892,8 @@ export type Database = {
           previous_result: string | null
           previous_test: boolean
           source: string
+          sponsor_id: string | null
+          sponsor_type: string
           status: string
           stripe_payment_id: string | null
         }
@@ -2893,6 +2910,8 @@ export type Database = {
           previous_result?: string | null
           previous_test?: boolean
           source?: string
+          sponsor_id?: string | null
+          sponsor_type?: string
           status?: string
           stripe_payment_id?: string | null
         }
@@ -2909,6 +2928,8 @@ export type Database = {
           previous_result?: string | null
           previous_test?: boolean
           source?: string
+          sponsor_id?: string | null
+          sponsor_type?: string
           status?: string
           stripe_payment_id?: string | null
         }
@@ -3039,7 +3060,12 @@ export type Database = {
           attestation_sent_at: string | null
           attestation_type: string
           attestation_url: string | null
+          bloc_comprehension: string | null
+          bloc_conclusion: string | null
+          bloc_introduction: string | null
+          bloc_technique: string | null
           booking_id: string
+          cecrl_label: string | null
           comments: string | null
           comments_comprehension: string | null
           comments_conclusion: string | null
@@ -3051,14 +3077,17 @@ export type Database = {
           criteria_checklist: Json | null
           grammar_points: string[] | null
           id: string
+          note_methodologique: string | null
           score_comprehension: number
           score_conversation: number
           score_expression: number
           score_general: number
+          score_general_calcule: number
           score_structure: number
           score_technique: number
           scoring_system: string
           selected_phrase_ids: string[] | null
+          status: string
           vocabulary_examples: string[] | null
         }
         Insert: {
@@ -3070,7 +3099,12 @@ export type Database = {
           attestation_sent_at?: string | null
           attestation_type: string
           attestation_url?: string | null
+          bloc_comprehension?: string | null
+          bloc_conclusion?: string | null
+          bloc_introduction?: string | null
+          bloc_technique?: string | null
           booking_id: string
+          cecrl_label?: string | null
           comments?: string | null
           comments_comprehension?: string | null
           comments_conclusion?: string | null
@@ -3082,6 +3116,7 @@ export type Database = {
           criteria_checklist?: Json | null
           grammar_points?: string[] | null
           id?: string
+          note_methodologique?: string | null
           score_comprehension: number
           score_conversation: number
           score_expression: number
@@ -3090,6 +3125,7 @@ export type Database = {
           score_technique: number
           scoring_system?: string
           selected_phrase_ids?: string[] | null
+          status?: string
           vocabulary_examples?: string[] | null
         }
         Update: {
@@ -3101,7 +3137,12 @@ export type Database = {
           attestation_sent_at?: string | null
           attestation_type?: string
           attestation_url?: string | null
+          bloc_comprehension?: string | null
+          bloc_conclusion?: string | null
+          bloc_introduction?: string | null
+          bloc_technique?: string | null
           booking_id?: string
+          cecrl_label?: string | null
           comments?: string | null
           comments_comprehension?: string | null
           comments_conclusion?: string | null
@@ -3113,6 +3154,7 @@ export type Database = {
           criteria_checklist?: Json | null
           grammar_points?: string[] | null
           id?: string
+          note_methodologique?: string | null
           score_comprehension?: number
           score_conversation?: number
           score_expression?: number
@@ -3121,6 +3163,7 @@ export type Database = {
           score_technique?: number
           scoring_system?: string
           selected_phrase_ids?: string[] | null
+          status?: string
           vocabulary_examples?: string[] | null
         }
         Relationships: [
@@ -3351,6 +3394,8 @@ export type Database = {
           ski_school_id: string | null
           ski_school_name: string | null
           source: string | null
+          sponsor_id: string | null
+          sponsor_type: string | null
           status: string | null
           stripe_payment_id: string | null
           student_id: string | null
@@ -3381,6 +3426,7 @@ export type Database = {
       }
     }
     Functions: {
+      cecrl_label_from_score: { Args: { _score: number }; Returns: string }
       cleanup_zztest_data: { Args: { _dry_run?: boolean }; Returns: Json }
       activate_season: { Args: { p_season_id: string }; Returns: undefined }
       generate_inscription_code: { Args: never; Returns: string }
@@ -3441,6 +3487,8 @@ export type Database = {
       is_formateur: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       is_student: { Args: never; Returns: boolean }
+      owns_test_booking: { Args: { _booking_id: string }; Returns: boolean }
+      test_booking_is_dsf: { Args: { _booking_id: string }; Returns: boolean }
       sign_instructor_contract_by_token: {
         Args: { p_signature_data: string; p_token: string }
         Returns: undefined

@@ -194,6 +194,6 @@ présence est sans effet fonctionnel).
 - La suppression d'objets reste réservée à `is_admin()` et n'est exposée par aucun écran ;
   à câbler si une purge RGPD manuelle devient nécessaire.
 - `instructors.cv_url` : liens Google Drive, hors Storage (section 5).
-- Point C.2 : lorsque `attestation_type` sera remplacé par `sponsor_type`, les politiques
-  candidat du point A devront être réécrites dans la même migration, avec la même preuve
-  par jeu de test. Les politiques de stockage du présent point ne sont pas concernées.
+- Point C.2 : politiques candidat réécrites sur `sponsor_type` (`docs/POINT_C2_SPONSOR_TYPE.md`).
+  Les politiques de stockage du présent point ne sont pas concernées. `attestation_type`
+  reste en colonne jusqu’à C.3 / C.5.

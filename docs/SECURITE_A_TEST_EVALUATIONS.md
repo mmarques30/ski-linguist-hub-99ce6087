@@ -48,10 +48,10 @@ en base au moment de la migration, donc aucune reprise n'était nécessaire.
 | Fonction | Rôle |
 |----------|------|
 | `owns_test_booking(uuid)` | rattache l'évaluation au stagiaire via `test_bookings` → `test_candidates.student_id` |
-| `test_booking_is_dsf(uuid)` | commanditaire DSF, déduit de `ski_schools.school_kind` ou du partenaire lié (`partners.type`) |
+| `test_booking_is_dsf(uuid)` | commanditaire DSF (`test_bookings.sponsor_type = 'dsf'`, C.2) |
 
-**À reprendre au point C.2** : `test_bookings.sponsor_type` / `sponsor_id` deviendront la source
-de vérité ; `test_booking_is_dsf` devra lire `sponsor_type` en priorité.
+**Fait au point C.2** : `test_bookings.sponsor_type` / `sponsor_id` sont la source
+de vérité ; `test_booking_is_dsf` lit `sponsor_type = 'dsf'`. Voir `docs/POINT_C2_SPONSOR_TYPE.md`.
 
 ## 4. Preuve exécutée sur la base live
 
