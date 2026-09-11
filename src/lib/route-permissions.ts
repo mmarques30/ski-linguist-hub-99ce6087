@@ -69,6 +69,7 @@ export const PATH_TO_ROUTE_KEY: Record<string, string> = {
   "/students": "students",
   "/tests": "tests",
   "/formateur/evaluations": "evaluations",
+  "/formateur/evaluations/:id/verifier": "evaluations",
   "/classes": "classes",
   "/formation/sessions": "classes",
   "/satisfaction-stats": "satisfaction",

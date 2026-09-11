@@ -187,6 +187,8 @@ export function useUpdateTestEvaluation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["test-evaluation"] });
+      queryClient.invalidateQueries({ queryKey: ["evaluation-with-booking"] });
+      queryClient.invalidateQueries({ queryKey: ["test-bookings-to-evaluate"] });
       toast({ title: "Évaluation mise à jour" });
     },
     onError: (error: Error) => {

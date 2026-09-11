@@ -3081,6 +3081,9 @@ export type Database = {
           grammar_points: string[] | null
           id: string
           note_methodologique: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_comment: string | null
           score_comprehension: number
           score_conversation: number
           score_expression: number
@@ -3120,6 +3123,9 @@ export type Database = {
           grammar_points?: string[] | null
           id?: string
           note_methodologique?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_comment?: string | null
           score_comprehension: number
           score_conversation: number
           score_expression: number
@@ -3158,6 +3164,9 @@ export type Database = {
           grammar_points?: string[] | null
           id?: string
           note_methodologique?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_comment?: string | null
           score_comprehension?: number
           score_conversation?: number
           score_expression?: number

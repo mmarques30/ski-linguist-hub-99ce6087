@@ -23,7 +23,8 @@ import {
   CheckCircle2,
   Eye,
   Edit,
-  QrCode
+  QrCode,
+  ShieldCheck
 } from "lucide-react";
 import { useTestBookingsToEvaluate } from "@/hooks/useTestEvaluations";
 import { LANGUAGE_FLAGS, LANGUAGE_LABELS } from "@/lib/evaluation-utils";
@@ -43,7 +44,7 @@ export default function EvaluationsList() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("pending");
   const [showQRDialog, setShowQRDialog] = useState(false);
-  const { canEdit, isFormateur } = useUserPermissions();
+  const { canEdit, isFormateur, isAdmin } = useUserPermissions();
   const editable = canEdit("evaluations");
   
   const { data: allCompleted, isLoading: pendingLoading, refetch: refetchPending } = useTestBookingsToEvaluate();
@@ -336,6 +337,15 @@ export default function EvaluationsList() {
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
+                              {isAdmin && booking.evaluation_status === "a_verifier" && booking.evaluation_id && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => navigate(`/formateur/evaluations/${booking.evaluation_id}/verifier`)}
+                                >
+                                  <ShieldCheck className="h-4 w-4 mr-1" />
+                                  Vérifier
+                                </Button>
+                              )}
                               <Button
                                 size="sm"
                                 variant="outline"
