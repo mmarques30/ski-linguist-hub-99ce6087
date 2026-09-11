@@ -5,6 +5,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2, Link2, Building2, Wand2 } from "lucide-react";
 import { useSkiSchoolPartnerMatching } from "@/hooks/useSkiSchoolPartnerMatching";
 import { toast } from "sonner";
+import {
+  MESSAGE_GEL_PROSPECTION,
+  PROSPECTION_MONITEURS_GELEE,
+} from "@/lib/prospection-gel";
 
 const KIND_LABELS: Record<string, string> = {
   esf: "ESF",
@@ -50,7 +54,15 @@ export function SkiSchoolMatchingCard() {
               ESF et autres écoles — lie chaque <code>ski_school</code> à un partenaire organisationnel pour les dates de stage et l&apos;outreach.
             </CardDescription>
           </div>
-          <Button onClick={handleAuto} disabled={runAutoMatching.isPending || unmatched.length === 0}>
+          <Button
+            onClick={handleAuto}
+            disabled={
+              runAutoMatching.isPending ||
+              unmatched.length === 0 ||
+              PROSPECTION_MONITEURS_GELEE
+            }
+            title={PROSPECTION_MONITEURS_GELEE ? MESSAGE_GEL_PROSPECTION : undefined}
+          >
             {runAutoMatching.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
             ) : (
@@ -129,7 +141,8 @@ export function SkiSchoolMatchingCard() {
                     ) : (
                       <Button
                         size="sm"
-                        disabled={createAndLink.isPending}
+                        disabled={createAndLink.isPending || PROSPECTION_MONITEURS_GELEE}
+                        title={PROSPECTION_MONITEURS_GELEE ? MESSAGE_GEL_PROSPECTION : undefined}
                         onClick={async () => {
                           try {
                             await createAndLink.mutateAsync(preview);
