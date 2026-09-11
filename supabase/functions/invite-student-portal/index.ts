@@ -1,6 +1,10 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { adminCorsHeaders, requireAdmin } from "../_shared/admin-auth.ts";
 import { applyEmailTemplate, sendFliEmail } from "../_shared/fli-email.ts";
+import {
+  isFliPlaceholderEmail,
+  isMassSendConfirmed,
+} from "../_shared/email-guards.ts";
 
 const APP_URL = Deno.env.get("APP_URL") || "https://ski-linguist-hub.lovable.app";
 
@@ -85,11 +89,25 @@ Deno.serve(async (req) => {
     if (authResult instanceof Response) return authResult;
     const { adminClient } = authResult;
 
-    const { studentIds, sendEmail: shouldSendEmail = true } = await req.json();
+    const {
+      studentIds,
+      sendEmail: shouldSendEmail = true,
+      confirmedCount,
+    } = await req.json();
 
     if (!Array.isArray(studentIds) || studentIds.length === 0) {
       return new Response(
         JSON.stringify({ success: false, error: "studentIds requis (tableau non vide)" }),
+        { status: 400, headers: { ...adminCorsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!isMassSendConfirmed(studentIds.length, confirmedCount)) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Confirmation de masse requise : indiquez confirmedCount = ${studentIds.length}`,
+        }),
         { status: 400, headers: { ...adminCorsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -119,6 +137,16 @@ Deno.serve(async (req) => {
           email: student?.email || "",
           success: false,
           error: "Email manquant",
+        });
+        continue;
+      }
+
+      if (isFliPlaceholderEmail(student.email)) {
+        results.push({
+          studentId,
+          email: student.email,
+          success: false,
+          error: "Adresse @fli.placeholder exclue de tout envoi",
         });
         continue;
       }

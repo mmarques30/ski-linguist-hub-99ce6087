@@ -39,123 +39,123 @@ interface TestSection {
 const initialTestData: TestSection[] = [
   {
     id: "auth",
-    title: "🔐 Autenticação",
+    title: "Authentification",
     icon: "🔐",
     items: [
-      { id: "auth-1", name: "Login com credenciais válidas", description: "Acessar /auth, inserir credenciais válidas e verificar redirecionamento para Dashboard", status: "pending" },
-      { id: "auth-2", name: "Logout", description: "Clicar no botão de logout no Sidebar e verificar redirecionamento para /auth", status: "pending" },
-      { id: "auth-3", name: "Rota protegida sem login", description: "Sem login, acessar /dashboard e verificar redirecionamento para /auth", status: "pending" },
+      { id: "auth-1", name: "Connexion avec identifiants valides", description: "Ouvrir /auth, saisir des identifiants valides et vérifier la redirection vers le tableau de bord", status: "pending" },
+      { id: "auth-2", name: "Déconnexion", description: "Cliquer sur Déconnexion dans la barre latérale et vérifier le retour vers /auth", status: "pending" },
+      { id: "auth-3", name: "Route protégée sans session", description: "Sans connexion, ouvrir une page interne et vérifier la redirection vers /auth", status: "pending" },
     ]
   },
   {
     id: "students",
-    title: "👥 Alunos",
+    title: "Stagiaires",
     icon: "👥",
     items: [
-      { id: "students-1", name: "Criar aluno", description: "Ir para /students, clicar em 'Novo Aluno', preencher dados e verificar se aparece na lista", status: "pending" },
-      { id: "students-2", name: "Visualizar detalhes do aluno", description: "Clicar em um aluno e verificar se mostra inscrições e estatísticas", status: "pending" },
-      { id: "students-3", name: "Editar aluno", description: "Editar dados de um aluno existente e verificar atualização", status: "pending" },
+      { id: "students-1", name: "Créer un stagiaire", description: "Aller sur /students, cliquer sur Nouveau stagiaire, remplir le formulaire et vérifier l'apparition dans la liste", status: "pending" },
+      { id: "students-2", name: "Voir la fiche stagiaire", description: "Ouvrir un stagiaire et vérifier inscriptions et statistiques", status: "pending" },
+      { id: "students-3", name: "Modifier un stagiaire", description: "Modifier une fiche existante et vérifier la mise à jour", status: "pending" },
     ]
   },
   {
     id: "inscriptions",
-    title: "📝 Inscrições",
+    title: "Inscriptions",
     icon: "📝",
     items: [
-      { id: "inscriptions-1", name: "Criar inscrição", description: "Ir para /inscriptions, clicar em 'Nova Inscrição', preencher os passos do formulário", status: "pending" },
-      { id: "inscriptions-2", name: "Código automático gerado", description: "Verificar se a inscrição recebeu código no formato FLI-YYXXXX", status: "pending" },
-      { id: "inscriptions-3", name: "Editar status da inscrição", description: "Clicar em uma inscrição e alterar o status", status: "pending" },
-      { id: "inscriptions-4", name: "Filtrar inscrições", description: "Testar filtros por status, idioma, etc.", status: "pending" },
+      { id: "inscriptions-1", name: "Créer une inscription", description: "Aller sur /inscriptions, cliquer sur Nouvelle inscription, parcourir les étapes", status: "pending" },
+      { id: "inscriptions-2", name: "Code automatique", description: "Vérifier qu'un code au format FLI-YYXXXX est attribué", status: "pending" },
+      { id: "inscriptions-3", name: "Modifier le statut", description: "Ouvrir une inscription et changer le statut", status: "pending" },
+      { id: "inscriptions-4", name: "Filtrer les inscriptions", description: "Tester les filtres par statut, langue, etc.", status: "pending" },
     ]
   },
   {
     id: "invoices",
-    title: "💰 Faturas",
+    title: "Factures",
     icon: "💰",
     items: [
-      { id: "invoices-1", name: "Criar fatura", description: "Ir para /invoices, clicar em 'Nova Fatura', selecionar inscrição, valor e tipo", status: "pending" },
-      { id: "invoices-2", name: "Número automático gerado", description: "Verificar se a fatura recebeu número no formato YYYY.XXXXX", status: "pending" },
-      { id: "invoices-3", name: "Filtrar por status", description: "Filtrar por Brouillon, Envoyée, Payée", status: "pending" },
-      { id: "invoices-4", name: "Editar fatura", description: "Clicar em uma fatura e editar os dados", status: "pending" },
-      { id: "invoices-5", name: "Visualizar PDF da fatura", description: "Gerar e visualizar o PDF da fatura", status: "pending" },
+      { id: "invoices-1", name: "Créer une facture", description: "Aller sur /invoices, cliquer sur Nouvelle facture, choisir inscription, montant et type", status: "pending" },
+      { id: "invoices-2", name: "Numéro automatique", description: "Vérifier un numéro au format YYYY.XXXXX", status: "pending" },
+      { id: "invoices-3", name: "Filtrer par statut", description: "Filtrer par Brouillon, Envoyée, Payée", status: "pending" },
+      { id: "invoices-4", name: "Modifier une facture", description: "Ouvrir une facture et modifier les données", status: "pending" },
+      { id: "invoices-5", name: "Aperçu PDF", description: "Générer et afficher le PDF de la facture", status: "pending" },
     ]
   },
   {
     id: "reminders",
-    title: "📧 Relances Automáticas",
+    title: "Relances automatiques",
     icon: "📧",
     items: [
-      { id: "reminders-1", name: "Dry-run de relances", description: "Executar curl com dry_run=true e verificar resposta JSON", status: "pending" },
-      { id: "reminders-2", name: "Lógica de níveis", description: "Verificar se respeita 7, 15, 30 dias de atraso", status: "pending" },
-      { id: "reminders-3", name: "Faturas ignoradas corretamente", description: "Verificar se faturas < 7 dias são ignoradas", status: "pending" },
+      { id: "reminders-1", name: "Simulation de relances", description: "Exécuter un appel en dry_run=true et vérifier la réponse JSON", status: "pending" },
+      { id: "reminders-2", name: "Niveaux de relance", description: "Vérifier le respect des délais 7, 15 et 30 jours", status: "pending" },
+      { id: "reminders-3", name: "Factures ignorées", description: "Vérifier que les factures de moins de 7 jours sont ignorées", status: "pending" },
     ]
   },
   {
     id: "placement",
-    title: "📊 Testes de Posicionamento",
+    title: "Tests de positionnement",
     icon: "📊",
     items: [
-      { id: "placement-1", name: "Visualizar lista de testes", description: "Ir para /placement-tests e verificar lista com estatísticas", status: "pending" },
-      { id: "placement-2", name: "Detalhes do teste", description: "Clicar em um teste e verificar informações", status: "pending" },
+      { id: "placement-1", name: "Liste des tests", description: "Aller sur /tests et vérifier la liste avec statistiques", status: "pending" },
+      { id: "placement-2", name: "Détail d'un test", description: "Ouvrir un test et vérifier les informations", status: "pending" },
     ]
   },
   {
     id: "evaluations",
-    title: "📝 Avaliações (Compte-Rendu)",
+    title: "Évaluations (compte-rendu)",
     icon: "📝",
     items: [
-      { id: "evaluations-1", name: "Listar avaliações pendentes", description: "Ir para /formateur/evaluations e verificar lista", status: "pending" },
-      { id: "evaluations-2", name: "Criar avaliação", description: "Selecionar teste, preencher scores e apreciações", status: "pending" },
-      { id: "evaluations-3", name: "Visualizar PDF do CR", description: "Clicar em 'Voir CR' e verificar PDF gerado", status: "pending" },
-      { id: "evaluations-4", name: "Sistema de frases", description: "Verificar se frases pré-definidas são carregadas por categoria", status: "pending" },
+      { id: "evaluations-1", name: "Liste des évaluations", description: "Aller sur /formateur/evaluations et vérifier la liste", status: "pending" },
+      { id: "evaluations-2", name: "Saisir une évaluation", description: "Choisir un test, remplir les notes et les blocs", status: "pending" },
+      { id: "evaluations-3", name: "Aperçu du compte-rendu", description: "Ouvrir l'aperçu et vérifier le contenu généré", status: "pending" },
+      { id: "evaluations-4", name: "Banque de phrases", description: "Vérifier le chargement des phrases par catégorie", status: "pending" },
     ]
   },
   {
     id: "satisfaction",
-    title: "😊 Satisfação",
+    title: "Satisfaction",
     icon: "😊",
     items: [
-      { id: "satisfaction-1", name: "Ver estatísticas", description: "Ir para /satisfaction-stats e verificar gráficos e médias", status: "pending" },
-      { id: "satisfaction-2", name: "Gerar QR Code", description: "Clicar em 'Générer QR' e verificar QR Code para pesquisa", status: "pending" },
-      { id: "satisfaction-3", name: "Responder pesquisa", description: "Acessar link da pesquisa e preencher formulário", status: "pending" },
+      { id: "satisfaction-1", name: "Statistiques", description: "Aller sur /satisfaction-stats et vérifier graphiques et moyennes", status: "pending" },
+      { id: "satisfaction-2", name: "QR Code", description: "Générer un QR et vérifier le lien vers le questionnaire", status: "pending" },
+      { id: "satisfaction-3", name: "Répondre au questionnaire", description: "Ouvrir le lien du questionnaire et le remplir", status: "pending" },
     ]
   },
   {
     id: "finance",
-    title: "💹 Finanças",
+    title: "Finance",
     icon: "💹",
     items: [
-      { id: "finance-1", name: "Dashboard financeiro", description: "Ir para /finance/dashboard e verificar KPIs atualizados", status: "pending" },
-      { id: "finance-2", name: "Charges fixes", description: "Ir para /finance/charges-fixes e verificar impayés e progressão", status: "pending" },
-      { id: "finance-3", name: "Rentabilidade", description: "Ir para /finance/rentabilite e verificar análise por formação", status: "pending" },
-      { id: "finance-4", name: "Tesouraria", description: "Ir para /finance/tresorerie e verificar projeção de fluxo", status: "pending" },
-      { id: "finance-5", name: "Comparação N-1", description: "Verificar se comparação com ano anterior funciona", status: "pending" },
-      { id: "finance-6", name: "Realtime updates", description: "Criar/editar fatura e verificar se dashboard atualiza automaticamente", status: "pending" },
+      { id: "finance-1", name: "Tableau de bord financier", description: "Aller sur /finance et vérifier les indicateurs", status: "pending" },
+      { id: "finance-2", name: "Charges fixes", description: "Aller sur /finance/charges-fixes et vérifier impayés et progression", status: "pending" },
+      { id: "finance-3", name: "Rentabilité", description: "Aller sur /finance/rentabilite et vérifier l'analyse par formation", status: "pending" },
+      { id: "finance-4", name: "Trésorerie", description: "Aller sur /finance/tresorerie et vérifier la projection", status: "pending" },
+      { id: "finance-5", name: "Comparaison N-1", description: "Vérifier la comparaison avec l'année précédente", status: "pending" },
+      { id: "finance-6", name: "Mises à jour temps réel", description: "Créer ou modifier une facture et vérifier le rafraîchissement", status: "pending" },
     ]
   },
   {
     id: "endpack",
-    title: "📦 Pack Fin de Formation",
+    title: "Pack fin de formation",
     icon: "📦",
     items: [
-      { id: "endpack-1", name: "Gerar pack completo", description: "Selecionar inscrição e gerar fatura + attestation + certificado", status: "pending" },
-      { id: "endpack-2", name: "Status atualizado", description: "Verificar se status da inscrição foi atualizado para concluído", status: "pending" },
-      { id: "endpack-3", name: "Link de satisfação gerado", description: "Verificar se link do questionário foi criado", status: "pending" },
+      { id: "endpack-1", name: "Générer le pack", description: "Sélectionner une inscription et générer facture + attestation + certificat", status: "pending" },
+      { id: "endpack-2", name: "Statut mis à jour", description: "Vérifier que le statut de l'inscription passe à terminé", status: "pending" },
+      { id: "endpack-3", name: "Lien de satisfaction", description: "Vérifier la création du lien de questionnaire", status: "pending" },
     ]
   },
   {
     id: "improvement",
-    title: "🔄 Amélioration Continue",
+    title: "Amélioration continue",
     icon: "🔄",
     items: [
-      { id: "improvement-1", name: "Criar ação", description: "Ir para /continuous-improvement e criar nova ação", status: "pending" },
-      { id: "improvement-2", name: "Filtrar por tipo", description: "Filtrar por correctiva, préventive, amélioration", status: "pending" },
-      { id: "improvement-3", name: "Atualizar status", description: "Alterar status de uma ação existente", status: "pending" },
+      { id: "improvement-1", name: "Créer une action", description: "Aller sur /amelioration et créer une action", status: "pending" },
+      { id: "improvement-2", name: "Filtrer par type", description: "Filtrer par corrective, préventive, amélioration", status: "pending" },
+      { id: "improvement-3", name: "Mettre à jour le statut", description: "Changer le statut d'une action existante", status: "pending" },
     ]
   },
 ];
 
-const STORAGE_KEY = "fli-testing-checklist";
+const STORAGE_KEY = "fli-testing-checklist-fr";
 
 export default function TestingChecklist() {
   const [testData, setTestData] = useState<TestSection[]>(initialTestData);
@@ -193,9 +193,9 @@ export default function TestingChecklist() {
     }));
     
     const statusMessages = {
-      success: "✅ Marcado como sucesso!",
-      failure: "❌ Marcado como falha!",
-      pending: "⏳ Resetado para pendente"
+      success: "Marqué comme réussi",
+      failure: "Marqué comme échec",
+      pending: "Remis en attente"
     };
     toast.success(statusMessages[status]);
   };
@@ -224,7 +224,7 @@ export default function TestingChecklist() {
 
   const resetAll = () => {
     setTestData(initialTestData);
-    toast.success("Checklist resetado!");
+    toast.success("Checklist réinitialisée");
   };
 
   const toggleSection = (sectionId: string) => {
@@ -264,7 +264,7 @@ export default function TestingChecklist() {
     a.download = `fli-test-results-${new Date().toISOString().split("T")[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("Resultados exportados!");
+    toast.success("Résultats exportés");
   };
 
   const getStatusIcon = (status: TestItem["status"]) => {
@@ -297,24 +297,25 @@ export default function TestingChecklist() {
               et email @example.invalid.
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={exportResults}>
-              <Download className="h-4 w-4 mr-2" />
-              Exportar
-            </Button>
-            <Button variant="destructive" onClick={resetAll}>
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Resetar
-            </Button>
-          </div>
         </div>
 
         <Emails8MinimalCard />
-        <CleanupZztestCard />
 
-        {/* Summary Card */}
         <Card>
-          <CardContent className="pt-6">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-lg">Checklist de recette</CardTitle>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={exportResults}>
+                <Download className="h-4 w-4 mr-2" />
+                Exporter
+              </Button>
+              <Button variant="outline" onClick={resetAll}>
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Réinitialiser la checklist
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
             <div className="flex items-center justify-between mb-4">
               <div className="flex gap-6">
                 <div className="text-center">
@@ -323,20 +324,20 @@ export default function TestingChecklist() {
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-500">{success}</div>
-                  <div className="text-sm text-muted-foreground">Sucesso</div>
+                  <div className="text-sm text-muted-foreground">Réussi</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-red-500">{failure}</div>
-                  <div className="text-sm text-muted-foreground">Falha</div>
+                  <div className="text-sm text-muted-foreground">Échec</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-muted-foreground">{pending}</div>
-                  <div className="text-sm text-muted-foreground">Pendente</div>
+                  <div className="text-sm text-muted-foreground">En attente</div>
                 </div>
               </div>
               <div className="text-right">
                 <div className="text-2xl font-bold">{progress.toFixed(0)}%</div>
-                <div className="text-sm text-muted-foreground">Concluído</div>
+                <div className="text-sm text-muted-foreground">Avancement</div>
               </div>
             </div>
             <Progress value={progress} className="h-3" />
@@ -361,7 +362,7 @@ export default function TestingChecklist() {
                             {stats.done}/{stats.total}
                           </Badge>
                           {stats.done === stats.total && stats.successCount === stats.total && (
-                            <Badge className="bg-green-500">✓ Completo</Badge>
+                            <Badge className="bg-green-500">Terminé</Badge>
                           )}
                         </CardTitle>
                         <ChevronDown className={`h-5 w-5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
@@ -395,7 +396,7 @@ export default function TestingChecklist() {
                                     variant={hasNotes ? "secondary" : "ghost"}
                                     className={hasNotes ? "text-blue-600" : ""}
                                     onClick={() => toggleNotes(item.id)}
-                                    title="Adicionar notas"
+                                    title="Ajouter une note"
                                   >
                                     <MessageSquare className="h-4 w-4" />
                                     {isNotesExpanded ? <ChevronUp className="h-3 w-3 ml-1" /> : <ChevronDown className="h-3 w-3 ml-1" />}
@@ -430,7 +431,7 @@ export default function TestingChecklist() {
                               {isNotesExpanded && (
                                 <div className="mt-3 pt-3 border-t">
                                   <Textarea
-                                    placeholder="Adicione observações, bugs encontrados, screenshots necessários..."
+                                    placeholder="Notes, anomalies, captures à joindre…"
                                     value={item.notes || ""}
                                     onChange={(e) => updateItemNotes(section.id, item.id, e.target.value)}
                                     className="min-h-[80px] text-sm"
@@ -457,6 +458,10 @@ export default function TestingChecklist() {
               </Collapsible>
             );
           })}
+        </div>
+
+        <div className="border-t pt-8">
+          <CleanupZztestCard />
         </div>
       </div>
     </MainLayout>

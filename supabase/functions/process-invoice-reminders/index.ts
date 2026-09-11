@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { isFliPlaceholderEmail } from '../_shared/email-guards.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -269,6 +270,9 @@ async function sendReminderEmail(
   dueDate: string,
   reminderLevel: 1 | 2 | 3
 ): Promise<void> {
+  if (isFliPlaceholderEmail(toEmail)) {
+    throw new Error('Adresse @fli.placeholder exclue de tout envoi')
+  }
   const formattedAmount = new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR'

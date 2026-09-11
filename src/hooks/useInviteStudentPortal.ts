@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { isMassSendConfirmed } from "@/lib/email-guards";
 
 export interface PortalInviteResult {
   studentId: string;
@@ -16,12 +17,20 @@ export function useInviteStudentPortal() {
     mutationFn: async ({
       studentIds,
       sendEmail = true,
+      confirmedCount,
     }: {
       studentIds: string[];
       sendEmail?: boolean;
+      confirmedCount?: number;
     }) => {
+      if (!isMassSendConfirmed(studentIds.length, confirmedCount)) {
+        throw new Error(
+          `Confirmation de masse requise : confirmez l'envoi de ${studentIds.length} invitations`
+        );
+      }
+
       const { data, error } = await supabase.functions.invoke("invite-student-portal", {
-        body: { studentIds, sendEmail },
+        body: { studentIds, sendEmail, confirmedCount },
       });
 
       if (error) {

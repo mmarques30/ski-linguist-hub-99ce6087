@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { isFliPlaceholderEmail } from '../_shared/email-guards.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -171,6 +172,9 @@ async function sendReminderEmail(
   baseUrl: string,
   reminderType: 'first' | 'second'
 ): Promise<void> {
+  if (isFliPlaceholderEmail(toEmail)) {
+    throw new Error('Adresse @fli.placeholder exclue de tout envoi')
+  }
   const surveyLink = `${baseUrl}/survey/${token}`
   
   const subject = reminderType === 'first'
