@@ -109,16 +109,40 @@ Après backfill : 0 ligne `sponsor_type` (table vide). Défaut d’insert `ecole
 Jeu `@example.invalid`, usurpation `SET ROLE authenticated` + `request.jwt.claims.sub`,
 puis suppression. Langue `anglais`, paiement `school_invoice`, source `manual`.
 
-Deux stagiaires, une école ESF, un partenaire DSF. Trois bookings **rattachés à l’école ESF**
-(l’ancienne inférence `school_kind` / `partners.type` ne verrait **aucun** DSF) :
+Deux stagiaires, une école ESF ZZTEST. Trois bookings **rattachés à cette école ESF**
+(l’ancienne inférence `school_kind` / `partners.type` ne verrait **aucun** DSF).
+Pas d’insert `partners` : le gel point 5 bloque la table ; `sponsor_id` DSF est un UUID
+sans ligne partenaire (conforme : pas de FK unique).
 
-| Booking | `sponsor_type` | `attestation_type` | Attendu ancien Point A | Attendu C.2 |
-|---------|----------------|--------------------|------------------------|-------------|
-| A-esf | `esf` | `dsf` | masqué (attestation) | **visible** |
-| A-dsf | `dsf` | `generique` | visible (école ESF) | **masqué** |
-| B-esf | `esf` | `generique` | visible | **visible** |
+| Booking | `sponsor_type` | `attestation_type` | Ancien Point A | C.2 | Vu |
+|---------|----------------|--------------------|----------------|-----|----|
+| A-esf | `esf` | `dsf` | masqué | **visible** | 1 |
+| A-dsf | `dsf` | `generique` | visible | **masqué** | 0 |
+| B-esf | `esf` | `generique` | visible | **visible** | 1 (B) |
 
-*(Tableau de résultats rempli après exécution live.)*
+Stagiaire A (`SET ROLE authenticated` + `request.jwt.claims.sub`) :
+
+| Contrôle | Vu | Attendu |
+|----------|----|---------|
+| `test_evaluations` | 1 | 1 (la sienne hors DSF, malgré `attestation_type = 'dsf'`) |
+| `test_evaluations` DSF (`sponsor_type`) | 0 | 0 |
+| `test_bookings` | 1 | 1 |
+| `test_bookings` DSF | 0 | 0 |
+| `test_bookings_complete` | 1 | 1 |
+| `test_candidates` | 1 | sa fiche |
+| `UPDATE test_evaluations` | 0 ligne | 0 |
+| `INSERT test_evaluations` | `42501` RLS | refus |
+| `test_booking_is_dsf(A-esf)` | false | false |
+| `test_booking_is_dsf(A-dsf)` | true | true |
+
+Stagiaire B : 1 évaluation, 1 réservation, 0 sur l’évaluation de A.
+Staff : 3 évaluations, 3 réservations (dont 1 DSF), `cecrl_scale` = 11.
+
+Insert UI-compatible : `status` défaut `brouillon`, `cecrl_label` = B2 pour un général 3,
+`score_general_calcule` = 3.
+
+Fixtures supprimées après contrôle (0 étudiant / école / booking / évaluation ZZTEST).
+Journal : `audit_log.action = 'c2_zztest_proof'`.
 
 ## 7. Hors C.2
 

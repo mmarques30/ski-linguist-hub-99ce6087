@@ -17,7 +17,7 @@ Journal : `audit_log.action = 'securite_rls_test_evaluations'` (aucune donnée p
 
 ### `test_evaluations`
 - `rls_test_evaluations_select_staff` : `is_staff()`
-- `rls_test_evaluations_select_candidate` : `is_student() AND owns_test_booking(booking_id) AND attestation_type <> 'dsf' AND NOT test_booking_is_dsf(booking_id)`
+- `rls_test_evaluations_select_candidate` : `is_student() AND owns_test_booking(booking_id) AND NOT test_booking_is_dsf(booking_id)` (C.2 : plus d'`attestation_type`)
 - `rls_test_evaluations_insert_staff` / `rls_test_evaluations_update_staff` : `is_staff()`
 - suppression : `is_admin()` (politique existante conservée)
 
