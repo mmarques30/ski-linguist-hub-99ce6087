@@ -54,26 +54,3 @@ export function useInviteStudentPortal() {
     },
   });
 }
-
-
-      if (error) {
-        throw new Error(error.message || "Impossible d'envoyer les invitations");
-      }
-
-      if (!data?.success) {
-        throw new Error(data?.error || "Impossible d'envoyer les invitations");
-      }
-
-      return data.data as {
-        total: number;
-        succeeded: number;
-        failed: number;
-        results: PortalInviteResult[];
-      };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["students"] });
-      queryClient.invalidateQueries({ queryKey: ["student-details"] });
-    },
-  });
-}
