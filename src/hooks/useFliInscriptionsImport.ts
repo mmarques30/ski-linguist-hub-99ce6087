@@ -1,6 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ParsedFliInscriptionRow } from "@/lib/fli-inscriptions-csv-import";
+import {
+  MESSAGE_GEL_PROSPECTION,
+  PROSPECTION_MONITEURS_GELEE,
+} from "@/lib/prospection-gel";
 
 interface ImportOptions {
   importInscriptions: boolean;
@@ -231,7 +235,13 @@ export function useFliInscriptionsImport() {
         }
       }
 
-      if (options.enrichMonitors && monitorContacts.length > 0) {
+      // L'import des stagiaires et des inscriptions reste ouvert ; seul
+      // l'enrichissement de la base moniteurs est gelé.
+      if (options.enrichMonitors && monitorContacts.length > 0 && PROSPECTION_MONITEURS_GELEE) {
+        result.errors.push(
+          `Enrichissement de la base moniteurs ignoré (${monitorContacts.length} contact(s)). ${MESSAGE_GEL_PROSPECTION}`
+        );
+      } else if (options.enrichMonitors && monitorContacts.length > 0) {
         const BATCH = 100;
         for (let i = 0; i < monitorContacts.length; i += BATCH) {
           const batch = monitorContacts.slice(i, i + BATCH).map((m) => ({

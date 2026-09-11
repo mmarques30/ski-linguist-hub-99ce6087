@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { assertProspectionNonGelee } from "@/lib/prospection-gel";
 
 // ─── Types ───────────────────────────────────────────────
 export interface Partner {
@@ -80,6 +81,7 @@ export function useCreatePartner() {
   const { toast } = useToast();
   return useMutation({
     mutationFn: async (partner: Partial<Partner>) => {
+      assertProspectionNonGelee();
       const { data, error } = await supabase.from("partners").insert(partner as any).select().single();
       if (error) throw error;
       return data;
@@ -97,6 +99,7 @@ export function useUpdatePartner() {
   const { toast } = useToast();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Partner> & { id: string }) => {
+      assertProspectionNonGelee();
       const { error } = await supabase.from("partners").update(updates as any).eq("id", id);
       if (error) throw error;
     },
@@ -114,6 +117,7 @@ export function useDeletePartner() {
   const { toast } = useToast();
   return useMutation({
     mutationFn: async (id: string) => {
+      assertProspectionNonGelee();
       const { error } = await supabase.from("partners").delete().eq("id", id);
       if (error) throw error;
     },

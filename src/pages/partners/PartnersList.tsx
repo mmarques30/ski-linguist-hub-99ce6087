@@ -6,11 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Building2, MapPin, Mail, Phone, Users, Upload } from "lucide-react";
+import { Plus, Search, Building2, MapPin, Mail, Phone, Users, Upload, Snowflake } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { usePartners, usePartnerStats } from "@/hooks/usePartners";
 import { PartnerFormDialog } from "@/components/partners/PartnerFormDialog";
 import { EsfDirectorsImportDialog } from "@/components/partners/EsfDirectorsImportDialog";
 import { StatCard } from "@/components/dashboard/StatCard";
+import {
+  MESSAGE_GEL_PROSPECTION,
+  MESSAGE_GEL_REACTIVATION,
+  PROSPECTION_MONITEURS_GELEE,
+} from "@/lib/prospection-gel";
 
 const TYPE_LABELS: Record<string, string> = {
   esf: "ESF",
@@ -51,14 +57,34 @@ export default function PartnersList() {
             <p className="text-muted-foreground">Gestion des partenariats ESF et autres</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setImportOpen(true)}>
+            <Button
+              variant="outline"
+              onClick={() => setImportOpen(true)}
+              disabled={PROSPECTION_MONITEURS_GELEE}
+              title={PROSPECTION_MONITEURS_GELEE ? MESSAGE_GEL_PROSPECTION : undefined}
+            >
               <Upload className="h-4 w-4 mr-2" /> BD ESF
             </Button>
-            <Button onClick={() => setFormOpen(true)}>
+            <Button
+              onClick={() => setFormOpen(true)}
+              disabled={PROSPECTION_MONITEURS_GELEE}
+              title={PROSPECTION_MONITEURS_GELEE ? MESSAGE_GEL_PROSPECTION : undefined}
+            >
               <Plus className="h-4 w-4 mr-2" /> Nouveau partenaire
             </Button>
           </div>
         </div>
+
+        {PROSPECTION_MONITEURS_GELEE && (
+          <Alert>
+            <Snowflake className="h-4 w-4" />
+            <AlertTitle>Base partenaires en lecture seule</AlertTitle>
+            <AlertDescription className="space-y-1 text-sm">
+              <p>{MESSAGE_GEL_PROSPECTION}</p>
+              <p className="text-muted-foreground">{MESSAGE_GEL_REACTIVATION}</p>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* KPIs */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
