@@ -28,6 +28,7 @@ import UserManagement from "./pages/admin/UserManagement";
 import EvaluationsList from "./pages/formateur/EvaluationsList";
 import EvaluationForm from "./pages/formateur/EvaluationForm";
 import EvaluationView from "./pages/formateur/EvaluationView";
+import EvaluationVerify from "./pages/formateur/EvaluationVerify";
 import Register from "./pages/register/Index";
 import { PaymentSuccessPage, PaymentCancelPage } from "./pages/register/PaymentReturn";
 import SatisfactionSurvey from "./pages/survey/SatisfactionSurvey";
@@ -108,6 +109,7 @@ const App = () => (
             <Route path="/admin/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
             <Route path="/admin/seasons" element={<ProtectedRoute><Seasons /></ProtectedRoute>} />
             <Route path="/formateur/evaluations" element={<ProtectedRoute><EvaluationsList /></ProtectedRoute>} />
+            <Route path="/formateur/evaluations/:id/verifier" element={<ProtectedRoute><EvaluationVerify /></ProtectedRoute>} />
             <Route path="/formateur/evaluation/:bookingId" element={<ProtectedRoute><EvaluationForm /></ProtectedRoute>} />
             <Route path="/formateur/evaluation/:bookingId/edit" element={<ProtectedRoute><EvaluationForm /></ProtectedRoute>} />
             <Route path="/formateur/evaluation-view/:evaluationId" element={<ProtectedRoute><EvaluationView /></ProtectedRoute>} />

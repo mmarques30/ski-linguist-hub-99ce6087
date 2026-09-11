@@ -356,6 +356,14 @@ export default function EvaluationForm() {
           </div>
         </div>
 
+        {existingEvaluation?.reviewer_comment && (
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Retour de vérification</AlertTitle>
+            <AlertDescription>{existingEvaluation.reviewer_comment}</AlertDescription>
+          </Alert>
+        )}
+
         <Card>
           <CardContent className="py-4">
             <div className="flex flex-wrap gap-6">
