@@ -15,8 +15,9 @@ export interface CreateUserInput {
   email: string;
   password: string;
   full_name: string;
-  role: "admin" | "user";
+  role: "admin" | "user" | "formateur";
   permissions: { route_key: string; can_view: boolean; can_edit: boolean }[];
+  instructor_id?: string;
 }
 
 export function useUserManagement() {

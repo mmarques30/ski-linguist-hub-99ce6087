@@ -263,7 +263,7 @@ export function AppSidebar() {
   const { toast } = useToast();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
-  const { isAdmin, canView, loading: permsLoading } = useUserPermissions();
+  const { isAdmin, isFormateur, canView } = useUserPermissions();
 
   const handleLogout = async () => {
     const { error } = await signOut();
@@ -279,7 +279,14 @@ export function AppSidebar() {
   };
 
   // Filter navigation groups based on permissions
-  const filteredGroups = navigationGroups
+  const filteredGroups = isFormateur
+    ? navigationGroups
+        .map((group) => ({
+          ...group,
+          items: group.items.filter((item) => item.href === "/formateur/evaluations"),
+        }))
+        .filter((group) => group.items.length > 0)
+    : navigationGroups
     .filter((group) => {
       // Administration only for admins
       if (group.label === "Administration") return isAdmin;
@@ -309,6 +316,7 @@ export function AppSidebar() {
 
       <SidebarContent className="scrollbar-thin">
         {/* Dashboard - standalone */}
+        {!isFormateur && (
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -335,6 +343,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        )}
 
         {/* Collapsible groups */}
         <SidebarGroup>
