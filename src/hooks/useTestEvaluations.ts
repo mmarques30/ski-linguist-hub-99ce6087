@@ -14,7 +14,6 @@ export function useTestBookingsToEvaluate() {
         .from("test_bookings_complete")
         .select("*")
         .eq("status", "completed")
-        .is("evaluation_id", null)
         .order("datetime", { ascending: false });
       
       if (error) throw error;
@@ -109,6 +108,13 @@ export interface CreateEvaluationData {
   score_conversation: number;
   scoring_system: 'sur_5' | 'sur_20';
   attestation_type: string;
+  status?: 'brouillon' | 'a_verifier' | 'valide' | 'envoye';
+  note_methodologique?: string | null;
+  cecrl_label?: string | null;
+  bloc_introduction?: string | null;
+  bloc_comprehension?: string | null;
+  bloc_technique?: string | null;
+  bloc_conclusion?: string | null;
   appreciation_intro?: string;
   appreciation_comprehension?: string;
   appreciation_grammar?: string;
@@ -140,19 +146,18 @@ export function useCreateTestEvaluation() {
         .single();
       
       if (error) throw error;
-
-      // Update booking status
-      await supabase
-        .from("test_bookings")
-        .update({ status: "evaluated" })
-        .eq("id", evaluation.booking_id);
-      
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["test-bookings-to-evaluate"] });
+      queryClient.invalidateQueries({ queryKey: ["completed-evaluations"] });
       queryClient.invalidateQueries({ queryKey: ["test-evaluation"] });
-      toast({ title: "Évaluation enregistrée avec succès" });
+      toast({
+        title:
+          data.status === "a_verifier"
+            ? "Évaluation soumise pour vérification"
+            : "Brouillon enregistré",
+      });
     },
     onError: (error: Error) => {
       toast({ 

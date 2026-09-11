@@ -36,6 +36,14 @@ export const CATEGORIES = [
   'conclusion'
 ] as const;
 
+/** Quatre blocs du compte-rendu C.3 (expression / grammaire restent en banque). */
+export const BLOC_CATEGORIES = [
+  'introduction',
+  'comprehension',
+  'technique',
+  'conclusion',
+] as const;
+
 export const CATEGORY_LABELS: Record<string, string> = {
   'introduction': 'Introduction',
   'comprehension': 'Compréhension',
@@ -92,9 +100,7 @@ export function scoreToLevel(score: number, system: 'sur_5' | 'sur_20'): string 
 
 export function compareLevels(level1: string, level2: string): number {
   const order = ['A1', 'A1+', 'A2', 'A2+', 'B1', 'B1+', 'B2', 'B2+', 'C1', 'C1+', 'C2'];
-  const cleanLevel1 = level1.replace('+', '');
-  const cleanLevel2 = level2.replace('+', '');
-  return order.indexOf(cleanLevel1) - order.indexOf(cleanLevel2);
+  return order.indexOf(level1) - order.indexOf(level2);
 }
 
 export function generateScoreOptions(system: 'sur_5' | 'sur_20'): number[] {

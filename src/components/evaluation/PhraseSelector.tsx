@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useTestPhrases, type TestPhrase } from "@/hooks/useTestPhrases";
 import { compareLevels, CATEGORY_LABELS } from "@/lib/evaluation-utils";
+import { hasTutoiement } from "@/lib/vouvoiement";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MessageSquare } from "lucide-react";
 
@@ -115,6 +116,11 @@ export function PhraseSelector({
                 >
                   {phrase.text_fr}
                 </label>
+                {hasTutoiement(phrase.text_fr) && (
+                  <Badge variant="destructive" className="ml-2 text-[10px]">
+                    tutoiement
+                  </Badge>
+                )}
                 {phrase.code && (
                   <span className="text-xs text-muted-foreground ml-2">
                     ({phrase.code})
