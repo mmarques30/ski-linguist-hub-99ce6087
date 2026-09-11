@@ -2,7 +2,7 @@
 
 Règle : noter ici, **ne pas corriger** tant que le point courant n’est pas validé.
 
-Dernière mise à jour : 2026-09-10 (point A2 — buckets `documents` et `funding-documents` privés).
+Dernière mise à jour : 2026-09-11 (8-minimal emails, en attente de clé Resend).
 
 ## Ouvert
 
@@ -43,4 +43,7 @@ Dernière mise à jour : 2026-09-10 (point A2 — buckets `documents` et `fundin
 | 3 — Formateurs | **Livré** |
 | 4A — Pistes | **Livré** |
 | Certificat bilan | **Livré** (vue + backfill live OK) |
-| 5–10 | Non démarrés |
+| A / A2 — buckets | **Livré** |
+| 5 — Gel prospection | Validé, fusion GitHub en cours |
+| 8-minimal emails | Préparé, attente `RESEND_API_KEY` |
+| 6, 7, 9, 10 | Non démarrés |

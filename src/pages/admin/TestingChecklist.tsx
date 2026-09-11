@@ -18,6 +18,7 @@ import {
   ChevronUp
 } from "lucide-react";
 import { toast } from "sonner";
+import { Emails8MinimalCard } from "@/components/admin/Emails8MinimalCard";
 
 interface TestItem {
   id: string;
@@ -305,6 +306,8 @@ export default function TestingChecklist() {
             </Button>
           </div>
         </div>
+
+        <Emails8MinimalCard />
 
         {/* Summary Card */}
         <Card>
