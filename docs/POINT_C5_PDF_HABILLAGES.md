@@ -31,12 +31,16 @@ note méthodologique, grille cinq compétences + appréciation générale au for
 ## Stockage
 
 Bucket privé `evaluation-pdfs`. `test_evaluations.pdf_url` = chemin
-`evaluations/<id>.pdf` (URL signée, pas d'objet public). Statut `envoye` après
-génération. Pas de courriel inventé.
+`evaluations/<id>.pdf` (URL signée, pas d'objet public).
+
+La génération pose `pdf_url` + `pdf_generated_at` et **laisse le statut `valide`**.
+`envoye` et `sent_at` uniquement quand le courriel au candidat ou au commanditaire
+est réellement parti — pas encore possible (aucun corps inventé).
 
 `attestation_type` est **supprimé**. `attestation_url` reste (copie du chemin).
 
-Le formateur ne peut pas poser `envoye`. Staff / `service_role` seulement.
+Le formateur ne peut pas poser `envoye`. Staff / `service_role` seulement, et
+`sent_at` est obligatoire pour `envoye`.
 
 Les réservations DSF restent invisibles au candidat (`test_booking_is_dsf`).
 
@@ -52,7 +56,9 @@ DELETE FROM public.app_settings WHERE key IN ('evaluation_price_ttc', 'fli_ident
 ALTER TABLE public.test_evaluations
   ADD COLUMN IF NOT EXISTS attestation_type text;
 ALTER TABLE public.test_evaluations
-  DROP COLUMN IF EXISTS pdf_url;
+  DROP COLUMN IF EXISTS pdf_url,
+  DROP COLUMN IF EXISTS pdf_generated_at,
+  DROP COLUMN IF EXISTS sent_at;
 DROP POLICY IF EXISTS "rls_evaluation_pdfs_select_staff" ON storage.objects;
 DROP POLICY IF EXISTS "rls_evaluation_pdfs_insert_staff" ON storage.objects;
 DROP POLICY IF EXISTS "rls_evaluation_pdfs_update_staff" ON storage.objects;

@@ -224,7 +224,10 @@ export function useGenerateEvaluationPdf() {
       queryClient.invalidateQueries({ queryKey: ["test-evaluation"] });
       queryClient.invalidateQueries({ queryKey: ["evaluation-with-booking"] });
       queryClient.invalidateQueries({ queryKey: ["completed-evaluations"] });
-      toast({ title: "PDF enregistré", description: `Habillage ${data.habillage}` });
+      toast({
+        title: "PDF enregistré",
+        description: "Le statut reste validé tant que le courriel n'est pas parti.",
+      });
       if (data.signedUrl) {
         window.open(data.signedUrl, "_blank", "noopener,noreferrer");
       }

@@ -80,7 +80,7 @@ export default function EvaluationView() {
                   disabled={generatePdf.isPending}
                 >
                   <FileDown className="h-4 w-4 mr-2" />
-                  {evaluation.status === "envoye" ? "Regénérer le PDF" : "Générer le PDF"}
+                  {evaluation.pdf_url ? "Regénérer le PDF" : "Générer le PDF"}
                 </Button>
               )}
             {evaluation.pdf_url && (

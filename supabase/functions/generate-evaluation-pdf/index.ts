@@ -1,8 +1,8 @@
 /**
  * Génère le PDF d'évaluation (habillage = sponsor_type), le dépose dans
- * le bucket privé evaluation-pdfs, pose pdf_url et passe le statut à envoye.
- *
- * Aucun corps d'e-mail n'est inventé : stockage + statut seulement.
+ * le bucket privé evaluation-pdfs, pose pdf_url et pdf_generated_at.
+ * Le statut reste valide. envoye + sent_at uniquement après un envoi e-mail réel
+ * (pas encore possible : aucun courriel inventé).
  * Paula déploie la fonction ; ne pas sonder 403/404.
  */
 
@@ -202,12 +202,11 @@ Deno.serve(async (req) => {
       .update({
         pdf_url: path,
         attestation_url: path,
-        attestation_sent_at: now,
-        status: "envoye",
+        pdf_generated_at: now,
       })
       .eq("id", evaluationId);
     if (updateErr) {
-      return json(500, { error: "Mise à jour du statut impossible" });
+      return json(500, { error: "Enregistrement du PDF impossible" });
     }
 
     const { data: signed } = await admin.storage
@@ -222,7 +221,8 @@ Deno.serve(async (req) => {
       new_values: {
         habillage: model.habillage,
         bucket: BUCKET,
-        status: "envoye",
+        status: evaluation.status,
+        pdf_generated_at: now,
         show_price: model.showPrice,
         caller_is_staff: true,
       },
@@ -234,7 +234,8 @@ Deno.serve(async (req) => {
       title: model.title,
       path,
       signedUrl: signed?.signedUrl ?? null,
-      status: "envoye",
+      status: evaluation.status,
+      pdf_generated_at: now,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Erreur interne";
