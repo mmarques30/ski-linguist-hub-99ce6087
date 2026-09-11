@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { assertProspectionNonGelee } from "@/lib/prospection-gel";
 
 export type IntakeStatus = "brouillon" | "confirme" | "ouvert" | "complet" | "annule";
 
@@ -107,6 +108,10 @@ export function useSendIntakeOutreach() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ intakeId, dryRun = false }: { intakeId: string; dryRun?: boolean }) => {
+      // Le refus fait autorité côté serveur (403 de l'edge function) ; ce
+      // garde-fou évite d'exposer la liste nominative des destinataires même
+      // en simulation.
+      assertProspectionNonGelee();
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Non authentifié");
 

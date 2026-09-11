@@ -6,6 +6,7 @@ import {
   scoreEsfPartnerNameMatch,
 } from "@/lib/esf-directors-csv-import";
 import { Partner } from "@/hooks/usePartners";
+import { assertProspectionNonGelee } from "@/lib/prospection-gel";
 
 export interface EsfDirectorsImportResult {
   created: number;
@@ -25,6 +26,7 @@ export function useEsfDirectorsImport() {
 
   return useMutation({
     mutationFn: async (rows: ParsedEsfDirectorRow[]): Promise<EsfDirectorsImportResult> => {
+      assertProspectionNonGelee();
       const result: EsfDirectorsImportResult = {
         created: 0,
         updated: 0,

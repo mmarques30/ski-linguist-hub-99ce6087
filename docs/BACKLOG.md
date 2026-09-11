@@ -2,7 +2,7 @@
 
 Règle : noter ici, **ne pas corriger** tant que le point courant n’est pas validé.
 
-Dernière mise à jour : 2026-09-11 (8-minimal emails, en attente de clé Resend).
+Dernière mise à jour : 2026-09-11 (gel + RGPD sur main ; 8-minimal emails, attente clé Resend).
 
 ## Ouvert
 
@@ -10,7 +10,6 @@ Dernière mise à jour : 2026-09-11 (8-minimal emails, en attente de clé Resend
 |----|---------|----------|
 | BL-001 | Cartes FLI import sans dry-run/audit alignés `/admin/import` | Avant point 9 |
 | BL-002 | `entry_level` corrompus historiques | SQL |
-| BL-006 | Outreach sans unsubscribe | Point 5 |
 | BL-007 | Crons `pg_net` | Point 8 |
 | BL-008 | STRIPE_SETUP obsolète | Point 6 |
 | BL-009 | Docs « purger toutes les données » | Faible |
@@ -33,6 +32,7 @@ Dernière mise à jour : 2026-09-11 (8-minimal emails, en attente de clé Resend
 | BL-013 | Statut `candidat` |
 | BL-018 | Mapping certificat→piste remplacé par bilan Entrée/Sortie |
 | BL-021 | Bucket `documents` privé — point A2, `docs/SECURITE_A2_BUCKET_DOCUMENTS.md` |
+| BL-006 | Outreach sans unsubscribe — traité par le gel, point 5, `docs/GEL_PROSPECTION_MONITEURS.md`. Condition de réouverture vérifiée à l'exécution. |
 
 ## Validations points
 
@@ -43,7 +43,8 @@ Dernière mise à jour : 2026-09-11 (8-minimal emails, en attente de clé Resend
 | 3 — Formateurs | **Livré** |
 | 4A — Pistes | **Livré** |
 | Certificat bilan | **Livré** (vue + backfill live OK) |
-| A / A2 — buckets | **Livré** |
-| 5 — Gel prospection | Validé, fusion GitHub en cours |
+| A — `test_evaluations` + certificats | **Livré** — `docs/SECURITE_A_TEST_EVALUATIONS.md` |
+| A2 — buckets privés | **Livré** — `docs/SECURITE_A2_BUCKET_DOCUMENTS.md` |
+| 5 — Gel prospection moniteurs | Fusionné main (PR #18) — `docs/GEL_PROSPECTION_MONITEURS.md` |
 | 8-minimal emails | Préparé, attente `RESEND_API_KEY` |
 | 6, 7, 9, 10 | Non démarrés |

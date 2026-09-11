@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { assertProspectionNonGelee } from "@/lib/prospection-gel";
 
 export interface SkiMonitor {
   id: string;
@@ -76,6 +77,7 @@ export function useCreateSkiMonitor() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (monitor: Omit<SkiMonitor, "id" | "created_at" | "updated_at">) => {
+      assertProspectionNonGelee();
       const { data, error } = await supabase.from("ski_monitors").insert(monitor).select().single();
       if (error) throw error;
       return data;
@@ -91,6 +93,7 @@ export function useUpdateSkiMonitor() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<SkiMonitor> & { id: string }) => {
+      assertProspectionNonGelee();
       const { data, error } = await supabase.from("ski_monitors").update(updates).eq("id", id).select().single();
       if (error) throw error;
       return data;
@@ -106,6 +109,7 @@ export function useDeleteSkiMonitor() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
+      assertProspectionNonGelee();
       const { error } = await supabase.from("ski_monitors").delete().eq("id", id);
       if (error) throw error;
     },
@@ -128,6 +132,7 @@ export function useImportSkiMonitors() {
       status: "active" | "unsubscribed";
       notes: string | null;
     }>) => {
+      assertProspectionNonGelee();
       const BATCH = 150;
       let imported = 0;
       const errors: string[] = [];

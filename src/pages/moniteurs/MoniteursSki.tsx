@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Plus, Search, Calendar, MapPin, Users, Mail, Send,
-  Building2, Globe, Lock, Upload,
+  Building2, Globe, Lock, Upload, Snowflake,
 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
@@ -25,6 +26,11 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  MESSAGE_GEL_PROSPECTION,
+  MESSAGE_GEL_REACTIVATION,
+  PROSPECTION_MONITEURS_GELEE,
+} from "@/lib/prospection-gel";
 
 function IntakeCard({
   intake,
@@ -86,14 +92,20 @@ function IntakeCard({
           )}
         </div>
 
-        <div className="flex gap-2 pt-1">
+        <div className="flex flex-wrap items-center gap-2 pt-1">
           <Button variant="outline" size="sm" onClick={onEdit}>Modifier</Button>
-          {["confirme", "ouvert"].includes(intake.status) && (
-            <Button size="sm" onClick={onSend} disabled={sending}>
-              <Send className="h-3.5 w-3.5 mr-1" />
-              {intake.outreach_sent_at ? "Renvoyer" : "Informer les moniteurs"}
-            </Button>
-          )}
+          {["confirme", "ouvert"].includes(intake.status) &&
+            (PROSPECTION_MONITEURS_GELEE ? (
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <Snowflake className="h-3.5 w-3.5" />
+                Envoi gelé
+              </span>
+            ) : (
+              <Button size="sm" onClick={onSend} disabled={sending}>
+                <Send className="h-3.5 w-3.5 mr-1" />
+                {intake.outreach_sent_at ? "Renvoyer" : "Informer les moniteurs"}
+              </Button>
+            ))}
         </div>
       </CardContent>
     </Card>
@@ -134,6 +146,17 @@ export default function MoniteursSki() {
             Base de contacts et dates de formation fermées avec les écoles de ski
           </p>
         </div>
+
+        {PROSPECTION_MONITEURS_GELEE && (
+          <Alert>
+            <Snowflake className="h-4 w-4" />
+            <AlertTitle>Prospection moniteurs gelée</AlertTitle>
+            <AlertDescription className="space-y-1 text-sm">
+              <p>{MESSAGE_GEL_PROSPECTION}</p>
+              <p className="text-muted-foreground">{MESSAGE_GEL_REACTIVATION}</p>
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatCard title="Moniteurs actifs" value={stats?.active || 0} subtitle={`${stats?.total || 0} au total`} icon={Users} />
@@ -194,10 +217,19 @@ export default function MoniteursSki() {
                   onChange={(e) => setSearchMonitors(e.target.value)}
                 />
               </div>
-              <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <Button
+                variant="outline"
+                onClick={() => setImportOpen(true)}
+                disabled={PROSPECTION_MONITEURS_GELEE}
+                title={PROSPECTION_MONITEURS_GELEE ? MESSAGE_GEL_PROSPECTION : undefined}
+              >
                 <Upload className="h-4 w-4 mr-2" /> Importer CSV
               </Button>
-              <Button onClick={() => { setEditMonitor(null); setMonitorFormOpen(true); }}>
+              <Button
+                onClick={() => { setEditMonitor(null); setMonitorFormOpen(true); }}
+                disabled={PROSPECTION_MONITEURS_GELEE}
+                title={PROSPECTION_MONITEURS_GELEE ? MESSAGE_GEL_PROSPECTION : undefined}
+              >
                 <Plus className="h-4 w-4 mr-2" /> Ajouter un moniteur
               </Button>
             </div>
@@ -227,8 +259,12 @@ export default function MoniteursSki() {
                     {monitors.map((m) => (
                       <tr
                         key={m.id}
-                        className="border-t hover:bg-muted/30 cursor-pointer"
-                        onClick={() => { setEditMonitor(m); setMonitorFormOpen(true); }}
+                        className={`border-t hover:bg-muted/30 ${PROSPECTION_MONITEURS_GELEE ? "" : "cursor-pointer"}`}
+                        onClick={
+                          PROSPECTION_MONITEURS_GELEE
+                            ? undefined
+                            : () => { setEditMonitor(m); setMonitorFormOpen(true); }
+                        }
                       >
                         <td className="p-3 font-medium">{m.first_name} {m.last_name}</td>
                         <td className="p-3 text-muted-foreground">{m.email}</td>
@@ -286,9 +322,11 @@ export default function MoniteursSki() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={() => handleSend(false)} disabled={sendOutreach.isPending}>
-              Envoyer les emails
-            </AlertDialogAction>
+            {!PROSPECTION_MONITEURS_GELEE && (
+              <AlertDialogAction onClick={() => handleSend(false)} disabled={sendOutreach.isPending}>
+                Envoyer les emails
+              </AlertDialogAction>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

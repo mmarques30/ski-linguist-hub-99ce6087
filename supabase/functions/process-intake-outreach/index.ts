@@ -1,4 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  outreachFreezeState,
+  verifierConformiteRgpd,
+} from "../_shared/outreach-freeze.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -73,6 +77,16 @@ async function sendEmail(
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Gel de la prospection : refus avant toute lecture de la base moniteurs,
+  // y compris en dry_run (un dry_run renvoie la liste nominative des destinataires).
+  const freeze = outreachFreezeState(Deno.env);
+  if (freeze.frozen) {
+    return new Response(
+      JSON.stringify({ success: false, frozen: true, error: freeze.message }),
+      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 
   try {
@@ -210,6 +224,26 @@ Deno.serve(async (req) => {
         const html = template
           ? applyTemplate(template.body_fr, variables)
           : `<p>Bonjour ${monitor.first_name}, une formation ${intake.language} est ouverte à ${intake.location}.</p>`;
+
+        // Condition de réouverture non négociable : pas un email sans lien de
+        // désinscription ni mention RGPD. Le contrôle est déterministe sur le
+        // gabarit, donc il échoue avant le premier envoi.
+        const conformite = verifierConformiteRgpd(html);
+        if (!conformite.conforme) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error:
+                "Envoi refusé : " +
+                conformite.manquants.join(", ") +
+                " absent(s) du gabarit intake_monitor_outreach. " +
+                "Aucun email ne peut partir sans lien de désinscription ni mention RGPD.",
+              manquants: conformite.manquants,
+              sentBeforeAbort: results.sent,
+            }),
+            { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
 
         const ok = await sendEmail(resendApiKey, monitor.email, subject, html);
 
