@@ -12,6 +12,7 @@ import {
   shouldSendSkiMonitorOnlineWelcomeDocuments,
   SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS,
 } from "../_shared/ski-monitor-welcome-documents.ts";
+import { applyEmailTemplate, sendFliEmail } from "../_shared/fli-email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -102,38 +103,6 @@ function parseDurationHours(duration?: string): number | null {
   return match ? Number(match[1]) : null;
 }
 
-function applyTemplate(template: string, variables: Record<string, string>): string {
-  return Object.entries(variables).reduce(
-    (html, [key, value]) => html.replaceAll(`{{${key}}}`, value),
-    template
-  );
-}
-
-async function sendEmail(
-  resendApiKey: string,
-  to: string,
-  subject: string,
-  html: string,
-  attachments?: Array<{ filename: string; content: string }>
-): Promise<boolean> {
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${resendApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: "FLI Formation <noreply@fli.fr>",
-      to: [to],
-      subject,
-      html,
-      ...(attachments?.length ? { attachments } : {}),
-    }),
-  });
-
-  return response.ok;
-}
-
 async function sendSkiMonitorWelcomeDocuments(params: {
   resendApiKey: string;
   supabase: ReturnType<typeof createClient>;
@@ -159,14 +128,20 @@ async function sendSkiMonitorWelcomeDocuments(params: {
   };
 
   const subject = template
-    ? applyTemplate(template.subject_fr, variables)
+    ? applyEmailTemplate(template.subject_fr, variables)
     : `Vos documents d'inscription FLI — ${language}`;
   const html = template
-    ? applyTemplate(template.body_fr, variables)
+    ? applyEmailTemplate(template.body_fr, variables)
     : `<p>Bonjour ${studentName},</p><p>Veuillez trouver ci-joint vos documents d'inscription FLI.</p>`;
 
   const attachments = await buildSkiMonitorWelcomeAttachments();
-  const sent = await sendEmail(resendApiKey, email, subject, html, attachments);
+  const sent = (await sendFliEmail({
+    resendApiKey,
+    to: email,
+    subject,
+    html,
+    attachments,
+  })).ok;
 
   for (const doc of SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS) {
     await supabase.from("document_sendings").insert({
@@ -491,9 +466,9 @@ Deno.serve(async (req) => {
       };
 
       if (template) {
-        const subject = applyTemplate(template.subject_fr, variables);
-        const html = applyTemplate(template.body_fr, variables);
-        emailSent = await sendEmail(resendApiKey, email, subject, html);
+        const subject = applyEmailTemplate(template.subject_fr, variables);
+        const html = applyEmailTemplate(template.body_fr, variables);
+        emailSent = (await sendFliEmail({ resendApiKey, to: email, subject, html })).ok;
 
         await supabase.from("email_log").insert({
           template_slug: "inscription_confirmation",
@@ -526,7 +501,7 @@ Deno.serve(async (req) => {
         const adminHtml = `<p>Le stagiaire <strong>${studentName}</strong> (${email}) nécessite un contact téléphonique suite au test de niveau.</p>
           <p>Code inscription: <strong>${inscription.code}</strong></p>
           <p>Merci de le contacter par téléphone.</p>`;
-        await sendEmail(resendApiKey, ADMIN_EMAIL, adminSubject, adminHtml);
+        await sendFliEmail({ resendApiKey, to: ADMIN_EMAIL, subject: adminSubject, html: adminHtml });
       }
 
       if (isCustomFormat) {
@@ -536,7 +511,7 @@ Deno.serve(async (req) => {
           <p>Langue: ${language} · Lieu: ${courseLocation || "—"}</p>
           <p><strong>Projet décrit:</strong></p>
           <p>${(registration.customFormatDetails || "").replace(/\n/g, "<br>")}</p>`;
-        await sendEmail(resendApiKey, ADMIN_EMAIL, adminSubject, adminHtml);
+        await sendFliEmail({ resendApiKey, to: ADMIN_EMAIL, subject: adminSubject, html: adminHtml });
       }
 
       const { data: adminUsers } = await supabase
