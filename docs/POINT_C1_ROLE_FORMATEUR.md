@@ -51,7 +51,25 @@ L’enrichissement de l’e-mail de confirmation (lieu, modalité, piste, ligne 
 - PDF trois habillages (C.5)
 - export xlsx (C.6)
 
-## 5. Retour arrière (down)
+## 5. Preuve live (2026-09-11)
+
+Jeu ZZTEST (`@example.invalid`), usurpation `SET ROLE authenticated` + `request.jwt.claims.sub`, puis suppression.
+
+| Contrôle | Vu | Attendu |
+|----------|----|---------|
+| `is_formateur()` | true | true |
+| `is_staff()` | false | false |
+| `test_evaluations` | 1 | 1 (la sienne) |
+| `test_bookings` | 2 | 2 (les siennes) |
+| `test_bookings_complete` | 2 | 2 (`security_invoker`) |
+| `instructors` | 1 | sa fiche |
+| `INSERT` sur son booking | 1 ligne | autorisé |
+| `INSERT` sur le booking d’un autre | `42501` RLS | refus |
+| `UPDATE` l’évaluation d’un autre | 0 | 0 |
+
+Sujet J-10 en base : `Validation des horaires J-10 — {{total_count}} inscription(s)`.
+
+## 6. Retour arrière (down)
 
 L’enum `formateur` ne peut pas être retiré (limitation PostgreSQL). Ne pas exécuter en production sans validation.
 
