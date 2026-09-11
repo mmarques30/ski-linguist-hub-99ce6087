@@ -1,4 +1,5 @@
 import { writeFile, mkdir } from "node:fs/promises";
+import { inflateSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 import { PDFDocument } from "pdf-lib";
 import {
@@ -11,6 +12,26 @@ import {
   type EvaluationPdfInput,
 } from "./evaluation-pdf";
 import { renderEvaluationPdf } from "./evaluation-pdf-render";
+
+function pdfVisibleText(bytes: Uint8Array): string {
+  const latin = Buffer.from(bytes).toString("latin1");
+  const chunks: string[] = [];
+  const re = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(latin))) {
+    const payload = Buffer.from(match[1], "latin1");
+    try {
+      chunks.push(inflateSync(payload).toString("latin1"));
+    } catch {
+      chunks.push(payload.toString("latin1"));
+    }
+  }
+  return chunks
+    .join("\n")
+    .replace(/<([0-9A-Fa-f]+)>/g, (_, hex: string) =>
+      Buffer.from(hex, "hex").toString("latin1")
+    );
+}
 
 const identity = DEFAULT_FLI_IDENTITY;
 
@@ -103,8 +124,8 @@ describe("octets PDF", () => {
       expect(bytes.byteLength).toBeGreaterThan(1000);
       const doc = await PDFDocument.load(bytes);
       expect(doc.getPageCount()).toBeGreaterThanOrEqual(1);
-      const ascii = Buffer.from(bytes).toString("latin1");
-      expect(ascii).toContain("%PDF");
+      const ascii = pdfVisibleText(bytes);
+      expect(Buffer.from(bytes).toString("latin1")).toContain("%PDF");
       expect(ascii).toContain("ZZTEST CandidatC5");
       if (sponsor === "dsf") {
         expect(ascii).toContain("Entreprise");
