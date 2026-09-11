@@ -107,7 +107,6 @@ export interface CreateEvaluationData {
   score_technique: number;
   score_conversation: number;
   scoring_system: 'sur_5' | 'sur_20';
-  attestation_type: string;
   status?: 'brouillon' | 'a_verifier' | 'valide' | 'envoye';
   note_methodologique?: string | null;
   cecrl_label?: string | null;
@@ -196,6 +195,48 @@ export function useUpdateTestEvaluation() {
         variant: "destructive", 
         title: "Erreur", 
         description: error.message 
+      });
+    },
+  });
+}
+
+export function useGenerateEvaluationPdf() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (evaluationId: string) => {
+      const { data, error } = await supabase.functions.invoke(
+        "generate-evaluation-pdf",
+        { body: { evaluationId } }
+      );
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data as {
+        ok: boolean;
+        path: string;
+        signedUrl: string | null;
+        status: string;
+        habillage: string;
+      };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["test-evaluation"] });
+      queryClient.invalidateQueries({ queryKey: ["evaluation-with-booking"] });
+      queryClient.invalidateQueries({ queryKey: ["completed-evaluations"] });
+      toast({
+        title: "PDF enregistré",
+        description: "Le statut reste validé tant que le courriel n'est pas parti.",
+      });
+      if (data.signedUrl) {
+        window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Génération PDF",
+        description: error.message,
       });
     },
   });

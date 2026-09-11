@@ -3061,8 +3061,10 @@ export type Database = {
           appreciation_intro: string | null
           appreciation_technique: string | null
           attestation_sent_at: string | null
-          attestation_type: string
           attestation_url: string | null
+          pdf_generated_at: string | null
+          pdf_url: string | null
+          sent_at: string | null
           bloc_comprehension: string | null
           bloc_conclusion: string | null
           bloc_introduction: string | null
@@ -3103,8 +3105,10 @@ export type Database = {
           appreciation_intro?: string | null
           appreciation_technique?: string | null
           attestation_sent_at?: string | null
-          attestation_type: string
           attestation_url?: string | null
+          pdf_generated_at?: string | null
+          pdf_url?: string | null
+          sent_at?: string | null
           bloc_comprehension?: string | null
           bloc_conclusion?: string | null
           bloc_introduction?: string | null
@@ -3144,8 +3148,10 @@ export type Database = {
           appreciation_intro?: string | null
           appreciation_technique?: string | null
           attestation_sent_at?: string | null
-          attestation_type?: string
           attestation_url?: string | null
+          pdf_generated_at?: string | null
+          pdf_url?: string | null
+          sent_at?: string | null
           bloc_comprehension?: string | null
           bloc_conclusion?: string | null
           bloc_introduction?: string | null
@@ -3401,6 +3407,8 @@ export type Database = {
           instructor_name: string | null
           language: string | null
           payment_type: string | null
+          pdf_generated_at: string | null
+          pdf_url: string | null
           previous_result: string | null
           previous_test: boolean | null
           score_general: number | null
@@ -3412,6 +3420,7 @@ export type Database = {
           status: string | null
           stripe_payment_id: string | null
           student_id: string | null
+          sent_at: string | null
         }
         Relationships: [
           {
