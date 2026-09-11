@@ -37,11 +37,10 @@ export function EvaluationPDFPreview({ evaluation, booking }: EvaluationPDFPrevi
   ];
 
   const appreciations = [
-    { label: "Introduction", text: evaluation.appreciation_intro },
-    { label: "Compréhension", text: evaluation.appreciation_comprehension },
-    { label: "Grammaire", text: evaluation.appreciation_grammar },
-    { label: "Technique", text: evaluation.appreciation_technique },
-    { label: "Conclusion", text: evaluation.appreciation_conclusion },
+    { label: "Introduction", text: evaluation.bloc_introduction || evaluation.appreciation_intro },
+    { label: "Compréhension", text: evaluation.bloc_comprehension || evaluation.appreciation_comprehension },
+    { label: "Technique", text: evaluation.bloc_technique || evaluation.appreciation_technique },
+    { label: "Conclusion", text: evaluation.bloc_conclusion || evaluation.appreciation_conclusion },
   ].filter(a => a.text);
 
   return (

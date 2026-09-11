@@ -235,14 +235,17 @@ export type Database = {
       }
       cecrl_scale: {
         Row: {
+          base_label: string
           cecrl_label: string
           score: number
         }
         Insert: {
+          base_label: string
           cecrl_label: string
           score: number
         }
         Update: {
+          base_label?: string
           cecrl_label?: string
           score?: number
         }
@@ -3380,6 +3383,7 @@ export type Database = {
           created_at: string | null
           datetime: string | null
           evaluation_id: string | null
+          evaluation_status: string | null
           google_event_id: string | null
           google_meet_link: string | null
           id: string | null
@@ -3427,6 +3431,7 @@ export type Database = {
     }
     Functions: {
       cecrl_label_from_score: { Args: { _score: number }; Returns: string }
+      dsf_partner_id: { Args: never; Returns: string }
       cleanup_zztest_data: { Args: { _dry_run?: boolean }; Returns: Json }
       activate_season: { Args: { p_season_id: string }; Returns: undefined }
       generate_inscription_code: { Args: never; Returns: string }

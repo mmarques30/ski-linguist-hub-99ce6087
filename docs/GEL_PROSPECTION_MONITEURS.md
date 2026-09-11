@@ -84,6 +84,12 @@ La migration comporte néanmoins deux boucles défensives et idempotentes :
 Elles couvrent le cas d'un déclenchement ajouté hors dépôt, depuis la console
 Supabase. Les déclencheurs `set_*_updated_at` sont conservés : ils n'envoient rien.
 
+**Exception C.3 (journalisée)** : une seule ligne `partners` a été créée malgré le gel,
+`type = dsf`, nom « Domaines Skiables de France », pour servir de commanditaire aux
+réservations DSF (`test_bookings.sponsor_id`). Le déclencheur a été désactivé le
+temps de l'INSERT, puis rétabli. Toute autre écriture sur `partners` reste refusée.
+Voir `docs/POINT_C3_SAISIE_FORMATEUR.md` et `audit_log.action = 'exception_gel_partenaire_dsf'`.
+
 ### 2.5 Back-office
 
 | Écran | Effet |

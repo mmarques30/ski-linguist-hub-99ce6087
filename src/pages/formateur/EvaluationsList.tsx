@@ -25,12 +25,19 @@ import {
   Edit,
   QrCode
 } from "lucide-react";
-import { useTestBookingsToEvaluate, useCompletedEvaluations } from "@/hooks/useTestEvaluations";
-import { LANGUAGE_FLAGS, LANGUAGE_LABELS, scoreToLevel } from "@/lib/evaluation-utils";
+import { useTestBookingsToEvaluate } from "@/hooks/useTestEvaluations";
+import { LANGUAGE_FLAGS, LANGUAGE_LABELS } from "@/lib/evaluation-utils";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { SurveyQRCodeDialog } from "@/components/survey/SurveyQRCodeDialog";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+
+const EVAL_STATUS_LABEL: Record<string, string> = {
+  brouillon: "Brouillon",
+  a_verifier: "À vérifier",
+  valide: "Validée",
+  envoye: "Envoyée",
+};
 
 export default function EvaluationsList() {
   const navigate = useNavigate();
@@ -39,12 +46,17 @@ export default function EvaluationsList() {
   const { canEdit, isFormateur } = useUserPermissions();
   const editable = canEdit("evaluations");
   
-  const { data: pendingBookings, isLoading: pendingLoading, refetch: refetchPending } = useTestBookingsToEvaluate();
-  const { data: completedBookings, isLoading: completedLoading, refetch: refetchCompleted } = useCompletedEvaluations();
+  const { data: allCompleted, isLoading: pendingLoading, refetch: refetchPending } = useTestBookingsToEvaluate();
+  const completedLoading = pendingLoading;
+  const pendingBookings = allCompleted?.filter(
+    (b) => !b.evaluation_id || b.evaluation_status === "brouillon"
+  );
+  const completedBookings = allCompleted?.filter(
+    (b) => b.evaluation_status && b.evaluation_status !== "brouillon"
+  );
 
   const handleRefresh = () => {
     refetchPending();
-    refetchCompleted();
   };
 
   return (
@@ -208,17 +220,28 @@ export default function EvaluationsList() {
                             </Badge>
                           </TableCell>
                           <TableCell>
+                            <div className="flex gap-2">
+                              {booking.evaluation_status && (
+                                <Badge variant={booking.evaluation_status === "brouillon" ? "secondary" : "default"}>
+                                  {EVAL_STATUS_LABEL[booking.evaluation_status] ?? booking.evaluation_status}
+                                </Badge>
+                              )}
                             {editable ? (
                               <Button
                                 size="sm"
-                                onClick={() => navigate(`/formateur/evaluation/${booking.id}`)}
+                                onClick={() => navigate(
+                                  booking.evaluation_id
+                                    ? `/formateur/evaluation/${booking.id}/edit`
+                                    : `/formateur/evaluation/${booking.id}`
+                                )}
                               >
-                                Évaluer
+                                {booking.evaluation_id ? "Continuer" : "Évaluer"}
                                 <ChevronRight className="h-4 w-4 ml-1" />
                               </Button>
                             ) : (
                               <Badge variant="secondary">En attente</Badge>
                             )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
@@ -305,6 +328,9 @@ export default function EvaluationsList() {
                             {booking.score_general !== null && (
                               <Badge variant="default">
                                 {booking.score_general}
+                                {booking.evaluation_status
+                                  ? ` · ${EVAL_STATUS_LABEL[booking.evaluation_status] ?? booking.evaluation_status}`
+                                  : ""}
                               </Badge>
                             )}
                           </TableCell>
