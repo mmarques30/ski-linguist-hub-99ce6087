@@ -3378,6 +3378,7 @@ export type Database = {
       }
     }
     Functions: {
+      cleanup_zztest_data: { Args: { _dry_run?: boolean }; Returns: Json }
       activate_season: { Args: { p_season_id: string }; Returns: undefined }
       generate_inscription_code: { Args: never; Returns: string }
       get_fiscal_year: { Args: { invoice_date: string }; Returns: string }
