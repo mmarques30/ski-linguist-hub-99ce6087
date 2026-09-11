@@ -47,9 +47,22 @@ export function applyEmailTemplate(
   );
 }
 
+import {
+  FLI_PLACEHOLDER_EMAIL_DOMAIN,
+  isFliPlaceholderEmail,
+} from "./email-guards.ts";
+
 export async function sendFliEmail(
   input: SendFliEmailInput
 ): Promise<SendFliEmailResult> {
+  if (isFliPlaceholderEmail(input.to)) {
+    return {
+      ok: false,
+      skipped: true,
+      error: `Adresse @${FLI_PLACEHOLDER_EMAIL_DOMAIN} exclue de tout envoi.`,
+    };
+  }
+
   if (!input.resendApiKey) {
     return {
       ok: false,

@@ -9,9 +9,15 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useInviteStudentPortal } from "@/hooks/useInviteStudentPortal";
+import {
+  STUDENT_PORTAL_IN_SEASON_SCOPE,
+  isFliPlaceholderEmail,
+} from "@/lib/email-guards";
+import { MassEmailConfirmDialog } from "@/components/email/MassEmailConfirmDialog";
 
 export function PortalInvitesBulkCard() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const invitePortal = useInviteStudentPortal();
 
   const { data: candidates = [], isLoading } = useQuery({
@@ -26,9 +32,14 @@ export function PortalInvitesBulkCard() {
         .limit(200);
 
       if (error) throw error;
-      return data;
+      return (data ?? []).filter((s) => !isFliPlaceholderEmail(s.email));
     },
+    enabled: STUDENT_PORTAL_IN_SEASON_SCOPE,
   });
+
+  if (!STUDENT_PORTAL_IN_SEASON_SCOPE) {
+    return null;
+  }
 
   const allSelected = candidates.length > 0 && selectedIds.size === candidates.length;
 
@@ -51,7 +62,7 @@ export function PortalInvitesBulkCard() {
 
   const selectedCount = selectedIds.size;
 
-  const handleInvite = async () => {
+  const sendInvites = async () => {
     if (!selectedCount) {
       toast.error("Sélectionnez au moins un stagiaire");
       return;
@@ -61,6 +72,7 @@ export function PortalInvitesBulkCard() {
       const result = await invitePortal.mutateAsync({
         studentIds: Array.from(selectedIds),
         sendEmail: true,
+        confirmedCount: selectedCount,
       });
       toast.success(
         `${result.succeeded} invitation(s) envoyée(s)${
@@ -70,7 +82,21 @@ export function PortalInvitesBulkCard() {
       setSelectedIds(new Set());
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erreur lors de l'envoi");
+    } finally {
+      setConfirmOpen(false);
     }
+  };
+
+  const handleInviteClick = () => {
+    if (!selectedCount) {
+      toast.error("Sélectionnez au moins un stagiaire");
+      return;
+    }
+    if (selectedCount > 1) {
+      setConfirmOpen(true);
+      return;
+    }
+    void sendInvites();
   };
 
   return (
@@ -88,7 +114,7 @@ export function PortalInvitesBulkCard() {
         <Alert>
           <AlertDescription className="text-sm">
             Chaque stagiaire reçoit un email avec un lien sécurisé. Un compte est créé automatiquement
-            s&apos;il n&apos;existe pas encore.
+            s&apos;il n&apos;existe pas encore. Les adresses @fli.placeholder sont exclues.
           </AlertDescription>
         </Alert>
 
@@ -135,7 +161,7 @@ export function PortalInvitesBulkCard() {
             <Button
               type="button"
               disabled={!selectedCount || invitePortal.isPending}
-              onClick={handleInvite}
+              onClick={handleInviteClick}
               className="w-full sm:w-auto"
             >
               {invitePortal.isPending ? (
@@ -148,6 +174,13 @@ export function PortalInvitesBulkCard() {
           </>
         )}
       </CardContent>
+      <MassEmailConfirmDialog
+        open={confirmOpen}
+        count={selectedCount}
+        pending={invitePortal.isPending}
+        onOpenChange={setConfirmOpen}
+        onConfirm={() => void sendInvites()}
+      />
     </Card>
   );
 }

@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { isFliPlaceholderEmail } from "../_shared/email-guards.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -83,6 +84,10 @@ async function sendEmail(
   subject: string,
   html: string
 ): Promise<boolean> {
+  if (isFliPlaceholderEmail(to)) {
+    console.error("Adresse @fli.placeholder exclue de tout envoi:", to);
+    return false;
+  }
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {

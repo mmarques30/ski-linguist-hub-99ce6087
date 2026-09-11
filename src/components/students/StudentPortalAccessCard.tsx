@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { CopyLinkRow } from "@/components/shared/CopyLinkRow";
 import { buildStudentPortalPreviewUrl } from "@/lib/client-links";
 import { useInviteStudentPortal } from "@/hooks/useInviteStudentPortal";
+import { isFliPlaceholderEmail, STUDENT_PORTAL_IN_SEASON_SCOPE } from "@/lib/email-guards";
 
 interface StudentPortalAccessCardProps {
   studentId: string;
@@ -27,9 +28,20 @@ export function StudentPortalAccessCard({
   const hasPortalAccount = Boolean(authUserId);
   const invitePortal = useInviteStudentPortal();
 
+  const canSendInvite =
+    STUDENT_PORTAL_IN_SEASON_SCOPE && Boolean(email) && !isFliPlaceholderEmail(email);
+
   const handleInvite = async () => {
     if (!email) {
       toast.error("Email manquant pour ce stagiaire");
+      return;
+    }
+    if (!STUDENT_PORTAL_IN_SEASON_SCOPE) {
+      toast.error("Le portail stagiaire est hors périmètre cette saison");
+      return;
+    }
+    if (isFliPlaceholderEmail(email)) {
+      toast.error("Les adresses @fli.placeholder sont exclues de tout envoi");
       return;
     }
 
@@ -37,6 +49,7 @@ export function StudentPortalAccessCard({
       const result = await invitePortal.mutateAsync({
         studentIds: [studentId],
         sendEmail: true,
+        confirmedCount: 1,
       });
       if (result.succeeded) {
         toast.success("Invitation portail envoyée par email");
@@ -71,7 +84,7 @@ export function StudentPortalAccessCard({
           {email && <Badge variant="secondary">{email}</Badge>}
         </div>
 
-        {!hasPortalAccount && email && (
+        {!hasPortalAccount && canSendInvite && (
           <Alert>
             <AlertTitle>Inviter au portail</AlertTitle>
             <AlertDescription className="space-y-3">
@@ -97,7 +110,7 @@ export function StudentPortalAccessCard({
           </Alert>
         )}
 
-        {hasPortalAccount && email && (
+        {hasPortalAccount && canSendInvite && (
           <Button
             type="button"
             size="sm"
