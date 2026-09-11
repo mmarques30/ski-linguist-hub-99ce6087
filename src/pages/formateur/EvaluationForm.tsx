@@ -172,13 +172,6 @@ export default function EvaluationForm() {
     }));
   };
 
-  const attestationType =
-    booking?.sponsor_type === "dsf"
-      ? "dsf"
-      : booking?.ski_school_name?.toLowerCase().includes("alpe d'huez")
-        ? "alpe_huez"
-        : "generique";
-
   const canSubmit =
     adjustmentOk &&
     (!methodoRequired || noteMethodologique.trim().length > 0) &&
@@ -228,7 +221,6 @@ export default function EvaluationForm() {
       score_technique: scores.technique,
       score_conversation: scores.conversation,
       scoring_system: "sur_5",
-      attestation_type: attestationType,
       status: submitForReview ? "a_verifier" : "brouillon",
       note_methodologique: methodoRequired ? noteMethodologique.trim() : noteMethodologique.trim() || null,
       cecrl_label: determinedLevel,
