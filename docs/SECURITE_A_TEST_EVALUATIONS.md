@@ -17,7 +17,7 @@ Journal : `audit_log.action = 'securite_rls_test_evaluations'` (aucune donnée p
 
 ### `test_evaluations`
 - `rls_test_evaluations_select_staff` : `is_staff()`
-- `rls_test_evaluations_select_candidate` : `is_student() AND owns_test_booking(booking_id) AND attestation_type <> 'dsf' AND NOT test_booking_is_dsf(booking_id)`
+- `rls_test_evaluations_select_candidate` : `is_student() AND owns_test_booking(booking_id) AND NOT test_booking_is_dsf(booking_id)` (C.2 : plus d'`attestation_type`)
 - `rls_test_evaluations_insert_staff` / `rls_test_evaluations_update_staff` : `is_staff()`
 - suppression : `is_admin()` (politique existante conservée)
 
@@ -48,10 +48,10 @@ en base au moment de la migration, donc aucune reprise n'était nécessaire.
 | Fonction | Rôle |
 |----------|------|
 | `owns_test_booking(uuid)` | rattache l'évaluation au stagiaire via `test_bookings` → `test_candidates.student_id` |
-| `test_booking_is_dsf(uuid)` | commanditaire DSF, déduit de `ski_schools.school_kind` ou du partenaire lié (`partners.type`) |
+| `test_booking_is_dsf(uuid)` | commanditaire DSF (`test_bookings.sponsor_type = 'dsf'`, C.2) |
 
-**À reprendre au point C.2** : `test_bookings.sponsor_type` / `sponsor_id` deviendront la source
-de vérité ; `test_booking_is_dsf` devra lire `sponsor_type` en priorité.
+**Fait au point C.2** : `test_bookings.sponsor_type` / `sponsor_id` sont la source
+de vérité ; `test_booking_is_dsf` lit `sponsor_type = 'dsf'`. Voir `docs/POINT_C2_SPONSOR_TYPE.md`.
 
 ## 4. Preuve exécutée sur la base live
 
