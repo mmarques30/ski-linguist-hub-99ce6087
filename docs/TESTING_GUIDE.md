@@ -1,268 +1,199 @@
-# Guia de Testes Completo - FLI Formation
+# Guide de test — FLI Formation
 
-## 📋 Índice
-1. [Autenticação](#autenticação)
-2. [Alunos](#alunos)
-3. [Inscrições](#inscrições)
-4. [Faturas](#faturas)
-5. [Testes de Posicionamento](#testes-de-posicionamento)
-6. [Avaliações (Compte-Rendu)](#avaliações)
-7. [Satisfação](#satisfação)
-8. [Finanças](#finanças)
-9. [Relances Automáticas](#relances-automáticas)
+Scénario à jouer **à partir du lundi 14 septembre 2026**. Compte administrateur requis pour les étapes back-office. Le formulaire public `/register` et la connexion stagiaire par lien magique n’en ont pas besoin.
+
+La checklist à cocher dans l’application reste sur `/admin/testing` (sidebar **Tests QA**). Les deux cartes en haut de cette page (emails 8-minimal, nettoyage ZZTEST) font partie de ce kit.
 
 ---
 
-## 🔐 Autenticação
+## Convention des jeux de test
 
-### Teste de Login
-1. Acesse `/auth`
-2. Insira credenciais válidas
-3. ✅ Deve redirecionar para Dashboard (`/`)
+Tout enregistrement de test porte **les deux** marques suivantes :
 
-### Teste de Logout
-1. Clique no botão de logout no Sidebar
-2. ✅ Deve redirecionar para `/auth`
+| Champ | Valeur |
+|---|---|
+| Nom ou prénom | commence par `ZZTEST` (ex. prénom `ZZTEST`, nom `Camille`) |
+| Email | se termine par `@example.invalid` (ex. `zztest.camille@example.invalid`) |
 
-### Rota Protegida
-1. Sem login, acesse `/inscriptions`
-2. ✅ Deve redirecionar para `/auth`
+Sans le préfixe **et** sans ce domaine, le bouton de nettoyage **ne touche pas** la ligne. N’utilisez jamais un vrai nom ni une vraie adresse.
 
----
+Jeu recommandé pour ce scénario :
 
-## 👥 Alunos
+- Civilité : Madame
+- Prénom : `ZZTEST`
+- Nom : `Camille`
+- Email : `zztest.camille@example.invalid`
+- Téléphone : `0000000000`
+- Adresse : `1 rue de Test`, `00000`, `Testville`
 
-### Criar Aluno
-1. Vá para `/students`
-2. Clique em "Novo Aluno"
-3. Preencha: Nome, Email, Telefone
-4. ✅ Aluno aparece na lista
+`@example.invalid` ne reçoit **aucun** courrier (domaine réservé, non routable). La preuve d’envoi se lit dans le journal d’emails de la fiche, et les deux textes se relisent / se testent vers `info@fli.fr` depuis `/admin/testing`.
 
-### Visualizar Detalhes
-1. Clique em um aluno
-2. ✅ Mostra inscrições e estatísticas
+En fin de campagne de test : `/admin/testing` → **Simuler (dry-run)** → si les comptes sont justes, taper `NETTOYER` → **Nettoyer les données de test**.
 
 ---
 
-## 📝 Inscrições
+## Avant de commencer
 
-### Criar Inscrição
-1. Vá para `/inscriptions`
-2. Clique em "Nova Inscrição"
-3. Preencha os passos do formulário
-4. ✅ Inscrição criada com código automático
-
-### Editar Status
-1. Clique em uma inscrição
-2. Altere o status
-3. ✅ Status atualizado
+1. Fusionner et déployer les branches `cursor/emails-8-minimal-7435` puis `cursor/kit-test-zztest-7435` (ou la seconde, qui contient déjà la première).
+2. Poser `RESEND_API_KEY` seulement après le DNS du point 8-minimal (voir `docs/EMAILS_8_MINIMAL.md`). Tant que la clé n’est pas là, `/register` enregistre quand même l’inscription ; l’écran de confirmation dira que l’équipe recontactera, et le journal d’emails restera vide ou en erreur « clé absente ».
+3. Ne pas activer de cron.
 
 ---
 
-## 💰 Faturas
+## Scénario pas à pas
 
-### Criar Fatura
-1. Vá para `/invoices`
-2. Clique em "Nova Fatura"
-3. Selecione inscrição, valor, tipo
-4. ✅ Fatura criada com número automático
+### 1. Inscription via `/register`
 
-### Testar Filtros
-1. Filtre por status (Brouillon, Envoyée, Payée)
-2. ✅ Lista atualiza corretamente
+1. Déconnexion back-office (ou navigateur privé).
+2. Ouvrir `/register`.
+3. **Étape 1 — Lieu et formation.** Choisir une langue, un lieu, une durée du catalogue. Noter les dates proposées. Si aucune session ne commence dans les **10 jours**, on corrigera la date au § 5.
+4. **Étape 2 — Informations personnelles.** Saisir le jeu ZZTEST ci-dessus. Continuer.
+5. **Étape 3 — Profil professionnel.** Choisir un profil **autre** que moniteur de ski (évite le pack documents moniteur). Continuer.
+6. **Étape 4 — Test de niveau.** Le test est obligatoire. Répondre jusqu’à la fin. À l’écran : un résultat en **piste** (pas un niveau CECRL). Continuer.
+7. **Étape 5 — Attentes.** Remplir librement, certification au choix (ex. Sans certification). Continuer.
+8. **Étape 6 — Paiement.** Choisir **150 € par virement bancaire + solde par chèque à l’inscription** (pas Stripe : pas de carte). Relire IBAN FLI à l’écran. Continuer.
+9. **Étape 7 — Confirmation.** Cocher l’acceptation, cliquer pour envoyer.
 
-### Editar Fatura
-1. Clique em uma fatura
-2. Edite os dados
-3. ✅ Alterações salvas
+**À l’écran :** cercle vert, titre **Inscription enregistrée**, badge **Code : FLI-…**. Conserver ce code.
 
----
+- Clé Resend absente : texte du type « Notre équipe vous contactera prochainement. »
+- Clé présente : « Un email de confirmation vous a été envoyé. » L’envoi part vers `@example.invalid` (il n’arrive nulle part). Les textes réels se vérifient au § 2.
 
-## 📊 Testes de Posicionamento
-
-### Visualizar Testes
-1. Vá para `/tests`
-2. ✅ Lista de testes com links públicos
-
-### Inscrição Pública
-1. Acesse `/register`
-2. Preencha todas as etapas incluindo teste de 20 questões
-3. ✅ Inscrição salva com código FLI e aparece em `/inscriptions`
+Bloc virement : RIB FLI + rappel du solde par chèque.
 
 ---
 
-## 📝 Avaliações (Compte-Rendu)
+### 2. Réception de l’email de confirmation
 
-### Criar Avaliação
-1. Vá para `/formateur/evaluations`
-2. Selecione um teste pendente
-3. Preencha scores e apreciações
-4. ✅ Avaliação salva
+Deux lectures distinctes.
 
-### Visualizar PDF
-1. Clique em "Voir CR"
-2. ✅ PDF gerado corretamente
+**A. Journal de l’inscription (toujours)**
 
----
+1. Se connecter au back-office (`/auth`).
+2. `/inscriptions`, rechercher `ZZTEST` ou le code FLI.
+3. Ouvrir la fiche → onglet **Accès client**.
+4. Bloc **Emails envoyés** : une ligne **Confirmation d’inscription**, destinataire `zztest.camille@example.invalid`.
+   - Sans clé : statut d’échec, message du type clé absente.
+   - Avec clé : statut `sent` (l’adresse de test ne livrera pas le message).
 
-## 😊 Satisfação
+**B. Textes réels dans la boîte FLI (une fois la clé posée)**
 
-### Ver Estatísticas
-1. Vá para `/satisfaction-stats`
-2. ✅ Mostra gráficos e médias
+1. `/admin/testing`, carte **Emails 8-minimal**.
+2. Relire les deux aperçus (vouvoiement, `formateur·rice`, adresse 25 avenue de la Gare, 73800 Montmélian, 04 79 28 21 09, info@fli.fr).
+3. **Envoyer les deux tests à info@fli.fr**.
+4. Dans `info@fli.fr` : deux messages préfixés `[TEST]`, expéditeur affiché **FLI — France Langues International**, répondre ouvre un brouillon vers `info@fli.fr`.
 
-### Gerar QR Code
-1. Clique em "Générer QR"
-2. ✅ QR Code para pesquisa
+Sans clé, le bouton répond que la clé est absente ; **rien ne part**.
 
 ---
 
-## 💹 Finanças
+### 3. Invitation au portail (lien magique)
 
-### Dashboard Financeiro
-1. Vá para `/finance`
-2. ✅ KPIs atualizados
+1. `/students`, ouvrir **ZZTEST Camille**.
+2. Carte **Espace stagiaire** : badge **Compte non créé**, bouton **Envoyer l’invitation**.
+3. Toast **Invitation portail envoyée par email**.
+4. Recharger : badge **Compte lié**.
+5. Onglet **Accès client** de l’inscription : une ligne d’email d’invitation (même logique clé présente / absente qu’au § 2).
+6. Le lien magique part vers `@example.invalid` : vous ne pouvez pas cliquer depuis cette boîte. Pour voir l’espace : **Voir comme le stagiaire** (`/students/…/portal-preview`). Bandeau ambre **Mode prévisualisation admin**.
 
-### Charges Fixes
-1. Vá para `/finance/charges-fixes`
-2. Visualize aba "Tableau de bord"
-3. ✅ Mostra impayés e progressão
-
-### Rentabilidade
-1. Vá para `/finance/rentabilite`
-2. ✅ Análise por formação
+Quand la clé Resend est posée, le second email de test du § 2 B est le texte d’invitation (lien d’exemple, pas un vrai jeton).
 
 ---
 
-## 📧 Relances Automáticas
+### 4. Affectation formateur·rice
 
-### Alertas de validação de horários (J-10)
-
-Envia email para Paula (`info@fli.fr`) quando inscrições com `schedule_status = pending` começam em 10 dias.
-
-#### Teste Dry-Run
-
-```bash
-curl -X POST "https://nghkrmvakjomzmfwdhbo.supabase.co/functions/v1/process-schedule-reminders?dry_run=true" \
-  -H "Authorization: Bearer <SUPABASE_ANON_KEY>"
-```
-
-#### Resposta esperada (sem inscrições elegíveis)
-
-```json
-{
-  "success": true,
-  "results": {
-    "dryRun": true,
-    "targetDate": "2026-08-07",
-    "totalPending": 0,
-    "emailSent": false
-  },
-  "summary": "No inscriptions to process"
-}
-```
-
-#### Preparar dados de teste
-
-```sql
-UPDATE inscriptions
-SET start_date = CURRENT_DATE + INTERVAL '10 days',
-    schedule_status = 'pending',
-    schedule_reminder_sent_at = NULL,
-    status = 'confirmee'
-WHERE id = 'SEU_INSCRIPTION_ID';
-```
-
-### Relances de faturas
-
-#### Via Terminal:
-```bash
-curl -X POST "https://nghkrmvakjomzmfwdhbo.supabase.co/functions/v1/process-invoice-reminders?dry_run=true" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5naGtybXZha2pvbXptZndkaGJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5NDIzMjUsImV4cCI6MjA4MzUxODMyNX0.mgAmQpO28Au607Hu3TMjTErQaTvRijbD98WEs954qBU"
-```
-
-#### Resposta esperada:
-```json
-{
-  "success": true,
-  "results": {
-    "dryRun": true,
-    "totalOverdue": 5,
-    "reminder1Sent": 2,
-    "reminder2Sent": 1,
-    "reminder3Sent": 0,
-    "skipped": 2,
-    "details": [
-      {
-        "invoiceNumber": "2025.14243",
-        "email": "aluno@email.com",
-        "daysOverdue": 10,
-        "reminderLevel": 1,
-        "action": "WOULD SEND Reminder 1"
-      }
-    ]
-  },
-  "summary": "[DRY-RUN] Would send 2 first, 1 second, 0 final reminders"
-}
-```
-
-### Preparar Dados de Teste
-
-1. **Criar fatura de teste com vencimento no passado:**
-```sql
--- No Cloud > Database, execute:
-UPDATE invoices 
-SET due_date = CURRENT_DATE - INTERVAL '10 days',
-    status = 'sent'
-WHERE id = 'SEU_INVOICE_ID';
-```
-
-2. **Verificar faturas em atraso:**
-```sql
-SELECT 
-  invoice_number,
-  due_date,
-  status,
-  CURRENT_DATE - due_date::date as days_overdue,
-  reminder_1_sent_at,
-  reminder_2_sent_at,
-  reminder_3_sent_at
-FROM invoices 
-WHERE status IN ('draft', 'sent') 
-  AND due_date < CURRENT_DATE
-ORDER BY due_date;
-```
-
-### Níveis de Relance
-
-| Dias em atraso | Nível | Assunto |
-|---------------|-------|---------|
-| 7-14 dias | 1 | "Rappel de paiement" |
-| 15-29 dias | 2 | "Second rappel de paiement" |
-| 30+ dias | 3 | "URGENT - Mise en demeure" |
+1. Fiche inscription ZZTEST → **Modifier**.
+2. Champ **Formateur** : choisir une personne **déjà en base** (ne pas créer un formateur ZZTEST).
+3. Enregistrer.
+4. Sur la fiche : le nom du formateur·rice apparaît dans les infos générales / formation.
 
 ---
 
-## 🔄 Fluxo Completo de Teste
+### 5. Validation J-10
 
-1. ✅ Login
-2. ✅ Criar aluno
-3. ✅ Criar inscrição
-4. ✅ Criar fatura
-5. ✅ Testar dry-run de relances
-6. ✅ Verificar dashboard financeiro
-7. ✅ Logout
+La liste `/inscriptions/schedule-validation` ne montre que les inscriptions **en attente d’horaire**, non annulées, dont la **date de début est aujourd’hui ou dans les 10 jours**.
+
+1. Si la session catalogue est plus loin : **Modifier** l’inscription, passer **date de début** à une date dans cette fenêtre (ex. test le 14/09 → début le 18/09/2026) et une date de fin cohérente. Enregistrer. Le statut d’horaire doit rester `pending`.
+2. Sidebar **Horaires J-10** (`/inscriptions/schedule-validation`).
+3. **À l’écran :** titre **Validation horaires J-10**, groupe par langue et date de début, ligne **ZZTEST Camille** avec le code FLI.
+4. Cocher la ligne, **Valider matin** ou **Valider après-midi**.
+5. Toast du type « 1 inscription(s) — groupe … validé ». La ligne disparaît de la liste.
+6. Retour fiche : bouton **Horaire** → statut matin ou après-midi renseigné.
+
+Aucun cron de relance J-10 n’est activé ; cette étape est manuelle.
 
 ---
 
-## 📝 Checklist Rápido
+### 6. Formulaires d’entrée et de sortie
 
-- [ ] Autenticação funciona
-- [ ] CRUD de alunos ok
-- [ ] CRUD de inscrições ok
-- [ ] CRUD de faturas ok
-- [ ] Filtros funcionam
-- [ ] Dashboard atualiza
-- [ ] Edge function responde
-- [ ] Dry-run mostra detalhes
-- [ ] Logs aparecem corretamente
+Sur la fiche, onglet **Formation**, carte **Bilan de progression**.
+
+**Entrée**
+
+1. **Formulaire entrée**. Titre : **Formulaire d’entrée formateur**.
+2. Niveau général (entrée) : ex. `Piste bleue` (piste / constat, pas SNMSF).
+3. Niveau technique / métier : ex. `Vocabulaire accueil`.
+4. Remarques facultatives. Enregistrer.
+5. Tableau : colonne Entrée remplie. Mention **Entrée OK**.
+
+**Sortie**
+
+1. **Formulaire sortie**. Titre : **Formulaire de sortie formateur**.
+2. Niveau général (sortie CECRL) : ex. `B1`.
+3. Niveau technique (sortie CECRL) : ex. `B1`.
+4. Objectif pédagogique atteint : **Oui**.
+5. Commentaire formateur : deux ou trois phrases.
+6. Heures suivies : laisser la valeur prévue ou saisir le prévu.
+7. Enregistrer.
+8. Tableau : colonnes Sortie remplies, **Sortie OK**, objectif **Oui**, commentaire visible. Aucune mention SNMSF / DSF.
+
+---
+
+### 7. Pack de fin
+
+1. En-tête de fiche → **Pack Fin de Formation**.
+2. **À l’écran :** titre **Pack Fin de Formation**, nom ZZTEST, code FLI, cases Facture / Certificat / Enquête cochées, bilan Entrée / Sortie repris. Si le formulaire de sortie manque, le certificat est bloqué (revenir au § 6).
+3. Générer.
+4. Succès : **Certificat créé (bilan de progression)**, identifiant de facture, éventuellement jeton d’enquête.
+5. Statut de l’inscription : **Terminée**.
+
+---
+
+### 8. Certificat visible dans le portail
+
+1. Fiche stagiaire → **Voir comme le stagiaire** → onglet **Documents**.
+2. **À l’écran :** **Certificat de fin de formation**, date de délivrance du jour.
+3. Pour le rendu stagiaire réel (lien magique) : `/student/documents`, carte **Certificats**, texte **Bilan de progression Entrée / Sortie**, bouton **Télécharger**. Le PDF s’ouvre via une URL signée (bucket privé). Le PDF montre Entrée / Sortie, pas une piste comme niveau final, et le paragraphe sur l’évaluation SNMSF en bas.
+
+Sans lien magique, la prévisualisation admin suffit pour cette étape.
+
+---
+
+### 9. Facture et paiement par chèque
+
+1. `/invoices`. Rechercher le n° créé par le pack (format `{exercice}.{séquence}`) ou le nom **ZZTEST Camille**.
+2. Crayon : **Méthode de paiement** = **Chèque**. Notes internes : `ZZTEST chèque n° 000001`. Enregistrer.
+3. Icône avion (facture en brouillon) → badge **Envoyée**. Toast **Facture marquée comme envoyée**.
+4. Icône coche verte → badge **Payée**. Toast **Facture marquée comme payée**.
+5. Optionnel, pour un encaissement listé à part : `/finance/payments` → **Enregistrer un paiement** → montant TTC de la facture, méthode **Chèque**, statut **Reçu**, payeur `ZZTEST Camille`, référence `ZZTEST-CHQ-000001`. Le paiement apparaît dans le tableau avec le libellé **Chèque**.
+
+Ne pas exporter de CSV nominatif dans le dépôt.
+
+---
+
+### 10. Nettoyage
+
+1. `/admin/testing` → **Nettoyer les données de test**.
+2. **Simuler (dry-run)** : journal avec des comptes > 0 (stagiaires, inscriptions, factures, paiements, certificats, éventuellement fichiers et comptes). **Dernier n° de facture réel** = plus haut numéro hors ZZTEST (plancher 14297). **Prochaine séquence** = ce numéro + 1.
+3. Taper `NETTOYER` → **Nettoyer les données de test**.
+4. `/students` : plus de ZZTEST. `/invoices` : plus de facture ZZTEST. Une nouvelle facture réelle reprend la séquence affichée.
+5. Une seconde simulation doit afficher des zéros.
+
+---
+
+## Ce que ce guide ne couvre pas
+
+- Évaluations SNMSF / DSF (point C, après validation de ce kit).
+- Prospection moniteurs (gelée).
+- Relances facture automatiques (cron existant, hors scénario).
+- Paiement Stripe de `/register` (volontairement évité ici).
