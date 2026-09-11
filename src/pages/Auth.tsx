@@ -29,7 +29,13 @@ export default function Auth() {
 
   useEffect(() => {
     if (!loading && !roleLoading && user) {
-      navigate(role === "student" ? "/student/dashboard" : "/", { replace: true });
+      const home =
+        role === "student"
+          ? "/student/dashboard"
+          : role === "formateur"
+            ? "/formateur/evaluations"
+            : "/";
+      navigate(home, { replace: true });
     }
   }, [user, loading, roleLoading, role, navigate]);
 

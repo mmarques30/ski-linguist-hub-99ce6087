@@ -21,6 +21,7 @@ export function useUserPermissions() {
   });
 
   const isAdmin = role === "admin";
+  const isFormateur = role === "formateur";
 
   const { data: permissions = [], isLoading: permsLoading } = useQuery({
     queryKey: ["user-permissions", user?.id],
@@ -32,22 +33,25 @@ export function useUserPermissions() {
         .eq("user_id", user.id);
       return data ?? [];
     },
-    enabled: !!user && !isAdmin,
+    enabled: !!user && !isAdmin && !isFormateur,
     staleTime: 5 * 60 * 1000,
   });
 
   const canView = (routeKey: string): boolean => {
     if (isAdmin) return true;
+    if (isFormateur) return routeKey === "evaluations";
     return permissions.some((p) => p.route_key === routeKey && p.can_view);
   };
 
   const canEdit = (routeKey: string): boolean => {
     if (isAdmin) return true;
+    if (isFormateur) return routeKey === "evaluations";
     return permissions.some((p) => p.route_key === routeKey && p.can_edit);
   };
 
   return {
     isAdmin,
+    isFormateur,
     canView,
     canEdit,
     loading: roleLoading || permsLoading,

@@ -26,6 +26,7 @@ export interface Instructor {
   photo_url: string | null;
   rating_average: number | null;
   certifications: any[] | null;
+  auth_user_id: string | null;
   alias: string[] | null;
   civilite: string | null;
   pays: string | null;

@@ -1319,6 +1319,7 @@ export type Database = {
           geographic_zones: string[] | null
           hourly_rate: number | null
           id: string
+          auth_user_id: string | null
           is_active: boolean | null
           languages: string[] | null
           last_name: string
@@ -1357,6 +1358,7 @@ export type Database = {
           geographic_zones?: string[] | null
           hourly_rate?: number | null
           id?: string
+          auth_user_id?: string | null
           is_active?: boolean | null
           languages?: string[] | null
           last_name: string
@@ -1395,6 +1397,7 @@ export type Database = {
           geographic_zones?: string[] | null
           hourly_rate?: number | null
           id?: string
+          auth_user_id?: string | null
           is_active?: boolean | null
           languages?: string[] | null
           last_name?: string
@@ -3411,6 +3414,16 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      formateur_owns_booking: { Args: { _booking_id: string }; Returns: boolean }
+      formateur_owns_candidate: {
+        Args: { _candidate_id: string }
+        Returns: boolean
+      }
+      formateur_sees_ski_school: {
+        Args: { _school_id: string }
+        Returns: boolean
+      }
+      get_my_instructor_id: { Args: never; Returns: string }
       get_my_student_id: { Args: never; Returns: string }
       get_satisfaction_survey_context: {
         Args: { p_token: string }
@@ -3425,6 +3438,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_formateur: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       is_student: { Args: never; Returns: boolean }
       sign_instructor_contract_by_token: {
@@ -3437,7 +3451,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user" | "student"
+      app_role: "admin" | "user" | "student" | "formateur"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3565,7 +3579,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user", "student"],
+      app_role: ["admin", "user", "student", "formateur"],
     },
   },
 } as const

@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { UserPlus, Shield, User, ToggleLeft, ToggleRight, Settings2 } from "lucide-react";
+import { UserPlus, Shield, User, GraduationCap, ToggleLeft, ToggleRight, Settings2 } from "lucide-react";
 import { useUserManagement } from "@/hooks/useUserManagement";
 import { UserFormDialog } from "@/components/admin/UserFormDialog";
 import { EditPermissionsDialog } from "@/components/admin/EditPermissionsDialog";
@@ -96,9 +96,21 @@ export default function UserManagement() {
                     </TableCell>
                     <TableCell>{u.email}</TableCell>
                     <TableCell>
-                      <Badge variant={u.role === "admin" ? "default" : "secondary"}>
+                      <Badge
+                        variant={
+                          u.role === "admin"
+                            ? "default"
+                            : u.role === "formateur"
+                              ? "outline"
+                              : "secondary"
+                        }
+                      >
                         {u.role === "admin" ? (
                           <><Shield className="h-3 w-3 mr-1" />Admin</>
+                        ) : u.role === "formateur" ? (
+                          <><GraduationCap className="h-3 w-3 mr-1" />Formateur</>
+                        ) : u.role === "student" ? (
+                          <><User className="h-3 w-3 mr-1" />Stagiaire</>
                         ) : (
                           <><User className="h-3 w-3 mr-1" />Utilisateur</>
                         )}
@@ -111,7 +123,7 @@ export default function UserManagement() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        {u.role !== "admin" && (
+                        {u.role === "user" && (
                           <Button
                             variant="ghost"
                             size="icon"

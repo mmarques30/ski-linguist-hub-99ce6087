@@ -36,7 +36,7 @@ export default function EvaluationsList() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("pending");
   const [showQRDialog, setShowQRDialog] = useState(false);
-  const { canEdit } = useUserPermissions();
+  const { canEdit, isFormateur } = useUserPermissions();
   const editable = canEdit("evaluations");
   
   const { data: pendingBookings, isLoading: pendingLoading, refetch: refetchPending } = useTestBookingsToEvaluate();
@@ -59,6 +59,13 @@ export default function EvaluationsList() {
             </p>
           </div>
           <div className="flex gap-2">
+            {isFormateur ? (
+              <Button variant="outline" onClick={handleRefresh}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Actualiser
+              </Button>
+            ) : (
+              <>
             <Button variant="outline" onClick={() => setShowQRDialog(true)}>
               <QrCode className="h-4 w-4 mr-2" />
               QR Satisfaction
@@ -67,11 +74,15 @@ export default function EvaluationsList() {
               <RefreshCw className="h-4 w-4 mr-2" />
               Actualiser
             </Button>
+              </>
+            )}
           </div>
         </div>
 
         {/* QR Code Dialog */}
-        <SurveyQRCodeDialog open={showQRDialog} onOpenChange={setShowQRDialog} />
+        {!isFormateur && (
+          <SurveyQRCodeDialog open={showQRDialog} onOpenChange={setShowQRDialog} />
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

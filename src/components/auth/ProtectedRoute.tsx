@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,7 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { data: role, isLoading: roleLoading } = useQuery({
     queryKey: ["user-role-check", user?.id],
@@ -40,6 +41,12 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     }
   }, [role, roleLoading, navigate]);
 
+  useEffect(() => {
+    if (!roleLoading && role === "formateur" && !location.pathname.startsWith("/formateur")) {
+      navigate("/formateur/evaluations", { replace: true });
+    }
+  }, [role, roleLoading, location.pathname, navigate]);
+
   if (loading || roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -52,6 +59,10 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!user || role === "student") {
+    return null;
+  }
+
+  if (role === "formateur" && !location.pathname.startsWith("/formateur")) {
     return null;
   }
 

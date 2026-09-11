@@ -52,7 +52,49 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, password, full_name, role, permissions } = await req.json();
+    const { email, password, full_name, role, permissions, instructor_id } =
+      await req.json();
+
+    const allowedRoles = ["admin", "user", "formateur"];
+    const assignedRole = role || "user";
+    if (!allowedRoles.includes(assignedRole)) {
+      return new Response(JSON.stringify({ error: "Invalid role" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (assignedRole === "formateur") {
+      if (!instructor_id) {
+        return new Response(
+          JSON.stringify({ error: "instructor_id required for role formateur" }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+      const { data: instructor, error: instructorError } = await adminClient
+        .from("instructors")
+        .select("id, auth_user_id")
+        .eq("id", instructor_id)
+        .maybeSingle();
+      if (instructorError || !instructor) {
+        return new Response(JSON.stringify({ error: "Instructor not found" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (instructor.auth_user_id) {
+        return new Response(
+          JSON.stringify({ error: "Instructor already linked to a user" }),
+          {
+            status: 409,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+    }
 
     if (!email || !password || !full_name) {
       return new Response(
@@ -91,10 +133,28 @@ Deno.serve(async (req) => {
     // Assign role
     await adminClient
       .from("user_roles")
-      .insert({ user_id: userId, role: role || "user" });
+      .insert({ user_id: userId, role: assignedRole });
+
+    if (assignedRole === "formateur") {
+      const { error: linkError } = await adminClient
+        .from("instructors")
+        .update({ auth_user_id: userId })
+        .eq("id", instructor_id)
+        .is("auth_user_id", null);
+      if (linkError) {
+        await adminClient.auth.admin.deleteUser(userId);
+        return new Response(
+          JSON.stringify({ error: "Failed to link instructor: " + linkError.message }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+    }
 
     // Insert permissions if role is 'user'
-    if (role !== "admin" && permissions && Array.isArray(permissions)) {
+    if (assignedRole === "user" && permissions && Array.isArray(permissions)) {
       const permRows = permissions.map(
         (p: { route_key: string; can_view: boolean; can_edit: boolean }) => ({
           user_id: userId,
@@ -109,7 +169,9 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ user: { id: userId, email, full_name, role } }),
+      JSON.stringify({
+        user: { id: userId, email, full_name, role: assignedRole, instructor_id: instructor_id || null },
+      }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

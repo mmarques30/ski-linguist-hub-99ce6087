@@ -20,6 +20,9 @@ import {
   PermissionEntry,
 } from "./UserPermissionsEditor";
 import { ALL_ROUTE_KEYS } from "@/lib/route-permissions";
+import { useInstructors } from "@/hooks/useInstructors";
+
+type StaffRole = "admin" | "user" | "formateur";
 
 interface Props {
   open: boolean;
@@ -28,8 +31,9 @@ interface Props {
     email: string;
     password: string;
     full_name: string;
-    role: "admin" | "user";
+    role: StaffRole;
     permissions: PermissionEntry[];
+    instructor_id?: string;
   }) => void;
   loading?: boolean;
 }
@@ -38,19 +42,24 @@ export function UserFormDialog({ open, onOpenChange, onSubmit, loading }: Props)
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [role, setRole] = useState<"admin" | "user">("user");
+  const [role, setRole] = useState<StaffRole>("user");
+  const [instructorId, setInstructorId] = useState<string>("");
   const [permissions, setPermissions] = useState<PermissionEntry[]>(
     ALL_ROUTE_KEYS.map((key) => ({ route_key: key, can_view: false, can_edit: false }))
   );
+  const { data: instructors = [] } = useInstructors({ status: "actif" });
+  const availableInstructors = instructors.filter((i) => !i.auth_user_id);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (role === "formateur" && !instructorId) return;
     onSubmit({
       email,
       password,
       full_name: fullName,
       role,
-      permissions: role === "admin" ? [] : permissions.filter((p) => p.can_view || p.can_edit),
+      permissions: role === "user" ? permissions.filter((p) => p.can_view || p.can_edit) : [],
+      instructor_id: role === "formateur" ? instructorId : undefined,
     });
   };
 
@@ -59,6 +68,7 @@ export function UserFormDialog({ open, onOpenChange, onSubmit, loading }: Props)
     setPassword("");
     setFullName("");
     setRole("user");
+    setInstructorId("");
     setPermissions(
       ALL_ROUTE_KEYS.map((key) => ({ route_key: key, can_view: false, can_edit: false }))
     );
@@ -112,16 +122,47 @@ export function UserFormDialog({ open, onOpenChange, onSubmit, loading }: Props)
           </div>
           <div className="space-y-2">
             <Label>Rôle</Label>
-            <Select value={role} onValueChange={(v) => setRole(v as "admin" | "user")}>
+            <Select
+              value={role}
+              onValueChange={(v) => {
+                setRole(v as StaffRole);
+                if (v !== "formateur") setInstructorId("");
+              }}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="admin">Administrateur</SelectItem>
                 <SelectItem value="user">Utilisateur</SelectItem>
+                <SelectItem value="formateur">Formateur</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {role === "formateur" && (
+            <div className="space-y-2">
+              <Label>Fiche formateur</Label>
+              <Select value={instructorId} onValueChange={setInstructorId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choisir une fiche instructors" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableInstructors.length === 0 ? (
+                    <SelectItem value="__none" disabled>
+                      Aucune fiche disponible (déjà liée ou aucune fiche actif)
+                    </SelectItem>
+                  ) : (
+                    availableInstructors.map((i) => (
+                      <SelectItem key={i.id} value={i.id}>
+                        {[i.last_name, i.first_name].filter(Boolean).join(" ")}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {role === "user" && (
             <div className="space-y-2">
@@ -141,7 +182,7 @@ export function UserFormDialog({ open, onOpenChange, onSubmit, loading }: Props)
             >
               Annuler
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading || (role === "formateur" && !instructorId)}>
               {loading ? "Création..." : "Créer l'utilisateur"}
             </Button>
           </div>

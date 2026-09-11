@@ -50,3 +50,12 @@ This is a single-package **Vite + React 18 + TypeScript** SPA (Lovable-generated
   transient `vite.config.ts.timestamp-*.mjs` file that ESLint may try to read and then fail
   with an `ENOENT` on that temp file. Run them separately.
 - Bun lockfiles (`bun.lock`, `bun.lockb`) are also committed, but this environment uses npm.
+
+### Git / docs (Paula, 2026-09-11)
+- Do **not** modify `docs/BACKLOG.md` or `docs/ETAT_APP_*.md` on working branches.
+  Those files are updated in a **separate commit on `main`** after each point is
+  merged (or on a dedicated `docs/` branch that Paula merges last).
+- Before every delivery report (and before saying a PR is ready to merge),
+  **merge `origin/main` into the working branch**, resolve any leftover conflicts,
+  and push, so Paula never has to resolve a merge conflict herself.
+
