@@ -25,7 +25,7 @@ export const DEFAULT_FLI_IDENTITY: FliIdentity = {
   address_line: "25 avenue de la Gare",
   postal_code: "73800",
   city: "Montmélian",
-  phone: "09 81 84 60 65",
+  phone: "04 79 28 21 09",
   email: "info@fli.fr",
 };
 

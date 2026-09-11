@@ -41,6 +41,16 @@ export type FliIdentity = {
   email: string;
 };
 
+/** Aligné sur app_settings.fli_identity (seed C.5). */
+export const DEFAULT_FLI_IDENTITY: FliIdentity = {
+  legal_name: "France Langues International",
+  address_line: "25 avenue de la Gare",
+  postal_code: "73800",
+  city: "Montmélian",
+  phone: "04 79 28 21 09",
+  email: "info@fli.fr",
+};
+
 export type EvaluationPdfScores = {
   comprehension: number;
   expression: number;

@@ -103,6 +103,20 @@ describe("octets PDF", () => {
       expect(bytes.byteLength).toBeGreaterThan(1000);
       const doc = await PDFDocument.load(bytes);
       expect(doc.getPageCount()).toBeGreaterThanOrEqual(1);
+      const ascii = Buffer.from(bytes).toString("latin1");
+      expect(ascii).toContain("%PDF");
+      expect(ascii).toContain("ZZTEST CandidatC5");
+      if (sponsor === "dsf") {
+        expect(ascii).toContain("Entreprise");
+        expect(ascii).not.toContain("TTC");
+        expect(ascii).not.toContain("Tarif");
+      } else {
+        expect(ascii).toContain("TTC");
+        expect(ascii).toContain("Tarif");
+      }
+      if (sponsor === "esf") {
+        expect(ascii).toContain("Cours collectifs enfants");
+      }
       await writeFile(
         `/opt/cursor/artifacts/c5-evaluation-${sponsor}.pdf`,
         bytes
