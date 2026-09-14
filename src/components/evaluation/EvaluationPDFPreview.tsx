@@ -17,10 +17,24 @@ import {
   buildEvaluationPdfModel,
   parseEvaluationPriceTtc,
   parseFliIdentity,
+  type CecrlScaleRow,
   type FliIdentity,
 } from "@/lib/evaluation-pdf";
 import type { TestEvaluation, TestBookingComplete } from "@/hooks/useTestEvaluations";
-import fliLogo from "@/assets/fli-invoice-logo.png";
+
+const ESF_LOGO = "/evaluation-pdf/esf-logo.jpg";
+const FLI_HEADER = "/evaluation-pdf/fli-entete-prosneige.png";
+const FLI_CACHET = "/evaluation-pdf/fli-cachet.png";
+const DSF_LETTERHEAD = "/evaluation-pdf/dsf-papier-entete-A4.png";
+const PARTNER_LOGOS = [
+  "/evaluation-pdf/orga-alpes-inter-langues.jpg",
+  "/evaluation-pdf/orga-cci-lorraine.jpg",
+  "/evaluation-pdf/orga-cite-des-langues.jpg",
+  "/evaluation-pdf/orga-cret-hautes-alpes.png",
+  "/evaluation-pdf/orga-greta-midi-pyrenees.jpg",
+  "/evaluation-pdf/orga-words-to-the-world.png",
+  "/evaluation-pdf/fli-logo-compact.png",
+];
 
 interface EvaluationPDFPreviewProps {
   evaluation: TestEvaluation;
@@ -42,7 +56,16 @@ function usePdfSettings() {
       const identity = parseFliIdentity(
         data?.find((row) => row.key === "fli_identity")?.value
       );
-      return { price, identity };
+      const { data: scale, error: scaleError } = await supabase
+        .from("cecrl_scale")
+        .select("score, cecrl_label, base_label, niveau, description")
+        .order("score");
+      if (scaleError) throw scaleError;
+      return {
+        price,
+        identity,
+        cecrlScale: (scale ?? []) as CecrlScaleRow[],
+      };
     },
   });
 }
@@ -91,6 +114,7 @@ export function EvaluationPDFPreview({ evaluation, booking }: EvaluationPDFPrevi
         noteMethodologique: evaluation.note_methodologique,
         priceTtc: settings.price,
         identity: settings.identity,
+        cecrlScale: settings.cecrlScale,
       });
     }
   } catch (err) {
@@ -107,17 +131,23 @@ export function EvaluationPDFPreview({ evaluation, booking }: EvaluationPDFPrevi
       </div>
 
       <div className="bg-white border rounded-lg p-8 print:border-none print:p-0" id="evaluation-pdf">
-        {model?.showFliHeaderFooter && (
-          <img src={fliLogo} alt="FLI" className="h-14 mb-4" />
-        )}
         {model?.showSyndicateHeader && (
-          <p className="text-xs font-semibold tracking-wide text-primary mb-1">SNMSF / ESF</p>
+          <img src={ESF_LOGO} alt="École du ski français" className="h-16 mb-3" />
         )}
-        <div className="flex justify-between items-start mb-6">
+        {model?.showFliHeaderFooter && (
+          <img src={FLI_HEADER} alt="France Langues International" className="h-16 mb-3 bg-black p-2" />
+        )}
+        {model?.showDsfLetterhead && (
+          <img src={DSF_LETTERHEAD} alt="DSF Formation" className="h-24 object-cover object-top mb-3" />
+        )}
+        <div className="flex justify-between items-start mb-4">
           <div>
             <h1 className="text-2xl font-bold text-primary">
               {model?.title ?? "Évaluation en langue vivante"}
             </h1>
+            {model?.subtitle && (
+              <p className="text-sm font-medium mt-2">{model.subtitle}</p>
+            )}
             {booking.sponsor_type && (
               <Badge variant="outline" className="mt-2">
                 {booking.sponsor_type}
@@ -131,7 +161,7 @@ export function EvaluationPDFPreview({ evaluation, booking }: EvaluationPDFPrevi
         )}
 
         <div className="grid grid-cols-2 gap-4 text-sm mb-6">
-          <p><span className="text-muted-foreground">Nom – Prénom :</span> {booking.candidate_name}</p>
+          <p><span className="text-muted-foreground">Nom – Prénom :</span> {model?.candidateDisplayName ?? booking.candidate_name}</p>
           {model?.showCompanyField ? (
             <p><span className="text-muted-foreground">Entreprise :</span> {model.companyName}</p>
           ) : (
@@ -189,6 +219,26 @@ export function EvaluationPDFPreview({ evaluation, booking }: EvaluationPDFPrevi
           </Card>
         )}
 
+        <Card className="mb-6">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Quatre blocs</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {(model?.blocs ?? []).map((bloc) => (
+              <div key={bloc.label}>
+                <h4 className="font-semibold text-sm text-muted-foreground mb-1">{bloc.label}</h4>
+                <p className="text-sm">{bloc.text || "—"}</p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {model?.showFliHeaderFooter && (
+          <div className="flex justify-end mb-6">
+            <img src={FLI_CACHET} alt="Cachet FLI" className="h-20" />
+          </div>
+        )}
+
         {model?.showCourseTable && (
           <Card className="mb-6">
             <CardHeader className="pb-3">
@@ -207,19 +257,13 @@ export function EvaluationPDFPreview({ evaluation, booking }: EvaluationPDFPrevi
           </Card>
         )}
 
-        <Card className="mb-6">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Quatre blocs</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {(model?.blocs ?? []).map((bloc) => (
-              <div key={bloc.label}>
-                <h4 className="font-semibold text-sm text-muted-foreground mb-1">{bloc.label}</h4>
-                <p className="text-sm">{bloc.text || "—"}</p>
-              </div>
+        {model?.showSyndicateHeader && (
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+            {PARTNER_LOGOS.map((src) => (
+              <img key={src} src={src} alt="" className="h-10 object-contain" />
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        )}
 
         {model?.showRegionalSections && (
           <div className="text-xs text-muted-foreground space-y-1 mb-6">
@@ -233,7 +277,7 @@ export function EvaluationPDFPreview({ evaluation, booking }: EvaluationPDFPrevi
 
         <Separator className="my-6" />
         <div className="text-center text-xs text-muted-foreground">
-          {identity.legal_name ? (
+          {model?.showFliHeaderFooter && identity.legal_name ? (
             <>
               <p>{identity.legal_name}</p>
               <p>
@@ -242,8 +286,10 @@ export function EvaluationPDFPreview({ evaluation, booking }: EvaluationPDFPrevi
                 {identity.email ? ` — ${identity.email}` : ""}
               </p>
             </>
+          ) : model?.showDsfLetterhead ? (
+            <p>Papier à en-tête DSF Formation — sans logo FLI, sans tarif.</p>
           ) : (
-            <p>Identité FLI chargée depuis les paramètres.</p>
+            identity.legal_name ? null : <p>Identité FLI chargée depuis les paramètres.</p>
           )}
         </div>
       </div>

@@ -12,9 +12,11 @@ import {
   evaluationPdfStoragePath,
   parseEvaluationPriceTtc,
   parseFliIdentity,
+  type CecrlScaleRow,
   type EvaluationPdfInput,
 } from "../_shared/evaluation-pdf-model.ts";
 import { renderEvaluationPdf } from "../_shared/evaluation-pdf-render.ts";
+import { loadEvaluationPdfAssets } from "../_shared/load-evaluation-pdf-assets.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -144,6 +146,18 @@ Deno.serve(async (req) => {
       return json(500, { error: "fli_identity manquant dans app_settings" });
     }
 
+    const { data: scaleRows } = await admin
+      .from("cecrl_scale")
+      .select("score, cecrl_label, base_label, niveau, description")
+      .order("score");
+    const cecrlScale: CecrlScaleRow[] = (scaleRows ?? []).map((row) => ({
+      score: Number(row.score),
+      cecrl_label: String(row.cecrl_label),
+      base_label: row.base_label != null ? String(row.base_label) : null,
+      niveau: row.niveau != null ? Number(row.niveau) : null,
+      description: row.description != null ? String(row.description) : null,
+    }));
+
     const instructorName = instructor
       ? `${instructor.first_name ?? ""} ${instructor.last_name ?? ""}`.trim()
       : null;
@@ -180,10 +194,12 @@ Deno.serve(async (req) => {
       noteMethodologique: evaluation.note_methodologique,
       priceTtc,
       identity,
+      cecrlScale,
     };
 
     const model = buildEvaluationPdfModel(input);
-    const bytes = await renderEvaluationPdf(model);
+    const assets = await loadEvaluationPdfAssets();
+    const bytes = await renderEvaluationPdf(model, assets);
     const path = evaluationPdfStoragePath(evaluationId);
 
     const { error: uploadErr } = await admin.storage

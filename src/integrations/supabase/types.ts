@@ -237,16 +237,22 @@ export type Database = {
         Row: {
           base_label: string
           cecrl_label: string
+          description: string
+          niveau: number
           score: number
         }
         Insert: {
           base_label: string
           cecrl_label: string
+          description: string
+          niveau: number
           score: number
         }
         Update: {
           base_label?: string
           cecrl_label?: string
+          description?: string
+          niveau?: number
           score?: number
         }
         Relationships: []

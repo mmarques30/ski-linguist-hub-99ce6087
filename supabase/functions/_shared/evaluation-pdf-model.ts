@@ -1,10 +1,7 @@
 /**
  * C.5 — modèle PDF d'évaluation (trois habillages).
- * Source de vérité : test_bookings.sponsor_type.
- * Tableau cours ESF et sections régionales extraits du .dotx (non inventés).
+ * Aligné sur src/lib/evaluation-pdf.ts — cartes minimales, sans React.
  */
-
-/** Aligné sur src/lib/evaluation-pdf.ts — cartes minimales, sans React. */
 
 const LANGUAGE_LABELS: Record<string, string> = {
   all: "Toutes langues",
@@ -41,13 +38,13 @@ export type FliIdentity = {
   email: string;
 };
 
-/** Aligné sur app_settings.fli_identity (seed C.5). */
+/** Aligné sur app_settings.fli_identity et le pied du .dotx ecole_ski. */
 export const DEFAULT_FLI_IDENTITY: FliIdentity = {
   legal_name: "France Langues International",
   address_line: "25 avenue de la Gare",
   postal_code: "73800",
   city: "Montmélian",
-  phone: "04 79 28 21 09",
+  phone: "09 81 84 60 65",
   email: "info@fli.fr",
 };
 
@@ -67,6 +64,35 @@ export type EvaluationPdfBlocs = {
   conclusion: string;
 };
 
+function roundToHalf(value: number): number {
+  return Math.round(value * 2) / 2;
+}
+
+function scoreGeneralCalcule(scores: EvaluationPdfScores): number {
+  const keys = [
+    "comprehension",
+    "expression",
+    "structure",
+    "technique",
+    "conversation",
+  ] as const;
+  const sum = keys.reduce((acc, key) => acc + scores[key], 0);
+  return roundToHalf(sum / keys.length);
+}
+
+function needsMethodoNote(general: number, calcule: number): boolean {
+  return Math.round((general - calcule) * 2) / 2 !== 0;
+}
+
+
+export type CecrlScaleRow = {
+  score: number;
+  cecrl_label: string;
+  base_label?: string | null;
+  niveau?: number | null;
+  description?: string | null;
+};
+
 export type EvaluationPdfInput = {
   sponsorType: string;
   evaluatedAt: Date;
@@ -84,14 +110,30 @@ export type EvaluationPdfInput = {
   noteMethodologique: string | null;
   priceTtc: number | null;
   identity: FliIdentity;
+  cecrlScale?: CecrlScaleRow[] | null;
 };
 
 export type SkillRow = { label: string; value: string };
 
+export type BaremeRow = {
+  score: number;
+  cecrl: string;
+  niveau: number;
+  labels: string;
+};
+
+export type ResolvedLevel = {
+  score: number;
+  cecrl: string;
+  niveau: number;
+  description: string;
+};
+
 export type EvaluationPdfModel = {
   habillage: SponsorType;
   title: string;
-  yearLabel: string;
+  seasonLabel: string;
+  subtitle: string;
   showPrice: boolean;
   priceLabel: string | null;
   showCourseTable: boolean;
@@ -99,7 +141,9 @@ export type EvaluationPdfModel = {
   showCompanyField: boolean;
   showFliHeaderFooter: boolean;
   showSyndicateHeader: boolean;
+  showDsfLetterhead: boolean;
   candidateName: string;
+  candidateDisplayName: string;
   candidateProfession: string;
   carteSyndicale: string;
   languageLabel: string;
@@ -109,6 +153,7 @@ export type EvaluationPdfModel = {
   instructorName: string;
   evaluatedOn: string;
   skillRows: SkillRow[];
+  baremeRows: BaremeRow[];
   noteMethodologique: string | null;
   blocs: { label: string; text: string }[];
   identity: FliIdentity;
@@ -147,18 +192,14 @@ export const ESF_REGIONAL_SECTIONS: ReadonlyArray<{
   },
 ];
 
-/** Barème européen du .dotx ESF (A1–C2 / niveaux 0–5). */
-export const CECRL_BAREME: ReadonlyArray<{
-  cecrl: string;
-  niveau: string;
-  labels: string;
-}> = [
-  { cecrl: "A1", niveau: "Niveau d'entrée 0", labels: "Faux débutant · Quelques notions · Éveil" },
-  { cecrl: "A2", niveau: "Niveau 1", labels: "Élémentaire · Pré-intermédiaire · Survie" },
-  { cecrl: "B1", niveau: "Niveau 2", labels: "Intermédiaire · Autonomie" },
-  { cecrl: "B2", niveau: "Niveau 3", labels: "Post intermédiaire · Opérationnel" },
-  { cecrl: "C1", niveau: "Niveau 4", labels: "Perfectionnement · Fluidité · Aisance" },
-  { cecrl: "C2", niveau: "Niveau 5", labels: "Maîtrise" },
+/** Barème européen du .dotx (A1–C2 / niveaux 0–5). Repli si cecrl_scale incomplet. */
+export const CECRL_BAREME: ReadonlyArray<BaremeRow> = [
+  { score: 0, cecrl: "A1", niveau: 0, labels: "Faux débutant / Quelques notions / Éveil" },
+  { score: 1, cecrl: "A2", niveau: 1, labels: "Élémentaire / Pré-intermédiaire / Survie" },
+  { score: 2, cecrl: "B1", niveau: 2, labels: "Intermédiaire / Autonomie" },
+  { score: 3, cecrl: "B2", niveau: 3, labels: "Post intermédiaire / Opérationnel" },
+  { score: 4, cecrl: "C1", niveau: 4, labels: "Perfectionnement / Fluidité / Aisance" },
+  { score: 5, cecrl: "C2", niveau: 5, labels: "Maîtrise" },
 ];
 
 export const ESF_DIRECTOR_NOTE =
@@ -167,38 +208,19 @@ export const ESF_DIRECTOR_NOTE =
 export const ESF_RETEST_NOTE =
   "Nous vous recommandons de tester vos capacités en langues tous les deux ans.";
 
-const ESF_SKILL_ORDER: Array<{ key: keyof EvaluationPdfScores; label: string }> = [
+export const ESF_ORGANISMES_CAPTION = "Organismes agréés";
+
+export const ESF_COURSE_HEADING =
+  "Corrélation entre le niveau d'anglais du moniteur ESF et le niveau du cours enseigné :";
+
+/** Mêmes libellés, même ordre, sur les trois habillages. */
+export const SKILL_ORDER: Array<{ key: keyof EvaluationPdfScores; label: string }> = [
   { key: "comprehension", label: "Compréhension" },
   { key: "expression", label: "Expression" },
   { key: "structure", label: "Structures de la langue" },
   { key: "technique", label: "Expression technique et spécifique" },
   { key: "conversation", label: "Conversation générale" },
-  { key: "general", label: "APPRÉCIATION GÉNÉRALE" },
-];
-
-const ECOLE_SKI_SKILL_ORDER: Array<{
-  key: keyof EvaluationPdfScores;
-  label: string;
-}> = [
-  { key: "expression", label: "Expression" },
-  { key: "conversation", label: "Conversation générale" },
-  {
-    key: "structure",
-    label: "Connaissances grammaticales (structure de la langue)",
-  },
-  { key: "comprehension", label: "Compréhension" },
-  {
-    key: "technique",
-    label: "Vocabulaire technique spécifique et phraséologie de l'enseignement du ski",
-  },
   { key: "general", label: "Appréciation générale" },
-];
-
-const BLOC_LABELS: Array<{ key: keyof EvaluationPdfBlocs; label: string }> = [
-  { key: "introduction", label: "Introduction" },
-  { key: "comprehension", label: "Compréhension" },
-  { key: "technique", label: "Technique" },
-  { key: "conclusion", label: "Conclusion" },
 ];
 
 export function isSponsorType(value: string): value is SponsorType {
@@ -220,9 +242,13 @@ export function skiSeasonYears(date: Date): { start: number; end: number } {
   return { start: year - 1, end: year };
 }
 
-export function evaluationTitle(date: Date): string {
+export function formatSeasonLabel(date: Date): string {
   const { start, end } = skiSeasonYears(date);
-  return `Évaluation en langue vivante saison ${start} / ${end}`;
+  return `${start} / ${end}`;
+}
+
+export function evaluationTitle(date: Date): string {
+  return `Évaluation en langue vivante saison ${formatSeasonLabel(date)}`;
 }
 
 export function parseEvaluationPriceTtc(value: unknown): number | null {
@@ -288,19 +314,145 @@ function formatDateFr(date: Date): string {
   return `${dd}/${mm}/${date.getFullYear()}`;
 }
 
+export function asScoreNumber(value: number | string): number {
+  return typeof value === "number" ? value : Number(value);
+}
+
+/** Palier 0–5 : floor de la note (0 et 0,5 → 0). */
+export function integerNiveau(score: number): number {
+  const n = asScoreNumber(score);
+  if (!Number.isFinite(n) || n < 1) return 0;
+  return Math.floor(n);
+}
+
+export function formatNiveauTableLabel(niveau: number): string {
+  return niveau <= 0 ? "Niveau d'entrée 0" : `Niveau ${niveau}`;
+}
+
+export function formatCandidateDisplayName(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "";
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts.slice(1).join(" ").toUpperCase()}`;
+}
+
+export function normalizeCecrlScale(rows?: CecrlScaleRow[] | null): CecrlScaleRow[] {
+  if (!rows?.length) {
+    return CECRL_BAREME.map((row) => ({
+      score: row.score,
+      cecrl_label: row.cecrl,
+      base_label: row.cecrl,
+      niveau: row.niveau,
+      description: row.labels,
+    }));
+  }
+  return [...rows]
+    .map((row) => ({
+      ...row,
+      score: asScoreNumber(row.score),
+      niveau: row.niveau ?? integerNiveau(asScoreNumber(row.score)),
+      description: row.description?.trim() || null,
+    }))
+    .sort((a, b) => a.score - b.score);
+}
+
+export function baremeRowsFromScale(rows?: CecrlScaleRow[] | null): BaremeRow[] {
+  const scale = normalizeCecrlScale(rows);
+  const integers = scale.filter((row) => Number.isInteger(row.score));
+  if (integers.length < 6) return [...CECRL_BAREME];
+  return integers.map((row) => {
+    const niveau = row.niveau ?? integerNiveau(row.score);
+    const fallback = CECRL_BAREME.find((item) => item.niveau === niveau);
+    return {
+      score: row.score,
+      cecrl: row.cecrl_label,
+      niveau,
+      labels: row.description || fallback?.labels || "",
+    };
+  });
+}
+
+export function resolveLevel(
+  score: number,
+  scale: CecrlScaleRow[],
+  cecrlHint?: string | null
+): ResolvedLevel {
+  const n = asScoreNumber(score);
+  const normalized = normalizeCecrlScale(scale);
+  const exact = normalized.find((row) => row.score === n);
+  const palier = exact?.niveau ?? integerNiveau(n);
+  const integerRow = normalized.find((row) => row.score === palier);
+  const fallback = CECRL_BAREME.find((row) => row.niveau === palier) ?? CECRL_BAREME[0];
+  return {
+    score: n,
+    cecrl:
+      (cecrlHint && cecrlHint.trim()) ||
+      exact?.cecrl_label ||
+      cecrlFromScore(n) ||
+      fallback.cecrl,
+    niveau: palier,
+    description:
+      exact?.description || integerRow?.description || fallback.labels,
+  };
+}
+
+export function nextCecrlLevel(
+  score: number,
+  scale: CecrlScaleRow[]
+): ResolvedLevel | null {
+  const palier = integerNiveau(score);
+  if (palier >= 5) return null;
+  return resolveLevel(palier + 1, scale);
+}
+
+export function techniqueBlocLabel(next: ResolvedLevel | null, current: ResolvedLevel): string {
+  const target = next ?? current;
+  return `Pour passer au ${target.cecrl} (Niveau ${target.niveau} - ${target.description})`;
+}
+
+export function evaluationSubtitle(input: {
+  candidateName: string;
+  generalScore: number;
+  current: ResolvedLevel;
+  next: ResolvedLevel | null;
+  languageLabel: string;
+  instructorName: string;
+}): string {
+  const name = formatCandidateDisplayName(input.candidateName);
+  const note = formatScoreFr(input.generalScore);
+  const objectif = input.next?.cecrl ?? input.current.cecrl;
+  const evaluator = input.instructorName.trim() || "—";
+  return `${name} — ${note} / ${input.current.cecrl} - Niveau ${input.current.niveau} - ${input.current.description} → ${objectif} (${input.languageLabel} — évaluateur·rice : ${evaluator})`;
+}
+
 function skillRowsFor(
-  habillage: SponsorType,
   scores: EvaluationPdfScores,
-  cecrlGeneral: string | null
+  cecrlGeneral: string | null,
+  scale: CecrlScaleRow[]
 ): SkillRow[] {
-  const order = habillage === "ecole_ski" ? ECOLE_SKI_SKILL_ORDER : ESF_SKILL_ORDER;
-  return order.map(({ key, label }) => ({
-    label,
-    value: formatScoreCecrl(
-      scores[key],
-      key === "general" ? cecrlGeneral : cecrlFromScore(scores[key])
-    ),
-  }));
+  return SKILL_ORDER.map(({ key, label }) => {
+    const hint = key === "general" ? cecrlGeneral : resolveLevel(scores[key], scale).cecrl;
+    return {
+      label,
+      value: formatScoreCecrl(scores[key], hint),
+    };
+  });
+}
+
+function commentBlocs(
+  input: EvaluationPdfBlocs,
+  current: ResolvedLevel,
+  next: ResolvedLevel | null
+): { label: string; text: string }[] {
+  return [
+    { label: "Points forts", text: input.introduction?.trim() || "" },
+    { label: "À consolider", text: input.comprehension?.trim() || "" },
+    {
+      label: techniqueBlocLabel(next, current),
+      text: input.technique?.trim() || "",
+    },
+    { label: "Clôture", text: input.conclusion?.trim() || "" },
+  ];
 }
 
 export function buildEvaluationPdfModel(input: EvaluationPdfInput): EvaluationPdfModel {
@@ -312,10 +464,29 @@ export function buildEvaluationPdfModel(input: EvaluationPdfInput): EvaluationPd
     throw new Error("evaluation_price_ttc manquant pour cet habillage");
   }
 
+  const scale = normalizeCecrlScale(input.cecrlScale);
+  const current = resolveLevel(input.scores.general, scale, input.cecrlGeneral);
+  const next = nextCecrlLevel(input.scores.general, scale);
+  const languageLabel = LANGUAGE_LABELS[input.language] || input.language;
+  const instructorName = input.instructorName?.trim() || "—";
+  const calcule = scoreGeneralCalcule(input.scores);
+  const methodo =
+    needsMethodoNote(input.scores.general, calcule)
+      ? input.noteMethodologique?.trim() || null
+      : null;
+
   return {
     habillage,
     title: evaluationTitle(input.evaluatedAt),
-    yearLabel: String(skiSeasonYears(input.evaluatedAt).start),
+    seasonLabel: formatSeasonLabel(input.evaluatedAt),
+    subtitle: evaluationSubtitle({
+      candidateName: input.candidateName,
+      generalScore: input.scores.general,
+      current,
+      next,
+      languageLabel,
+      instructorName,
+    }),
     showPrice,
     priceLabel,
     showCourseTable: habillage === "esf",
@@ -323,21 +494,21 @@ export function buildEvaluationPdfModel(input: EvaluationPdfInput): EvaluationPd
     showCompanyField: habillage === "dsf",
     showFliHeaderFooter: habillage === "ecole_ski",
     showSyndicateHeader: habillage === "esf",
+    showDsfLetterhead: habillage === "dsf",
     candidateName: input.candidateName,
+    candidateDisplayName: formatCandidateDisplayName(input.candidateName),
     candidateProfession: input.candidateProfession?.trim() || "—",
     carteSyndicale: input.carteSyndicale?.trim() || "—",
-    languageLabel: LANGUAGE_LABELS[input.language] || input.language,
+    languageLabel,
     previousTestLabel: input.previousTest ? "OUI" : "NON",
     skiSchoolName: input.skiSchoolName?.trim() || "—",
     companyName: (input.companyName || input.skiSchoolName || "").trim() || "—",
-    instructorName: input.instructorName?.trim() || "—",
+    instructorName,
     evaluatedOn: formatDateFr(input.evaluatedAt),
-    skillRows: skillRowsFor(habillage, input.scores, input.cecrlGeneral),
-    noteMethodologique: input.noteMethodologique?.trim() || null,
-    blocs: BLOC_LABELS.map(({ key, label }) => ({
-      label,
-      text: input.blocs[key]?.trim() || "",
-    })),
+    skillRows: skillRowsFor(input.scores, input.cecrlGeneral, scale),
+    baremeRows: baremeRowsFromScale(scale),
+    noteMethodologique: methodo,
+    blocs: commentBlocs(input.blocs, current, next),
     identity: input.identity,
     identityLine: formatIdentityLine(input.identity),
   };

@@ -1,6 +1,9 @@
 # C.5 — PDF trois habillages
 
-Migration : `supabase/migrations/20260911150000_c5_evaluation_pdf.sql`
+Migrations :
+- `supabase/migrations/20260911150000_c5_evaluation_pdf.sql`
+- `supabase/migrations/20260911151000_c5_pdf_generated_at.sql`
+- `supabase/migrations/20260911152000_c5_cecrl_scale_descriptions.sql`
 
 Journaux : `c5_evaluation_pdf`, `c5_evaluation_pdf_generated` (aucune donnée personnelle)
 
@@ -9,14 +12,16 @@ Paula déploie la fonction — ne pas sonder 403/404.
 
 Les `.dotx` ne sont **pas** dans le dépôt. Tableau cours ESF et sections régionales
 transcrits dans `src/lib/evaluation-pdf.ts` (copie Deno : `_shared/evaluation-pdf-model.ts`).
+Logos d’habillage : `public/evaluation-pdf/` et
+`supabase/functions/_shared/evaluation-pdf-assets/` (aucune donnée de test).
 
 ## Habillage = `test_bookings.sponsor_type`
 
 | sponsor_type | En-tête | Prix | Particularités |
 |---|---|---|---|
-| `esf` | en-tête syndicat | `app_settings.evaluation_price_ttc` | tableau cours, sections régionales |
-| `ecole_ski` | en-tête et pied FLI | idem | « Fait à Montmélian » |
-| `dsf` | titre calculé | **aucun** | champ **Entreprise** (école / partenaire) |
+| `esf` | logo ESF haut gauche ; titre saison calculée | `app_settings.evaluation_price_ttc` | bande 7 organismes agréés en pied de page 1 ; tableau cours + sections régionales en page 2 |
+| `ecole_ski` | `fli-entete-prosneige.png` ; tampon FLI en signature ; pied FLI | idem | même titre saison ; texte justifié dans les marges |
+| `dsf` | papier à en-tête A4 `dsf-papier-entete-A4.png` | **aucun** | champ **Entreprise** ; **sans logo FLI** |
 
 Prix : jsonb numérique `45`, lu à la génération, jamais écrit en dur dans le rendu
 (sauf valeur seedée).
@@ -24,9 +29,25 @@ Prix : jsonb numérique `45`, lu à la génération, jamais écrit en dur dans l
 Identité FLI : `app_settings.fli_identity` (25 avenue de la Gare, 73800 Montmélian,
 09 81 84 60 65, info@fli.fr).
 
-Contenu commun (données de la ligne) : titre calculé (saison ski juillet–juin),
-note méthodologique, grille cinq compétences + appréciation générale au format
-`N - CECRL`, niveaux / libellés, quatre blocs.
+Saison : 1er juillet N → 30 juin N+1, titre
+`Évaluation en langue vivante saison AAAA / AAAA` (pas d’année de modèle Word).
+
+Sous-titre sous l’en-tête :
+`Prénom NOM — [note] / [CECRL] - Niveau [X] - [label] → [objectif] (Langue — évaluateur·rice : Nom)`.
+
+Quatre blocs (ordre d’affichage, contenus C.2/C.3) :
+1. Points forts ← `bloc_introduction`
+2. À consolider ← `bloc_comprehension`
+3. Pour passer au [CECRL suivant] (Niveau [X+1] - [label]) ← `bloc_technique`
+4. Clôture ← `bloc_conclusion`
+
+Note méthodologique **uniquement si l’écart note générale / moyenne calculée est non nul**.
+
+Compétences (même ordre et mêmes libellés sur les trois habillages) :
+Compréhension, Expression, Structures de la langue, Expression technique et
+spécifique, Conversation générale, Appréciation générale.
+
+Barème : `cecrl_scale.niveau` + `cecrl_scale.description`.
 
 ## Stockage
 
@@ -65,6 +86,9 @@ DROP POLICY IF EXISTS "rls_evaluation_pdfs_update_staff" ON storage.objects;
 DROP POLICY IF EXISTS "rls_evaluation_pdfs_delete_admin" ON storage.objects;
 DELETE FROM storage.objects WHERE bucket_id = 'evaluation-pdfs';
 DELETE FROM storage.buckets WHERE id = 'evaluation-pdfs';
+ALTER TABLE public.cecrl_scale
+  DROP COLUMN IF EXISTS niveau,
+  DROP COLUMN IF EXISTS description;
 COMMIT;
 ```
 
