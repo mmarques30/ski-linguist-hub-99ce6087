@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { RegistrationData } from "@/pages/register/Index";
 import type { RegistrationPaymentOption } from "@/lib/registration-payments";
+import { messageFromFunctionsInvoke } from "@/lib/supabase-error";
 
 export interface RegistrationSubmissionResult {
   inscriptionId: string;
@@ -20,7 +21,7 @@ export async function submitRegistration(
   });
 
   if (error) {
-    throw new Error(error.message || "Erreur lors de la soumission de l'inscription");
+    throw new Error(messageFromFunctionsInvoke(error, result));
   }
 
   if (!result?.success) {
