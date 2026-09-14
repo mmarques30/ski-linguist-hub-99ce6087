@@ -7,6 +7,7 @@ import {
   type CsvRow,
   parseFrenchNumber,
 } from "@/lib/csv-import-parser";
+import { mapEntryLevelToCecrl } from "@/lib/entry-level-cecrl";
 
 export type ImportTableType =
   | "instructors"
@@ -341,7 +342,7 @@ function mapInscriptionRow(row: CsvRow): Record<string, unknown> {
     deposit_amount: deposit,
     deposit_date: isEmpty(row.deposit_date) ? null : row.deposit_date,
     payment_method: isEmpty(row.payment_mode || row.payment_method) ? null : (row.payment_mode || row.payment_method),
-    entry_level: isEmpty(row.level_entry || row.entry_level) ? null : (row.level_entry || row.entry_level),
+    entry_level: mapEntryLevelToCecrl(isEmpty(row.level_entry || row.entry_level) ? null : (row.level_entry || row.entry_level)),
     final_general_level: isEmpty(row.level_exit_general) ? null : row.level_exit_general,
     final_specific_level: isEmpty(row.level_exit_specific) ? null : row.level_exit_specific,
     certification_type: isEmpty(row.certification) ? null : row.certification,
