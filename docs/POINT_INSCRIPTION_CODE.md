@@ -32,9 +32,15 @@ moniteur). Les déposer sous ces noms exacts pour que les liens ouvrent un docum
 ## Vérifications
 
 1. `generate_inscription_code()` propose un code libre au format `FLI-AAnnnn`
-2. Deux créations consécutives → deux codes, séquence +1
+2. Quatre créations consécutives (après `FLI-260001` existant) → `FLI-260002` … `FLI-260005`
 3. Échec volontaire : pas de stagiaire orphelin ; message en français
 4. `/register` étape 7 : liens règlement intérieur + conditions générales (nouvel onglet)
+
+Journal `inscription_code_four_consecutive` : les quatre codes, sans donnée personnelle.
+
+L’ancienne fonction, sur base vide de codes `FLI-26`, produisait `FLI-260001`,
+`FLI-262601`, `FLI-262627`, puis bloquait à la quatrième. Ici la quatrième
+(`FLI-260004`) et la cinquième (`FLI-260005`) sont libres.
 
 ## DOWN
 
@@ -42,5 +48,7 @@ Voir le bas de la migration. Ne pas exécuter sans validation Paula.
 Ne recrée pas les trois inscriptions d'essai.
 
 C.6 n'est pas commencé. Gabarits PDF C.5 non modifiés.
-Les garde-fous emails (#26) n'ont rien à changer ici ; la fonction Edge concernée
-attend toujours le déploiement Paula.
+
+Le commit GitHub est sur la PR `cursor/inscription-code-collision-7435` (pas encore
+sur `main`). La fonction live utilise déjà `RIGHT(code, 4)`.
+
