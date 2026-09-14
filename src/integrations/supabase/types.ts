@@ -2972,6 +2972,8 @@ export type Database = {
           profession: string
           profession_autre: string | null
           ski_school_id: string
+          ski_discipline: string | null
+          training_cycle: string | null
           student_id: string | null
         }
         Insert: {
@@ -2986,6 +2988,8 @@ export type Database = {
           profession: string
           profession_autre?: string | null
           ski_school_id: string
+          ski_discipline?: string | null
+          training_cycle?: string | null
           student_id?: string | null
         }
         Update: {
@@ -3000,6 +3004,8 @@ export type Database = {
           profession?: string
           profession_autre?: string | null
           ski_school_id?: string
+          ski_discipline?: string | null
+          training_cycle?: string | null
           student_id?: string | null
         }
         Relationships: [
@@ -3092,6 +3098,7 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           reviewer_comment: string | null
+          verified_at: string | null
           score_comprehension: number
           score_conversation: number
           score_expression: number
@@ -3136,6 +3143,7 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           reviewer_comment?: string | null
+          verified_at?: string | null
           score_comprehension: number
           score_conversation: number
           score_expression: number
@@ -3179,6 +3187,7 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           reviewer_comment?: string | null
+          verified_at?: string | null
           score_comprehension?: number
           score_conversation?: number
           score_expression?: number
@@ -3401,6 +3410,8 @@ export type Database = {
           candidate_phone: string | null
           candidate_photo: string | null
           candidate_profession: string | null
+          candidate_ski_discipline: string | null
+          candidate_training_cycle: string | null
           created_at: string | null
           datetime: string | null
           evaluation_id: string | null
@@ -3427,6 +3438,7 @@ export type Database = {
           stripe_payment_id: string | null
           student_id: string | null
           sent_at: string | null
+          verified_at: string | null
         }
         Relationships: [
           {
@@ -3456,6 +3468,24 @@ export type Database = {
     Functions: {
       cecrl_label_from_score: { Args: { _score: number }; Returns: string }
       dsf_partner_id: { Args: never; Returns: string }
+      list_ski_schools_for_test: {
+        Args: Record<PropertyKey, never>
+        Returns: { id: string; name: string }[]
+      }
+      submit_test_booking_candidate: {
+        Args: {
+          p_name: string
+          p_email: string
+          p_phone: string
+          p_profession: string
+          p_profession_autre: string
+          p_ski_school_id: string
+          p_carte_syndicale: string
+          p_ski_discipline: string
+          p_training_cycle: string
+        }
+        Returns: string
+      }
       cleanup_zztest_data: { Args: { _dry_run?: boolean }; Returns: Json }
       activate_season: { Args: { p_season_id: string }; Returns: undefined }
       generate_inscription_code: { Args: never; Returns: string }

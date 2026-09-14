@@ -6,7 +6,8 @@
  */
 
 import { LANGUAGE_LABELS, SCORE_TO_LEVEL_5 } from "./evaluation-utils";
-import { needsMethodoNote, scoreGeneralCalcule } from "./evaluation-scores";
+import { suggestsMethodoNote, scoreGeneralCalcule } from "./evaluation-scores";
+import { formatSkiDisciplineLabel } from "./test-candidate-fields";
 
 export const EVALUATION_PDF_BUCKET = "evaluation-pdfs";
 
@@ -21,13 +22,13 @@ export type FliIdentity = {
   email: string;
 };
 
-/** Aligné sur app_settings.fli_identity et le pied du .dotx ecole_ski. */
+/** Aligné sur app_settings.fli_identity — aucune coordonnée dans les gabarits. */
 export const DEFAULT_FLI_IDENTITY: FliIdentity = {
   legal_name: "France Langues International",
   address_line: "25 avenue de la Gare",
   postal_code: "73800",
   city: "Montmélian",
-  phone: "09 81 84 60 65",
+  phone: "04 79 28 21 09",
   email: "info@fli.fr",
 };
 
@@ -60,6 +61,8 @@ export type EvaluationPdfInput = {
   evaluatedAt: Date;
   candidateName: string;
   candidateProfession?: string | null;
+  skiDiscipline?: string | null;
+  trainingCycle?: string | null;
   carteSyndicale?: string | null;
   language: string;
   previousTest: boolean;
@@ -73,6 +76,7 @@ export type EvaluationPdfInput = {
   priceTtc: number | null;
   identity: FliIdentity;
   cecrlScale?: CecrlScaleRow[] | null;
+  verifiedAt?: Date | null;
 };
 
 export type SkillRow = { label: string; value: string };
@@ -114,6 +118,10 @@ export type EvaluationPdfModel = {
   companyName: string;
   instructorName: string;
   evaluatedOn: string;
+  verifiedOn: string | null;
+  skiDiscipline: string | null;
+  skiDisciplineLabel: string;
+  trainingCycle: string;
   skillRows: SkillRow[];
   baremeRows: BaremeRow[];
   noteMethodologique: string | null;
@@ -372,19 +380,24 @@ export function techniqueBlocLabel(next: ResolvedLevel | null, current: Resolved
   return `Pour passer au ${target.cecrl} (Niveau ${target.niveau} - ${target.description})`;
 }
 
+/** Premier segment du libellé de palier (ex. « Post intermédiaire / Opérationnel »). */
+export function principalLabel(description: string): string {
+  const first = description.split(" / ")[0]?.trim();
+  return first || description.trim();
+}
+
 export function evaluationSubtitle(input: {
   candidateName: string;
   generalScore: number;
   current: ResolvedLevel;
-  next: ResolvedLevel | null;
   languageLabel: string;
   instructorName: string;
 }): string {
   const name = formatCandidateDisplayName(input.candidateName);
   const note = formatScoreFr(input.generalScore);
-  const objectif = input.next?.cecrl ?? input.current.cecrl;
   const evaluator = input.instructorName.trim() || "—";
-  return `${name} — ${note} / ${input.current.cecrl} - Niveau ${input.current.niveau} - ${input.current.description} → ${objectif} (${input.languageLabel} — évaluateur·rice : ${evaluator})`;
+  const reached = principalLabel(input.current.description);
+  return `${name} — ${note} / ${input.current.cecrl} - Niveau ${input.current.niveau} - ${reached} → objectif C1 (${input.languageLabel} — évaluateur·rice : ${evaluator})`;
 }
 
 function skillRowsFor(
@@ -433,9 +446,10 @@ export function buildEvaluationPdfModel(input: EvaluationPdfInput): EvaluationPd
   const instructorName = input.instructorName?.trim() || "—";
   const calcule = scoreGeneralCalcule(input.scores);
   const methodo =
-    needsMethodoNote(input.scores.general, calcule)
+    suggestsMethodoNote(input.scores.general, calcule)
       ? input.noteMethodologique?.trim() || null
       : null;
+  const verifiedOn = input.verifiedAt ? formatDateFr(input.verifiedAt) : null;
 
   return {
     habillage,
@@ -445,7 +459,6 @@ export function buildEvaluationPdfModel(input: EvaluationPdfInput): EvaluationPd
       candidateName: input.candidateName,
       generalScore: input.scores.general,
       current,
-      next,
       languageLabel,
       instructorName,
     }),
@@ -467,6 +480,10 @@ export function buildEvaluationPdfModel(input: EvaluationPdfInput): EvaluationPd
     companyName: (input.companyName || input.skiSchoolName || "").trim() || "—",
     instructorName,
     evaluatedOn: formatDateFr(input.evaluatedAt),
+    verifiedOn,
+    skiDiscipline: input.skiDiscipline?.trim() || null,
+    skiDisciplineLabel: formatSkiDisciplineLabel(input.skiDiscipline),
+    trainingCycle: input.trainingCycle?.trim() || "—",
     skillRows: skillRowsFor(input.scores, input.cecrlGeneral, scale),
     baremeRows: baremeRowsFromScale(scale),
     noteMethodologique: methodo,

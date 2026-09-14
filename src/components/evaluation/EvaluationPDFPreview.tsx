@@ -90,6 +90,8 @@ export function EvaluationPDFPreview({ evaluation, booking }: EvaluationPDFPrevi
         evaluatedAt: booking.datetime ? new Date(booking.datetime) : new Date(),
         candidateName: booking.candidate_name || "",
         candidateProfession: booking.candidate_profession,
+        skiDiscipline: booking.candidate_ski_discipline,
+        trainingCycle: booking.candidate_training_cycle,
         language: booking.language || "anglais",
         previousTest: Boolean(booking.previous_test),
         skiSchoolName: booking.ski_school_name,
@@ -115,6 +117,7 @@ export function EvaluationPDFPreview({ evaluation, booking }: EvaluationPDFPrevi
         priceTtc: settings.price,
         identity: settings.identity,
         cecrlScale: settings.cecrlScale,
+        verifiedAt: evaluation.verified_at ? new Date(evaluation.verified_at) : null,
       });
     }
   } catch (err) {
@@ -147,6 +150,11 @@ export function EvaluationPDFPreview({ evaluation, booking }: EvaluationPDFPrevi
             </h1>
             {model?.subtitle && (
               <p className="text-sm font-medium mt-2">{model.subtitle}</p>
+            )}
+            {model?.noteMethodologique && (
+              <p className="text-sm italic text-muted-foreground mt-1">
+                {model.noteMethodologique}
+              </p>
             )}
             {booking.sponsor_type && (
               <Badge variant="outline" className="mt-2">
@@ -186,6 +194,16 @@ export function EvaluationPDFPreview({ evaluation, booking }: EvaluationPDFPrevi
           <p>
             <span className="text-muted-foreground">Profession :</span> {booking.candidate_profession}
           </p>
+          {model?.showSyndicateHeader && (
+            <>
+              <p>
+                <span className="text-muted-foreground">Discipline :</span> {model.skiDisciplineLabel}
+              </p>
+              <p>
+                <span className="text-muted-foreground">Cycle de formation :</span> {model.trainingCycle}
+              </p>
+            </>
+          )}
         </div>
 
         <Card className="mb-6">
@@ -208,17 +226,6 @@ export function EvaluationPDFPreview({ evaluation, booking }: EvaluationPDFPrevi
           <p className="font-semibold mb-4">Tarif {model.priceLabel}</p>
         )}
 
-        {model?.noteMethodologique && (
-          <Card className="mb-6">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Note méthodologique</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm">{model.noteMethodologique}</p>
-            </CardContent>
-          </Card>
-        )}
-
         <Card className="mb-6">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">Quatre blocs</CardTitle>
@@ -234,7 +241,10 @@ export function EvaluationPDFPreview({ evaluation, booking }: EvaluationPDFPrevi
         </Card>
 
         {model?.showFliHeaderFooter && (
-          <div className="flex justify-end mb-6">
+          <div className="flex justify-between items-end mb-6">
+            <p className="text-sm">
+              Fait à {identity.city || "Montmélian"}, le {model.verifiedOn ?? "—"}
+            </p>
             <img src={FLI_CACHET} alt="Cachet FLI" className="h-20" />
           </div>
         )}

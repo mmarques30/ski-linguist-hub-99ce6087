@@ -104,6 +104,7 @@ export default function EvaluationVerify() {
       status: "valide",
       reviewed_at: new Date().toISOString(),
       reviewed_by: user.id,
+      verified_at: new Date().toISOString(),
     });
     toast({ title: "Évaluation validée" });
     navigate("/formateur/evaluations");

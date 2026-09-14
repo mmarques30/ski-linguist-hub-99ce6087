@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
 
     const { data: candidate } = await admin
       .from("test_candidates")
-      .select("name, profession, carte_syndicale, ski_school_id")
+      .select("name, profession, carte_syndicale, ski_school_id, ski_discipline, training_cycle")
       .eq("id", booking.candidate_id)
       .maybeSingle();
 
@@ -167,6 +167,8 @@ Deno.serve(async (req) => {
       evaluatedAt: booking.datetime ? new Date(booking.datetime) : new Date(),
       candidateName: candidate?.name ?? "",
       candidateProfession: candidate?.profession,
+      skiDiscipline: candidate?.ski_discipline,
+      trainingCycle: candidate?.training_cycle,
       carteSyndicale: candidate?.carte_syndicale,
       language: booking.language,
       previousTest: Boolean(booking.previous_test),
@@ -195,6 +197,7 @@ Deno.serve(async (req) => {
       priceTtc,
       identity,
       cecrlScale,
+      verifiedAt: evaluation.verified_at ? new Date(evaluation.verified_at) : null,
     };
 
     const model = buildEvaluationPdfModel(input);

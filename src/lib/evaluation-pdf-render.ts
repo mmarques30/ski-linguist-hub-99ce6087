@@ -28,7 +28,7 @@ const MUTED = rgb(0.35, 0.35, 0.35);
 const RULE = rgb(0.75, 0.78, 0.82);
 const BAND = rgb(0.93, 0.95, 0.97);
 
-export type Fonts = { regular: PDFFont; bold: PDFFont };
+export type Fonts = { regular: PDFFont; bold: PDFFont; italic: PDFFont };
 
 function pdfSafe(text: string): string {
   return text
@@ -148,6 +148,7 @@ class Cursor {
     opts: {
       size?: number;
       bold?: boolean;
+      italic?: boolean;
       color?: ReturnType<typeof rgb>;
       x?: number;
       maxWidth?: number;
@@ -155,7 +156,11 @@ class Cursor {
     } = {}
   ) {
     const size = opts.size ?? 10;
-    const font = opts.bold ? this.fonts.bold : this.fonts.regular;
+    const font = opts.italic
+      ? this.fonts.italic
+      : opts.bold
+        ? this.fonts.bold
+        : this.fonts.regular;
     const color = opts.color ?? INK;
     const x = opts.x ?? this.bounds.left;
     const maxWidth = opts.maxWidth ?? this.bounds.right - x;
@@ -225,9 +230,9 @@ function drawTable(
   fonts: Fonts,
   rows: string[][],
   colWidths: number[],
-  header = false
+  header = false,
+  size = 7.5
 ) {
-  const size = 7.5;
   const pad = 3.5;
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
@@ -371,9 +376,19 @@ function drawSkillsTable(cursor: Cursor, fonts: Fonts, model: EvaluationPdfModel
   cursor.space(6);
 }
 
-function drawBaremeTable(cursor: Cursor, fonts: Fonts, model: EvaluationPdfModel, accent: ReturnType<typeof rgb>) {
-  cursor.text("Barème européen", { size: 11, bold: true, color: accent });
-  cursor.space(3);
+function drawBaremeTable(
+  cursor: Cursor,
+  fonts: Fonts,
+  model: EvaluationPdfModel,
+  accent: ReturnType<typeof rgb>,
+  compact = false
+) {
+  cursor.text("Barème européen", {
+    size: compact ? 8 : 11,
+    bold: true,
+    color: accent,
+  });
+  cursor.space(compact ? 2 : 3);
   drawTable(
     cursor,
     fonts,
@@ -386,9 +401,10 @@ function drawBaremeTable(cursor: Cursor, fonts: Fonts, model: EvaluationPdfModel
       ]),
     ],
     [cursor.width * 0.14, cursor.width * 0.28, cursor.width * 0.58],
-    true
+    true,
+    compact ? 6 : 7.5
   );
-  cursor.space(5);
+  cursor.space(compact ? 3 : 5);
 }
 
 function drawSkillsAndBareme(cursor: Cursor, fonts: Fonts, model: EvaluationPdfModel) {
@@ -406,6 +422,8 @@ function drawMeta(cursor: Cursor, model: EvaluationPdfModel) {
   }
   if (model.showSyndicateHeader) {
     cursor.kv("N° Carte Syndicale :", model.carteSyndicale);
+    cursor.kv("Discipline :", model.skiDisciplineLabel);
+    cursor.kv("Cycle de formation :", model.trainingCycle);
   }
   cursor.kv("Langue évaluée :", model.languageLabel);
   cursor.kv("Avez-vous déjà été évalué(e) ?", model.previousTestLabel);
@@ -416,17 +434,18 @@ function drawMeta(cursor: Cursor, model: EvaluationPdfModel) {
 }
 
 function drawComments(cursor: Cursor, model: EvaluationPdfModel, accent: ReturnType<typeof rgb>) {
+  const compact = model.showDsfLetterhead;
   cursor.text(
     model.habillage === "dsf"
       ? "Appréciation"
       : "Appréciation sur les capacités du stagiaire",
-    { size: 11, bold: true, color: accent }
+    { size: compact ? 10 : 11, bold: true, color: accent }
   );
-  cursor.space(4);
+  cursor.space(compact ? 2 : 4);
   for (const bloc of model.blocs) {
-    cursor.text(bloc.label, { size: 9, bold: true, color: MUTED });
-    cursor.text(bloc.text || "—", { size: 9.5 });
-    cursor.space(3);
+    cursor.text(bloc.label, { size: compact ? 8 : 9, bold: true, color: MUTED });
+    cursor.text(bloc.text || "—", { size: compact ? 8 : 9.5 });
+    cursor.space(compact ? 2 : 3);
   }
 }
 
@@ -438,6 +457,7 @@ export async function renderEvaluationPdf(
   const fonts: Fonts = {
     regular: await doc.embedFont(StandardFonts.Helvetica),
     bold: await doc.embedFont(StandardFonts.HelveticaBold),
+    italic: await doc.embedFont(StandardFonts.HelveticaOblique),
   };
   const esfLogo = await embedImage(doc, assets.esfLogo);
   const fliHeader = await embedImage(doc, assets.fliHeader);
@@ -517,6 +537,14 @@ export async function renderEvaluationPdf(
   }
 
   cursor.text(model.subtitle, { size: 9, bold: true, color: INK, gap: 2 });
+  if (model.noteMethodologique) {
+    cursor.text(model.noteMethodologique, {
+      size: 8,
+      italic: true,
+      color: MUTED,
+      gap: 2,
+    });
+  }
   cursor.space(4);
   cursor.rule();
   drawMeta(cursor, model);
@@ -543,11 +571,6 @@ export async function renderEvaluationPdf(
     if (model.showPrice && model.priceLabel) {
       cursor.text(`Tarif ${model.priceLabel}`, { size: 11, bold: true, color: TEAL });
       cursor.space(4);
-    }
-    if (model.noteMethodologique) {
-      cursor.text("Note méthodologique", { size: 11, bold: true, color: accentNavy });
-      cursor.text(model.noteMethodologique, { size: 9.5 });
-      cursor.space(6);
     }
     drawComments(cursor, model, accentNavy);
     cursor.space(4);
@@ -625,14 +648,8 @@ export async function renderEvaluationPdf(
     }
   } else if (model.showDsfLetterhead) {
     drawSkillsTable(cursor, fonts, model, accent);
-    if (model.noteMethodologique) {
-      cursor.text("Note méthodologique", { size: 11, bold: true, color: accent });
-      cursor.text(model.noteMethodologique, { size: 9.5 });
-      cursor.space(6);
-    }
+    drawBaremeTable(cursor, fonts, model, accent, true);
     drawComments(cursor, model, accent);
-    cursor.forceNewPage();
-    drawBaremeTable(cursor, fonts, model, accent);
   } else {
     drawSkillsAndBareme(cursor, fonts, model);
     if (model.showPrice && model.priceLabel) {
@@ -642,11 +659,6 @@ export async function renderEvaluationPdf(
         color: model.showFliHeaderFooter ? TEAL : accent,
       });
       cursor.space(4);
-    }
-    if (model.noteMethodologique) {
-      cursor.text("Note méthodologique", { size: 11, bold: true, color: accent });
-      cursor.text(model.noteMethodologique, { size: 9.5 });
-      cursor.space(6);
     }
     drawComments(cursor, model, accent);
     if (model.showFliHeaderFooter) {
@@ -660,7 +672,7 @@ export async function renderEvaluationPdf(
           height: stampH,
         });
       }
-      cursor.text(`Fait à ${model.identity.city}, le ${model.evaluatedOn}`, {
+      cursor.text(`Fait à ${model.identity.city}, le ${model.verifiedOn ?? "—"}`, {
         size: 9,
         maxWidth: cursor.width - (fliCachet ? stampW + 8 : 0),
       });

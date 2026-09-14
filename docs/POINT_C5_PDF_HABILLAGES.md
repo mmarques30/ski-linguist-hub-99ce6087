@@ -4,8 +4,9 @@ Migrations :
 - `supabase/migrations/20260911150000_c5_evaluation_pdf.sql`
 - `supabase/migrations/20260911151000_c5_pdf_generated_at.sql`
 - `supabase/migrations/20260911152000_c5_cecrl_scale_descriptions.sql`
+- `supabase/migrations/20260911153000_c5_score_general_rule.sql`
 
-Journaux : `c5_evaluation_pdf`, `c5_evaluation_pdf_generated` (aucune donnée personnelle)
+Journaux : `c5_evaluation_pdf`, `c5_evaluation_pdf_generated`, `c5_score_general_rule` (aucune donnée personnelle)
 
 Edge function : `generate-evaluation-pdf` (staff / admin, clé service pour le dépôt).
 Paula déploie la fonction — ne pas sonder 403/404.
@@ -21,19 +22,19 @@ Logos d’habillage : `public/evaluation-pdf/` et
 |---|---|---|---|
 | `esf` | logo ESF haut gauche ; titre saison calculée | `app_settings.evaluation_price_ttc` | bande 7 organismes agréés en pied de page 1 ; tableau cours + sections régionales en page 2 |
 | `ecole_ski` | `fli-entete-prosneige.png` ; tampon FLI en signature ; pied FLI | idem | même titre saison ; texte justifié dans les marges |
-| `dsf` | papier à en-tête A4 `dsf-papier-entete-A4.png` | **aucun** | champ **Entreprise** ; **sans logo FLI** |
+| `dsf` | papier à en-tête A4 `dsf-papier-entete-A4.png` | **aucun** | champ **Entreprise** ; **sans logo FLI** ; barème page 1 |
 
 Prix : jsonb numérique `45`, lu à la génération, jamais écrit en dur dans le rendu
 (sauf valeur seedée).
 
 Identité FLI : `app_settings.fli_identity` (25 avenue de la Gare, 73800 Montmélian,
-09 81 84 60 65, info@fli.fr).
+04 79 28 21 09, info@fli.fr). Aucune coordonnée dans les gabarits.
 
 Saison : 1er juillet N → 30 juin N+1, titre
 `Évaluation en langue vivante saison AAAA / AAAA` (pas d’année de modèle Word).
 
-Sous-titre sous l’en-tête :
-`Prénom NOM — [note] / [CECRL] - Niveau [X] - [label] → [objectif] (Langue — évaluateur·rice : Nom)`.
+Sous-titre sous l’en-tête (label du niveau atteint = appréciation générale) :
+`Prénom NOM — [note] / [CECRL] - Niveau [X] - [label principal] → objectif C1 (Langue — évaluateur·rice : Nom)`.
 
 Quatre blocs (ordre d’affichage, contenus C.2/C.3) :
 1. Points forts ← `bloc_introduction`
@@ -41,7 +42,20 @@ Quatre blocs (ordre d’affichage, contenus C.2/C.3) :
 3. Pour passer au [CECRL suivant] (Niveau [X+1] - [label]) ← `bloc_technique`
 4. Clôture ← `bloc_conclusion`
 
-Note méthodologique **uniquement si l’écart note générale / moyenne calculée est non nul**.
+Appréciation générale = une note saisie. `score_general_calcule` reste en base
+(contrôle) et n’apparaît ni à la saisie ni sur le CR.
+Règle : |générale − moyenne des cinq| > 1 → refus
+« note générale incohérente avec les cinq compétences » ;
+entre 0,5 et 1 → saisie OK, note méthodologique proposée en italique sous le titre,
+non imposée ; écart nul ou 0,5 → rien.
+
+ESF, bloc d’identité : discipline (alpin / nordique) et cycle de formation,
+saisis par le candidat (`test_candidates`, obligatoires si profession = moniteur)
+sur `/reserver-test`.
+
+DSF : barème en page 1 sous la grille, corps réduit ; pas de page 2 dédiée.
+
+« Fait à Montmélian, le » = `verified_at` (validation Paula), pas la date d’évaluation.
 
 Compétences (même ordre et mêmes libellés sur les trois habillages) :
 Compréhension, Expression, Structures de la langue, Expression technique et

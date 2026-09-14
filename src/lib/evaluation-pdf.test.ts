@@ -11,6 +11,7 @@ import {
   formatCandidateDisplayName,
   formatScoreCecrl,
   parseEvaluationPriceTtc,
+  principalLabel,
   skiSeasonYears,
   type CecrlScaleRow,
   type EvaluationPdfInput,
@@ -60,6 +61,8 @@ const sample = (sponsorType: string): EvaluationPdfInput => ({
   evaluatedAt: new Date("2026-01-15T10:00:00.000Z"),
   candidateName: "ZZTEST CandidatC5",
   candidateProfession: "moniteur",
+  skiDiscipline: "alpin",
+  trainingCycle: "ZZTEST Cycle 2",
   language: "anglais",
   previousTest: false,
   skiSchoolName: "ZZTEST École C5",
@@ -84,6 +87,7 @@ const sample = (sponsorType: string): EvaluationPdfInput => ({
   priceTtc: 45,
   identity,
   cecrlScale: SCALE,
+  verifiedAt: new Date("2026-09-10T12:00:00.000Z"),
 });
 
 async function loadAssets(): Promise<EvaluationPdfAssets> {
@@ -123,14 +127,20 @@ describe("nom affiché et sous-titre", () => {
     expect(formatCandidateDisplayName("ZZTEST CandidatC5")).toBe("ZZTEST CANDIDATC5");
   });
 
-  it("calcule le sous-titre note / CECRL / palier / objectif", () => {
+  it("calcule le sous-titre label principal → objectif C1", () => {
+    expect(principalLabel("Post intermédiaire / Opérationnel")).toBe(
+      "Post intermédiaire"
+    );
     const model = buildEvaluationPdfModel(sample("esf"));
     expect(model.subtitle).toContain("ZZTEST CANDIDATC5");
-    expect(model.subtitle).toContain("3 / B2 - Niveau 3 - Post intermédiaire / Opérationnel");
-    expect(model.subtitle).toContain("C1");
+    expect(model.subtitle).toContain("3 / B2 - Niveau 3 - Post intermédiaire");
+    expect(model.subtitle).not.toContain("Opérationnel");
+    expect(model.subtitle).toContain("→ objectif C1");
     expect(model.subtitle).toContain("Anglais");
     expect(model.subtitle).toContain("évaluateur");
     expect(model.subtitle).toContain("ZZTEST Formateur");
+    expect(model.skiDisciplineLabel).toBe("Alpin");
+    expect(model.trainingCycle).toBe("ZZTEST Cycle 2");
   });
 });
 
@@ -177,7 +187,20 @@ describe("blocs C.2/C.3 et note méthodologique", () => {
     expect(model.noteMethodologique).toBeNull();
   });
 
-  it("n'affiche la note méthodologique que si l'écart est non nul", () => {
+  it("n'affiche la note méthodologique que pour un écart d'1 point", () => {
+    const halfGap = buildEvaluationPdfModel({
+      ...sample("esf"),
+      scores: {
+        comprehension: 3,
+        expression: 3,
+        structure: 3,
+        technique: 3,
+        conversation: 3.5,
+        general: 3.5,
+      },
+      noteMethodologique: "Ne doit pas apparaître pour 0,5.",
+    });
+    expect(halfGap.noteMethodologique).toBeNull();
     const withGap = buildEvaluationPdfModel({
       ...sample("esf"),
       scores: {
@@ -225,7 +248,7 @@ describe("retour à la ligne", () => {
     const max = 200;
     const lines = wrapText(
       font,
-      "France Langues International — 25 avenue de la Gare — 73800 Montmélian — Tél. : 09 81 84 60 65 — info@fli.fr",
+      "France Langues International — 25 avenue de la Gare — 73800 Montmélian — Tél. : 04 79 28 21 09 — info@fli.fr",
       7,
       max
     );
@@ -257,9 +280,11 @@ describe("octets PDF", () => {
       expect(ascii).toContain("Expression technique et sp");
       expect(ascii).toContain("Appr");
       expect(ascii).toContain("saison 2025 / 2026");
+      await writeFile(`/opt/cursor/artifacts/c5-preuve-${sponsor}.pdf`, bytes);
       if (sponsor === "dsf") {
-        expect(doc.getPageCount()).toBe(2);
+        expect(doc.getPageCount()).toBe(1);
         expect(ascii).toContain("Entreprise");
+        expect(ascii).toContain("Bar");
         expect(ascii).not.toContain("TTC");
         expect(ascii).not.toContain("Tarif");
       } else {
@@ -271,13 +296,18 @@ describe("octets PDF", () => {
         expect(ascii).toContain("Cours collectifs enfants");
         expect(ascii).toContain("Organismes agr");
         expect(ascii).toContain("Sections r");
+        expect(ascii).toContain("Alpin");
+        expect(ascii).toContain("ZZTEST Cycle 2");
+        expect(ascii).toContain("objectif C1");
       }
       if (sponsor === "ecole_ski") {
         expect(doc.getPageCount()).toBe(1);
-        expect(ascii).toContain("09 81 84 60 65");
+        expect(ascii).toContain("04 79 28 21 09");
+        expect(ascii).not.toContain("09 81 84 60 65");
         expect(ascii).toContain("Fait ");
+        expect(ascii).toContain("10/09/2026");
+        expect(ascii).not.toContain("le 15/01/2026");
       }
-      await writeFile(`/opt/cursor/artifacts/c5-evaluation-${sponsor}.pdf`, bytes);
     }
   }, 20_000);
 });
