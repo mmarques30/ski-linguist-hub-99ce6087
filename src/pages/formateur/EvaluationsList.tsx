@@ -137,7 +137,7 @@ export default function EvaluationsList() {
       );
       const rows = dsfRowsForExport(source, {}, pdfLinks);
       const buffer = await buildDsfXlsxBuffer(rows);
-      const blob = new Blob([buffer], {
+      const blob = new Blob([new Uint8Array(buffer)], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
       const url = URL.createObjectURL(blob);
