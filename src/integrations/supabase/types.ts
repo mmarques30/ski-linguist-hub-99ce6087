@@ -3429,8 +3429,17 @@ export type Database = {
           previous_result: string | null
           previous_test: boolean | null
           score_general: number | null
+          score_comprehension: number | null
+          score_expression: number | null
+          score_structure: number | null
+          score_technique: number | null
+          score_conversation: number | null
+          cecrl_label: string | null
           ski_school_id: string | null
           ski_school_name: string | null
+          station: string | null
+          partner_name: string | null
+          company_name: string | null
           source: string | null
           sponsor_id: string | null
           sponsor_type: string | null
