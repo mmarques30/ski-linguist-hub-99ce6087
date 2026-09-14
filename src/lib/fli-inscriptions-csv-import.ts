@@ -1,3 +1,5 @@
+import { mapEntryLevelToCecrl } from "@/lib/entry-level-cecrl";
+
 export interface ParsedFliInscriptionRow {
   modality: string | null;
   course_type: string | null;
@@ -270,7 +272,11 @@ function rowToParsed(row: Record<string, string>): ParsedFliInscriptionRow | nul
     price: parseNumber(getColumn(row, "Coût pédagogique", "Cout pedagogique")),
     rhythm: isEmpty(getColumn(row, "Rythme")) ? null : getColumn(row, "Rythme"),
     entry_test_score: isEmpty(getColumn(row, "Résultat test - entrée", "Resultat test - entree")) ? null : getColumn(row, "Résultat test - entrée", "Resultat test - entree"),
-    entry_level: isEmpty(getColumn(row, "Niveau entrée", "Niveau entree")) ? null : getColumn(row, "Niveau entrée", "Niveau entree"),
+    entry_level: mapEntryLevelToCecrl(
+      isEmpty(getColumn(row, "Niveau entrée", "Niveau entree"))
+        ? null
+        : getColumn(row, "Niveau entrée", "Niveau entree")
+    ),
     group_name: isEmpty(getColumn(row, "Groupe")) ? null : getColumn(row, "Groupe"),
     schedule: isEmpty(getColumn(row, "Horaires")) ? null : getColumn(row, "Horaires"),
     final_general_level: isEmpty(getColumn(row, "Niv général en fin de stage", "Niv general en fin de stage")) ? null : getColumn(row, "Niv général en fin de stage", "Niv general en fin de stage"),

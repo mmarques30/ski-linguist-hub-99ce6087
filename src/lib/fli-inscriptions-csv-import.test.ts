@@ -18,4 +18,12 @@ Présentiel;Collectif;6 participants;Facturé;ESF Test;Jean Dupont;Monsieur;Rue 
   it("maps cancelled status", () => {
     expect(mapFliInscriptionStatus("Annulé", "", null)).toBe("annulee");
   });
+
+  it("mappe Niveau entrée historique vers CECRL", () => {
+    const header =
+      "Nom et Prénom;Email;Langue;Date début;Date fin;Niveau entrée;Status";
+    const csv = `${header}\nJean Dupont;jean.dupont@example.com;Anglais;15/11/2021;19/11/2021;Faux débutant;Facturé`;
+    const result = parseFliInscriptionsCsv(csv);
+    expect(result.rows[0].entry_level).toBe("A2");
+  });
 });
