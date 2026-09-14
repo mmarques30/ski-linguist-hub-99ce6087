@@ -3,14 +3,23 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Edit, FileText } from "lucide-react";
-import { useEvaluationWithBooking } from "@/hooks/useTestEvaluations";
+import { ArrowLeft, Edit, FileText, FileDown } from "lucide-react";
+import {
+  useEvaluationWithBooking,
+  useGenerateEvaluationPdf,
+} from "@/hooks/useTestEvaluations";
 import { EvaluationPDFPreview } from "@/components/evaluation/EvaluationPDFPreview";
+import { CertificatePdfButton } from "@/components/certificates/CertificatePdfButton";
+import { EVALUATION_PDF_BUCKET } from "@/lib/evaluation-pdf";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 
 export default function EvaluationView() {
   const { evaluationId } = useParams<{ evaluationId: string }>();
   const navigate = useNavigate();
+  const { isAdmin, role } = useUserPermissions();
   const { data, isLoading } = useEvaluationWithBooking(evaluationId || "");
+  const generatePdf = useGenerateEvaluationPdf();
+  const isStaff = isAdmin || role === "user";
 
   if (isLoading) {
     return (
@@ -63,13 +72,32 @@ export default function EvaluationView() {
               {booking.ski_school_name}
             </p>
           </div>
-          <Button 
-            variant="outline"
-            onClick={() => navigate(`/formateur/evaluation/${booking.id}/edit`)}
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Modifier
-          </Button>
+          <div className="flex gap-2">
+            {isStaff &&
+              (evaluation.status === "valide" || evaluation.status === "envoye") && (
+                <Button
+                  onClick={() => void generatePdf.mutateAsync(evaluation.id)}
+                  disabled={generatePdf.isPending}
+                >
+                  <FileDown className="h-4 w-4 mr-2" />
+                  {evaluation.pdf_url ? "Regénérer le PDF" : "Générer le PDF"}
+                </Button>
+              )}
+            {evaluation.pdf_url && (
+              <CertificatePdfButton
+                pathOrUrl={evaluation.pdf_url}
+                bucket={EVALUATION_PDF_BUCKET}
+                label="Ouvrir le PDF"
+              />
+            )}
+            <Button 
+              variant="outline"
+              onClick={() => navigate(`/formateur/evaluation/${booking.id}/edit`)}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Modifier
+            </Button>
+          </div>
         </div>
 
         {/* Content */}

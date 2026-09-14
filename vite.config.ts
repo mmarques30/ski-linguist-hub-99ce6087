@@ -13,6 +13,7 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "https://esm.sh/pdf-lib@1.17.1": "pdf-lib",
     },
   },
 }));

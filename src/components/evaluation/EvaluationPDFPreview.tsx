@@ -2,171 +2,305 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Printer, Download } from "lucide-react";
-import { 
-  LANGUAGE_FLAGS, 
-  LANGUAGE_LABELS, 
-  scoreToLevel,
-  CATEGORY_LABELS
+import { Printer } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  LANGUAGE_FLAGS,
+  LANGUAGE_LABELS,
 } from "@/lib/evaluation-utils";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import {
+  ESF_COURSE_TABLE,
+  ESF_DIRECTOR_NOTE,
+  ESF_REGIONAL_SECTIONS,
+  ESF_RETEST_NOTE,
+  buildEvaluationPdfModel,
+  parseEvaluationPriceTtc,
+  parseFliIdentity,
+  type CecrlScaleRow,
+  type FliIdentity,
+} from "@/lib/evaluation-pdf";
 import type { TestEvaluation, TestBookingComplete } from "@/hooks/useTestEvaluations";
-import fliLogo from "@/assets/fli-invoice-logo.png";
+
+const ESF_LOGO = "/evaluation-pdf/esf-logo.jpg";
+const FLI_HEADER = "/evaluation-pdf/fli-entete-prosneige.png";
+const FLI_CACHET = "/evaluation-pdf/fli-cachet.png";
+const DSF_LETTERHEAD = "/evaluation-pdf/dsf-papier-entete-A4.png";
+const PARTNER_LOGOS = [
+  "/evaluation-pdf/orga-alpes-inter-langues.jpg",
+  "/evaluation-pdf/orga-cci-lorraine.jpg",
+  "/evaluation-pdf/orga-cite-des-langues.jpg",
+  "/evaluation-pdf/orga-cret-hautes-alpes.png",
+  "/evaluation-pdf/orga-greta-midi-pyrenees.jpg",
+  "/evaluation-pdf/orga-words-to-the-world.png",
+  "/evaluation-pdf/fli-logo-compact.png",
+];
 
 interface EvaluationPDFPreviewProps {
   evaluation: TestEvaluation;
   booking: TestBookingComplete;
 }
 
-export function EvaluationPDFPreview({ evaluation, booking }: EvaluationPDFPreviewProps) {
-  const level = scoreToLevel(evaluation.score_general, evaluation.scoring_system as 'sur_5' | 'sur_20');
-  const maxScore = evaluation.scoring_system === 'sur_20' ? 20 : 5;
+function usePdfSettings() {
+  return useQuery({
+    queryKey: ["evaluation-pdf-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("app_settings")
+        .select("key, value")
+        .in("key", ["evaluation_price_ttc", "fli_identity"]);
+      if (error) throw error;
+      const price = parseEvaluationPriceTtc(
+        data?.find((row) => row.key === "evaluation_price_ttc")?.value
+      );
+      const identity = parseFliIdentity(
+        data?.find((row) => row.key === "fli_identity")?.value
+      );
+      const { data: scale, error: scaleError } = await supabase
+        .from("cecrl_scale")
+        .select("score, cecrl_label, base_label, niveau, description")
+        .order("score");
+      if (scaleError) throw scaleError;
+      return {
+        price,
+        identity,
+        cecrlScale: (scale ?? []) as CecrlScaleRow[],
+      };
+    },
+  });
+}
 
-  const handlePrint = () => {
-    window.print();
+export function EvaluationPDFPreview({ evaluation, booking }: EvaluationPDFPreviewProps) {
+  const { data: settings } = usePdfSettings();
+  const identity: FliIdentity = settings?.identity ?? {
+    legal_name: "",
+    address_line: "",
+    postal_code: "",
+    city: "",
+    phone: "",
+    email: "",
   };
 
-  const scores = [
-    { label: "Compréhension", value: evaluation.score_comprehension },
-    { label: "Expression", value: evaluation.score_expression },
-    { label: "Structures", value: evaluation.score_structure },
-    { label: "Technique", value: evaluation.score_technique },
-    { label: "Conversation", value: evaluation.score_conversation },
-    { label: "Général", value: evaluation.score_general, highlight: true },
-  ];
-
-  const appreciations = [
-    { label: "Introduction", text: evaluation.bloc_introduction || evaluation.appreciation_intro },
-    { label: "Compréhension", text: evaluation.bloc_comprehension || evaluation.appreciation_comprehension },
-    { label: "Technique", text: evaluation.bloc_technique || evaluation.appreciation_technique },
-    { label: "Conclusion", text: evaluation.bloc_conclusion || evaluation.appreciation_conclusion },
-  ].filter(a => a.text);
+  let model = null as ReturnType<typeof buildEvaluationPdfModel> | null;
+  let modelError: string | null = null;
+  try {
+    if (booking.sponsor_type && settings?.identity) {
+      model = buildEvaluationPdfModel({
+        sponsorType: booking.sponsor_type,
+        evaluatedAt: booking.datetime ? new Date(booking.datetime) : new Date(),
+        candidateName: booking.candidate_name || "",
+        candidateProfession: booking.candidate_profession,
+        skiDiscipline: booking.candidate_ski_discipline,
+        trainingCycle: booking.candidate_training_cycle,
+        language: booking.language || "anglais",
+        previousTest: Boolean(booking.previous_test),
+        skiSchoolName: booking.ski_school_name,
+        companyName: booking.ski_school_name,
+        instructorName: booking.instructor_name,
+        scores: {
+          comprehension: evaluation.score_comprehension,
+          expression: evaluation.score_expression,
+          structure: evaluation.score_structure,
+          technique: evaluation.score_technique,
+          conversation: evaluation.score_conversation,
+          general: evaluation.score_general,
+        },
+        cecrlGeneral: evaluation.cecrl_label,
+        blocs: {
+          introduction: evaluation.bloc_introduction || evaluation.appreciation_intro || "",
+          comprehension:
+            evaluation.bloc_comprehension || evaluation.appreciation_comprehension || "",
+          technique: evaluation.bloc_technique || evaluation.appreciation_technique || "",
+          conclusion: evaluation.bloc_conclusion || evaluation.appreciation_conclusion || "",
+        },
+        noteMethodologique: evaluation.note_methodologique,
+        priceTtc: settings.price,
+        identity: settings.identity,
+        cecrlScale: settings.cecrlScale,
+        verifiedAt: evaluation.verified_at ? new Date(evaluation.verified_at) : null,
+      });
+    }
+  } catch (err) {
+    modelError = err instanceof Error ? err.message : "Aperçu indisponible";
+  }
 
   return (
     <div className="space-y-4">
-      {/* Actions */}
       <div className="flex gap-2 print:hidden">
-        <Button variant="outline" onClick={handlePrint}>
+        <Button variant="outline" onClick={() => window.print()}>
           <Printer className="h-4 w-4 mr-2" />
           Imprimer
         </Button>
       </div>
 
-      {/* PDF Content */}
       <div className="bg-white border rounded-lg p-8 print:border-none print:p-0" id="evaluation-pdf">
-        {/* Header */}
-        <div className="flex justify-between items-start mb-8">
+        {model?.showSyndicateHeader && (
+          <img src={ESF_LOGO} alt="École du ski français" className="h-16 mb-3" />
+        )}
+        {model?.showFliHeaderFooter && (
+          <img src={FLI_HEADER} alt="France Langues International" className="h-16 mb-3 bg-black p-2" />
+        )}
+        {model?.showDsfLetterhead && (
+          <img src={DSF_LETTERHEAD} alt="DSF Formation" className="h-24 object-cover object-top mb-3" />
+        )}
+        <div className="flex justify-between items-start mb-4">
           <div>
-            <img src={fliLogo} alt="FLI Logo" className="h-16 mb-4" />
-            <h1 className="text-2xl font-bold text-primary">COMPTE-RENDU D'ÉVALUATION</h1>
-            <p className="text-muted-foreground">
-              Test de niveau linguistique
-            </p>
-          </div>
-          <div className="text-right">
-            <Badge variant="outline" className="text-lg px-4 py-2">
-              Niveau: {level}
-            </Badge>
-            <p className="text-sm text-muted-foreground mt-2">
-              {booking.datetime && format(new Date(booking.datetime), "dd MMMM yyyy", { locale: fr })}
-            </p>
+            <h1 className="text-2xl font-bold text-primary">
+              {model?.title ?? "Évaluation en langue vivante"}
+            </h1>
+            {model?.subtitle && (
+              <p className="text-sm font-medium mt-2">{model.subtitle}</p>
+            )}
+            {model?.noteMethodologique && (
+              <p className="text-sm italic text-muted-foreground mt-1">
+                {model.noteMethodologique}
+              </p>
+            )}
+            {booking.sponsor_type && (
+              <Badge variant="outline" className="mt-2">
+                {booking.sponsor_type}
+              </Badge>
+            )}
           </div>
         </div>
 
-        <Separator className="my-6" />
+        {modelError && (
+          <p className="text-sm text-destructive mb-4">{modelError}</p>
+        )}
 
-        {/* Candidate Info */}
-        <div className="grid grid-cols-2 gap-6 mb-8">
-          <div>
-            <h3 className="font-semibold text-sm text-muted-foreground mb-1">CANDIDAT</h3>
-            <p className="font-medium text-lg">{booking.candidate_name}</p>
-            <p className="text-sm text-muted-foreground">{booking.candidate_email}</p>
-            <p className="text-sm text-muted-foreground">{booking.candidate_phone}</p>
-          </div>
-          <div>
-            <h3 className="font-semibold text-sm text-muted-foreground mb-1">ÉCOLE / LANGUE</h3>
-            <p className="font-medium">{booking.ski_school_name}</p>
-            <p className="text-sm">
-              {LANGUAGE_FLAGS[booking.language || 'all']}{" "}
-              {LANGUAGE_LABELS[booking.language || 'all']}
+        <div className="grid grid-cols-2 gap-4 text-sm mb-6">
+          <p><span className="text-muted-foreground">Nom – Prénom :</span> {model?.candidateDisplayName ?? booking.candidate_name}</p>
+          {model?.showCompanyField ? (
+            <p><span className="text-muted-foreground">Entreprise :</span> {model.companyName}</p>
+          ) : (
+            <p>
+              <span className="text-muted-foreground">
+                {booking.sponsor_type === "esf" ? "ESF" : "École de ski"} :
+              </span>{" "}
+              {booking.ski_school_name}
             </p>
-            <p className="text-sm text-muted-foreground capitalize">
-              Profession: {booking.candidate_profession}
-            </p>
-          </div>
+          )}
+          <p>
+            <span className="text-muted-foreground">Langue :</span>{" "}
+            {LANGUAGE_FLAGS[booking.language || "all"]}{" "}
+            {LANGUAGE_LABELS[booking.language || "all"] || booking.language}
+          </p>
+          <p>
+            <span className="text-muted-foreground">Date :</span> {model?.evaluatedOn}
+          </p>
+          <p>
+            <span className="text-muted-foreground">Formateur :</span> {booking.instructor_name}
+          </p>
+          <p>
+            <span className="text-muted-foreground">Profession :</span> {booking.candidate_profession}
+          </p>
+          {model?.showSyndicateHeader && (
+            <>
+              <p>
+                <span className="text-muted-foreground">Discipline :</span> {model.skiDisciplineLabel}
+              </p>
+              <p>
+                <span className="text-muted-foreground">Cycle de formation :</span> {model.trainingCycle}
+              </p>
+            </>
+          )}
         </div>
 
-        {/* Scores */}
-        <Card className="mb-8">
+        <Card className="mb-6">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Notes ({evaluation.scoring_system === 'sur_20' ? 'sur 20' : 'sur 5'})</CardTitle>
+            <CardTitle className="text-lg">Niveau de 0 à 5 — N - CECRL</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
-              {scores.map((score) => (
-                <div 
-                  key={score.label} 
-                  className={`text-center p-3 rounded-lg ${
-                    score.highlight 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'bg-muted'
-                  }`}
-                >
-                  <div className="text-2xl font-bold">
-                    {score.value}/{maxScore}
-                  </div>
-                  <div className="text-xs font-medium opacity-80">
-                    {score.label}
-                  </div>
-                  <div className="text-xs opacity-60">
-                    {scoreToLevel(score.value, evaluation.scoring_system as 'sur_5' | 'sur_20')}
-                  </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {(model?.skillRows ?? []).map((row) => (
+                <div key={row.label} className="rounded-lg bg-muted p-3">
+                  <div className="text-xs text-muted-foreground">{row.label}</div>
+                  <div className="text-lg font-bold">{row.value}</div>
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
 
-        {/* Appreciations */}
-        {appreciations.length > 0 && (
-          <Card className="mb-8">
+        {model?.showPrice && model.priceLabel && (
+          <p className="font-semibold mb-4">Tarif {model.priceLabel}</p>
+        )}
+
+        <Card className="mb-6">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Quatre blocs</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {(model?.blocs ?? []).map((bloc) => (
+              <div key={bloc.label}>
+                <h4 className="font-semibold text-sm text-muted-foreground mb-1">{bloc.label}</h4>
+                <p className="text-sm">{bloc.text || "—"}</p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {model?.showFliHeaderFooter && (
+          <div className="flex justify-between items-end mb-6">
+            <p className="text-sm">
+              Fait à {identity.city || "Montmélian"}, le {model.verifiedOn ?? "—"}
+            </p>
+            <img src={FLI_CACHET} alt="Cachet FLI" className="h-20" />
+          </div>
+        )}
+
+        {model?.showCourseTable && (
+          <Card className="mb-6">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Appréciation détaillée</CardTitle>
+              <CardTitle className="text-lg">Niveau ↔ type de cours</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {appreciations.map((appreciation) => (
-                <div key={appreciation.label}>
-                  <h4 className="font-semibold text-sm text-muted-foreground mb-1">
-                    {appreciation.label}
-                  </h4>
-                  <p className="text-sm">{appreciation.text}</p>
+            <CardContent className="space-y-2 text-sm">
+              <p className="text-muted-foreground">{ESF_DIRECTOR_NOTE}</p>
+              {ESF_COURSE_TABLE.map((row) => (
+                <div key={row.course} className="flex justify-between gap-4">
+                  <span>{row.course}</span>
+                  <span className="font-medium">{row.level}</span>
                 </div>
               ))}
+              <p className="text-muted-foreground">{ESF_RETEST_NOTE}</p>
             </CardContent>
           </Card>
         )}
 
-        {/* General Comments */}
-        {evaluation.comments && (
-          <Card className="mb-8">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Commentaires généraux</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm">{evaluation.comments}</p>
-            </CardContent>
-          </Card>
+        {model?.showSyndicateHeader && (
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+            {PARTNER_LOGOS.map((src) => (
+              <img key={src} src={src} alt="" className="h-10 object-contain" />
+            ))}
+          </div>
         )}
 
-        {/* Footer */}
+        {model?.showRegionalSections && (
+          <div className="text-xs text-muted-foreground space-y-1 mb-6">
+            {ESF_REGIONAL_SECTIONS.map((section) => (
+              <p key={section.phone}>
+                {section.phone} – {section.places}
+              </p>
+            ))}
+          </div>
+        )}
+
         <Separator className="my-6" />
         <div className="text-center text-xs text-muted-foreground">
-          <p>France Langues International - Organisme de formation n° 84 73 02523 73</p>
-          <p>100 Route des Esserts, 73800 Montmélian - contact@fli-formation.fr</p>
-          <p className="mt-2">
-            Document généré le {format(new Date(), "dd/MM/yyyy 'à' HH:mm", { locale: fr })}
-          </p>
+          {model?.showFliHeaderFooter && identity.legal_name ? (
+            <>
+              <p>{identity.legal_name}</p>
+              <p>
+                {identity.address_line}, {identity.postal_code} {identity.city}
+                {identity.phone ? ` — ${identity.phone}` : ""}
+                {identity.email ? ` — ${identity.email}` : ""}
+              </p>
+            </>
+          ) : model?.showDsfLetterhead ? (
+            <p>Papier à en-tête DSF Formation — sans logo FLI, sans tarif.</p>
+          ) : (
+            identity.legal_name ? null : <p>Identité FLI chargée depuis les paramètres.</p>
+          )}
         </div>
       </div>
     </div>

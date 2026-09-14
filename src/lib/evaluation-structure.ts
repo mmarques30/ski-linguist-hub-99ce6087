@@ -1,10 +1,7 @@
 /** Motifs de structure du compte-rendu (C.4). */
 
 import { BLOC_CATEGORIES, CATEGORY_LABELS, scoreToLevel } from "./evaluation-utils";
-import {
-  isScoreAdjustmentAllowed,
-  needsMethodoNote,
-} from "./evaluation-scores";
+import { isScoreAdjustmentAllowed } from "./evaluation-scores";
 import { collectTutoiement } from "./vouvoiement";
 
 export type StructureMotif = {
@@ -63,9 +60,6 @@ export function listStructureMotifs(
     evaluation.score_general,
     evaluation.score_general_calcule
   );
-  const methodoOk =
-    !needsMethodoNote(evaluation.score_general, evaluation.score_general_calcule) ||
-    Boolean(evaluation.note_methodologique?.trim());
   const expectedLabel = scoreToLevel(
     evaluation.score_general,
     evaluation.scoring_system === "sur_20" ? "sur_20" : "sur_5"
@@ -102,22 +96,11 @@ export function listStructureMotifs(
     },
     {
       id: "ecart",
-      label: "Écart note générale ≤ 1",
+      label: "Appréciation générale cohérente",
       ok: adjustOk,
-      detail: `Générale ${evaluation.score_general} · calculée ${evaluation.score_general_calcule}.`,
-    },
-    {
-      id: "methodo",
-      label: "Note méthodologique si écart",
-      ok: methodoOk,
-      detail: methodoOk
-        ? needsMethodoNote(
-            evaluation.score_general,
-            evaluation.score_general_calcule
-          )
-          ? "Écart expliqué."
-          : "Pas d'écart."
-        : "Écart non nul sans note méthodologique.",
+      detail: adjustOk
+        ? "Écart d'au plus un point avec les cinq compétences."
+        : "note générale incohérente avec les cinq compétences",
     },
     {
       id: "cecrl",
@@ -137,7 +120,7 @@ export function structureAllowsValidation(motifs: StructureMotif[]): boolean {
 export const ABSOLUTE_RULES = [
   "Vouvoiement obligatoire — le tutoiement bloque la validation.",
   "Quatre blocs : introduction, compréhension, technique, conclusion.",
-  "Écart maximal de 1 point entre note générale et moyenne calculée ; note méthodologique dès que l'écart est non nul.",
+  "Écart maximal de 1 point entre l'appréciation générale et la moyenne des cinq compétences. Au-delà : « note générale incohérente avec les cinq compétences ». Entre 0,5 et 1 : note méthodologique proposée, non imposée. Écart nul ou 0,5 : rien.",
   "Relecture orthographique : propositions acceptées une à une — jamais de réécriture automatique du texte.",
   "Valider → statut valide. Refuser → brouillon, avec commentaire au formateur.",
 ] as const;

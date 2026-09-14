@@ -30,6 +30,7 @@ import EvaluationForm from "./pages/formateur/EvaluationForm";
 import EvaluationView from "./pages/formateur/EvaluationView";
 import EvaluationVerify from "./pages/formateur/EvaluationVerify";
 import Register from "./pages/register/Index";
+import BookTest from "./pages/test/BookTest";
 import { PaymentSuccessPage, PaymentCancelPage } from "./pages/register/PaymentReturn";
 import SatisfactionSurvey from "./pages/survey/SatisfactionSurvey";
 import ContinuousImprovement from "./pages/ContinuousImprovement";
@@ -71,6 +72,7 @@ const App = () => (
             {/* Public routes */}
             <Route path="/auth" element={<Auth />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/reserver-test" element={<BookTest />} />
             <Route path="/register/payment-success" element={<PaymentSuccessPage />} />
             <Route path="/register/payment-cancel" element={<PaymentCancelPage />} />
             <Route path="/survey/:token" element={<SatisfactionSurvey />} />

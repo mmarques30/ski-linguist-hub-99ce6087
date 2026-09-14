@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Label } from "@/components/ui/label";
 import {
   ArrowLeft,
   Save,
@@ -38,9 +37,10 @@ import {
   CATEGORY_LABELS,
 } from "@/lib/evaluation-utils";
 import {
+  SCORE_GENERAL_INCOHERENT,
   isScoreAdjustmentAllowed,
-  needsMethodoNote,
   scoreGeneralCalcule,
+  suggestsMethodoNote,
   type FiveScores,
 } from "@/lib/evaluation-scores";
 import { collectTutoiement } from "@/lib/vouvoiement";
@@ -87,16 +87,15 @@ export default function EvaluationForm() {
     technique: 0,
     conversation: 0,
   });
-  const [generalOverride, setGeneralOverride] = useState<number | null>(null);
+  const [general, setGeneral] = useState(0);
   const [noteMethodologique, setNoteMethodologique] = useState("");
   const [sections, setSections] = useState<SectionStates>(emptySections);
   const [initialized, setInitialized] = useState(false);
 
   const calcule = useMemo(() => scoreGeneralCalcule(scores), [scores]);
-  const general = generalOverride ?? calcule;
   const determinedLevel = useMemo(() => scoreToLevel(general, "sur_5"), [general]);
   const adjustmentOk = isScoreAdjustmentAllowed(general, calcule);
-  const methodoRequired = needsMethodoNote(general, calcule);
+  const methodoSuggested = suggestsMethodoNote(general, calcule);
 
   useEffect(() => {
     if (existingEvaluation && (isEditMode || existingEvaluation.status === "brouillon") && !initialized) {
@@ -107,10 +106,7 @@ export default function EvaluationForm() {
         technique: existingEvaluation.score_technique,
         conversation: existingEvaluation.score_conversation,
       });
-      const storedCalcule = existingEvaluation.score_general_calcule;
-      if (existingEvaluation.score_general !== storedCalcule) {
-        setGeneralOverride(existingEvaluation.score_general);
-      }
+      setGeneral(existingEvaluation.score_general);
       setNoteMethodologique(existingEvaluation.note_methodologique || "");
       const next = emptySections();
       BLOC_CATEGORIES.forEach((cat) => {
@@ -172,17 +168,7 @@ export default function EvaluationForm() {
     }));
   };
 
-  const attestationType =
-    booking?.sponsor_type === "dsf"
-      ? "dsf"
-      : booking?.ski_school_name?.toLowerCase().includes("alpe d'huez")
-        ? "alpe_huez"
-        : "generique";
-
-  const canSubmit =
-    adjustmentOk &&
-    (!methodoRequired || noteMethodologique.trim().length > 0) &&
-    !hasVouvoiementIssue;
+  const canSubmit = adjustmentOk && !hasVouvoiementIssue;
 
   const handleSave = async (submitForReview: boolean) => {
     if (!bookingId || !booking) return;
@@ -190,16 +176,7 @@ export default function EvaluationForm() {
     if (!adjustmentOk) {
       toast({
         variant: "destructive",
-        title: "Note générale hors limite",
-        description: "L'écart avec la moyenne calculée ne peut pas dépasser 1 point.",
-      });
-      return;
-    }
-    if (methodoRequired && !noteMethodologique.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Note méthodologique obligatoire",
-        description: "Expliquez l'écart entre la moyenne calculée et la note générale.",
+        title: SCORE_GENERAL_INCOHERENT,
       });
       return;
     }
@@ -228,9 +205,8 @@ export default function EvaluationForm() {
       score_technique: scores.technique,
       score_conversation: scores.conversation,
       scoring_system: "sur_5",
-      attestation_type: attestationType,
       status: submitForReview ? "a_verifier" : "brouillon",
-      note_methodologique: methodoRequired ? noteMethodologique.trim() : noteMethodologique.trim() || null,
+      note_methodologique: noteMethodologique.trim() || null,
       cecrl_label: determinedLevel,
       ...blocs,
       appreciation_intro: blocs.bloc_introduction,
@@ -263,8 +239,7 @@ export default function EvaluationForm() {
 
   const isLoading = bookingLoading || evalLoading;
   const isSaving = createMutation.isPending || updateMutation.isPending;
-  const draftDisabled =
-    isSaving || !adjustmentOk || (methodoRequired && !noteMethodologique.trim());
+  const draftDisabled = isSaving || !adjustmentOk;
   const actionButtons = (
     <div className="flex flex-wrap gap-4 bg-background p-4 border rounded-lg shadow-sm">
       <Button
@@ -351,8 +326,23 @@ export default function EvaluationForm() {
           <div className="flex-1">
             <h1 className="text-2xl font-bold">Compte-rendu d'évaluation</h1>
             <p className="text-muted-foreground">
-              Cinq notes sur 5 · quatre blocs · vouvoiement · brouillon ou soumission
+              Notes sur 5 · quatre blocs · vouvoiement · brouillon ou soumission
             </p>
+            {methodoSuggested && (
+              <div className="mt-3 space-y-2 max-w-xl">
+                <p className="italic text-sm text-muted-foreground">
+                  Note méthodologique (facultative)
+                </p>
+                <Textarea
+                  id="note-methodo"
+                  className="italic"
+                  value={noteMethodologique}
+                  onChange={(e) => setNoteMethodologique(e.target.value)}
+                  placeholder="Proposition libre — non obligatoire"
+                  rows={2}
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -414,7 +404,7 @@ export default function EvaluationForm() {
           <div className="lg:col-span-2 space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>1. Cinq notes (sur 5)</CardTitle>
+                <CardTitle>1. Notes (sur 5)</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
@@ -448,37 +438,16 @@ export default function EvaluationForm() {
                     onChange={(v) => setScores({ ...scores, conversation: v })}
                     scoringSystem="sur_5"
                   />
+                  <ScoreInput
+                    label="Appréciation générale"
+                    value={general}
+                    onChange={setGeneral}
+                    scoringSystem="sur_5"
+                  />
                 </div>
-                <div className="rounded-lg border p-4 space-y-3">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-sm text-muted-foreground">Moyenne calculée</span>
-                    <Badge variant="secondary">{calcule} · {scoreToLevel(calcule, "sur_5")}</Badge>
-                    <span className="text-sm text-muted-foreground">Note générale (ajustable de ±1)</span>
-                    <ScoreInput
-                      label="Générale"
-                      value={general}
-                      onChange={(v) => setGeneralOverride(v)}
-                      scoringSystem="sur_5"
-                    />
-                  </div>
-                  {!adjustmentOk && (
-                    <p className="text-sm text-destructive">
-                      Écart de {Math.abs(general - calcule)} : le maximum autorisé est 1 point.
-                    </p>
-                  )}
-                  {methodoRequired && (
-                    <div className="space-y-2">
-                      <Label htmlFor="note-methodo">Note méthodologique (obligatoire)</Label>
-                      <Textarea
-                        id="note-methodo"
-                        value={noteMethodologique}
-                        onChange={(e) => setNoteMethodologique(e.target.value)}
-                        placeholder="Pourquoi ajustez-vous la moyenne calculée ?"
-                        rows={3}
-                      />
-                    </div>
-                  )}
-                </div>
+                {!adjustmentOk && (
+                  <p className="text-sm text-destructive">{SCORE_GENERAL_INCOHERENT}</p>
+                )}
               </CardContent>
             </Card>
 

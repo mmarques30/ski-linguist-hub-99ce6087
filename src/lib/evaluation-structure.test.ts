@@ -37,19 +37,27 @@ describe("motifs de structure", () => {
     expect(structureAllowsValidation(motifs)).toBe(false);
   });
 
-  it("exige la note méthodologique dès qu'il y a un écart", () => {
-    const without = listStructureMotifs({
+  it("n'exige pas de note méthodologique ; refuse seulement un écart > 1", () => {
+    const gapOne = listStructureMotifs({
       ...base,
       score_general: 4,
+      cecrl_label: "C1",
       note_methodologique: null,
     });
-    expect(without.find((m) => m.id === "methodo")?.ok).toBe(false);
-    const withNote = listStructureMotifs({
+    expect(gapOne.find((m) => m.id === "ecart")?.ok).toBe(true);
+    expect(gapOne.find((m) => m.id === "methodo")).toBeUndefined();
+    expect(structureAllowsValidation(gapOne)).toBe(true);
+
+    const tooFar = listStructureMotifs({
       ...base,
-      score_general: 4,
-      note_methodologique: "Conversation plus solide que la moyenne.",
+      score_general: 4.5,
+      cecrl_label: "C1+",
+      note_methodologique: "Même avec une note, l'écart est trop grand.",
     });
-    expect(withNote.find((m) => m.id === "methodo")?.ok).toBe(true);
-    expect(withNote.find((m) => m.id === "ecart")?.ok).toBe(true);
+    expect(tooFar.find((m) => m.id === "ecart")?.ok).toBe(false);
+    expect(tooFar.find((m) => m.id === "ecart")?.detail).toBe(
+      "note générale incohérente avec les cinq compétences"
+    );
+    expect(structureAllowsValidation(tooFar)).toBe(false);
   });
 });
