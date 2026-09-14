@@ -17,6 +17,7 @@ export type CleanupZztestJournal = {
   certificates: number;
   storage_objects: number;
   auth_users: number;
+  test_phrases?: number;
   last_real_invoice_sequence: number;
   next_invoice_sequence: number;
   deleted?: boolean;
@@ -34,6 +35,7 @@ function JournalTable({ journal }: { journal: CleanupZztestJournal }) {
     ["Certificats", journal.certificates],
     ["Fichiers de stockage", journal.storage_objects],
     ["Comptes portail", journal.auth_users],
+    ["Phrases de test (référentiel)", journal.test_phrases ?? 0],
     ["Dernier n° de facture réel", journal.last_real_invoice_sequence],
     ["Prochaine séquence", journal.next_invoice_sequence],
   ];
@@ -107,7 +109,8 @@ export function CleanupZztestCard() {
         <CardDescription>
           Supprime uniquement les stagiaires dont le nom commence par {ZZTEST_PREFIX} et
           l&apos;email se termine par @{ZZTEST_EMAIL_DOMAIN}, plus inscriptions, factures,
-          paiements, certificats, fichiers et comptes liés. La prochaine facture reprend
+          paiements, certificats, fichiers, comptes liés et phrases de référentiel
+          dont le code commence par {ZZTEST_PREFIX}. La prochaine facture reprend
           le dernier numéro réel. Journal sans donnée personnelle.
         </CardDescription>
       </CardHeader>

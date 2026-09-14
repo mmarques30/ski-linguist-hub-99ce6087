@@ -23,3 +23,8 @@ export function isZztestRecord(input: {
     isZztestEmail(input.email)
   );
 }
+
+/** Phrases / critères de référentiel marqués ZZTEST (hors stagiaires). */
+export function isZztestReferentialCode(value: string | null | undefined): boolean {
+  return (value ?? "").trim().toUpperCase().startsWith(ZZTEST_PREFIX);
+}

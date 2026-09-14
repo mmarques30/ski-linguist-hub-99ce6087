@@ -13,6 +13,7 @@ import {
   SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS,
 } from "../_shared/ski-monitor-welcome-documents.ts";
 import { applyEmailTemplate, sendFliEmail } from "../_shared/fli-email.ts";
+import { describeCaughtError } from "../_shared/supabase-error.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,6 +21,18 @@ const corsHeaders = {
 };
 
 const ADMIN_EMAIL = "info@fli.fr";
+
+async function deleteNewStudent(
+  supabase: ReturnType<typeof createClient>,
+  studentId: string | undefined,
+  createdStudent: boolean
+) {
+  if (!createdStudent || !studentId) return;
+  const { error } = await supabase.from("students").delete().eq("id", studentId);
+  if (error) {
+    console.error("submit-registration orphan student cleanup:", error);
+  }
+}
 
 const LANGUAGE_MAP: Record<string, string> = {
   english: "Anglais",
@@ -253,6 +266,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     let studentId = existingStudent?.id;
+    let createdStudent = false;
 
     if (studentId) {
       await supabase
@@ -287,10 +301,14 @@ Deno.serve(async (req) => {
 
       if (studentError) throw studentError;
       studentId = newStudent.id;
+      createdStudent = true;
     }
 
     const { data: inscriptionCode, error: codeError } = await supabase.rpc("generate_inscription_code");
-    if (codeError) throw codeError;
+    if (codeError) {
+      await deleteNewStudent(supabase, studentId, createdStudent);
+      throw codeError;
+    }
 
     const startDate =
       registration.startDate || season?.start_date || new Date().toISOString().split("T")[0];
@@ -371,7 +389,10 @@ Deno.serve(async (req) => {
       .select("id, code")
       .single();
 
-    if (inscriptionError) throw inscriptionError;
+    if (inscriptionError) {
+      await deleteNewStudent(supabase, studentId, createdStudent);
+      throw inscriptionError;
+    }
 
     if (paymentFields?.paymentFlow === "virement" && paymentFields.virementAmount > 0) {
       const isFullTransfer =
@@ -555,13 +576,19 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("submit-registration error:", error);
+    const described = describeCaughtError(error);
+    console.error("submit-registration error:", {
+      message: described.message,
+      code: described.code,
+      error,
+    });
     return new Response(
       JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : "Erreur interne",
+        error: described.message,
+        code: described.code,
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

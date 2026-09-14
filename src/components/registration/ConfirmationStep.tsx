@@ -28,6 +28,7 @@ import {
   studentFacingPisteFromCecrl,
   studentFacingPisteLabel,
 } from "@/lib/placement-test-engine";
+import { REGISTRATION_LEGAL_DOCUMENTS } from "@/lib/registration-legal-documents";
 
 interface ConfirmationStepProps {
   data: RegistrationData;
@@ -406,7 +407,25 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             </Label>
             <p className="text-sm text-muted-foreground">
               En soumettant cette inscription, je confirme que les informations fournies sont exactes
-              et j'accepte les conditions générales de formation de France Langues International.
+              et j'accepte le{" "}
+              <a
+                href={REGISTRATION_LEGAL_DOCUMENTS.reglementInterieur.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline font-medium text-foreground"
+              >
+                {REGISTRATION_LEGAL_DOCUMENTS.reglementInterieur.label}
+              </a>{" "}
+              et les{" "}
+              <a
+                href={REGISTRATION_LEGAL_DOCUMENTS.conditionsGenerales.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline font-medium text-foreground"
+              >
+                {REGISTRATION_LEGAL_DOCUMENTS.conditionsGenerales.label}
+              </a>{" "}
+              de formation de France Langues International.
             </p>
           </div>
         </div>

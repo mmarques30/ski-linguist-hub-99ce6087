@@ -56,9 +56,9 @@ export function FliInscriptionsImportCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Planilha FLI — Inscrições históricas</CardTitle>
+        <CardTitle>Tableur FLI — Inscriptions historiques</CardTitle>
         <CardDescription>
-          Formato Excel exportado (séparateur <code>;</code>) : inscriptions, stagiaires, écoles de ski.
+          Export tableur (séparateur <code>;</code>) : inscriptions, stagiaires, écoles de ski.
           Complète aussi la base moniteurs avec les contacts trouvés.
         </CardDescription>
       </CardHeader>
@@ -86,7 +86,7 @@ export function FliInscriptionsImportCard() {
             <>
               <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
-                Cliquez pour sélectionner incriptions_29072026.csv
+                Cliquez pour sélectionner un fichier CSV
               </p>
             </>
           )}

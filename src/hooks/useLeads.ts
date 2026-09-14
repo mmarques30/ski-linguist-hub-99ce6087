@@ -234,6 +234,7 @@ export function useConvertLead() {
       const lastName = nameParts.slice(1).join(" ") || "—";
 
       let studentId: string;
+      let createdStudent = false;
       const { data: existing } = await supabase
         .from("students")
         .select("id")
@@ -256,6 +257,7 @@ export function useConvertLead() {
           .single();
         if (studentError) throw studentError;
         studentId = newStudent.id;
+        createdStudent = true;
       }
 
       const { data: season } = await supabase
@@ -265,7 +267,12 @@ export function useConvertLead() {
         .maybeSingle();
 
       const { data: code, error: codeError } = await supabase.rpc("generate_inscription_code");
-      if (codeError) throw codeError;
+      if (codeError) {
+        if (createdStudent) {
+          await supabase.from("students").delete().eq("id", studentId);
+        }
+        throw codeError;
+      }
 
       const language = LANGUAGE_MAP[lead.language_interest || ""] || "Anglais";
       const startDate = season?.start_date || new Date().toISOString().split("T")[0];
@@ -294,7 +301,12 @@ export function useConvertLead() {
         .select("id, code")
         .single();
 
-      if (inscError) throw inscError;
+      if (inscError) {
+        if (createdStudent) {
+          await supabase.from("students").delete().eq("id", studentId);
+        }
+        throw inscError;
+      }
 
       const { error: leadError } = await (supabase as any)
         .from("leads")

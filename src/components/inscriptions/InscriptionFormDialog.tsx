@@ -37,6 +37,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { format } from "date-fns";
 import { useCurrentSeason, usePriceLookup } from "@/hooks/useSeasons";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { describeCaughtError } from "@/lib/supabase-error";
 
 const translations = {
   titleCreate: {
@@ -436,9 +437,16 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
       queryClient.invalidateQueries({ queryKey: ["inscriptions"] });
       queryClient.invalidateQueries({ queryKey: ["inscription-stats"] });
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error saving inscription:", error);
-      toast.error(isEditMode ? t(translations.errorEdit) : t(translations.errorCreate));
+      const described = describeCaughtError(error);
+      toast.error(
+        isEditMode
+          ? t(translations.errorEdit)
+          : described.message && described.message !== "Erreur interne"
+            ? described.message
+            : t(translations.errorCreate)
+      );
     } finally {
       setIsSubmitting(false);
     }
