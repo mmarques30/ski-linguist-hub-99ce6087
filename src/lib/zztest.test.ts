@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isZztestEmail, isZztestName, isZztestRecord } from "./zztest";
+import { isZztestEmail, isZztestName, isZztestRecord, isZztestReferentialCode } from "./zztest";
 
 describe("convention ZZTEST", () => {
   it("accepte un stagiaire de test", () => {
@@ -35,5 +35,10 @@ describe("convention ZZTEST", () => {
   it("reconnaît le préfixe sans tenir compte de la casse", () => {
     expect(isZztestName("zztest-marie")).toBe(true);
     expect(isZztestEmail("x@EXAMPLE.INVALID")).toBe(true);
+  });
+
+  it("reconnaît un code de phrase de référentiel ZZTEST", () => {
+    expect(isZztestReferentialCode("ZZTEST-CONCL-02")).toBe(true);
+    expect(isZztestReferentialCode("INT-01")).toBe(false);
   });
 });
