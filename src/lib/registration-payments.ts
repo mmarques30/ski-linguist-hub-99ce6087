@@ -100,21 +100,27 @@ export function formatPaymentBreakdown(summary: RegistrationPaymentSummary): str
   return lines.join("\n");
 }
 
-export function requiresStripeCheckout(option: RegistrationPaymentOption): boolean {
+/**
+ * Aucun mode de règlement n'est coché par défaut dans `/register` (décision Paula) :
+ * ces trois prédicats acceptent donc l'absence de choix.
+ */
+export type MaybePaymentOption = RegistrationPaymentOption | null | undefined;
+
+export function requiresStripeCheckout(option: MaybePaymentOption): boolean {
   return (
     option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE ||
     option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL
   );
 }
 
-export function requiresVirementInstructions(option: RegistrationPaymentOption): boolean {
+export function requiresVirementInstructions(option: MaybePaymentOption): boolean {
   return (
     option === REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT ||
     option === REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL
   );
 }
 
-export function hasChequeBalance(option: RegistrationPaymentOption): boolean {
+export function hasChequeBalance(option: MaybePaymentOption): boolean {
   return (
     option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE ||
     option === REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT

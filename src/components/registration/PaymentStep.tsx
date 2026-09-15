@@ -20,6 +20,7 @@ import {
   type RegistrationPaymentOption,
 } from "@/lib/registration-payments";
 import { formatPriceEUR, isCustomFormatDuration } from "@/lib/registration-offerings";
+import { toast } from "sonner";
 
 interface PaymentStepProps {
   data: Partial<RegistrationData>;
@@ -42,18 +43,22 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
   const coursePrice = data.price ?? 0;
   const hasPrice = coursePrice > 0;
 
-  const selectedOption =
-    data.paymentOption ?? REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE;
+  // Décision Paula : aucun mode de règlement coché par défaut.
+  const selectedOption: RegistrationPaymentOption | null = data.paymentOption ?? null;
 
   const summary = useMemo(
-    () => (hasPrice ? getRegistrationPaymentSummary(coursePrice, selectedOption) : null),
+    () =>
+      hasPrice && selectedOption
+        ? getRegistrationPaymentSummary(coursePrice, selectedOption)
+        : null,
     [coursePrice, hasPrice, selectedOption]
   );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isCustomFormat && hasPrice && !data.paymentOption) {
-      onUpdate({ paymentOption: REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE });
+    if (!isCustomFormat && hasPrice && !selectedOption) {
+      toast.error("Veuillez choisir un mode de règlement pour continuer.");
+      return;
     }
     onNext();
   };
@@ -95,33 +100,33 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {summary && (
-            <div className="rounded-lg border bg-muted/40 p-4 space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Tarif formation</span>
-                <span className="font-medium">{formatPriceEUR(summary.coursePrice)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Frais de dossier (déduits)</span>
-                <span className="font-medium">− {formatPriceEUR(summary.dossierFee)}</span>
-              </div>
-              {summary.balanceAfterDossier > 0 && hasChequeBalance(selectedOption) && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">{CHEQUE_BALANCE_SUMMARY_LABEL}</span>
-                  <span className="font-medium">{formatPriceEUR(summary.balanceAfterDossier)}</span>
-                </div>
-              )}
-              <div className="flex justify-between border-t pt-2 font-semibold">
-                <span>À régler maintenant</span>
-                <span>{formatPriceEUR(summary.amountDueNow)}</span>
-              </div>
+          <div className="rounded-lg border bg-muted/40 p-4 space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Tarif formation</span>
+              <span className="font-medium">{formatPriceEUR(coursePrice)}</span>
             </div>
-          )}
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Frais de dossier (déduits)</span>
+              <span className="font-medium">− {formatPriceEUR(FRAIS_DOSSIER_EUR)}</span>
+            </div>
+            {summary && summary.balanceAfterDossier > 0 && hasChequeBalance(selectedOption) && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{CHEQUE_BALANCE_SUMMARY_LABEL}</span>
+                <span className="font-medium">{formatPriceEUR(summary.balanceAfterDossier)}</span>
+              </div>
+            )}
+            <div className="flex justify-between border-t pt-2 font-semibold">
+              <span>À régler maintenant</span>
+              <span>
+                {summary ? formatPriceEUR(summary.amountDueNow) : "selon le mode choisi"}
+              </span>
+            </div>
+          </div>
 
           <div className="space-y-3">
             <Label>Choisissez votre mode de règlement</Label>
             <RadioGroup
-              value={selectedOption}
+              value={selectedOption ?? ""}
               onValueChange={(value) =>
                 onUpdate({ paymentOption: value as RegistrationPaymentOption })
               }

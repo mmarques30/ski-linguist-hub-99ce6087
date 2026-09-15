@@ -5,13 +5,23 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, Copy, Loader2, Phone, Mountain, Landmark } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle,
+  Copy,
+  ExternalLink,
+  Landmark,
+  Loader2,
+  Mountain,
+  Phone,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { RegistrationData } from "@/pages/register/Index";
 import {
   createRegistrationCheckout,
   submitRegistration,
+  type RegistrationSubmissionResult,
 } from "@/services/registrationService";
 import { formatPriceEUR, isCustomFormatDuration } from "@/lib/registration-offerings";
 import {
@@ -23,12 +33,30 @@ import {
   PAYMENT_OPTION_LABELS,
   REGISTRATION_PAYMENT_OPTIONS,
   requiresStripeCheckout,
+  type RegistrationPaymentOption,
 } from "@/lib/registration-payments";
 import {
   studentFacingPisteFromCecrl,
   studentFacingPisteLabel,
 } from "@/lib/placement-test-engine";
-import { REGISTRATION_LEGAL_DOCUMENTS } from "@/lib/registration-legal-documents";
+import {
+  isLegalDocumentReadable,
+  LEGAL_DOCUMENT_ON_REQUEST_NOTICE,
+  legalDocumentTitle,
+  REGISTRATION_LEGAL_DOCUMENT_LIST,
+  REGISTRATION_LEGAL_DOCUMENTS,
+} from "@/lib/registration-legal-documents";
+import {
+  expectsStationGroupAssignment,
+  STATION_GROUP_NOTICE_AFTER_TEST,
+  STATION_GROUP_SIGNATURE,
+} from "@/lib/registration-group-notice";
+import {
+  registrationCheckoutFailureNotice,
+  registrationFailureNotice,
+  REGISTRATION_FAILURE_TITLE,
+  type RegistrationFailureNotice,
+} from "@/lib/registration-error-message";
 
 interface ConfirmationStepProps {
   data: RegistrationData;
@@ -67,6 +95,7 @@ const certificationLabels: Record<string, string> = {
 export function ConfirmationStep({ data }: ConfirmationStepProps) {
   const [accepted, setAccepted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [failure, setFailure] = useState<RegistrationFailureNotice | null>(null);
   const [result, setResult] = useState<{
     inscriptionCode: string;
     needsAdminCall: boolean;
@@ -75,16 +104,21 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
     paymentFlow: "stripe" | "virement" | "none";
     paymentOption?: string;
     coursePrice?: number;
+    checkoutFailure?: RegistrationFailureNotice;
   } | null>(null);
 
   const testCompleted = Boolean(data.testAnswers && data.currentLevel);
+  const isStationGroup = expectsStationGroupAssignment(data.modality);
   const isCustomFormat = data.isCustomFormat || isCustomFormatDuration(data.duration);
   const coursePrice = data.price ?? 0;
   const hasPaymentStep = !isCustomFormat && coursePrice > 0;
-  const paymentOption = data.paymentOption ?? REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE;
-  const paymentSummary = hasPaymentStep
-    ? getRegistrationPaymentSummary(coursePrice, paymentOption)
-    : null;
+  // Décision Paula : aucun mode de règlement coché par défaut, donc aucun repli ici.
+  const paymentOption = data.paymentOption ?? null;
+  const paymentMissing = hasPaymentStep && !paymentOption;
+  const paymentSummary =
+    hasPaymentStep && paymentOption
+      ? getRegistrationPaymentSummary(coursePrice, paymentOption)
+      : null;
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -107,14 +141,29 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
     }
 
     setIsSubmitting(true);
-    try {
-      const submission = await submitRegistration(data);
+    setFailure(null);
 
-      if (
-        submission.paymentFlow === "stripe" &&
-        data.paymentOption &&
-        requiresStripeCheckout(data.paymentOption)
-      ) {
+    let submission: RegistrationSubmissionResult;
+    try {
+      submission = await submitRegistration(data);
+    } catch (error) {
+      // Le message brut reste dans la console pour l'équipe ; le stagiaire lit
+      // une version française avec la consigne de contact (BL-025).
+      console.error("Registration error:", error);
+      setFailure(registrationFailureNotice(error));
+      toast.error(REGISTRATION_FAILURE_TITLE);
+      setIsSubmitting(false);
+      return;
+    }
+
+    // À partir d'ici l'inscription existe : une nouvelle soumission créerait un
+    // doublon. Un échec du paiement en ligne se dit donc sur l'écran de succès.
+    if (
+      submission.paymentFlow === "stripe" &&
+      data.paymentOption &&
+      requiresStripeCheckout(data.paymentOption)
+    ) {
+      try {
         const origin = window.location.origin;
         const checkout = await createRegistrationCheckout({
           inscriptionId: submission.inscriptionId,
@@ -125,27 +174,33 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
         });
         window.location.href = checkout.checkoutUrl;
         return;
+      } catch (error) {
+        console.error("Registration checkout error:", error);
+        setResult({
+          inscriptionCode: submission.inscriptionCode,
+          needsAdminCall: submission.needsAdminCall,
+          emailSent: submission.emailSent,
+          documentsSent: submission.documentsSent,
+          paymentFlow: "none",
+          paymentOption: data.paymentOption,
+          coursePrice,
+          checkoutFailure: registrationCheckoutFailureNotice(error),
+        });
+        setIsSubmitting(false);
+        return;
       }
-
-      setResult({
-        inscriptionCode: submission.inscriptionCode,
-        needsAdminCall: submission.needsAdminCall,
-        emailSent: submission.emailSent,
-        documentsSent: submission.documentsSent,
-        paymentFlow: submission.paymentFlow,
-        paymentOption: data.paymentOption,
-        coursePrice,
-      });
-    } catch (error) {
-      console.error("Registration error:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Erreur lors de la soumission. Veuillez réessayer."
-      );
-    } finally {
-      setIsSubmitting(false);
     }
+
+    setResult({
+      inscriptionCode: submission.inscriptionCode,
+      needsAdminCall: submission.needsAdminCall,
+      emailSent: submission.emailSent,
+      documentsSent: submission.documentsSent,
+      paymentFlow: submission.paymentFlow,
+      paymentOption: data.paymentOption,
+      coursePrice,
+    });
+    setIsSubmitting(false);
   };
 
   if (result) {
@@ -171,6 +226,17 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
               </Badge>
             </div>
 
+            {result.checkoutFailure && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-left space-y-1">
+                  <p className="font-medium">{result.checkoutFailure.title}</p>
+                  {result.checkoutFailure.detail && <p>{result.checkoutFailure.detail}</p>}
+                  <p>{result.checkoutFailure.instruction}</p>
+                </AlertDescription>
+              </Alert>
+            )}
+
             {result.paymentFlow === "virement" && result.coursePrice && result.paymentOption && (
               <Alert>
                 <Landmark className="h-4 w-4" />
@@ -186,7 +252,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                       {formatPriceEUR(
                         getRegistrationPaymentSummary(
                           result.coursePrice,
-                          result.paymentOption as typeof paymentOption
+                          result.paymentOption as RegistrationPaymentOption
                         ).amountDueNow
                       )}
                     </strong>{" "}
@@ -214,10 +280,10 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
 
             {result.coursePrice &&
               result.paymentOption &&
-              hasChequeBalance(result.paymentOption as typeof paymentOption) &&
+              hasChequeBalance(result.paymentOption as RegistrationPaymentOption) &&
               getRegistrationPaymentSummary(
                 result.coursePrice,
-                result.paymentOption as typeof paymentOption
+                result.paymentOption as RegistrationPaymentOption
               ).balanceAfterDossier > 0 && (
                 <Alert>
                   <AlertDescription className="text-left space-y-2">
@@ -226,7 +292,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                       {formatPriceEUR(
                         getRegistrationPaymentSummary(
                           result.coursePrice,
-                          result.paymentOption as typeof paymentOption
+                          result.paymentOption as RegistrationPaymentOption
                         ).balanceAfterDossier
                       )}{" "}
                       à envoyer avec votre inscription
@@ -236,13 +302,14 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                 </Alert>
               )}
 
-            <Alert>
-              <Mountain className="h-4 w-4" />
-              <AlertDescription>
-                Votre groupe (matin ou après-midi) sera confirmé environ 10 jours avant le début
-                des cours, après validation par notre équipe.
-              </AlertDescription>
-            </Alert>
+            {isStationGroup && (
+              <Alert>
+                <Mountain className="h-4 w-4" />
+                <AlertDescription>
+                  {STATION_GROUP_NOTICE_AFTER_TEST} — {STATION_GROUP_SIGNATURE}
+                </AlertDescription>
+              </Alert>
+            )}
             {result.needsAdminCall && (
               <Alert>
                 <Phone className="h-4 w-4" />
@@ -336,7 +403,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
               <span className="font-medium">{fundingLabels[data.fundingType] || data.fundingType}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Piste atteinte</span>
+              <span className="text-muted-foreground">Votre piste</span>
               <Badge>
                 {data.testSummary
                   ? studentFacingPisteLabel({
@@ -395,6 +462,32 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
 
         <Separator />
 
+        {/* BL-023 : le texte à accepter se lit avant la case, dans un nouvel onglet. */}
+        <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
+          <p className="text-sm font-medium">À lire avant d&apos;accepter</p>
+          <ul className="space-y-2 text-sm">
+            {REGISTRATION_LEGAL_DOCUMENT_LIST.map((document) => (
+              <li key={document.key}>
+                {isLegalDocumentReadable(document) ? (
+                  <a
+                    href={document.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 underline font-medium text-foreground"
+                  >
+                    {legalDocumentTitle(document)}
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                ) : (
+                  <span className="text-muted-foreground">
+                    {legalDocumentTitle(document)} — {LEGAL_DOCUMENT_ON_REQUEST_NOTICE}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+
         <div className="flex items-start space-x-3 rounded-lg border p-4">
           <Checkbox
             id="terms"
@@ -403,20 +496,11 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
           />
           <div className="space-y-1">
             <Label htmlFor="terms" className="cursor-pointer">
-              J'accepte les conditions générales
+              J&apos;accepte les conditions générales de formation
             </Label>
             <p className="text-sm text-muted-foreground">
               En soumettant cette inscription, je confirme que les informations fournies sont exactes
-              et j'accepte le{" "}
-              <a
-                href={REGISTRATION_LEGAL_DOCUMENTS.reglementInterieur.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline font-medium text-foreground"
-              >
-                {REGISTRATION_LEGAL_DOCUMENTS.reglementInterieur.label}
-              </a>{" "}
-              et les{" "}
+              et j&apos;accepte les{" "}
               <a
                 href={REGISTRATION_LEGAL_DOCUMENTS.conditionsGenerales.href}
                 target="_blank"
@@ -425,7 +509,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
               >
                 {REGISTRATION_LEGAL_DOCUMENTS.conditionsGenerales.label}
               </a>{" "}
-              de formation de France Langues International.
+              de France Langues International.
             </p>
           </div>
         </div>
@@ -439,10 +523,30 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
           </Alert>
         )}
 
+        {paymentMissing && (
+          <Alert variant="destructive">
+            <AlertDescription>
+              Aucun mode de règlement n'est choisi. Revenez à l'étape « Paiement » pour en
+              sélectionner un avant de soumettre.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {failure && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription className="space-y-1">
+              <p className="font-medium">{failure.title}</p>
+              {failure.detail && <p>{failure.detail}</p>}
+              <p>{failure.instruction}</p>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Button
           onClick={handleSubmit}
           className="w-full"
-          disabled={!accepted || isSubmitting || !testCompleted}
+          disabled={!accepted || isSubmitting || !testCompleted || paymentMissing}
         >
           {isSubmitting ? (
             <>

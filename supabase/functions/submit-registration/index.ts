@@ -81,6 +81,7 @@ const SLOPE_LABELS: Record<string, string> = {
   vocab_ski: "Vocabulaire du ski",
 };
 
+// BL-026 : sans piste validée, le stagiaire commence sur la piste verte.
 function studentFacingSlopeLabel(summary?: {
   passedSlopes: string[];
   highestSlopeReached: string;
@@ -93,8 +94,7 @@ function studentFacingSlopeLabel(summary?: {
     const best = passed.reduce((a, b) => (order.indexOf(b) > order.indexOf(a) ? b : a));
     return SLOPE_LABELS[best];
   }
-  if (summary.endedAtVocab) return SLOPE_LABELS.vocab_ski;
-  return SLOPE_LABELS[summary.highestSlopeReached] || "Début de parcours";
+  return SLOPE_LABELS.verte;
 }
 
 interface RegistrationPayload {

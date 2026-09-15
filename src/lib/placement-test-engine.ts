@@ -75,8 +75,17 @@ export function determineLevelFromSlopes(passedSlopes: SlopeLevel[]): string {
 }
 
 /**
+ * BL-026 — décision Paula : un·e stagiaire qui ne valide pas la piste verte
+ * commence sur la piste verte. Côté stagiaire on annonce donc « Piste verte »,
+ * jamais « Vocabulaire ski » ni « Début de parcours » : le bloc vocabulaire est
+ * un complément du test, pas une piste, et « Début de parcours » n'existe pas
+ * sur le domaine. Le détail par bloc reste visible côté administration.
+ */
+export const PISTE_STAGIAIRE_PAR_DEFAUT = SLOPE_LABELS.verte;
+
+/**
  * Libellé piste pour l'UI stagiaire (jamais de code CECRL).
- * Préfère la plus haute piste réussie ; sinon vocab / début de parcours.
+ * Préfère la plus haute piste réussie ; sinon la piste verte.
  */
 export function studentFacingPisteLabel(input: {
   passedSlopes?: SlopeLevel[] | string[] | null;
@@ -94,10 +103,7 @@ export function studentFacingPisteLabel(input: {
     }
     return SLOPE_LABELS[best];
   }
-  if (input.endedAtVocab) return SLOPE_LABELS.vocab_ski;
-  const high = input.highestSlopeReached;
-  if (high && high in SLOPE_LABELS) return SLOPE_LABELS[high as SlopeLevel];
-  return "Début de parcours";
+  return PISTE_STAGIAIRE_PAR_DEFAUT;
 }
 
 /** Reverse CECRL → libellé piste (portail, si pas de résumé pistes). */
@@ -105,7 +111,7 @@ export function studentFacingPisteFromCecrl(cecrl: string | null | undefined): s
   if (!cecrl) return "À déterminer";
   const key = cecrl.trim().toUpperCase();
   const map: Record<string, string> = {
-    A1: "Début de parcours",
+    A1: PISTE_STAGIAIRE_PAR_DEFAUT,
     A2: SLOPE_LABELS.verte,
     B1: SLOPE_LABELS.bleue,
     B2: SLOPE_LABELS.rouge,
