@@ -500,6 +500,90 @@ export type Database = {
           },
         ]
       }
+      email_models: {
+        Row: {
+          audience: string
+          created_at: string
+          cron_jobname: string | null
+          edge_function: string | null
+          model_key: string
+          position: number
+          title_fr: string
+          trigger_fr: string
+        }
+        Insert: {
+          audience: string
+          created_at?: string
+          cron_jobname?: string | null
+          edge_function?: string | null
+          model_key: string
+          position: number
+          title_fr: string
+          trigger_fr: string
+        }
+        Update: {
+          audience?: string
+          created_at?: string
+          cron_jobname?: string | null
+          edge_function?: string | null
+          model_key?: string
+          position?: number
+          title_fr?: string
+          trigger_fr?: string
+        }
+        Relationships: []
+      }
+      email_template_drafts: {
+        Row: {
+          body_en: string
+          body_fr: string
+          body_pt: string
+          created_at: string
+          model_key: string
+          notes: string | null
+          position: number
+          slug: string
+          subject_en: string
+          subject_fr: string
+          subject_pt: string
+          updated_at: string
+          variables: Json
+          variant_label: string
+        }
+        Insert: {
+          body_en?: string
+          body_fr?: string
+          body_pt?: string
+          created_at?: string
+          model_key: string
+          notes?: string | null
+          position?: number
+          slug: string
+          subject_en?: string
+          subject_fr?: string
+          subject_pt?: string
+          updated_at?: string
+          variables?: Json
+          variant_label?: string
+        }
+        Update: {
+          body_en?: string
+          body_fr?: string
+          body_pt?: string
+          created_at?: string
+          model_key?: string
+          notes?: string | null
+          position?: number
+          slug?: string
+          subject_en?: string
+          subject_fr?: string
+          subject_pt?: string
+          updated_at?: string
+          variables?: Json
+          variant_label?: string
+        }
+        Relationships: []
+      }
       email_templates: {
         Row: {
           body_en: string
@@ -508,12 +592,16 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          model_key: string | null
           slug: string
           subject_en: string
           subject_fr: string
           subject_pt: string
           updated_at: string
+          validated_at: string | null
+          validated_by: string | null
           variables: Json
+          variant_label: string
         }
         Insert: {
           body_en?: string
@@ -522,12 +610,16 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          model_key?: string | null
           slug: string
           subject_en?: string
           subject_fr?: string
           subject_pt?: string
           updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
           variables?: Json
+          variant_label?: string
         }
         Update: {
           body_en?: string
@@ -536,12 +628,70 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          model_key?: string | null
           slug?: string
           subject_en?: string
           subject_fr?: string
           subject_pt?: string
           updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
           variables?: Json
+          variant_label?: string
+        }
+        Relationships: []
+      }
+      edge_dispatch_config: {
+        Row: {
+          description: string | null
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      edge_dispatch_log: {
+        Row: {
+          auth_mode: string
+          created_at: string
+          function_name: string
+          id: string
+          jobname: string | null
+          note: string | null
+          request_id: number | null
+          triggered_by: string | null
+        }
+        Insert: {
+          auth_mode: string
+          created_at?: string
+          function_name: string
+          id?: string
+          jobname?: string | null
+          note?: string | null
+          request_id?: number | null
+          triggered_by?: string | null
+        }
+        Update: {
+          auth_mode?: string
+          created_at?: string
+          function_name?: string
+          id?: string
+          jobname?: string | null
+          note?: string | null
+          request_id?: number | null
+          triggered_by?: string | null
         }
         Relationships: []
       }
@@ -1321,6 +1471,7 @@ export type Database = {
         ]
       }
       instructors: {
+        Row: {
           alias: string[] | null
           civilite: string | null
           pays: string | null
@@ -3496,6 +3647,17 @@ export type Database = {
         Returns: string
       }
       cleanup_zztest_data: { Args: { _dry_run?: boolean }; Returns: Json }
+      email_models_overview: { Args: never; Returns: Json }
+      publish_email_template_draft: { Args: { p_slug: string }; Returns: Json }
+      unpublish_email_template: { Args: { p_slug: string }; Returns: Json }
+      set_email_cron_active: {
+        Args: { p_jobname: string; p_active: boolean }
+        Returns: Json
+      }
+      run_email_cron_now: {
+        Args: { p_jobname: string; p_dry_run?: boolean }
+        Returns: Json
+      }
       activate_season: { Args: { p_season_id: string }; Returns: undefined }
       generate_inscription_code: { Args: never; Returns: string }
       get_fiscal_year: { Args: { invoice_date: string }; Returns: string }

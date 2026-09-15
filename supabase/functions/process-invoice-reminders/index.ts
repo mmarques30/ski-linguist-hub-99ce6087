@@ -1,29 +1,30 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { isFliPlaceholderEmail } from '../_shared/email-guards.ts'
+import { sendFliEmail } from '../_shared/fli-email.ts'
+import { loadEmailTemplate, renderEmailTemplate } from '../_shared/email-model-templates.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-interface OverdueInvoice {
-  id: string
-  invoice_number: string
-  amount_ht: number
-  amount_ttc: number | null
-  due_date: string
-  status: string
-  reminder_1_sent_at: string | null
-  reminder_2_sent_at: string | null
-  reminder_3_sent_at: string | null
-  inscription: {
-    id: string
-    student: {
-      first_name: string
-      last_name: string
-      email: string
-    }
-  } | null
+const REMINDER_SLUGS = {
+  1: 'invoice_reminder_1',
+  2: 'invoice_reminder_2',
+  3: 'invoice_reminder_3',
+} as const
+
+type ReminderLevel = 1 | 2 | 3
+
+function formatAmount(amount: number): string {
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount)
+}
+
+function formatDateFr(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
 }
 
 Deno.serve(async (req) => {
@@ -34,30 +35,37 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url)
     const dryRun = url.searchParams.get('dry_run') === 'true'
-    
-    console.log(`🚀 Starting invoice reminder processing... (dry_run: ${dryRun})`)
-    
+
+    console.log(`Starting invoice reminder processing (dry_run: ${dryRun})`)
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const resendApiKey = Deno.env.get('RESEND_API_KEY')
+    const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // In dry-run mode, we don't need Resend API key
+    // Point 8 : un niveau de relance ne part que si son modèle est validé et actif.
+    const templates = new Map<ReminderLevel, Awaited<ReturnType<typeof loadEmailTemplate>>>()
+    for (const level of [1, 2, 3] as ReminderLevel[]) {
+      templates.set(level, await loadEmailTemplate(supabase, REMINDER_SLUGS[level]))
+    }
+
+    const missingTemplates = ([1, 2, 3] as ReminderLevel[])
+      .filter((level) => !templates.get(level))
+      .map((level) => REMINDER_SLUGS[level])
+
     if (!dryRun && !resendApiKey) {
-      console.log('⚠️ RESEND_API_KEY not configured - skipping email sending')
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          message: 'RESEND_API_KEY not configured. Use ?dry_run=true to test without sending emails.' 
+        JSON.stringify({
+          success: false,
+          message: "RESEND_API_KEY absente. Utilisez ?dry_run=true pour un essai sans envoi.",
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey)
     const now = new Date()
     const today = now.toISOString().split('T')[0]
 
-    // Fetch overdue invoices (due_date < today and status not 'paid')
     const { data: invoices, error } = await supabase
       .from('invoices')
       .select(`
@@ -86,11 +94,10 @@ Deno.serve(async (req) => {
       throw error
     }
 
-    console.log(`📋 Found ${invoices?.length || 0} overdue invoices`)
-
     const results = {
       dryRun,
       totalOverdue: invoices?.length || 0,
+      missingTemplates,
       reminder1Sent: 0,
       reminder2Sent: 0,
       reminder3Sent: 0,
@@ -102,22 +109,21 @@ Deno.serve(async (req) => {
         reminderLevel: number | null
         action: string
       }>,
-      errors: [] as string[]
+      errors: [] as string[],
     }
 
     for (const invoice of invoices || []) {
       const inscription = (invoice as any).inscriptions
       const student = inscription?.students
-      
+
       if (!student?.email) {
-        console.log(`⏭️ Skipping invoice ${invoice.invoice_number} - no student email found`)
         results.skipped++
         results.details.push({
           invoiceNumber: invoice.invoice_number,
           email: 'N/A',
           daysOverdue: 0,
           reminderLevel: null,
-          action: 'SKIPPED - No email'
+          action: 'IGNOREE - aucune adresse',
         })
         continue
       }
@@ -125,134 +131,126 @@ Deno.serve(async (req) => {
       const dueDate = new Date(invoice.due_date)
       const daysOverdue = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24))
 
+      let level: ReminderLevel | null = null
+      if (!invoice.reminder_1_sent_at && daysOverdue >= 7 && daysOverdue < 15) {
+        level = 1
+      } else if (invoice.reminder_1_sent_at && !invoice.reminder_2_sent_at && daysOverdue >= 15 && daysOverdue < 30) {
+        level = 2
+      } else if (invoice.reminder_2_sent_at && !invoice.reminder_3_sent_at && daysOverdue >= 30) {
+        level = 3
+      }
+
+      if (level === null) {
+        let reason = 'pas encore relançable'
+        if (daysOverdue < 7) reason = `${daysOverdue} jours de retard (7 minimum)`
+        else if (invoice.reminder_3_sent_at) reason = 'toutes les relances sont parties'
+        else if (!invoice.reminder_1_sent_at && daysOverdue >= 15) reason = 'relance 1 jamais envoyée'
+        else if (!invoice.reminder_2_sent_at && daysOverdue >= 30) reason = 'relance 2 jamais envoyée'
+
+        results.skipped++
+        results.details.push({
+          invoiceNumber: invoice.invoice_number,
+          email: student.email,
+          daysOverdue,
+          reminderLevel: null,
+          action: `IGNOREE - ${reason}`,
+        })
+        continue
+      }
+
+      const template = templates.get(level)
+      if (!template) {
+        results.skipped++
+        results.details.push({
+          invoiceNumber: invoice.invoice_number,
+          email: student.email,
+          daysOverdue,
+          reminderLevel: level,
+          action: `IGNOREE - modèle ${REMINDER_SLUGS[level]} non validé`,
+        })
+        continue
+      }
+
+      const variables = {
+        client_name: `${student.first_name} ${student.last_name}`.trim(),
+        invoice_number: invoice.invoice_number,
+        amount: formatAmount(invoice.amount_ttc || invoice.amount_ht),
+        due_date: formatDateFr(invoice.due_date),
+        days_overdue: String(daysOverdue),
+      }
+
+      if (dryRun) {
+        results.details.push({
+          invoiceNumber: invoice.invoice_number,
+          email: student.email,
+          daysOverdue,
+          reminderLevel: level,
+          action: `ESSAI - relance ${level} prête (${REMINDER_SLUGS[level]})`,
+        })
+        if (level === 1) results.reminder1Sent++
+        if (level === 2) results.reminder2Sent++
+        if (level === 3) results.reminder3Sent++
+        continue
+      }
+
       try {
-        // Reminder 1: 7 days overdue
-        if (!invoice.reminder_1_sent_at && daysOverdue >= 7 && daysOverdue < 15) {
-          if (!dryRun && resendApiKey) {
-            await sendReminderEmail(
-              resendApiKey,
-              student.email,
-              student.first_name,
-              invoice.invoice_number,
-              invoice.amount_ttc || invoice.amount_ht,
-              invoice.due_date,
-              1
-            )
+        const rendered = renderEmailTemplate(template, variables)
+        const outcome = await sendFliEmail({
+          resendApiKey,
+          to: student.email,
+          subject: rendered.subject,
+          html: rendered.html,
+        })
 
-            await supabase
-              .from('invoices')
-              .update({ reminder_1_sent_at: now.toISOString() })
-              .eq('id', invoice.id)
-          }
+        await supabase.from('email_log').insert({
+          template_slug: REMINDER_SLUGS[level],
+          recipient_email: student.email,
+          recipient_name: variables.client_name,
+          inscription_id: inscription?.id ?? null,
+          status: outcome.ok ? 'sent' : outcome.skipped ? 'skipped' : 'failed',
+          error_message: outcome.error ?? null,
+          variables_used: variables,
+        })
 
-          results.reminder1Sent++
-          results.details.push({
-            invoiceNumber: invoice.invoice_number,
-            email: student.email,
-            daysOverdue,
-            reminderLevel: 1,
-            action: dryRun ? 'WOULD SEND Reminder 1' : 'SENT Reminder 1'
-          })
-          console.log(`📧 ${dryRun ? '[DRY-RUN]' : ''} Reminder 1 to ${student.email} for invoice ${invoice.invoice_number}`)
+        if (!outcome.ok) {
+          results.errors.push(`Facture ${invoice.invoice_number}: ${outcome.error ?? 'envoi refusé'}`)
+          continue
         }
-        // Reminder 2: 15 days overdue
-        else if (invoice.reminder_1_sent_at && !invoice.reminder_2_sent_at && daysOverdue >= 15 && daysOverdue < 30) {
-          if (!dryRun && resendApiKey) {
-            await sendReminderEmail(
-              resendApiKey,
-              student.email,
-              student.first_name,
-              invoice.invoice_number,
-              invoice.amount_ttc || invoice.amount_ht,
-              invoice.due_date,
-              2
-            )
 
-            await supabase
-              .from('invoices')
-              .update({ reminder_2_sent_at: now.toISOString() })
-              .eq('id', invoice.id)
-          }
+        const column = `reminder_${level}_sent_at`
+        await supabase
+          .from('invoices')
+          .update({ [column]: now.toISOString() })
+          .eq('id', invoice.id)
 
-          results.reminder2Sent++
-          results.details.push({
-            invoiceNumber: invoice.invoice_number,
-            email: student.email,
-            daysOverdue,
-            reminderLevel: 2,
-            action: dryRun ? 'WOULD SEND Reminder 2' : 'SENT Reminder 2'
-          })
-          console.log(`📧 ${dryRun ? '[DRY-RUN]' : ''} Reminder 2 to ${student.email} for invoice ${invoice.invoice_number}`)
-        }
-        // Reminder 3: 30 days overdue (final notice)
-        else if (invoice.reminder_2_sent_at && !invoice.reminder_3_sent_at && daysOverdue >= 30) {
-          if (!dryRun && resendApiKey) {
-            await sendReminderEmail(
-              resendApiKey,
-              student.email,
-              student.first_name,
-              invoice.invoice_number,
-              invoice.amount_ttc || invoice.amount_ht,
-              invoice.due_date,
-              3
-            )
+        if (level === 1) results.reminder1Sent++
+        if (level === 2) results.reminder2Sent++
+        if (level === 3) results.reminder3Sent++
 
-            await supabase
-              .from('invoices')
-              .update({ reminder_3_sent_at: now.toISOString() })
-              .eq('id', invoice.id)
-          }
-
-          results.reminder3Sent++
-          results.details.push({
-            invoiceNumber: invoice.invoice_number,
-            email: student.email,
-            daysOverdue,
-            reminderLevel: 3,
-            action: dryRun ? 'WOULD SEND Final Notice' : 'SENT Final Notice'
-          })
-          console.log(`📧 ${dryRun ? '[DRY-RUN]' : ''} Final notice to ${student.email} for invoice ${invoice.invoice_number}`)
-        }
-        // No action needed yet
-        else {
-          let reason = 'Not due for reminder yet'
-          if (daysOverdue < 7) reason = `Only ${daysOverdue} days overdue (needs 7+)`
-          else if (invoice.reminder_3_sent_at) reason = 'All reminders already sent'
-          else if (!invoice.reminder_1_sent_at && daysOverdue >= 15) reason = 'Reminder 1 not sent yet'
-          else if (!invoice.reminder_2_sent_at && daysOverdue >= 30) reason = 'Reminder 2 not sent yet'
-          
-          results.details.push({
-            invoiceNumber: invoice.invoice_number,
-            email: student.email,
-            daysOverdue,
-            reminderLevel: null,
-            action: `SKIPPED - ${reason}`
-          })
-        }
+        results.details.push({
+          invoiceNumber: invoice.invoice_number,
+          email: student.email,
+          daysOverdue,
+          reminderLevel: level,
+          action: `ENVOYEE - relance ${level}`,
+        })
       } catch (emailError) {
-        const errorMsg = `Failed to send reminder for invoice ${invoice.invoice_number}: ${emailError}`
-        console.error(`❌ ${errorMsg}`)
-        results.errors.push(errorMsg)
+        results.errors.push(`Facture ${invoice.invoice_number}: ${emailError}`)
       }
     }
 
     const summary = dryRun
-      ? `[DRY-RUN] Would send ${results.reminder1Sent} first, ${results.reminder2Sent} second, ${results.reminder3Sent} final reminders`
-      : `Sent ${results.reminder1Sent} first, ${results.reminder2Sent} second, ${results.reminder3Sent} final reminders`
+      ? `[ESSAI] ${results.reminder1Sent} premières, ${results.reminder2Sent} secondes, ${results.reminder3Sent} mises en demeure`
+      : `${results.reminder1Sent} premières, ${results.reminder2Sent} secondes, ${results.reminder3Sent} mises en demeure`
 
-    console.log(`✅ ${summary}`)
+    console.log(summary)
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        results,
-        summary
-      }),
+      JSON.stringify({ success: true, results, summary }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
-
   } catch (error) {
-    console.error('❌ Error processing invoice reminders:', error)
+    console.error('Error processing invoice reminders:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return new Response(
       JSON.stringify({ success: false, error: errorMessage }),
@@ -260,84 +258,3 @@ Deno.serve(async (req) => {
     )
   }
 })
-
-async function sendReminderEmail(
-  apiKey: string,
-  toEmail: string,
-  firstName: string,
-  invoiceNumber: string,
-  amount: number,
-  dueDate: string,
-  reminderLevel: 1 | 2 | 3
-): Promise<void> {
-  if (isFliPlaceholderEmail(toEmail)) {
-    throw new Error('Adresse @fli.placeholder exclue de tout envoi')
-  }
-  const formattedAmount = new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR'
-  }).format(amount)
-
-  const formattedDueDate = new Date(dueDate).toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  })
-
-  let subject: string
-  let body: string
-  
-  switch (reminderLevel) {
-    case 1:
-      subject = `Rappel de paiement - Facture ${invoiceNumber}`
-      body = `
-        <h2>Bonjour ${firstName},</h2>
-        <p>Nous vous informons que la facture <strong>${invoiceNumber}</strong> d'un montant de <strong>${formattedAmount}</strong>, échue le ${formattedDueDate}, n'a pas encore été réglée.</p>
-        <p>Nous vous remercions de bien vouloir procéder au règlement dans les meilleurs délais.</p>
-        <p>Si le paiement a déjà été effectué, veuillez ne pas tenir compte de ce message.</p>
-        <p>Cordialement,<br>L'équipe FLI Formation</p>
-      `
-      break
-    case 2:
-      subject = `Second rappel de paiement - Facture ${invoiceNumber}`
-      body = `
-        <h2>Bonjour ${firstName},</h2>
-        <p>Malgré notre précédent rappel, nous constatons que la facture <strong>${invoiceNumber}</strong> d'un montant de <strong>${formattedAmount}</strong>, échue le ${formattedDueDate}, reste impayée.</p>
-        <p>Nous vous prions de régulariser cette situation dans les plus brefs délais afin d'éviter toute procédure de recouvrement.</p>
-        <p>Si vous rencontrez des difficultés de paiement, n'hésitez pas à nous contacter pour trouver une solution.</p>
-        <p>Cordialement,<br>L'équipe FLI Formation</p>
-      `
-      break
-    case 3:
-      subject = `URGENT - Mise en demeure - Facture ${invoiceNumber}`
-      body = `
-        <h2>Bonjour ${firstName},</h2>
-        <p><strong>Dernier avis avant procédure de recouvrement</strong></p>
-        <p>Malgré nos relances précédentes, la facture <strong>${invoiceNumber}</strong> d'un montant de <strong>${formattedAmount}</strong>, échue le ${formattedDueDate}, demeure impayée.</p>
-        <p>Sans règlement de votre part sous 8 jours, nous nous verrons dans l'obligation de transmettre ce dossier à notre service de recouvrement.</p>
-        <p>Des frais supplémentaires et des intérêts de retard pourront alors s'appliquer conformément à nos conditions générales.</p>
-        <p>Pour toute question ou pour régulariser votre situation, veuillez nous contacter immédiatement.</p>
-        <p>Cordialement,<br>L'équipe FLI Formation</p>
-      `
-      break
-  }
-
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: 'FLI Formation <noreply@fli-formation.fr>',
-      to: [toEmail],
-      subject,
-      html: body,
-    }),
-  })
-
-  if (!response.ok) {
-    const errorData = await response.text()
-    throw new Error(`Resend API error: ${errorData}`)
-  }
-}

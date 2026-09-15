@@ -21,6 +21,7 @@ import {
   PanelLeft,
   Briefcase,
   Award,
+  Mail,
 } from "lucide-react";
 import { useState } from "react";
 import fliLogo from "@/assets/fli-marca-yellow.png";
@@ -146,6 +147,7 @@ const navigationGroups: NavGroup[] = [
     icon: Settings,
     items: [
       { name: "Import", href: "/admin/import", icon: Upload },
+      { name: "Emails", href: "/admin/emails", icon: Mail },
       { name: "Phrases", href: "/admin/phrases", icon: MessageSquare },
       { name: "Saisons", href: "/admin/seasons", icon: Calendar },
       { name: "Tests QA", href: "/admin/testing", icon: FlaskConical },
