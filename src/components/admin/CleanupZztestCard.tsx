@@ -8,6 +8,13 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ZZTEST_EMAIL_DOMAIN, ZZTEST_PREFIX } from "@/lib/zztest";
 
+export type CleanupZztestEntry = {
+  stagiaire: string;
+  cree_le: string;
+  cree_par: string;
+  inscriptions: string[];
+};
+
 export type CleanupZztestJournal = {
   dry_run: boolean;
   students: number;
@@ -18,6 +25,7 @@ export type CleanupZztestJournal = {
   storage_objects: number;
   auth_users: number;
   test_phrases?: number;
+  a_supprimer?: CleanupZztestEntry[];
   last_real_invoice_sequence: number;
   next_invoice_sequence: number;
   deleted?: boolean;
@@ -49,6 +57,28 @@ function JournalTable({ journal }: { journal: CleanupZztestJournal }) {
         >
           <span className="text-muted-foreground">{label}</span>
           <span className="font-medium">{value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AuteursTable({ entries }: { entries: CleanupZztestEntry[] }) {
+  return (
+    <div className="rounded-lg border text-sm">
+      {entries.map((entry) => (
+        <div key={entry.stagiaire} className="border-b px-3 py-2 last:border-b-0">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <span className="font-medium">{entry.stagiaire}</span>
+            <span className="text-xs text-muted-foreground">
+              saisi le {entry.cree_le} par {entry.cree_par}
+            </span>
+          </div>
+          {entry.inscriptions.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              {entry.inscriptions.join(", ")}
+            </p>
+          )}
         </div>
       ))}
     </div>
@@ -143,6 +173,18 @@ export function CleanupZztestCard() {
           <div className="space-y-2">
             <p className="text-sm font-medium">Journal</p>
             <JournalTable journal={journal} />
+          </div>
+        )}
+
+        {journal?.a_supprimer && journal.a_supprimer.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Qui a saisi ces lignes</p>
+            <p className="text-xs text-muted-foreground">
+              Vérifiez cette liste avant d&apos;exécuter : une ligne saisie à
+              l&apos;instant depuis le back-office est probablement une recette
+              en cours, pas un résidu de script.
+            </p>
+            <AuteursTable entries={journal.a_supprimer} />
           </div>
         )}
 
