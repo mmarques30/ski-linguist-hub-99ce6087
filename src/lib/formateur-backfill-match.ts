@@ -254,7 +254,7 @@ export function matchInscriptionsFormateur(
     _score: mojibakeScore(d.code),
   }));
 
-  const csv: CsvEnrich[] = csvRows.map((r, i) => {
+  const csv: CsvEnrich[] = csvRows.map((r, i): CsvEnrich => {
     const csvName = cell(r, "Nom et Prénom", "Nom");
     return {
       ...r,

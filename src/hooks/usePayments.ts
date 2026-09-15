@@ -83,7 +83,7 @@ export function usePayments(filters?: PaymentFilters) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data || []) as Payment[];
+      return ((data || []) as unknown) as Payment[];
     },
   });
 }

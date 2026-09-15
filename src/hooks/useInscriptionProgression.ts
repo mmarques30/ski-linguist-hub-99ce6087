@@ -50,7 +50,7 @@ export function useInscriptionProgression(inscriptionId?: string) {
         .maybeSingle();
 
       if (error) throw error;
-      return data as InscriptionProgressionRow | null;
+      return (data as unknown) as InscriptionProgressionRow | null;
     },
     enabled: !!inscriptionId,
   });
