@@ -5,13 +5,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, Copy, Loader2, Phone, Mountain, Landmark } from "lucide-react";
+import { AlertTriangle, CheckCircle, Copy, Loader2, Phone, Mountain, Landmark } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { RegistrationData } from "@/pages/register/Index";
 import {
   createRegistrationCheckout,
   submitRegistration,
+  type RegistrationSubmissionResult,
 } from "@/services/registrationService";
 import { formatPriceEUR, isCustomFormatDuration } from "@/lib/registration-offerings";
 import {
@@ -35,6 +36,12 @@ import {
   STATION_GROUP_NOTICE_AFTER_TEST,
   STATION_GROUP_SIGNATURE,
 } from "@/lib/registration-group-notice";
+import {
+  registrationCheckoutFailureNotice,
+  registrationFailureNotice,
+  REGISTRATION_FAILURE_TITLE,
+  type RegistrationFailureNotice,
+} from "@/lib/registration-error-message";
 
 interface ConfirmationStepProps {
   data: RegistrationData;
@@ -73,6 +80,7 @@ const certificationLabels: Record<string, string> = {
 export function ConfirmationStep({ data }: ConfirmationStepProps) {
   const [accepted, setAccepted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [failure, setFailure] = useState<RegistrationFailureNotice | null>(null);
   const [result, setResult] = useState<{
     inscriptionCode: string;
     needsAdminCall: boolean;
@@ -81,6 +89,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
     paymentFlow: "stripe" | "virement" | "none";
     paymentOption?: string;
     coursePrice?: number;
+    checkoutFailure?: RegistrationFailureNotice;
   } | null>(null);
 
   const testCompleted = Boolean(data.testAnswers && data.currentLevel);
@@ -117,14 +126,29 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
     }
 
     setIsSubmitting(true);
-    try {
-      const submission = await submitRegistration(data);
+    setFailure(null);
 
-      if (
-        submission.paymentFlow === "stripe" &&
-        data.paymentOption &&
-        requiresStripeCheckout(data.paymentOption)
-      ) {
+    let submission: RegistrationSubmissionResult;
+    try {
+      submission = await submitRegistration(data);
+    } catch (error) {
+      // Le message brut reste dans la console pour l'équipe ; le stagiaire lit
+      // une version française avec la consigne de contact (BL-025).
+      console.error("Registration error:", error);
+      setFailure(registrationFailureNotice(error));
+      toast.error(REGISTRATION_FAILURE_TITLE);
+      setIsSubmitting(false);
+      return;
+    }
+
+    // À partir d'ici l'inscription existe : une nouvelle soumission créerait un
+    // doublon. Un échec du paiement en ligne se dit donc sur l'écran de succès.
+    if (
+      submission.paymentFlow === "stripe" &&
+      data.paymentOption &&
+      requiresStripeCheckout(data.paymentOption)
+    ) {
+      try {
         const origin = window.location.origin;
         const checkout = await createRegistrationCheckout({
           inscriptionId: submission.inscriptionId,
@@ -135,27 +159,33 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
         });
         window.location.href = checkout.checkoutUrl;
         return;
+      } catch (error) {
+        console.error("Registration checkout error:", error);
+        setResult({
+          inscriptionCode: submission.inscriptionCode,
+          needsAdminCall: submission.needsAdminCall,
+          emailSent: submission.emailSent,
+          documentsSent: submission.documentsSent,
+          paymentFlow: "none",
+          paymentOption: data.paymentOption,
+          coursePrice,
+          checkoutFailure: registrationCheckoutFailureNotice(error),
+        });
+        setIsSubmitting(false);
+        return;
       }
-
-      setResult({
-        inscriptionCode: submission.inscriptionCode,
-        needsAdminCall: submission.needsAdminCall,
-        emailSent: submission.emailSent,
-        documentsSent: submission.documentsSent,
-        paymentFlow: submission.paymentFlow,
-        paymentOption: data.paymentOption,
-        coursePrice,
-      });
-    } catch (error) {
-      console.error("Registration error:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Erreur lors de la soumission. Veuillez réessayer."
-      );
-    } finally {
-      setIsSubmitting(false);
     }
+
+    setResult({
+      inscriptionCode: submission.inscriptionCode,
+      needsAdminCall: submission.needsAdminCall,
+      emailSent: submission.emailSent,
+      documentsSent: submission.documentsSent,
+      paymentFlow: submission.paymentFlow,
+      paymentOption: data.paymentOption,
+      coursePrice,
+    });
+    setIsSubmitting(false);
   };
 
   if (result) {
@@ -180,6 +210,17 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                 Code : {result.inscriptionCode}
               </Badge>
             </div>
+
+            {result.checkoutFailure && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-left space-y-1">
+                  <p className="font-medium">{result.checkoutFailure.title}</p>
+                  {result.checkoutFailure.detail && <p>{result.checkoutFailure.detail}</p>}
+                  <p>{result.checkoutFailure.instruction}</p>
+                </AlertDescription>
+              </Alert>
+            )}
 
             {result.paymentFlow === "virement" && result.coursePrice && result.paymentOption && (
               <Alert>
@@ -455,6 +496,17 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             <AlertDescription>
               Aucun mode de règlement n'est choisi. Revenez à l'étape « Paiement » pour en
               sélectionner un avant de soumettre.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {failure && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription className="space-y-1">
+              <p className="font-medium">{failure.title}</p>
+              {failure.detail && <p>{failure.detail}</p>}
+              <p>{failure.instruction}</p>
             </AlertDescription>
           </Alert>
         )}
