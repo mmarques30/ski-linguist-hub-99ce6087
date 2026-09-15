@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Upload,
   FileSpreadsheet,
@@ -43,6 +44,7 @@ import {
   type CsvRow,
 } from "@/lib/csv-import-parser";
 import {
+  IMPORT_HISTORIQUE_LIMITE,
   IMPORT_TABLE_LABELS,
   prepareImport,
   type ImportTableType,
@@ -55,6 +57,7 @@ interface TableCounts {
   students: number;
   inscriptions: number;
   invoices: number;
+  payments: number;
 }
 
 const EMPTY_COUNTS: TableCounts = {
@@ -63,7 +66,11 @@ const EMPTY_COUNTS: TableCounts = {
   students: 0,
   inscriptions: 0,
   invoices: 0,
+  payments: 0,
 };
+
+/** Tables de l'import historique (point 9) : la barrière de date s'applique. */
+const TABLES_HISTORIQUE: ImportTableType[] = ["invoices", "payments"];
 
 async function countTable(table: ImportTableType): Promise<number> {
   const { count, error } = await supabase
@@ -106,6 +113,9 @@ export default function Import() {
   const [progress, setProgress] = useState(0);
   const [prepared, setPrepared] = useState<PreparedImport | null>(null);
   const [dryRunDone, setDryRunDone] = useState(false);
+  const [limiterHistorique, setLimiterHistorique] = useState(true);
+  const tableHistorique = TABLES_HISTORIQUE.includes(selectedTable);
+  const barriereActive = limiterHistorique && tableHistorique;
   const [importResult, setImportResult] = useState<{
     imported: number;
     errors: string[];
@@ -121,15 +131,23 @@ export default function Import() {
   const refreshCounts = useCallback(async () => {
     setCountsLoading(true);
     try {
-      const [instructors, ski_schools, students, inscriptions, invoices] =
+      const [instructors, ski_schools, students, inscriptions, invoices, payments] =
         await Promise.all([
           countTable("instructors"),
           countTable("ski_schools"),
           countTable("students"),
           countTable("inscriptions"),
           countTable("invoices"),
+          countTable("payments"),
         ]);
-      setCounts({ instructors, ski_schools, students, inscriptions, invoices });
+      setCounts({
+        instructors,
+        ski_schools,
+        students,
+        inscriptions,
+        invoices,
+        payments,
+      });
     } catch (error) {
       toast({
         variant: "destructive",
@@ -185,7 +203,9 @@ export default function Import() {
     if (allRows.length === 0 || !file) return;
     setIsDryRunning(true);
     try {
-      const result = prepareImport(allRows, selectedTable);
+      const result = prepareImport(allRows, selectedTable, {
+        historicalBefore: barriereActive ? IMPORT_HISTORIQUE_LIMITE : undefined,
+      });
       setPrepared(result);
       setDryRunDone(true);
       setImportResult(null);
@@ -199,6 +219,7 @@ export default function Import() {
           total_rows: result.totalRows,
           accepted: result.acceptedCount,
           rejected: result.rejectedCount,
+          barriere_historique: barriereActive ? IMPORT_HISTORIQUE_LIMITE : null,
           first_errors: result.rejections.slice(0, 20).map((r) => ({
             line: r.lineNumber,
             reason: r.reason,
@@ -270,6 +291,7 @@ export default function Import() {
           total_rows: prepared.totalRows,
           accepted_at_dry_run: prepared.acceptedCount,
           rejected_at_dry_run: prepared.rejectedCount,
+          barriere_historique: barriereActive ? IMPORT_HISTORIQUE_LIMITE : null,
           imported,
           write_errors: errors,
         },
@@ -409,7 +431,7 @@ export default function Import() {
             <CardTitle>Table cible</CardTitle>
             <CardDescription>
               Ordre conseillé : instructors → ski_schools → students →
-              inscriptions → invoices
+              inscriptions → invoices → payments
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-end">
@@ -448,6 +470,33 @@ export default function Import() {
               Purger {selectedTable}
             </Button>
           </CardContent>
+          {tableHistorique && (
+            <CardContent className="pt-0">
+              <div className="flex items-start gap-3 rounded-lg border bg-muted/30 p-3">
+                <Switch
+                  id="barriere-historique"
+                  checked={limiterHistorique}
+                  onCheckedChange={(checked) => {
+                    setLimiterHistorique(checked);
+                    resetImportState();
+                  }}
+                />
+                <div className="space-y-1">
+                  <Label htmlFor="barriere-historique" className="cursor-pointer">
+                    Import historique : refuser les dates du{" "}
+                    {IMPORT_HISTORIQUE_LIMITE} ou postérieures
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    L&apos;exercice courant commence le {IMPORT_HISTORIQUE_LIMITE}. Une
+                    pièce datée à partir de ce jour fausserait la numérotation
+                    fiscale : elle est rejetée avec sa ligne et son motif. À
+                    décocher seulement pour saisir une pièce de l&apos;exercice en
+                    cours.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          )}
         </Card>
 
         <AlertDialog open={purgeOpen} onOpenChange={setPurgeOpen}>

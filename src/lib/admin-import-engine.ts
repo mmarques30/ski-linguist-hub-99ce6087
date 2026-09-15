@@ -14,7 +14,21 @@ export type ImportTableType =
   | "ski_schools"
   | "students"
   | "inscriptions"
-  | "invoices";
+  | "invoices"
+  | "payments";
+
+/**
+ * Bascule de l'historique FLI : l'exercice courant commence le 01/10/2025.
+ * L'import historique (point 9) ne doit donc contenir que des dates
+ * strictement antérieures, sinon une pièce ancienne se retrouverait dans
+ * l'exercice en cours et fausserait la numérotation fiscale.
+ */
+export const IMPORT_HISTORIQUE_LIMITE = "2025-10-01";
+
+export interface PrepareImportOptions {
+  /** Date ISO exclusive : toute pièce datée à partir de ce jour est refusée. */
+  historicalBefore?: string;
+}
 
 export interface ImportRejection {
   lineNumber: number; // 1-based data line (header = line 1 → first data = 2)
@@ -37,6 +51,7 @@ export const IMPORT_TABLE_LABELS: Record<ImportTableType, string> = {
   students: "students (stagiaires)",
   inscriptions: "inscriptions",
   invoices: "invoices (factures)",
+  payments: "payments (paiements)",
 };
 
 /** Tables concernées par une purge « chaînée » historique (ordre FK). */
@@ -141,6 +156,24 @@ function parseFrenchDate(raw: string): string | null {
     return `${m[3]}-${mm}-${dd}`;
   }
   throw new Error(`Date invalide : ${raw}`);
+}
+
+/**
+ * Refuse une date à partir de la limite (comparaison lexicographique sur ISO).
+ * `null` passe : c'est à l'appelant de décider si le champ est obligatoire.
+ */
+function rejectFromLimit(
+  date: string | null,
+  limit: string | undefined,
+  label: string
+): string | null {
+  if (!date || !limit) return date;
+  if (date >= limit) {
+    throw new Error(
+      `${label} ${date} n'est pas antérieure au ${limit} : hors périmètre de l'import historique`
+    );
+  }
+  return date;
 }
 
 function mapAlias(raw: string, firstName: string | null, lastName: string): string[] | null {
@@ -353,7 +386,10 @@ function mapInscriptionRow(row: CsvRow): Record<string, unknown> {
   };
 }
 
-function mapInvoiceRow(row: CsvRow): Record<string, unknown> {
+function mapInvoiceRow(
+  row: CsvRow,
+  options: PrepareImportOptions = {}
+): Record<string, unknown> {
   const invoiceTypeRaw = (row.invoice_type || "formation").toLowerCase().replace(/-/g, "_");
   const typeMap: Record<string, string> = {
     formation: "formation",
@@ -398,18 +434,32 @@ function mapInvoiceRow(row: CsvRow): Record<string, unknown> {
   };
   const paymentType = paymentTypeMap[paymentTypeVal] || "integral";
 
+  // Pas de repli sur la date du jour : une facture sans date tomberait dans
+  // l'exercice courant et casserait la numérotation fiscale.
+  const invoiceDateRaw = cell(row, "invoice_date", "Date facture", "date_facture");
+  if (isEmpty(invoiceDateRaw)) {
+    throw new Error("invoice_date manquante : une facture historique doit porter sa date d'origine");
+  }
+  const invoiceDate = rejectFromLimit(
+    parseFrenchDate(invoiceDateRaw),
+    options.historicalBefore,
+    "Date de facture"
+  );
+
   return {
     invoice_number: isEmpty(row.invoice_number) ? null : row.invoice_number,
-    invoice_date: isEmpty(row.invoice_date)
-      ? new Date().toISOString().split("T")[0]
-      : row.invoice_date,
-    due_date: isEmpty(row.due_date) ? null : row.due_date,
+    invoice_date: invoiceDate,
+    due_date: parseFrenchDate(cell(row, "due_date", "Date échéance", "date_echeance")),
     invoice_type: type,
     payment_type: paymentType,
     amount_ht: amountHt,
     tva_rate: tvaRate,
     status,
-    payment_date: isEmpty(row.payment_date) ? null : row.payment_date,
+    payment_date: rejectFromLimit(
+      parseFrenchDate(cell(row, "payment_date", "Date paiement", "date_paiement")),
+      options.historicalBefore,
+      "Date de paiement"
+    ),
     payment_method: isEmpty(row.payment_method) ? null : row.payment_method,
     notes: isEmpty(row.notes) ? null : row.notes,
     inscription_id: sanitizeUUID(row.inscription_id || ""),
@@ -417,7 +467,111 @@ function mapInvoiceRow(row: CsvRow): Record<string, unknown> {
   };
 }
 
-function mapRow(row: CsvRow, table: ImportTableType): Record<string, unknown> {
+const PAYMENT_METHODS: Record<string, string> = {
+  stripe: "stripe",
+  virement: "virement",
+  transfert: "virement",
+  transfer: "virement",
+  cheque: "cheque",
+  chq: "cheque",
+  especes: "especes",
+  espece: "especes",
+  liquide: "especes",
+  cash: "especes",
+  cb: "cb",
+  carte: "cb",
+  "carte bancaire": "cb",
+};
+
+const PAYMENT_TYPES: Record<string, string> = {
+  acompte: "acompte",
+  adiantamento: "acompte",
+  partial: "partial",
+  partiel: "partial",
+  solde: "partial",
+  saldo: "partial",
+  total: "total",
+  integral: "total",
+  intégral: "total",
+};
+
+function mapPaymentRow(
+  row: CsvRow,
+  options: PrepareImportOptions = {}
+): Record<string, unknown> {
+  const amount = parseFrenchNumber(cell(row, "amount", "Montant", "montant"));
+  if (amount === null) {
+    throw new Error("amount manquant ou non numérique");
+  }
+
+  const methodRaw = cell(row, "payment_method", "Mode de paiement", "mode", "moyen");
+  if (isEmpty(methodRaw)) {
+    throw new Error("payment_method manquant (attendu : virement | cheque | especes | cb | stripe)");
+  }
+  const methodKey = methodRaw.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const method = PAYMENT_METHODS[methodKey];
+  if (!method) {
+    throw new Error(
+      `Mode de paiement invalide : ${methodRaw} (attendu : virement | cheque | especes | cb | stripe)`
+    );
+  }
+
+  const typeRaw = cell(row, "payment_type", "Type de paiement", "type");
+  const typeKey = typeRaw.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const type = isEmpty(typeRaw) ? "total" : PAYMENT_TYPES[typeKey];
+  if (!type) {
+    throw new Error(`Type de paiement invalide : ${typeRaw} (attendu : acompte | partial | total)`);
+  }
+
+  const dateRaw = cell(row, "payment_date", "Date paiement", "date_paiement", "Date");
+  if (isEmpty(dateRaw)) {
+    throw new Error("payment_date manquante : un paiement historique doit porter sa date d'origine");
+  }
+  const paymentDate = rejectFromLimit(
+    parseFrenchDate(dateRaw),
+    options.historicalBefore,
+    "Date de paiement"
+  );
+
+  const payerTypeRaw = cell(row, "payer_type", "Payeur", "type_payeur");
+  const payerKey = payerTypeRaw.trim().toLowerCase();
+  const payerType = isEmpty(payerTypeRaw)
+    ? "stagiaire"
+    : ["stagiaire", "ecole", "entreprise", "esf"].includes(payerKey)
+      ? payerKey === "esf"
+        ? "ecole"
+        : payerKey
+      : (() => {
+          throw new Error(`Type de payeur invalide : ${payerTypeRaw}`);
+        })();
+
+  return {
+    invoice_id: sanitizeUUID(cell(row, "invoice_id")),
+    inscription_id: sanitizeUUID(cell(row, "inscription_id")),
+    amount,
+    payment_type: type,
+    payment_method: method,
+    payment_date: paymentDate,
+    currency: isEmpty(cell(row, "currency", "Devise")) ? "EUR" : cell(row, "currency", "Devise").toUpperCase(),
+    reference: isEmpty(cell(row, "reference", "Référence", "ref")) ? null : cell(row, "reference", "Référence", "ref"),
+    payer_type: payerType,
+    payer_name: isEmpty(cell(row, "payer_name", "Nom du payeur")) ? null : cell(row, "payer_name", "Nom du payeur"),
+    cheque_number: isEmpty(cell(row, "cheque_number", "Numéro de chèque")) ? null : cell(row, "cheque_number", "Numéro de chèque"),
+    cheque_bank: isEmpty(cell(row, "cheque_bank", "Banque")) ? null : cell(row, "cheque_bank", "Banque"),
+    cheque_date: rejectFromLimit(
+      parseFrenchDate(cell(row, "cheque_date", "Date du chèque")),
+      options.historicalBefore,
+      "Date du chèque"
+    ),
+    notes: isEmpty(cell(row, "notes", "Notes")) ? null : cell(row, "notes", "Notes"),
+  };
+}
+
+function mapRow(
+  row: CsvRow,
+  table: ImportTableType,
+  options: PrepareImportOptions
+): Record<string, unknown> {
   switch (table) {
     case "instructors":
       return mapInstructorRow(row);
@@ -428,7 +582,9 @@ function mapRow(row: CsvRow, table: ImportTableType): Record<string, unknown> {
     case "inscriptions":
       return mapInscriptionRow(row);
     case "invoices":
-      return mapInvoiceRow(row);
+      return mapInvoiceRow(row, options);
+    case "payments":
+      return mapPaymentRow(row, options);
     default:
       throw new Error(`Table non supportée : ${table}`);
   }
@@ -440,7 +596,8 @@ function mapRow(row: CsvRow, table: ImportTableType): Record<string, unknown> {
  */
 export function prepareImport(
   rows: CsvRow[],
-  table: ImportTableType
+  table: ImportTableType,
+  options: PrepareImportOptions = {}
 ): PreparedImport {
   const accepted: Record<string, unknown>[] = [];
   const rejections: ImportRejection[] = [];
@@ -448,7 +605,7 @@ export function prepareImport(
   rows.forEach((row, index) => {
     const lineNumber = index + 2; // header = 1
     try {
-      const record = mapRow(row, table);
+      const record = mapRow(row, table, options);
       accepted.push(record);
     } catch (error) {
       rejections.push({
