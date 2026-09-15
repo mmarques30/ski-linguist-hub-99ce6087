@@ -2,8 +2,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
+  linkEsfPartners,
   matchFliInvoicesToInscriptions,
   toInvoiceInsert,
+  FLI_INVOICES_WRITE_CONFIRMATION,
+  type EsfPartnerInput,
   type FliInvoiceParsedRow,
   type FliInvoicesMatchReport,
   type InscriptionMatchInput,
@@ -16,7 +19,17 @@ export interface FliInvoicesWriteResult {
   skippedExisting: number;
   paymentsInserted: number;
   relatedLinked: number;
+  partnersLinked: number;
   errors: string[];
+}
+
+async function loadEsfPartners(): Promise<EsfPartnerInput[]> {
+  const { data, error } = await supabase
+    .from("partners")
+    .select("id, name, type, station, esf_code")
+    .eq("type", "esf");
+  if (error) throw error;
+  return (data ?? []) as EsfPartnerInput[];
 }
 
 async function loadInscriptions(): Promise<InscriptionMatchInput[]> {
@@ -62,14 +75,19 @@ export function useFliInvoicesMatch() {
 
   return useMutation({
     mutationFn: async (rows: FliInvoiceParsedRow[]): Promise<FliInvoicesMatchReport> => {
-      const inscriptions = await loadInscriptions();
+      const [inscriptions, partners] = await Promise.all([
+        loadInscriptions(),
+        loadEsfPartners(),
+      ]);
       const report = matchFliInvoicesToInscriptions(rows, inscriptions);
+      report.esfPartners = linkEsfPartners(rows, report, partners);
       await writeAudit(user?.id, "import_dry_run", {
         filename: "facturation_FLI",
         total_rows: rows.length,
         matched: report.matched.length,
         unmatched: report.unmatched.length,
         ambiguous: report.ambiguous.length,
+        esf_partners: report.esfPartners,
         by_year: report.byYear,
       });
       return report;
@@ -85,15 +103,21 @@ export function useFliInvoicesImport() {
     mutationFn: async ({
       rows,
       match,
+      confirmation,
     }: {
       rows: FliInvoiceParsedRow[];
       match: FliInvoicesMatchReport;
+      confirmation: string;
     }): Promise<FliInvoicesWriteResult> => {
+      if (confirmation.trim() !== FLI_INVOICES_WRITE_CONFIRMATION) {
+        throw new Error(`Écriture bloquée : taper exactement « ${FLI_INVOICES_WRITE_CONFIRMATION} ».`);
+      }
       const result: FliInvoicesWriteResult = {
         inserted: 0,
         skippedExisting: 0,
         paymentsInserted: 0,
         relatedLinked: 0,
+        partnersLinked: 0,
         errors: [],
       };
 
@@ -110,13 +134,27 @@ export function useFliInvoicesImport() {
       const matchByNumber = new Map(
         match.matched.map((m) => [m.invoiceNumber, m.inscriptionId])
       );
+      const partners = await loadEsfPartners();
+      const esfLinks = linkEsfPartners(rows, match, partners);
+      const esfPartnerByInvoice = new Map(
+        esfLinks
+          .filter((link) => link.partnerId)
+          .map((link) => [
+            link.invoiceNumber,
+            partners.find((p) => p.id === link.partnerId) ?? null,
+          ])
+      );
 
       const toInsert = rows.filter((row) => !existingByNumber.has(row.invoiceNumber));
       result.skippedExisting = rows.length - toInsert.length;
 
       for (let i = 0; i < toInsert.length; i += BATCH) {
         const batch = toInsert.slice(i, i + BATCH).map((row) =>
-          toInvoiceInsert(row, matchByNumber.get(row.invoiceNumber) ?? null)
+          toInvoiceInsert(
+            row,
+            matchByNumber.get(row.invoiceNumber) ?? null,
+            esfPartnerByInvoice.get(row.invoiceNumber) ?? null
+          )
         );
         const { data, error } = await supabase
           .from("invoices")
@@ -161,7 +199,9 @@ export function useFliInvoicesImport() {
       for (const row of rows) {
         const invoiceId = existingByNumber.get(row.invoiceNumber);
         const inscriptionId = matchByNumber.get(row.invoiceNumber) ?? null;
+        const esfPartner = esfPartnerByInvoice.get(row.invoiceNumber) ?? null;
         const payerType = row.clientType === "ecole_ski" ? "ecole" : "stagiaire";
+        const payerName = esfPartner?.name ?? row.clientName;
         if (
           row.depositAmount &&
           row.depositAmount > 0 &&
@@ -177,7 +217,7 @@ export function useFliInvoicesImport() {
             payment_date: row.depositDate,
             currency: "EUR",
             payer_type: payerType,
-            payer_name: row.clientName,
+            payer_name: payerName,
           });
         }
         if (row.paymentMethod && row.invoiceStatus === "paid" && row.paymentDate) {
@@ -190,7 +230,7 @@ export function useFliInvoicesImport() {
             payment_date: row.paymentDate,
             currency: "EUR",
             payer_type: payerType,
-            payer_name: row.clientName,
+            payer_name: payerName,
             cheque_number: row.chequeNumber,
             cheque_bank: row.chequeBank,
             cheque_date: row.paymentMethod === "cheque" ? row.paymentDate : null,
@@ -208,12 +248,38 @@ export function useFliInvoicesImport() {
         }
       }
 
+      const partnerUpdates = esfLinks.filter((link) => link.partnerId && link.inscriptionId);
+      if (partnerUpdates.length > 0) {
+        const inscriptionIds = partnerUpdates.map((link) => link.inscriptionId as string);
+        const { data: current, error: currentError } = await supabase
+          .from("inscriptions")
+          .select("id, partner_id")
+          .in("id", inscriptionIds);
+        if (currentError) {
+          result.errors.push(`Lecture inscriptions partenaires : ${currentError.message}`);
+        } else {
+          const byId = new Map((current ?? []).map((row) => [row.id, row.partner_id]));
+          for (const link of partnerUpdates) {
+            const inscriptionId = link.inscriptionId as string;
+            if (byId.get(inscriptionId)) continue;
+            const { error } = await supabase
+              .from("inscriptions")
+              .update({ partner_id: link.partnerId })
+              .eq("id", inscriptionId);
+            if (error) result.errors.push(`Partenaire ${link.invoiceNumber} : ${error.message}`);
+            else result.partnersLinked += 1;
+          }
+        }
+      }
+
       await writeAudit(user?.id, "import", {
         filename: "facturation_FLI",
         inserted: result.inserted,
         skipped_existing: result.skippedExisting,
         payments_inserted: result.paymentsInserted,
         related_linked: result.relatedLinked,
+        partners_linked: result.partnersLinked,
+        esf_partners: esfLinks,
         write_errors: result.errors.slice(0, 20),
       });
 

@@ -19,7 +19,7 @@ Le CSV n'est **pas** versé au dépôt (données nominatives).
 | Sujet | Règle |
 |---|---|
 | Type | TVA montant = 0 → `formation`. TVA ≠ 0 → `test`, sauf désignation « encadrement » → `soustraitance`. Graphies (`Tstes`, `testes`) et avoirs à TVA non nulle : rapportés, classés test. |
-| Moyen de paiement | `Chèque` / `Virement` / `CB` → payée. `à régler` → impayée (`sent`). `avoir` et `annulée` sont des **statuts**, pas des moyens. Vide → liste « à demander à Paula ». `facturé à l'ESF` → `client_type = ecole_ski`. |
+| Moyen de paiement | `Chèque` / `Virement` / `CB` → payée. `à régler` → impayée (`sent`). `avoir` et `annulée` sont des **statuts**, pas des moyens. Vide → liste « à demander à Paula ». `facturé à l'ESF` → payeur école (`client_type = ecole_ski`), partenaire ESF via **Lieu du stage** (les 3 du CSV : La Rosière → `ESF ROSIERE (LA)` code 548, `inscriptions.partner_id` si rattachée). |
 | Rattachement | nom + date de début + langue. Non-rattachées attendues nombreuses sur 2020-2022. Ambiguës non rattachées. |
 | Barrière 01/10/2025 | **non appliquée** sur cette carte : le fichier inclut 25-26 et 26-27 avec leurs numéros d'origine. La barrière reste sur l'import CSV générique. |
 
@@ -36,4 +36,4 @@ le max.
 
 Voir l'écran : HT / TVA / TTC par exercice, à comparer aux totaux de
 l'expert-comptable. L'écriture n'est possible qu'après le dry-run de
-rattachement.
+rattachement **et** la phrase explicite « OK import ».

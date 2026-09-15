@@ -5,6 +5,7 @@ import {
   foldInvoiceText,
   matchFliInvoicesToInscriptions,
   parseFliInvoicesCsv,
+  resolveEsfPartner,
   toInvoiceInsert,
 } from "@/lib/fli-invoices-csv-import";
 
@@ -170,6 +171,22 @@ describe("parseFliInvoicesCsv", () => {
     expect(insert.sequence_number).toBe(13010);
     expect(insert.fiscal_year).toBe("20-21");
   });
+
+  it("classe « facturé à l'ESF » en payeur école", () => {
+    const preview = parseFliInvoicesCsv(
+      csv([
+        line({
+          "Moyen de paiement": "facturé à l'ESF",
+          "Lieu du stage": "La Rosière",
+        }),
+      ])
+    );
+    expect(preview.rows[0].paymentKind).toBe("esf");
+    expect(preview.rows[0].clientType).toBe("ecole_ski");
+    expect(preview.rows[0].invoiceStatus).toBe("sent");
+    expect(preview.rows[0].location).toBe("La Rosière");
+    expect(preview.esfBilled).toHaveLength(1);
+  });
 });
 
 describe("matchFliInvoicesToInscriptions", () => {
@@ -247,3 +264,50 @@ describe("matchFliInvoicesToInscriptions", () => {
     expect(report.matched).toHaveLength(1);
   });
 });
+
+describe("resolveEsfPartner", () => {
+  const partners = [
+    {
+      id: "rosiere",
+      name: "ESF ROSIERE (LA)",
+      type: "esf" as const,
+      station: "rosiere la",
+      esf_code: "548",
+    },
+    {
+      id: "c1550",
+      name: "ESF COURCHEVEL 1550",
+      type: "esf" as const,
+      station: "courchevel",
+      esf_code: "302",
+    },
+    {
+      id: "c1850",
+      name: "ESF COURCHEVEL 1850",
+      type: "esf" as const,
+      station: "courchevel",
+      esf_code: "308",
+    },
+  ];
+
+  it("rattache La Rosière à l'unique ESF ROSIERE (LA)", () => {
+    const partner = resolveEsfPartner("La Rosière", null, partners);
+    expect(partner?.id).toBe("rosiere");
+    const preview = parseFliInvoicesCsv(
+      csv([
+        line({
+          "Moyen de paiement": "facturé à l'ESF",
+          "Lieu du stage": "La Rosière",
+        }),
+      ])
+    );
+    const insert = toInvoiceInsert(preview.rows[0], "insc", partner);
+    expect(insert.client_type).toBe("ecole_ski");
+    expect(String(insert.notes)).toMatch(/ESF ROSIERE \(LA\) \(548\)/);
+  });
+
+  it("ne choisit pas au hasard si plusieurs ESF partagent la station", () => {
+    expect(resolveEsfPartner("Courchevel", null, partners)).toBeNull();
+  });
+});
+
