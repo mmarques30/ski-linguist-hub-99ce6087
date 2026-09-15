@@ -55,6 +55,7 @@ import { FormateurEntryFormDialog } from "@/components/inscriptions/FormateurEnt
 import { FormateurExitFormDialog } from "@/components/inscriptions/FormateurExitFormDialog";
 import { useInscriptionProgression } from "@/hooks/useInscriptionProgression";
 import { pisteLabelFromPlacementAnswers } from "@/lib/placement-test-engine";
+import { invoiceStatusLabel } from "@/lib/payment-methods";
 import {
   isEntryFormComplete,
   isExitFormComplete,
@@ -287,10 +288,12 @@ export default function InscriptionDetails() {
                 <Clock className="mr-2 h-4 w-4" />
                 Horaire
               </Button>
-              <Button size="sm" onClick={() => setInvoiceDialogOpen(true)}>
-                <Receipt className="mr-2 h-4 w-4" />
-                {t(translations.createInvoice)}
-              </Button>
+              {(!invoices || invoices.length === 0) && (
+                <Button size="sm" onClick={() => setInvoiceDialogOpen(true)}>
+                  <Receipt className="mr-2 h-4 w-4" />
+                  {t(translations.createInvoice)}
+                </Button>
+              )}
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -712,7 +715,7 @@ export default function InscriptionDetails() {
                         <div className="text-right">
                           <p className="font-medium">{formatPrice(invoice.amount_ttc || invoice.amount_ht)}</p>
                           <Badge variant={invoice.status === "paid" ? "default" : "secondary"}>
-                            {invoice.status === "paid" ? "Payée" : invoice.status === "pending" ? "En attente" : invoice.status}
+                            {invoiceStatusLabel(invoice.status)}
                           </Badge>
                         </div>
                       </div>

@@ -14,14 +14,20 @@ const docTypeLabels: Record<string, string> = {
   convention: "Convention de formation",
   attestation: "Attestation de présence",
   certificat: "Certificat de fin de formation",
+  CERTIFICAT: "Certificat de fin de formation",
   convocation: "Convocation",
   programme: "Programme de formation",
 };
+
+function isCertificateDoc(type: string | null | undefined): boolean {
+  return (type ?? "").toUpperCase() === "CERTIFICAT";
+}
 
 export default function StudentDocuments() {
   const { data: student } = useStudentProfile();
   const { data: documents, isLoading } = useStudentDocuments(student?.id);
   const { data: certificates } = useStudentCertificates(student?.id);
+  const otherDocuments = (documents || []).filter((d) => !isCertificateDoc(d.document_type));
 
   return (
     <StudentLayout>
@@ -83,9 +89,9 @@ export default function StudentDocuments() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {documents && documents.length > 0 ? (
+                {otherDocuments.length > 0 ? (
                   <div className="space-y-2">
-                    {documents.map((d) => (
+                    {otherDocuments.map((d) => (
                       <div
                         key={d.id}
                         className="flex items-center justify-between p-3 rounded-lg bg-muted/30"

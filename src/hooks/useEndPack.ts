@@ -43,6 +43,7 @@ interface EndPackData {
 
 interface EndPackResult {
   invoiceId?: string;
+  invoiceNumber?: string | null;
   certificateId?: string;
   surveyToken?: string;
   certificateSkippedReason?: string;
@@ -117,11 +118,14 @@ export function useGenerateEndPack() {
       if (data.generateInvoice) {
         const { data: existingInvoices } = await supabase
           .from("invoices")
-          .select("id")
+          .select("id, invoice_number")
           .eq("inscription_id", data.inscriptionId)
-          .eq("payment_type", "integral");
+          .in("payment_type", ["integral", "saldo", "solde"]);
 
-        if (!existingInvoices || existingInvoices.length === 0) {
+        if (existingInvoices && existingInvoices.length > 0) {
+          result.invoiceId = existingInvoices[0].id;
+          result.invoiceNumber = existingInvoices[0].invoice_number;
+        } else {
           const { data: inscription } = await supabase
             .from("inscriptions")
             .select("price, deposit_amount")
@@ -139,14 +143,15 @@ export function useGenerateEndPack() {
                 inscription_id: data.inscriptionId,
                 invoice_type: "formation",
                 amount_ht: finalAmount > 0 ? finalAmount : amount,
-                payment_type: deposit > 0 ? "solde" : "integral",
+                payment_type: deposit > 0 ? "saldo" : "integral",
                 status: "draft",
               })
-              .select()
+              .select("id, invoice_number")
               .single();
 
             if (invoiceError) throw invoiceError;
             result.invoiceId = invoice.id;
+            result.invoiceNumber = invoice.invoice_number;
           }
         }
       }
