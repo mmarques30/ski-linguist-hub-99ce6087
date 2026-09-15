@@ -153,7 +153,12 @@ export default function InscriptionDetails() {
         .maybeSingle();
 
       if (error) throw error;
-      return data;
+      return data as unknown as
+        | (Record<string, any> & {
+            entry_test_id?: string | null;
+            dates_to_confirm?: boolean | null;
+          })
+        | null;
     },
     enabled: !!id,
   });

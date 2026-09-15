@@ -13,6 +13,8 @@ export interface InscriptionComplete {
   duration_hours: number | null;
   price: number | null;
   entry_level: string | null;
+  entry_test_id?: string | null;
+  dates_to_confirm?: boolean | null;
   exit_level?: string | null;
   course_location?: string | null;
   end_pack_sent_at?: string | null;

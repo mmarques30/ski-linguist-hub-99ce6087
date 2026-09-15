@@ -14,6 +14,7 @@ export interface Student {
   postal_code: string | null;
   created_at: string;
   updated_at: string;
+  auth_user_id?: string | null;
   inscription_count?: number;
 }
 

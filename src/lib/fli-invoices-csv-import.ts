@@ -31,6 +31,9 @@ export type PaymentKind =
   | "cheque"
   | "virement"
   | "cb"
+  | "especes"
+  | "stripe"
+  | "organisme"
   | "unpaid"
   | "credit"
   | "cancelled"
@@ -496,6 +499,9 @@ export function parseFliInvoicesCsv(text: string): FliInvoicesPreview {
     cheque: 0,
     virement: 0,
     cb: 0,
+    especes: 0,
+    stripe: 0,
+    organisme: 0,
     unpaid: 0,
     credit: 0,
     cancelled: 0,
