@@ -10,7 +10,7 @@ export interface InvoiceData {
   invoiceDate: Date;
   dueDate: Date;
   invoiceType: InvoiceType;
-  status: "draft" | "sent" | "paid" | "cancelled";
+  status: "draft" | "sent" | "paid" | "cancelled" | "a_verifier";
   // Client info
   clientName: string;
   clientAddress: string;
