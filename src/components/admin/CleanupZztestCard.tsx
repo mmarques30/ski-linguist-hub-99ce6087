@@ -23,6 +23,7 @@ export type CleanupZztestJournal = {
   payments: number;
   certificates: number;
   storage_objects: number;
+  storage_deleted_via_api?: number;
   auth_users: number;
   test_phrases?: number;
   a_supprimer?: CleanupZztestEntry[];
@@ -86,10 +87,13 @@ function AuteursTable({ entries }: { entries: CleanupZztestEntry[] }) {
 }
 
 async function callCleanup(dryRun: boolean): Promise<CleanupZztestJournal> {
-  const { data, error } = await supabase.rpc("cleanup_zztest_data", {
-    _dry_run: dryRun,
+  const { data, error } = await supabase.functions.invoke("cleanup-zztest", {
+    body: { dry_run: dryRun },
   });
   if (error) throw new Error(error.message);
+  if (data && typeof data === "object" && "error" in data && data.error) {
+    throw new Error(String((data as { error: string }).error));
+  }
   return data as CleanupZztestJournal;
 }
 
@@ -140,8 +144,10 @@ export function CleanupZztestCard() {
           Supprime uniquement les stagiaires dont le nom commence par {ZZTEST_PREFIX} et
           l&apos;email se termine par @{ZZTEST_EMAIL_DOMAIN}, plus inscriptions, factures,
           paiements, certificats, fichiers, comptes liés et phrases de référentiel
-          dont le code commence par {ZZTEST_PREFIX}. La prochaine facture reprend
-          le dernier numéro réel. Journal sans donnée personnelle.
+          dont le code commence par {ZZTEST_PREFIX}. Les fichiers du stockage sont
+          supprimés via l&apos;API Storage (clé service) puis le SQL suit : un seul
+          bouton, y compris s&apos;il existe un certificat. La prochaine facture
+          reprend le dernier numéro réel. Journal sans donnée personnelle.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

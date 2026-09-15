@@ -51,3 +51,6 @@ verify_jwt = true
 
 [functions.generate-evaluation-pdf]
 verify_jwt = true
+
+[functions.cleanup-zztest]
+verify_jwt = false
