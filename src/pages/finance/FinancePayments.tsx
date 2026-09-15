@@ -14,6 +14,7 @@ import { usePayments, usePaymentKPIs, useCreatePayment } from "@/hooks/usePaymen
 import { useInvoices } from "@/hooks/useInvoices";
 import {
   PAYMENT_METHODS,
+  PAYMENT_STATUS_LABELS,
   CHEQUE_STATUSES,
   paymentMethodLabel,
   chequeStatusLabel,
@@ -31,12 +32,7 @@ const STATUS_STYLES: Record<string, string> = {
   rembourse: "bg-blue-100 text-blue-800",
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  en_attente: "En attente",
-  recu: "Reçu",
-  echoue: "Échoué",
-  rembourse: "Remboursé",
-};
+const STATUS_LABELS = PAYMENT_STATUS_LABELS;
 
 const PAYER_LABELS: Record<string, string> = {
   stagiaire: "Stagiaire",

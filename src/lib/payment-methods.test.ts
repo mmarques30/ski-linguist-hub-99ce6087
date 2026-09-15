@@ -4,6 +4,8 @@ import {
   chequeStatusLabel,
   invoiceStatusLabel,
   paymentMethodLabel,
+  paymentStatusLabel,
+  paymentTypeLabel,
 } from "@/lib/payment-methods";
 
 describe("payment-methods", () => {
@@ -20,5 +22,16 @@ describe("payment-methods", () => {
     expect(invoiceStatusLabel("draft")).toBe("Brouillon");
     expect(invoiceStatusLabel("a_verifier")).toBe("À vérifier");
     expect(chequeStatusLabel("encaisse")).toBe("Encaissé");
+  });
+
+  it("traduit les types de facture et de paiement, héritages inclus", () => {
+    expect(paymentTypeLabel("integral")).toBe("Intégral");
+    expect(paymentTypeLabel("acompte")).toBe("Acompte");
+    expect(paymentTypeLabel("adiantamento")).toBe("Acompte");
+    expect(paymentTypeLabel("saldo")).toBe("Solde");
+    expect(paymentTypeLabel("total")).toBe("Total");
+    expect(paymentTypeLabel(null)).toBe("—");
+    expect(paymentStatusLabel("recu")).toBe("Reçu");
+    expect(paymentStatusLabel("en_attente")).toBe("En attente");
   });
 });

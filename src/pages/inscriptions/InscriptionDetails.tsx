@@ -55,7 +55,7 @@ import { FormateurEntryFormDialog } from "@/components/inscriptions/FormateurEnt
 import { FormateurExitFormDialog } from "@/components/inscriptions/FormateurExitFormDialog";
 import { useInscriptionProgression } from "@/hooks/useInscriptionProgression";
 import { pisteLabelFromPlacementAnswers } from "@/lib/placement-test-engine";
-import { invoiceStatusLabel } from "@/lib/payment-methods";
+import { invoiceStatusLabel, paymentTypeLabel } from "@/lib/payment-methods";
 import {
   isEntryFormComplete,
   isExitFormComplete,
@@ -709,7 +709,7 @@ export default function InscriptionDetails() {
                         <div>
                           <p className="font-medium">{invoice.invoice_number}</p>
                           <p className="text-sm text-muted-foreground">
-                            {formatDate(invoice.invoice_date)} • {invoice.payment_type}
+                            {formatDate(invoice.invoice_date)} • {paymentTypeLabel(invoice.payment_type)}
                           </p>
                         </div>
                         <div className="text-right">

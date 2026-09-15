@@ -30,6 +30,23 @@ export const INVOICE_STATUS_LABELS: Record<string, string> = {
   a_verifier: "À vérifier",
 };
 
+/** Types de facture / paiement, valeurs techniques et héritées incluses. */
+export const PAYMENT_TYPE_LABELS: Record<string, string> = {
+  integral: "Intégral",
+  acompte: "Acompte",
+  adiantamento: "Acompte",
+  solde: "Solde",
+  saldo: "Solde",
+  total: "Total",
+};
+
+export const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  en_attente: "En attente",
+  recu: "Reçu",
+  echoue: "Échoué",
+  rembourse: "Remboursé",
+};
+
 const LEGACY_METHOD_ALIASES: Record<string, PaymentMethodValue> = {
   carte: "cb",
   carte_bancaire: "cb",
@@ -55,6 +72,16 @@ export function paymentMethodLabel(raw: string | null | undefined): string {
 export function invoiceStatusLabel(status: string | null | undefined): string {
   if (!status) return "—";
   return INVOICE_STATUS_LABELS[status] ?? status;
+}
+
+export function paymentTypeLabel(type: string | null | undefined): string {
+  if (!type) return "—";
+  return PAYMENT_TYPE_LABELS[type.trim().toLowerCase()] ?? type;
+}
+
+export function paymentStatusLabel(status: string | null | undefined): string {
+  if (!status) return "—";
+  return PAYMENT_STATUS_LABELS[status] ?? status;
 }
 
 export function chequeStatusLabel(status: string | null | undefined): string {
