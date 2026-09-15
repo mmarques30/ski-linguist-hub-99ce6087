@@ -1,0 +1,3616 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Phrases de test pour évaluation linguistique des moniteurs de ski",
+    "total_phrases": 540,
+    "languages": [
+      "COMMON",
+      "EN",
+      "PT",
+      "ES",
+      "NL",
+      "RU",
+      "IT",
+      "ZH",
+      "DE",
+      "FR"
+    ],
+    "categories": [
+      "INTRODUCTION",
+      "COMPREHENSION",
+      "CONCLUSION",
+      "PRONONCIATION",
+      "GRAMMAIRE",
+      "VOCABULAIRE"
+    ],
+    "created_date": "2026-01-15"
+  },
+  "phrases": [
+    {
+      "code": "INTRO-01",
+      "language": "COMMON",
+      "category": "INTRODUCTION",
+      "text_fr": "Bonjour, je suis [Nom]. Je serai votre examinateur aujourd'hui.",
+      "context": "Accueil candidat",
+      "is_correction": false
+    },
+    {
+      "code": "INTRO-02",
+      "language": "COMMON",
+      "category": "INTRODUCTION",
+      "text_fr": "Bienvenue à ce test de langue pour moniteurs de ski.",
+      "context": "Accueil candidat",
+      "is_correction": false
+    },
+    {
+      "code": "INTRO-03",
+      "language": "COMMON",
+      "category": "INTRODUCTION",
+      "text_fr": "Ce test évalue votre capacité à communiquer dans un contexte d'enseignement du ski.",
+      "context": "Explication test",
+      "is_correction": false
+    },
+    {
+      "code": "INTRO-04",
+      "language": "COMMON",
+      "category": "INTRODUCTION",
+      "text_fr": "Le test dure environ 30 minutes.",
+      "context": "Durée",
+      "is_correction": false
+    },
+    {
+      "code": "INTRO-05",
+      "language": "COMMON",
+      "category": "INTRODUCTION",
+      "text_fr": "Nous allons évaluer votre prononciation, votre grammaire et votre vocabulaire technique.",
+      "context": "Critères",
+      "is_correction": false
+    },
+    {
+      "code": "INTRO-06",
+      "language": "COMMON",
+      "category": "INTRODUCTION",
+      "text_fr": "N'hésitez pas à me demander de répéter si vous ne comprenez pas.",
+      "context": "Consigne",
+      "is_correction": false
+    },
+    {
+      "code": "INTRO-07",
+      "language": "COMMON",
+      "category": "INTRODUCTION",
+      "text_fr": "Essayez de répondre le plus naturellement possible.",
+      "context": "Consigne",
+      "is_correction": false
+    },
+    {
+      "code": "INTRO-08",
+      "language": "COMMON",
+      "category": "INTRODUCTION",
+      "text_fr": "Êtes-vous prêt(e) à commencer ?",
+      "context": "Démarrage",
+      "is_correction": false
+    },
+    {
+      "code": "INTRO-09",
+      "language": "COMMON",
+      "category": "INTRODUCTION",
+      "text_fr": "Commençons par quelques questions générales.",
+      "context": "Transition",
+      "is_correction": false
+    },
+    {
+      "code": "INTRO-10",
+      "language": "COMMON",
+      "category": "INTRODUCTION",
+      "text_fr": "Parlez-moi de votre expérience en tant que skieur.",
+      "context": "Question ouverte",
+      "is_correction": false
+    },
+    {
+      "code": "INTRO-11",
+      "language": "COMMON",
+      "category": "INTRODUCTION",
+      "text_fr": "Depuis combien de temps enseignez-vous le ski ?",
+      "context": "Question expérience",
+      "is_correction": false
+    },
+    {
+      "code": "INTRO-12",
+      "language": "COMMON",
+      "category": "INTRODUCTION",
+      "text_fr": "Pourquoi avez-vous choisi de devenir moniteur de ski ?",
+      "context": "Question motivation",
+      "is_correction": false
+    },
+    {
+      "code": "INTRO-13",
+      "language": "COMMON",
+      "category": "INTRODUCTION",
+      "text_fr": "Où avez-vous appris cette langue ?",
+      "context": "Question parcours",
+      "is_correction": false
+    },
+    {
+      "code": "INTRO-14",
+      "language": "COMMON",
+      "category": "INTRODUCTION",
+      "text_fr": "Avez-vous déjà enseigné à des élèves parlant cette langue ?",
+      "context": "Question expérience",
+      "is_correction": false
+    },
+    {
+      "code": "INTRO-15",
+      "language": "COMMON",
+      "category": "INTRODUCTION",
+      "text_fr": "Dans quelle station travaillez-vous habituellement ?",
+      "context": "Question contexte",
+      "is_correction": false
+    },
+    {
+      "code": "COMP-01",
+      "language": "COMMON",
+      "category": "COMPREHENSION",
+      "text_fr": "Pouvez-vous répéter, s'il vous plaît ?",
+      "context": "Demande répétition",
+      "is_correction": false
+    },
+    {
+      "code": "COMP-02",
+      "language": "COMMON",
+      "category": "COMPREHENSION",
+      "text_fr": "Je vais répéter plus lentement.",
+      "context": "Répétition lente",
+      "is_correction": false
+    },
+    {
+      "code": "COMP-03",
+      "language": "COMMON",
+      "category": "COMPREHENSION",
+      "text_fr": "Est-ce que vous comprenez la question ?",
+      "context": "Vérification",
+      "is_correction": false
+    },
+    {
+      "code": "COMP-04",
+      "language": "COMMON",
+      "category": "COMPREHENSION",
+      "text_fr": "Je vais reformuler autrement.",
+      "context": "Reformulation",
+      "is_correction": false
+    },
+    {
+      "code": "COMP-05",
+      "language": "COMMON",
+      "category": "COMPREHENSION",
+      "text_fr": "Prenez votre temps pour répondre.",
+      "context": "Encouragement",
+      "is_correction": false
+    },
+    {
+      "code": "COMP-06",
+      "language": "COMMON",
+      "category": "COMPREHENSION",
+      "text_fr": "N'hésitez pas à demander des clarifications.",
+      "context": "Encouragement",
+      "is_correction": false
+    },
+    {
+      "code": "COMP-07",
+      "language": "COMMON",
+      "category": "COMPREHENSION",
+      "text_fr": "Avez-vous besoin que je répète ?",
+      "context": "Vérification",
+      "is_correction": false
+    },
+    {
+      "code": "COMP-08",
+      "language": "COMMON",
+      "category": "COMPREHENSION",
+      "text_fr": "Très bien, continuons.",
+      "context": "Transition",
+      "is_correction": false
+    },
+    {
+      "code": "COMP-09",
+      "language": "COMMON",
+      "category": "COMPREHENSION",
+      "text_fr": "Passons à la partie suivante.",
+      "context": "Transition",
+      "is_correction": false
+    },
+    {
+      "code": "COMP-10",
+      "language": "COMMON",
+      "category": "COMPREHENSION",
+      "text_fr": "Nous allons maintenant passer aux jeux de rôle.",
+      "context": "Transition",
+      "is_correction": false
+    },
+    {
+      "code": "COMP-11",
+      "language": "COMMON",
+      "category": "COMPREHENSION",
+      "text_fr": "Imaginez que je suis votre élève.",
+      "context": "Mise en situation",
+      "is_correction": false
+    },
+    {
+      "code": "COMP-12",
+      "language": "COMMON",
+      "category": "COMPREHENSION",
+      "text_fr": "Je vais jouer le rôle d'un débutant.",
+      "context": "Mise en situation",
+      "is_correction": false
+    },
+    {
+      "code": "COMP-13",
+      "language": "COMMON",
+      "category": "COMPREHENSION",
+      "text_fr": "Comment expliqueriez-vous cela à un enfant ?",
+      "context": "Mise en situation",
+      "is_correction": false
+    },
+    {
+      "code": "COMP-14",
+      "language": "COMMON",
+      "category": "COMPREHENSION",
+      "text_fr": "Décrivez-moi comment faire un virage.",
+      "context": "Question technique",
+      "is_correction": false
+    },
+    {
+      "code": "COMP-15",
+      "language": "COMMON",
+      "category": "COMPREHENSION",
+      "text_fr": "Que dites-vous à un élève qui a peur ?",
+      "context": "Question pédagogique",
+      "is_correction": false
+    },
+    {
+      "code": "COMP-16",
+      "language": "COMMON",
+      "category": "COMPREHENSION",
+      "text_fr": "Comment gérez-vous une situation d'urgence ?",
+      "context": "Question sécurité",
+      "is_correction": false
+    },
+    {
+      "code": "COMP-17",
+      "language": "COMMON",
+      "category": "COMPREHENSION",
+      "text_fr": "Excellente réponse.",
+      "context": "Feedback positif",
+      "is_correction": false
+    },
+    {
+      "code": "COMP-18",
+      "language": "COMMON",
+      "category": "COMPREHENSION",
+      "text_fr": "C'est correct.",
+      "context": "Feedback positif",
+      "is_correction": false
+    },
+    {
+      "code": "COMP-19",
+      "language": "COMMON",
+      "category": "COMPREHENSION",
+      "text_fr": "Pas tout à fait, essayez encore.",
+      "context": "Feedback correctif",
+      "is_correction": false
+    },
+    {
+      "code": "COMP-20",
+      "language": "COMMON",
+      "category": "COMPREHENSION",
+      "text_fr": "Pouvez-vous développer cette réponse ?",
+      "context": "Demande précision",
+      "is_correction": false
+    },
+    {
+      "code": "CONCL-01",
+      "language": "COMMON",
+      "category": "CONCLUSION",
+      "text_fr": "Nous arrivons à la fin du test.",
+      "context": "Conclusion",
+      "is_correction": false
+    },
+    {
+      "code": "CONCL-02",
+      "language": "COMMON",
+      "category": "CONCLUSION",
+      "text_fr": "Merci pour votre participation.",
+      "context": "Remerciement",
+      "is_correction": false
+    },
+    {
+      "code": "CONCL-03",
+      "language": "COMMON",
+      "category": "CONCLUSION",
+      "text_fr": "Avez-vous des questions sur le test ?",
+      "context": "Questions",
+      "is_correction": false
+    },
+    {
+      "code": "CONCL-04",
+      "language": "COMMON",
+      "category": "CONCLUSION",
+      "text_fr": "Les résultats seront communiqués dans les prochains jours.",
+      "context": "Information résultats",
+      "is_correction": false
+    },
+    {
+      "code": "CONCL-05",
+      "language": "COMMON",
+      "category": "CONCLUSION",
+      "text_fr": "Vous recevrez un rapport détaillé par email.",
+      "context": "Information résultats",
+      "is_correction": false
+    },
+    {
+      "code": "CONCL-06",
+      "language": "COMMON",
+      "category": "CONCLUSION",
+      "text_fr": "Bonne continuation dans votre apprentissage.",
+      "context": "Encouragement",
+      "is_correction": false
+    },
+    {
+      "code": "CONCL-07",
+      "language": "COMMON",
+      "category": "CONCLUSION",
+      "text_fr": "N'hésitez pas à continuer à pratiquer.",
+      "context": "Conseil",
+      "is_correction": false
+    },
+    {
+      "code": "CONCL-08",
+      "language": "COMMON",
+      "category": "CONCLUSION",
+      "text_fr": "Je vous souhaite une bonne saison.",
+      "context": "Salutation",
+      "is_correction": false
+    },
+    {
+      "code": "CONCL-09",
+      "language": "COMMON",
+      "category": "CONCLUSION",
+      "text_fr": "Au revoir et à bientôt.",
+      "context": "Salutation",
+      "is_correction": false
+    },
+    {
+      "code": "CONCL-10",
+      "language": "COMMON",
+      "category": "CONCLUSION",
+      "text_fr": "Félicitations pour avoir complété ce test.",
+      "context": "Félicitations",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-PT-01",
+      "language": "PT",
+      "category": "PRONONCIATION",
+      "text_fr": "Attention à la prononciation des voyelles nasales portugaises (ão, ãe, õe) qui sont différentes du français.",
+      "error_type": "Nasais",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-PT-02",
+      "language": "PT",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"R\" initial ou double en portugais brésilien se prononce comme un \"H\" aspiré : \"Rio\" = \"Hio\".",
+      "error_type": "R inicial",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-PT-03",
+      "language": "PT",
+      "category": "PRONONCIATION",
+      "text_fr": "Votre \"R\" français est trop marqué : en brésilien, le \"R\" en début de mot ou double est aspiré.",
+      "error_type": "R français",
+      "is_correction": true
+    },
+    {
+      "code": "EXPR-PT-04",
+      "language": "PT",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"S\" en fin de syllabe se prononce souvent \"CH\" au Brésil : \"mesmo\" → \"mechmo\".",
+      "error_type": "S final",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-PT-05",
+      "language": "PT",
+      "category": "PRONONCIATION",
+      "text_fr": "Attention au \"LH\" qui se prononce comme le \"LL\" espagnol ou le \"GLI\" italien, pas comme un L+H.",
+      "error_type": "LH",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-PT-06",
+      "language": "PT",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"NH\" se prononce comme le \"GN\" français (montagne) : \"montanha\" = \"montagna\".",
+      "error_type": "NH",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-PT-07",
+      "language": "PT",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"D\" devant \"I\" ou \"E\" se prononce souvent \"DJ\" au Brésil : \"dia\" → \"djia\".",
+      "error_type": "D + i/e",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-PT-08",
+      "language": "PT",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"T\" devant \"I\" ou \"E\" se prononce souvent \"TCH\" au Brésil : \"time\" → \"tchime\".",
+      "error_type": "T + i/e",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-PT-09",
+      "language": "PT",
+      "category": "PRONONCIATION",
+      "text_fr": "Votre accent français est très perceptible et peut gêner la compréhension.",
+      "error_type": "Accent général",
+      "is_correction": true
+    },
+    {
+      "code": "EXPR-PT-10",
+      "language": "PT",
+      "category": "PRONONCIATION",
+      "text_fr": "Attention à l'accent tonique qui est essentiel en portugais : \"médico\" vs \"medico\".",
+      "error_type": "Accent tonique",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-PT-01",
+      "language": "PT",
+      "category": "GRAMMAIRE",
+      "text_fr": "En portugais, le sujet est souvent omis car la conjugaison suffit : \"Eu falo\" → \"Falo\".",
+      "error_type": "Sujet omis",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-PT-02",
+      "language": "PT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Attention à SER (permanent) vs ESTAR (temporaire) : \"Sou professor\" vs \"Estou cansado\".",
+      "error_type": "Ser/Estar",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-PT-03",
+      "language": "PT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous confondez SER et ESTAR : c'est un point fondamental à maîtriser.",
+      "error_type": "Ser/Estar",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-PT-04",
+      "language": "PT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le gérondif (-NDO) s'utilise beaucoup au Brésil : \"Estou esquiando\" (je suis en train de skier).",
+      "error_type": "Gérondif",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-PT-05",
+      "language": "PT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le pluriel des mots en -ÃO peut être -ÕES, -ÃES ou -ÃOS : apprenez-les au cas par cas.",
+      "error_type": "Pluriel -ão",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-PT-06",
+      "language": "PT",
+      "category": "GRAMMAIRE",
+      "text_fr": "La préposition \"EM\" se contracte avec les articles : em + o = no, em + a = na.",
+      "error_type": "Contractions",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-PT-07",
+      "language": "PT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Attention aux prépositions : \"pensar EM\" (penser à), \"gostar DE\" (aimer), \"precisar DE\" (avoir besoin de).",
+      "error_type": "Prépositions",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-PT-08",
+      "language": "PT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous traduisez littéralement les prépositions du français : elles sont différentes en portugais.",
+      "error_type": "Prépositions",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-PT-09",
+      "language": "PT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le subjonctif (subjuntivo) est très utilisé en portugais, plus qu'en français moderne.",
+      "error_type": "Subjonctif",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-PT-10",
+      "language": "PT",
+      "category": "GRAMMAIRE",
+      "text_fr": "\"Haver\" impersonnel : \"Há muita neve\" (il y a beaucoup de neige), pas \"Tem muita neve\" (familier).",
+      "error_type": "Haver/Ter",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-PT-11",
+      "language": "PT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Attention au placement des pronoms : en brésilien parlé, ils vont souvent avant le verbe.",
+      "error_type": "Pronoms",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-PT-12",
+      "language": "PT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le placement des pronoms est souvent incorrect dans vos phrases.",
+      "error_type": "Pronoms",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-PT-13",
+      "language": "PT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les possessifs s'accordent avec l'objet possédé : \"meu ski\" / \"minha prancha\".",
+      "error_type": "Possessifs",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-PT-14",
+      "language": "PT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le futur proche s'exprime avec \"IR + infinitif\" : \"Vou esquiar amanhã\".",
+      "error_type": "Futur proche",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-PT-15",
+      "language": "PT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Attention au passé : pretérito perfeito (action ponctuelle) vs imperfeito (habitude, description).",
+      "error_type": "Passé",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-PT-16",
+      "language": "PT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous mélangez le pretérito perfeito et l'imperfeito : révisez la différence.",
+      "error_type": "Passé",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-PT-17",
+      "language": "PT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le conditionnel se forme avec -IA : \"Eu gostaria de...\" (j'aimerais...).",
+      "error_type": "Conditionnel",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-PT-18",
+      "language": "PT",
+      "category": "GRAMMAIRE",
+      "text_fr": "\"Por\" vs \"Para\" : \"por\" = à travers, par, à cause de / \"para\" = pour, vers (destination, but).",
+      "error_type": "Por/Para",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-PT-19",
+      "language": "PT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous confondez POR et PARA : révisez leurs usages respectifs.",
+      "error_type": "Por/Para",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-PT-20",
+      "language": "PT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les articles sont obligatoires devant les possessifs en portugais européen, optionnels au Brésil.",
+      "error_type": "Articles",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-PT-V01",
+      "language": "PT",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : escola de esqui (école de ski), aula (cours), iniciante (débutant), intermediário (intermédiaire), avançado (confirmé).",
+      "context": "Niveaux",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-PT-V02",
+      "language": "PT",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : cunha/pizza (chasse-neige), curva paralela (virage parallèle), bastões (bâtons), lâminas (carres).",
+      "context": "Technique",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-PT-V03",
+      "language": "PT",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : dobre os joelhos (pliez les genoux), incline-se para frente (penchez-vous en avant), transferência de peso (transfert de poids).",
+      "context": "Instructions",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-PT-V04",
+      "language": "PT",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : teleférico/telecadeira (télésiège), teleférico de arrasto (téléski), gôndola (télécabine).",
+      "context": "Remontées",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-PT-V05",
+      "language": "PT",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : barra de segurança (garde-corps), apoio para os pés (repose-pieds), levante (lever), abaixe (baisser).",
+      "context": "Remontées",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-PT-V06",
+      "language": "PT",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : olhe em frente (regardez devant), siga-me (suivez-moi), pare aqui (arrêtez-vous ici), muito bem (bien joué).",
+      "context": "Instructions",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-PT-V07",
+      "language": "PT",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : pontas dos esquis (spatules), caudas dos esquis (talons), fixações (fixations), botas (chaussures).",
+      "context": "Équipement",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-PT-V08",
+      "language": "PT",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : pista (piste), pista verde (piste verte), fora de pista (hors-piste), moguls/lombadas (bosses).",
+      "context": "Pistes",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-PT-V09",
+      "language": "PT",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : estação de esqui (station de ski) - pas \"estação\" seul qui signifie gare ou saison.",
+      "context": "Station",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-PT-V10",
+      "language": "PT",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : Onde dói? (Où avez-vous mal?), Consegue se mexer? (Pouvez-vous bouger?), A ajuda está chegando (Les secours arrivent).",
+      "context": "Urgence",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-ES-01",
+      "language": "ES",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"J\" espagnol est une jota gutturale, pas un \"J\" français : \"jefe\" se prononce avec un son de gorge.",
+      "error_type": "Jota",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-ES-02",
+      "language": "ES",
+      "category": "PRONONCIATION",
+      "text_fr": "Votre \"J\" français est incompréhensible pour un hispanophone : travaillez la jota.",
+      "error_type": "Jota",
+      "is_correction": true
+    },
+    {
+      "code": "EXPR-ES-03",
+      "language": "ES",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"R\" roulé (RR ou R initial) doit vibrer avec la langue contre le palais.",
+      "error_type": "R roulé",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-ES-04",
+      "language": "ES",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"R\" roulé est absent de votre prononciation : c'est un point à travailler.",
+      "error_type": "R roulé",
+      "is_correction": true
+    },
+    {
+      "code": "EXPR-ES-05",
+      "language": "ES",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"Z\" et le \"C\" (devant e/i) se prononcent \"S\" en Amérique latine, \"TH\" en Espagne.",
+      "error_type": "Z/C",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-ES-06",
+      "language": "ES",
+      "category": "PRONONCIATION",
+      "text_fr": "Attention : le \"V\" se prononce comme un \"B\" doux en espagnol.",
+      "error_type": "V = B",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-ES-07",
+      "language": "ES",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"LL\" se prononce \"Y\" dans la plupart des régions : \"llamar\" = \"yamar\".",
+      "error_type": "LL",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-ES-08",
+      "language": "ES",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"H\" est toujours muet en espagnol : \"hola\" = \"ola\".",
+      "error_type": "H muet",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-ES-09",
+      "language": "ES",
+      "category": "PRONONCIATION",
+      "text_fr": "Attention à l'accent tonique : en espagnol, il est crucial pour le sens (hablo vs habló).",
+      "error_type": "Accent tonique",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-ES-10",
+      "language": "ES",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"U\" après \"G\" ou \"Q\" ne se prononce pas : \"que\" = \"ké\", \"guitarra\" = \"gitara\".",
+      "error_type": "U muet",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ES-01",
+      "language": "ES",
+      "category": "GRAMMAIRE",
+      "text_fr": "SER (permanent, identité) vs ESTAR (temporaire, état, lieu) : \"Soy profesor\" vs \"Estoy cansado\".",
+      "error_type": "Ser/Estar",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ES-02",
+      "language": "ES",
+      "category": "GRAMMAIRE",
+      "text_fr": "La distinction SER/ESTAR est fondamentale et vous la maîtrisez mal.",
+      "error_type": "Ser/Estar",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-ES-03",
+      "language": "ES",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le sujet est généralement omis en espagnol : \"Hablo español\" (pas \"Yo hablo español\").",
+      "error_type": "Sujet omis",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ES-04",
+      "language": "ES",
+      "category": "GRAMMAIRE",
+      "text_fr": "\"Gustar\" fonctionne à l'envers : \"Me gusta el esquí\" (le ski me plaît) et non \"Yo gusto el esquí\".",
+      "error_type": "Gustar",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ES-05",
+      "language": "ES",
+      "category": "GRAMMAIRE",
+      "text_fr": "La structure de GUSTAR vous pose problème : le sujet français devient COI en espagnol.",
+      "error_type": "Gustar",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-ES-06",
+      "language": "ES",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les deux passés : pretérito indefinido (action ponctuelle) vs pretérito imperfecto (habitude, description).",
+      "error_type": "Passé",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ES-07",
+      "language": "ES",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous confondez les deux passés espagnols : révisez indefinido vs imperfecto.",
+      "error_type": "Passé",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-ES-08",
+      "language": "ES",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le subjonctif est très utilisé : après \"querer que\", \"esperar que\", \"para que\", etc.",
+      "error_type": "Subjonctif",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ES-09",
+      "language": "ES",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le subjonctif espagnol est mal maîtrisé : il est plus fréquent qu'en français moderne.",
+      "error_type": "Subjonctif",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-ES-10",
+      "language": "ES",
+      "category": "GRAMMAIRE",
+      "text_fr": "\"Hay\" (il y a) est invariable : \"Hay un problema\" / \"Hay muchos problemas\".",
+      "error_type": "Hay",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ES-11",
+      "language": "ES",
+      "category": "GRAMMAIRE",
+      "text_fr": "POR vs PARA : \"por\" = à cause de, par, pendant / \"para\" = pour, vers, but.",
+      "error_type": "Por/Para",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ES-12",
+      "language": "ES",
+      "category": "GRAMMAIRE",
+      "text_fr": "POR et PARA sont souvent confondus dans vos phrases.",
+      "error_type": "Por/Para",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-ES-13",
+      "language": "ES",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'article défini s'utilise devant les noms de langues : \"Hablo el español\".",
+      "error_type": "Articles",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ES-14",
+      "language": "ES",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le \"a\" personnel : devant un COD humain, ajoutez \"a\" : \"Veo a mi alumno\".",
+      "error_type": "A personnel",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ES-15",
+      "language": "ES",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous oubliez systématiquement le \"a\" personnel devant les COD humains.",
+      "error_type": "A personnel",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-ES-16",
+      "language": "ES",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les possessifs courts vont avant le nom : \"mi esquí\" (pas \"el esquí mío\" sauf emphase).",
+      "error_type": "Possessifs",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ES-17",
+      "language": "ES",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le gérondif (-ANDO/-IENDO) exprime une action en cours : \"Estoy esquiando\".",
+      "error_type": "Gérondif",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ES-18",
+      "language": "ES",
+      "category": "GRAMMAIRE",
+      "text_fr": "Attention à \"depuis\" : \"Llevo 5 años enseñando\" ou \"Enseño desde hace 5 años\".",
+      "error_type": "Depuis",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ES-19",
+      "language": "ES",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les pronoms COD/COI se placent avant le verbe conjugué ou attachés à l'infinitif/gérondif.",
+      "error_type": "Pronoms",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ES-20",
+      "language": "ES",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le placement des pronoms est souvent incorrect dans vos phrases.",
+      "error_type": "Pronoms",
+      "is_correction": true
+    },
+    {
+      "code": "TECH-ES-V01",
+      "language": "ES",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : escuela de esquí (école de ski), clase (cours), principiante (débutant), intermedio (intermédiaire), avanzado (confirmé).",
+      "context": "Niveaux",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-ES-V02",
+      "language": "ES",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : cuña (chasse-neige), giro paralelo (virage parallèle), bastones (bâtons), cantos (carres).",
+      "context": "Technique",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-ES-V03",
+      "language": "ES",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : flexiona las rodillas (pliez les genoux), inclínate hacia adelante (penchez-vous en avant), transferencia de peso (transfert de poids).",
+      "context": "Instructions",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-ES-V04",
+      "language": "ES",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : telesilla (télésiège), telearrastre (téléski), telecabina/góndola (télécabine).",
+      "context": "Remontées",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-ES-V05",
+      "language": "ES",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : barra de seguridad (garde-corps), reposapiés (repose-pieds), levanta (lever), baja (baisser).",
+      "context": "Remontées",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-ES-V06",
+      "language": "ES",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : mira adelante (regardez devant), sígueme (suivez-moi), para aquí (arrêtez-vous ici), muy bien (bien joué).",
+      "context": "Instructions",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-ES-V07",
+      "language": "ES",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : puntas de los esquís (spatules), colas (talons), fijaciones (fixations), botas (chaussures).",
+      "context": "Équipement",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-ES-V08",
+      "language": "ES",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : pista (piste), pista verde (piste verte), fuera de pista (hors-piste), baches/moguls (bosses).",
+      "context": "Pistes",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-ES-V09",
+      "language": "ES",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : estación de esquí (station de ski) - pas \"estación\" seul qui signifie gare ou saison.",
+      "context": "Station",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-ES-V10",
+      "language": "ES",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : ¿Dónde te duele? (Où as-tu mal?), ¿Puedes moverte? (Peux-tu bouger?), La ayuda viene en camino (Les secours arrivent).",
+      "context": "Urgence",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-NL-01",
+      "language": "NL",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"G\" néerlandais est guttural (comme le \"ch\" allemand de \"Bach\") : pratiquez ce son de gorge.",
+      "error_type": "G guttural",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-NL-02",
+      "language": "NL",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"G\" guttural néerlandais est absent de votre prononciation : c'est un son essentiel.",
+      "error_type": "G guttural",
+      "is_correction": true
+    },
+    {
+      "code": "EXPR-NL-03",
+      "language": "NL",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"CH\" se prononce également de manière gutturale, comme le \"G\".",
+      "error_type": "CH",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-NL-04",
+      "language": "NL",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"R\" néerlandais peut être roulé ou guttural selon les régions.",
+      "error_type": "R",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-NL-05",
+      "language": "NL",
+      "category": "PRONONCIATION",
+      "text_fr": "Les voyelles longues et courtes sont distinctives : \"man\" (homme) vs \"maan\" (lune).",
+      "error_type": "Voyelles",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-NL-06",
+      "language": "NL",
+      "category": "PRONONCIATION",
+      "text_fr": "Vous ne faites pas la distinction entre voyelles longues et courtes : c'est problématique.",
+      "error_type": "Voyelles",
+      "is_correction": true
+    },
+    {
+      "code": "EXPR-NL-07",
+      "language": "NL",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"W\" se prononce entre un \"V\" et un \"W\" anglais.",
+      "error_type": "W",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-NL-08",
+      "language": "NL",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"IJ\" et \"EI\" se prononcent comme un \"AY\" long.",
+      "error_type": "IJ/EI",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-NL-09",
+      "language": "NL",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"UI\" est une diphtongue difficile, proche de \"EU\" suivi de \"I\".",
+      "error_type": "UI",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-NL-10",
+      "language": "NL",
+      "category": "PRONONCIATION",
+      "text_fr": "Les consonnes finales se dévoisent : \"hond\" se prononce \"hont\".",
+      "error_type": "Dévoisement",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-NL-01",
+      "language": "NL",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'ordre des mots est V2 (verbe en 2e position) en phrase principale : \"Vandaag ski ik\" (Aujourd'hui, je skie).",
+      "error_type": "Ordre V2",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-NL-02",
+      "language": "NL",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'ordre des mots V2 n'est pas respecté : le verbe doit être en 2e position.",
+      "error_type": "Ordre V2",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-NL-03",
+      "language": "NL",
+      "category": "GRAMMAIRE",
+      "text_fr": "En subordonnée, le verbe va à la fin : \"omdat ik ski\" (parce que je skie).",
+      "error_type": "Subordonnée",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-NL-04",
+      "language": "NL",
+      "category": "GRAMMAIRE",
+      "text_fr": "En subordonnée, vous ne mettez pas le verbe à la fin comme il faut.",
+      "error_type": "Subordonnée",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-NL-05",
+      "language": "NL",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les verbes séparables : le préfixe va à la fin : \"Ik sta op\" (je me lève).",
+      "error_type": "Verbes séparables",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-NL-06",
+      "language": "NL",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les verbes séparables vous posent problème : le préfixe doit aller à la fin.",
+      "error_type": "Verbes séparables",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-NL-07",
+      "language": "NL",
+      "category": "GRAMMAIRE",
+      "text_fr": "Deux genres : \"de\" (commun) et \"het\" (neutre). Il faut les apprendre par cœur.",
+      "error_type": "Genres de/het",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-NL-08",
+      "language": "NL",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous mélangez \"de\" et \"het\" : apprenez le genre avec chaque nouveau mot.",
+      "error_type": "Genres",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-NL-09",
+      "language": "NL",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'adjectif prend un \"-e\" devant les noms définis et pluriels : \"de grote berg\" mais \"een groot huis\".",
+      "error_type": "Adjectifs",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-NL-10",
+      "language": "NL",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le passé composé utilise \"hebben\" ou \"zijn\" selon le verbe.",
+      "error_type": "Auxiliaires",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-NL-11",
+      "language": "NL",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les verbes de mouvement prennent \"zijn\" : \"Ik ben geskied\" (j'ai skié).",
+      "error_type": "Zijn",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-NL-12",
+      "language": "NL",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le diminutif (-je, -tje, -pje, -etje) est très utilisé : \"huisje\" (maisonnette).",
+      "error_type": "Diminutifs",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-NL-13",
+      "language": "NL",
+      "category": "GRAMMAIRE",
+      "text_fr": "\"Er\" a plusieurs fonctions (il y a, pronom, lieu) : \"Er is sneeuw\" (Il y a de la neige).",
+      "error_type": "Er",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-NL-14",
+      "language": "NL",
+      "category": "GRAMMAIRE",
+      "text_fr": "La négation \"niet\" se place généralement en fin de phrase ou avant l'élément nié.",
+      "error_type": "Négation",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-NL-15",
+      "language": "NL",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le placement de \"niet\" est souvent incorrect dans vos phrases.",
+      "error_type": "Négation",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-NL-16",
+      "language": "NL",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les prépositions régissent parfois des cas : \"met hem\" (avec lui) vs \"van hem\" (de lui).",
+      "error_type": "Prépositions",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-NL-V01",
+      "language": "NL",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : skischool (école de ski), les (cours), beginner (débutant), gevorderde (intermédiaire), expert (confirmé).",
+      "context": "Niveaux",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-NL-V02",
+      "language": "NL",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : ploeg/pizzapunt (chasse-neige), parallelle bocht (virage parallèle), stokken (bâtons), kanten (carres).",
+      "context": "Technique",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-NL-V03",
+      "language": "NL",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : buig je knieën (pliez les genoux), leun voorover (penchez-vous en avant), gewichtsverplaatsing (transfert de poids).",
+      "context": "Instructions",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-NL-V04",
+      "language": "NL",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : stoeltjeslift (télésiège), sleeplift (téléski), gondel/cabine (télécabine).",
+      "context": "Remontées",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-NL-V05",
+      "language": "NL",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : veiligheidsbeugel (garde-corps), voetensteun (repose-pieds), omhoog (lever), omlaag (baisser).",
+      "context": "Remontées",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-NL-V06",
+      "language": "NL",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : kijk vooruit (regardez devant), volg mij (suivez-moi), stop hier (arrêtez-vous ici), goed gedaan (bien joué).",
+      "context": "Instructions",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-NL-V07",
+      "language": "NL",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : skipunten (spatules), skistaarten (talons), bindingen (fixations), skischoenen (chaussures).",
+      "context": "Équipement",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-NL-V08",
+      "language": "NL",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : piste (piste), groene piste (piste verte), off-piste (hors-piste), bulten (bosses).",
+      "context": "Pistes",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-NL-V09",
+      "language": "NL",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : skigebied (domaine skiable), skiresort (station de ski).",
+      "context": "Station",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-NL-V10",
+      "language": "NL",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : Waar doet het pijn? (Où avez-vous mal?), Kun je bewegen? (Pouvez-vous bouger?), Hulp is onderweg (Les secours arrivent).",
+      "context": "Urgence",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-RU-01",
+      "language": "RU",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"Ы\" (y) est une voyelle difficile : positionnez la langue comme pour \"i\" mais reculée.",
+      "error_type": "Ы",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-RU-02",
+      "language": "RU",
+      "category": "PRONONCIATION",
+      "text_fr": "Le son \"Ы\" est absent de votre prononciation : c'est un son essentiel en russe.",
+      "error_type": "Ы",
+      "is_correction": true
+    },
+    {
+      "code": "EXPR-RU-03",
+      "language": "RU",
+      "category": "PRONONCIATION",
+      "text_fr": "Distinguez les consonnes dures et molles (palatalisées) : c'est phonémique en russe.",
+      "error_type": "Consonnes molles",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-RU-04",
+      "language": "RU",
+      "category": "PRONONCIATION",
+      "text_fr": "Vous ne faites pas la différence entre consonnes dures et molles : travaillez ce point.",
+      "error_type": "Consonnes molles",
+      "is_correction": true
+    },
+    {
+      "code": "EXPR-RU-05",
+      "language": "RU",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"Р\" russe est roulé comme en espagnol ou italien.",
+      "error_type": "R roulé",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-RU-06",
+      "language": "RU",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"Х\" se prononce comme le \"J\" espagnol ou le \"CH\" allemand de \"Bach\".",
+      "error_type": "Х",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-RU-07",
+      "language": "RU",
+      "category": "PRONONCIATION",
+      "text_fr": "Les voyelles non accentuées se réduisent : \"О\" non accentué → \"A\", \"Е/Я\" non accentué → \"И\".",
+      "error_type": "Réduction vocalique",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-RU-08",
+      "language": "RU",
+      "category": "PRONONCIATION",
+      "text_fr": "L'accent tonique est mobile et distinctif : apprenez-le avec chaque mot.",
+      "error_type": "Accent tonique",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-RU-09",
+      "language": "RU",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"Щ\" se prononce comme un \"CH\" long et mouillé.",
+      "error_type": "Щ",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-RU-10",
+      "language": "RU",
+      "category": "PRONONCIATION",
+      "text_fr": "Les consonnes finales se dévoisent : \"год\" (année) se prononce \"got\".",
+      "error_type": "Dévoisement",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-RU-01",
+      "language": "RU",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le russe a 6 cas (nominatif, génitif, datif, accusatif, instrumental, prépositionnel).",
+      "error_type": "Cas",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-RU-02",
+      "language": "RU",
+      "category": "GRAMMAIRE",
+      "text_fr": "La déclinaison des noms et adjectifs est mal maîtrisée : les cas sont essentiels.",
+      "error_type": "Cas",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-RU-03",
+      "language": "RU",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les verbes ont deux aspects : imperfectif (action en cours/habituelle) et perfectif (action achevée).",
+      "error_type": "Aspects",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-RU-04",
+      "language": "RU",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous confondez les aspects verbaux : imperfectif vs perfectif est fondamental.",
+      "error_type": "Aspects",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-RU-05",
+      "language": "RU",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le verbe \"être\" au présent est généralement omis : \"Я студент\" (Je suis étudiant).",
+      "error_type": "Être omis",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-RU-06",
+      "language": "RU",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les verbes de mouvement distinguent aller à pied/en véhicule, une fois/habituellement.",
+      "error_type": "Verbes mouvement",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-RU-07",
+      "language": "RU",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les verbes de mouvement russes sont complexes et mal utilisés.",
+      "error_type": "Verbes mouvement",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-RU-08",
+      "language": "RU",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'adjectif s'accorde en genre, nombre et cas avec le nom.",
+      "error_type": "Accord adjectif",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-RU-09",
+      "language": "RU",
+      "category": "GRAMMAIRE",
+      "text_fr": "Après les nombres 2-4, le nom est au génitif singulier ; après 5+, au génitif pluriel.",
+      "error_type": "Nombres + cas",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-RU-10",
+      "language": "RU",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'accord après les nombres vous pose problème : révisez les règles.",
+      "error_type": "Nombres",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-RU-11",
+      "language": "RU",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les prépositions régissent des cas spécifiques : \"в\" + accusatif (direction) vs \"в\" + prépositionnel (lieu).",
+      "error_type": "Prépositions",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-RU-12",
+      "language": "RU",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le passé s'accorde en genre avec le sujet : \"он читал\" (il lisait) vs \"она читала\" (elle lisait).",
+      "error_type": "Passé + genre",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-RU-13",
+      "language": "RU",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'ordre des mots est relativement libre grâce aux cas, mais l'information nouvelle va en fin.",
+      "error_type": "Ordre des mots",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-RU-14",
+      "language": "RU",
+      "category": "GRAMMAIRE",
+      "text_fr": "\"У меня есть\" (j'ai) : littéralement \"chez moi il y a\" - structure à mémoriser.",
+      "error_type": "Avoir",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-RU-15",
+      "language": "RU",
+      "category": "GRAMMAIRE",
+      "text_fr": "La négation \"не\" se place directement avant le verbe ou l'élément nié.",
+      "error_type": "Négation",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-RU-16",
+      "language": "RU",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le génitif s'utilise après la négation : \"У меня нет машины\" (je n'ai pas de voiture).",
+      "error_type": "Génitif + négation",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-RU-V01",
+      "language": "RU",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : горнолыжная школа (école de ski), урок (cours), начинающий (débutant), средний уровень (intermédiaire), продвинутый (confirmé).",
+      "context": "Niveaux",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-RU-V02",
+      "language": "RU",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : плуг (chasse-neige), параллельный поворот (virage parallèle), палки (bâtons), канты (carres).",
+      "context": "Technique",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-RU-V03",
+      "language": "RU",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : согните колени (pliez les genoux), наклонитесь вперёд (penchez-vous en avant), перенос веса (transfert de poids).",
+      "context": "Instructions",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-RU-V04",
+      "language": "RU",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : кресельный подъёмник (télésiège), бугельный подъёмник (téléski), гондола (télécabine).",
+      "context": "Remontées",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-RU-V05",
+      "language": "RU",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : страховочная дуга (garde-corps), подножка (repose-pieds), поднять (lever), опустить (baisser).",
+      "context": "Remontées",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-RU-V06",
+      "language": "RU",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : смотрите вперёд (regardez devant), следуйте за мной (suivez-moi), остановитесь здесь (arrêtez-vous ici), молодец (bien joué).",
+      "context": "Instructions",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-RU-V07",
+      "language": "RU",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : носки лыж (spatules), пятки лыж (talons), крепления (fixations), ботинки (chaussures).",
+      "context": "Équipement",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-RU-V08",
+      "language": "RU",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : трасса/склон (piste), зелёная трасса (piste verte), внетрассовое катание (hors-piste), бугры (bosses).",
+      "context": "Pistes",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-RU-V09",
+      "language": "RU",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : горнолыжный курорт (station de ski).",
+      "context": "Station",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-RU-V10",
+      "language": "RU",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : Где болит? (Où avez-vous mal?), Вы можете двигаться? (Pouvez-vous bouger?), Помощь идёт (Les secours arrivent).",
+      "context": "Urgence",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-IT-01",
+      "language": "IT",
+      "category": "PRONONCIATION",
+      "text_fr": "Les consonnes doubles sont plus longues : \"palla\" ≠ \"pala\". Marquez bien la durée.",
+      "error_type": "Doubles",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-IT-02",
+      "language": "IT",
+      "category": "PRONONCIATION",
+      "text_fr": "Vous ne marquez pas les consonnes doubles : c'est pourtant distinctif en italien.",
+      "error_type": "Doubles",
+      "is_correction": true
+    },
+    {
+      "code": "EXPR-IT-03",
+      "language": "IT",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"R\" italien est roulé avec la langue contre le palais.",
+      "error_type": "R roulé",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-IT-04",
+      "language": "IT",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"GLI\" se prononce comme le \"LL\" espagnol ou le \"LH\" portugais (mouillé).",
+      "error_type": "GLI",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-IT-05",
+      "language": "IT",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"GN\" se prononce comme en français (\"montagne\").",
+      "error_type": "GN",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-IT-06",
+      "language": "IT",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"C\" devant E/I se prononce \"TCH\" : \"ciao\" = \"tchao\".",
+      "error_type": "C + e/i",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-IT-07",
+      "language": "IT",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"G\" devant E/I se prononce \"DJ\" : \"gelato\" = \"djelato\".",
+      "error_type": "G + e/i",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-IT-08",
+      "language": "IT",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"SC\" devant E/I se prononce \"CH\" : \"sci\" = \"chi\".",
+      "error_type": "SC + e/i",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-IT-09",
+      "language": "IT",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"H\" est toujours muet et sert à durcir C et G : \"che\" = \"ké\", \"ghetto\" = \"guetto\".",
+      "error_type": "H muet",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-IT-10",
+      "language": "IT",
+      "category": "PRONONCIATION",
+      "text_fr": "L'accent tonique varie : apprenez-le avec chaque mot.",
+      "error_type": "Accent tonique",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-IT-01",
+      "language": "IT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le sujet est généralement omis : \"Parlo italiano\" (pas \"Io parlo italiano\").",
+      "error_type": "Sujet omis",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-IT-02",
+      "language": "IT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les articles définis : il/lo/la/i/gli/le - \"lo\" devant s+consonne, z, gn, ps, x.",
+      "error_type": "Articles",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-IT-03",
+      "language": "IT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous utilisez mal les articles \"il\" et \"lo\" : révisez les règles.",
+      "error_type": "Articles",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-IT-04",
+      "language": "IT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les articles contractés : a+il=al, di+il=del, in+il=nel, etc.",
+      "error_type": "Contractions",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-IT-05",
+      "language": "IT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Passato prossimo vs imperfetto : comme en français, mais l'imparfait est plus utilisé en italien.",
+      "error_type": "Passé",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-IT-06",
+      "language": "IT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le passato prossimo utilise \"essere\" ou \"avere\" selon le verbe.",
+      "error_type": "Auxiliaires",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-IT-07",
+      "language": "IT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Avec \"essere\", le participe s'accorde : \"Maria è andata\" (Marie est allée).",
+      "error_type": "Accord participe",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-IT-08",
+      "language": "IT",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'accord du participe passé avec essere est souvent oublié.",
+      "error_type": "Accord participe",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-IT-09",
+      "language": "IT",
+      "category": "GRAMMAIRE",
+      "text_fr": "\"Piacere\" fonctionne comme \"gustar\" espagnol : \"Mi piace lo sci\" (le ski me plaît).",
+      "error_type": "Piacere",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-IT-10",
+      "language": "IT",
+      "category": "GRAMMAIRE",
+      "text_fr": "La structure de PIACERE vous pose problème : le sujet français devient COI.",
+      "error_type": "Piacere",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-IT-11",
+      "language": "IT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le subjonctif est très utilisé après \"che\", \"penso che\", \"voglio che\", etc.",
+      "error_type": "Subjonctif",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-IT-12",
+      "language": "IT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le subjonctif italien est mal maîtrisé : il est plus fréquent qu'en français moderne.",
+      "error_type": "Subjonctif",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-IT-13",
+      "language": "IT",
+      "category": "GRAMMAIRE",
+      "text_fr": "\"C'è\" (il y a, singulier) / \"Ci sono\" (il y a, pluriel).",
+      "error_type": "C'è/Ci sono",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-IT-14",
+      "language": "IT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les possessifs prennent l'article : \"il mio sci\" (mon ski) - sauf avec les noms de famille au singulier.",
+      "error_type": "Possessifs",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-IT-15",
+      "language": "IT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le conditionnel se forme avec -EI, -ESTI, -EBBE... : \"Vorrei...\" (je voudrais).",
+      "error_type": "Conditionnel",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-IT-16",
+      "language": "IT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les pronoms COD/COI se placent avant le verbe conjugué ou attachés à l'infinitif.",
+      "error_type": "Pronoms",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-IT-17",
+      "language": "IT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le placement des pronoms est souvent incorrect.",
+      "error_type": "Pronoms",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-IT-18",
+      "language": "IT",
+      "category": "GRAMMAIRE",
+      "text_fr": "\"Stare + gérondif\" pour l'action en cours : \"Sto sciando\" (je suis en train de skier).",
+      "error_type": "Gérondif",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-IT-19",
+      "language": "IT",
+      "category": "GRAMMAIRE",
+      "text_fr": "Attention aux faux amis : \"camera\" = chambre (pas caméra), \"salire\" = monter (pas salir).",
+      "error_type": "Faux amis",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-IT-V01",
+      "language": "IT",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : scuola di sci (école de ski), lezione (cours), principiante (débutant), intermedio (intermédiaire), esperto (confirmé).",
+      "context": "Niveaux",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-IT-V02",
+      "language": "IT",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : spazzaneve (chasse-neige), curva parallela (virage parallèle), bastoncini (bâtons), lamine (carres).",
+      "context": "Technique",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-IT-V03",
+      "language": "IT",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : piega le ginocchia (pliez les genoux), piegati in avanti (penchez-vous en avant), trasferimento del peso (transfert de poids).",
+      "context": "Instructions",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-IT-V04",
+      "language": "IT",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : seggiovia (télésiège), skilift (téléski), cabinovia/telecabina (télécabine).",
+      "context": "Remontées",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-IT-V05",
+      "language": "IT",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : barra di sicurezza (garde-corps), poggiapiedi (repose-pieds), alzare (lever), abbassare (baisser).",
+      "context": "Remontées",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-IT-V06",
+      "language": "IT",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : guarda avanti (regardez devant), seguimi (suivez-moi), fermati qui (arrêtez-vous ici), bravo/brava (bien joué).",
+      "context": "Instructions",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-IT-V07",
+      "language": "IT",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : punte degli sci (spatules), code degli sci (talons), attacchi (fixations), scarponi (chaussures).",
+      "context": "Équipement",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-IT-V08",
+      "language": "IT",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : pista (piste), pista verde (piste verte), fuoripista (hors-piste), gobbe (bosses).",
+      "context": "Pistes",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-IT-V09",
+      "language": "IT",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : stazione sciistica / comprensorio (station de ski / domaine).",
+      "context": "Station",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-IT-V10",
+      "language": "IT",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : Dove ti fa male? (Où as-tu mal?), Riesci a muoverti? (Tu arrives à bouger?), I soccorsi stanno arrivando (Les secours arrivent).",
+      "context": "Urgence",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-ZH-01",
+      "language": "ZH",
+      "category": "PRONONCIATION",
+      "text_fr": "Les 4 tons sont essentiels en chinois : un mauvais ton = un autre mot. Pratiquez-les systématiquement.",
+      "error_type": "Tons",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-ZH-02",
+      "language": "ZH",
+      "category": "PRONONCIATION",
+      "text_fr": "Les tons sont très mal maîtrisés : sans tons corrects, vous êtes difficilement compréhensible.",
+      "error_type": "Tons",
+      "is_correction": true
+    },
+    {
+      "code": "EXPR-ZH-03",
+      "language": "ZH",
+      "category": "PRONONCIATION",
+      "text_fr": "Le 3ème ton descend puis remonte ; le 4ème ton descend brusquement.",
+      "error_type": "Tons 3 et 4",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-ZH-04",
+      "language": "ZH",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"X\" (pinyin) se prononce comme un \"S\" chuinté, langue derrière les dents.",
+      "error_type": "X",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-ZH-05",
+      "language": "ZH",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"Q\" (pinyin) se prononce comme un \"TCH\" aspiré, pas comme un \"K\".",
+      "error_type": "Q",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-ZH-06",
+      "language": "ZH",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"ZH\" se prononce comme un \"DJ\" rétroflexe (langue recourbée).",
+      "error_type": "ZH",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-ZH-07",
+      "language": "ZH",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"R\" chinois est une approximante rétroflexe, différente du R français.",
+      "error_type": "R",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-ZH-08",
+      "language": "ZH",
+      "category": "PRONONCIATION",
+      "text_fr": "Distinguez les consonnes aspirées (p, t, k, c, ch, q) des non-aspirées (b, d, g, z, zh, j).",
+      "error_type": "Aspiration",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-ZH-09",
+      "language": "ZH",
+      "category": "PRONONCIATION",
+      "text_fr": "Vous ne faites pas la différence entre consonnes aspirées et non-aspirées.",
+      "error_type": "Aspiration",
+      "is_correction": true
+    },
+    {
+      "code": "EXPR-ZH-10",
+      "language": "ZH",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"Ü\" (pinyin) est comme le \"u\" français, mais le \"U\" simple est plus postérieur.",
+      "error_type": "Ü vs U",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ZH-01",
+      "language": "ZH",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le chinois n'a pas de conjugaison : le verbe reste invariable (我滑雪 wǒ huáxuě = je skie).",
+      "error_type": "Pas de conjugaison",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ZH-02",
+      "language": "ZH",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'ordre des mots est Sujet + Temps + Lieu + Verbe + Objet.",
+      "error_type": "Ordre des mots",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ZH-03",
+      "language": "ZH",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'ordre des mots chinois est différent du français : le temps et le lieu vont AVANT le verbe.",
+      "error_type": "Ordre des mots",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-ZH-04",
+      "language": "ZH",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les classificateurs (量词) sont obligatoires entre nombre/démonstratif et nom : 一个人 yī gè rén (une personne).",
+      "error_type": "Classificateurs",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ZH-05",
+      "language": "ZH",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les classificateurs sont souvent oubliés ou mal choisis.",
+      "error_type": "Classificateurs",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-ZH-06",
+      "language": "ZH",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le passé se marque avec 了 (le) après le verbe pour l'action accomplie : 我滑了雪 (j'ai skié).",
+      "error_type": "了 (le)",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ZH-07",
+      "language": "ZH",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'action en cours se marque avec 在 (zài) avant le verbe : 我在滑雪 (je suis en train de skier).",
+      "error_type": "在 (zài)",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ZH-08",
+      "language": "ZH",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'expérience passée se marque avec 过 (guò) : 我滑过雪 (j'ai déjà skié dans ma vie).",
+      "error_type": "过 (guò)",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ZH-09",
+      "language": "ZH",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous confondez 了, 过 et 在 : ce sont trois aspects différents.",
+      "error_type": "Aspects",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-ZH-10",
+      "language": "ZH",
+      "category": "GRAMMAIRE",
+      "text_fr": "La négation au présent : 不 (bù) ; la négation au passé : 没 (méi).",
+      "error_type": "Négation",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ZH-11",
+      "language": "ZH",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous utilisez 不 au lieu de 没 pour les actions passées.",
+      "error_type": "不 vs 没",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-ZH-12",
+      "language": "ZH",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les questions se forment avec 吗 (ma) à la fin ou en répétant le verbe (affirmative + négative).",
+      "error_type": "Questions",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ZH-13",
+      "language": "ZH",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le complément de résultat se place après le verbe : 学会 (xuéhuì) = apprendre jusqu'à savoir.",
+      "error_type": "Compléments",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ZH-14",
+      "language": "ZH",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le comparatif : A 比 B + adjectif (A bǐ B = A est plus... que B).",
+      "error_type": "Comparatif",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ZH-15",
+      "language": "ZH",
+      "category": "GRAMMAIRE",
+      "text_fr": "\"Il y a\" = 有 (yǒu) : 这里有雪 (zhèlǐ yǒu xuě = il y a de la neige ici).",
+      "error_type": "有 (yǒu)",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-ZH-16",
+      "language": "ZH",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le thème se place souvent en début de phrase : 滑雪，我很喜欢 (Le ski, j'aime beaucoup).",
+      "error_type": "Thématisation",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-ZH-V01",
+      "language": "ZH",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : 滑雪学校 huáxuě xuéxiào (école de ski), 课 kè (cours), 初学者 chūxuézhě (débutant), 中级 zhōngjí (intermédiaire), 高级 gāojí (confirmé).",
+      "context": "Niveaux",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-ZH-V02",
+      "language": "ZH",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : 犁式 lí shì (chasse-neige), 平行转弯 píngxíng zhuǎnwān (virage parallèle), 雪杖 xuězhàng (bâtons), 雪板边刃 xuěbǎn biānrèn (carres).",
+      "context": "Technique",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-ZH-V03",
+      "language": "ZH",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : 弯曲膝盖 wānqū xīgài (pliez les genoux), 身体前倾 shēntǐ qiánqīng (penchez-vous en avant).",
+      "context": "Instructions",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-ZH-V04",
+      "language": "ZH",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : 缆车 lǎnchē (télésiège/télécabine), 拖牵 tuōqiān (téléski).",
+      "context": "Remontées",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-ZH-V05",
+      "language": "ZH",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : 安全杆 ānquán gǎn (garde-corps), 抬起 táiqǐ (lever), 放下 fàngxià (baisser).",
+      "context": "Remontées",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-ZH-V06",
+      "language": "ZH",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : 向前看 xiàng qián kàn (regardez devant), 跟我来 gēn wǒ lái (suivez-moi), 在这里停 zài zhèlǐ tíng (arrêtez-vous ici), 很好 hěn hǎo (bien joué).",
+      "context": "Instructions",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-ZH-V07",
+      "language": "ZH",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : 雪板头 xuěbǎn tóu (spatules), 雪板尾 xuěbǎn wěi (talons), 固定器 gùdìngqì (fixations), 雪鞋 xuěxié (chaussures).",
+      "context": "Équipement",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-ZH-V08",
+      "language": "ZH",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : 雪道 xuědào (piste), 绿道 lǜdào (piste verte), 野雪 yě xuě (hors-piste).",
+      "context": "Pistes",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-ZH-V09",
+      "language": "ZH",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : 滑雪场 huáxuěchǎng (station de ski).",
+      "context": "Station",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-ZH-V10",
+      "language": "ZH",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : 哪里疼？nǎlǐ téng? (Où avez-vous mal?), 你能动吗？nǐ néng dòng ma? (Pouvez-vous bouger?), 救援马上到 jiùyuán mǎshàng dào (Les secours arrivent).",
+      "context": "Urgence",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-DE-01",
+      "language": "DE",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"CH\" après a/o/u est guttural (comme \"Bach\") ; après e/i/ä/ö/ü, il est palatal (comme \"ich\").",
+      "error_type": "CH",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-DE-02",
+      "language": "DE",
+      "category": "PRONONCIATION",
+      "text_fr": "Le son \"CH\" allemand est mal prononcé : distinguez le \"ach-Laut\" du \"ich-Laut\".",
+      "error_type": "CH",
+      "is_correction": true
+    },
+    {
+      "code": "EXPR-DE-03",
+      "language": "DE",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"R\" allemand est uvulaire (comme en français) ou roulé selon les régions.",
+      "error_type": "R",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-DE-04",
+      "language": "DE",
+      "category": "PRONONCIATION",
+      "text_fr": "Les voyelles longues et courtes sont distinctives : \"Staat\" (état) vs \"Stadt\" (ville).",
+      "error_type": "Voyelles",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-DE-05",
+      "language": "DE",
+      "category": "PRONONCIATION",
+      "text_fr": "Vous ne distinguez pas les voyelles longues des voyelles courtes.",
+      "error_type": "Voyelles",
+      "is_correction": true
+    },
+    {
+      "code": "EXPR-DE-06",
+      "language": "DE",
+      "category": "PRONONCIATION",
+      "text_fr": "Les \"Umlaute\" (ä, ö, ü) sont des sons distincts, pas des variantes.",
+      "error_type": "Umlaute",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-DE-07",
+      "language": "DE",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"W\" se prononce \"V\" : \"Wasser\" = \"Vasser\".",
+      "error_type": "W = V",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-DE-08",
+      "language": "DE",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"V\" se prononce \"F\" dans les mots allemands : \"Vater\" = \"Fater\".",
+      "error_type": "V = F",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-DE-09",
+      "language": "DE",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"Z\" se prononce \"TS\" : \"Zeit\" = \"Tsaït\".",
+      "error_type": "Z = TS",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-DE-10",
+      "language": "DE",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"S\" initial devant voyelle se prononce \"Z\" : \"Sonne\" = \"Zonne\".",
+      "error_type": "S = Z",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-DE-11",
+      "language": "DE",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"ß\" (Eszett) se prononce comme un \"S\" sourd long.",
+      "error_type": "ß",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-DE-12",
+      "language": "DE",
+      "category": "PRONONCIATION",
+      "text_fr": "L'accent tonique est généralement sur la première syllabe des mots allemands.",
+      "error_type": "Accent",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-DE-01",
+      "language": "DE",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'allemand a 4 cas : nominatif, accusatif, datif, génitif. Les articles et adjectifs se déclinent.",
+      "error_type": "Cas",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-DE-02",
+      "language": "DE",
+      "category": "GRAMMAIRE",
+      "text_fr": "La déclinaison des articles et adjectifs est mal maîtrisée : les cas sont essentiels.",
+      "error_type": "Cas",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-DE-03",
+      "language": "DE",
+      "category": "GRAMMAIRE",
+      "text_fr": "En phrase principale, le verbe conjugué est TOUJOURS en 2ème position (V2).",
+      "error_type": "Ordre V2",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-DE-04",
+      "language": "DE",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le verbe n'est pas en 2ème position : c'est une règle absolue en allemand.",
+      "error_type": "Ordre V2",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-DE-05",
+      "language": "DE",
+      "category": "GRAMMAIRE",
+      "text_fr": "En subordonnée, le verbe conjugué va à la FIN : \"weil ich Ski fahre\" (parce que je skie).",
+      "error_type": "Subordonnée",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-DE-06",
+      "language": "DE",
+      "category": "GRAMMAIRE",
+      "text_fr": "En subordonnée, vous ne mettez pas le verbe à la fin.",
+      "error_type": "Subordonnée",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-DE-07",
+      "language": "DE",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les verbes séparables : le préfixe va à la fin : \"Ich stehe auf\" (je me lève).",
+      "error_type": "Verbes séparables",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-DE-08",
+      "language": "DE",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les verbes séparables vous posent problème : le préfixe doit aller à la fin.",
+      "error_type": "Verbes séparables",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-DE-09",
+      "language": "DE",
+      "category": "GRAMMAIRE",
+      "text_fr": "Trois genres : der (masculin), die (féminin), das (neutre). Apprenez-les avec chaque nom.",
+      "error_type": "Genres",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-DE-10",
+      "language": "DE",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous vous trompez souvent sur le genre des noms : apprenez der/die/das avec chaque mot.",
+      "error_type": "Genres",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-DE-11",
+      "language": "DE",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le parfait (Perfekt) utilise \"haben\" ou \"sein\" selon le verbe.",
+      "error_type": "Auxiliaires",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-DE-12",
+      "language": "DE",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les verbes de mouvement et de changement d'état prennent \"sein\" : \"Ich bin gefahren\".",
+      "error_type": "Sein",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-DE-13",
+      "language": "DE",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'accusatif répond à \"wen/was?\" (qui/quoi?) ; le datif à \"wem?\" (à qui?).",
+      "error_type": "Accusatif/Datif",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-DE-14",
+      "language": "DE",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous confondez accusatif et datif : c'est un point fondamental.",
+      "error_type": "Accusatif/Datif",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-DE-15",
+      "language": "DE",
+      "category": "GRAMMAIRE",
+      "text_fr": "Certaines prépositions régissent toujours le même cas : mit, zu, von → datif ; für, durch → accusatif.",
+      "error_type": "Prépositions",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-DE-16",
+      "language": "DE",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les prépositions de lieu : accusatif (direction) vs datif (position) : \"in den Berg\" vs \"in dem Berg\".",
+      "error_type": "Prépositions lieu",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-DE-17",
+      "language": "DE",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'adjectif épithète se décline : \"ein großer Berg\" vs \"der große Berg\" vs \"großer Berg\".",
+      "error_type": "Déclinaison adj.",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-DE-18",
+      "language": "DE",
+      "category": "GRAMMAIRE",
+      "text_fr": "La déclinaison de l'adjectif est approximative : révisez les trois types de déclinaison.",
+      "error_type": "Déclinaison adj.",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-DE-19",
+      "language": "DE",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le conditionnel se forme avec \"würde + infinitif\" ou le Konjunktiv II.",
+      "error_type": "Conditionnel",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-DE-20",
+      "language": "DE",
+      "category": "GRAMMAIRE",
+      "text_fr": "La négation \"nicht\" se place généralement en fin de phrase ou avant l'élément nié.",
+      "error_type": "Négation",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-DE-V01",
+      "language": "DE",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : Skischule (école de ski), Unterricht/Kurs (cours), Anfänger (débutant), Fortgeschrittener (intermédiaire), Experte (confirmé).",
+      "context": "Niveaux",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-DE-V02",
+      "language": "DE",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : Pflug/Schneepflug (chasse-neige), Parallelschwung (virage parallèle), Stöcke (bâtons), Kanten (carres).",
+      "context": "Technique",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-DE-V03",
+      "language": "DE",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : Knie beugen (pliez les genoux), nach vorne lehnen (penchez-vous en avant), Gewichtsverlagerung (transfert de poids).",
+      "context": "Instructions",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-DE-V04",
+      "language": "DE",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : Sessellift (télésiège), Schlepplift (téléski), Gondel/Kabinenbahn (télécabine).",
+      "context": "Remontées",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-DE-V05",
+      "language": "DE",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : Sicherheitsbügel (garde-corps), Fußstütze (repose-pieds), hochheben (lever), runterlassen (baisser).",
+      "context": "Remontées",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-DE-V06",
+      "language": "DE",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : nach vorne schauen (regardez devant), folgen Sie mir (suivez-moi), hier anhalten (arrêtez-vous ici), gut gemacht (bien joué).",
+      "context": "Instructions",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-DE-V07",
+      "language": "DE",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : Skispitzen (spatules), Skienden (talons), Bindungen (fixations), Skischuhe (chaussures).",
+      "context": "Équipement",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-DE-V08",
+      "language": "DE",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : Piste (piste), grüne Piste (piste verte), Tiefschnee/Off-Piste (hors-piste), Buckel (bosses).",
+      "context": "Pistes",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-DE-V09",
+      "language": "DE",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : Skigebiet (domaine skiable), Skiort (station de ski).",
+      "context": "Station",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-DE-V10",
+      "language": "DE",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : Wo tut es weh? (Où avez-vous mal?), Können Sie sich bewegen? (Pouvez-vous bouger?), Hilfe ist unterwegs (Les secours arrivent).",
+      "context": "Urgence",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-FR-01",
+      "language": "FR",
+      "category": "PRONONCIATION",
+      "text_fr": "Les voyelles nasales (an, on, in, un) sont bien distinguées.",
+      "error_type": "Nasales",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-FR-02",
+      "language": "FR",
+      "category": "PRONONCIATION",
+      "text_fr": "Les voyelles nasales sont mal prononcées ou confondues entre elles.",
+      "error_type": "Nasales",
+      "is_correction": true
+    },
+    {
+      "code": "EXPR-FR-03",
+      "language": "FR",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"R\" français (uvulaire) est correctement produit.",
+      "error_type": "R",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-FR-04",
+      "language": "FR",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"R\" français n'est pas maîtrisé : il est roulé ou absent.",
+      "error_type": "R",
+      "is_correction": true
+    },
+    {
+      "code": "EXPR-FR-05",
+      "language": "FR",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"U\" français [y] est distinct du \"OU\" [u].",
+      "error_type": "U vs OU",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-FR-06",
+      "language": "FR",
+      "category": "PRONONCIATION",
+      "text_fr": "Vous confondez le \"U\" et le \"OU\" français.",
+      "error_type": "U vs OU",
+      "is_correction": true
+    },
+    {
+      "code": "EXPR-FR-07",
+      "language": "FR",
+      "category": "PRONONCIATION",
+      "text_fr": "Les liaisons obligatoires sont respectées.",
+      "error_type": "Liaisons",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-FR-08",
+      "language": "FR",
+      "category": "PRONONCIATION",
+      "text_fr": "Les liaisons obligatoires sont souvent omises.",
+      "error_type": "Liaisons",
+      "is_correction": true
+    },
+    {
+      "code": "EXPR-FR-09",
+      "language": "FR",
+      "category": "PRONONCIATION",
+      "text_fr": "L'enchaînement vocalique est fluide.",
+      "error_type": "Enchaînement",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-FR-10",
+      "language": "FR",
+      "category": "PRONONCIATION",
+      "text_fr": "Les \"e\" muets sont correctement gérés.",
+      "error_type": "E muet",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-FR-11",
+      "language": "FR",
+      "category": "PRONONCIATION",
+      "text_fr": "L'intonation française (montante pour les questions) est respectée.",
+      "error_type": "Intonation",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-FR-12",
+      "language": "FR",
+      "category": "PRONONCIATION",
+      "text_fr": "Votre intonation reste celle de votre langue maternelle.",
+      "error_type": "Intonation",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-FR-01",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'accord du participe passé avec avoir + COD antéposé est correct.",
+      "error_type": "Accord PP",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-FR-02",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'accord du participe passé est mal maîtrisé.",
+      "error_type": "Accord PP",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-FR-03",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le subjonctif est utilisé correctement après les verbes de volonté, doute, émotion.",
+      "error_type": "Subjonctif",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-FR-04",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le subjonctif est souvent remplacé par l'indicatif.",
+      "error_type": "Subjonctif",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-FR-05",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "La concordance des temps est respectée.",
+      "error_type": "Concordance",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-FR-06",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "La concordance des temps n'est pas respectée dans le discours indirect.",
+      "error_type": "Concordance",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-FR-07",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les pronoms COD et COI sont correctement placés et accordés.",
+      "error_type": "Pronoms",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-FR-08",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le placement des pronoms est incorrect.",
+      "error_type": "Pronoms",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-FR-09",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "La négation est complète (ne...pas, ne...plus, ne...jamais).",
+      "error_type": "Négation",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-FR-10",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le \"ne\" de la négation est systématiquement oublié.",
+      "error_type": "Négation",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-FR-11",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les articles partitifs (du, de la, des) sont correctement utilisés.",
+      "error_type": "Partitifs",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-FR-12",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les articles partitifs sont mal utilisés ou absents.",
+      "error_type": "Partitifs",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-FR-13",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les prépositions de lieu sont correctes (à, en, au, aux).",
+      "error_type": "Prépositions",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-FR-14",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les prépositions de lieu sont souvent incorrectes.",
+      "error_type": "Prépositions",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-FR-15",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le genre des noms est généralement correct.",
+      "error_type": "Genre",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-FR-16",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le genre des noms est souvent incorrect.",
+      "error_type": "Genre",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-FR-17",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le passé composé et l'imparfait sont correctement distingués.",
+      "error_type": "PC vs Imparfait",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-FR-18",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le passé composé et l'imparfait sont confondus.",
+      "error_type": "PC vs Imparfait",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-FR-19",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'accord de l'adjectif en genre et nombre est respecté.",
+      "error_type": "Accord adj.",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-FR-20",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'accord de l'adjectif est souvent oublié ou incorrect.",
+      "error_type": "Accord adj.",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-FR-EN-01",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous placez l'adjectif avant le nom comme en anglais : en français, il va généralement après.",
+      "error_type": "Anglais - Adjectif",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-FR-EN-02",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous utilisez le present perfect anglais au lieu du passé composé français.",
+      "error_type": "Anglais - Temps",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-FR-ES-01",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous omettez les articles comme en espagnol : ils sont obligatoires en français.",
+      "error_type": "Espagnol - Articles",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-FR-DE-01",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous placez le verbe à la fin comme en allemand : en français, l'ordre est SVO.",
+      "error_type": "Allemand - Ordre",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-FR-ZH-01",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous omettez les conjugaisons comme en chinois : en français, le verbe se conjugue.",
+      "error_type": "Chinois - Conjugaison",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-FR-RU-01",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous omettez les articles comme en russe : ils sont essentiels en français.",
+      "error_type": "Russe - Articles",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-FR-PT-01",
+      "language": "FR",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous confondez les structures proches du portugais : attention aux faux amis.",
+      "error_type": "Portugais - Faux amis",
+      "is_correction": true
+    },
+    {
+      "code": "TECH-FR-V01",
+      "language": "FR",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : école de ski, cours/leçon, débutant, intermédiaire, confirmé/expert.",
+      "context": "Niveaux",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-FR-V02",
+      "language": "FR",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : chasse-neige, virage parallèle, bâtons, carres.",
+      "context": "Technique",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-FR-V03",
+      "language": "FR",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : pliez les genoux, penchez-vous en avant, transfert de poids.",
+      "context": "Instructions",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-FR-V04",
+      "language": "FR",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : télésiège, téléski, télécabine, téléphérique.",
+      "context": "Remontées",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-FR-V05",
+      "language": "FR",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : garde-corps, repose-pieds, lever, baisser.",
+      "context": "Remontées",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-FR-V06",
+      "language": "FR",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : regardez devant vous, suivez-moi, arrêtez-vous ici, très bien / bravo.",
+      "context": "Instructions",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-FR-V07",
+      "language": "FR",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : spatules, talons, fixations, chaussures de ski.",
+      "context": "Équipement",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-FR-V08",
+      "language": "FR",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : piste, piste verte/bleue/rouge/noire, hors-piste, bosses.",
+      "context": "Pistes",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-FR-V09",
+      "language": "FR",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : station de ski, domaine skiable.",
+      "context": "Station",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-FR-V10",
+      "language": "FR",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : Où avez-vous mal ? Pouvez-vous bouger ? Les secours arrivent.",
+      "context": "Urgence",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-EN-01",
+      "language": "EN",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"TH\" anglais (θ / ð) est souvent remplacé par \"Z\" ou \"S\" par les francophones.",
+      "error_type": "TH",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-EN-02",
+      "language": "EN",
+      "category": "PRONONCIATION",
+      "text_fr": "Votre \"TH\" est prononcé comme un \"Z\" ou \"S\" : placez la langue entre les dents.",
+      "error_type": "TH",
+      "is_correction": true
+    },
+    {
+      "code": "EXPR-EN-03",
+      "language": "EN",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"H\" aspiré anglais est souvent omis par les francophones : \"house\" ≠ \"ouse\".",
+      "error_type": "H aspiré",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-EN-04",
+      "language": "EN",
+      "category": "PRONONCIATION",
+      "text_fr": "Vous omettez le \"H\" aspiré : c'est important en anglais.",
+      "error_type": "H aspiré",
+      "is_correction": true
+    },
+    {
+      "code": "EXPR-EN-05",
+      "language": "EN",
+      "category": "PRONONCIATION",
+      "text_fr": "La distinction entre voyelles courtes et longues est phonémique : \"ship\" vs \"sheep\".",
+      "error_type": "Voyelles",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-EN-06",
+      "language": "EN",
+      "category": "PRONONCIATION",
+      "text_fr": "Vous ne faites pas la distinction entre les voyelles courtes et longues.",
+      "error_type": "Voyelles",
+      "is_correction": true
+    },
+    {
+      "code": "EXPR-EN-07",
+      "language": "EN",
+      "category": "PRONONCIATION",
+      "text_fr": "Le \"R\" anglais (approximant) est différent du \"R\" français (uvulaire).",
+      "error_type": "R",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-EN-08",
+      "language": "EN",
+      "category": "PRONONCIATION",
+      "text_fr": "Votre \"R\" français est trop marqué : l'anglais utilise un R approximant.",
+      "error_type": "R",
+      "is_correction": true
+    },
+    {
+      "code": "EXPR-EN-09",
+      "language": "EN",
+      "category": "PRONONCIATION",
+      "text_fr": "L'accent tonique en anglais est variable et distinctif : \"REcord\" (n.) vs \"reCORD\" (v.).",
+      "error_type": "Accent tonique",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-EN-10",
+      "language": "EN",
+      "category": "PRONONCIATION",
+      "text_fr": "L'accent tonique est souvent mal placé dans vos mots.",
+      "error_type": "Accent tonique",
+      "is_correction": true
+    },
+    {
+      "code": "EXPR-EN-11",
+      "language": "EN",
+      "category": "PRONONCIATION",
+      "text_fr": "Les consonnes finales sont souvent avalées en anglais : \"last\" peut sonner \"las'\".",
+      "error_type": "Consonnes finales",
+      "is_correction": false
+    },
+    {
+      "code": "EXPR-EN-12",
+      "language": "EN",
+      "category": "PRONONCIATION",
+      "text_fr": "Attention à l'intonation anglaise qui monte et descend différemment du français.",
+      "error_type": "Intonation",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-EN-01",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les articles \"a/an/the\" sont souvent mal utilisés par les francophones.",
+      "error_type": "Articles",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-EN-02",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'utilisation des articles est incorrecte : révisez a/an/the.",
+      "error_type": "Articles",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-EN-03",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'ordre des mots est SVO en anglais, comme en français.",
+      "error_type": "Ordre SVO",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-EN-04",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'adjectif se place AVANT le nom en anglais : \"a big mountain\", pas \"a mountain big\".",
+      "error_type": "Adjectif",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-EN-05",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous placez l'adjectif après le nom comme en français : en anglais, il va avant.",
+      "error_type": "Adjectif",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-EN-06",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le présent simple vs présent continu : \"I ski\" (habitude) vs \"I am skiing\" (maintenant).",
+      "error_type": "Present simple/continu",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-EN-07",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous confondez le présent simple et le présent continu.",
+      "error_type": "Present simple/continu",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-EN-08",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le present perfect exprime un lien avec le présent : \"I have skied\" (expérience de vie).",
+      "error_type": "Present perfect",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-EN-09",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous utilisez mal le present perfect : il n'équivaut pas exactement au passé composé.",
+      "error_type": "Present perfect",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-EN-10",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les prépositions de lieu : \"at\" (point), \"in\" (espace fermé), \"on\" (surface).",
+      "error_type": "Prépositions",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-EN-11",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les prépositions sont souvent incorrectes : elles diffèrent du français.",
+      "error_type": "Prépositions",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-EN-12",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les modaux (can, must, should, will) ne prennent pas de \"to\" : \"I can ski\", pas \"I can to ski\".",
+      "error_type": "Modaux",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-EN-13",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous ajoutez \"to\" après les modaux : c'est incorrect.",
+      "error_type": "Modaux",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-EN-14",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le génitif ('s) exprime la possession : \"the student's skis\" = les skis de l'élève.",
+      "error_type": "Génitif",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-EN-15",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le conditionnel : \"If + past simple, would + infinitif\" : \"If I had time, I would ski\".",
+      "error_type": "Conditionnel",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-EN-16",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "La structure conditionnelle est incorrecte : révisez les \"if clauses\".",
+      "error_type": "Conditionnel",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-EN-17",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "\"Some\" (affirmatif) vs \"any\" (négatif/interrogatif) : \"I have some skis\" / \"Do you have any skis?\"",
+      "error_type": "Some/Any",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-EN-18",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "La distinction some/any n'est pas respectée.",
+      "error_type": "Some/Any",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-EN-19",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les phrasal verbs sont nombreux : \"put on\" (enfiler), \"take off\" (enlever), \"slow down\" (ralentir).",
+      "error_type": "Phrasal verbs",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-EN-20",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les phrasal verbs sont mal utilisés ou évités.",
+      "error_type": "Phrasal verbs",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-EN-21",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "\"For\" (durée) vs \"since\" (point de départ) : \"for 5 years\" / \"since 2019\".",
+      "error_type": "For/Since",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-EN-22",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "Vous confondez \"for\" et \"since\".",
+      "error_type": "For/Since",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-EN-23",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le passif : \"The lesson is given by...\" (La leçon est donnée par...).",
+      "error_type": "Passif",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-EN-24",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "La formation du passif est incorrecte.",
+      "error_type": "Passif",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-EN-25",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le discours indirect : \"He said he would come\" (Il a dit qu'il viendrait).",
+      "error_type": "Discours indirect",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-EN-26",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "Le discours indirect est mal formé : attention au \"backshift\".",
+      "error_type": "Discours indirect",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-EN-27",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "\"Make\" vs \"do\" : \"make a decision\" mais \"do an exercise\".",
+      "error_type": "Make/Do",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-EN-28",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "La distinction make/do est souvent incorrecte.",
+      "error_type": "Make/Do",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-EN-29",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les questions se forment avec l'auxiliaire : \"Do you ski?\" / \"Can you ski?\"",
+      "error_type": "Questions",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-EN-30",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "La formation des questions est incorrecte : utilisez l'auxiliaire.",
+      "error_type": "Questions",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-EN-31",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "La négation : \"I don't ski\" / \"I can't ski\" / \"I haven't skied\".",
+      "error_type": "Négation",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-EN-32",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "La formation de la négation est incorrecte.",
+      "error_type": "Négation",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-EN-33",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les comparatifs : \"easier\" / \"more difficult\" / \"better\" (irrégulier).",
+      "error_type": "Comparatifs",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-EN-34",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "La formation des comparatifs est incorrecte.",
+      "error_type": "Comparatifs",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-EN-35",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "Les superlatifs : \"the easiest\" / \"the most difficult\" / \"the best\".",
+      "error_type": "Superlatifs",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-EN-36",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "La formation des superlatifs est incorrecte.",
+      "error_type": "Superlatifs",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-EN-37",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "\"Much\" / \"many\" : \"much snow\" (indénombrable) vs \"many students\" (dénombrable).",
+      "error_type": "Much/Many",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-EN-38",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "La distinction much/many n'est pas respectée.",
+      "error_type": "Much/Many",
+      "is_correction": true
+    },
+    {
+      "code": "GRAM-EN-39",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "\"Used to\" exprime une habitude passée : \"I used to ski every winter\".",
+      "error_type": "Used to",
+      "is_correction": false
+    },
+    {
+      "code": "GRAM-EN-40",
+      "language": "EN",
+      "category": "GRAMMAIRE",
+      "text_fr": "L'utilisation de \"used to\" est incorrecte.",
+      "error_type": "Used to",
+      "is_correction": true
+    },
+    {
+      "code": "TECH-EN-V01",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : ski school (école de ski), lesson (cours), beginner (débutant), intermediate (intermédiaire), advanced (confirmé).",
+      "context": "Niveaux",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V02",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : snowplough/pizza (chasse-neige), parallel turn (virage parallèle), poles (bâtons), edges (carres).",
+      "context": "Technique",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V03",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : bend your knees (pliez les genoux), lean forward (penchez-vous en avant), weight transfer (transfert de poids).",
+      "context": "Instructions",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V04",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : chairlift (télésiège), drag lift/button lift (téléski), gondola/cable car (télécabine).",
+      "context": "Remontées",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V05",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : safety bar (garde-corps), footrest (repose-pieds), lift up/raise (lever), lower (baisser).",
+      "context": "Remontées",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V06",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : look ahead (regardez devant), follow me (suivez-moi), stop here (arrêtez-vous ici), well done (bien joué).",
+      "context": "Instructions",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V07",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : tips (spatules), tails (talons), bindings (fixations), boots (chaussures).",
+      "context": "Équipement",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V08",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : slope/piste/run (piste), green run (piste verte), off-piste (hors-piste), moguls/bumps (bosses).",
+      "context": "Pistes",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V09",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : ski resort (station de ski), ski area (domaine skiable).",
+      "context": "Station",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V10",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : Where does it hurt? (Où avez-vous mal?), Can you move? (Pouvez-vous bouger?), Help is on the way (Les secours arrivent).",
+      "context": "Urgence",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V11",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : helmet (casque), goggles (masque), gloves (gants), jacket (veste).",
+      "context": "Équipement",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V12",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : fresh snow/powder (neige fraîche), packed snow (neige damée), icy (verglacé), slushy (neige mouillée).",
+      "context": "Neige",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V13",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : turn (virage), carving (carving), sideslip (dérapage), traverse (traversée).",
+      "context": "Technique",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V14",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : inside ski/outside ski (ski intérieur/extérieur), uphill/downhill (amont/aval).",
+      "context": "Position",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V15",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : ski patrol (pisteurs), first aid (premiers secours), stretcher/sled (brancard/luge de secours).",
+      "context": "Sécurité",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V16",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : rental shop (magasin de location), ski pass/lift ticket (forfait), piste map (plan des pistes).",
+      "context": "Services",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V17",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : fall line (ligne de pente), gradient (pente), flat section (replat).",
+      "context": "Terrain",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V18",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : balance (équilibre), stance (position), posture (posture), alignment (alignement).",
+      "context": "Position",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V19",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : pressure (pression), rotation (rotation), edging (prise de carre), steering (conduite).",
+      "context": "Technique avancée",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V20",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : Watch out! (Attention!), Coming through! (Je passe!), On your left/right! (Sur votre gauche/droite!).",
+      "context": "Communication piste",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V21",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : That's it! (C'est ça!), Keep going! (Continuez!), You're doing great! (Vous y êtes presque!)",
+      "context": "Encouragements",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V22",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : Try again (Essayez encore), Let's practice (Pratiquons), One more time (Une fois de plus).",
+      "context": "Pédagogie",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V23",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : closed (fermé), open (ouvert), groomed (damé), ungroomed (non damé).",
+      "context": "État des pistes",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V24",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : avalanche risk (risque d'avalanche), weather conditions (conditions météo), visibility (visibilité).",
+      "context": "Sécurité",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V25",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : meeting point (point de rendez-vous), gathering area (zone de regroupement), departure point (point de départ).",
+      "context": "Organisation",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V26",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : warm up (échauffement), cool down (récupération), stretch (étirement), rest (repos).",
+      "context": "Préparation physique",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V27",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : children's area (zone enfants), learning area (espace débutants), terrain park (snowpark).",
+      "context": "Zones",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V28",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : private lesson (cours particulier), group lesson (cours collectif), intensive course (stage intensif).",
+      "context": "Types de cours",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V29",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : morning session (séance du matin), afternoon session (séance de l'après-midi), full day (journée complète).",
+      "context": "Horaires",
+      "is_correction": false
+    },
+    {
+      "code": "TECH-EN-V30",
+      "language": "EN",
+      "category": "VOCABULAIRE",
+      "text_fr": "Rappel : booking (réservation), cancellation (annulation), confirmation (confirmation), availability (disponibilité).",
+      "context": "Administration",
+      "is_correction": false
+    }
+  ],
+  "statistics": {
+    "by_language": {
+      "COMMON": 45,
+      "EN": 82,
+      "PT": 40,
+      "ES": 40,
+      "NL": 36,
+      "RU": 36,
+      "IT": 39,
+      "ZH": 36,
+      "DE": 42,
+      "FR": 49
+    },
+    "by_category": {
+      "INTRODUCTION": 15,
+      "COMPREHENSION": 20,
+      "CONCLUSION": 10,
+      "PRONONCIATION": 96,
+      "GRAMMAIRE": 194,
+      "VOCABULAIRE": 110
+    },
+    "corrections_vs_explanations": {
+      "corrections": 95,
+      "explanations": 350
+    }
+  }
+}

@@ -1321,6 +1321,7 @@ export type Database = {
         ]
       }
       instructors: {
+        Row: {
           alias: string[] | null
           civilite: string | null
           pays: string | null
@@ -3221,8 +3222,11 @@ export type Database = {
           active: boolean
           category: string
           code: string | null
+          context: string | null
           created_at: string
+          error_type: string | null
           id: string
+          is_correction: boolean
           is_positive: boolean
           language: string
           level_max: string | null
@@ -3236,8 +3240,11 @@ export type Database = {
           active?: boolean
           category: string
           code?: string | null
+          context?: string | null
           created_at?: string
+          error_type?: string | null
           id?: string
+          is_correction?: boolean
           is_positive?: boolean
           language: string
           level_max?: string | null
@@ -3251,8 +3258,11 @@ export type Database = {
           active?: boolean
           category?: string
           code?: string | null
+          context?: string | null
           created_at?: string
+          error_type?: string | null
           id?: string
+          is_correction?: boolean
           is_positive?: boolean
           language?: string
           level_max?: string | null

@@ -67,16 +67,38 @@ import {
   type TestPhrase,
 } from "@/hooks/useTestPhrases";
 import {
-  LANGUAGE_FLAGS,
-  LANGUAGE_LABELS,
-  LANGUAGES,
-  CATEGORIES,
-  CATEGORY_LABELS,
   PROFESSIONS,
   PROFESSION_LABELS,
   LEVELS,
-  generatePhraseCode,
 } from "@/lib/evaluation-utils";
+import {
+  FILE_CATEGORY_LABELS,
+  FILE_LANGUAGE_FLAGS,
+  FILE_LANGUAGE_LABELS,
+  PHRASE_BANK_COMMON,
+  fileCategoryLabel,
+  fileLanguageLabel,
+} from "@/lib/test-phrases-bank";
+
+const FILE_LANGUAGES = Object.keys(FILE_LANGUAGE_LABELS);
+const FILE_CATEGORIES = Object.keys(FILE_CATEGORY_LABELS);
+const DEFAULT_FILE_CATEGORY = "INTRODUCTION";
+
+interface PhraseFormData {
+  language: string;
+  category: string;
+  profession: string;
+  level_min: string;
+  level_max: string;
+  code: string;
+  text_fr: string;
+  context: string;
+  error_type: string;
+  is_correction: boolean;
+  is_positive: boolean;
+  order_index: number;
+  active: boolean;
+}
 
 export default function AdminPhrases() {
   const { toast } = useToast();
@@ -96,14 +118,17 @@ export default function AdminPhrases() {
   const [selectedPhrase, setSelectedPhrase] = useState<TestPhrase | null>(null);
 
   // Form state
-  const [formData, setFormData] = useState({
-    language: "all",
-    category: "introduction",
+  const [formData, setFormData] = useState<PhraseFormData>({
+    language: PHRASE_BANK_COMMON,
+    category: DEFAULT_FILE_CATEGORY,
     profession: "",
     level_min: "",
     level_max: "",
     code: "",
     text_fr: "",
+    context: "",
+    error_type: "",
+    is_correction: false,
     is_positive: true,
     order_index: 0,
     active: true,
@@ -131,13 +156,16 @@ export default function AdminPhrases() {
   const openCreateDialog = () => {
     setSelectedPhrase(null);
     setFormData({
-      language: "all",
-      category: "introduction",
+      language: PHRASE_BANK_COMMON,
+      category: DEFAULT_FILE_CATEGORY,
       profession: "",
       level_min: "",
       level_max: "",
       code: "",
       text_fr: "",
+      context: "",
+      error_type: "",
+      is_correction: false,
       is_positive: true,
       order_index: (phrases?.length || 0) + 1,
       active: true,
@@ -155,6 +183,9 @@ export default function AdminPhrases() {
       level_max: phrase.level_max || "",
       code: phrase.code || "",
       text_fr: phrase.text_fr,
+      context: phrase.context || "",
+      error_type: phrase.error_type || "",
+      is_correction: phrase.is_correction,
       is_positive: phrase.is_positive,
       order_index: phrase.order_index,
       active: phrase.active,
@@ -169,6 +200,8 @@ export default function AdminPhrases() {
       level_min: formData.level_min || null,
       level_max: formData.level_max || null,
       code: formData.code || null,
+      context: formData.context || null,
+      error_type: formData.error_type || null,
     };
 
     if (selectedPhrase) {
@@ -289,9 +322,9 @@ export default function AdminPhrases() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="_all">Toutes</SelectItem>
-                  {LANGUAGES.map((lang) => (
+                  {FILE_LANGUAGES.map((lang) => (
                     <SelectItem key={lang} value={lang}>
-                      {LANGUAGE_FLAGS[lang]} {LANGUAGE_LABELS[lang]}
+                      {FILE_LANGUAGE_FLAGS[lang]} {FILE_LANGUAGE_LABELS[lang]}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -303,9 +336,9 @@ export default function AdminPhrases() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="_all">Toutes</SelectItem>
-                  {CATEGORIES.map((cat) => (
+                  {FILE_CATEGORIES.map((cat) => (
                     <SelectItem key={cat} value={cat}>
-                      {CATEGORY_LABELS[cat]}
+                      {FILE_CATEGORY_LABELS[cat]}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -388,13 +421,11 @@ export default function AdminPhrases() {
                         {phrase.code || "-"}
                       </TableCell>
                       <TableCell>
-                        <span className="mr-1">{LANGUAGE_FLAGS[phrase.language]}</span>
-                        <span className="text-sm">
-                          {LANGUAGE_LABELS[phrase.language] || phrase.language}
-                        </span>
+                        <span className="mr-1">{FILE_LANGUAGE_FLAGS[phrase.language]}</span>
+                        <span className="text-sm">{fileLanguageLabel(phrase.language)}</span>
                       </TableCell>
                       <TableCell className="text-sm">
-                        {CATEGORY_LABELS[phrase.category] || phrase.category}
+                        {fileCategoryLabel(phrase.category)}
                       </TableCell>
                       <TableCell className="text-sm">
                         {phrase.profession 
@@ -485,7 +516,7 @@ export default function AdminPhrases() {
               <Input
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                placeholder="Ex: INT-0-01"
+                placeholder="Ex: INTRO-01"
               />
             </div>
 
@@ -499,9 +530,9 @@ export default function AdminPhrases() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {LANGUAGES.map((lang) => (
+                  {FILE_LANGUAGES.map((lang) => (
                     <SelectItem key={lang} value={lang}>
-                      {LANGUAGE_FLAGS[lang]} {LANGUAGE_LABELS[lang]}
+                      {FILE_LANGUAGE_FLAGS[lang]} {FILE_LANGUAGE_LABELS[lang]}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -518,9 +549,9 @@ export default function AdminPhrases() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {CATEGORIES.map((cat) => (
+                  {FILE_CATEGORIES.map((cat) => (
                     <SelectItem key={cat} value={cat}>
-                      {CATEGORY_LABELS[cat]}
+                      {FILE_CATEGORY_LABELS[cat]}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -593,15 +624,35 @@ export default function AdminPhrases() {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label>Contexte (optionnel)</Label>
+              <Input
+                value={formData.context}
+                onChange={(e) => setFormData({ ...formData, context: e.target.value })}
+                placeholder="Ex: Accueil candidat"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Point de langue (optionnel)</Label>
+              <Input
+                value={formData.error_type}
+                onChange={(e) => setFormData({ ...formData, error_type: e.target.value })}
+                placeholder="Ex: Accord participe"
+              />
+            </div>
+
             <div className="flex items-center gap-4">
               <div className="flex items-center space-x-2">
                 <Switch
-                  id="is_positive"
-                  checked={formData.is_positive}
-                  onCheckedChange={(v) => setFormData({ ...formData, is_positive: v })}
+                  id="is_correction"
+                  checked={formData.is_correction}
+                  onCheckedChange={(v) =>
+                    setFormData({ ...formData, is_correction: v, is_positive: !v })
+                  }
                 />
-                <Label htmlFor="is_positive">
-                  {formData.is_positive ? "Phrase positive" : "Lacune / Point négatif"}
+                <Label htmlFor="is_correction">
+                  {formData.is_correction ? "Correction au candidat" : "Explication"}
                 </Label>
               </div>
             </div>

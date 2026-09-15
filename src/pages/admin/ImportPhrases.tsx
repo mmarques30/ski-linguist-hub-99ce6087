@@ -1,50 +1,71 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useBulkImportPhrases, useTestPhrases } from "@/hooks/useTestPhrases";
 import { Upload, FileJson, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
-import { LANGUAGE_FLAGS, CATEGORY_LABELS } from "@/lib/evaluation-utils";
-import testPhrasesData from "@/data/test_phrases_import.json";
+import {
+  FILE_LANGUAGE_FLAGS,
+  fileCategoryLabel,
+  fileLanguageLabel,
+  phraseBankCounts,
+  type PhraseBankItem,
+} from "@/lib/test-phrases-bank";
+import testPhrasesData from "@/data/test_phrases_complete.json";
 
-interface PhraseToImport {
+interface FilePhrase {
+  code: string;
   language: string;
   category: string;
-  profession: string | null;
-  level_min: string | null;
-  level_max: string | null;
-  code: string;
   text_fr: string;
-  is_positive: boolean;
-  order_index: number;
+  context?: string;
+  error_type?: string;
+  is_correction: boolean;
+}
+
+/** Les étiquettes langue et catégorie du fichier partent en base telles quelles. */
+function toInsertRow(phrase: FilePhrase, index: number) {
+  return {
+    language: phrase.language,
+    category: phrase.category,
+    profession: null,
+    level_min: null,
+    level_max: null,
+    code: phrase.code,
+    text_fr: phrase.text_fr,
+    context: phrase.context ?? null,
+    error_type: phrase.error_type ?? null,
+    is_correction: phrase.is_correction,
+    is_positive: !phrase.is_correction,
+    order_index: index + 1,
+    active: true,
+  };
 }
 
 export default function ImportPhrasesPage() {
   const { toast } = useToast();
   const bulkImport = useBulkImportPhrases();
   const { data: existingPhrases } = useTestPhrases({ active: null });
-  
-  const [phrases] = useState<PhraseToImport[]>(testPhrasesData.phrases);
+
+  const phrases = testPhrasesData.phrases as FilePhrase[];
   const [replaceExisting, setReplaceExisting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{ success: number; skipped: number } | null>(null);
 
-  const existingCodes = new Set(existingPhrases?.map(p => p.code) || []);
-  const newPhrases = phrases.filter(p => !existingCodes.has(p.code));
-  const duplicatePhrases = phrases.filter(p => existingCodes.has(p.code));
+  const existingCodes = useMemo(
+    () => new Set(existingPhrases?.map((p) => p.code) || []),
+    [existingPhrases],
+  );
+  const newPhrases = phrases.filter((p) => !existingCodes.has(p.code));
+  const duplicatePhrases = phrases.filter((p) => existingCodes.has(p.code));
 
-  const categoryStats = phrases.reduce((acc, p) => {
-    acc[p.category] = (acc[p.category] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const languageStats = phrases.reduce((acc, p) => {
-    acc[p.language] = (acc[p.language] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const counts = useMemo(() => phraseBankCounts(phrases as unknown as PhraseBankItem[]), [phrases]);
+  const corrections = phrases.filter((p) => p.is_correction).length;
+  const announced = testPhrasesData.metadata.total_phrases;
 
   const handleImport = async () => {
     setImporting(true);
@@ -52,43 +73,31 @@ export default function ImportPhrasesPage() {
 
     try {
       const phrasesToImport = replaceExisting ? phrases : newPhrases;
-      
+
       if (phrasesToImport.length === 0) {
         toast({
           title: "Rien à importer",
           description: "Toutes les phrases existent déjà dans la base de données.",
-          variant: "destructive"
+          variant: "destructive",
         });
         setImporting(false);
         return;
       }
 
-      // Transform to match expected format
-      const formattedPhrases = phrasesToImport.map(p => ({
-        language: p.language,
-        category: p.category,
-        profession: p.profession,
-        level_min: p.level_min,
-        level_max: p.level_max,
-        code: p.code,
-        text_fr: p.text_fr,
-        is_positive: p.is_positive,
-        order_index: p.order_index,
-        active: true
-      }));
+      await bulkImport.mutateAsync(
+        phrasesToImport.map((phrase) => toInsertRow(phrase, phrases.indexOf(phrase))),
+      );
 
-      await bulkImport.mutateAsync(formattedPhrases);
-      
       setImportResult({
         success: phrasesToImport.length,
-        skipped: replaceExisting ? 0 : duplicatePhrases.length
+        skipped: replaceExisting ? 0 : duplicatePhrases.length,
       });
     } catch (error) {
       console.error("Import error:", error);
       toast({
         title: "Erreur d'import",
         description: error instanceof Error ? error.message : "Une erreur est survenue",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setImporting(false);
@@ -105,31 +114,40 @@ export default function ImportPhrasesPage() {
           </p>
         </div>
 
+        {announced !== phrases.length && (
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Écart avec la métadonnée du fichier</AlertTitle>
+            <AlertDescription>
+              Le fichier annonce {announced} phrases et en contient {phrases.length}. Seules
+              les {phrases.length} phrases présentes sont importées, sans dédoublonnage ni
+              renommage.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="grid gap-6 md:grid-cols-2">
-          {/* File Preview */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileJson className="h-5 w-5" />
                 Fichier à importer
               </CardTitle>
-              <CardDescription>
-                {testPhrasesData.metadata.description}
-              </CardDescription>
+              <CardDescription>{testPhrasesData.metadata.description}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-sm text-muted-foreground">
-                Version: {testPhrasesData.metadata.version} | 
-                Créé: {testPhrasesData.metadata.created}
+                Version : {testPhrasesData.metadata.version} · Créé :{" "}
+                {testPhrasesData.metadata.created_date}
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-medium mb-2">Par catégorie</h4>
                   <div className="space-y-1">
-                    {Object.entries(categoryStats).map(([cat, count]) => (
+                    {Object.entries(counts.byCategory).map(([cat, count]) => (
                       <div key={cat} className="flex justify-between text-sm">
-                        <span>{CATEGORY_LABELS[cat as keyof typeof CATEGORY_LABELS] || cat}</span>
+                        <span>{fileCategoryLabel(cat)}</span>
                         <Badge variant="secondary">{count}</Badge>
                       </div>
                     ))}
@@ -138,10 +156,10 @@ export default function ImportPhrasesPage() {
                 <div>
                   <h4 className="font-medium mb-2">Par langue</h4>
                   <div className="space-y-1">
-                    {Object.entries(languageStats).map(([lang, count]) => (
+                    {Object.entries(counts.byLanguage).map(([lang, count]) => (
                       <div key={lang} className="flex justify-between text-sm">
                         <span>
-                          {LANGUAGE_FLAGS[lang as keyof typeof LANGUAGE_FLAGS] || ""} {lang}
+                          {FILE_LANGUAGE_FLAGS[lang] || ""} {fileLanguageLabel(lang)}
                         </span>
                         <Badge variant="secondary">{count}</Badge>
                       </div>
@@ -150,15 +168,17 @@ export default function ImportPhrasesPage() {
                 </div>
               </div>
 
-              <div className="pt-4 border-t">
+              <div className="pt-4 border-t space-y-1">
                 <div className="flex items-center gap-2 text-lg font-semibold">
-                  Total: {phrases.length} phrases
+                  Total : {counts.total} phrases
                 </div>
+                <p className="text-sm text-muted-foreground">
+                  {corrections} corrections · {counts.total - corrections} explications
+                </p>
               </div>
             </CardContent>
           </Card>
 
-          {/* Import Options */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -219,8 +239,8 @@ export default function ImportPhrasesPage() {
                 </div>
               )}
 
-              <Button 
-                onClick={handleImport} 
+              <Button
+                onClick={handleImport}
                 disabled={importing || (newPhrases.length === 0 && !replaceExisting)}
                 className="w-full"
                 size="lg"

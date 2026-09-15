@@ -43,6 +43,7 @@ import {
   suggestsMethodoNote,
   type FiveScores,
 } from "@/lib/evaluation-scores";
+import { blocCommentsWithoutPhrases, phraseIdsForBloc } from "@/lib/test-phrases-bank";
 import { collectTutoiement } from "@/lib/vouvoiement";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -112,16 +113,20 @@ export default function EvaluationForm() {
       BLOC_CATEGORIES.forEach((cat) => {
         const commentKey = `comments_${cat}` as keyof typeof existingEvaluation;
         const bloc = existingEvaluation[blocKey(cat)];
+        const blocText = typeof bloc === "string" ? bloc : "";
+        const selectedIds = phraseIdsForBloc(
+          existingEvaluation.selected_phrase_ids,
+          allPhrases ?? [],
+          blocText,
+        );
+        const blocPhraseTexts = selectedIds
+          .map((id) => allPhrases?.find((p) => p.id === id)?.text_fr ?? "")
+          .filter(Boolean);
         next[cat] = {
-          selectedIds:
-            existingEvaluation.selected_phrase_ids?.filter((id) => {
-              const phrase = allPhrases?.find((p) => p.id === id);
-              return phrase?.category === cat;
-            }) || [],
+          selectedIds,
           comments:
             (existingEvaluation[commentKey] as string) ||
-            (typeof bloc === "string" ? bloc : "") ||
-            "",
+            blocCommentsWithoutPhrases(blocText, blocPhraseTexts),
         };
       });
       setSections(next);
