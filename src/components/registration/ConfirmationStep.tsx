@@ -23,6 +23,7 @@ import {
   PAYMENT_OPTION_LABELS,
   REGISTRATION_PAYMENT_OPTIONS,
   requiresStripeCheckout,
+  type RegistrationPaymentOption,
 } from "@/lib/registration-payments";
 import {
   studentFacingPisteFromCecrl,
@@ -81,10 +82,13 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
   const isCustomFormat = data.isCustomFormat || isCustomFormatDuration(data.duration);
   const coursePrice = data.price ?? 0;
   const hasPaymentStep = !isCustomFormat && coursePrice > 0;
-  const paymentOption = data.paymentOption ?? REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE;
-  const paymentSummary = hasPaymentStep
-    ? getRegistrationPaymentSummary(coursePrice, paymentOption)
-    : null;
+  // Décision Paula : aucun mode de règlement coché par défaut, donc aucun repli ici.
+  const paymentOption = data.paymentOption ?? null;
+  const paymentMissing = hasPaymentStep && !paymentOption;
+  const paymentSummary =
+    hasPaymentStep && paymentOption
+      ? getRegistrationPaymentSummary(coursePrice, paymentOption)
+      : null;
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -186,7 +190,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                       {formatPriceEUR(
                         getRegistrationPaymentSummary(
                           result.coursePrice,
-                          result.paymentOption as typeof paymentOption
+                          result.paymentOption as RegistrationPaymentOption
                         ).amountDueNow
                       )}
                     </strong>{" "}
@@ -214,10 +218,10 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
 
             {result.coursePrice &&
               result.paymentOption &&
-              hasChequeBalance(result.paymentOption as typeof paymentOption) &&
+              hasChequeBalance(result.paymentOption as RegistrationPaymentOption) &&
               getRegistrationPaymentSummary(
                 result.coursePrice,
-                result.paymentOption as typeof paymentOption
+                result.paymentOption as RegistrationPaymentOption
               ).balanceAfterDossier > 0 && (
                 <Alert>
                   <AlertDescription className="text-left space-y-2">
@@ -226,7 +230,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                       {formatPriceEUR(
                         getRegistrationPaymentSummary(
                           result.coursePrice,
-                          result.paymentOption as typeof paymentOption
+                          result.paymentOption as RegistrationPaymentOption
                         ).balanceAfterDossier
                       )}{" "}
                       à envoyer avec votre inscription
@@ -439,10 +443,19 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
           </Alert>
         )}
 
+        {paymentMissing && (
+          <Alert variant="destructive">
+            <AlertDescription>
+              Aucun mode de règlement n'est choisi. Revenez à l'étape « Paiement » pour en
+              sélectionner un avant de soumettre.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Button
           onClick={handleSubmit}
           className="w-full"
-          disabled={!accepted || isSubmitting || !testCompleted}
+          disabled={!accepted || isSubmitting || !testCompleted || paymentMissing}
         >
           {isSubmitting ? (
             <>
