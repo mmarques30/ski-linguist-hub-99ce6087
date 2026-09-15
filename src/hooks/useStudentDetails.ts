@@ -29,7 +29,7 @@ export function useStudentDetails(studentId: string | undefined) {
         .maybeSingle();
 
       if (studentError) throw studentError;
-      if (!student) throw new Error("Aluno não encontrado");
+      if (!student) throw new Error("Stagiaire introuvable");
 
       // Fetch all inscriptions for this student
       const { data: inscriptions, error: inscriptionsError } = await supabase

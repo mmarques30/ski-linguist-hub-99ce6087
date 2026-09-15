@@ -46,6 +46,7 @@ import { InscriptionFormDialog } from "@/components/inscriptions/InscriptionForm
 import { EndPackDialog } from "@/components/endpack/EndPackDialog";
 import { InvoiceCreateDialog } from "@/components/invoices/InvoiceCreateDialog";
 import { ScheduleApprovalDialog } from "@/components/inscriptions/ScheduleApprovalDialog";
+import { InscriptionStatusMenu } from "@/components/inscriptions/InscriptionStatusMenu";
 import { PlacementTestSummaryCard } from "@/components/inscriptions/PlacementTestSummaryCard";
 import { InscriptionDocumentsCard } from "@/components/inscriptions/InscriptionDocumentsCard";
 import { InscriptionClientAccessCard } from "@/components/inscriptions/InscriptionClientAccessCard";
@@ -94,7 +95,7 @@ const translations = {
   createdAt: { fr: "Date de création", "pt-BR": "Data de criação", en: "Created At" },
   notSpecified: { fr: "Non spécifié", "pt-BR": "Não especificado", en: "Not specified" },
   editInscription: { fr: "Modifier", "pt-BR": "Editar", en: "Edit" },
-  endPack: { fr: "End Pack", "pt-BR": "End Pack", en: "End Pack" },
+  endPack: { fr: "Pack fin de formation", "pt-BR": "Pacote de fim de formação", en: "End Pack" },
   createInvoice: { fr: "Créer facture", "pt-BR": "Criar fatura", en: "Create Invoice" },
   deleteInscription: { fr: "Supprimer", "pt-BR": "Excluir", en: "Delete" },
   confirmDelete: { fr: "Confirmer la suppression", "pt-BR": "Confirmar exclusão", en: "Confirm Deletion" },
@@ -261,9 +262,12 @@ export default function InscriptionDetails() {
               <h1 className="text-2xl font-bold">
                 {inscription.code || t(translations.inscriptionDetails)}
               </h1>
-              <Badge className={statusStyles[inscription.status || ""] || "bg-gray-100 text-gray-800"}>
-                {statusLabels[inscription.status || ""] || inscription.status}
-              </Badge>
+              <InscriptionStatusMenu
+                inscriptionId={inscription.id}
+                status={inscription.status || ""}
+                startDate={inscription.start_date}
+                readOnly={!editable}
+              />
             </div>
             <p className="text-muted-foreground">
               {inscription.student_name} • {inscription.language}
@@ -770,7 +774,7 @@ export default function InscriptionDetails() {
                   toast.success(t(translations.deleted));
                   navigate("/inscriptions");
                 } catch (error: any) {
-                  toast.error(error.message || "Error deleting inscription");
+                  toast.error(error.message || "Suppression de l'inscription impossible");
                 }
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -834,6 +838,9 @@ export default function InscriptionDetails() {
               niveau_technique_sortie: progression?.niveau_technique_sortie ?? null,
               objectif_atteint: progression?.objectif_atteint ?? null,
               commentaire_sortie: progression?.commentaire_sortie ?? null,
+              status: inscription.status,
+              end_pack_sent_at: (inscription as { end_pack_sent_at?: string | null })
+                .end_pack_sent_at ?? null,
             }}
           />
 

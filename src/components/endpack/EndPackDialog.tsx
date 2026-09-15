@@ -30,6 +30,12 @@ import {
   OBJECTIF_ATTEINT_LABELS,
   type ObjectifAtteint,
 } from "@/lib/certificate-progression";
+import {
+  canCloseWithEndPack,
+  endPackBlockedReason,
+  getStatusLabel,
+  getStatusStyle,
+} from "@/lib/inscription-status";
 
 interface EndPackDialogProps {
   open: boolean;
@@ -54,6 +60,8 @@ interface EndPackDialogProps {
     niveau_technique_sortie?: string | null;
     objectif_atteint?: string | null;
     commentaire_sortie?: string | null;
+    status?: string | null;
+    end_pack_sent_at?: string | null;
   };
   onSuccess?: () => void;
 }
@@ -115,8 +123,26 @@ export function EndPackDialog({
     [merged]
   );
 
+  const statut = inscription.status ?? null;
+  // Générer le pack clôture l'inscription : la base accepte le passage à
+  // « Terminée » depuis brouillon, en attente, confirmée ou en cours dès que
+  // end_pack_sent_at est renseigné. Seuls les statuts finaux restent fermés.
+  const clotureBloquee = statut
+    ? endPackBlockedReason(statut, inscription.end_pack_sent_at ?? null)
+    : null;
+  const clotureFermee = statut ? !canCloseWithEndPack(statut) : false;
+
   const handleGenerate = async () => {
     if (generateCertificate && !exitReady) return;
+    try {
+      await generateAll();
+    } catch {
+      // Le message est affiché par le hook ; la boîte reste ouverte pour
+      // corriger ce qui bloque.
+    }
+  };
+
+  const generateAll = async () => {
     const res = await generateEndPack.mutateAsync({
       inscriptionId: merged.id,
       studentId: merged.student_id,
@@ -172,7 +198,26 @@ export function EndPackDialog({
               {inscription.duration_hours && (
                 <Badge variant="secondary">{inscription.duration_hours}h</Badge>
               )}
+              {statut && (
+                <Badge className={getStatusStyle(statut)}>
+                  {getStatusLabel(statut, "fr")}
+                </Badge>
+              )}
             </div>
+
+            {clotureBloquee ? (
+              <Alert variant={clotureFermee ? "destructive" : "default"}>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>{clotureBloquee}</AlertDescription>
+              </Alert>
+            ) : (
+              statut && (
+                <p className="text-xs text-muted-foreground">
+                  La génération clôture l&apos;inscription :{" "}
+                  {getStatusLabel(statut, "fr")} → Terminée.
+                </p>
+              )
+            )}
 
             <Separator />
 
@@ -301,6 +346,7 @@ export function EndPackDialog({
                 disabled={
                   generateEndPack.isPending ||
                   progressionLoading ||
+                  clotureFermee ||
                   (!generateInvoice &&
                     !(generateCertificate && exitReady) &&
                     !sendSurvey)

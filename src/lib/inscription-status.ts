@@ -33,6 +33,77 @@ export function getNextStatuses(current: string): InscriptionStatus[] {
   return STATUS_TRANSITIONS[current as InscriptionStatus] ?? [];
 }
 
+// Statuts finaux : plus aucune transition n'en part.
+export const TERMINAL_STATUSES: InscriptionStatus[] = ['facturee', 'annulee'];
+
+export function isTerminalStatus(status: string): boolean {
+  return TERMINAL_STATUSES.includes(status as InscriptionStatus);
+}
+
+// Générer le pack de fin est l'acte de clôture : il porte l'inscription à
+// « Terminée » depuis n'importe quel statut vivant, sans passage manuel par
+// en attente / confirmée / en cours. Le déclencheur
+// validate_inscription_status_transition() applique la même règle en base.
+export const END_PACK_CLOSABLE_STATUSES: InscriptionStatus[] = [
+  'brouillon',
+  'en_attente',
+  'confirmee',
+  'en_cours',
+];
+
+export function canCloseWithEndPack(status: string): boolean {
+  return END_PACK_CLOSABLE_STATUSES.includes(status as InscriptionStatus);
+}
+
+/**
+ * Raison, en français, pour laquelle le pack de fin ne peut pas clôturer cette
+ * inscription. `null` quand la clôture est possible.
+ */
+export function endPackBlockedReason(
+  status: string,
+  endPackSentAt?: string | null
+): string | null {
+  if (endPackSentAt) {
+    return 'Le pack de fin a déjà été généré pour cette inscription : les documents existants sont réutilisés, le statut ne change plus.';
+  }
+  if (canCloseWithEndPack(status)) return null;
+  if (status === 'terminee') {
+    return 'Cette inscription est déjà terminée. Générer le pack complétera les documents manquants sans changer le statut.';
+  }
+  return `Une inscription « ${getStatusLabel(status, 'fr')} » ne peut plus être clôturée : son statut est final.`;
+}
+
+/**
+ * Phrase française expliquant un refus de transition, alignée sur le message
+ * du déclencheur. Sert aussi de garde-fou côté écran, avant l'aller-retour.
+ */
+export function describeRefusedTransition(from: string, to: string): string {
+  const depuis = getStatusLabel(from, 'fr');
+  const vers = getStatusLabel(to, 'fr');
+  const cibles = getNextStatuses(from);
+
+  if (cibles.length === 0) {
+    return `« ${depuis} » est un statut final : l'inscription ne peut plus changer d'état.`;
+  }
+
+  const liste = cibles.map((statut) => getStatusLabel(statut, 'fr')).join(', ');
+  return `Passage de « ${depuis} » à « ${vers} » impossible. Depuis « ${depuis} », les statuts possibles sont : ${liste}. Le pack de fin de formation, lui, clôture l'inscription quel que soit son statut.`;
+}
+
+/**
+ * Une formation déjà commencée ne peut plus être annulée : la base refuse la
+ * transition confirmée → annulée dans ce cas.
+ */
+export function cancellationBlockedReason(
+  status: string,
+  startDate: string | null,
+  today: string
+): string | null {
+  if (status !== 'confirmee') return null;
+  if (!startDate || startDate > today) return null;
+  return `La formation a débuté le ${startDate} : l'annulation n'est plus possible depuis « Confirmée ».`;
+}
+
 // Translated labels for each status
 export const STATUS_LABELS: Record<InscriptionStatus, { fr: string; 'pt-BR': string; en: string }> = {
   brouillon: { fr: 'Brouillon', 'pt-BR': 'Rascunho', en: 'Draft' },

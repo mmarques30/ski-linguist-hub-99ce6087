@@ -14,6 +14,8 @@ export interface InscriptionComplete {
   price: number | null;
   entry_level: string | null;
   exit_level?: string | null;
+  course_location?: string | null;
+  end_pack_sent_at?: string | null;
   season_id?: string | null;
   certification_result: string | null;
   created_at: string;
@@ -116,6 +118,57 @@ export function useUpdateInscriptionStatus() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["inscriptions"] });
       queryClient.invalidateQueries({ queryKey: ["inscription-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["inscription-details"] });
+      queryClient.invalidateQueries({ queryKey: ["inscription-timeline"] });
+      queryClient.invalidateQueries({ queryKey: ["inscriptions-a-avancer"] });
+    },
+  });
+}
+
+export interface StatusAdvanceReport {
+  dry_run: boolean;
+  transition: string;
+  nombre: number;
+  inscriptions: { code: string | null; debut: string }[];
+}
+
+/**
+ * Compte les inscriptions confirmées dont la date de début est atteinte : elles
+ * devraient être « En cours ». Le job pg_cron qui fait ce rattrapage la nuit
+ * existe mais reste inactif, donc l'écran propose de le déclencher à la main.
+ */
+export function useDueStatusAdvances() {
+  return useQuery({
+    queryKey: ["inscriptions-a-avancer"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("avancer_statuts_inscriptions", {
+        _dry_run: true,
+      });
+
+      if (error) throw error;
+      return data as unknown as StatusAdvanceReport;
+    },
+    retry: false,
+  });
+}
+
+export function useAdvanceDueStatuses() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc("avancer_statuts_inscriptions", {
+        _dry_run: false,
+      });
+
+      if (error) throw error;
+      return data as unknown as StatusAdvanceReport;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["inscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["inscription-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["inscription-details"] });
+      queryClient.invalidateQueries({ queryKey: ["inscriptions-a-avancer"] });
     },
   });
 }

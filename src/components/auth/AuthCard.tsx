@@ -13,8 +13,15 @@ import { useToast } from "@/hooks/use-toast";
 import fliLogo from "@/assets/fli-marca-black.png";
 
 const authSchema = z.object({
-  email: z.string().trim().email("Formato de email inválido").max(255, "Email muito longo"),
-  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres").max(72, "Senha muito longa"),
+  email: z
+    .string()
+    .trim()
+    .email("Adresse e-mail invalide")
+    .max(255, "Adresse e-mail trop longue"),
+  password: z
+    .string()
+    .min(6, "Le mot de passe doit comporter au moins 6 caractères")
+    .max(72, "Mot de passe trop long"),
 });
 
 export function AuthCard() {
@@ -45,7 +52,7 @@ export function AuthCard() {
       const firstError = validation.error.errors[0];
       toast({
         variant: "destructive",
-        title: "Erro de validação",
+        title: "Saisie incomplète",
         description: firstError.message,
       });
       return;
@@ -58,10 +65,13 @@ export function AuthCard() {
       if (error) {
         toast({
           variant: "destructive",
-          title: "Erro ao entrar",
-          description: error.message === "Invalid login credentials" 
-            ? "Email ou senha incorretos" 
-            : error.message,
+          title: "Connexion impossible",
+          description:
+            error.message === "Invalid login credentials"
+              ? "Adresse e-mail ou mot de passe incorrect"
+              : error.message === "Email not confirmed"
+                ? "Cette adresse n'a pas encore été confirmée"
+                : error.message,
         });
       } else {
         setLoginSuccess(true);
@@ -106,10 +116,10 @@ export function AuthCard() {
                 exit={{ opacity: 0 }}
               >
                 <CardTitle className="text-2xl text-foreground">
-                  Bem-vindo de volta
+                  Bienvenue
                 </CardTitle>
                 <CardDescription className="text-muted-foreground">
-                  Redirecionando para o painel...
+                  Redirection vers le tableau de bord…
                 </CardDescription>
               </motion.div>
             ) : (
@@ -120,10 +130,10 @@ export function AuthCard() {
                 exit={{ opacity: 0, y: -10 }}
               >
                 <CardTitle className="text-2xl text-foreground">
-                  Painel Administrativo
+                  Administration FLI
                 </CardTitle>
                 <CardDescription className="text-muted-foreground">
-                  Acesse sua conta para continuar
+                  Connectez-vous pour accéder au back-office
                 </CardDescription>
               </motion.div>
             )}
@@ -138,7 +148,7 @@ export function AuthCard() {
                 <Input
                   id="email-login"
                   type="email"
-                  placeholder="seu@email.com"
+                  placeholder="prenom@fli.fr"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="transition-all duration-200 focus:ring-2 focus:ring-primary"
@@ -147,7 +157,7 @@ export function AuthCard() {
               </motion.div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password-login" className="text-foreground">Senha</Label>
+              <Label htmlFor="password-login" className="text-foreground">Mot de passe</Label>
               <motion.div whileHover={{ scale: 1.01 }} whileFocus={{ scale: 1.01 }}>
                 <Input
                   id="password-login"
@@ -177,9 +187,9 @@ export function AuthCard() {
                       className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
                     />
                   ) : loginSuccess ? (
-                    "Sucesso"
+                    "Connecté"
                   ) : (
-                    "Entrar"
+                    "Se connecter"
                   )}
                 </Button>
               </motion.div>

@@ -25,17 +25,17 @@ import { fr, ptBR, enUS } from "date-fns/locale";
 
 const translations = {
   title: {
-    fr: "Dashboard de Gestão",
+    fr: "Tableau de bord",
     "pt-BR": "Painel de Gestão",
     en: "Management Dashboard",
   },
   subtitle: {
-    fr: "Visão completa das operações em tempo real",
+    fr: "Vue complète de l'activité en temps réel",
     "pt-BR": "Visão completa das operações em tempo real",
     en: "Complete view of real-time operations",
   },
   updatedNow: {
-    fr: "Atualizado agora",
+    fr: "Actualisé à l'instant",
     "pt-BR": "Atualizado agora",
     en: "Updated now",
   },

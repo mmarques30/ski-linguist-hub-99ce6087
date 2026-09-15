@@ -8,11 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Sun, Sunset, ExternalLink, Clock } from "lucide-react";
+import { Loader2, Sun, Sunset, ExternalLink, Clock, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { usePendingSchedules } from "@/hooks/usePendingSchedules";
 import { useBulkApproveSchedule } from "@/hooks/useApproveSchedule";
 import { SCHEDULE_ASSIGNMENT_DAYS_BEFORE } from "@/lib/placement-test-engine";
+import { getStatusLabel } from "@/lib/inscription-status";
 
 export default function ScheduleValidation() {
   const { data, isLoading, isError } = usePendingSchedules();
@@ -59,10 +60,26 @@ export default function ScheduleValidation() {
             Validation horaires J-{SCHEDULE_ASSIGNMENT_DAYS_BEFORE}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Inscriptions en attente de groupe matin / après-midi (début dans les{" "}
-            {SCHEDULE_ASSIGNMENT_DAYS_BEFORE} prochains jours)
+            Inscriptions en attente de groupe matin / après-midi : début dans les{" "}
+            {SCHEDULE_ASSIGNMENT_DAYS_BEFORE} prochains jours, et retards non traités,
+            quelle que soit l&apos;origine de l&apos;inscription.
           </p>
         </div>
+
+        {data && data.lateTotal > 0 && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>
+              {data.lateTotal} formation{data.lateTotal > 1 ? "s" : ""} commencée
+              {data.lateTotal > 1 ? "s" : ""} sans horaire validé
+            </AlertTitle>
+            <AlertDescription>
+              Ces inscriptions restaient invisibles : la liste ne remontait que les débuts
+              à venir. Elles sont regroupées en haut, du retard le plus ancien au plus
+              récent.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Alert>
           <AlertTitle>Analysez par langue avant de valider</AlertTitle>
@@ -85,8 +102,8 @@ export default function ScheduleValidation() {
         {!isLoading && data?.total === 0 && (
           <Card>
             <CardContent className="py-10 text-center text-muted-foreground">
-              Aucune inscription en attente de validation dans la fenêtre J-
-              {SCHEDULE_ASSIGNMENT_DAYS_BEFORE}.
+              Aucune inscription en attente de validation, ni dans la fenêtre J-
+              {SCHEDULE_ASSIGNMENT_DAYS_BEFORE}, ni en retard.
             </CardContent>
           </Card>
         )}
@@ -96,7 +113,10 @@ export default function ScheduleValidation() {
           const allInGroupSelected = groupIds.every((id) => selectedIds.has(id));
 
           return (
-            <Card key={`${group.startDate}-${group.language}`}>
+            <Card
+              key={`${group.startDate}-${group.language}`}
+              className={group.deadline.late ? "border-destructive/50" : undefined}
+            >
               <CardHeader>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
@@ -106,9 +126,14 @@ export default function ScheduleValidation() {
                       {format(new Date(group.startDate), "EEEE d MMMM yyyy", { locale: fr })}
                     </CardDescription>
                   </div>
-                  <Badge variant="outline">
-                    {group.inscriptions.length} en attente
-                  </Badge>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant={group.deadline.late ? "destructive" : "secondary"}>
+                      {group.deadline.label}
+                    </Badge>
+                    <Badge variant="outline">
+                      {group.inscriptions.length} en attente
+                    </Badge>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -148,8 +173,14 @@ export default function ScheduleValidation() {
                       <div className="flex-1 min-w-[200px]">
                         <p className="font-medium">{inscription.student_name}</p>
                         <p className="text-muted-foreground text-xs">
-                          {inscription.code || "—"} · Niveau {inscription.entry_level || "—"}
+                          {inscription.code || "—"} · Niveau {inscription.entry_level || "—"} ·{" "}
+                          {getStatusLabel(inscription.status, "fr")}
                         </p>
+                        {inscription.schedule && (
+                          <p className="text-muted-foreground text-xs">
+                            Horaire prévu : {inscription.schedule}
+                          </p>
+                        )}
                       </div>
                       <Button variant="ghost" size="sm" asChild>
                         <Link to={`/inscriptions/${inscription.id}`}>
