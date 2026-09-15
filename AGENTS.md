@@ -59,3 +59,29 @@ This is a single-package **Vite + React 18 + TypeScript** SPA (Lovable-generated
   **merge `origin/main` into the working branch**, resolve any leftover conflicts,
   and push, so Paula never has to resolve a merge conflict herself.
 
+### Revue de code — copies `src/lib` ↔ `supabase/functions/_shared` (Paula, 2026-09-15)
+Les fonctions Edge Deno ne peuvent pas importer `src/`. Plusieurs modules métier
+existent donc en **deux copies**. Toute PR qui modifie un fichier de `src/lib`
+ayant une copie dans `supabase/functions/_shared` **livre les deux copies et un
+test de drift** (les deux restent d'accord). Sans ça, la PR est incomplète.
+
+Paires connues :
+
+| `src/lib` | `supabase/functions/_shared` |
+|-----------|------------------------------|
+| `registration-dates.ts` | `registration-dates.ts` |
+| `registration-payments.ts` | `registration-payments.ts` |
+| `email-guards.ts` | `email-guards.ts` |
+| `supabase-error.ts` | `supabase-error.ts` |
+| `evaluation-pdf.ts` | `evaluation-pdf-model.ts` (même modèle, nom Deno) |
+| `evaluation-pdf-render.ts` | `evaluation-pdf-render.ts` |
+| `evaluation-pdf-assets.ts` | `evaluation-pdf-assets.ts` |
+
+Logos C.5 : mêmes fichiers dans `public/evaluation-pdf/` et
+`supabase/functions/_shared/evaluation-pdf-assets/`.
+
+Modèle de test : `src/lib/registration-dates.test.ts` (« garde la copie Deno
+d'accord avec le module front ») — comparer les fonctions exportées, pas
+seulement un commentaire « aligné sur… ». Les helpers _shared sans pendant
+`src/lib` (auth admin, Stripe, e-mail) sont hors de cette règle.
+
