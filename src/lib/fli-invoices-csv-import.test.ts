@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+  EMPTY_PAYMENT_CUTOFF,
   HISTORICAL_SEQUENCE_GAP,
+  applyEmptyPaymentRules,
   deduceInvoiceType,
   foldInvoiceText,
   matchFliInvoicesToInscriptions,
   parseFliInvoicesCsv,
   resolveEsfPartner,
   toInvoiceInsert,
+  toPaymentInserts,
 } from "@/lib/fli-invoices-csv-import";
 
 const HEADER =
@@ -140,17 +143,18 @@ describe("parseFliInvoicesCsv", () => {
       "credit",
       "cancelled",
       "unpaid",
-      "empty",
+      "historique",
     ]);
     expect(preview.rows.map((r) => r.invoiceStatus)).toEqual([
       "paid",
       "cancelled",
       "sent",
-      "sent",
+      "paid",
     ]);
     expect(preview.rows[0].paymentMethod).toBeNull();
     expect(preview.emptyPaymentMethods).toHaveLength(1);
-    expect(preview.rows[3].askPaula).toBe(true);
+    expect(preview.emptyPaymentMethods[0].resolution).toBe("historique");
+    expect(preview.rows[3].paymentMethod).toBe("historique");
   });
 
   it("déduit formation / test / sous-traitance et signale les graphies", () => {
@@ -170,6 +174,8 @@ describe("parseFliInvoicesCsv", () => {
     expect(insert.invoice_number).toBe("20-21.13010");
     expect(insert.sequence_number).toBe(13010);
     expect(insert.fiscal_year).toBe("20-21");
+    expect(insert).not.toHaveProperty("amount_ttc");
+    expect(String(insert.notes)).toContain("Dupont Marie");
   });
 
   it("classe « facturé à l'ESF » en payeur école", () => {
@@ -308,6 +314,75 @@ describe("resolveEsfPartner", () => {
 
   it("ne choisit pas au hasard si plusieurs ESF partagent la station", () => {
     expect(resolveEsfPartner("Courchevel", null, partners)).toBeNull();
+  });
+});
+
+describe("applyEmptyPaymentRules", () => {
+  it("classe négatif → avoir, zéro/ERREUR → annulée, avant cut-off → historique, après → à vérifier", () => {
+    const preview = parseFliInvoicesCsv(
+      csv([
+        line({
+          "Moyen de paiement": "",
+          "Total HT": "-100",
+          "Total TTC": "-100",
+        }),
+        line({
+          "n° seq": "13011",
+          "Fact FLI": "20-21.13011",
+          "Moyen de paiement": "",
+          "Total HT": "0",
+          "Total TTC": "0",
+        }),
+        line({
+          "n° seq": "13012",
+          "Fact FLI": "20-21.13012",
+          "Nom et Prénom": "_ERREUR_",
+          "Moyen de paiement": "",
+          "Total HT": "10",
+          "Total TTC": "10",
+        }),
+        line({
+          "n° seq": "13013",
+          "Fact FLI": "20-21.13013",
+          "Moyen de paiement": "",
+          "Date Fact": "2025-06-30",
+        }),
+        line({
+          "n° seq": "14000",
+          "Année compt": "25-26",
+          "Fact FLI": "25-26.14000",
+          "Moyen de paiement": "",
+          "Date Fact": "2025-07-01",
+        }),
+      ])
+    );
+    expect(preview.rows.map((r) => r.invoiceStatus)).toEqual([
+      "paid",
+      "cancelled",
+      "cancelled",
+      "paid",
+      "a_verifier",
+    ]);
+    expect(preview.rows[3].paymentMethod).toBe("historique");
+    expect(preview.toVerify).toHaveLength(1);
+    expect(preview.toVerify[0].invoiceNumber).toBe("25-26.14000");
+    expect(preview.caGrandTotal.ht).toBe(1160);
+    expect(EMPTY_PAYMENT_CUTOFF).toBe("2025-07-01");
+    expect(applyEmptyPaymentRules(preview.rows[4])).toBe("a_verifier");
+  });
+
+  it("crée un paiement même si la date d'émission est vide, via la date de facture", () => {
+    const preview = parseFliInvoicesCsv(
+      csv([
+        line({
+          "Date émiss chèque / virement": "",
+        }),
+      ])
+    );
+    const payments = toPaymentInserts(preview.rows[0], "insc");
+    expect(payments).toHaveLength(1);
+    expect(payments[0].payment_date).toBe("2020-10-16");
+    expect(payments[0].payment_method).toBe("virement");
   });
 });
 

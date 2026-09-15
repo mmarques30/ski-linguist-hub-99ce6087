@@ -104,10 +104,10 @@ export function FliInvoicesImportCard() {
 
   const downloadEmptyMeans = () => {
     if (!preview) return;
-    const lines = ["facture;nom;date;montant_ttc"];
+    const lines = ["facture;nom;date;montant_ttc;resolution"];
     for (const row of preview.emptyPaymentMethods) {
       lines.push(
-        [row.invoiceNumber, row.clientName, row.invoiceDate, String(row.amountTtc)]
+        [row.invoiceNumber, row.clientName, row.invoiceDate, String(row.amountTtc), row.resolution]
           .map((v) => `"${String(v).replace(/"/g, '""')}"`)
           .join(";")
       );
@@ -237,6 +237,51 @@ export function FliInvoicesImportCard() {
               </Table>
             </div>
 
+            <div>
+              <h3 className="text-sm font-medium mb-2">Chiffre d&apos;affaires (hors annulées, avoirs déduits)</h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Exercice</TableHead>
+                    <TableHead className="text-right">N</TableHead>
+                    <TableHead className="text-right">HT</TableHead>
+                    <TableHead className="text-right">TVA</TableHead>
+                    <TableHead className="text-right">TTC</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {preview.caByYear.map((y) => (
+                    <TableRow key={`ca-${y.year}`}>
+                      <TableCell>{y.year}</TableCell>
+                      <TableCell className="text-right">{y.n}</TableCell>
+                      <TableCell className="text-right">{euro(y.ht)}</TableCell>
+                      <TableCell className="text-right">{euro(y.tva)}</TableCell>
+                      <TableCell className="text-right">{euro(y.ttc)}</TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow>
+                    <TableCell className="font-medium">CA</TableCell>
+                    <TableCell className="text-right font-medium">
+                      {preview.caGrandTotal.n}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {euro(preview.caGrandTotal.ht)}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {euro(preview.caGrandTotal.tva)}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {euro(preview.caGrandTotal.ttc)}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+              <p className="text-xs text-muted-foreground mt-1">
+                {preview.cancelled.length} annulée(s) exclues · {preview.credits.length} avoir(s)
+                en négatif.
+              </p>
+            </div>
+
             {preview.ambiguousTypes.length > 0 && (
               <Alert>
                 <AlertTitle>
@@ -265,8 +310,9 @@ export function FliInvoicesImportCard() {
                 Moyens : {preview.byPaymentKind.cheque} chèque, {preview.byPaymentKind.virement}{" "}
                 virement, {preview.byPaymentKind.cb} CB, {preview.byPaymentKind.unpaid} à
                 régler, {preview.byPaymentKind.credit} avoir, {preview.byPaymentKind.cancelled}{" "}
-                annulée, {preview.byPaymentKind.empty} vide (à demander),{" "}
-                {preview.byPaymentKind.esf} facturé à l&apos;ESF.
+                annulée, {preview.byPaymentKind.historique} historique,{" "}
+                {preview.byPaymentKind.a_verifier} à vérifier, {preview.byPaymentKind.esf}{" "}
+                facturé à l&apos;ESF.
               </p>
               {preview.emptyPaymentMethods.length > 0 && (
                 <Button variant="link" className="h-auto p-0" onClick={downloadEmptyMeans}>

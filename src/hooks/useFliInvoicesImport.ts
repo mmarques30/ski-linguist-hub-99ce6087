@@ -5,6 +5,7 @@ import {
   linkEsfPartners,
   matchFliInvoicesToInscriptions,
   toInvoiceInsert,
+  toPaymentInserts,
   FLI_INVOICES_WRITE_CONFIRMATION,
   type EsfPartnerInput,
   type FliInvoiceParsedRow,
@@ -200,40 +201,12 @@ export function useFliInvoicesImport() {
         const invoiceId = existingByNumber.get(row.invoiceNumber);
         const inscriptionId = matchByNumber.get(row.invoiceNumber) ?? null;
         const esfPartner = esfPartnerByInvoice.get(row.invoiceNumber) ?? null;
-        const payerType = row.clientType === "ecole_ski" ? "ecole" : "stagiaire";
-        const payerName = esfPartner?.name ?? row.clientName;
-        if (
-          row.depositAmount &&
-          row.depositAmount > 0 &&
-          row.depositMethod &&
-          row.depositDate
-        ) {
+        for (const payment of toPaymentInserts(row, inscriptionId, esfPartner)) {
+          const { invoice_number: _invoiceNumber, ...rest } = payment;
+          void _invoiceNumber;
           payments.push({
+            ...rest,
             invoice_id: invoiceId ?? null,
-            inscription_id: inscriptionId,
-            amount: row.depositAmount,
-            payment_type: "acompte",
-            payment_method: row.depositMethod,
-            payment_date: row.depositDate,
-            currency: "EUR",
-            payer_type: payerType,
-            payer_name: payerName,
-          });
-        }
-        if (row.paymentMethod && row.invoiceStatus === "paid" && row.paymentDate) {
-          payments.push({
-            invoice_id: invoiceId ?? null,
-            inscription_id: inscriptionId,
-            amount: Math.abs(row.amountTtc),
-            payment_type: "total",
-            payment_method: row.paymentMethod,
-            payment_date: row.paymentDate,
-            currency: "EUR",
-            payer_type: payerType,
-            payer_name: payerName,
-            cheque_number: row.chequeNumber,
-            cheque_bank: row.chequeBank,
-            cheque_date: row.paymentMethod === "cheque" ? row.paymentDate : null,
           });
         }
       }

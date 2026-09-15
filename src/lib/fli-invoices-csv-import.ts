@@ -16,9 +16,16 @@ import {
 export const HISTORICAL_SEQUENCE_GAP = 13288;
 
 export type InvoiceType = "formation" | "test" | "soustraitance";
-export type InvoiceStatus = "draft" | "sent" | "paid" | "cancelled";
+export type InvoiceStatus = "draft" | "sent" | "paid" | "cancelled" | "a_verifier";
 export type ClientType = "stagiaire" | "ecole_ski" | "dsf" | "autre";
-export type DbPaymentMethod = "cheque" | "virement" | "cb";
+export type DbPaymentMethod =
+  | "cheque"
+  | "virement"
+  | "cb"
+  | "especes"
+  | "stripe"
+  | "organisme"
+  | "historique";
 
 export type PaymentKind =
   | "cheque"
@@ -29,7 +36,12 @@ export type PaymentKind =
   | "cancelled"
   | "empty"
   | "esf"
-  | "other";
+  | "other"
+  | "historique"
+  | "a_verifier";
+
+/** Cut-off Paula : moyen vide avant cette date → réglée, après → à vérifier. */
+export const EMPTY_PAYMENT_CUTOFF = "2025-07-01";
 
 export interface FliInvoiceParsedRow {
   lineNumber: number;
@@ -105,6 +117,9 @@ export interface FliInvoicesPreview {
   };
   totalsByYear: FiscalYearTotal[];
   grandTotal: FiscalYearTotal;
+  /** HT/TVA/TTC hors factures annulées (les avoirs négatifs restent déduits). */
+  caByYear: FiscalYearTotal[];
+  caGrandTotal: FiscalYearTotal;
   byType: Record<InvoiceType, number>;
   byPaymentKind: Record<PaymentKind, number>;
   ambiguousTypes: Array<{
@@ -119,6 +134,13 @@ export interface FliInvoicesPreview {
     invoiceDate: string;
     year: string;
     amountHt: number;
+    amountTtc: number;
+    resolution: "credit" | "cancelled" | "historique" | "a_verifier";
+  }>;
+  toVerify: Array<{
+    invoiceNumber: string;
+    clientName: string;
+    invoiceDate: string;
     amountTtc: number;
   }>;
   credits: Array<{ invoiceNumber: string; amountHt: number; relatedInvoiceRef: string | null }>;
@@ -416,6 +438,39 @@ function classifyPayment(moyen: string): {
   };
 }
 
+/** Règles Paula pour une colonne moyen vide. */
+export function applyEmptyPaymentRules(row: FliInvoiceParsedRow): "credit" | "cancelled" | "historique" | "a_verifier" {
+  const blob = foldInvoiceText(`${row.clientName} ${row.designation}`);
+  if (row.amountTtc < 0 || row.amountHt < 0) {
+    row.paymentKind = "credit";
+    row.invoiceStatus = "paid";
+    row.askPaula = false;
+    row.askPaulaReason = null;
+    return "credit";
+  }
+  if (row.amountTtc === 0 || blob.includes("erreur")) {
+    row.paymentKind = "cancelled";
+    row.invoiceStatus = "cancelled";
+    row.askPaula = false;
+    row.askPaulaReason = null;
+    return "cancelled";
+  }
+  if (row.invoiceDate < EMPTY_PAYMENT_CUTOFF) {
+    row.paymentKind = "historique";
+    row.paymentMethod = "historique";
+    row.invoiceStatus = "paid";
+    row.paymentDate = row.paymentDate || row.invoiceDate;
+    row.askPaula = false;
+    row.askPaulaReason = null;
+    return "historique";
+  }
+  row.paymentKind = "a_verifier";
+  row.invoiceStatus = "a_verifier";
+  row.askPaula = true;
+  row.askPaulaReason = "Moyen vide, date ≥ 01/07/2025 : à vérifier";
+  return "a_verifier";
+}
+
 function emptyYear(year: string): FiscalYearTotal {
   return { year, n: 0, ht: 0, tva: 0, ttc: 0 };
 }
@@ -427,6 +482,7 @@ export function parseFliInvoicesCsv(text: string): FliInvoicesPreview {
   const seen = new Set<string>();
   const ambiguousTypes: FliInvoicesPreview["ambiguousTypes"] = [];
   const emptyPaymentMethods: FliInvoicesPreview["emptyPaymentMethods"] = [];
+  const toVerify: FliInvoicesPreview["toVerify"] = [];
   const credits: FliInvoicesPreview["credits"] = [];
   const cancelled: FliInvoicesPreview["cancelled"] = [];
   const esfBilled: FliInvoicesPreview["esfBilled"] = [];
@@ -446,6 +502,8 @@ export function parseFliInvoicesCsv(text: string): FliInvoicesPreview {
     empty: 0,
     esf: 0,
     other: 0,
+    historique: 0,
+    a_verifier: 0,
   };
 
   parsed.rows.forEach((raw, index) => {
@@ -523,6 +581,26 @@ export function parseFliInvoicesCsv(text: string): FliInvoicesPreview {
     }
 
     rows.push(row);
+    if (row.paymentKind === "empty") {
+      const resolution = applyEmptyPaymentRules(row);
+      emptyPaymentMethods.push({
+        invoiceNumber,
+        clientName: row.clientName,
+        invoiceDate: row.invoiceDate,
+        year: row.fiscalYear,
+        amountHt,
+        amountTtc: row.amountTtc,
+        resolution,
+      });
+      if (resolution === "a_verifier") {
+        toVerify.push({
+          invoiceNumber,
+          clientName: row.clientName,
+          invoiceDate: row.invoiceDate,
+          amountTtc: row.amountTtc,
+        });
+      }
+    }
     byType[row.invoiceType] += 1;
     byPaymentKind[row.paymentKind] += 1;
     if (row.typeAmbiguous || row.typeNote) {
@@ -534,16 +612,6 @@ export function parseFliInvoicesCsv(text: string): FliInvoicesPreview {
           note: row.typeNote ?? "",
         });
       }
-    }
-    if (row.paymentKind === "empty") {
-      emptyPaymentMethods.push({
-        invoiceNumber,
-        clientName: row.clientName,
-        invoiceDate: row.invoiceDate,
-        year: row.fiscalYear,
-        amountHt,
-        amountTtc: row.amountTtc,
-      });
     }
     if (row.paymentKind === "credit") {
       credits.push({
@@ -604,6 +672,31 @@ export function parseFliInvoicesCsv(text: string): FliInvoicesPreview {
     emptyYear("total")
   );
 
+  const caMap = new Map<string, FiscalYearTotal>();
+  for (const row of rows) {
+    if (row.invoiceStatus === "cancelled") continue;
+    const current = caMap.get(row.fiscalYear) ?? emptyYear(row.fiscalYear);
+    caMap.set(row.fiscalYear, addTotal(current, row));
+  }
+  const caByYear = [...caMap.values()]
+    .sort((a, b) => a.year.localeCompare(b.year))
+    .map((y) => ({
+      ...y,
+      ht: round2(y.ht),
+      tva: round2(y.tva),
+      ttc: round2(y.ttc),
+    }));
+  const caGrandTotal = caByYear.reduce(
+    (acc, y) => ({
+      year: "ca",
+      n: acc.n + y.n,
+      ht: round2(acc.ht + y.ht),
+      tva: round2(acc.tva + y.tva),
+      ttc: round2(acc.ttc + y.ttc),
+    }),
+    emptyYear("ca")
+  );
+
   return {
     totalRows: rows.length,
     encodingNotes: parsed.encodingNotes,
@@ -616,10 +709,13 @@ export function parseFliInvoicesCsv(text: string): FliInvoicesPreview {
     },
     totalsByYear,
     grandTotal,
+    caByYear,
+    caGrandTotal,
     byType,
     byPaymentKind,
     ambiguousTypes,
     emptyPaymentMethods,
+    toVerify,
     credits,
     cancelled,
     esfBilled,
@@ -792,7 +888,10 @@ export function toInvoiceInsert(
         ? `Payeur école : ${esfPartner.name}${esfPartner.esf_code ? ` (${esfPartner.esf_code})` : ""}`
         : "Payeur école : ESF (partenaire non rattaché — lieu ambigu ou absent)"
       : null;
-  const notes = [row.notes, partnerNote].filter(Boolean).join(" — ") || null;
+  const notes =
+    [row.clientName, row.notes, partnerNote].filter(Boolean).join(" — ") || null;
+  const paidDate =
+    row.invoiceStatus === "paid" ? row.paymentDate || row.invoiceDate : null;
   return {
     invoice_number: row.invoiceNumber,
     fiscal_year: row.fiscalYear,
@@ -802,12 +901,78 @@ export function toInvoiceInsert(
     client_type: row.clientType,
     amount_ht: row.amountHt,
     tva_rate: row.tvaRate,
-    amount_ttc: row.amountTtc,
     status: row.invoiceStatus,
-    payment_date: row.invoiceStatus === "paid" ? row.paymentDate : null,
+    payment_date: paidDate,
     payment_method: row.paymentMethod,
     payment_type: "integral",
     notes,
     inscription_id: inscriptionId,
   };
+}
+
+export interface FliPaymentInsert {
+  invoice_number: string;
+  inscription_id: string | null;
+  amount: number;
+  payment_type: "acompte" | "total";
+  payment_method: DbPaymentMethod;
+  payment_date: string;
+  currency: "EUR";
+  payer_type: string;
+  payer_name: string;
+  cheque_number: string | null;
+  cheque_bank: string | null;
+  cheque_date: string | null;
+  cheque_status: "recu" | "remis" | "encaisse" | "rejete" | null;
+  status: "recu";
+}
+
+/** Paiements liés à une ligne CSV : acompte éventuel + encaissement si facture réglée. */
+export function toPaymentInserts(
+  row: FliInvoiceParsedRow,
+  inscriptionId: string | null,
+  esfPartner?: EsfPartnerInput | null
+): FliPaymentInsert[] {
+  const payerType = row.clientType === "ecole_ski" ? "ecole" : "stagiaire";
+  const payerName = esfPartner?.name ?? row.clientName;
+  const out: FliPaymentInsert[] = [];
+  if (row.depositAmount && row.depositAmount > 0 && row.depositMethod && row.depositDate) {
+    out.push({
+      invoice_number: row.invoiceNumber,
+      inscription_id: inscriptionId,
+      amount: row.depositAmount,
+      payment_type: "acompte",
+      payment_method: row.depositMethod,
+      payment_date: row.depositDate,
+      currency: "EUR",
+      payer_type: payerType,
+      payer_name: payerName,
+      cheque_number: null,
+      cheque_bank: null,
+      cheque_date: null,
+      cheque_status: row.depositMethod === "cheque" ? "encaisse" : null,
+      status: "recu",
+    });
+  }
+  const paymentDate =
+    row.paymentDate || (row.invoiceStatus === "paid" && row.paymentMethod ? row.invoiceDate : null);
+  if (row.paymentMethod && row.invoiceStatus === "paid" && paymentDate) {
+    out.push({
+      invoice_number: row.invoiceNumber,
+      inscription_id: inscriptionId,
+      amount: Math.abs(row.amountTtc),
+      payment_type: "total",
+      payment_method: row.paymentMethod,
+      payment_date: paymentDate,
+      currency: "EUR",
+      payer_type: payerType,
+      payer_name: payerName,
+      cheque_number: row.chequeNumber,
+      cheque_bank: row.chequeBank,
+      cheque_date: row.paymentMethod === "cheque" ? paymentDate : null,
+      cheque_status: row.paymentMethod === "cheque" ? "encaisse" : null,
+      status: "recu",
+    });
+  }
+  return out;
 }
