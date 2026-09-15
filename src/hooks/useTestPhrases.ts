@@ -1,16 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { PHRASE_BANK_ALL, PHRASE_BANK_COMMON } from "@/lib/test-phrases-bank";
 
 export interface TestPhrase {
   id: string;
+  /** Étiquette de langue du fichier source (COMMON, EN, PT…), non traduite. */
   language: string;
+  /** Étiquette de catégorie du fichier source (INTRODUCTION, GRAMMAIRE…), non traduite. */
   category: string;
   profession: string | null;
   level_min: string | null;
   level_max: string | null;
   code: string | null;
   text_fr: string;
+  context: string | null;
+  is_correction: boolean;
+  error_type: string | null;
   is_positive: boolean;
   order_index: number;
   active: boolean;
@@ -37,8 +43,10 @@ export function useTestPhrases(filters?: TestPhraseFilters) {
         .order("category")
         .order("order_index");
 
-      if (filters?.language && filters.language !== 'all') {
-        query = query.or(`language.eq.${filters.language},language.eq.all`);
+      if (filters?.language && filters.language !== PHRASE_BANK_ALL) {
+        query = query.or(
+          `language.eq.${filters.language},language.eq.${PHRASE_BANK_COMMON}`,
+        );
       }
       
       if (filters?.category) {
@@ -178,11 +186,12 @@ export function useBulkImportPhrases() {
 
   return useMutation({
     mutationFn: async (phrases: Omit<TestPhrase, "id" | "created_at" | "updated_at">[]) => {
+      // Reprise d'import : le code du fichier sert de clé, la phrase est mise à jour.
       const { data, error } = await supabase
         .from("test_phrases")
-        .insert(phrases)
+        .upsert(phrases, { onConflict: "code" })
         .select();
-      
+
       if (error) throw error;
       return data;
     },
