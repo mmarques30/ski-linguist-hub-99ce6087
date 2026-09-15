@@ -931,6 +931,7 @@ export type Database = {
           course_materials: string | null
           course_type: string | null
           created_at: string
+          dates_to_confirm: boolean
           deposit_amount: number | null
           deposit_date: string | null
           documents_sent_at: string | null
@@ -1012,6 +1013,7 @@ export type Database = {
           course_materials?: string | null
           course_type?: string | null
           created_at?: string
+          dates_to_confirm?: boolean
           deposit_amount?: number | null
           deposit_date?: string | null
           documents_sent_at?: string | null
@@ -1093,6 +1095,7 @@ export type Database = {
           course_materials?: string | null
           course_type?: string | null
           created_at?: string
+          dates_to_confirm?: boolean
           deposit_amount?: number | null
           deposit_date?: string | null
           documents_sent_at?: string | null
