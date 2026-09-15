@@ -11,6 +11,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { FinanceKPICard } from "@/components/finance/FinanceKPICard";
 import { usePayments, usePaymentKPIs, useCreatePayment } from "@/hooks/usePayments";
+import { useInvoices } from "@/hooks/useInvoices";
+import {
+  PAYMENT_METHODS,
+  CHEQUE_STATUSES,
+  paymentMethodLabel,
+  chequeStatusLabel,
+} from "@/lib/payment-methods";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { DollarSign, Clock, AlertTriangle, Percent, Plus } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
@@ -31,18 +38,10 @@ const STATUS_LABELS: Record<string, string> = {
   rembourse: "Remboursé",
 };
 
-const METHOD_LABELS: Record<string, string> = {
-  carte_bancaire: "Carte bancaire",
-  virement: "Virement",
-  cheque: "Chèque",
-  especes: "Espèces",
-  opco: "OPCO",
-};
-
 const PAYER_LABELS: Record<string, string> = {
   stagiaire: "Stagiaire",
-  opco: "OPCO",
-  esf: "ESF",
+  ecole: "École de ski",
+  organisme: "Organisme",
   autre: "Autre",
 };
 
@@ -63,6 +62,7 @@ export default function FinancePayments() {
   });
   const { data: kpis } = usePaymentKPIs(startDate, endDate);
   const createPayment = useCreatePayment();
+  const { data: invoices = [] } = useInvoices();
 
   const [form, setForm] = useState({
     amount: "",
@@ -71,13 +71,20 @@ export default function FinancePayments() {
     status: "recu",
     payer_type: "stagiaire",
     payer_name: "",
+    invoice_id: "",
+    cheque_status: "recu",
     reference: "",
     notes: "",
   });
+  const selectedInvoice = invoices.find((inv) => inv.id === form.invoice_id);
 
   const handleSubmit = async () => {
     if (!form.amount || Number(form.amount) <= 0) {
       toast.error("Montant invalide");
+      return;
+    }
+    if (!form.invoice_id) {
+      toast.error("Rattachez le paiement à une facture");
       return;
     }
     try {
@@ -88,6 +95,9 @@ export default function FinancePayments() {
         status: form.status,
         payer_type: form.payer_type,
         payer_name: form.payer_name || null,
+        invoice_id: form.invoice_id,
+        inscription_id: selectedInvoice?.inscription_id ?? null,
+        cheque_status: form.payment_method === "cheque" ? form.cheque_status : null,
         reference: form.reference || null,
         notes: form.notes || null,
       });
@@ -100,6 +110,8 @@ export default function FinancePayments() {
         status: "recu",
         payer_type: "stagiaire",
         payer_name: "",
+        invoice_id: "",
+        cheque_status: "recu",
         reference: "",
         notes: "",
       });
@@ -144,6 +156,33 @@ export default function FinancePayments() {
                   <DialogTitle>Enregistrer un paiement</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Facture</Label>
+                    <Select
+                      value={form.invoice_id}
+                      onValueChange={(v) => {
+                        const invoice = invoices.find((inv) => inv.id === v);
+                        setForm({
+                          ...form,
+                          invoice_id: v,
+                          amount: form.amount || String(invoice?.amount_ttc || invoice?.amount_ht || ""),
+                          payer_name: form.payer_name || invoice?.inscription?.student_name || "",
+                        });
+                      }}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Choisir une facture" /></SelectTrigger>
+                      <SelectContent>
+                        {invoices.map((inv) => (
+                          <SelectItem key={inv.id} value={inv.id}>
+                            {inv.invoice_number || inv.id.slice(0, 8)} · {inv.amount_ttc ?? inv.amount_ht} €
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedInvoice?.inscription_id && (
+                      <p className="text-xs text-muted-foreground">Inscription liée automatiquement</p>
+                    )}
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Montant (€)</Label>
@@ -169,8 +208,8 @@ export default function FinancePayments() {
                       <Select value={form.payment_method} onValueChange={(v) => setForm({ ...form, payment_method: v })}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          {Object.entries(METHOD_LABELS).map(([k, v]) => (
-                            <SelectItem key={k} value={k}>{v}</SelectItem>
+                          {PAYMENT_METHODS.map((method) => (
+                            <SelectItem key={method.value} value={method.value}>{method.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -187,6 +226,19 @@ export default function FinancePayments() {
                       </Select>
                     </div>
                   </div>
+                  {form.payment_method === "cheque" && (
+                    <div className="space-y-2">
+                      <Label>Statut du chèque</Label>
+                      <Select value={form.cheque_status} onValueChange={(v) => setForm({ ...form, cheque_status: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {CHEQUE_STATUSES.map((status) => (
+                            <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Type de payeur</Label>
@@ -285,8 +337,8 @@ export default function FinancePayments() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Toutes les méthodes</SelectItem>
-                  {Object.entries(METHOD_LABELS).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  {PAYMENT_METHODS.map((method) => (
+                    <SelectItem key={method.value} value={method.value}>{method.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -310,6 +362,7 @@ export default function FinancePayments() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Date</TableHead>
+                      <TableHead>Facture</TableHead>
                       <TableHead>Client</TableHead>
                       <TableHead>Inscription</TableHead>
                       <TableHead>Méthode</TableHead>
@@ -324,6 +377,9 @@ export default function FinancePayments() {
                         <TableCell className="whitespace-nowrap">
                           {format(new Date(p.payment_date), "dd/MM/yyyy")}
                         </TableCell>
+                        <TableCell className="font-mono text-xs">
+                          {p.invoice?.invoice_number || "—"}
+                        </TableCell>
                         <TableCell className="max-w-[150px] truncate">
                           {getClientName(p)}
                         </TableCell>
@@ -331,7 +387,10 @@ export default function FinancePayments() {
                           {p.inscription?.code || "-"}
                         </TableCell>
                         <TableCell>
-                          {METHOD_LABELS[p.payment_method] || p.payment_method}
+                          {paymentMethodLabel(p.payment_method)}
+                          {p.payment_method === "cheque" && p.cheque_status
+                            ? ` · ${chequeStatusLabel(p.cheque_status)}`
+                            : ""}
                         </TableCell>
                         <TableCell className="text-right font-medium">
                           {formatPrice(Number(p.amount))}
@@ -348,7 +407,7 @@ export default function FinancePayments() {
                     ))}
                     {payments.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                           Aucun paiement enregistré
                         </TableCell>
                       </TableRow>

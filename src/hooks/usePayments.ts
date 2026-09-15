@@ -10,6 +10,7 @@ export interface Payment {
   payment_method: string;
   payment_date: string;
   status: string;
+  cheque_status: string | null;
   reference: string | null;
   payer_type: string | null;
   payer_name: string | null;
@@ -142,6 +143,42 @@ export function usePaymentKPIs(startDate?: string, endDate?: string) {
   });
 }
 
+export async function ensureInvoicePayment(params: {
+  invoiceId: string;
+  inscriptionId?: string | null;
+  amount: number;
+  paymentMethod: string;
+  paymentDate: string;
+  payerName?: string | null;
+  chequeStatus?: string | null;
+}): Promise<"created" | "already_paid"> {
+  const { data: existing, error: readError } = await supabase
+    .from("payments")
+    .select("id, amount")
+    .eq("invoice_id", params.invoiceId);
+  if (readError) throw readError;
+  const paid = (existing ?? []).reduce((sum, row) => sum + Number(row.amount || 0), 0);
+  if (params.amount <= 0 || paid + 0.009 >= params.amount) {
+    return "already_paid";
+  }
+  const remaining = Math.round((params.amount - paid) * 100) / 100;
+  const { error } = await supabase.from("payments").insert({
+    invoice_id: params.invoiceId,
+    inscription_id: params.inscriptionId ?? null,
+    amount: remaining,
+    payment_type: "total",
+    payment_method: params.paymentMethod,
+    payment_date: params.paymentDate,
+    status: "recu",
+    payer_type: "stagiaire",
+    payer_name: params.payerName ?? null,
+    cheque_status: params.paymentMethod === "cheque" ? params.chequeStatus || "recu" : null,
+    cheque_date: params.paymentMethod === "cheque" ? params.paymentDate : null,
+  } as never);
+  if (error) throw error;
+  return "created";
+}
+
 export function useCreatePayment() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -152,6 +189,8 @@ export function useCreatePayment() {
       payment_method: string;
       payment_date: string;
       status: string;
+      payment_type?: "acompte" | "partial" | "total";
+      cheque_status?: string | null;
       reference?: string | null;
       payer_type?: string | null;
       payer_name?: string | null;
@@ -161,7 +200,7 @@ export function useCreatePayment() {
         .from("payments")
         .insert({
           ...payment,
-          payment_type: "total",
+          payment_type: payment.payment_type ?? "total",
         })
         .select()
         .single();
@@ -173,6 +212,7 @@ export function useCreatePayment() {
       queryClient.invalidateQueries({ queryKey: ["payment-kpis"] });
       queryClient.invalidateQueries({ queryKey: ["financial-kpis"] });
       queryClient.invalidateQueries({ queryKey: ["pending-invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
     },
   });
 }
