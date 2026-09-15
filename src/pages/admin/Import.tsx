@@ -36,6 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { FliInscriptionsImportCard } from "@/components/admin/FliInscriptionsImportCard";
 import { FliFormResponsesImportCard } from "@/components/admin/FliFormResponsesImportCard";
+import { FliInvoicesImportCard } from "@/components/admin/FliInvoicesImportCard";
 import {
   buildRejectionCsv,
   downloadTextFile,
@@ -362,6 +363,7 @@ export default function Import() {
   return (
     <MainLayout>
       <div className="space-y-6">
+        <FliInvoicesImportCard />
         <FliInscriptionsImportCard />
         <FliFormResponsesImportCard />
 
