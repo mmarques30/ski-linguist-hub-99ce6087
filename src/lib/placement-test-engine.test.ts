@@ -5,6 +5,8 @@ import {
   evaluateSlope,
   getNextSlopeAfterSlope,
   needsAdminCallFromResults,
+  pisteLabelFromPlacementAnswers,
+  PISTE_STAGIAIRE_PAR_DEFAUT,
   studentFacingPisteFromCecrl,
   studentFacingCertificateLabel,
   studentFacingPisteLabel,
@@ -62,18 +64,36 @@ describe("placement-test-engine", () => {
       studentFacingPisteFromCecrl(null),
     ];
     expect(samples[0]).toBe("Piste bleue");
-    expect(samples[1]).toBe("Vocabulaire ski");
-    expect(samples[2]).toBe("Début de parcours");
+    expect(samples[1]).toBe("Piste verte");
+    expect(samples[2]).toBe("Piste verte");
     expect(samples[3]).toBe("Piste bleue");
-    expect(samples[4]).toBe("Début de parcours");
+    expect(samples[4]).toBe("Piste verte");
     for (const label of samples) {
       expect(label).not.toMatch(cecrl);
     }
   });
 
+  // BL-026 : la verte non validée reste « Piste verte » côté stagiaire.
+  it("annonce la piste verte quand aucune piste n'est validée", () => {
+    expect(PISTE_STAGIAIRE_PAR_DEFAUT).toBe("Piste verte");
+    expect(
+      studentFacingPisteLabel({
+        passedSlopes: [],
+        highestSlopeReached: "verte",
+        endedAtVocab: true,
+      })
+    ).toBe("Piste verte");
+    expect(studentFacingPisteFromCecrl("a1")).toBe("Piste verte");
+    expect(
+      pisteLabelFromPlacementAnswers({
+        summary: { passedSlopes: [], highestSlopeReached: "verte", endedAtVocab: true },
+      })
+    ).toBe("Piste verte");
+  });
+
   it("studentFacingCertificateLabel maps CECRL to piste or omits", () => {
     expect(studentFacingCertificateLabel("B2")).toBe("Piste rouge");
-    expect(studentFacingCertificateLabel("A1")).toBe("Début de parcours");
+    expect(studentFacingCertificateLabel("A1")).toBe("Piste verte");
     expect(studentFacingCertificateLabel("unknown")).toBeNull();
     expect(studentFacingCertificateLabel(null)).toBeNull();
   });

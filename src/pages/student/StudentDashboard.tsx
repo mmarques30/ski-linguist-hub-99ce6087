@@ -170,7 +170,7 @@ export default function StudentDashboard() {
                     </div>
                     {niveauAffiche && niveauAffiche !== "À déterminer" && (
                       <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Piste atteinte</span>
+                        <span className="text-muted-foreground">Votre piste</span>
                         <Badge>{niveauAffiche}</Badge>
                       </div>
                     )}

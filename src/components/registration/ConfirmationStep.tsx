@@ -340,7 +340,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
               <span className="font-medium">{fundingLabels[data.fundingType] || data.fundingType}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Piste atteinte</span>
+              <span className="text-muted-foreground">Votre piste</span>
               <Badge>
                 {data.testSummary
                   ? studentFacingPisteLabel({

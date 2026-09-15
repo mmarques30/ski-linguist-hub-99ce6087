@@ -179,7 +179,7 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
         <CardContent className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="text-center p-4 rounded-lg bg-muted/50">
-              <p className="text-sm text-muted-foreground mb-2">Piste atteinte</p>
+              <p className="text-sm text-muted-foreground mb-2">Votre piste</p>
               <Badge className="text-xl px-4 py-1">
                 {studentFacingPisteLabel({
                   passedSlopes: result.passedSlopes,
