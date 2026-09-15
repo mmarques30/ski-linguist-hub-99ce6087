@@ -264,7 +264,7 @@ export function matchInscriptionsFormateur(
       _csvName: csvName,
       _date: parseDate(cell(r, "Date début", "start_date")),
       _langs: allAlnum(cell(r, "Langue", "language")),
-    };
+    } as unknown as CsvEnrich;
   });
 
   const codeToDb = new Map<string, number[]>();
