@@ -1,260 +1,176 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { describeCaughtError } from "@/lib/supabase-error";
 import {
-  buildProgressionSnapshot,
-  canIssueCertificate,
-  formatLocationOrModality,
-  type CertificateBilanData,
-  type ObjectifAtteint,
-} from "@/lib/certificate-progression";
-import { buildCertificatePdfBlob } from "@/lib/certificate-pdf";
-import {
-  CERTIFICATE_BUCKET,
-  buildCertificatePath,
-} from "@/lib/certificateStorage";
+  generateEndPack,
+  type EndPackInput,
+  type EndPackResult,
+  type EndPackStore,
+} from "@/lib/end-pack";
+import { CERTIFICATE_BUCKET } from "@/lib/certificateStorage";
 
-interface EndPackData {
-  inscriptionId: string;
-  studentId: string;
-  studentName: string;
-  language: string;
-  startDate: string;
-  endDate: string;
-  durationHours: number | null;
-  hoursFollowed: number | null;
-  courseLocation: string | null;
-  modality: string | null;
-  formateurName: string | null;
-  code: string | null;
-  niveauGeneralEntree: string;
-  niveauTechniqueEntree: string;
-  niveauGeneralSortie: string;
-  niveauTechniqueSortie: string;
-  objectifAtteint: ObjectifAtteint;
-  commentaireSortie: string;
-  attendanceRate?: number;
-  generateInvoice: boolean;
-  generateCertificate: boolean;
-  sendSurvey: boolean;
-  /** Optional pre-rendered PDF blob (from CertificatePreview). */
-  certificatePdfBlob?: Blob | null;
+export type { EndPackInput as EndPackData, EndPackResult };
+
+function throwIfError(error: unknown, fallback: string): void {
+  if (!error) return;
+  throw new Error(describeCaughtError(error).message || fallback);
 }
 
-interface EndPackResult {
-  invoiceId?: string;
-  invoiceNumber?: string | null;
-  certificateId?: string;
-  surveyToken?: string;
-  certificateSkippedReason?: string;
-}
+function createSupabaseEndPackStore(): EndPackStore {
+  return {
+    async findExistingInvoice(inscriptionId) {
+      const { data, error } = await supabase
+        .from("invoices")
+        .select("id, invoice_number")
+        .eq("inscription_id", inscriptionId)
+        .in("payment_type", ["integral", "saldo", "solde"]);
+      throwIfError(error, "Lecture des factures impossible.");
+      if (!data || data.length === 0) return null;
+      return { id: data[0].id, invoice_number: data[0].invoice_number };
+    },
 
-/**
- * Dépose le PDF dans le bucket privé et renvoie son chemin de stockage.
- * Le premier segment doit être le student_id : la politique de lecture du
- * stagiaire s'appuie dessus.
- */
-async function uploadCertificatePdf(
-  studentId: string,
-  inscriptionId: string,
-  certificateId: string,
-  blob: Blob
-): Promise<string | null> {
-  const path = buildCertificatePath(studentId, inscriptionId, certificateId);
-  const { error } = await supabase.storage
-    .from(CERTIFICATE_BUCKET)
-    .upload(path, blob, {
-      contentType: "application/pdf",
-      upsert: true,
-    });
-  if (error) {
-    console.error("Certificate PDF upload failed:", error);
-    return null;
-  }
-  return path;
+    async getInscriptionAmounts(inscriptionId) {
+      const { data, error } = await supabase
+        .from("inscriptions")
+        .select("price, deposit_amount")
+        .eq("id", inscriptionId)
+        .maybeSingle();
+      throwIfError(error, "Lecture de l'inscription impossible.");
+      return data;
+    },
+
+    async insertInvoice(row) {
+      const { data, error } = await supabase
+        .from("invoices")
+        .insert(row)
+        .select("id, invoice_number")
+        .single();
+      throwIfError(error, "Création de la facture impossible.");
+      if (!data) throw new Error("Création de la facture impossible.");
+      return data;
+    },
+
+    async findExistingCertificate(inscriptionId) {
+      const { data, error } = await supabase
+        .from("certificates")
+        .select("id, pdf_url")
+        .eq("inscription_id", inscriptionId);
+      throwIfError(error, "Lecture des certificats impossible.");
+      if (!data || data.length === 0) return null;
+      return { id: data[0].id, pdf_url: data[0].pdf_url };
+    },
+
+    async insertCertificate(row) {
+      const { data, error } = await supabase
+        .from("certificates")
+        .insert(row as never)
+        .select("id")
+        .single();
+      throwIfError(error, "Création du certificat impossible.");
+      if (!data) throw new Error("Création du certificat impossible.");
+      return { id: data.id };
+    },
+
+    async updateCertificatePdfUrl(id, path) {
+      const { error } = await supabase
+        .from("certificates")
+        .update({ pdf_url: path })
+        .eq("id", id);
+      throwIfError(error, "Enregistrement du chemin PDF impossible.");
+    },
+
+    async insertDocumentSending(row) {
+      const { data, error } = await supabase
+        .from("document_sendings")
+        .insert(row as never)
+        .select("id")
+        .single();
+      throwIfError(error, "Enregistrement du certificat impossible.");
+      if (!data) throw new Error("Enregistrement du certificat impossible.");
+      return { id: data.id };
+    },
+
+    async uploadCertificatePdf(path, blob) {
+      const { error } = await supabase.storage
+        .from(CERTIFICATE_BUCKET)
+        .upload(path, blob, {
+          contentType: "application/pdf",
+          upsert: true,
+        });
+      throwIfError(error, "Dépôt du PDF du certificat impossible.");
+    },
+
+    async findExistingSurvey(inscriptionId) {
+      const { data, error } = await supabase
+        .from("satisfaction_surveys")
+        .select("id, token")
+        .eq("inscription_id", inscriptionId);
+      throwIfError(error, "Lecture des enquêtes impossible.");
+      if (!data || data.length === 0) return null;
+      return { id: data[0].id, token: data[0].token };
+    },
+
+    async insertSurvey(row) {
+      const { data, error } = await supabase
+        .from("satisfaction_surveys")
+        .insert(row)
+        .select("id, token")
+        .single();
+      throwIfError(error, "Création de l'enquête impossible.");
+      if (!data) throw new Error("Création de l'enquête impossible.");
+      return { id: data.id, token: data.token };
+    },
+
+    async closeInscription(inscriptionId, fields) {
+      const { error } = await supabase
+        .from("inscriptions")
+        .update(fields as never)
+        .eq("id", inscriptionId);
+      throwIfError(error, "Passage au statut Terminée impossible.");
+    },
+
+    async deleteInvoice(id) {
+      const { error } = await supabase.from("invoices").delete().eq("id", id);
+      throwIfError(error, "Annulation de la facture brouillon impossible.");
+    },
+
+    async deleteCertificate(id) {
+      const { error } = await supabase.from("certificates").delete().eq("id", id);
+      throwIfError(error, "Annulation du certificat impossible.");
+    },
+
+    async deleteDocumentSending(id) {
+      const { error } = await supabase
+        .from("document_sendings")
+        .delete()
+        .eq("id", id);
+      throwIfError(error, "Annulation de l'enregistrement du certificat impossible.");
+    },
+
+    async deleteSurvey(id) {
+      const { error } = await supabase
+        .from("satisfaction_surveys")
+        .delete()
+        .eq("id", id);
+      throwIfError(error, "Annulation de l'enquête impossible.");
+    },
+
+    async removeCertificatePdf(path) {
+      const { error } = await supabase.storage
+        .from(CERTIFICATE_BUCKET)
+        .remove([path]);
+      throwIfError(error, "Suppression du PDF du certificat impossible.");
+    },
+  };
 }
 
 export function useGenerateEndPack() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: EndPackData): Promise<EndPackResult> => {
-      const result: EndPackResult = {};
-
-      const exitFields = {
-        niveau_general_sortie: data.niveauGeneralSortie,
-        niveau_technique_sortie: data.niveauTechniqueSortie,
-        objectif_atteint: data.objectifAtteint,
-        commentaire_sortie: data.commentaireSortie,
-      };
-
-      if (data.generateCertificate && !canIssueCertificate(exitFields)) {
-        throw new Error(
-          "Certificat impossible : formulaire de sortie formateur incomplet"
-        );
-      }
-
-      const { error: updateError } = await supabase
-        .from("inscriptions")
-        .update({
-          status: "terminee",
-          exit_level: data.niveauGeneralSortie,
-          final_general_level: data.niveauGeneralSortie,
-          final_specific_level: data.niveauTechniqueSortie,
-          progression:
-            data.objectifAtteint === "oui"
-              ? "Oui"
-              : data.objectifAtteint === "partiellement"
-                ? "Partiellement"
-                : "Non",
-          final_status: "terminee",
-          end_pack_sent_at: new Date().toISOString(),
-          hours_followed: data.hoursFollowed,
-        } as never)
-        .eq("id", data.inscriptionId);
-
-      if (updateError) throw updateError;
-
-      if (data.generateInvoice) {
-        const { data: existingInvoices } = await supabase
-          .from("invoices")
-          .select("id, invoice_number")
-          .eq("inscription_id", data.inscriptionId)
-          .in("payment_type", ["integral", "saldo", "solde"]);
-
-        if (existingInvoices && existingInvoices.length > 0) {
-          result.invoiceId = existingInvoices[0].id;
-          result.invoiceNumber = existingInvoices[0].invoice_number;
-        } else {
-          const { data: inscription } = await supabase
-            .from("inscriptions")
-            .select("price, deposit_amount")
-            .eq("id", data.inscriptionId)
-            .single();
-
-          if (inscription) {
-            const amount = inscription.price || 0;
-            const deposit = inscription.deposit_amount || 0;
-            const finalAmount = amount - deposit;
-
-            const { data: invoice, error: invoiceError } = await supabase
-              .from("invoices")
-              .insert({
-                inscription_id: data.inscriptionId,
-                invoice_type: "formation",
-                amount_ht: finalAmount > 0 ? finalAmount : amount,
-                payment_type: deposit > 0 ? "saldo" : "integral",
-                status: "draft",
-              })
-              .select("id, invoice_number")
-              .single();
-
-            if (invoiceError) throw invoiceError;
-            result.invoiceId = invoice.id;
-            result.invoiceNumber = invoice.invoice_number;
-          }
-        }
-      }
-
-      if (data.generateCertificate) {
-        const { data: existingCert } = await supabase
-          .from("certificates")
-          .select("id, pdf_url")
-          .eq("inscription_id", data.inscriptionId);
-
-        if (!existingCert || existingCert.length === 0) {
-          const issueDate = new Date().toISOString().split("T")[0];
-          const bilan: CertificateBilanData = {
-            studentName: data.studentName,
-            language: data.language,
-            startDate: data.startDate,
-            endDate: data.endDate,
-            durationHoursPlanned: data.durationHours,
-            hoursFollowed: data.hoursFollowed,
-            locationOrModality: formatLocationOrModality({
-              course_location: data.courseLocation,
-              modality: data.modality,
-            }),
-            formateurName: data.formateurName,
-            niveauGeneralEntree: data.niveauGeneralEntree,
-            niveauTechniqueEntree: data.niveauTechniqueEntree,
-            niveauGeneralSortie: data.niveauGeneralSortie,
-            niveauTechniqueSortie: data.niveauTechniqueSortie,
-            objectifAtteint: data.objectifAtteint,
-            commentaire: data.commentaireSortie,
-            issueDate,
-            inscriptionCode: data.code,
-          };
-
-          const { data: certificate, error: certError } = await supabase
-            .from("certificates")
-            .insert({
-              inscription_id: data.inscriptionId,
-              student_id: data.studentId,
-              // Conservé pour contrainte NOT NULL — n'est plus le libellé affiché au stagiaire
-              level_achieved: data.niveauGeneralSortie,
-              attendance_rate: data.attendanceRate ?? null,
-              issue_date: issueDate,
-              hours_followed: data.hoursFollowed,
-              hours_planned: data.durationHours,
-              progression_snapshot: buildProgressionSnapshot(bilan),
-            } as never)
-            .select()
-            .single();
-
-          if (certError) throw certError;
-          result.certificateId = certificate.id;
-
-          const pdfBlob =
-            data.certificatePdfBlob || buildCertificatePdfBlob(bilan);
-          const storagePath = await uploadCertificatePdf(
-            data.studentId,
-            data.inscriptionId,
-            certificate.id,
-            pdfBlob
-          );
-          if (storagePath) {
-            await supabase
-              .from("certificates")
-              .update({ pdf_url: storagePath })
-              .eq("id", certificate.id);
-
-            await supabase.from("document_sendings").insert({
-              inscription_id: data.inscriptionId,
-              document_type: "CERTIFICAT",
-              sent_to: "portail-stagiaire",
-              pdf_url: storagePath,
-            } as never);
-          }
-        } else {
-          result.certificateId = existingCert[0].id;
-        }
-      }
-
-      if (data.sendSurvey) {
-        const { data: existingSurvey } = await supabase
-          .from("satisfaction_surveys")
-          .select("id, token")
-          .eq("inscription_id", data.inscriptionId);
-
-        if (!existingSurvey || existingSurvey.length === 0) {
-          const { data: survey, error: surveyError } = await supabase
-            .from("satisfaction_surveys")
-            .insert({
-              inscription_id: data.inscriptionId,
-              student_id: data.studentId,
-            })
-            .select()
-            .single();
-
-          if (surveyError) throw surveyError;
-          result.surveyToken = survey.token;
-        } else {
-          result.surveyToken = existingSurvey[0].token;
-        }
-      }
-
-      return result;
+    mutationFn: async (data: EndPackInput): Promise<EndPackResult> => {
+      return generateEndPack(createSupabaseEndPackStore(), data);
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["inscriptions"] });
@@ -275,8 +191,6 @@ export function useGenerateEndPack() {
     onError: (error: Error) => {
       console.error("End pack generation error:", error);
       const message = error.message || "";
-      // Message d'une base pas encore migrée au point 10 : le déclencheur
-      // refusait la clôture depuis un statut autre que « En cours ».
       if (message.includes("Transition de statut non autorisée")) {
         toast.error(
           "Clôture refusée par la base : la migration du cycle de vie (point 10) n'est pas appliquée sur cet environnement."
