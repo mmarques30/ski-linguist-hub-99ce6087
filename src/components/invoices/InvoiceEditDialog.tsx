@@ -18,6 +18,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUpdateInvoice, InvoiceWithInscription } from "@/hooks/useInvoices";
+import { ensureInvoicePayment } from "@/hooks/usePayments";
+import {
+  PAYMENT_METHODS,
+  CHEQUE_STATUSES,
+  canonicalPaymentMethod,
+  HISTORICAL_PAYMENT_METHOD,
+} from "@/lib/payment-methods";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
@@ -37,9 +44,10 @@ export function InvoiceEditDialog({ invoice, open, onOpenChange }: InvoiceEditDi
     client_type: "stagiaire" as "stagiaire" | "ecole_ski" | "dsf" | "autre",
     amount_ht: 0,
     tva_rate: 0,
-    status: "draft" as "draft" | "sent" | "paid" | "cancelled",
+    status: "draft" as "draft" | "sent" | "paid" | "cancelled" | "a_verifier",
     payment_method: "",
     payment_date: "",
+    cheque_status: "recu",
     notes: "",
   });
 
@@ -53,8 +61,9 @@ export function InvoiceEditDialog({ invoice, open, onOpenChange }: InvoiceEditDi
         amount_ht: invoice.amount_ht || 0,
         tva_rate: invoice.tva_rate || 0,
         status: invoice.status,
-        payment_method: invoice.payment_method || "",
+        payment_method: canonicalPaymentMethod(invoice.payment_method) || "",
         payment_date: invoice.payment_date || "",
+        cheque_status: "recu",
         notes: invoice.notes || "",
       });
     }
@@ -65,6 +74,16 @@ export function InvoiceEditDialog({ invoice, open, onOpenChange }: InvoiceEditDi
     if (!invoice) return;
 
     try {
+      if (formData.status === "paid") {
+        if (!formData.payment_method || !formData.payment_date) {
+          toast.error("Une facture payée exige un moyen et une date de paiement");
+          return;
+        }
+      }
+      const method =
+        formData.payment_method === HISTORICAL_PAYMENT_METHOD
+          ? HISTORICAL_PAYMENT_METHOD
+          : canonicalPaymentMethod(formData.payment_method);
       await updateInvoice.mutateAsync({
         id: invoice.id,
         invoice_date: formData.invoice_date,
@@ -74,10 +93,22 @@ export function InvoiceEditDialog({ invoice, open, onOpenChange }: InvoiceEditDi
         amount_ht: formData.amount_ht,
         tva_rate: formData.tva_rate,
         status: formData.status,
-        payment_method: formData.payment_method || null,
+        payment_method: method,
         payment_date: formData.payment_date || null,
         notes: formData.notes || null,
       });
+      if (formData.status === "paid" && method && formData.payment_date) {
+        const amount = invoice.amount_ttc || formData.amount_ht * (1 + formData.tva_rate / 100);
+        await ensureInvoicePayment({
+          invoiceId: invoice.id,
+          inscriptionId: invoice.inscription_id,
+          amount,
+          paymentMethod: method,
+          paymentDate: formData.payment_date,
+          payerName: invoice.inscription?.student_name ?? null,
+          chequeStatus: method === "cheque" ? formData.cheque_status : null,
+        });
+      }
       toast.success("Facture mise à jour avec succès");
       onOpenChange(false);
     } catch (error) {
@@ -167,7 +198,7 @@ export function InvoiceEditDialog({ invoice, open, onOpenChange }: InvoiceEditDi
               <Label htmlFor="status">Statut</Label>
               <Select
                 value={formData.status}
-                onValueChange={(value: "draft" | "sent" | "paid" | "cancelled") =>
+                onValueChange={(value: "draft" | "sent" | "paid" | "cancelled" | "a_verifier") =>
                   setFormData({ ...formData, status: value })
                 }
               >
@@ -179,6 +210,7 @@ export function InvoiceEditDialog({ invoice, open, onOpenChange }: InvoiceEditDi
                   <SelectItem value="sent">Envoyée</SelectItem>
                   <SelectItem value="paid">Payée</SelectItem>
                   <SelectItem value="cancelled">Annulée</SelectItem>
+                  <SelectItem value="a_verifier">À vérifier</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -242,11 +274,16 @@ export function InvoiceEditDialog({ invoice, open, onOpenChange }: InvoiceEditDi
                   <SelectValue placeholder="Sélectionner..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="virement">Virement bancaire</SelectItem>
-                  <SelectItem value="cheque">Chèque</SelectItem>
-                  <SelectItem value="carte">Carte bancaire</SelectItem>
-                  <SelectItem value="especes">Espèces</SelectItem>
-                  <SelectItem value="stripe">Stripe</SelectItem>
+                  {PAYMENT_METHODS.map((method) => (
+                    <SelectItem key={method.value} value={method.value}>
+                      {method.label}
+                    </SelectItem>
+                  ))}
+                  {formData.payment_method === HISTORICAL_PAYMENT_METHOD && (
+                    <SelectItem value={HISTORICAL_PAYMENT_METHOD}>
+                      Non renseigné (historique)
+                    </SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -262,6 +299,28 @@ export function InvoiceEditDialog({ invoice, open, onOpenChange }: InvoiceEditDi
               />
             </div>
           </div>
+          {formData.payment_method === "cheque" && (
+            <div className="space-y-2">
+              <Label htmlFor="cheque_status">Statut du chèque</Label>
+              <Select
+                value={formData.cheque_status}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, cheque_status: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CHEQUE_STATUSES.map((status) => (
+                    <SelectItem key={status.value} value={status.value}>
+                      {status.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Notes */}
           <div className="space-y-2">

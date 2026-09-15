@@ -27,6 +27,8 @@ import {
 import { Search, Filter, Download, Plus, Eye, FileText, Loader2, Send, CheckCircle, Pencil, CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useInvoices, useUpdateInvoice, InvoiceWithInscription } from "@/hooks/useInvoices";
+import { ensureInvoicePayment } from "@/hooks/usePayments";
+import { canonicalPaymentMethod } from "@/lib/payment-methods";
 import { InvoiceTemplate, InvoiceData } from "@/components/invoices/InvoiceTemplate";
 import { InvoiceEditDialog } from "@/components/invoices/InvoiceEditDialog";
 import { InvoiceCreateDialog } from "@/components/invoices/InvoiceCreateDialog";
@@ -423,6 +425,7 @@ export default function Invoices() {
     sent: t(translations.statusSent),
     paid: t(translations.statusPaid),
     cancelled: t(translations.statusCancelled),
+    a_verifier: "À vérifier",
   };
 
   const typeLabels: Record<string, string> = {
@@ -462,11 +465,28 @@ export default function Invoices() {
   };
 
   const handleMarkAsPaid = async (invoice: InvoiceWithInscription) => {
+    const method = canonicalPaymentMethod(invoice.payment_method);
+    if (!method) {
+      toast.error("Saisissez un moyen de paiement dans la fiche facture avant de marquer Payée");
+      setSelectedInvoice(invoice);
+      setEditOpen(true);
+      return;
+    }
+    const paymentDate = invoice.payment_date || new Date().toISOString().split("T")[0];
     try {
       await updateInvoice.mutateAsync({
         id: invoice.id,
         status: "paid",
-        payment_date: new Date().toISOString().split("T")[0],
+        payment_date: paymentDate,
+        payment_method: method,
+      });
+      await ensureInvoicePayment({
+        invoiceId: invoice.id,
+        inscriptionId: invoice.inscription_id,
+        amount: invoice.amount_ttc || invoice.amount_ht,
+        paymentMethod: method,
+        paymentDate,
+        payerName: invoice.inscription?.student_name ?? null,
       });
       toast.success(t(translations.markedAsPaid));
     } catch (err) {
@@ -592,6 +612,7 @@ export default function Invoices() {
               <SelectItem value="sent">{t(translations.statusSent)}</SelectItem>
               <SelectItem value="paid">{t(translations.statusPaid)}</SelectItem>
               <SelectItem value="cancelled">{t(translations.statusCancelled)}</SelectItem>
+              <SelectItem value="a_verifier">À vérifier</SelectItem>
             </SelectContent>
           </Select>
           <Select value={typeFilter} onValueChange={setTypeFilter}>

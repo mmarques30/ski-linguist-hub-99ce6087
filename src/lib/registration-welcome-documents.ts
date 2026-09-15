@@ -33,7 +33,7 @@ export const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   LIVRET: "Livret",
   CONVOCATION: "Convocation",
   ATTESTATION_PRESENCE: "Attestation de présence",
-  CERTIFICAT: "Certificat",
+  CERTIFICAT: "Certificat de fin de formation",
   FACTURE: "Facture",
 };
 

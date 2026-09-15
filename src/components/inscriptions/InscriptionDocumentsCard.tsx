@@ -115,7 +115,12 @@ export function InscriptionDocumentsCard({
         <Alert>
           <Mail className="h-4 w-4" />
           <AlertDescription>
-            Pack d&apos;inscription envoyé le {formatSentAt(latestSentAt)}
+            {sendings.some((s) =>
+              ["CERTIFICAT", "FACTURE", "ATTESTATION_PRESENCE"].includes(s.document_type)
+            )
+              ? "Pack de fin de formation envoyé"
+              : "Pack d'inscription envoyé"}{" "}
+            le {formatSentAt(latestSentAt)}
             {(studentEmail || sendings[0]?.sent_to) ? ` à ${studentEmail || sendings[0]?.sent_to}` : ""}.
           </AlertDescription>
         </Alert>

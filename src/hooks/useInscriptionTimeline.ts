@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { paymentMethodLabel, paymentTypeLabel } from "@/lib/payment-methods";
 
 export type InscriptionTimelineEventType =
   | "created"
@@ -98,7 +99,7 @@ export function useInscriptionTimeline(inscriptionId?: string) {
           type: "payment",
           at: payment.payment_date || payment.created_at,
           title: `Paiement ${payment.amount} €`,
-          description: `${payment.payment_method} · ${payment.payment_type}`,
+          description: `${paymentMethodLabel(payment.payment_method)} · ${paymentTypeLabel(payment.payment_type)}`,
           status: payment.status,
         });
       }

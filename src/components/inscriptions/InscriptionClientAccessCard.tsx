@@ -7,6 +7,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, Mail, Link2, CreditCard, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { CopyLinkRow } from "@/components/shared/CopyLinkRow";
+import {
+  paymentMethodLabel,
+  paymentStatusLabel,
+  paymentTypeLabel,
+} from "@/lib/payment-methods";
 import { useInscriptionClientAccess } from "@/hooks/useInscriptionClientAccess";
 import { useCreateSurveyForInscription } from "@/hooks/useSatisfactionSurvey";
 import {
@@ -169,10 +174,10 @@ export function InscriptionClientAccessCard({
                 <div key={payment.id} className="rounded-lg border px-4 py-3 text-sm">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-medium">{payment.amount} €</span>
-                    <Badge variant="secondary">{payment.status}</Badge>
+                    <Badge variant="secondary">{paymentStatusLabel(payment.status)}</Badge>
                   </div>
                   <p className="text-muted-foreground mt-1">
-                    {payment.payment_method} · {payment.payment_type}
+                    {paymentMethodLabel(payment.payment_method)} · {paymentTypeLabel(payment.payment_type)}
                     {payment.payment_date
                       ? ` · ${format(new Date(payment.payment_date), "dd/MM/yyyy")}`
                       : ""}

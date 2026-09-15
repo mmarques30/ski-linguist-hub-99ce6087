@@ -11,6 +11,7 @@ import fliLogo from "@/assets/fli-logo.png";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { StripeSettingsCard } from "@/components/settings/StripeSettingsCard";
+import { InvoiceSequenceFloorCard } from "@/components/settings/InvoiceSequenceFloorCard";
 const translations = {
   title: {
     fr: "Paramètres",
@@ -393,6 +394,8 @@ export default function Settings() {
                 </div>
               </CardContent>
             </Card>
+
+            <InvoiceSequenceFloorCard />
           </TabsContent>
 
           <TabsContent value="notifications" className="space-y-6">

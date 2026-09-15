@@ -28,6 +28,8 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { buildSurveyUrl } from "@/lib/client-links";
 import { CopyLinkRow } from "@/components/shared/CopyLinkRow";
+import { getStatusLabel } from "@/lib/inscription-status";
+import { DOCUMENT_TYPE_LABELS } from "@/lib/registration-welcome-documents";
 import {
   pisteLabelFromPlacementAnswers,
   studentFacingPisteFromCecrl,
@@ -132,7 +134,7 @@ export default function StudentPortalPreview() {
                       {inscriptions.slice(0, 5).map((ins) => (
                         <li key={ins.id} className="flex justify-between gap-2">
                           <span>{ins.language} · {ins.code}</span>
-                          <Badge variant="outline">{ins.status}</Badge>
+                          <Badge variant="outline">{getStatusLabel(ins.status, "fr")}</Badge>
                         </li>
                       ))}
                     </ul>
@@ -211,9 +213,11 @@ export default function StudentPortalPreview() {
                   <p className="text-sm text-muted-foreground">Aucun document</p>
                 ) : (
                   <>
-                    {documents?.map((doc) => (
+                    {documents?.filter((doc) => doc.document_type?.toUpperCase() !== "CERTIFICAT").map((doc) => (
                       <div key={doc.id} className="rounded-lg border p-3 text-sm">
-                        <p className="font-medium">{doc.document_type}</p>
+                        <p className="font-medium">
+                          {DOCUMENT_TYPE_LABELS[doc.document_type] || doc.document_type}
+                        </p>
                         <p className="text-muted-foreground">
                           Envoyé le {format(new Date(doc.sent_at), "dd/MM/yyyy")}
                         </p>

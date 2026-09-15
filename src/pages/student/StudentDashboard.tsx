@@ -16,21 +16,7 @@ import {
   studentFacingPisteFromCecrl,
 } from "@/lib/placement-test-engine";
 
-const statusLabels: Record<string, string> = {
-  brouillon: "Brouillon",
-  en_attente: "En attente",
-  confirmee: "Confirmée",
-  en_cours: "En cours",
-  terminee: "Terminée",
-  facturee: "Facturée",
-};
-
-const statusColors: Record<string, string> = {
-  en_cours: "bg-blue-100 text-blue-800",
-  confirmee: "bg-emerald-100 text-emerald-800",
-  terminee: "bg-muted text-muted-foreground",
-  en_attente: "bg-amber-100 text-amber-800",
-};
+import { getStatusLabel, getStatusStyle } from "@/lib/inscription-status";
 
 export default function StudentDashboard() {
   const { data: student } = useStudentProfile();
@@ -111,8 +97,8 @@ export default function StudentDashboard() {
                       </span>
                     </div>
                   )}
-                  <Badge className={statusColors[activeInscription.status] || ""}>
-                    {statusLabels[activeInscription.status] || activeInscription.status}
+                  <Badge className={getStatusStyle(activeInscription.status)}>
+                    {getStatusLabel(activeInscription.status, "fr")}
                   </Badge>
                 </div>
               ) : (
@@ -241,9 +227,9 @@ export default function StudentDashboard() {
                       </div>
                       <Badge
                         variant="outline"
-                        className={statusColors[i.status] || ""}
+                        className={getStatusStyle(i.status)}
                       >
-                        {statusLabels[i.status] || i.status}
+                        {getStatusLabel(i.status, "fr")}
                       </Badge>
                     </div>
                   ))}

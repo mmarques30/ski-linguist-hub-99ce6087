@@ -78,6 +78,7 @@ export function EndPackDialog({
   const [sendSurvey, setSendSurvey] = useState(true);
   const [result, setResult] = useState<{
     invoiceId?: string;
+    invoiceNumber?: string | null;
     certificateId?: string;
     surveyToken?: string;
   } | null>(null);
@@ -377,7 +378,9 @@ export function EndPackDialog({
                 {result.invoiceId && (
                   <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 border border-blue-200">
                     <FileText className="h-5 w-5 text-blue-600" />
-                    <p className="font-medium text-sm">Facture créée</p>
+                    <p className="font-medium text-sm">
+                      Facture créée{result.invoiceNumber ? ` ${result.invoiceNumber}` : ""}
+                    </p>
                   </div>
                 )}
                 {result.certificateId && (
