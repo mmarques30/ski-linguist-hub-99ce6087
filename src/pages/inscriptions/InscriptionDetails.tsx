@@ -154,7 +154,7 @@ export default function InscriptionDetails() {
 
       if (error) throw error;
       return data as unknown as
-        | (Record<string, unknown> & {
+        | (Record<string, any> & {
             entry_test_id?: string | null;
             dates_to_confirm?: boolean | null;
           })
