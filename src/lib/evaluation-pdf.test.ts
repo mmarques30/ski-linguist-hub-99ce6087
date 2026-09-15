@@ -1,4 +1,5 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { inflateSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
@@ -18,6 +19,11 @@ import {
 } from "./evaluation-pdf";
 import { EVALUATION_PDF_ASSET_FILES, type EvaluationPdfAssets } from "./evaluation-pdf-assets";
 import { renderEvaluationPdf, wrapText } from "./evaluation-pdf-render";
+
+// Les trois PDF de preuve du point C.5 sont écrits à côté des tests. Le chemin
+// était figé sur /opt/cursor/artifacts, qui n'existe que dans le bac à sable de
+// l'agent : ailleurs, mkdir échoue en EACCES et npm test part en rouge.
+const PROOF_DIR = process.env.FLI_PDF_PREUVES_DIR ?? join(tmpdir(), "fli-pdf-preuves");
 
 function pdfVisibleText(bytes: Uint8Array): string {
   const latin = Buffer.from(bytes).toString("latin1");
@@ -261,7 +267,7 @@ describe("retour à la ligne", () => {
 
 describe("octets PDF", () => {
   it("produit un PDF par habillage et écrit les trois preuves", async () => {
-    await mkdir("/opt/cursor/artifacts", { recursive: true });
+    await mkdir(PROOF_DIR, { recursive: true });
     const assets = await loadAssets();
     for (const sponsor of ["esf", "ecole_ski", "dsf"] as const) {
       const model = buildEvaluationPdfModel(sample(sponsor));
@@ -280,7 +286,7 @@ describe("octets PDF", () => {
       expect(ascii).toContain("Expression technique et sp");
       expect(ascii).toContain("Appr");
       expect(ascii).toContain("saison 2025 / 2026");
-      await writeFile(`/opt/cursor/artifacts/c5-preuve-${sponsor}.pdf`, bytes);
+      await writeFile(join(PROOF_DIR, `c5-preuve-${sponsor}.pdf`), bytes);
       if (sponsor === "dsf") {
         expect(doc.getPageCount()).toBe(1);
         expect(ascii).toContain("Entreprise");
