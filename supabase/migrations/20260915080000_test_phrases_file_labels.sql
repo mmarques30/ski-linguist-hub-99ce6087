@@ -9,6 +9,23 @@ ALTER TABLE public.test_phrases
   ADD COLUMN IF NOT EXISTS is_correction boolean NOT NULL DEFAULT false,
   ADD COLUMN IF NOT EXISTS error_type text;
 
+-- L'ancienne contrainte n'acceptait que les six catégories de l'application
+-- (introduction, comprehension, expression, grammar, technique, conclusion).
+-- Les étiquettes du fichier les remplacent, à l'identique du fichier.
+ALTER TABLE public.test_phrases
+  DROP CONSTRAINT IF EXISTS test_phrases_category_check;
+
+ALTER TABLE public.test_phrases
+  ADD CONSTRAINT test_phrases_category_check
+  CHECK (category = ANY (ARRAY[
+    'INTRODUCTION',
+    'COMPREHENSION',
+    'CONCLUSION',
+    'PRONONCIATION',
+    'GRAMMAIRE',
+    'VOCABULAIRE'
+  ]::text[]));
+
 COMMENT ON COLUMN public.test_phrases.context IS
   'Champ "context" du fichier source (INTRODUCTION / COMPREHENSION / CONCLUSION). NULL ailleurs.';
 COMMENT ON COLUMN public.test_phrases.is_correction IS
