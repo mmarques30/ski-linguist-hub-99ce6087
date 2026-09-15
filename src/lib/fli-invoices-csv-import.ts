@@ -48,6 +48,7 @@ export interface FliInvoiceParsedRow {
   language: string | null;
   startDate: string | null;
   endDate: string | null;
+  location: string | null;
   clientName: string;
   email: string | null;
   skiSchool: string | null;
@@ -115,12 +116,19 @@ export interface FliInvoicesPreview {
   emptyPaymentMethods: Array<{
     invoiceNumber: string;
     clientName: string;
+    invoiceDate: string;
     year: string;
     amountHt: number;
+    amountTtc: number;
   }>;
   credits: Array<{ invoiceNumber: string; amountHt: number; relatedInvoiceRef: string | null }>;
   cancelled: Array<{ invoiceNumber: string; amountHt: number }>;
-  esfBilled: Array<{ invoiceNumber: string; clientName: string }>;
+  esfBilled: Array<{
+    invoiceNumber: string;
+    clientName: string;
+    location: string | null;
+    skiSchool: string | null;
+  }>;
   otherPaymentLabels: Array<{ invoiceNumber: string; label: string }>;
   rows: FliInvoiceParsedRow[];
 }
@@ -138,9 +146,34 @@ export interface FliInvoicesMatchReport {
   ambiguous: Array<{
     invoiceNumber: string;
     clientName: string;
+    invoiceDate: string;
+    startDate: string | null;
+    language: string | null;
     candidates: Array<{ id: string; code: string | null; name: string }>;
   }>;
+  esfPartners: EsfPartnerLink[];
   byYear: Record<string, { matched: number; unmatched: number; ambiguous: number }>;
+}
+
+/** Phrase exigée par Paula avant toute écriture du CSV historique. */
+export const FLI_INVOICES_WRITE_CONFIRMATION = "OK import";
+
+export interface EsfPartnerInput {
+  id: string;
+  name: string;
+  type: string;
+  station: string | null;
+  esf_code?: string | null;
+}
+
+export interface EsfPartnerLink {
+  invoiceNumber: string;
+  clientName: string;
+  location: string | null;
+  partnerId: string | null;
+  partnerName: string | null;
+  partnerCode: string | null;
+  inscriptionId: string | null;
 }
 
 const MAC_ROMAN_TO_LATIN: Record<string, string> = {
@@ -158,7 +191,7 @@ const MAC_ROMAN_TO_LATIN: Record<string, string> = {
   "\u009d": "ù",
 };
 
-function restoreMacRoman(raw: string): string {
+export function restoreMacRoman(raw: string): string {
   return raw.replace(/[\u0080-\u009F]/g, (ch) => MAC_ROMAN_TO_LATIN[ch] ?? "");
 }
 
@@ -460,6 +493,7 @@ export function parseFliInvoicesCsv(text: string): FliInvoicesPreview {
       language: cell(raw, "Langue") || null,
       startDate: isoDate(cell(raw, "Date de début")),
       endDate: isoDate(cell(raw, "Date de fin")),
+      location: cell(raw, "Lieu du stage") || null,
       clientName: cell(raw, "Nom et Prénom"),
       email: cell(raw, "Email") || null,
       skiSchool: cell(raw, "école de ski") || null,
@@ -505,8 +539,10 @@ export function parseFliInvoicesCsv(text: string): FliInvoicesPreview {
       emptyPaymentMethods.push({
         invoiceNumber,
         clientName: row.clientName,
+        invoiceDate: row.invoiceDate,
         year: row.fiscalYear,
         amountHt,
+        amountTtc: row.amountTtc,
       });
     }
     if (row.paymentKind === "credit") {
@@ -520,7 +556,12 @@ export function parseFliInvoicesCsv(text: string): FliInvoicesPreview {
       cancelled.push({ invoiceNumber, amountHt });
     }
     if (row.paymentKind === "esf") {
-      esfBilled.push({ invoiceNumber, clientName: row.clientName });
+      esfBilled.push({
+        invoiceNumber,
+        clientName: row.clientName,
+        location: row.location,
+        skiSchool: row.skiSchool,
+      });
     }
     if (row.paymentKind === "other") {
       otherPaymentLabels.push({
@@ -654,10 +695,13 @@ export function matchFliInvoicesToInscriptions(
       ambiguous.push({
         invoiceNumber: row.invoiceNumber,
         clientName: row.clientName,
+        invoiceDate: row.invoiceDate,
+        startDate: row.startDate,
+        language: row.language,
         candidates: [...unique.values()].map((c) => ({
           id: c.id,
-          code: c.code,
-          name: `${c.first_name ?? ""} ${c.last_name ?? ""}`.trim(),
+          code: c.code ? restoreMacRoman(c.code) : null,
+          name: restoreMacRoman(`${c.first_name ?? ""} ${c.last_name ?? ""}`.trim()),
         })),
       });
       bump(year, "ambiguous");
@@ -674,13 +718,81 @@ export function matchFliInvoicesToInscriptions(
     }
   }
 
-  return { matched, unmatched, ambiguous, byYear };
+  return { matched, unmatched, ambiguous, esfPartners: [], byYear };
+}
+
+const STATION_STOP = new Set(["esf", "la", "le", "les", "de", "du", "des", "d", "l"]);
+
+/** Clé de station : articles et préfixe ESF ignorés, tokens triés. */
+export function stationTokenKey(raw: string | null | undefined): string {
+  return foldInvoiceText(raw)
+    .split(/\s+/)
+    .filter((t) => t && !STATION_STOP.has(t))
+    .sort()
+    .join(" ");
+}
+
+/**
+ * Rattache un partenaire ESF unique à partir du lieu de stage / école de ski.
+ * Plusieurs ESF sur la même station (ex. Courchevel) → aucun rattachement auto.
+ */
+export function resolveEsfPartner(
+  location: string | null,
+  skiSchool: string | null,
+  partners: EsfPartnerInput[]
+): EsfPartnerInput | null {
+  const esf = partners.filter((p) => p.type === "esf");
+  const keys = [...new Set([skiSchool, location].map(stationTokenKey).filter(Boolean))];
+  if (keys.length === 0 || esf.length === 0) return null;
+
+  const hits = new Map<string, EsfPartnerInput>();
+  for (const key of keys) {
+    const exact = esf.filter(
+      (p) => stationTokenKey(p.station) === key || stationTokenKey(p.name) === key
+    );
+    if (exact.length !== 1) continue;
+    hits.set(exact[0].id, exact[0]);
+  }
+  if (hits.size === 1) return [...hits.values()][0];
+  return null;
+}
+
+export function linkEsfPartners(
+  rows: FliInvoiceParsedRow[],
+  match: Pick<FliInvoicesMatchReport, "matched">,
+  partners: EsfPartnerInput[]
+): EsfPartnerLink[] {
+  const inscriptionByInvoice = new Map(
+    match.matched.map((m) => [m.invoiceNumber, m.inscriptionId])
+  );
+  return rows
+    .filter((row) => row.paymentKind === "esf")
+    .map((row) => {
+      const partner = resolveEsfPartner(row.location, row.skiSchool, partners);
+      return {
+        invoiceNumber: row.invoiceNumber,
+        clientName: row.clientName,
+        location: row.location,
+        partnerId: partner?.id ?? null,
+        partnerName: partner?.name ?? null,
+        partnerCode: partner?.esf_code ?? null,
+        inscriptionId: inscriptionByInvoice.get(row.invoiceNumber) ?? null,
+      };
+    });
 }
 
 export function toInvoiceInsert(
   row: FliInvoiceParsedRow,
-  inscriptionId: string | null
+  inscriptionId: string | null,
+  esfPartner?: EsfPartnerInput | null
 ): Record<string, unknown> {
+  const partnerNote =
+    row.paymentKind === "esf"
+      ? esfPartner
+        ? `Payeur école : ${esfPartner.name}${esfPartner.esf_code ? ` (${esfPartner.esf_code})` : ""}`
+        : "Payeur école : ESF (partenaire non rattaché — lieu ambigu ou absent)"
+      : null;
+  const notes = [row.notes, partnerNote].filter(Boolean).join(" — ") || null;
   return {
     invoice_number: row.invoiceNumber,
     fiscal_year: row.fiscalYear,
@@ -695,7 +807,7 @@ export function toInvoiceInsert(
     payment_date: row.invoiceStatus === "paid" ? row.paymentDate : null,
     payment_method: row.paymentMethod,
     payment_type: "integral",
-    notes: row.notes,
+    notes,
     inscription_id: inscriptionId,
   };
 }

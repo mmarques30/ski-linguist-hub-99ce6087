@@ -14,12 +14,15 @@ import {
 import { Upload, FileSpreadsheet, Loader2, CheckCircle2 } from "lucide-react";
 import {
   parseFliInvoicesCsv,
+  FLI_INVOICES_WRITE_CONFIRMATION,
   type FliInvoicesMatchReport,
   type FliInvoicesPreview,
 } from "@/lib/fli-invoices-csv-import";
 import { useFliInvoicesImport, useFliInvoicesMatch } from "@/hooks/useFliInvoicesImport";
 import { downloadTextFile } from "@/lib/csv-import-parser";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 function euro(n: number): string {
   return n.toLocaleString("fr-FR", {
@@ -34,12 +37,14 @@ export function FliInvoicesImportCard() {
   const [preview, setPreview] = useState<FliInvoicesPreview | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
   const [match, setMatch] = useState<FliInvoicesMatchReport | null>(null);
+  const [okImport, setOkImport] = useState("");
   const dryRun = useFliInvoicesMatch();
   const write = useFliInvoicesImport();
 
   const handleFile = async (file: File) => {
     setParseError(null);
     setMatch(null);
+    setOkImport("");
     try {
       const text = await file.text();
       setPreview(parseFliInvoicesCsv(text));
@@ -67,9 +72,13 @@ export function FliInvoicesImportCard() {
   const handleWrite = async () => {
     if (!preview || !match) return;
     try {
-      const result = await write.mutateAsync({ rows: preview.rows, match });
+      const result = await write.mutateAsync({
+        rows: preview.rows,
+        match,
+        confirmation: okImport,
+      });
       toast.success(
-        `Écriture : ${result.inserted} facture(s), ${result.paymentsInserted} paiement(s), ${result.skippedExisting} déjà en base.`
+        `Écriture : ${result.inserted} facture(s), ${result.paymentsInserted} paiement(s), ${result.partnersLinked} partenaire(s), ${result.skippedExisting} déjà en base.`
       );
       if (result.errors.length > 0) {
         toast.warning(`${result.errors.length} erreur(s) — voir la console`);
@@ -95,15 +104,29 @@ export function FliInvoicesImportCard() {
 
   const downloadEmptyMeans = () => {
     if (!preview) return;
-    const lines = ["facture;nom;exercice;ht"];
+    const lines = ["facture;nom;date;montant_ttc"];
     for (const row of preview.emptyPaymentMethods) {
       lines.push(
-        [row.invoiceNumber, row.clientName, row.year, String(row.amountHt)]
-          .map((v) => `"${v.replace(/"/g, '""')}"`)
+        [row.invoiceNumber, row.clientName, row.invoiceDate, String(row.amountTtc)]
+          .map((v) => `"${String(v).replace(/"/g, '""')}"`)
           .join(";")
       );
     }
-    downloadTextFile("factures-moyen-vide.csv", lines.join("\n"));
+    downloadTextFile("factures-sans-moyen-paiement.csv", lines.join("\n"));
+  };
+
+  const downloadAmbiguous = () => {
+    if (!match) return;
+    const lines = ["facture;nom;date_facture;date_debut;langue;candidates"];
+    for (const row of match.ambiguous) {
+      const cands = row.candidates.map((c) => `${c.code ?? "?"} ${c.name}`).join(" | ");
+      lines.push(
+        [row.invoiceNumber, row.clientName, row.invoiceDate, row.startDate ?? "", row.language ?? "", cands]
+          .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+          .join(";")
+      );
+    }
+    downloadTextFile("factures-ambigues.csv", lines.join("\n"));
   };
 
   return (
@@ -252,23 +275,22 @@ export function FliInvoicesImportCard() {
               )}
             </div>
 
+            {preview.esfBilled.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                {preview.esfBilled.length} facture(s) « facturé à l&apos;ESF » → payeur école
+                {preview.esfBilled.map((r) => r.location).filter(Boolean).length > 0
+                  ? `, lieu ${[...new Set(preview.esfBilled.map((r) => r.location).filter(Boolean))].join(", ")}`
+                  : ""}
+                . Le partenaire ESF est proposé au dry-run.
+              </p>
+            )}
+
             <div className="flex flex-wrap gap-2">
               <Button onClick={() => void handleDryRun()} disabled={dryRun.isPending}>
                 {dryRun.isPending ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
                 Dry-run rattachement inscriptions
-              </Button>
-              <Button
-                onClick={() => void handleWrite()}
-                disabled={!match || write.isPending}
-              >
-                {write.isPending ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                )}
-                Écrire en base
               </Button>
             </div>
 
@@ -301,9 +323,66 @@ export function FliInvoicesImportCard() {
                       ))}
                   </TableBody>
                 </Table>
-                <Button variant="outline" size="sm" onClick={downloadUnmatched}>
-                  Télécharger les non-rattachées
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" onClick={downloadUnmatched}>
+                    Télécharger les non-rattachées
+                  </Button>
+                  {match.ambiguous.length > 0 && (
+                    <Button variant="outline" size="sm" onClick={downloadAmbiguous}>
+                      Télécharger les {match.ambiguous.length} ambiguës
+                    </Button>
+                  )}
+                </div>
+                {match.esfPartners.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="font-medium">Facturé à l&apos;ESF → partenaire</p>
+                    <ul className="list-disc pl-5">
+                      {match.esfPartners.map((link) => (
+                        <li key={link.invoiceNumber}>
+                          {link.invoiceNumber} {link.clientName}
+                          {link.location ? ` (${link.location})` : ""} →{" "}
+                          {link.partnerName
+                            ? `${link.partnerName}${link.partnerCode ? ` ${link.partnerCode}` : ""}`
+                            : "partenaire non unique"}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <Alert>
+                  <AlertTitle>Écriture bloquée</AlertTitle>
+                  <AlertDescription>
+                    Taper exactement « {FLI_INVOICES_WRITE_CONFIRMATION} » pour déverrouiller.
+                    Sans ce feu vert, rien n&apos;est écrit.
+                  </AlertDescription>
+                </Alert>
+                <div className="flex flex-wrap items-end gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="ok-import">Confirmation</Label>
+                    <Input
+                      id="ok-import"
+                      value={okImport}
+                      onChange={(e) => setOkImport(e.target.value)}
+                      placeholder={FLI_INVOICES_WRITE_CONFIRMATION}
+                      autoComplete="off"
+                      className="w-48"
+                    />
+                  </div>
+                  <Button
+                    onClick={() => void handleWrite()}
+                    disabled={
+                      write.isPending ||
+                      okImport.trim() !== FLI_INVOICES_WRITE_CONFIRMATION
+                    }
+                  >
+                    {write.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                    )}
+                    Écrire en base
+                  </Button>
+                </div>
               </div>
             )}
           </>
