@@ -30,6 +30,11 @@ import {
   studentFacingPisteLabel,
 } from "@/lib/placement-test-engine";
 import { REGISTRATION_LEGAL_DOCUMENTS } from "@/lib/registration-legal-documents";
+import {
+  expectsStationGroupAssignment,
+  STATION_GROUP_NOTICE_AFTER_TEST,
+  STATION_GROUP_SIGNATURE,
+} from "@/lib/registration-group-notice";
 
 interface ConfirmationStepProps {
   data: RegistrationData;
@@ -79,6 +84,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
   } | null>(null);
 
   const testCompleted = Boolean(data.testAnswers && data.currentLevel);
+  const isStationGroup = expectsStationGroupAssignment(data.modality);
   const isCustomFormat = data.isCustomFormat || isCustomFormatDuration(data.duration);
   const coursePrice = data.price ?? 0;
   const hasPaymentStep = !isCustomFormat && coursePrice > 0;
@@ -240,13 +246,14 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                 </Alert>
               )}
 
-            <Alert>
-              <Mountain className="h-4 w-4" />
-              <AlertDescription>
-                Votre groupe (matin ou après-midi) sera confirmé environ 10 jours avant le début
-                des cours, après validation par notre équipe.
-              </AlertDescription>
-            </Alert>
+            {isStationGroup && (
+              <Alert>
+                <Mountain className="h-4 w-4" />
+                <AlertDescription>
+                  {STATION_GROUP_NOTICE_AFTER_TEST} — {STATION_GROUP_SIGNATURE}
+                </AlertDescription>
+              </Alert>
+            )}
             {result.needsAdminCall && (
               <Alert>
                 <Phone className="h-4 w-4" />

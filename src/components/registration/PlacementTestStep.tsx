@@ -23,6 +23,12 @@ import {
   type SlopeLevel,
   type SlopeResult,
 } from "@/lib/placement-test-engine";
+import {
+  expectsStationGroupAssignment,
+  STATION_GROUP_NOTICE_AFTER_TEST,
+  STATION_GROUP_NOTICE_BEFORE_TEST,
+  STATION_GROUP_SIGNATURE,
+} from "@/lib/registration-group-notice";
 
 interface PlacementTestStepProps {
   data: Partial<RegistrationData>;
@@ -31,6 +37,7 @@ interface PlacementTestStepProps {
 }
 
 export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepProps) {
+  const isStationGroup = expectsStationGroupAssignment(data.modality);
   const [testStarted, setTestStarted] = useState(false);
   const [currentSlope, setCurrentSlope] = useState<SlopeLevel>("verte");
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -220,13 +227,14 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
             </Alert>
           )}
 
-          <Alert>
-            <Mountain className="h-4 w-4" />
-            <AlertDescription>
-              L'affectation au groupe du matin ou de l'après-midi sera définie par notre équipe
-              environ 10 jours avant le début des cours, après analyse de l'ensemble des inscrits.
-            </AlertDescription>
-          </Alert>
+          {isStationGroup && (
+            <Alert>
+              <Mountain className="h-4 w-4" />
+              <AlertDescription>
+                {STATION_GROUP_NOTICE_AFTER_TEST} — {STATION_GROUP_SIGNATURE}
+              </AlertDescription>
+            </Alert>
+          )}
 
           <Button onClick={handleSubmit} className="w-full">
             Continuer vers les attentes
@@ -302,12 +310,13 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
             </AlertDescription>
           </Alert>
 
-          <Alert className="bg-muted/50 border-primary/20">
-            <AlertDescription className="text-sm">
-              Le groupe matin/après-midi sera attribué par l'équipe FLI environ 10 jours avant le
-              début des cours, après validation par Paula.
-            </AlertDescription>
-          </Alert>
+          {isStationGroup && (
+            <Alert className="bg-muted/50 border-primary/20">
+              <AlertDescription className="text-sm">
+                {STATION_GROUP_NOTICE_BEFORE_TEST} — {STATION_GROUP_SIGNATURE}
+              </AlertDescription>
+            </Alert>
+          )}
 
           {isLoading ? (
             <div className="flex items-center justify-center py-4">
