@@ -10,10 +10,46 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
+      _bl033_dedup_map: {
+        Row: {
+          code_cible: string | null
+          garde: string | null
+          supprime: string | null
+        }
+        Insert: {
+          code_cible?: string | null
+          garde?: string | null
+          supprime?: string | null
+        }
+        Update: {
+          code_cible?: string | null
+          garde?: string | null
+          supprime?: string | null
+        }
+        Relationships: []
+      }
+      _bl033_log: {
+        Row: {
+          col: string | null
+          n: number | null
+          tbl: string | null
+        }
+        Insert: {
+          col?: string | null
+          n?: number | null
+          tbl?: string | null
+        }
+        Update: {
+          col?: string | null
+          n?: number | null
+          tbl?: string | null
+        }
+        Relationships: []
+      }
       accommodations: {
         Row: {
           address: string | null
@@ -169,6 +205,30 @@ export type Database = {
           },
         ]
       }
+      cecrl_scale: {
+        Row: {
+          base_label: string
+          cecrl_label: string
+          description: string
+          niveau: number
+          score: number
+        }
+        Insert: {
+          base_label: string
+          cecrl_label: string
+          description: string
+          niveau: number
+          score: number
+        }
+        Update: {
+          base_label?: string
+          cecrl_label?: string
+          description?: string
+          niveau?: number
+          score?: number
+        }
+        Relationships: []
+      }
       certificates: {
         Row: {
           attendance_rate: number | null
@@ -232,30 +292,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      cecrl_scale: {
-        Row: {
-          base_label: string
-          cecrl_label: string
-          description: string
-          niveau: number
-          score: number
-        }
-        Insert: {
-          base_label: string
-          cecrl_label: string
-          description: string
-          niveau: number
-          score: number
-        }
-        Update: {
-          base_label?: string
-          cecrl_label?: string
-          description?: string
-          niveau?: number
-          score?: number
-        }
-        Relationships: []
       }
       continuous_improvement: {
         Row: {
@@ -446,6 +482,60 @@ export type Database = {
           },
         ]
       }
+      edge_dispatch_config: {
+        Row: {
+          description: string | null
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      edge_dispatch_log: {
+        Row: {
+          auth_mode: string
+          created_at: string
+          function_name: string
+          id: string
+          jobname: string | null
+          note: string | null
+          request_id: number | null
+          triggered_by: string | null
+        }
+        Insert: {
+          auth_mode: string
+          created_at?: string
+          function_name: string
+          id?: string
+          jobname?: string | null
+          note?: string | null
+          request_id?: number | null
+          triggered_by?: string | null
+        }
+        Update: {
+          auth_mode?: string
+          created_at?: string
+          function_name?: string
+          id?: string
+          jobname?: string | null
+          note?: string | null
+          request_id?: number | null
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
       email_log: {
         Row: {
           created_at: string
@@ -582,7 +672,15 @@ export type Database = {
           variables?: Json
           variant_label?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "email_template_drafts_model_key_fkey"
+            columns: ["model_key"]
+            isOneToOne: false
+            referencedRelation: "email_models"
+            referencedColumns: ["model_key"]
+          },
+        ]
       }
       email_templates: {
         Row: {
@@ -638,60 +736,6 @@ export type Database = {
           validated_by?: string | null
           variables?: Json
           variant_label?: string
-        }
-        Relationships: []
-      }
-      edge_dispatch_config: {
-        Row: {
-          description: string | null
-          key: string
-          updated_at: string
-          value: string
-        }
-        Insert: {
-          description?: string | null
-          key: string
-          updated_at?: string
-          value: string
-        }
-        Update: {
-          description?: string | null
-          key?: string
-          updated_at?: string
-          value?: string
-        }
-        Relationships: []
-      }
-      edge_dispatch_log: {
-        Row: {
-          auth_mode: string
-          created_at: string
-          function_name: string
-          id: string
-          jobname: string | null
-          note: string | null
-          request_id: number | null
-          triggered_by: string | null
-        }
-        Insert: {
-          auth_mode: string
-          created_at?: string
-          function_name: string
-          id?: string
-          jobname?: string | null
-          note?: string | null
-          request_id?: number | null
-          triggered_by?: string | null
-        }
-        Update: {
-          auth_mode?: string
-          created_at?: string
-          function_name?: string
-          id?: string
-          jobname?: string | null
-          note?: string | null
-          request_id?: number | null
-          triggered_by?: string | null
         }
         Relationships: []
       }
@@ -926,6 +970,7 @@ export type Database = {
           check_date: string | null
           check_number: string | null
           code: string | null
+          commentaire_sortie: string | null
           course_address: string | null
           course_location: string | null
           course_materials: string | null
@@ -957,6 +1002,7 @@ export type Database = {
           funding_organization: string | null
           group_name: string | null
           group_size: number | null
+          groupe_code: string | null
           hours_followed: number | null
           hours_per_day: number | null
           id: string
@@ -981,13 +1027,12 @@ export type Database = {
           progression: string | null
           qualiopi_status: string | null
           remarques_entree: string | null
-          commentaire_sortie: string | null
           rhythm: string | null
           schedule: string | null
           schedule_approved_at: string | null
           schedule_approved_by: string | null
-          schedule_status: string
           schedule_reminder_sent_at: string | null
+          schedule_status: string
           season_id: string | null
           ski_school_id: string | null
           start_date: string
@@ -1008,6 +1053,7 @@ export type Database = {
           check_date?: string | null
           check_number?: string | null
           code?: string | null
+          commentaire_sortie?: string | null
           course_address?: string | null
           course_location?: string | null
           course_materials?: string | null
@@ -1039,15 +1085,9 @@ export type Database = {
           funding_organization?: string | null
           group_name?: string | null
           group_size?: number | null
+          groupe_code?: string | null
           hours_followed?: number | null
           hours_per_day?: number | null
-          niveau_general_entree?: string | null
-          niveau_general_sortie?: string | null
-          niveau_technique_entree?: string | null
-          niveau_technique_sortie?: string | null
-          objectif_atteint?: string | null
-          remarques_entree?: string | null
-          commentaire_sortie?: string | null
           id?: string
           instructor_accommodation_address?: string | null
           instructor_accommodation_dates?: string | null
@@ -1057,6 +1097,11 @@ export type Database = {
           language: string
           max_participants?: string | null
           modality?: string | null
+          niveau_general_entree?: string | null
+          niveau_general_sortie?: string | null
+          niveau_technique_entree?: string | null
+          niveau_technique_sortie?: string | null
+          objectif_atteint?: string | null
           observations?: string | null
           partner_id?: string | null
           payment_method?: string | null
@@ -1064,12 +1109,13 @@ export type Database = {
           price?: number | null
           progression?: string | null
           qualiopi_status?: string | null
+          remarques_entree?: string | null
           rhythm?: string | null
           schedule?: string | null
           schedule_approved_at?: string | null
           schedule_approved_by?: string | null
-          schedule_status?: string
           schedule_reminder_sent_at?: string | null
+          schedule_status?: string
           season_id?: string | null
           ski_school_id?: string | null
           start_date: string
@@ -1090,6 +1136,7 @@ export type Database = {
           check_date?: string | null
           check_number?: string | null
           code?: string | null
+          commentaire_sortie?: string | null
           course_address?: string | null
           course_location?: string | null
           course_materials?: string | null
@@ -1121,15 +1168,9 @@ export type Database = {
           funding_organization?: string | null
           group_name?: string | null
           group_size?: number | null
+          groupe_code?: string | null
           hours_followed?: number | null
           hours_per_day?: number | null
-          niveau_general_entree?: string | null
-          niveau_general_sortie?: string | null
-          niveau_technique_entree?: string | null
-          niveau_technique_sortie?: string | null
-          objectif_atteint?: string | null
-          remarques_entree?: string | null
-          commentaire_sortie?: string | null
           id?: string
           instructor_accommodation_address?: string | null
           instructor_accommodation_dates?: string | null
@@ -1139,6 +1180,11 @@ export type Database = {
           language?: string
           max_participants?: string | null
           modality?: string | null
+          niveau_general_entree?: string | null
+          niveau_general_sortie?: string | null
+          niveau_technique_entree?: string | null
+          niveau_technique_sortie?: string | null
+          objectif_atteint?: string | null
           observations?: string | null
           partner_id?: string | null
           payment_method?: string | null
@@ -1146,12 +1192,13 @@ export type Database = {
           price?: number | null
           progression?: string | null
           qualiopi_status?: string | null
+          remarques_entree?: string | null
           rhythm?: string | null
           schedule?: string | null
           schedule_approved_at?: string | null
           schedule_approved_by?: string | null
-          schedule_status?: string
           schedule_reminder_sent_at?: string | null
+          schedule_status?: string
           season_id?: string | null
           ski_school_id?: string | null
           start_date?: string
@@ -1478,32 +1525,31 @@ export type Database = {
       }
       instructors: {
         Row: {
-          alias: string[] | null
-          civilite: string | null
-          pays: string | null
-          statut_administratif: string | null
-          identifiant_etranger: string | null
-          assujetti_tva: boolean | null
-          consentement_temoignage: string | null
-          consentement_photo: string | null
-          cv_url: string | null
-          formulaire_2026: boolean | null
-          date_naissance: string | null
           address: string | null
+          alias: string[] | null
+          assujetti_tva: boolean | null
+          auth_user_id: string | null
           availability_status: string | null
           bio: string | null
           certifications: Json | null
           city: string | null
+          civilite: string | null
+          consentement_photo: string | null
+          consentement_temoignage: string | null
           created_at: string
+          cv_url: string | null
+          date_naissance: string | null
           email: string | null
           first_name: string | null
+          formulaire_2026: boolean | null
           geographic_zones: string[] | null
           hourly_rate: number | null
           id: string
-          auth_user_id: string | null
+          identifiant_etranger: string | null
           is_active: boolean | null
           languages: string[] | null
           last_name: string
+          pays: string | null
           phone: string | null
           photo_url: string | null
           postal_code: string | null
@@ -1513,36 +1559,36 @@ export type Database = {
           specialty_details: string | null
           status: string | null
           status_notes: string | null
+          statut_administratif: string | null
           tax_status: string | null
           updated_at: string | null
         }
         Insert: {
-          alias?: string[] | null
-          civilite?: string | null
-          pays?: string | null
-          statut_administratif?: string | null
-          identifiant_etranger?: string | null
-          assujetti_tva?: boolean | null
-          consentement_temoignage?: string | null
-          consentement_photo?: string | null
-          cv_url?: string | null
-          formulaire_2026?: boolean | null
-          date_naissance?: string | null
           address?: string | null
+          alias?: string[] | null
+          assujetti_tva?: boolean | null
+          auth_user_id?: string | null
           availability_status?: string | null
           bio?: string | null
           certifications?: Json | null
           city?: string | null
+          civilite?: string | null
+          consentement_photo?: string | null
+          consentement_temoignage?: string | null
           created_at?: string
+          cv_url?: string | null
+          date_naissance?: string | null
           email?: string | null
           first_name?: string | null
+          formulaire_2026?: boolean | null
           geographic_zones?: string[] | null
           hourly_rate?: number | null
           id?: string
-          auth_user_id?: string | null
+          identifiant_etranger?: string | null
           is_active?: boolean | null
           languages?: string[] | null
           last_name: string
+          pays?: string | null
           phone?: string | null
           photo_url?: string | null
           postal_code?: string | null
@@ -1552,36 +1598,36 @@ export type Database = {
           specialty_details?: string | null
           status?: string | null
           status_notes?: string | null
+          statut_administratif?: string | null
           tax_status?: string | null
           updated_at?: string | null
         }
         Update: {
-          alias?: string[] | null
-          civilite?: string | null
-          pays?: string | null
-          statut_administratif?: string | null
-          identifiant_etranger?: string | null
-          assujetti_tva?: boolean | null
-          consentement_temoignage?: string | null
-          consentement_photo?: string | null
-          cv_url?: string | null
-          formulaire_2026?: boolean | null
-          date_naissance?: string | null
           address?: string | null
+          alias?: string[] | null
+          assujetti_tva?: boolean | null
+          auth_user_id?: string | null
           availability_status?: string | null
           bio?: string | null
           certifications?: Json | null
           city?: string | null
+          civilite?: string | null
+          consentement_photo?: string | null
+          consentement_temoignage?: string | null
           created_at?: string
+          cv_url?: string | null
+          date_naissance?: string | null
           email?: string | null
           first_name?: string | null
+          formulaire_2026?: boolean | null
           geographic_zones?: string[] | null
           hourly_rate?: number | null
           id?: string
-          auth_user_id?: string | null
+          identifiant_etranger?: string | null
           is_active?: boolean | null
           languages?: string[] | null
           last_name?: string
+          pays?: string | null
           phone?: string | null
           photo_url?: string | null
           postal_code?: string | null
@@ -1591,6 +1637,7 @@ export type Database = {
           specialty_details?: string | null
           status?: string | null
           status_notes?: string | null
+          statut_administratif?: string | null
           tax_status?: string | null
           updated_at?: string | null
         }
@@ -2096,6 +2143,7 @@ export type Database = {
           cheque_deposit_date: string | null
           cheque_deposited: boolean | null
           cheque_number: string | null
+          cheque_status: string | null
           created_at: string
           currency: string
           id: string
@@ -2120,6 +2168,7 @@ export type Database = {
           cheque_deposit_date?: string | null
           cheque_deposited?: boolean | null
           cheque_number?: string | null
+          cheque_status?: string | null
           created_at?: string
           currency?: string
           id?: string
@@ -2144,6 +2193,7 @@ export type Database = {
           cheque_deposit_date?: string | null
           cheque_deposited?: boolean | null
           cheque_number?: string | null
+          cheque_status?: string | null
           created_at?: string
           currency?: string
           id?: string
@@ -3114,6 +3164,13 @@ export type Database = {
             referencedRelation: "instructors"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "test_bookings_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
         ]
       }
       test_candidates: {
@@ -3128,10 +3185,10 @@ export type Database = {
           photo_id_url: string | null
           profession: string
           profession_autre: string | null
-          ski_school_id: string
           ski_discipline: string | null
-          training_cycle: string | null
+          ski_school_id: string
           student_id: string | null
+          training_cycle: string | null
         }
         Insert: {
           carte_syndicale?: string | null
@@ -3144,10 +3201,10 @@ export type Database = {
           photo_id_url?: string | null
           profession: string
           profession_autre?: string | null
-          ski_school_id: string
           ski_discipline?: string | null
-          training_cycle?: string | null
+          ski_school_id: string
           student_id?: string | null
+          training_cycle?: string | null
         }
         Update: {
           carte_syndicale?: string | null
@@ -3160,10 +3217,10 @@ export type Database = {
           photo_id_url?: string | null
           profession?: string
           profession_autre?: string | null
-          ski_school_id?: string
           ski_discipline?: string | null
-          training_cycle?: string | null
+          ski_school_id?: string
           student_id?: string | null
+          training_cycle?: string | null
         }
         Relationships: [
           {
@@ -3231,9 +3288,6 @@ export type Database = {
           appreciation_technique: string | null
           attestation_sent_at: string | null
           attestation_url: string | null
-          pdf_generated_at: string | null
-          pdf_url: string | null
-          sent_at: string | null
           bloc_comprehension: string | null
           bloc_conclusion: string | null
           bloc_introduction: string | null
@@ -3252,20 +3306,23 @@ export type Database = {
           grammar_points: string[] | null
           id: string
           note_methodologique: string | null
+          pdf_generated_at: string | null
+          pdf_url: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           reviewer_comment: string | null
-          verified_at: string | null
           score_comprehension: number
           score_conversation: number
           score_expression: number
           score_general: number
-          score_general_calcule: number
+          score_general_calcule: number | null
           score_structure: number
           score_technique: number
           scoring_system: string
           selected_phrase_ids: string[] | null
+          sent_at: string | null
           status: string
+          verified_at: string | null
           vocabulary_examples: string[] | null
         }
         Insert: {
@@ -3276,9 +3333,6 @@ export type Database = {
           appreciation_technique?: string | null
           attestation_sent_at?: string | null
           attestation_url?: string | null
-          pdf_generated_at?: string | null
-          pdf_url?: string | null
-          sent_at?: string | null
           bloc_comprehension?: string | null
           bloc_conclusion?: string | null
           bloc_introduction?: string | null
@@ -3297,19 +3351,23 @@ export type Database = {
           grammar_points?: string[] | null
           id?: string
           note_methodologique?: string | null
+          pdf_generated_at?: string | null
+          pdf_url?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           reviewer_comment?: string | null
-          verified_at?: string | null
           score_comprehension: number
           score_conversation: number
           score_expression: number
           score_general: number
+          score_general_calcule?: number | null
           score_structure: number
           score_technique: number
           scoring_system?: string
           selected_phrase_ids?: string[] | null
+          sent_at?: string | null
           status?: string
+          verified_at?: string | null
           vocabulary_examples?: string[] | null
         }
         Update: {
@@ -3320,9 +3378,6 @@ export type Database = {
           appreciation_technique?: string | null
           attestation_sent_at?: string | null
           attestation_url?: string | null
-          pdf_generated_at?: string | null
-          pdf_url?: string | null
-          sent_at?: string | null
           bloc_comprehension?: string | null
           bloc_conclusion?: string | null
           bloc_introduction?: string | null
@@ -3341,19 +3396,23 @@ export type Database = {
           grammar_points?: string[] | null
           id?: string
           note_methodologique?: string | null
+          pdf_generated_at?: string | null
+          pdf_url?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           reviewer_comment?: string | null
-          verified_at?: string | null
           score_comprehension?: number
           score_conversation?: number
           score_expression?: number
           score_general?: number
+          score_general_calcule?: number | null
           score_structure?: number
           score_technique?: number
           scoring_system?: string
           selected_phrase_ids?: string[] | null
+          sent_at?: string | null
           status?: string
+          verified_at?: string | null
           vocabulary_examples?: string[] | null
         }
         Relationships: [
@@ -3486,6 +3545,7 @@ export type Database = {
           check_date: string | null
           check_number: string | null
           code: string | null
+          commentaire_sortie: string | null
           course_address: string | null
           course_location: string | null
           course_materials: string | null
@@ -3496,13 +3556,22 @@ export type Database = {
           duration_days: number | null
           duration_hours: number | null
           end_date: string | null
+          end_pack_sent_at: string | null
+          entry_form_completed_at: string | null
           entry_level: string | null
+          entry_test_id: string | null
           entry_test_score: string | null
+          exit_form_completed_at: string | null
+          exit_level: string | null
           expectations: string | null
           final_general_level: string | null
           final_specific_level: string | null
           final_status: string | null
+          formateur: string | null
+          formateur_email: string | null
+          formateur_telephone: string | null
           group_name: string | null
+          hours_followed: number | null
           hours_per_day: number | null
           id: string | null
           instructor_email: string | null
@@ -3512,11 +3581,18 @@ export type Database = {
           language: string | null
           max_participants: string | null
           modality: string | null
+          niveau_general_entree: string | null
+          niveau_general_sortie: string | null
+          niveau_technique_entree: string | null
+          niveau_technique_sortie: string | null
+          objectif_atteint: string | null
           observations: string | null
           payment_method: string | null
           pedagogical_cost: number | null
           price: number | null
+          progression: string | null
           qualiopi_status: string | null
+          remarques_entree: string | null
           rhythm: string | null
           schedule: string | null
           ski_school_director: string | null
@@ -3578,6 +3654,8 @@ export type Database = {
           candidate_profession: string | null
           candidate_ski_discipline: string | null
           candidate_training_cycle: string | null
+          cecrl_label: string | null
+          company_name: string | null
           created_at: string | null
           datetime: string | null
           evaluation_id: string | null
@@ -3589,30 +3667,28 @@ export type Database = {
           instructor_id: string | null
           instructor_name: string | null
           language: string | null
+          partner_name: string | null
           payment_type: string | null
           pdf_generated_at: string | null
           pdf_url: string | null
           previous_result: string | null
           previous_test: boolean | null
-          score_general: number | null
           score_comprehension: number | null
+          score_conversation: number | null
           score_expression: number | null
+          score_general: number | null
           score_structure: number | null
           score_technique: number | null
-          score_conversation: number | null
-          cecrl_label: string | null
+          sent_at: string | null
           ski_school_id: string | null
           ski_school_name: string | null
-          station: string | null
-          partner_name: string | null
-          company_name: string | null
           source: string | null
           sponsor_id: string | null
           sponsor_type: string | null
+          station: string | null
           status: string | null
           stripe_payment_id: string | null
           student_id: string | null
-          sent_at: string | null
           verified_at: string | null
         }
         Relationships: [
@@ -3631,6 +3707,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "test_bookings_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "test_candidates_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
@@ -3641,40 +3724,43 @@ export type Database = {
       }
     }
     Functions: {
-      cecrl_label_from_score: { Args: { _score: number }; Returns: string }
-      dsf_partner_id: { Args: never; Returns: string }
-      list_ski_schools_for_test: {
-        Args: Record<PropertyKey, never>
-        Returns: { id: string; name: string }[]
-      }
-      submit_test_booking_candidate: {
-        Args: {
-          p_name: string
-          p_email: string
-          p_phone: string
-          p_profession: string
-          p_profession_autre: string
-          p_ski_school_id: string
-          p_carte_syndicale: string
-          p_ski_discipline: string
-          p_training_cycle: string
-        }
-        Returns: string
-      }
-      avancer_statuts_inscriptions: { Args: { _dry_run?: boolean }; Returns: Json }
-      cleanup_zztest_data: { Args: { _dry_run?: boolean }; Returns: Json }
-      email_models_overview: { Args: never; Returns: Json }
-      publish_email_template_draft: { Args: { p_slug: string }; Returns: Json }
-      unpublish_email_template: { Args: { p_slug: string }; Returns: Json }
-      set_email_cron_active: {
-        Args: { p_jobname: string; p_active: boolean }
-        Returns: Json
-      }
-      run_email_cron_now: {
-        Args: { p_jobname: string; p_dry_run?: boolean }
+      _avancer_statuts_inscriptions: {
+        Args: { _dry_run?: boolean }
         Returns: Json
       }
       activate_season: { Args: { p_season_id: string }; Returns: undefined }
+      avancer_statuts_inscriptions: {
+        Args: { _dry_run?: boolean }
+        Returns: Json
+      }
+      cecrl_label_from_score: { Args: { _score: number }; Returns: string }
+      classify_entry_level_source: { Args: { _raw: string }; Returns: string }
+      cleanup_zztest_data: { Args: { _dry_run?: boolean }; Returns: Json }
+      dispatch_edge_function: {
+        Args: {
+          p_body?: Json
+          p_function: string
+          p_jobname?: string
+          p_query?: string
+        }
+        Returns: number
+      }
+      dsf_partner_id: { Args: never; Returns: string }
+      email_models_overview: { Args: never; Returns: Json }
+      fix_macroman: { Args: { v: string }; Returns: string }
+      formateur_owns_booking: {
+        Args: { _booking_id: string }
+        Returns: boolean
+      }
+      formateur_owns_candidate: {
+        Args: { _candidate_id: string }
+        Returns: boolean
+      }
+      formateur_sees_ski_school: {
+        Args: { _school_id: string }
+        Returns: boolean
+      }
+      funding_object_is_linked: { Args: { _name: string }; Returns: boolean }
       generate_inscription_code: { Args: never; Returns: string }
       get_fiscal_year: { Args: { invoice_date: string }; Returns: string }
       get_instructor_contract_by_signature_token: {
@@ -3706,15 +3792,6 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      formateur_owns_booking: { Args: { _booking_id: string }; Returns: boolean }
-      formateur_owns_candidate: {
-        Args: { _candidate_id: string }
-        Returns: boolean
-      }
-      formateur_sees_ski_school: {
-        Args: { _school_id: string }
-        Returns: boolean
-      }
       get_my_instructor_id: { Args: never; Returns: string }
       get_my_student_id: { Args: never; Returns: string }
       get_satisfaction_survey_context: {
@@ -3729,20 +3806,60 @@ export type Database = {
         }
         Returns: boolean
       }
+      import_point9_invoices: { Args: { payload: Json }; Returns: number }
+      import_point9_payments: { Args: { payload: Json }; Returns: number }
       is_admin: { Args: never; Returns: boolean }
       is_formateur: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       is_student: { Args: never; Returns: boolean }
+      libelle_statut_inscription: { Args: { _statut: string }; Returns: string }
+      list_ski_schools_for_test: {
+        Args: never
+        Returns: {
+          id: string
+          name: string
+        }[]
+      }
+      map_entry_level_to_cecrl: { Args: { _raw: string }; Returns: string }
       owns_test_booking: { Args: { _booking_id: string }; Returns: boolean }
-      test_booking_is_dsf: { Args: { _booking_id: string }; Returns: boolean }
+      publish_email_template_draft: { Args: { p_slug: string }; Returns: Json }
+      restaurer_accents_macroman: { Args: { _texte: string }; Returns: string }
+      run_email_cron_now: {
+        Args: { p_dry_run?: boolean; p_jobname: string }
+        Returns: Json
+      }
+      set_email_cron_active: {
+        Args: { p_active: boolean; p_jobname: string }
+        Returns: Json
+      }
       sign_instructor_contract_by_token: {
         Args: { p_signature_data: string; p_token: string }
         Returns: undefined
+      }
+      storage_object_belongs_to_me: {
+        Args: { _name: string }
+        Returns: boolean
       }
       submit_satisfaction_survey_by_token: {
         Args: { p_data: Json; p_token: string }
         Returns: undefined
       }
+      submit_test_booking_candidate: {
+        Args: {
+          p_carte_syndicale: string
+          p_email: string
+          p_name: string
+          p_phone: string
+          p_profession: string
+          p_profession_autre: string
+          p_ski_discipline: string
+          p_ski_school_id: string
+          p_training_cycle: string
+        }
+        Returns: string
+      }
+      test_booking_is_dsf: { Args: { _booking_id: string }; Returns: boolean }
+      unpublish_email_template: { Args: { p_slug: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "user" | "student" | "formateur"
@@ -3761,12 +3878,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3790,11 +3907,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3815,11 +3932,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3840,11 +3957,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3857,11 +3974,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
