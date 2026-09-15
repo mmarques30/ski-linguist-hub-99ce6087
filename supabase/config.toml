@@ -1,10 +1,20 @@
 project_id = "nghkrmvakjomzmfwdhbo"
 
+# Les quatre fonctions ci-dessous ne sont appelées que par pg_cron, via
+# public.dispatch_edge_function() qui joint un JWT lu dans le Vault. Elles
+# exigent donc une authentification : sans en-tête, elles étaient invocables
+# publiquement alors qu'elles déclenchent des envois d'emails.
 [functions.generate-monthly-charges]
-verify_jwt = false
+verify_jwt = true
 
 [functions.process-invoice-reminders]
-verify_jwt = false
+verify_jwt = true
+
+[functions.process-schedule-reminders]
+verify_jwt = true
+
+[functions.process-survey-reminders]
+verify_jwt = true
 
 [functions.create-user]
 verify_jwt = false
