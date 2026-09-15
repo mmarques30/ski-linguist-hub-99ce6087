@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { useAdvanceDueStatuses, useDueStatusAdvances } from "@/hooks/useInscriptions";
 
 /**
- * Rattrapage des statuts échus : une inscription confirmée dont la date de
- * début est atteinte devrait être « En cours ». Le job pg_cron qui fait ce
- * passage la nuit est créé inactif, donc l'écran propose de le lancer.
+ * Rattrapage des statuts échus : une inscription confirmée dont la formation a
+ * commencé et n'est pas finie devrait être « En cours ». Le job pg_cron qui
+ * fait ce passage la nuit est créé inactif, donc l'écran propose de le lancer
+ * — après avoir montré lesquelles seraient touchées.
  */
 export function DueStatusAdvanceCard() {
   const { data, isLoading } = useDueStatusAdvances();
@@ -26,12 +27,13 @@ export function DueStatusAdvanceCard() {
     <Alert>
       <PlayCircle className="h-4 w-4" />
       <AlertTitle>
-        {data.nombre} inscription{pluriel ? "s" : ""} confirmée{pluriel ? "s" : ""} {pluriel ? "ont" : "a"}{" "}
-        déjà commencé
+        {data.nombre} formation{pluriel ? "s" : ""} en cours {pluriel ? "sont" : "est"} encore au
+        statut « Confirmée »
       </AlertTitle>
       <AlertDescription className="space-y-3">
         <p>
-          Leur date de début est passée mais leur statut est resté « Confirmée ».
+          {pluriel ? "Elles ont" : "Elle a"} commencé et ne {pluriel ? "sont" : "est"} pas
+          terminée{pluriel ? "s" : ""}.
           {codes && <> {codes}{data.inscriptions.length > 6 ? "…" : ""}</>}
         </p>
         <Button

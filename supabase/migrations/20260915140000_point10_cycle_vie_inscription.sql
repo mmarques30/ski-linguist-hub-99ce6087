@@ -171,12 +171,18 @@ DECLARE
   n integer := 0;
   details jsonb := '[]'::jsonb;
 BEGIN
+  -- Formation réellement en cours : commencée et pas encore finie. Une
+  -- inscription restée « Confirmée » alors que sa date de fin est passée n'est
+  -- pas « en cours » : elle relève du pack de fin, donc d'une décision, pas
+  -- d'un rattrapage automatique. Sur la base live, 3 des 6 inscriptions
+  -- confirmées à date de début passée étaient dans ce cas.
   SELECT coalesce(array_agg(id), '{}'::uuid[])
     INTO ids
   FROM public.inscriptions
   WHERE status = 'confirmee'
     AND start_date IS NOT NULL
-    AND start_date <= current_date;
+    AND start_date <= current_date
+    AND (end_date IS NULL OR end_date >= current_date);
 
   n := coalesce(array_length(ids, 1), 0);
 
@@ -203,7 +209,7 @@ BEGIN
       'inscriptions',
       jsonb_build_object(
         'transition', 'confirmee -> en_cours',
-        'critere', 'start_date <= ' || current_date::text,
+        'critere', 'formation en cours au ' || current_date::text,
         'nombre', n,
         'inscriptions', details
       )
@@ -235,7 +241,7 @@ END;
 $$;
 
 COMMENT ON FUNCTION public.avancer_statuts_inscriptions(boolean) IS
-  'Passe en « En cours » les inscriptions confirmées dont la date de début est atteinte. Dry-run par défaut ; l''écriture est journalisée dans audit_log.';
+  'Passe en « En cours » les inscriptions confirmées dont la formation est en cours (début atteint, fin non dépassée). Dry-run par défaut ; l''écriture est journalisée dans audit_log.';
 
 REVOKE ALL ON FUNCTION public._avancer_statuts_inscriptions(boolean) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public._avancer_statuts_inscriptions(boolean) FROM anon;
@@ -290,7 +296,10 @@ SELECT
     'contraintes_ajoutees', jsonb_build_array('inscriptions_status_check', 'inscriptions_schedule_status_check'),
     'a_avancer_maintenant', (
       SELECT count(*) FROM public.inscriptions
-      WHERE status = 'confirmee' AND start_date IS NOT NULL AND start_date <= current_date
+      WHERE status = 'confirmee'
+        AND start_date IS NOT NULL
+        AND start_date <= current_date
+        AND (end_date IS NULL OR end_date >= current_date)
     ),
     'cron_avancement_actif', coalesce(
       (SELECT active FROM cron.job WHERE jobname = 'avancer-statuts-inscriptions'),
