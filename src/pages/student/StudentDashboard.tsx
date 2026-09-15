@@ -17,6 +17,7 @@ import {
 } from "@/lib/placement-test-engine";
 
 import { getStatusLabel, getStatusStyle } from "@/lib/inscription-status";
+import { inscriptionDateRangeLabel } from "@/lib/registration-dates";
 
 export default function StudentDashboard() {
   const { data: student } = useStudentProfile();
@@ -70,9 +71,8 @@ export default function StudentDashboard() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Dates</span>
-                    <span>
-                      {format(new Date(activeInscription.start_date), "dd/MM/yyyy")} —{" "}
-                      {format(new Date(activeInscription.end_date), "dd/MM/yyyy")}
+                    <span className="text-right">
+                      {inscriptionDateRangeLabel(activeInscription)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">

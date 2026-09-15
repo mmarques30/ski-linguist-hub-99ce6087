@@ -38,6 +38,7 @@ import { Search, Filter, Download, Plus, Eye, Edit, Trash2, ClipboardList, Uploa
 import { cn } from "@/lib/utils";
 import { useInscriptions, useUpdateInscriptionStatus, useDeleteInscription } from "@/hooks/useInscriptions";
 import { getNextStatuses } from "@/lib/inscription-status";
+import { DATES_A_PLANIFIER_LABEL } from "@/lib/registration-dates";
 import { DueStatusAdvanceCard } from "@/components/inscriptions/DueStatusAdvanceCard";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
@@ -467,9 +468,18 @@ export default function Inscriptions() {
                       <Badge variant="outline">{inscription.entry_level || "-"}</Badge>
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm">
-                        {formatDate(inscription.start_date)} - {formatDate(inscription.end_date)}
-                      </span>
+                      {inscription.dates_to_confirm ? (
+                        <span className="text-sm text-muted-foreground">
+                          {DATES_A_PLANIFIER_LABEL}
+                          <span className="block text-xs">
+                            souhaité le {formatDate(inscription.start_date)}
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="text-sm">
+                          {formatDate(inscription.start_date)} - {formatDate(inscription.end_date)}
+                        </span>
+                      )}
                     </TableCell>
                     <TableCell>{formatPrice(inscription.price)}</TableCell>
                     <TableCell>

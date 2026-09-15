@@ -14,6 +14,11 @@ import {
 } from "../_shared/ski-monitor-welcome-documents.ts";
 import { applyEmailTemplate, sendFliEmail } from "../_shared/fli-email.ts";
 import { describeCaughtError } from "../_shared/supabase-error.ts";
+import {
+  inscriptionDatesSentenceFr,
+  REQUESTED_START_DATE_REQUIRED_MESSAGE,
+  resolveInscriptionDates,
+} from "../_shared/registration-dates.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -121,6 +126,8 @@ interface RegistrationPayload {
   dateLabel?: string;
   startDate?: string;
   endDate?: string;
+  /** BL-029 : date souhaitée quand l'offre n'a pas de session datée. */
+  requestedStartDate?: string;
   price?: number;
   isCustomFormat?: boolean;
   customFormatDetails?: string;
@@ -260,9 +267,30 @@ Deno.serve(async (req) => {
       }
     }
 
+    // BL-029 : plus aucun repli sur les dates de la saison. Une offre « dates
+    // flexibles » retient la date de début souhaitée par le stagiaire et reste
+    // marquée « à planifier » jusqu'à ce que FLI fixe le calendrier. Le contrôle
+    // vient avant la création du stagiaire et du code d'inscription, pour ne
+    // rien laisser derrière soi en cas de refus.
+    const dates = resolveInscriptionDates({
+      startDate: registration.startDate,
+      endDate: registration.endDate,
+      requestedStartDate: registration.requestedStartDate,
+    });
+
+    if (!dates) {
+      return new Response(
+        JSON.stringify({ success: false, error: REQUESTED_START_DATE_REQUIRED_MESSAGE }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { start_date: startDate, end_date: endDate, dates_to_confirm: datesToConfirm } = dates;
+
+    // La saison ne sert plus qu'au rattachement comptable et aux règles de prix.
     const { data: season } = await supabase
       .from("seasons")
-      .select("id, start_date, end_date")
+      .select("id")
       .eq("is_current", true)
       .maybeSingle();
 
@@ -342,9 +370,6 @@ Deno.serve(async (req) => {
       throw codeError;
     }
 
-    const startDate =
-      registration.startDate || season?.start_date || new Date().toISOString().split("T")[0];
-    const endDate = registration.endDate || season?.end_date || startDate;
     const courseLocation =
       registration.locationLabel ||
       LOCATION_LABELS[registration.location] ||
@@ -378,6 +403,7 @@ Deno.serve(async (req) => {
         language,
         start_date: startDate,
         end_date: endDate,
+        dates_to_confirm: datesToConfirm,
         duration_hours: durationHours,
         price,
         entry_level: registration.currentLevel || null,
@@ -396,6 +422,9 @@ Deno.serve(async (req) => {
             : null,
           registration.dateLabel || registration.dates
             ? `Dates: ${registration.dateLabel || registration.dates}`
+            : null,
+          datesToConfirm
+            ? `⏳ Dates à planifier — début souhaité par le stagiaire : ${startDate}`
             : null,
           registration.offeringId ? `Offre catalogue: ${registration.offeringId}` : null,
           registration.profession === "ski_instructor" ? "Moniteur de ski" : "Autre profession",
@@ -516,6 +545,12 @@ Deno.serve(async (req) => {
         language,
         start_date: startDate,
         end_date: endDate,
+        // BL-029 : une période à planifier ne s'écrit pas « du X au X ».
+        dates_label: inscriptionDatesSentenceFr({
+          start_date: startDate,
+          end_date: endDate,
+          dates_to_confirm: datesToConfirm,
+        }),
         inscription_code: inscription.code || "",
         course_location: courseLocation || "À confirmer",
         modality_label:

@@ -56,6 +56,8 @@ import { FormateurExitFormDialog } from "@/components/inscriptions/FormateurExit
 import { useInscriptionProgression } from "@/hooks/useInscriptionProgression";
 import { pisteLabelFromPlacementAnswers } from "@/lib/placement-test-engine";
 import { invoiceStatusLabel, paymentTypeLabel } from "@/lib/payment-methods";
+import { DATES_A_PLANIFIER_LABEL } from "@/lib/registration-dates";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   isEntryFormComplete,
   isExitFormComplete,
@@ -518,14 +520,32 @@ export default function InscriptionDetails() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* BL-029 : sur une offre « dates flexibles », start_date n'est
+                      que le début souhaité par le stagiaire. */}
+                  {inscription.dates_to_confirm && (
+                    <Alert>
+                      <Calendar className="h-4 w-4" />
+                      <AlertDescription>
+                        Dates {DATES_A_PLANIFIER_LABEL.toLowerCase()} : le stagiaire a demandé à
+                        commencer le {formatDate(inscription.start_date)}. Fixez les dates
+                        définitives avant d&apos;éditer la convention ou la facture.
+                      </AlertDescription>
+                    </Alert>
+                  )}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">Début</p>
+                      <p className="text-sm text-muted-foreground">
+                        {inscription.dates_to_confirm ? "Début souhaité" : "Début"}
+                      </p>
                       <p className="font-medium">{formatDate(inscription.start_date)}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Fin</p>
-                      <p className="font-medium">{formatDate(inscription.end_date)}</p>
+                      <p className="font-medium">
+                        {inscription.dates_to_confirm
+                          ? DATES_A_PLANIFIER_LABEL
+                          : formatDate(inscription.end_date)}
+                      </p>
                     </div>
                     {inscription.duration_days && (
                       <div>

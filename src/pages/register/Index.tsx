@@ -43,6 +43,8 @@ export interface RegistrationData {
   dateLabel?: string;
   startDate?: string;
   endDate?: string;
+  /** BL-029 : date souhaitée quand l'offre choisie n'a pas de session datée. */
+  requestedStartDate?: string;
   price?: number;
   isCustomFormat?: boolean;
   customFormatDetails?: string;

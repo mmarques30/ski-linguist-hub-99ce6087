@@ -12,6 +12,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, MapPin, Calendar, Euro, MessageSquare } from "lucide-react";
 import type { RegistrationData } from "@/pages/register/Index";
@@ -28,6 +29,13 @@ import {
   uniqueLocations,
   uniqueModalities,
 } from "@/lib/registration-offerings";
+import {
+  offeringHasFixedDates,
+  REQUESTED_START_DATE_MESSAGES,
+  requestedStartDateNotice,
+  requestedStartDateProblem,
+  todayIso,
+} from "@/lib/registration-dates";
 
 interface CourseSelectionStepProps {
   data: Partial<RegistrationData>;
@@ -90,10 +98,25 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
   }, [offerings, data]);
 
   const isCustomFormat = isCustomFormatDuration(data.duration);
+
+  // BL-029 : les offres « dates flexibles » n'ont pas de session datée, et un
+  // devis personnalisé n'en a jamais. Sans date demandée ici, l'inscription
+  // héritait des dates de la saison côté serveur.
+  const needsRequestedStartDate =
+    isCustomFormat || (!!selectedOffering && !offeringHasFixedDates(selectedOffering));
+  const today = todayIso();
+  const requestedStartDateError = needsRequestedStartDate
+    ? requestedStartDateProblem(data.requestedStartDate, today)
+    : null;
+  const requestedStartDateHint = needsRequestedStartDate
+    ? requestedStartDateNotice(data.requestedStartDate, today)
+    : null;
+
   const canContinue =
     !!data.location &&
     !!data.language &&
     !!data.fundingType &&
+    !requestedStartDateError &&
     (isCustomFormat
       ? (data.customFormatDetails?.trim().length ?? 0) >= 20
       : !!data.duration && !!selectedOffering);
@@ -107,6 +130,10 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
       dates: selectedOffering.date_label || data.dates,
       startDate: selectedOffering.start_date || undefined,
       endDate: selectedOffering.end_date || undefined,
+      // Une session datée fixe le calendrier : la date souhaitée n'a plus lieu d'être.
+      requestedStartDate: offeringHasFixedDates(selectedOffering)
+        ? undefined
+        : data.requestedStartDate,
       dateLabel: selectedOffering.date_label || undefined,
       modality: selectedOffering.modality_key,
       language: selectedOffering.language_key,
@@ -154,6 +181,8 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
         price: undefined,
         dates: "Projet personnalisé — devis sur demande",
         dateLabel: "Projet personnalisé — devis sur demande",
+        startDate: undefined,
+        endDate: undefined,
       });
       return;
     }
@@ -435,6 +464,37 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                         proposition personnalisée.
                       </p>
                     </div>
+                  )}
+                </div>
+              )}
+
+              {/* 6. Date de début souhaitée — offres sans session datée */}
+              {needsRequestedStartDate && (
+                <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                  <Label htmlFor="requested-start-date" className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Date de début souhaitée *
+                  </Label>
+                  <Input
+                    id="requested-start-date"
+                    type="date"
+                    min={today}
+                    value={data.requestedStartDate || ""}
+                    onChange={(e) => onUpdate({ requestedStartDate: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Cette formule n&apos;a pas de session au calendrier : indiquez quand vous
+                    souhaitez commencer. L&apos;équipe FLI fixera les dates définitives avec vous.
+                  </p>
+                  {data.requestedStartDate && requestedStartDateError && (
+                    <p className="text-xs text-destructive">
+                      {REQUESTED_START_DATE_MESSAGES[requestedStartDateError]}
+                    </p>
+                  )}
+                  {requestedStartDateHint && (
+                    <p className="text-xs text-amber-700 dark:text-amber-500">
+                      {requestedStartDateHint}
+                    </p>
                   )}
                 </div>
               )}

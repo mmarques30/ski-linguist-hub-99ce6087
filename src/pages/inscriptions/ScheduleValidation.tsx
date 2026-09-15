@@ -14,6 +14,7 @@ import { usePendingSchedules } from "@/hooks/usePendingSchedules";
 import { useBulkApproveSchedule } from "@/hooks/useApproveSchedule";
 import { SCHEDULE_ASSIGNMENT_DAYS_BEFORE } from "@/lib/placement-test-engine";
 import { getStatusLabel } from "@/lib/inscription-status";
+import { DATES_A_PLANIFIER_LABEL } from "@/lib/registration-dates";
 
 export default function ScheduleValidation() {
   const { data, isLoading, isError } = usePendingSchedules();
@@ -180,6 +181,13 @@ export default function ScheduleValidation() {
                           <p className="text-muted-foreground text-xs">
                             Horaire prévu : {inscription.schedule}
                           </p>
+                        )}
+                        {/* BL-029 : cette date n'est qu'un souhait, la caler en
+                            matin / après-midi avant de la confirmer est prématuré. */}
+                        {inscription.dates_to_confirm && (
+                          <Badge variant="outline" className="mt-1 text-xs font-normal">
+                            Dates {DATES_A_PLANIFIER_LABEL.toLowerCase()}
+                          </Badge>
                         )}
                       </div>
                       <Button variant="ghost" size="sm" asChild>

@@ -25,6 +25,12 @@ import {
 } from "@/services/registrationService";
 import { formatPriceEUR, isCustomFormatDuration } from "@/lib/registration-offerings";
 import {
+  DATES_A_PLANIFIER_LABEL,
+  formatDateFr,
+  REQUESTED_START_DATE_MESSAGES,
+  requestedStartDateProblem,
+} from "@/lib/registration-dates";
+import {
   CHEQUE_BALANCE_INSTRUCTION,
   CHEQUE_BALANCE_SUMMARY_LABEL,
   FLI_BANK_DETAILS,
@@ -137,6 +143,14 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
 
     if (hasPaymentStep && !data.paymentOption) {
       toast.error("Veuillez choisir un mode de paiement.");
+      return;
+    }
+
+    // BL-029 : une offre sans session datée exige une date de début souhaitée.
+    // Sans ce contrôle, l'Edge Function refuse après coup avec le même message.
+    const offeringIsDated = Boolean(data.startDate && data.endDate);
+    if (!offeringIsDated && requestedStartDateProblem(data.requestedStartDate)) {
+      toast.error(REQUESTED_START_DATE_MESSAGES.manquante);
       return;
     }
 
@@ -383,6 +397,17 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                 <span className="text-muted-foreground">Dates</span>
                 <span className="font-medium text-right max-w-[60%]">
                   {data.dateLabel || data.dates}
+                </span>
+              </div>
+            )}
+            {/* BL-029 : la date souhaitée doit apparaître dans le récapitulatif,
+                c'est elle qui sera écrite sur l'inscription. */}
+            {data.requestedStartDate && !data.endDate && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Début souhaité</span>
+                <span className="font-medium text-right max-w-[60%]">
+                  {formatDateFr(data.requestedStartDate)} — {DATES_A_PLANIFIER_LABEL.toLowerCase()}{" "}
+                  avec l&apos;équipe FLI
                 </span>
               </div>
             )}
