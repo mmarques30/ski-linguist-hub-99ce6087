@@ -30,6 +30,27 @@ describe("BL-002 entry_level → CECRL", () => {
     expect(mapEntryLevelToCecrl("1 - A2")).toBe("A2");
   });
 
+  it("suit l'échelle numérotée de l'ancien tableur", () => {
+    expect(mapEntryLevelToCecrl("1 - A2")).toBe("A2");
+    expect(mapEntryLevelToCecrl("1-a2")).toBe("A2");
+    expect(mapEntryLevelToCecrl("2 - B1")).toBe("B1");
+    expect(mapEntryLevelToCecrl("3 - B2")).toBe("B2");
+    expect(mapEntryLevelToCecrl("4 - C1+")).toBe("C1");
+    expect(classifyEntryLevelSource("2 - B1")).toBe("prefixe_numerique");
+    expect(classifyEntryLevelSource("1 - A2")).toBe("1_a2");
+  });
+
+  it("ne lit pas un numéro comme un niveau", () => {
+    expect(mapEntryLevelToCecrl("2 - stage déjà effectué")).toBeNull();
+    expect(mapEntryLevelToCecrl("stage déjà effectué 2 fois")).toBeNull();
+    expect(
+      mapEntryLevelToCecrl(
+        "1 semaine de stage deja fait je me débrouille pour communiquer"
+      )
+    ).toBeNull();
+    expect(mapEntryLevelToCecrl("Jamais evaluer mais fais plusieurs stage")).toBeNull();
+  });
+
   it("ne prend pas « débutante » pour A1 (phrases libres)", () => {
     expect(
       mapEntryLevelToCecrl('Débutante ! je n\'ai jamais "pratiqué" cette langue')
