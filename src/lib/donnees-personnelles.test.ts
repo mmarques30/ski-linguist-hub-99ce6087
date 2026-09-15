@@ -33,6 +33,17 @@ const DOMAINES_AUTORISES = [
   "email.com",
 ];
 
+// TLD non délivrables par construction : RFC 2606 / RFC 6761, plus
+// `.placeholder` utilisé par les garde-fous e-mail (`@fli.placeholder`) pour
+// marquer une adresse volontairement injoignable.
+const TLD_NON_DELIVRABLES = [
+  "invalid",
+  "test",
+  "example",
+  "localhost",
+  "placeholder",
+];
+
 const EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".json"];
 const MOTIF_EMAIL = /[a-z0-9._%+-]+@([a-z0-9.-]+\.[a-z]{2,})/gi;
 
@@ -55,6 +66,8 @@ describe("hygiène des données du dépôt", () => {
         // `@types/...`, `@tanstack/...` : imports de paquets, pas des adresses
         if (!domaine.includes(".") || domaine.endsWith(".ts")) continue;
         if (DOMAINES_AUTORISES.includes(domaine)) continue;
+        const tld = domaine.slice(domaine.lastIndexOf(".") + 1);
+        if (TLD_NON_DELIVRABLES.includes(tld)) continue;
         infractions.push(
           `${fichier.replace(process.cwd() + "/", "")} → @${domaine}`
         );
