@@ -986,6 +986,7 @@ export type Database = {
           schedule_approved_at: string | null
           schedule_approved_by: string | null
           schedule_status: string
+          schedule_reminder_sent_at: string | null
           season_id: string | null
           ski_school_id: string | null
           start_date: string
@@ -1066,6 +1067,7 @@ export type Database = {
           schedule_approved_at?: string | null
           schedule_approved_by?: string | null
           schedule_status?: string
+          schedule_reminder_sent_at?: string | null
           season_id?: string | null
           ski_school_id?: string | null
           start_date: string
@@ -1146,6 +1148,7 @@ export type Database = {
           schedule_approved_at?: string | null
           schedule_approved_by?: string | null
           schedule_status?: string
+          schedule_reminder_sent_at?: string | null
           season_id?: string | null
           ski_school_id?: string | null
           start_date?: string
@@ -3655,6 +3658,7 @@ export type Database = {
         }
         Returns: string
       }
+      avancer_statuts_inscriptions: { Args: { _dry_run?: boolean }; Returns: Json }
       cleanup_zztest_data: { Args: { _dry_run?: boolean }; Returns: Json }
       email_models_overview: { Args: never; Returns: Json }
       publish_email_template_draft: { Args: { p_slug: string }; Returns: Json }

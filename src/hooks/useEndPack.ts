@@ -269,7 +269,16 @@ export function useGenerateEndPack() {
     },
     onError: (error: Error) => {
       console.error("End pack generation error:", error);
-      toast.error(error.message || "Erreur lors de la génération du pack fin de formation");
+      const message = error.message || "";
+      // Message d'une base pas encore migrée au point 10 : le déclencheur
+      // refusait la clôture depuis un statut autre que « En cours ».
+      if (message.includes("Transition de statut non autorisée")) {
+        toast.error(
+          "Clôture refusée par la base : la migration du cycle de vie (point 10) n'est pas appliquée sur cet environnement."
+        );
+        return;
+      }
+      toast.error(message || "Erreur lors de la génération du pack fin de formation");
     },
   });
 }

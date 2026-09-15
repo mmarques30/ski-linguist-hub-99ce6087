@@ -37,6 +37,8 @@ import {
 import { Search, Filter, Download, Plus, Eye, Edit, Trash2, ClipboardList, Upload, Loader2, Package, MoreHorizontal, CheckCircle, XCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useInscriptions, useUpdateInscriptionStatus, useDeleteInscription } from "@/hooks/useInscriptions";
+import { getNextStatuses } from "@/lib/inscription-status";
+import { DueStatusAdvanceCard } from "@/components/inscriptions/DueStatusAdvanceCard";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
@@ -224,11 +226,14 @@ const statusStyles: Record<string, string> = {
   annulee: "bg-red-100 text-red-800",
 };
 
-const statusOptions = [
-  { value: "en_cours", icon: Clock, color: "text-indigo-600" },
-  { value: "terminee", icon: CheckCircle, color: "text-gray-600" },
-  { value: "annulee", icon: XCircle, color: "text-red-600" },
-];
+const statusIcons: Record<string, { icon: typeof Clock; color: string }> = {
+  en_attente: { icon: Clock, color: "text-yellow-600" },
+  confirmee: { icon: CheckCircle, color: "text-blue-600" },
+  en_cours: { icon: Clock, color: "text-indigo-600" },
+  terminee: { icon: CheckCircle, color: "text-gray-600" },
+  facturee: { icon: CheckCircle, color: "text-emerald-600" },
+  annulee: { icon: XCircle, color: "text-red-600" },
+};
 
 export default function Inscriptions() {
   const [statusFilter, setStatusFilter] = useState("all");
@@ -293,9 +298,7 @@ export default function Inscriptions() {
     } catch (error: any) {
       console.error("Error updating status:", error);
       const msg = error?.message || "";
-      if (msg.includes("Transition de statut non autorisée")) {
-        toast.error(msg);
-      } else if (msg.includes("Impossible d'annuler")) {
+      if (/statut|transition|annuler/i.test(msg)) {
         toast.error(msg);
       } else {
         toast.error(language === "pt-BR" ? "Erro ao atualizar status" : language === "en" ? "Error updating status" : "Erreur lors de la mise à jour du statut");
@@ -356,6 +359,8 @@ export default function Inscriptions() {
             )}
           </div>
         </div>
+
+        {editable && <DueStatusAdvanceCard />}
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-4 rounded-lg border bg-card p-4">
@@ -478,19 +483,32 @@ export default function Inscriptions() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="start">
-                            {statusOptions.map((option) => {
-                              const Icon = option.icon;
+                            {/* Seules les cibles que la base accepte : proposer
+                                « Terminée » depuis « Brouillon » ne produisait
+                                qu'un message d'erreur. */}
+                            {getNextStatuses(inscription.status).map((option) => {
+                              const Icon = statusIcons[option]?.icon ?? Clock;
                               return (
                                 <DropdownMenuItem
-                                  key={option.value}
-                                  onClick={() => handleStatusChange(inscription.id, option.value)}
-                                  disabled={inscription.status === option.value || updateStatus.isPending}
+                                  key={option}
+                                  onClick={() => handleStatusChange(inscription.id, option)}
+                                  disabled={updateStatus.isPending}
                                 >
-                                  <Icon className={cn("mr-2 h-4 w-4", option.color)} />
-                                  {statusLabels[option.value]}
+                                  <Icon
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      statusIcons[option]?.color ?? "text-muted-foreground"
+                                    )}
+                                  />
+                                  {statusLabels[option]}
                                 </DropdownMenuItem>
                               );
                             })}
+                            {getNextStatuses(inscription.status).length === 0 && (
+                              <DropdownMenuItem disabled>
+                                Statut final : aucun changement possible
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       ) : (
@@ -537,6 +555,7 @@ export default function Inscriptions() {
                                     course_location: inscription.course_location,
                                     modality: inscription.modality,
                                     formateur: inscription.instructor_name,
+                                    status: inscription.status,
                                   })}
                                 >
                                   <Package className="mr-2 h-4 w-4" />

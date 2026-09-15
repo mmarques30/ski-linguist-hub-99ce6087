@@ -1,6 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { SCHEDULE_ASSIGNMENT_DAYS_BEFORE } from "@/lib/placement-test-engine";
+import {
+  SCHEDULE_OUT_OF_SCOPE_STATUSES,
+  SCHEDULE_PENDING,
+  groupPendingSchedules,
+  scheduleDeadline,
+  scheduleHorizonKey,
+  todayKey,
+  type PendingScheduleGroupOf,
+} from "@/lib/schedule-validation";
 
 export interface PendingScheduleInscription {
   id: string;
@@ -8,39 +16,31 @@ export interface PendingScheduleInscription {
   language: string;
   start_date: string;
   entry_level: string | null;
+  /** Horaire repris du fichier d'import, quand il existe. */
+  schedule: string | null;
   schedule_status: string;
   schedule_reminder_sent_at: string | null;
+  status: string;
   student_id: string | null;
   student_name: string;
   student_email: string | null;
+  /** Vrai quand la formation a déjà commencé sans horaire validé. */
+  late: boolean;
 }
 
-export interface PendingScheduleGroup {
-  startDate: string;
-  language: string;
-  inscriptions: PendingScheduleInscription[];
-}
-
-function addDays(date: Date, days: number): Date {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
-
-function formatDateKey(date: Date): string {
-  return date.toISOString().split("T")[0];
-}
+export type PendingScheduleGroup = PendingScheduleGroupOf<PendingScheduleInscription>;
 
 export function usePendingSchedules() {
   return useQuery({
     queryKey: ["pending-schedules"],
     queryFn: async () => {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const horizon = addDays(today, SCHEDULE_ASSIGNMENT_DAYS_BEFORE);
-      const todayKey = formatDateKey(today);
-      const horizonKey = formatDateKey(horizon);
+      const today = todayKey();
+      const horizon = scheduleHorizonKey(today);
 
+      // Pas de plancher sur start_date : une inscription dont le début est
+      // passé sans horaire validé doit rester visible, quelle que soit son
+      // origine. Seules les inscriptions dont le cycle est clos quittent la
+      // liste.
       const { data, error } = await supabase
         .from("inscriptions")
         .select(
@@ -50,16 +50,17 @@ export function usePendingSchedules() {
           language,
           start_date,
           entry_level,
+          schedule,
           schedule_status,
           schedule_reminder_sent_at,
+          status,
           student_id,
           students!inner(first_name, last_name, email)
         `
         )
-        .eq("schedule_status", "pending")
-        .neq("status", "annulee")
-        .gte("start_date", todayKey)
-        .lte("start_date", horizonKey)
+        .eq("schedule_status", SCHEDULE_PENDING)
+        .not("status", "in", `(${SCHEDULE_OUT_OF_SCOPE_STATUSES.join(",")})`)
+        .lte("start_date", horizon)
         .order("start_date", { ascending: true });
 
       if (error) throw error;
@@ -76,38 +77,26 @@ export function usePendingSchedules() {
           language: row.language,
           start_date: row.start_date,
           entry_level: row.entry_level,
+          schedule: row.schedule,
           schedule_status: row.schedule_status,
           schedule_reminder_sent_at: row.schedule_reminder_sent_at,
+          status: row.status,
           student_id: row.student_id,
           student_name: student
             ? `${student.first_name} ${student.last_name}`.trim()
             : "—",
           student_email: student?.email ?? null,
+          late: scheduleDeadline(row.start_date, today).late,
         };
       });
 
-      const groupMap = new Map<string, PendingScheduleGroup>();
-
-      for (const inscription of inscriptions) {
-        const key = `${inscription.start_date}::${inscription.language}`;
-        const existing = groupMap.get(key);
-        if (existing) {
-          existing.inscriptions.push(inscription);
-        } else {
-          groupMap.set(key, {
-            startDate: inscription.start_date,
-            language: inscription.language,
-            inscriptions: [inscription],
-          });
-        }
-      }
+      const groups = groupPendingSchedules(inscriptions, today);
 
       return {
         inscriptions,
-        groups: Array.from(groupMap.values()).sort((a, b) =>
-          a.startDate.localeCompare(b.startDate)
-        ),
+        groups,
         total: inscriptions.length,
+        lateTotal: inscriptions.filter((i) => i.late).length,
       };
     },
   });
