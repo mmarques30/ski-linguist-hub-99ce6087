@@ -4,6 +4,8 @@ export const ENTRY_LEVEL_CECRL = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
 export type EntryLevelCecrl = (typeof ENTRY_LEVEL_CECRL)[number];
 
 const CECRL_RE = /^(A1|A2|B1|B2|C1|C2)\+?$/i;
+/** Échelle de l'ancien tableur : « 1 - A2 », « 2 - B1 »… */
+const CECRL_PREFIXE_NUMERIQUE_RE = /^[0-9]+ ?- ?(a1|a2|b1|b2|c1|c2)\+?$/;
 
 /** U+008E (C1) : `é` latin1 mal décodé, pas UTF-8. */
 export function replaceMisdecodedEAcute(raw: string): string {
@@ -35,7 +37,9 @@ export function mapEntryLevelToCecrl(
   if (CECRL_RE.test(n)) {
     return n.replace(/\+$/, "").toUpperCase() as EntryLevelCecrl;
   }
-  if (n === "1 - a2" || n === "1-a2") return "A2";
+  if (CECRL_PREFIXE_NUMERIQUE_RE.test(n)) {
+    return n.replace(/^[0-9]+ ?- ?/, "").replace(/\+$/, "").toUpperCase() as EntryLevelCecrl;
+  }
   if (n === "debutant") return "A1";
   if (n === "faux debutant") return "A2";
   if (n === "intermediaire") return "B1";
@@ -53,6 +57,7 @@ export function classifyEntryLevelSource(raw: string | null | undefined): string
     if (n === "intermediaire") return "intermediaire";
     if (n === "perfeccionement" || n === "perfectionnement") return "perfectionnement";
     if (n === "1 - a2" || n === "1-a2") return "1_a2";
+    if (CECRL_PREFIXE_NUMERIQUE_RE.test(n)) return "prefixe_numerique";
     return `already_${mapped.toLowerCase()}`;
   }
   if (n === "n/a") return "n_a";

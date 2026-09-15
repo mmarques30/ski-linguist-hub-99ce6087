@@ -2,6 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PLACEMENT_QUESTION_LANGUAGE_MAP } from "@/lib/placement-questions-data";
 
+/** BL-002 : un test sans niveau CECRL s'affiche en clair, pas « ? ». */
+export const NIVEAU_NON_RENSEIGNE = "Non renseigné";
+
 export interface PlacementTestStatsRow {
   languageKey: string;
   languageLabel: string;
@@ -55,7 +58,7 @@ export function usePlacementTestStats() {
           bucket.totalQuestions = row.total_questions;
         }
         if (row.score_percentage != null) bucket.scores.push(row.score_percentage);
-        const level = row.determined_level || "?";
+        const level = row.determined_level || NIVEAU_NON_RENSEIGNE;
         bucket.levels[level] = (bucket.levels[level] || 0) + 1;
       }
 

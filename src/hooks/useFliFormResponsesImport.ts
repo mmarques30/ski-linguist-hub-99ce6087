@@ -5,6 +5,7 @@ import {
   normalizeLanguageForMatch,
   scoreInscriptionMatch,
 } from "@/lib/fli-form-responses-csv-import";
+import { mapEntryLevelToCecrl } from "@/lib/entry-level-cecrl";
 
 interface ImportResult {
   studentsMatched: number;
@@ -115,7 +116,12 @@ function findBestInscription(
   return scored[0]?.inscription || inscriptions[0];
 }
 
+/** BL-002 : la colonne porte du CECRL. La réponse déclarative part dans `answers`. */
 function buildDeterminedLevel(row: ParsedFormResponseRow): string | null {
+  return mapEntryLevelToCecrl(buildNiveauDeclareSource(row));
+}
+
+function buildNiveauDeclareSource(row: ParsedFormResponseRow): string | null {
   return row.previous_evaluation || row.self_assessed_level || null;
 }
 
@@ -221,6 +227,7 @@ export function useFliFormResponsesImport() {
               payment_preference: row.payment_preference,
               handicap: row.handicap,
               responses: row.test_answers,
+              niveau_declare_source: buildNiveauDeclareSource(row),
             },
           })
           .select("id")

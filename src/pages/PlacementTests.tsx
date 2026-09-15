@@ -7,7 +7,7 @@ import { Link2, ExternalLink, Copy, Check, FileQuestion, Loader2 } from "lucide-
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { REGISTRATION_LANGUAGES } from "@/lib/registration-languages";
-import { usePlacementTestStats } from "@/hooks/usePlacementTestStats";
+import { NIVEAU_NON_RENSEIGNE, usePlacementTestStats } from "@/hooks/usePlacementTestStats";
 import { Link } from "react-router-dom";
 
 const translations = {
@@ -80,6 +80,7 @@ const levelColors: Record<string, string> = {
   B2: "bg-emerald-100 text-emerald-800",
   C1: "bg-blue-100 text-blue-800",
   C2: "bg-purple-100 text-purple-800",
+  [NIVEAU_NON_RENSEIGNE]: "bg-muted text-muted-foreground",
 };
 
 export default function PlacementTests() {
