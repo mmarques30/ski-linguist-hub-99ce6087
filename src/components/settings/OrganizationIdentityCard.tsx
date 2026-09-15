@@ -13,6 +13,7 @@ import {
   missingRequiredIdentityFields,
   ORGANIZATION_IDENTITY_FIELDS,
   ORGANIZATION_IDENTITY_KEY,
+  organizationIdentityToJson,
   parseOrganizationIdentity,
   type OrganizationIdentity,
 } from "@/lib/organization-identity";
@@ -47,7 +48,7 @@ export function OrganizationIdentityCard() {
       const { error } = await supabase.from("app_settings").upsert(
         {
           key: ORGANIZATION_IDENTITY_KEY,
-          value: identity,
+          value: organizationIdentityToJson(identity),
           description:
             "Identité de l'organisme de formation. Saisie dans /settings, lue par les PDF et les conventions.",
         },
@@ -78,15 +79,7 @@ export function OrganizationIdentityCard() {
       );
       return;
     }
-    save.mutate({
-      ...draft,
-      ...Object.fromEntries(
-        ORGANIZATION_IDENTITY_FIELDS.map((field) => [
-          field.key,
-          draft[field.key].trim(),
-        ])
-      ),
-    } as OrganizationIdentity);
+    save.mutate(draft);
   };
 
   return (

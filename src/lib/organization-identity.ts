@@ -92,6 +92,17 @@ export function parseOrganizationIdentity(value: unknown): OrganizationIdentity 
   return identity;
 }
 
+/** Forme stockée dans `app_settings.value` (jsonb), valeurs déjà rognées. */
+export function organizationIdentityToJson(
+  identity: OrganizationIdentity
+): Record<string, string> {
+  const json: Record<string, string> = {};
+  for (const field of ORGANIZATION_IDENTITY_FIELDS) {
+    json[field.key] = identity[field.key].trim();
+  }
+  return json;
+}
+
 export function missingRequiredIdentityFields(
   identity: OrganizationIdentity
 ): OrganizationIdentityFieldSpec[] {

@@ -5,7 +5,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, CheckCircle, Copy, Loader2, Phone, Mountain, Landmark } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle,
+  Copy,
+  ExternalLink,
+  Landmark,
+  Loader2,
+  Mountain,
+  Phone,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { RegistrationData } from "@/pages/register/Index";
@@ -30,7 +39,13 @@ import {
   studentFacingPisteFromCecrl,
   studentFacingPisteLabel,
 } from "@/lib/placement-test-engine";
-import { REGISTRATION_LEGAL_DOCUMENTS } from "@/lib/registration-legal-documents";
+import {
+  isLegalDocumentReadable,
+  LEGAL_DOCUMENT_ON_REQUEST_NOTICE,
+  legalDocumentTitle,
+  REGISTRATION_LEGAL_DOCUMENT_LIST,
+  REGISTRATION_LEGAL_DOCUMENTS,
+} from "@/lib/registration-legal-documents";
 import {
   expectsStationGroupAssignment,
   STATION_GROUP_NOTICE_AFTER_TEST,
@@ -447,6 +462,32 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
 
         <Separator />
 
+        {/* BL-023 : le texte à accepter se lit avant la case, dans un nouvel onglet. */}
+        <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
+          <p className="text-sm font-medium">À lire avant d&apos;accepter</p>
+          <ul className="space-y-2 text-sm">
+            {REGISTRATION_LEGAL_DOCUMENT_LIST.map((document) => (
+              <li key={document.key}>
+                {isLegalDocumentReadable(document) ? (
+                  <a
+                    href={document.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 underline font-medium text-foreground"
+                  >
+                    {legalDocumentTitle(document)}
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                ) : (
+                  <span className="text-muted-foreground">
+                    {legalDocumentTitle(document)} — {LEGAL_DOCUMENT_ON_REQUEST_NOTICE}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+
         <div className="flex items-start space-x-3 rounded-lg border p-4">
           <Checkbox
             id="terms"
@@ -455,20 +496,11 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
           />
           <div className="space-y-1">
             <Label htmlFor="terms" className="cursor-pointer">
-              J'accepte les conditions générales
+              J&apos;accepte les conditions générales de formation
             </Label>
             <p className="text-sm text-muted-foreground">
               En soumettant cette inscription, je confirme que les informations fournies sont exactes
-              et j'accepte le{" "}
-              <a
-                href={REGISTRATION_LEGAL_DOCUMENTS.reglementInterieur.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline font-medium text-foreground"
-              >
-                {REGISTRATION_LEGAL_DOCUMENTS.reglementInterieur.label}
-              </a>{" "}
-              et les{" "}
+              et j&apos;accepte les{" "}
               <a
                 href={REGISTRATION_LEGAL_DOCUMENTS.conditionsGenerales.href}
                 target="_blank"
@@ -477,7 +509,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
               >
                 {REGISTRATION_LEGAL_DOCUMENTS.conditionsGenerales.label}
               </a>{" "}
-              de formation de France Langues International.
+              de France Langues International.
             </p>
           </div>
         </div>

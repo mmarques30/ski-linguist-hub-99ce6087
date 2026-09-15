@@ -27,7 +27,12 @@ Liens (nouvel onglet) vers :
 - `/registration-documents/conditions-generales.pdf`
 
 Ces deux fichiers n'étaient **pas** dans `public/registration-documents/` (seulement le pack
-moniteur). Les déposer sous ces noms exacts pour que les liens ouvrent un document.
+moniteur) : les deux liens répondaient 404.
+
+> **Repris par BL-023** (`docs/POINT_VAGUE1.md`) : plus aucun lien vers ces deux PDF.
+> Les conditions générales sont la page `/conditions-generales`, et le règlement
+> intérieur est annoncé comme communiqué sur demande tant que FLI n'en a pas de
+> version publiable. Rien à déposer sous ces noms.
 
 ## Vérifications
 

@@ -58,6 +58,7 @@ import StudentPlanning from "./pages/student/StudentPlanning";
 import CommercialDashboard from "./pages/commercial/CommercialDashboard";
 import MoniteursSki from "./pages/moniteurs/MoniteursSki";
 import DashboardGestaoMockupPage from "./pages/mockup/DashboardGestaoMockup";
+import ConditionsGenerales from "./pages/legal/ConditionsGenerales";
 
 const queryClient = new QueryClient();
 
@@ -77,6 +78,7 @@ const App = () => (
             <Route path="/register/payment-success" element={<PaymentSuccessPage />} />
             <Route path="/register/payment-cancel" element={<PaymentCancelPage />} />
             <Route path="/survey/:token" element={<SatisfactionSurvey />} />
+            <Route path="/conditions-generales" element={<ConditionsGenerales />} />
 
             {/* Design-validation mockup — static data, remove once approved */}
             <Route path="/mockup/dashboard-gestao" element={<DashboardGestaoMockupPage />} />
