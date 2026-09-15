@@ -32,14 +32,12 @@ BEGIN
   SELECT coalesce(array_agg(id), ARRAY[]::uuid[])
     INTO invoice_ids
     FROM public.invoices
-   WHERE student_id = ANY (student_ids)
-      OR inscription_id = ANY (inscription_ids);
+   WHERE inscription_id = ANY (inscription_ids);
 
   SELECT coalesce(array_agg(id), ARRAY[]::uuid[])
     INTO payment_ids
     FROM public.payments
-   WHERE student_id = ANY (student_ids)
-      OR inscription_id = ANY (inscription_ids)
+   WHERE inscription_id = ANY (inscription_ids)
       OR invoice_id = ANY (invoice_ids);
 
   SELECT coalesce(array_agg(id), ARRAY[]::uuid[])
