@@ -1,29 +1,26 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { isFliPlaceholderEmail } from '../_shared/email-guards.ts'
+import { sendFliEmail } from '../_shared/fli-email.ts'
+import { loadEmailTemplate, renderEmailTemplate } from '../_shared/email-model-templates.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-interface SurveyReminder {
-  id: string
-  token: string
-  inscription_id: string
-  student_id: string
-  created_at: string
-  reminder_1_sent_at: string | null
-  reminder_2_sent_at: string | null
-  student: {
-    first_name: string
-    last_name: string
-    email: string
-  }
-  inscription: {
-    language: string
-    start_date: string
-    end_date: string
-  }
+const REMINDER_SLUGS = {
+  1: 'satisfaction_survey_reminder_1',
+  2: 'satisfaction_survey_reminder_2',
+} as const
+
+type ReminderLevel = 1 | 2
+
+function formatDateFr(dateStr: string | null): string {
+  if (!dateStr) return '—'
+  return new Date(dateStr).toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
 }
 
 Deno.serve(async (req) => {
@@ -32,27 +29,41 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const url = new URL(req.url)
+    const dryRun = url.searchParams.get('dry_run') === 'true'
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const resendApiKey = Deno.env.get('RESEND_API_KEY')
+    const surveyBaseUrl = Deno.env.get('SURVEY_BASE_URL')
+      || 'https://ski-linguist-hub.lovable.app'
 
-    if (!resendApiKey) {
-      console.log('RESEND_API_KEY not configured - skipping email sending')
+    if (!dryRun && !resendApiKey) {
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          message: 'RESEND_API_KEY not configured' 
+        JSON.stringify({
+          success: false,
+          message: "RESEND_API_KEY absente. Utilisez ?dry_run=true pour un essai sans envoi.",
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey)
+
+    // Point 8 : aucune relance ne part si son modèle n'est pas validé et actif.
+    const templates = new Map<ReminderLevel, Awaited<ReturnType<typeof loadEmailTemplate>>>()
+    for (const level of [1, 2] as ReminderLevel[]) {
+      templates.set(level, await loadEmailTemplate(supabase, REMINDER_SLUGS[level]))
+    }
+
+    const missingTemplates = ([1, 2] as ReminderLevel[])
+      .filter((level) => !templates.get(level))
+      .map((level) => REMINDER_SLUGS[level])
+
     const now = new Date()
     const fiveDaysAgo = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000)
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
-    // Fetch incomplete surveys that need reminders
     const { data: surveys, error } = await supabase
       .from('satisfaction_surveys')
       .select(`
@@ -81,79 +92,100 @@ Deno.serve(async (req) => {
     }
 
     const results = {
+      dryRun,
+      missingTemplates,
       reminder1Sent: 0,
       reminder2Sent: 0,
-      errors: [] as string[]
+      skipped: 0,
+      errors: [] as string[],
     }
-
-    const surveyUrl = Deno.env.get('SURVEY_BASE_URL') || 'https://id-preview--34e71e1a-49f7-433e-bb36-fc4d26e86f8e.lovable.app'
 
     for (const survey of surveys || []) {
       const student = (survey as any).students
       const inscription = (survey as any).inscriptions
       const createdAt = new Date(survey.created_at)
 
-      if (!student?.email) continue
+      if (!student?.email) {
+        results.skipped++
+        continue
+      }
+
+      let level: ReminderLevel | null = null
+      if (!survey.reminder_1_sent_at && createdAt <= fiveDaysAgo) {
+        level = 1
+      } else if (survey.reminder_1_sent_at && !survey.reminder_2_sent_at && createdAt <= thirtyDaysAgo) {
+        level = 2
+      }
+
+      if (level === null) {
+        results.skipped++
+        continue
+      }
+
+      const template = templates.get(level)
+      if (!template) {
+        results.skipped++
+        continue
+      }
+
+      const variables = {
+        student_name: student.first_name || '',
+        language: inscription?.language || '',
+        end_date: formatDateFr(inscription?.end_date ?? null),
+        survey_link: `${surveyBaseUrl}/survey/${survey.token}`,
+      }
+
+      if (dryRun) {
+        if (level === 1) results.reminder1Sent++
+        if (level === 2) results.reminder2Sent++
+        continue
+      }
 
       try {
-        // Check if J+5 reminder is needed
-        if (!survey.reminder_1_sent_at && createdAt <= fiveDaysAgo) {
-          await sendReminderEmail(
-            resendApiKey,
-            student.email,
-            student.first_name,
-            survey.token,
-            surveyUrl,
-            'first'
-          )
+        const rendered = renderEmailTemplate(template, variables)
+        const outcome = await sendFliEmail({
+          resendApiKey,
+          to: student.email,
+          subject: rendered.subject,
+          html: rendered.html,
+        })
 
-          await supabase
-            .from('satisfaction_surveys')
-            .update({ reminder_1_sent_at: now.toISOString() })
-            .eq('id', survey.id)
+        await supabase.from('email_log').insert({
+          template_slug: REMINDER_SLUGS[level],
+          recipient_email: student.email,
+          recipient_name: `${student.first_name} ${student.last_name}`.trim(),
+          inscription_id: survey.inscription_id,
+          status: outcome.ok ? 'sent' : outcome.skipped ? 'skipped' : 'failed',
+          error_message: outcome.error ?? null,
+          variables_used: variables,
+        })
 
-          results.reminder1Sent++
-          console.log(`Sent J+5 reminder to ${student.email}`)
+        if (!outcome.ok) {
+          results.errors.push(`Questionnaire ${survey.id}: ${outcome.error ?? 'envoi refusé'}`)
+          continue
         }
-        // Check if J+30 reminder is needed
-        else if (
-          survey.reminder_1_sent_at && 
-          !survey.reminder_2_sent_at && 
-          createdAt <= thirtyDaysAgo
-        ) {
-          await sendReminderEmail(
-            resendApiKey,
-            student.email,
-            student.first_name,
-            survey.token,
-            surveyUrl,
-            'second'
-          )
 
-          await supabase
-            .from('satisfaction_surveys')
-            .update({ reminder_2_sent_at: now.toISOString() })
-            .eq('id', survey.id)
+        const column = `reminder_${level}_sent_at`
+        await supabase
+          .from('satisfaction_surveys')
+          .update({ [column]: now.toISOString() })
+          .eq('id', survey.id)
 
-          results.reminder2Sent++
-          console.log(`Sent J+30 reminder to ${student.email}`)
-        }
+        if (level === 1) results.reminder1Sent++
+        if (level === 2) results.reminder2Sent++
       } catch (emailError) {
-        const errorMsg = `Failed to send reminder to ${student.email}: ${emailError}`
-        console.error(errorMsg)
-        results.errors.push(errorMsg)
+        results.errors.push(`Questionnaire ${survey.id}: ${emailError}`)
       }
     }
 
+    const summary = dryRun
+      ? `[ESSAI] ${results.reminder1Sent} relances J+5 et ${results.reminder2Sent} relances J+30 prêtes`
+      : `${results.reminder1Sent} relances J+5 et ${results.reminder2Sent} relances J+30 envoyées`
+
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        results,
-        message: `Sent ${results.reminder1Sent} J+5 reminders and ${results.reminder2Sent} J+30 reminders`
-      }),
+      JSON.stringify({ success: true, results, summary }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
-
   } catch (error) {
     console.error('Error processing survey reminders:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
@@ -163,58 +195,3 @@ Deno.serve(async (req) => {
     )
   }
 })
-
-async function sendReminderEmail(
-  apiKey: string,
-  toEmail: string,
-  firstName: string,
-  token: string,
-  baseUrl: string,
-  reminderType: 'first' | 'second'
-): Promise<void> {
-  if (isFliPlaceholderEmail(toEmail)) {
-    throw new Error('Adresse @fli.placeholder exclue de tout envoi')
-  }
-  const surveyLink = `${baseUrl}/survey/${token}`
-  
-  const subject = reminderType === 'first'
-    ? `Rappel : Votre avis nous intéresse - Questionnaire de satisfaction`
-    : `Dernier rappel : N'oubliez pas de donner votre avis !`
-
-  const body = reminderType === 'first'
-    ? `
-      <h2>Bonjour ${firstName},</h2>
-      <p>Nous espérons que votre formation s'est bien passée !</p>
-      <p>Nous n'avons pas encore reçu votre retour sur votre expérience de formation. Votre avis est précieux et nous aide à améliorer continuellement nos services.</p>
-      <p>Le questionnaire ne prend que 2 minutes :</p>
-      <p><a href="${surveyLink}" style="display: inline-block; background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Donner mon avis</a></p>
-      <p>Merci de votre confiance,<br>L'équipe FLI</p>
-    `
-    : `
-      <h2>Bonjour ${firstName},</h2>
-      <p>Ceci est notre dernier rappel concernant le questionnaire de satisfaction suite à votre formation.</p>
-      <p>Votre retour d'expérience est essentiel pour nous permettre d'améliorer nos formations et répondre au mieux aux attentes de nos stagiaires.</p>
-      <p>Le questionnaire ne prend que 2 minutes :</p>
-      <p><a href="${surveyLink}" style="display: inline-block; background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Donner mon avis maintenant</a></p>
-      <p>Merci d'avance pour votre participation,<br>L'équipe FLI</p>
-    `
-
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: 'FLI Formation <noreply@fli-formation.fr>',
-      to: [toEmail],
-      subject,
-      html: body,
-    }),
-  })
-
-  if (!response.ok) {
-    const errorData = await response.text()
-    throw new Error(`Resend API error: ${errorData}`)
-  }
-}

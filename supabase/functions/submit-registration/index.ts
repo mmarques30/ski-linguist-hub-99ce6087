@@ -66,6 +66,37 @@ const LOCATION_LABELS: Record<string, string> = {
   chamonix: "Chamonix",
 };
 
+const MODALITY_LABELS: Record<string, string> = {
+  in_person: "Présentiel",
+  online_individual: "En ligne — cours individuel",
+  online_group: "En ligne — petit groupe",
+};
+
+// Côté stagiaire on annonce la piste, jamais le code CECRL (règle du point 4).
+const SLOPE_LABELS: Record<string, string> = {
+  verte: "Piste verte",
+  bleue: "Piste bleue",
+  rouge: "Piste rouge",
+  noire: "Piste noire",
+  vocab_ski: "Vocabulaire du ski",
+};
+
+function studentFacingSlopeLabel(summary?: {
+  passedSlopes: string[];
+  highestSlopeReached: string;
+  endedAtVocab: boolean;
+}): string {
+  if (!summary) return "À déterminer";
+  const order = ["verte", "bleue", "rouge", "noire"];
+  const passed = (summary.passedSlopes || []).filter((s) => order.includes(s));
+  if (passed.length > 0) {
+    const best = passed.reduce((a, b) => (order.indexOf(b) > order.indexOf(a) ? b : a));
+    return SLOPE_LABELS[best];
+  }
+  if (summary.endedAtVocab) return SLOPE_LABELS.vocab_ski;
+  return SLOPE_LABELS[summary.highestSlopeReached] || "Début de parcours";
+}
+
 interface RegistrationPayload {
   civility: string;
   firstName: string;
@@ -132,6 +163,7 @@ async function sendSkiMonitorWelcomeDocuments(params: {
     .from("email_templates")
     .select("subject_fr, body_fr")
     .eq("slug", "inscription_ski_monitor_welcome")
+    .eq("is_active", true)
     .maybeSingle();
 
   const variables = {
@@ -475,6 +507,7 @@ Deno.serve(async (req) => {
         .from("email_templates")
         .select("subject_fr, body_fr")
         .eq("slug", "inscription_confirmation")
+        .eq("is_active", true)
         .maybeSingle();
 
       const studentName = `${registration.firstName} ${registration.lastName}`;
@@ -484,6 +517,13 @@ Deno.serve(async (req) => {
         start_date: startDate,
         end_date: endDate,
         inscription_code: inscription.code || "",
+        course_location: courseLocation || "À confirmer",
+        modality_label:
+          MODALITY_LABELS[registration.modality] || registration.modality || "À confirmer",
+        slope_label: studentFacingSlopeLabel(registration.testSummary),
+        payment_label: registration.paymentOption
+          ? paymentLabels[registration.paymentOption] || registration.paymentOption
+          : "Devis à établir",
       };
 
       if (template) {

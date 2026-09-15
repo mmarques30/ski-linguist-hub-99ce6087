@@ -203,6 +203,7 @@ Deno.serve(async (req) => {
       .from("email_templates")
       .select("subject_fr, body_fr")
       .eq("slug", "schedule_validation_reminder")
+      .eq("is_active", true)
       .maybeSingle();
 
     const variables = {

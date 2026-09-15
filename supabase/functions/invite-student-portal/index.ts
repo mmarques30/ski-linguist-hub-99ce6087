@@ -173,6 +173,7 @@ Deno.serve(async (req) => {
             .from("email_templates")
             .select("subject_fr, body_fr")
             .eq("slug", "student_portal_invite")
+            .eq("is_active", true)
             .maybeSingle();
 
           const variables = {
