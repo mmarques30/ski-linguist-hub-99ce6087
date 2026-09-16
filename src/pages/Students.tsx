@@ -194,10 +194,6 @@ export default function Students() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm">
-              <Download className="mr-2 h-4 w-4" />
-              {t(translations.export)}
-            </Button>
             {editable && (
               <Button size="sm" onClick={handleCreateStudent}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -222,9 +218,6 @@ export default function Students() {
               />
             </div>
           </div>
-          <Button variant="outline" size="icon">
-            <Filter className="h-4 w-4" />
-          </Button>
           <div className="flex items-center gap-1 border rounded-lg p-1">
             <Button
               variant={viewMode === "grid" ? "secondary" : "ghost"}
@@ -325,12 +318,20 @@ export default function Students() {
                             <Pencil className="h-4 w-4" />
                           </Button>
                         )}
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Mail className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Phone className="h-4 w-4" />
-                        </Button>
+                        {student.email && (
+                          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                            <a href={`mailto:${student.email}`} aria-label="Envoyer un e-mail">
+                              <Mail className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        )}
+                        {student.phone && (
+                          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                            <a href={`tel:${student.phone}`} aria-label="Appeler">
+                              <Phone className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -397,12 +398,20 @@ export default function Students() {
                         <Pencil className="h-4 w-4" />
                       </Button>
                     )}
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Mail className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Phone className="h-4 w-4" />
-                    </Button>
+                    {student.email && (
+                      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                        <a href={`mailto:${student.email}`} aria-label="Envoyer un e-mail">
+                          <Mail className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    )}
+                    {student.phone && (
+                      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                        <a href={`tel:${student.phone}`} aria-label="Appeler">
+                          <Phone className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>

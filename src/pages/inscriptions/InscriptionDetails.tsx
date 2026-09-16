@@ -196,6 +196,21 @@ export default function InscriptionDetails() {
     enabled: !!id,
   });
 
+  const skiSchoolId = (inscription as { ski_school_id?: string | null } | null)?.ski_school_id;
+  const { data: skiSchoolPartnerId } = useQuery({
+    queryKey: ["ski-school-partner", skiSchoolId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ski_schools")
+        .select("partner_id")
+        .eq("id", skiSchoolId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.partner_id ?? null;
+    },
+    enabled: !!skiSchoolId,
+  });
+
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return t(translations.notSpecified);
     try {
@@ -382,7 +397,16 @@ export default function InscriptionDetails() {
                 <CardContent className="space-y-2">
                   {inscription.instructor_name ? (
                     <>
-                      <p className="font-medium">{inscription.instructor_name}</p>
+                      {inscription.instructor_id ? (
+                        <Link
+                          to={`/formateurs/${inscription.instructor_id}`}
+                          className="font-medium text-primary hover:underline"
+                        >
+                          {inscription.instructor_name}
+                        </Link>
+                      ) : (
+                        <p className="font-medium">{inscription.instructor_name}</p>
+                      )}
                       {inscription.instructor_email && (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Mail className="h-3.5 w-3.5" />
@@ -413,7 +437,16 @@ export default function InscriptionDetails() {
                 <CardContent className="space-y-2">
                   {inscription.ski_school_name ? (
                     <>
-                      <p className="font-medium">{inscription.ski_school_name}</p>
+                      {skiSchoolPartnerId ? (
+                        <Link
+                          to={`/gestion/partenaires/${skiSchoolPartnerId}`}
+                          className="font-medium text-primary hover:underline"
+                        >
+                          {inscription.ski_school_name}
+                        </Link>
+                      ) : (
+                        <p className="font-medium">{inscription.ski_school_name}</p>
+                      )}
                       {inscription.ski_school_director && (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <User className="h-3.5 w-3.5" />
@@ -727,12 +760,15 @@ export default function InscriptionDetails() {
                 <CardContent>
                   <div className="space-y-2">
                     {invoices.map((invoice) => (
-                      <div 
-                        key={invoice.id} 
-                        className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                      <Link
+                        key={invoice.id}
+                        to={`/invoices?q=${encodeURIComponent(invoice.invoice_number || invoice.id)}`}
+                        className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
                       >
                         <div>
-                          <p className="font-medium">{invoice.invoice_number}</p>
+                          <p className="font-medium text-primary hover:underline">
+                            {invoice.invoice_number}
+                          </p>
                           <p className="text-sm text-muted-foreground">
                             {formatDate(invoice.invoice_date)} • {paymentTypeLabel(invoice.payment_type)}
                           </p>
@@ -743,7 +779,7 @@ export default function InscriptionDetails() {
                             {invoiceStatusLabel(invoice.status)}
                           </Badge>
                         </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 </CardContent>

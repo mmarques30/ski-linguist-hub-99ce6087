@@ -348,10 +348,6 @@ export default function Inscriptions() {
                 </Link>
               </Button>
             )}
-            <Button variant="outline" size="sm">
-              <Download className="mr-2 h-4 w-4" />
-              {t(translations.export)}
-            </Button>
             {editable && (
               <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -382,6 +378,7 @@ export default function Inscriptions() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t(translations.allStatuses)}</SelectItem>
+              <SelectItem value="brouillon">{language === "pt-BR" ? "Rascunho" : language === "en" ? "Draft" : "Brouillon"}</SelectItem>
               <SelectItem value="en_attente">{language === "pt-BR" ? "Pendente" : language === "en" ? "Pending" : "En attente"}</SelectItem>
               <SelectItem value="confirmee">{language === "pt-BR" ? "Confirmada" : language === "en" ? "Confirmed" : "Confirmée"}</SelectItem>
               <SelectItem value="en_cours">{t(translations.statusInProgress)}</SelectItem>
@@ -402,9 +399,6 @@ export default function Inscriptions() {
               <SelectItem value="Allemand">{t(translations.german)}</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon">
-            <Filter className="h-4 w-4" />
-          </Button>
         </div>
 
         {/* Table */}

@@ -217,10 +217,15 @@ export function LeadFormDialog({ open, onOpenChange, lead, defaultChannel = "cpf
             {(form.expansion_channel === "b2b" || form.expansion_channel === "dsf") && (
               <div>
                 <Label>Partenaire</Label>
-                <Select value={form.partner_id} onValueChange={(v) => setForm({ ...form, partner_id: v })}>
+                <Select
+                  value={form.partner_id || "none"}
+                  onValueChange={(v) =>
+                    setForm({ ...form, partner_id: v === "none" ? "" : v })
+                  }
+                >
                   <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Aucun</SelectItem>
+                    <SelectItem value="none">Aucun</SelectItem>
                     {partners.map((p) => (
                       <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                     ))}

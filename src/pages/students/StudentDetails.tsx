@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -166,10 +166,14 @@ export default function StudentDetails() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <Mail className="mr-2 h-4 w-4" />
-              Envoyer un email
-            </Button>
+            {student.email ? (
+              <Button variant="outline" size="sm" asChild>
+                <a href={`mailto:${student.email}`}>
+                  <Mail className="mr-2 h-4 w-4" />
+                  Envoyer un email
+                </a>
+              </Button>
+            ) : null}
           </div>
         </div>
 
@@ -384,6 +388,8 @@ export default function StudentDetails() {
 }
 
 function InscriptionTable({ inscriptions }: { inscriptions: any[] }) {
+  const navigate = useNavigate();
+
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "-";
     try {
@@ -441,8 +447,20 @@ function InscriptionTable({ inscriptions }: { inscriptions: any[] }) {
         </TableHeader>
         <TableBody>
           {inscriptions.map((inscription) => (
-            <TableRow key={inscription.id}>
-              <TableCell className="font-medium">{inscription.code || "-"}</TableCell>
+            <TableRow
+              key={inscription.id}
+              className="cursor-pointer hover:bg-muted/50"
+              onClick={() => navigate(`/inscriptions/${inscription.id}`)}
+            >
+              <TableCell className="font-medium">
+                <Link
+                  to={`/inscriptions/${inscription.id}`}
+                  className="text-primary hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {inscription.code || "-"}
+                </Link>
+              </TableCell>
               <TableCell>
                 <Badge variant="outline">{inscription.language}</Badge>
               </TableCell>

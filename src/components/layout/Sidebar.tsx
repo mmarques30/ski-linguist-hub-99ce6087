@@ -1,12 +1,10 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { 
-  Users, 
+import {
+  Users,
   ClipboardList,
   UserCog,
-  GraduationCap, 
+  GraduationCap,
   Calendar,
-  FileText,
   Receipt,
   LayoutDashboard,
   Settings,
@@ -17,13 +15,13 @@ import {
   FlaskConical,
   Upload,
   MessageSquare,
-  ChevronRight,
   PanelLeft,
   Briefcase,
   Award,
   Mail,
+  Clock,
+  PieChart,
 } from "lucide-react";
-import { useState } from "react";
 import fliLogo from "@/assets/fli-marca-yellow.png";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -34,21 +32,14 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { PATH_TO_ROUTE_KEY } from "@/lib/route-permissions";
 import {
@@ -57,94 +48,66 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-interface SubItem {
-  name: string;
-  href: string;
-}
-
 interface NavItem {
   name: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  subItems?: SubItem[];
 }
 
-interface NavGroup {
+interface NavSection {
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
   items: NavItem[];
 }
 
-const dashboardItem: NavItem = {
-  name: "Dashboard",
-  href: "/",
-  icon: LayoutDashboard,
-};
-
-const navigationGroups: NavGroup[] = [
+/**
+ * Navigation produit — 2 niveaux (section fixe + liens).
+ * Pas de sous-menus repliables : les anciennes sous-pages Finance /
+ * Inscriptions sont des items frères. Documents et Sessions (coquilles)
+ * restent hors menu jusqu'à implémentation réelle.
+ */
+const navigationSections: NavSection[] = [
   {
-    label: "Gestion",
-    icon: Briefcase,
+    label: "Opérations",
     items: [
-      { 
-        name: "Finance", 
-        href: "/finance", 
-        icon: Wallet,
-        subItems: [
-          { name: "Vue d'ensemble", href: "/finance" },
-          { name: "Paiements", href: "/finance/payments" },
-          { name: "Analyses", href: "/finance/analyses" },
-          { name: "Rentabilité", href: "/finance/rentabilite" },
-          { name: "Trésorerie", href: "/finance/tresorerie" },
-          { name: "Charges fixes", href: "/finance/charges-fixes" },
-        ],
-      },
-      { name: "Commercial", href: "/gestion/commercial", icon: TrendingUp },
-      { name: "Moniteurs ski", href: "/gestion/moniteurs", icon: Users },
-      { name: "Partenaires", href: "/gestion/partenaires", icon: Briefcase },
-      {
-        name: "Inscriptions",
-        href: "/inscriptions",
-        icon: ClipboardList,
-        subItems: [
-          { name: "Liste", href: "/inscriptions" },
-          { name: "Horaires J-10", href: "/inscriptions/schedule-validation" },
-        ],
-      },
-      { name: "Factures", href: "/invoices", icon: Receipt },
+      { name: "Inscriptions", href: "/inscriptions", icon: ClipboardList },
+      { name: "Horaires J-10", href: "/inscriptions/schedule-validation", icon: Clock },
       { name: "Stagiaires", href: "/students", icon: Users },
-    ],
-  },
-  {
-    label: "Formation",
-    icon: GraduationCap,
-    items: [
+      { name: "Formateurs", href: "/formateurs", icon: UserCog },
       { name: "Tests de niveau", href: "/tests", icon: GraduationCap },
       { name: "Évaluations", href: "/formateur/evaluations", icon: ClipboardList },
-      { name: "Sessions", href: "/formation/sessions", icon: Calendar },
     ],
   },
   {
-    label: "Formateurs",
-    icon: UserCog,
+    label: "Commercial & partenaires",
     items: [
-      { name: "Formateurs", href: "/formateurs", icon: UserCog },
+      { name: "Pipeline commercial", href: "/gestion/commercial", icon: TrendingUp },
+      { name: "Partenaires", href: "/gestion/partenaires", icon: Briefcase },
+      { name: "Moniteurs de ski", href: "/gestion/moniteurs", icon: Users },
+    ],
+  },
+  {
+    label: "Finance",
+    items: [
+      { name: "Factures", href: "/invoices", icon: Receipt },
+      { name: "Paiements", href: "/finance/payments", icon: Wallet },
+      { name: "Vue d'ensemble", href: "/finance", icon: LayoutDashboard },
+      { name: "Analyses", href: "/finance/analyses", icon: BarChart3 },
+      { name: "Rentabilité", href: "/finance/rentabilite", icon: PieChart },
+      { name: "Trésorerie", href: "/finance/tresorerie", icon: TrendingUp },
+      { name: "Charges fixes", href: "/finance/charges-fixes", icon: Wallet },
     ],
   },
   {
     label: "Qualité",
-    icon: Award,
     items: [
       { name: "Satisfaction", href: "/satisfaction-stats", icon: BarChart3 },
       { name: "Amélioration", href: "/amelioration", icon: TrendingUp },
       { name: "Audit Qualiopi", href: "/qualite/audit", icon: Award },
-      { name: "Historique", href: "/qualite/historique", icon: ClipboardList },
-      { name: "Documents", href: "/documents", icon: FileText },
+      { name: "Journal d'audit", href: "/qualite/historique", icon: ClipboardList },
     ],
   },
   {
     label: "Administration",
-    icon: Settings,
     items: [
       { name: "Import", href: "/admin/import", icon: Upload },
       { name: "Emails", href: "/admin/emails", icon: Mail },
@@ -157,105 +120,24 @@ const navigationGroups: NavGroup[] = [
   },
 ];
 
-function isGroupActive(group: NavGroup, pathname: string): boolean {
-  return group.items.some(
-    (item) =>
-      pathname === item.href ||
-      item.subItems?.some((sub) => pathname === sub.href)
-  );
-}
-
-function SubItemCollapsible({ item }: { item: NavItem }) {
-  const location = useLocation();
-  const isActive = location.pathname === item.href;
-  const isSubActive = item.subItems?.some((s) => location.pathname === s.href);
-  const [isOpen, setIsOpen] = useState(isActive || !!isSubActive);
-
-  if (!item.subItems) {
-    return (
-      <SidebarMenuSubItem>
-        <SidebarMenuSubButton asChild isActive={isActive}>
-          <NavLink to={item.href}>
-            <item.icon className="h-4 w-4" />
-            <span>{item.name}</span>
-          </NavLink>
-        </SidebarMenuSubButton>
-      </SidebarMenuSubItem>
-    );
+function isItemActive(pathname: string, href: string): boolean {
+  if (href === "/") return pathname === "/";
+  if (href === "/inscriptions") {
+    return pathname === "/inscriptions" || /^\/inscriptions\/[^/]+$/.test(pathname);
   }
-
-  return (
-    <SidebarMenuSubItem>
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsibleTrigger asChild>
-          <SidebarMenuSubButton isActive={isActive || !!isSubActive} className="cursor-pointer">
-            <item.icon className="h-4 w-4" />
-            <span>{item.name}</span>
-            <ChevronRight
-              className={cn(
-                "ml-auto h-3 w-3 transition-transform duration-200",
-                isOpen && "rotate-90"
-              )}
-            />
-          </SidebarMenuSubButton>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <SidebarMenuSub>
-            {item.subItems.map((sub) => (
-              <SidebarMenuSubItem key={sub.href}>
-                <SidebarMenuSubButton asChild isActive={location.pathname === sub.href}>
-                  <NavLink to={sub.href}>
-                    <span>{sub.name}</span>
-                  </NavLink>
-                </SidebarMenuSubButton>
-              </SidebarMenuSubItem>
-            ))}
-          </SidebarMenuSub>
-        </CollapsibleContent>
-      </Collapsible>
-    </SidebarMenuSubItem>
-  );
-}
-
-function NavGroupCollapsible({ group }: { group: NavGroup }) {
-  const location = useLocation();
-  const { state } = useSidebar();
-  const isCollapsed = state === "collapsed";
-  const groupActive = isGroupActive(group, location.pathname);
-  const [isOpen, setIsOpen] = useState(groupActive);
-
-  return (
-    <SidebarMenuItem>
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <CollapsibleTrigger asChild>
-              <SidebarMenuButton isActive={groupActive}>
-                <group.icon className="h-4 w-4" />
-                <span>{group.label}</span>
-                <ChevronRight
-                  className={cn(
-                    "ml-auto h-4 w-4 transition-transform duration-200",
-                    isOpen && "rotate-90"
-                  )}
-                />
-              </SidebarMenuButton>
-            </CollapsibleTrigger>
-          </TooltipTrigger>
-          {isCollapsed && (
-            <TooltipContent side="right">{group.label}</TooltipContent>
-          )}
-        </Tooltip>
-        <CollapsibleContent>
-          <SidebarMenuSub>
-            {group.items.map((item) => (
-              <SubItemCollapsible key={item.href} item={item} />
-            ))}
-          </SidebarMenuSub>
-        </CollapsibleContent>
-      </Collapsible>
-    </SidebarMenuItem>
-  );
+  if (href === "/students") {
+    return pathname === "/students" || pathname.startsWith("/students/");
+  }
+  if (href === "/formateurs") {
+    return pathname === "/formateurs" || pathname.startsWith("/formateurs/");
+  }
+  if (href === "/gestion/partenaires") {
+    return pathname === "/gestion/partenaires" || pathname.startsWith("/gestion/partenaires/");
+  }
+  if (href === "/formateur/evaluations") {
+    return pathname.startsWith("/formateur/");
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export function AppSidebar() {
@@ -280,83 +162,112 @@ export function AppSidebar() {
     }
   };
 
-  // Filter navigation groups based on permissions
-  const filteredGroups = isFormateur
-    ? navigationGroups
-        .map((group) => ({
-          ...group,
-          items: group.items.filter((item) => item.href === "/formateur/evaluations"),
+  const filteredSections = isFormateur
+    ? [
+        {
+          label: "Espace formateur",
+          items: [
+            {
+              name: "Évaluations",
+              href: "/formateur/evaluations",
+              icon: ClipboardList,
+            },
+          ],
+        },
+      ]
+    : navigationSections
+        .filter((section) => {
+          if (section.label === "Administration") return isAdmin;
+          return true;
+        })
+        .map((section) => ({
+          ...section,
+          items: section.items.filter((item) => {
+            if (isAdmin) return true;
+            const routeKey = PATH_TO_ROUTE_KEY[item.href];
+            if (!routeKey) return true;
+            return canView(routeKey);
+          }),
         }))
-        .filter((group) => group.items.length > 0)
-    : navigationGroups
-    .filter((group) => {
-      // Administration only for admins
-      if (group.label === "Administration") return isAdmin;
-      return true;
-    })
-    .map((group) => ({
-      ...group,
-      items: group.items.filter((item) => {
-        if (isAdmin) return true;
-        const routeKey = PATH_TO_ROUTE_KEY[item.href];
-        if (!routeKey) return true;
-        // For items with subitems (like Finance), show if any sub has permission
-        if (item.subItems) {
-          return item.subItems.some((sub) => {
-            const subKey = PATH_TO_ROUTE_KEY[sub.href];
-            return subKey ? canView(subKey) : true;
-          });
-        }
-        return canView(routeKey);
-      }),
-    }))
-    .filter((group) => group.items.length > 0);
+        .filter((section) => section.items.length > 0);
 
   return (
-    <Sidebar collapsible="offcanvas" className="border-r-0">
-      <SidebarHeader className="border-b border-sidebar-border py-1" />
+    <Sidebar collapsible="icon" className="border-r-0">
+      <SidebarHeader className="border-b border-sidebar-border py-2 px-2">
+        {!isCollapsed && (
+          <div className="flex items-center gap-2 px-1">
+            <img src={fliLogo} alt="FLI" className="h-7 w-auto" />
+            <span className="text-xs font-medium text-sidebar-foreground/80 truncate">
+              Formation
+            </span>
+          </div>
+        )}
+      </SidebarHeader>
 
       <SidebarContent className="scrollbar-thin">
-        {/* Dashboard - standalone */}
         {!isFormateur && (
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={location.pathname === dashboardItem.href}
-                    >
-                      <NavLink to={dashboardItem.href}>
-                        <dashboardItem.icon className="h-4 w-4" />
-                        <span>{dashboardItem.name}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </TooltipTrigger>
-                  {isCollapsed && (
-                    <TooltipContent side="right">
-                      {dashboardItem.name}
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={location.pathname === "/"}
+                        tooltip="Tableau de bord"
+                      >
+                        <NavLink to="/">
+                          <LayoutDashboard className="h-4 w-4" />
+                          <span>Tableau de bord</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </TooltipTrigger>
+                    {isCollapsed && (
+                      <TooltipContent side="right">Tableau de bord</TooltipContent>
+                    )}
+                  </Tooltip>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
         )}
 
-        {/* Collapsible groups */}
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {filteredGroups.map((group) => (
-                <NavGroupCollapsible key={group.label} group={group} />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {filteredSections.map((section) => (
+          <SidebarGroup key={section.label}>
+            <SidebarGroupLabel className="text-[0.65rem] tracking-wider uppercase text-sidebar-foreground/50">
+              {section.label}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {section.items.map((item) => {
+                  const active = isItemActive(location.pathname, item.href);
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={active}
+                            tooltip={item.name}
+                          >
+                            <NavLink to={item.href}>
+                              <item.icon className="h-4 w-4" />
+                              <span>{item.name}</span>
+                            </NavLink>
+                          </SidebarMenuButton>
+                        </TooltipTrigger>
+                        {isCollapsed && (
+                          <TooltipContent side="right">{item.name}</TooltipContent>
+                        )}
+                      </Tooltip>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border">

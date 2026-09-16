@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -374,13 +375,31 @@ export default function FinancePayments() {
                           {format(new Date(p.payment_date), "dd/MM/yyyy")}
                         </TableCell>
                         <TableCell className="font-mono text-xs">
-                          {p.invoice?.invoice_number || "—"}
+                          {p.invoice_id && p.invoice?.invoice_number ? (
+                            <Link
+                              to={`/invoices?q=${encodeURIComponent(p.invoice.invoice_number)}`}
+                              className="text-primary hover:underline"
+                            >
+                              {p.invoice.invoice_number}
+                            </Link>
+                          ) : (
+                            "—"
+                          )}
                         </TableCell>
                         <TableCell className="max-w-[150px] truncate">
                           {getClientName(p)}
                         </TableCell>
                         <TableCell className="font-mono text-xs">
-                          {p.inscription?.code || "-"}
+                          {p.inscription_id && p.inscription?.code ? (
+                            <Link
+                              to={`/inscriptions/${p.inscription_id}`}
+                              className="text-primary hover:underline"
+                            >
+                              {p.inscription.code}
+                            </Link>
+                          ) : (
+                            "-"
+                          )}
                         </TableCell>
                         <TableCell>
                           {paymentMethodLabel(p.payment_method)}
