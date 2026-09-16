@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Mail, Link2, CreditCard, Eye } from "lucide-react";
+import { Loader2, Mail, Link2, CreditCard, Copy, Check, Eye } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { CopyLinkRow } from "@/components/shared/CopyLinkRow";
 import {
@@ -49,10 +50,23 @@ export function InscriptionClientAccessCard({
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const { data, isLoading, refetch } = useInscriptionClientAccess(inscriptionId);
   const createSurvey = useCreateSurveyForInscription();
+  const [codeCopied, setCodeCopied] = useState(false);
 
   const registrationUrl = buildPublicRegistrationUrl(origin, language);
   const portalPreviewUrl = buildStudentPortalPreviewUrl(origin, studentId);
   const latestSurvey = data?.surveys[0];
+
+  const handleCopyCode = async () => {
+    if (!inscriptionCode) return;
+    try {
+      await navigator.clipboard.writeText(inscriptionCode);
+      setCodeCopied(true);
+      toast.success("Code d'inscription copié");
+      window.setTimeout(() => setCodeCopied(false), 2000);
+    } catch {
+      toast.error("Impossible de copier");
+    }
+  };
 
   const handleCreateSurvey = async () => {
     try {
@@ -94,11 +108,36 @@ export function InscriptionClientAccessCard({
         </CardHeader>
         <CardContent className="space-y-3">
           {inscriptionCode && (
-            <div className="rounded-lg border bg-muted/30 px-4 py-3">
-              <p className="text-sm text-muted-foreground">Code inscription</p>
-              <p className="text-lg font-semibold tracking-wide">{inscriptionCode}</p>
+            <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 px-4 py-3">
+              <div>
+                <p className="text-sm text-muted-foreground">Code inscription</p>
+                <p className="text-lg font-semibold tracking-wide">{inscriptionCode}</p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleCopyCode}
+                aria-label="Copier le code d'inscription"
+              >
+                {codeCopied ? (
+                  <Check className="h-4 w-4 text-emerald-600" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+                <span className="ml-2">{codeCopied ? "Copié" : "Copier"}</span>
+              </Button>
             </div>
           )}
+
+          <Alert className="border-amber-200 bg-amber-50 text-amber-950">
+            <Eye className="h-4 w-4" />
+            <AlertTitle>Prévisualisation admin</AlertTitle>
+            <AlertDescription>
+              Le lien « Espace stagiaire » ci-dessous est réservé au staff. Ne
+              pas l&apos;envoyer au stagiaire : il n&apos;ouvre pas son portail.
+            </AlertDescription>
+          </Alert>
 
           <CopyLinkRow
             label="Formulaire d'inscription public"

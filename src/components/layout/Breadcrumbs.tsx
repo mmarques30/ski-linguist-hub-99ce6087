@@ -12,9 +12,12 @@ const LABELS: Record<string, string> = {
   gestion: "Gestion",
   commercial: "Commercial",
   partenaires: "Partenaires",
+  moniteurs: "Moniteurs",
   inscriptions: "Inscriptions",
+  "schedule-validation": "Horaires J-10",
   invoices: "Factures",
   students: "Stagiaires",
+  "portal-preview": "Prévisualisation portail",
   tests: "Tests de niveau",
   classes: "Planning",
   formation: "Formation",
@@ -32,6 +35,7 @@ const LABELS: Record<string, string> = {
   evaluations: "Évaluations",
   evaluation: "Évaluation",
   "evaluation-view": "Évaluation",
+  verifier: "Vérification",
   amelioration: "Amélioration",
   "satisfaction-stats": "Satisfaction",
   formateurs: "Formateurs",
@@ -44,9 +48,21 @@ const LABELS: Record<string, string> = {
   planning: "Planning",
 };
 
+/**
+ * Préfixes qui n'ont pas de page dédiée : les afficher en texte, pas en lien,
+ * pour éviter un NotFound au clic (ex. /gestion, /admin, /qualite).
+ */
+const NON_NAVIGABLE_PATHS = new Set([
+  "/gestion",
+  "/admin",
+  "/qualite",
+  "/formateur",
+  "/formation",
+  "/student",
+]);
+
 function labelize(seg: string): string {
   if (LABELS[seg]) return LABELS[seg];
-  // UUID / numeric id detection
   if (/^[0-9a-f]{8}-/i.test(seg) || /^\d+$/.test(seg)) return "Détails";
   return seg.charAt(0).toUpperCase() + seg.slice(1);
 }
@@ -60,7 +76,12 @@ export function Breadcrumbs() {
 
   const crumbs = segments.map((seg, idx) => {
     const path = "/" + segments.slice(0, idx + 1).join("/");
-    return { label: labelize(seg), path, isLast: idx === segments.length - 1 };
+    return {
+      label: labelize(seg),
+      path,
+      isLast: idx === segments.length - 1,
+      navigable: !NON_NAVIGABLE_PATHS.has(path),
+    };
   });
 
   return (
@@ -73,13 +94,19 @@ export function Breadcrumbs() {
         className="flex items-center gap-1 hover:text-foreground transition-colors"
       >
         <Home className="h-3.5 w-3.5" />
-        <span>Dashboard</span>
+        <span>Tableau de bord</span>
       </Link>
       {crumbs.map((c) => (
         <Fragment key={c.path}>
           <ChevronRight className="h-3.5 w-3.5 opacity-50" />
-          {c.isLast ? (
-            <span className="font-medium text-foreground">{c.label}</span>
+          {c.isLast || !c.navigable ? (
+            <span
+              className={
+                c.isLast ? "font-medium text-foreground" : "text-muted-foreground"
+              }
+            >
+              {c.label}
+            </span>
           ) : (
             <Link to={c.path} className="hover:text-foreground transition-colors">
               {c.label}

@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -306,11 +307,12 @@ const statusStyles: Record<string, string> = {
 };
 
 export default function Invoices() {
+  const [searchParams] = useSearchParams();
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [clientTypeFilter, setClientTypeFilter] = useState("all");
   const [periodFilter, setPeriodFilter] = useState("all");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => searchParams.get("q") || "");
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceWithInscription | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -318,6 +320,11 @@ export default function Invoices() {
   const { language, t } = useLanguage();
   const { canEdit } = useUserPermissions();
   const editable = canEdit("invoices");
+
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q) setSearch(q);
+  }, [searchParams]);
 
   // Bornes d'exercice fiscal FLI (libellé AA-AA)
   const getSeasonDates = (offset: number = 0) => {
@@ -757,9 +764,26 @@ export default function Invoices() {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1">
-                        <span className="text-sm font-medium truncate max-w-[150px]">
-                          {getClientName(invoice)}
-                        </span>
+                        {invoice.inscription?.student_id ? (
+                          <Link
+                            to={`/students/${invoice.inscription.student_id}`}
+                            className="text-sm font-medium truncate max-w-[150px] text-primary hover:underline"
+                          >
+                            {getClientName(invoice)}
+                          </Link>
+                        ) : (
+                          <span className="text-sm font-medium truncate max-w-[150px]">
+                            {getClientName(invoice)}
+                          </span>
+                        )}
+                        {invoice.inscription_id && invoice.inscription?.code && (
+                          <Link
+                            to={`/inscriptions/${invoice.inscription_id}`}
+                            className="text-xs text-muted-foreground hover:text-primary hover:underline font-mono"
+                          >
+                            {invoice.inscription.code}
+                          </Link>
+                        )}
                         <Badge
                           className={cn(
                             clientTypeStyles[invoice.client_type] || "bg-gray-100 text-gray-800",

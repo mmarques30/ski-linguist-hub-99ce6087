@@ -192,16 +192,19 @@ export function InvoiceCreateDialog({ open, onOpenChange, defaultInscriptionId }
           <div className="space-y-2">
             <Label htmlFor="inscription">Inscription (optionnel)</Label>
             <Select
-              value={formData.inscription_id}
+              value={formData.inscription_id || "none"}
               onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, inscription_id: value }))
+                setFormData((prev) => ({
+                  ...prev,
+                  inscription_id: value === "none" ? "" : value,
+                }))
               }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Sélectionner une inscription..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Aucune inscription</SelectItem>
+                <SelectItem value="none">Aucune inscription</SelectItem>
                 {loadingInscriptions ? (
                   <div className="flex items-center justify-center p-4">
                     <Loader2 className="h-4 w-4 animate-spin" />

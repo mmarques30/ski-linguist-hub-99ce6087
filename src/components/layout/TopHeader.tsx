@@ -153,10 +153,12 @@ export function TopHeader() {
           </PopoverContent>
         </Popover>
 
-        {/* Profile */}
+        {/* Profile → Paramètres */}
         <button
+          type="button"
           className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-white/70 transition-all duration-200 hover:scale-110 hover:bg-white/20 hover:text-white hover:shadow-md"
-          aria-label="Profile"
+          aria-label="Paramètres du compte"
+          onClick={() => navigate("/settings")}
         >
           <Avatar className="h-7 w-7">
             <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">

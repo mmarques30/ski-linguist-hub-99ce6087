@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Edit, Plus, Trash2, Mail, Phone, MapPin, Building2, Star, FileText } from "lucide-react";
+import { ArrowLeft, Edit, Plus, Trash2, Mail, Phone, MapPin, Building2, Star, FileText, Snowflake } from "lucide-react";
 import {
   usePartnerDetails,
   usePartnerContracts,
@@ -20,8 +21,13 @@ import {
 import { PartnerFormDialog } from "@/components/partners/PartnerFormDialog";
 import { ContractFormDialog } from "@/components/partners/ContractFormDialog";
 import { ContactFormDialog } from "@/components/partners/ContactFormDialog";
+import {
+  MESSAGE_GEL_PROSPECTION,
+  PROSPECTION_MONITEURS_GELEE,
+} from "@/lib/prospection-gel";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { toast } from "sonner";
 
 const TYPE_LABELS: Record<string, string> = {
   esf: "ESF", hotel: "Hôtel", remontees_mecaniques: "Remontées mécaniques",
@@ -54,6 +60,10 @@ export default function PartnerDetails() {
   const totalPaid = invoices.filter((i) => i.status === "paid").reduce((s, i) => s + (i.amount_ttc || i.amount_ht || 0), 0);
 
   const handleDelete = async () => {
+    if (PROSPECTION_MONITEURS_GELEE) {
+      toast.error(MESSAGE_GEL_PROSPECTION);
+      return;
+    }
     if (!confirm("Supprimer ce partenaire ?")) return;
     await deletePartner.mutateAsync(partner.id);
     navigate("/gestion/partenaires");
@@ -79,13 +89,31 @@ export default function PartnerDetails() {
               </p>
             )}
           </div>
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={PROSPECTION_MONITEURS_GELEE}
+            onClick={() => setEditOpen(true)}
+          >
             <Edit className="h-4 w-4 mr-1" /> Modifier
           </Button>
-          <Button variant="destructive" size="sm" onClick={handleDelete}>
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={PROSPECTION_MONITEURS_GELEE}
+            onClick={handleDelete}
+          >
             <Trash2 className="h-4 w-4 mr-1" /> Supprimer
           </Button>
         </div>
+
+        {PROSPECTION_MONITEURS_GELEE && (
+          <Alert>
+            <Snowflake className="h-4 w-4" />
+            <AlertTitle>Prospection gelée</AlertTitle>
+            <AlertDescription>{MESSAGE_GEL_PROSPECTION}</AlertDescription>
+          </Alert>
+        )}
 
         {/* KPIs row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -133,7 +161,12 @@ export default function PartnerDetails() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-base">Contacts</CardTitle>
-                  <Button size="sm" variant="outline" onClick={() => setContactOpen(true)}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={PROSPECTION_MONITEURS_GELEE}
+                    onClick={() => setContactOpen(true)}
+                  >
                     <Plus className="h-3.5 w-3.5 mr-1" /> Ajouter
                   </Button>
                 </CardHeader>
@@ -170,7 +203,11 @@ export default function PartnerDetails() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-base">Contrats</CardTitle>
-                <Button size="sm" onClick={() => setContractOpen(true)}>
+                <Button
+                  size="sm"
+                  disabled={PROSPECTION_MONITEURS_GELEE}
+                  onClick={() => setContractOpen(true)}
+                >
                   <Plus className="h-3.5 w-3.5 mr-1" /> Nouveau contrat
                 </Button>
               </CardHeader>
@@ -263,8 +300,25 @@ export default function PartnerDetails() {
                     </TableHeader>
                     <TableBody>
                       {invoices.map((inv: any) => (
-                        <TableRow key={inv.id}>
-                          <TableCell className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" /> {inv.invoice_number || "-"}</TableCell>
+                        <TableRow
+                          key={inv.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() =>
+                            navigate(
+                              `/invoices?q=${encodeURIComponent(inv.invoice_number || inv.id)}`
+                            )
+                          }
+                        >
+                          <TableCell className="flex items-center gap-1.5">
+                            <FileText className="h-3.5 w-3.5" />
+                            <Link
+                              to={`/invoices?q=${encodeURIComponent(inv.invoice_number || inv.id)}`}
+                              className="text-primary hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {inv.invoice_number || "-"}
+                            </Link>
+                          </TableCell>
                           <TableCell>{format(new Date(inv.invoice_date), "dd/MM/yyyy")}</TableCell>
                           <TableCell>{(inv.amount_ttc || inv.amount_ht || 0).toLocaleString("fr-FR")} €</TableCell>
                           <TableCell><Badge variant="outline">{inv.status}</Badge></TableCell>

@@ -80,9 +80,15 @@ const App = () => (
             <Route path="/survey/:token" element={<SatisfactionSurvey />} />
             <Route path="/conditions-generales" element={<ConditionsGenerales />} />
 
-            {/* Design-validation mockup — static data, remove once approved */}
-            <Route path="/mockup/dashboard-gestao" element={<DashboardGestaoMockupPage />} />
-            
+            {/* Design-validation mockup — staff only */}
+            <Route
+              path="/mockup/dashboard-gestao"
+              element={
+                <ProtectedRoute>
+                  <DashboardGestaoMockupPage />
+                </ProtectedRoute>
+              }
+            />
             {/* Protected admin routes */}
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/finance" element={<ProtectedRoute><FinanceDashboard /></ProtectedRoute>} />

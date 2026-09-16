@@ -24,7 +24,9 @@ export interface Invoice {
 
 export interface InvoiceWithInscription extends Invoice {
   inscription?: {
+    id?: string | null;
     code: string | null;
+    student_id?: string | null;
     student_name: string | null;
     student_email: string | null;
     student_phone: string | null;
@@ -121,7 +123,9 @@ export function useInvoices(filters?: {
           return {
             ...invoice,
             inscription: {
+              id: inscription.id,
               code: inscription.code,
+              student_id: inscription.student_id,
               student_name: student ? `${student.first_name} ${student.last_name}` : null,
               student_email: student?.email || null,
               student_phone: student?.phone || null,
