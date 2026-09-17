@@ -23,6 +23,10 @@ import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { ListSkeleton } from "@/components/common/ListSkeleton";
 import { EmptyState } from "@/components/common/EmptyState";
 import { PortalInvitesBulkCard } from "@/components/students/PortalInvitesBulkCard";
+import {
+  studentEmailForSend,
+  studentEmailLabel,
+} from "@/lib/email-guards";
 
 // Translations for the Students page
 const translations = {
@@ -285,7 +289,15 @@ export default function Students() {
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell>{student.email}</TableCell>
+                    <TableCell>
+                      {studentEmailForSend(student.email) ? (
+                        student.email
+                      ) : (
+                        <span className="text-muted-foreground italic">
+                          {studentEmailLabel(student.email)}
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell>{student.phone || "-"}</TableCell>
                     <TableCell>{student.city || "-"}</TableCell>
                     <TableCell>
@@ -318,7 +330,7 @@ export default function Students() {
                             <Pencil className="h-4 w-4" />
                           </Button>
                         )}
-                        {student.email && (
+                        {studentEmailForSend(student.email) && (
                           <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                             <a href={`mailto:${student.email}`} aria-label="Envoyer un e-mail">
                               <Mail className="h-4 w-4" />
@@ -370,7 +382,13 @@ export default function Students() {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-muted-foreground">{t(translations.email)}</p>
-                      <p className="font-medium truncate">{student.email}</p>
+                      <p
+                        className={`font-medium truncate ${
+                          studentEmailForSend(student.email) ? "" : "text-muted-foreground italic"
+                        }`}
+                      >
+                        {studentEmailLabel(student.email)}
+                      </p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">{t(translations.phone)}</p>
@@ -398,7 +416,7 @@ export default function Students() {
                         <Pencil className="h-4 w-4" />
                       </Button>
                     )}
-                    {student.email && (
+                    {studentEmailForSend(student.email) && (
                       <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                         <a href={`mailto:${student.email}`} aria-label="Envoyer un e-mail">
                           <Mail className="h-4 w-4" />
