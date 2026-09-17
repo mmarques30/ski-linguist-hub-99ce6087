@@ -108,13 +108,16 @@ export default function AdminRegistrationDocuments() {
           <AlertTitle>Comment ça fonctionne</AlertTitle>
           <AlertDescription className="space-y-1">
             <p>
-              Par défaut, l&apos;app utilise les trois fichiers livrés avec le code. Si vous
-              déposez une nouvelle version ici, elle est stockée de façon privée et
-              utilisée pour les prochains envois (pack moniteur / dossier de formation).
+              Par défaut, l&apos;app utilise les fichiers livrés avec le code pour les
+              pièces jointes statiques (critères FIF-PL). Les modèles Word restent
+              téléchargeables ici ; la convention et le programme du dossier de
+              formation sont générés automatiquement en PDF à partir de chaque
+              inscription (envoi +30 min, modèle email « Dossier de formation »,
+              payeur stagiaire uniquement).
             </p>
             <p>
-              Étape suivante prévue : générer convention et programme à partir des
-              données de chaque inscription (modèle email « Dossier de formation »).
+              Si vous déposez une nouvelle version des critères ici, elle est
+              stockée de façon privée et utilisée pour les prochains envois.
             </p>
           </AlertDescription>
         </Alert>

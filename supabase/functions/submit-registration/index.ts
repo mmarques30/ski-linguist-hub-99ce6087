@@ -6,12 +6,6 @@ import {
   normalizePaymentOption,
   REGISTRATION_PAYMENT_OPTIONS,
 } from "../_shared/registration-payments.ts";
-import {
-  buildSkiMonitorWelcomeAttachments,
-  getPublicDocumentUrl,
-  shouldSendSkiMonitorOnlineWelcomeDocuments,
-  SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS,
-} from "../_shared/ski-monitor-welcome-documents.ts";
 import { applyEmailTemplate, sendFliEmail } from "../_shared/fli-email.ts";
 import { describeCaughtError } from "../_shared/supabase-error.ts";
 import {
@@ -19,6 +13,7 @@ import {
   REQUESTED_START_DATE_REQUIRED_MESSAGE,
   resolveInscriptionDates,
 } from "../_shared/registration-dates.ts";
+import { isStudentPayer } from "../_shared/inscription-payer.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -154,71 +149,28 @@ function parseDurationHours(duration?: string): number | null {
   return match ? Number(match[1]) : null;
 }
 
-async function sendSkiMonitorWelcomeDocuments(params: {
-  resendApiKey: string;
+/** File d'attente modèle 2 : dossier FIF-PL à +30 min (payeur stagiaire). */
+async function enqueueInscriptionDocuments(params: {
   supabase: ReturnType<typeof createClient>;
-  registration: RegistrationPayload;
-  inscription: { id: string; code: string | null };
-  language: string;
-  email: string;
-  studentName: string;
+  inscriptionId: string;
+  fundingOrganization: string | null;
 }): Promise<boolean> {
-  const { resendApiKey, supabase, registration, inscription, language, email, studentName } = params;
-  const appBaseUrl = Deno.env.get("APP_BASE_URL") || "https://ski-linguist-hub.lovable.app";
-
-  const { data: template } = await supabase
-    .from("email_templates")
-    .select("subject_fr, body_fr")
-    .eq("slug", "inscription_ski_monitor_welcome")
-    .eq("is_active", true)
-    .maybeSingle();
-
-  const variables = {
-    student_name: studentName,
-    language,
-    inscription_code: inscription.code || "",
-  };
-
-  const subject = template
-    ? applyEmailTemplate(template.subject_fr, variables)
-    : `Vos documents d'inscription FLI — ${language}`;
-  const html = template
-    ? applyEmailTemplate(template.body_fr, variables)
-    : `<p>Bonjour ${studentName},</p><p>Veuillez trouver ci-joint vos documents d'inscription FLI.</p>`;
-
-  const attachments = await buildSkiMonitorWelcomeAttachments(supabase);
-  const sent = (await sendFliEmail({
-    resendApiKey,
-    to: email,
-    subject,
-    html,
-    attachments,
-  })).ok;
-
-  for (const doc of SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS) {
-    await supabase.from("document_sendings").insert({
-      inscription_id: inscription.id,
-      document_type: doc.documentType,
-      sent_to: email,
-      pdf_url: getPublicDocumentUrl(appBaseUrl, doc.internalFile),
-    });
+  if (!isStudentPayer({ funding_organization: params.fundingOrganization })) {
+    return false;
   }
-
-  await supabase
-    .from("inscriptions")
-    .update({ documents_sent_at: new Date().toISOString() })
-    .eq("id", inscription.id);
-
-  await supabase.from("email_log").insert({
-    template_slug: "inscription_ski_monitor_welcome",
-    recipient_email: email,
-    recipient_name: studentName,
-    status: sent ? "sent" : "failed",
-    inscription_id: inscription.id,
-    variables_used: { ...variables, attachments: SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS.map((d) => d.label) },
+  const scheduledFor = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+  const { error } = await params.supabase.from("scheduled_reminders").insert({
+    type: "DOCUMENT",
+    related_id: params.inscriptionId,
+    related_table: "inscriptions",
+    scheduled_for: scheduledFor,
+    status: "PENDING",
   });
-
-  return sent;
+  if (error) {
+    console.error("enqueue inscription_documents:", error);
+    return false;
+  }
+  return true;
 }
 
 Deno.serve(async (req) => {
@@ -609,20 +561,16 @@ Deno.serve(async (req) => {
         }
       }
 
-      if (shouldSendSkiMonitorOnlineWelcomeDocuments(registration)) {
-        try {
-          documentsSent = await sendSkiMonitorWelcomeDocuments({
-            resendApiKey,
-            supabase,
-            registration,
-            inscription,
-            language,
-            email,
-            studentName,
-          });
-        } catch (docError) {
-          console.error("ski monitor welcome documents error:", docError);
-        }
+      const fundingOrganization =
+        FUNDING_MAP[registration.fundingType] || registration.fundingType || null;
+      try {
+        documentsSent = await enqueueInscriptionDocuments({
+          supabase,
+          inscriptionId: inscription.id,
+          fundingOrganization,
+        });
+      } catch (docError) {
+        console.error("enqueue inscription_documents error:", docError);
       }
 
       if (needsAdminCall) {
