@@ -121,6 +121,17 @@ describe("checkVariables", () => {
     );
     expect(check.undeclared).toEqual(["iban"]);
   });
+
+  it("ignore le contenu EN/PT résiduel", () => {
+    const check = checkVariables(
+      variant({
+        body_en: "<p>Hello {{orphan_en}}</p>",
+        body_pt: "<p>Olá {{orphan_pt}}</p>",
+      }),
+    );
+    expect(check.undeclared).toEqual([]);
+    expect(check.unused).toEqual(["days_overdue"]);
+  });
 });
 
 describe("modelStatus", () => {

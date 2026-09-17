@@ -133,14 +133,8 @@ export interface VariableCheck {
 }
 
 export function checkVariables(variant: EmailModelVariant): VariableCheck {
-  const used = variablesUsedIn(
-    variant.subject_fr,
-    variant.body_fr,
-    variant.subject_en,
-    variant.body_en,
-    variant.subject_pt,
-    variant.body_pt,
-  );
+  // Les envois sont exclusivement en français : on ignore EN/PT.
+  const used = variablesUsedIn(variant.subject_fr, variant.body_fr);
   return {
     unused: variant.variables.filter((name) => !used.includes(name)),
     undeclared: used.filter((name) => !variant.variables.includes(name)),
