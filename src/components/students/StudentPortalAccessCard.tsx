@@ -41,7 +41,7 @@ export function StudentPortalAccessCard({
       return;
     }
     if (isFliPlaceholderEmail(email)) {
-      toast.error("Les adresses @fli.placeholder sont exclues de tout envoi");
+      toast.error("Les adresses placeholder d'import sont exclues de tout envoi");
       return;
     }
 

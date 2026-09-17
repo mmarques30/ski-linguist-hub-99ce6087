@@ -31,6 +31,10 @@ import {
 } from "lucide-react";
 import { useStudentDetails } from "@/hooks/useStudentDetails";
 import { StudentPortalAccessCard } from "@/components/students/StudentPortalAccessCard";
+import {
+  studentEmailForSend,
+  studentEmailLabel,
+} from "@/lib/email-guards";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -149,12 +153,12 @@ export default function StudentDetails() {
                   {student.first_name} {student.last_name}
                 </h1>
                 <div className="flex items-center gap-4 mt-1 text-muted-foreground">
-                  {student.email && (
-                    <span className="flex items-center gap-1">
-                      <Mail className="h-4 w-4" />
-                      {student.email}
+                  <span className="flex items-center gap-1">
+                    <Mail className="h-4 w-4" />
+                    <span className={studentEmailForSend(student.email) ? "" : "italic"}>
+                      {studentEmailLabel(student.email)}
                     </span>
-                  )}
+                  </span>
                   {student.phone && (
                     <span className="flex items-center gap-1">
                       <Phone className="h-4 w-4" />
@@ -166,7 +170,7 @@ export default function StudentDetails() {
             </div>
           </div>
           <div className="flex gap-2">
-            {student.email ? (
+            {studentEmailForSend(student.email) ? (
               <Button variant="outline" size="sm" asChild>
                 <a href={`mailto:${student.email}`}>
                   <Mail className="mr-2 h-4 w-4" />
@@ -251,7 +255,13 @@ export default function StudentDetails() {
                   <Mail className="h-4 w-4 text-muted-foreground mt-0.5" />
                   <div>
                     <p className="text-sm font-medium">Email</p>
-                    <p className="text-sm text-muted-foreground">{student.email}</p>
+                    <p
+                      className={`text-sm text-muted-foreground ${
+                        studentEmailForSend(student.email) ? "" : "italic"
+                      }`}
+                    >
+                      {studentEmailLabel(student.email)}
+                    </p>
                   </div>
                 </div>
                 {student.phone && (

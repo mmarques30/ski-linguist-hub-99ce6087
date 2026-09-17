@@ -114,7 +114,8 @@ export function PortalInvitesBulkCard() {
         <Alert>
           <AlertDescription className="text-sm">
             Chaque stagiaire reçoit un email avec un lien sécurisé. Un compte est créé automatiquement
-            s&apos;il n&apos;existe pas encore. Les adresses @fli.placeholder sont exclues.
+            s&apos;il n&apos;existe pas encore. Les adresses placeholder d&apos;import
+            (@fli.placeholder…) sont exclues.
           </AlertDescription>
         </Alert>
 

@@ -235,7 +235,7 @@ function rowToParsed(row: Record<string, string>): ParsedFliInscriptionRow | nul
   let email = normalizeEmail(emailRaw);
   if (!email) {
     const seed = code || `${fullName}-${startDate}`;
-    email = `import.${slugify(seed) || "unknown"}@fli.import`;
+    email = `import.${slugify(seed) || "unknown"}@fli.placeholder.local`;
   }
 
   const { first_name, last_name } = parseFullName(fullName || email.split("@")[0]);
