@@ -95,7 +95,8 @@ export default function AdminRegistrationDocuments() {
         <div>
           <h1 className="text-2xl font-bold">Modèles documents d&apos;inscription</h1>
           <p className="text-muted-foreground mt-1">
-            Fichiers joints après inscription (critères FIF-PL, convention, programme).
+            Fichiers du dossier d&apos;inscription (critères FIF-PL, tutoriel, modèles
+            convention / programme).
             Les textes d&apos;email se gèrent à part sur{" "}
             <Link to="/admin/emails" className="underline underline-offset-2">
               /admin/emails
@@ -109,15 +110,15 @@ export default function AdminRegistrationDocuments() {
           <AlertDescription className="space-y-1">
             <p>
               Par défaut, l&apos;app utilise les fichiers livrés avec le code pour les
-              pièces jointes statiques (critères FIF-PL). Les modèles Word restent
-              téléchargeables ici ; la convention et le programme du dossier de
+              pièces jointes statiques (critères FIF-PL et tutoriel). Les modèles Word
+              restent téléchargeables ici ; la convention et le programme du dossier de
               formation sont générés automatiquement en PDF à partir de chaque
               inscription (envoi +30 min, modèle email « Dossier de formation »,
               payeur stagiaire uniquement).
             </p>
             <p>
-              Si vous déposez une nouvelle version des critères ici, elle est
-              stockée de façon privée et utilisée pour les prochains envois.
+              Si vous déposez une nouvelle version des critères ou du tutoriel ici, elle
+              est stockée de façon privée et utilisée pour les prochains envois.
             </p>
           </AlertDescription>
         </Alert>
