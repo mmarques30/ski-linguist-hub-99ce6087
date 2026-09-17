@@ -70,7 +70,7 @@ const navigationSections: NavSection[] = [
     label: "Opérations",
     items: [
       { name: "Inscriptions", href: "/inscriptions", icon: ClipboardList },
-      { name: "Horaires J-10", href: "/inscriptions/schedule-validation", icon: Clock },
+      { name: "Constitution des groupes", href: "/inscriptions/schedule-validation", icon: Clock },
       { name: "Stagiaires", href: "/students", icon: Users },
       { name: "Formateurs", href: "/formateurs", icon: UserCog },
       { name: "Tests de niveau", href: "/tests", icon: GraduationCap },

@@ -9,6 +9,7 @@ import {
   todayKey,
   type PendingScheduleGroupOf,
 } from "@/lib/schedule-validation";
+import { needsMorningAfternoonGroup } from "@/lib/registration-group-notice";
 
 export interface PendingScheduleInscription {
   id: string;
@@ -23,6 +24,8 @@ export interface PendingScheduleInscription {
   schedule_status: string;
   schedule_reminder_sent_at: string | null;
   status: string;
+  modality: string | null;
+  course_type: string | null;
   student_id: string | null;
   student_name: string;
   student_email: string | null;
@@ -40,9 +43,9 @@ export function usePendingSchedules() {
       const horizon = scheduleHorizonKey(today);
 
       // Pas de plancher sur start_date : une inscription dont le début est
-      // passé sans horaire validé doit rester visible, quelle que soit son
-      // origine. Seules les inscriptions dont le cycle est clos quittent la
-      // liste.
+      // passé sans horaire validé doit rester visible. Seules les inscriptions
+      // dont le cycle est clos quittent la liste. Les individuels / en ligne
+      // sont exclus : pas de groupe matin / après-midi à constituer.
       const { data, error } = await supabase
         .from("inscriptions")
         .select(
@@ -57,6 +60,8 @@ export function usePendingSchedules() {
           schedule_status,
           schedule_reminder_sent_at,
           status,
+          modality,
+          course_type,
           student_id,
           students!inner(first_name, last_name, email)
         `
@@ -68,31 +73,35 @@ export function usePendingSchedules() {
 
       if (error) throw error;
 
-      const inscriptions: PendingScheduleInscription[] = (data || []).map((row) => {
-        const student = row.students as {
-          first_name: string;
-          last_name: string;
-          email: string | null;
-        } | null;
-        return {
-          id: row.id,
-          code: row.code,
-          language: row.language,
-          start_date: row.start_date,
-          dates_to_confirm: row.dates_to_confirm ?? false,
-          entry_level: row.entry_level,
-          schedule: row.schedule,
-          schedule_status: row.schedule_status,
-          schedule_reminder_sent_at: row.schedule_reminder_sent_at,
-          status: row.status,
-          student_id: row.student_id,
-          student_name: student
-            ? `${student.first_name} ${student.last_name}`.trim()
-            : "—",
-          student_email: student?.email ?? null,
-          late: scheduleDeadline(row.start_date, today).late,
-        };
-      });
+      const inscriptions: PendingScheduleInscription[] = (data || [])
+        .filter((row) => needsMorningAfternoonGroup(row.modality, row.course_type))
+        .map((row) => {
+          const student = row.students as {
+            first_name: string;
+            last_name: string;
+            email: string | null;
+          } | null;
+          return {
+            id: row.id,
+            code: row.code,
+            language: row.language,
+            start_date: row.start_date,
+            dates_to_confirm: row.dates_to_confirm ?? false,
+            entry_level: row.entry_level,
+            schedule: row.schedule,
+            schedule_status: row.schedule_status,
+            schedule_reminder_sent_at: row.schedule_reminder_sent_at,
+            status: row.status,
+            modality: row.modality,
+            course_type: row.course_type,
+            student_id: row.student_id,
+            student_name: student
+              ? `${student.first_name} ${student.last_name}`.trim()
+              : "—",
+            student_email: student?.email ?? null,
+            late: scheduleDeadline(row.start_date, today).late,
+          };
+        });
 
       const groups = groupPendingSchedules(inscriptions, today);
 

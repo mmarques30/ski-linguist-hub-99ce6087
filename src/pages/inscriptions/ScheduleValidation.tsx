@@ -58,12 +58,13 @@ export default function ScheduleValidation() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Clock className="h-6 w-6" />
-            Validation horaires J-{SCHEDULE_ASSIGNMENT_DAYS_BEFORE}
+            Constitution des groupes
           </h1>
           <p className="text-muted-foreground mt-1">
-            Inscriptions en attente de groupe matin / après-midi : début dans les{" "}
-            {SCHEDULE_ASSIGNMENT_DAYS_BEFORE} prochains jours, et retards non traités,
-            quelle que soit l&apos;origine de l&apos;inscription.
+            Stages collectifs en station : attribution du groupe matin ou après-midi
+            pour les débuts dans les {SCHEDULE_ASSIGNMENT_DAYS_BEFORE} prochains jours,
+            et les retards non traités. Les formations individuelles ou en ligne
+            n&apos;apparaissent pas ici.
           </p>
         </div>
 
@@ -100,11 +101,16 @@ export default function ScheduleValidation() {
           <p className="text-destructive">Impossible de charger les horaires en attente.</p>
         )}
 
-        {!isLoading && data?.total === 0 && (
+            {!isLoading && data?.total === 0 && (
           <Card>
-            <CardContent className="py-10 text-center text-muted-foreground">
-              Aucune inscription en attente de validation, ni dans la fenêtre J-
-              {SCHEDULE_ASSIGNMENT_DAYS_BEFORE}, ni en retard.
+            <CardContent className="py-10 text-center text-muted-foreground space-y-2">
+              <p>
+                Aucun stage collectif en station en attente de groupe, ni dans la
+                fenêtre J-{SCHEDULE_ASSIGNMENT_DAYS_BEFORE}, ni en retard.
+              </p>
+              <p className="text-sm">
+                Les formations individuelles ou en ligne sont exclues de cet écran.
+              </p>
             </CardContent>
           </Card>
         )}

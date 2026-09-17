@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   expectsStationGroupAssignment,
+  needsMorningAfternoonGroup,
   STATION_GROUP_NOTICE_AFTER_TEST,
   STATION_GROUP_NOTICE_BEFORE_TEST,
   STATION_GROUP_SIGNATURE,
@@ -24,6 +25,15 @@ describe("message du groupe matin / après-midi", () => {
     expect(expectsStationGroupAssignment(null)).toBe(false);
     expect(expectsStationGroupAssignment(undefined)).toBe(false);
     expect(expectsStationGroupAssignment("")).toBe(false);
+  });
+
+  it("réserve la constitution des groupes aux collectifs présentiels", () => {
+    expect(needsMorningAfternoonGroup("presentiel", "Collectif")).toBe(true);
+    expect(needsMorningAfternoonGroup("presentiel", " Collectif ")).toBe(true);
+    expect(needsMorningAfternoonGroup("presentiel", "Individuel")).toBe(false);
+    expect(needsMorningAfternoonGroup("en_ligne", "Collectif")).toBe(false);
+    expect(needsMorningAfternoonGroup("presentiel", "En Binôme")).toBe(false);
+    expect(needsMorningAfternoonGroup("presentiel", null)).toBe(false);
   });
 
   it("est signé de l'équipe, pas du prénom de la directrice", () => {

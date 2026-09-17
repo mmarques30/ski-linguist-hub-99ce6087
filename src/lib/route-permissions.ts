@@ -14,7 +14,7 @@ export const ROUTE_GROUPS: RouteGroup[] = [
     label: "Opérations",
     routes: [
       { key: "inscriptions", label: "Inscriptions" },
-      { key: "inscriptions.schedule", label: "Horaires J-10" },
+      { key: "inscriptions.schedule", label: "Constitution des groupes" },
       { key: "students", label: "Stagiaires" },
       { key: "formateurs", label: "Formateurs" },
       { key: "tests", label: "Tests de niveau" },
