@@ -1,5 +1,5 @@
 export interface SkiMonitorWelcomeDocument {
-  documentType: "REGLEMENT" | "CONVENTION" | "PROGRAMME";
+  documentType: "REGLEMENT" | "CONVENTION" | "PROGRAMME" | "LIVRET";
   filename: string;
   internalFile: string;
   label: string;
@@ -23,6 +23,12 @@ export const SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS: SkiMonitorWelcomeDocument[] =
     filename: "Contenu pedagogique Station 2022.dotx",
     internalFile: "contenu-pedagogique-station-2022.dotx",
     label: "Contenu pédagogique Station 2022",
+  },
+  {
+    documentType: "LIVRET",
+    filename: "Tutoriel FIF-PL FLI.pdf",
+    internalFile: "tutoriel-fif-pl-fli.pdf",
+    label: "Tutoriel pour la demande de prise en charge FIF-PL",
   },
 ];
 

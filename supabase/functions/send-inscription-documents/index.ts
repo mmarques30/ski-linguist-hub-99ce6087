@@ -35,6 +35,9 @@ const TEMPLATE_SLUG = "inscription_documents";
 const CRITERIA_DOC = SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS.find(
   (d) => d.documentType === "REGLEMENT"
 )!;
+const TUTORIEL_DOC = SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS.find(
+  (d) => d.documentType === "LIVRET"
+)!;
 
 function bytesToBase64(bytes: Uint8Array): string {
   let binary = "";
@@ -255,17 +258,20 @@ Deno.serve(async (req) => {
           identity: identityRow?.value,
         });
 
-        const [conventionBytes, programmeBytes, criteriaBytes] = await Promise.all([
-          renderInscriptionDocumentPdf(conventionModel),
-          renderInscriptionDocumentPdf(programmeModel),
-          loadSkiMonitorWelcomeDocument(CRITERIA_DOC.internalFile, supabase),
-        ]);
+        const [conventionBytes, programmeBytes, criteriaBytes, tutorielBytes] =
+          await Promise.all([
+            renderInscriptionDocumentPdf(conventionModel),
+            renderInscriptionDocumentPdf(programmeModel),
+            loadSkiMonitorWelcomeDocument(CRITERIA_DOC.internalFile, supabase),
+            loadSkiMonitorWelcomeDocument(TUTORIEL_DOC.internalFile, supabase),
+          ]);
 
         const code = inscription.code || "sans-code";
         const attachments = [
           { filename: conventionFilename(code), content: bytesToBase64(conventionBytes) },
           { filename: programmeFilename(code), content: bytesToBase64(programmeBytes) },
           { filename: CRITERIA_DOC.filename, content: bytesToBase64(criteriaBytes) },
+          { filename: TUTORIEL_DOC.filename, content: bytesToBase64(tutorielBytes) },
         ];
 
         if (dryRun) {
@@ -319,6 +325,12 @@ Deno.serve(async (req) => {
             {
               inscription_id: inscriptionId,
               document_type: "REGLEMENT",
+              sent_to: email,
+              pdf_url: null,
+            },
+            {
+              inscription_id: inscriptionId,
+              document_type: "LIVRET",
               sent_to: email,
               pdf_url: null,
             },

@@ -24,6 +24,12 @@ export const REGISTRATION_WELCOME_DOCUMENTS: RegistrationWelcomeDocument[] = [
     internalFile: "contenu-pedagogique-station-2022.dotx",
     label: "Contenu pédagogique Station 2022",
   },
+  {
+    documentType: "LIVRET",
+    filename: "Tutoriel FIF-PL FLI.pdf",
+    internalFile: "tutoriel-fif-pl-fli.pdf",
+    label: "Tutoriel pour la demande de prise en charge FIF-PL",
+  },
 ];
 
 /** Préfixe storage (bucket `documents`, objets staff) pour les modèles remplaçables. */
@@ -33,7 +39,7 @@ export const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   REGLEMENT: "Critères de prise en charge",
   CONVENTION: "Convention Stage langues Station",
   PROGRAMME: "Contenu pédagogique Station",
-  LIVRET: "Livret",
+  LIVRET: "Tutoriel FIF-PL",
   CONVOCATION: "Convocation",
   ATTESTATION_PRESENCE: "Attestation de présence",
   CERTIFICAT: "Certificat de fin de formation",

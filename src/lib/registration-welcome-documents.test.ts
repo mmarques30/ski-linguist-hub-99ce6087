@@ -7,13 +7,17 @@ import {
 } from "./registration-welcome-documents";
 
 describe("registration welcome document templates", () => {
-  it("expose les trois modèles d'inscription", () => {
-    expect(REGISTRATION_WELCOME_DOCUMENTS).toHaveLength(3);
+  it("expose les quatre modèles d'inscription", () => {
+    expect(REGISTRATION_WELCOME_DOCUMENTS).toHaveLength(4);
     expect(REGISTRATION_WELCOME_DOCUMENTS.map((d) => d.documentType)).toEqual([
       "REGLEMENT",
       "CONVENTION",
       "PROGRAMME",
+      "LIVRET",
     ]);
+    expect(
+      REGISTRATION_WELCOME_DOCUMENTS.some((d) => d.internalFile === "tutoriel-fif-pl-fli.pdf"),
+    ).toBe(true);
   });
 
   it("construit un chemin storage staff stable", () => {
