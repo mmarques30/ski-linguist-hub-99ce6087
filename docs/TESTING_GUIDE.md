@@ -2,7 +2,20 @@
 
 Scénario à jouer **à partir du lundi 14 septembre 2026**. Compte administrateur requis pour les étapes back-office. Le formulaire public `/register` et la connexion stagiaire par lien magique n’en ont pas besoin.
 
-La checklist à cocher dans l’application reste sur `/admin/testing` (sidebar **Tests QA**). Les deux cartes en haut de cette page (emails 8-minimal, nettoyage ZZTEST) font partie de ce kit.
+La checklist à cocher dans l’application reste sur `/admin/testing` (sidebar **Tests QA**). Les cartes en haut de cette page (emails 8-minimal, **logins formateur/stagiaire**, nettoyage ZZTEST) font partie de ce kit.
+
+---
+
+## Logins de test — formateur & stagiaire
+
+Les rôles existent déjà en base (`formateur`, `student`). Pour voir chaque espace sans créer de compte à la main :
+
+| Rôle | Email | Mot de passe | Accueil |
+|---|---|---|---|
+| Formateur | `zztest.formateur@example.invalid` | `ZZTEST-Formateur1!` | `/formateur/evaluations` |
+| Stagiaire | `zztest.stagiaire@example.invalid` | `ZZTEST-Stagiaire1!` | `/student/dashboard` |
+
+Connexion sur **/auth**, carte **Administration FLI** (email + mot de passe) pour les deux. La carte « Espace stagiaire » n’offre que le magic link. Script de re-provision : `scripts/sql/zztest_roles_logins.sql`.
 
 ---
 
