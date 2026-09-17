@@ -215,7 +215,7 @@ const LANGUAGE_MAP: Record<string, string> = {
   francais: "Français",
   anglais: "Anglais",
   espagnol: "Espagnol",
-  portugais: "Portugais",
+  portugais: "Portugais brésilien",
   italien: "Italien",
   allemand: "Allemand",
 };

@@ -26,6 +26,7 @@ import {
 import { InstructorFormDialog } from "@/components/formateurs/InstructorFormDialog";
 import { SessionFormDialog } from "@/components/formateurs/SessionFormDialog";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { displayLanguageLabel } from "@/lib/taught-languages";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -39,6 +40,18 @@ const statusColors: Record<string, string> = {
 const paymentStatusColors: Record<string, string> = {
   a_payer: "bg-amber-100 text-amber-800",
   paye: "bg-emerald-100 text-emerald-800",
+};
+
+const instructorStatusStyles: Record<string, string> = {
+  actif: "bg-emerald-100 text-emerald-800",
+  inactif: "bg-slate-100 text-slate-700",
+  candidat: "bg-sky-100 text-sky-800",
+};
+
+const instructorStatusLabels: Record<string, string> = {
+  actif: "Actif·ve",
+  inactif: "Inactif·ve",
+  candidat: "Candidat·e",
 };
 
 export default function InstructorDetails() {
@@ -83,21 +96,28 @@ export default function InstructorDetails() {
             <AvatarFallback className="text-xl">{initials.toUpperCase()}</AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-2xl font-bold">
                 {instructor.first_name} {instructor.last_name}
               </h1>
-              <Badge
-                className={
-                  instructor.availability_status === "disponible"
-                    ? "bg-emerald-100 text-emerald-800"
-                    : instructor.availability_status === "occupe"
-                    ? "bg-amber-100 text-amber-800"
-                    : "bg-red-100 text-red-800"
-                }
-              >
-                {instructor.availability_status || "disponible"}
-              </Badge>
+              {instructor.status && (
+                <Badge className={instructorStatusStyles[instructor.status] || ""}>
+                  {instructorStatusLabels[instructor.status] || instructor.status}
+                </Badge>
+              )}
+              {instructor.status === "actif" && (
+                <Badge
+                  className={
+                    instructor.availability_status === "disponible"
+                      ? "bg-emerald-100 text-emerald-800"
+                      : instructor.availability_status === "occupe"
+                      ? "bg-amber-100 text-amber-800"
+                      : "bg-red-100 text-red-800"
+                  }
+                >
+                  {instructor.availability_status || "disponible"}
+                </Badge>
+              )}
             </div>
             <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
               {instructor.email && (
@@ -118,7 +138,7 @@ export default function InstructorDetails() {
             </div>
             <div className="flex flex-wrap gap-1 mt-2">
               {(instructor.languages || []).map((l) => (
-                <Badge key={l} variant="outline">{l}</Badge>
+                <Badge key={l} variant="outline">{displayLanguageLabel(l)}</Badge>
               ))}
             </div>
           </div>
@@ -151,6 +171,16 @@ export default function InstructorDetails() {
               <Card>
                 <CardHeader><CardTitle className="text-base">Informations</CardTitle></CardHeader>
                 <CardContent className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Statut</span>
+                    <span className="font-medium">
+                      {instructorStatusLabels[instructor.status || ""] || instructor.status || "—"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Disponibilité</span>
+                    <span className="font-medium">{instructor.availability_status || "—"}</span>
+                  </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Tarif horaire</span>
                     <span className="font-medium">{instructor.hourly_rate ?? "—"} €/h</span>

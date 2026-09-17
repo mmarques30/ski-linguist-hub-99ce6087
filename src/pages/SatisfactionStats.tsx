@@ -535,7 +535,7 @@ const languageOptions: { value: LanguageFilter; label: string }[] = [
   { value: "Français", label: "Français" },
   { value: "Allemand", label: "Allemand" },
   { value: "Italien", label: "Italien" },
-  { value: "Portugais", label: "Portugais" },
+  { value: "Portugais brésilien", label: "Portugais brésilien" },
 ];
 
 const seasonOptions: { value: SeasonFilter; label: string }[] = [

@@ -25,7 +25,7 @@ interface Props {
   intake?: CourseIntake | null;
 }
 
-const LANGUAGES = ["Anglais", "Français", "Espagnol", "Portugais", "Italien", "Allemand", "Russe", "Chinois", "Néerlandais"];
+const LANGUAGES = ["Anglais", "Français", "Espagnol", "Portugais brésilien", "Italien", "Allemand", "Russe", "Chinois", "Néerlandais"];
 
 export function CourseIntakeFormDialog({ open, onOpenChange, intake }: Props) {
   const createIntake = useCreateCourseIntake();

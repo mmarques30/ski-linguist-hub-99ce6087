@@ -223,8 +223,9 @@ function parseFrenchTimestamp(value: string): string | null {
 export function mapFormLanguage(value: string): string {
   const map: Record<string, string> = {
     anglais: "Anglais",
-    "portugais bresilien": "Portugais",
-    "portugais brésilien": "Portugais",
+    portugais: "Portugais brésilien",
+    "portugais bresilien": "Portugais brésilien",
+    "portugais brésilien": "Portugais brésilien",
     neerlandais: "Néerlandais",
     néerlandais: "Néerlandais",
     russe: "Russe",
@@ -240,7 +241,7 @@ export function mapFormLanguage(value: string): string {
 function detectLanguageFromAnswers(testAnswers: Record<string, string>): string | null {
   const keys = Object.keys(testAnswers).join(" ").toLowerCase();
   if (keys.includes("my brother") || keys.includes("bindings")) return "Anglais";
-  if (keys.includes("minha irmã") || keys.includes("calcanhar")) return "Portugais";
+  if (keys.includes("minha irmã") || keys.includes("calcanhar")) return "Portugais brésilien";
   if (keys.includes("mijn broer") || keys.includes("eekhoorn")) return "Néerlandais";
   if (keys.includes("comment t") || keys.includes("collègue")) return "Français";
   if (keys.includes("лыж") || keys.includes("трасса")) return "Russe";

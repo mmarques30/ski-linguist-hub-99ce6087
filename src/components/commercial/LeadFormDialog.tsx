@@ -244,7 +244,7 @@ export function LeadFormDialog({ open, onOpenChange, lead, defaultChannel = "cpf
                   <SelectItem value="anglais">Anglais</SelectItem>
                   <SelectItem value="francais">Français</SelectItem>
                   <SelectItem value="espagnol">Espagnol</SelectItem>
-                  <SelectItem value="portugais">Portugais</SelectItem>
+                  <SelectItem value="portugais">Portugais brésilien</SelectItem>
                   <SelectItem value="autre">Autre</SelectItem>
                 </SelectContent>
               </Select>

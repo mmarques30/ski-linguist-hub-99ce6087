@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, subYears, startOfQuarter, endOfQuarter, subQuarters, format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { isPortugueseLanguage } from "@/lib/taught-languages";
 
 interface SatisfactionSurvey {
   id: string;
@@ -25,7 +26,7 @@ interface SatisfactionSurvey {
 
 export type PeriodFilter = "all" | "thisMonth" | "lastMonth" | "thisQuarter" | "lastQuarter" | "thisYear" | "lastYear" | "last3Months" | "last6Months" | "last12Months";
 export type SeasonFilter = "all" | "spring2024" | "summer2024" | "autumn2024" | "winter2024" | "spring2025" | "summer2025" | "autumn2025" | "winter2025" | "custom";
-export type LanguageFilter = "all" | "Anglais" | "Espagnol" | "Français" | "Allemand" | "Italien" | "Portugais";
+export type LanguageFilter = "all" | "Anglais" | "Espagnol" | "Français" | "Allemand" | "Italien" | "Portugais brésilien";
 
 export interface SatisfactionFilters {
   period: PeriodFilter;
@@ -190,7 +191,12 @@ export function useSatisfactionStats(filters?: SatisfactionFilters) {
       
       // Apply language filter
       if (language !== "all") {
-        typedSurveys = typedSurveys.filter((s) => s.inscription?.language === language);
+        typedSurveys = typedSurveys.filter((s) => {
+          const lang = s.inscription?.language;
+          if (!lang) return false;
+          if (isPortugueseLanguage(language)) return isPortugueseLanguage(lang);
+          return lang === language;
+        });
       }
       
       // Apply period filter
@@ -442,7 +448,12 @@ export function useSeasonComparison(filters: SeasonComparisonFilters) {
       
       // Apply language filter
       if (language !== "all") {
-        typedSurveys = typedSurveys.filter((s) => s.inscription?.language === language);
+        typedSurveys = typedSurveys.filter((s) => {
+          const lang = s.inscription?.language;
+          if (!lang) return false;
+          if (isPortugueseLanguage(language)) return isPortugueseLanguage(lang);
+          return lang === language;
+        });
       }
       
       const currentRange = getSeasonDateRange(currentSeason, customCurrentRange);
