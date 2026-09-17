@@ -27,14 +27,29 @@ describe('matrice de transitions', () => {
     expect(canTransition('confirmee', 'en_cours')).toBe(true);
     expect(canTransition('confirmee', 'annulee')).toBe(true);
     expect(canTransition('en_cours', 'terminee')).toBe(true);
+    expect(canTransition('en_cours', 'confirmee')).toBe(true);
+    expect(canTransition('en_cours', 'annulee')).toBe(true);
+    expect(canTransition('en_cours', 'facturee')).toBe(true);
     expect(canTransition('terminee', 'facturee')).toBe(true);
+    expect(canTransition('terminee', 'en_cours')).toBe(true);
+    expect(canTransition('terminee', 'annulee')).toBe(true);
   });
 
-  it('refuse les raccourcis, dont celui qui bloquait le pack de fin', () => {
+  it('refuse les raccourcis hors corrections prévues', () => {
     expect(canTransition('brouillon', 'terminee')).toBe(false);
     expect(canTransition('brouillon', 'en_cours')).toBe(false);
     expect(canTransition('en_attente', 'en_cours')).toBe(false);
     expect(canTransition('confirmee', 'terminee')).toBe(false);
+    expect(canTransition('confirmee', 'facturee')).toBe(false);
+  });
+
+  it('propose les corrections depuis En cours', () => {
+    expect(getNextStatuses('en_cours')).toEqual([
+      'terminee',
+      'confirmee',
+      'annulee',
+      'facturee',
+    ]);
   });
 
   it('traite facturée et annulée comme des statuts finaux', () => {
@@ -98,7 +113,7 @@ describe('messages de refus', () => {
 });
 
 describe('annulation d’une formation commencée', () => {
-  it('bloque quand la date de début est atteinte', () => {
+  it('bloque quand la date de début est atteinte depuis Confirmée', () => {
     expect(cancellationBlockedReason('confirmee', '2026-09-10', '2026-09-15')).toContain(
       '2026-09-10'
     );
@@ -107,6 +122,10 @@ describe('annulation d’une formation commencée', () => {
 
   it('laisse passer une formation à venir', () => {
     expect(cancellationBlockedReason('confirmee', '2026-09-20', '2026-09-15')).toBeNull();
+  });
+
+  it('ne bloque pas l’annulation depuis En cours', () => {
+    expect(cancellationBlockedReason('en_cours', '2026-01-01', '2026-09-15')).toBeNull();
   });
 
   it('ne dit rien pour les autres statuts', () => {
