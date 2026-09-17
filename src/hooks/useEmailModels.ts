@@ -53,15 +53,19 @@ export function useSaveEmailDraft() {
       slug: string;
       subject_fr: string;
       body_fr: string;
-      subject_en: string;
-      body_en: string;
-      subject_pt: string;
-      body_pt: string;
     }) => {
-      const { slug, ...fields } = draft;
+      const { slug, subject_fr, body_fr } = draft;
+      // EN/PT conservés en colonnes vides : tous les envois partent en français.
       const { error } = await supabase
         .from("email_template_drafts")
-        .update(fields)
+        .update({
+          subject_fr,
+          body_fr,
+          subject_en: "",
+          body_en: "",
+          subject_pt: "",
+          body_pt: "",
+        })
         .eq("slug", slug);
       if (error) throw error;
     },

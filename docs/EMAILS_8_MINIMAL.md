@@ -103,10 +103,11 @@ Bouton `/admin/testing` → « Envoyer les deux tests à info@fli.fr ».
 - Sans clé : HTTP 409, message explicite, **aucun** appel Resend.
 - Avec clé : deux messages préfixés `[TEST]`, destinataire `info@fli.fr`, corps fictif `ZZTEST Camille`.
 
-## 6. J-10 — sujet portugais
+## 6. Langue d'envoi
 
-Ancien : `FLI — Validação de horários (D-10) — {{total_count}} inscrição(ões)`
-Corrigé : `FLI — Validação dos horários (J-10) — {{total_count}} inscrição(ões)`
+Les emails transactionnels partent **uniquement en français**. Les colonnes
+anglais / portugais héritées restent vides et ne sont plus éditées sur
+`/admin/emails`.
 
 Le cron `process-schedule-reminders` n'est **pas** activé.
 

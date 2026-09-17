@@ -134,32 +134,27 @@ function VariantEditor({
 
       <Tabs defaultValue="fr">
         <TabsList>
-          <TabsTrigger value="fr">Français</TabsTrigger>
-          <TabsTrigger value="en">Anglais</TabsTrigger>
-          <TabsTrigger value="pt">Portugais</TabsTrigger>
+          <TabsTrigger value="fr">Texte</TabsTrigger>
           <TabsTrigger value="apercu">Aperçu</TabsTrigger>
         </TabsList>
 
-        {(["fr", "en", "pt"] as const).map((locale) => {
-          const subjectKey = `subject_${locale}` as const;
-          const bodyKey = `body_${locale}` as const;
-          return (
-            <TabsContent key={locale} value={locale} className="space-y-2 pt-3">
-              <Input
-                value={merged[subjectKey]}
-                placeholder="Sujet"
-                onChange={(e) => onChange({ [subjectKey]: e.target.value })}
-              />
-              <Textarea
-                value={merged[bodyKey]}
-                placeholder="Corps HTML"
-                rows={12}
-                className="font-mono text-xs"
-                onChange={(e) => onChange({ [bodyKey]: e.target.value })}
-              />
-            </TabsContent>
-          );
-        })}
+        <TabsContent value="fr" className="space-y-2 pt-3">
+          <Input
+            value={merged.subject_fr}
+            placeholder="Sujet"
+            onChange={(e) => onChange({ subject_fr: e.target.value })}
+          />
+          <Textarea
+            value={merged.body_fr}
+            placeholder="Corps HTML"
+            rows={12}
+            className="font-mono text-xs"
+            onChange={(e) => onChange({ body_fr: e.target.value })}
+          />
+          <p className="text-xs text-muted-foreground">
+            Les emails transactionnels partent uniquement en français.
+          </p>
+        </TabsContent>
 
         <TabsContent value="apercu" className="space-y-2 pt-3">
           <p className="text-sm">
@@ -258,10 +253,6 @@ export default function AdminEmails() {
         slug: variant.slug,
         subject_fr: merged.subject_fr,
         body_fr: merged.body_fr,
-        subject_en: merged.subject_en,
-        body_en: merged.body_en,
-        subject_pt: merged.subject_pt,
-        body_pt: merged.body_pt,
       });
       setEdits((prev) => {
         const next = { ...prev };

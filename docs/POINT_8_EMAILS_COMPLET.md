@@ -37,10 +37,10 @@ variantes (les paliers de relance).
 | 5 | `invoice_reminder` | client / ESF | cron quotidien sur factures échues | 3 — J+7, J+15, mise en demeure J+30 |
 | 6 | `satisfaction_survey_reminder` | stagiaire | cron quotidien, questionnaire non rempli | 2 — J+5, J+30 |
 
-Les trois langues (français, anglais, portugais) sont rédigées pour chaque
-variante. Le pied de page est identique partout : FLI — France Langues
-International, 25 avenue de la Gare, 73800 Montmélian, 04 79 28 21 09,
-info@fli.fr.
+Les emails transactionnels partent uniquement en français. Les colonnes
+anglais / portugais héritées restent vides et ne sont plus éditées. Le pied
+de page est identique partout : FLI — France Langues International,
+25 avenue de la Gare, 73800 Montmélian, 04 79 28 21 09, info@fli.fr.
 
 ### Choix de rédaction
 

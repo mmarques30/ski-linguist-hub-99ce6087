@@ -6,7 +6,7 @@ Validé par Paula le 17/09/2026. Onze modèles, dix-sept textes avec les variant
 
 - Expéditeur : `FLI — France Langues International <noreply@fli.fr>` ; Reply-To : `info@fli.fr`. Aligner `process-schedule-reminders` (envoie encore « FLI Formation » sans Reply-To).
 - Syntaxe des variables : `{{variable}}` (doubles accolades), substitution dans l'app avant l'appel Resend. Une variable absente ne doit jamais laisser `{{...}}` dans l'email : bloquer l'envoi et journaliser `failed`.
-- Français, vouvoiement, écriture inclusive au point médian. Exception unique : `satisfaction_survey_trainer_notice` (formateur·rice) est au tutoiement.
+- Français uniquement (pas d'anglais ni de portugais), vouvoiement, écriture inclusive au point médian. Exception unique : `satisfaction_survey_trainer_notice` (formateur·rice) est au tutoiement.
 - Signature « L'équipe FLI » et pied de page commun sur tous les modèles sauf le rappel interne (`schedule_validation_reminder`).
 - Aucune donnée en dur : dates, noms, montants, lieux, codes sont des variables. Le téléphone et l'adresse de FLI sont les seules constantes.
 - Aucun emoji.
