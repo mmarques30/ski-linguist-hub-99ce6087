@@ -141,7 +141,7 @@ export function AuthCard() {
         </CardHeader>
 
         <CardContent className="pt-4">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div className="space-y-2">
               <Label htmlFor="email-login" className="text-foreground">Email</Label>
               <motion.div whileHover={{ scale: 1.01 }} whileFocus={{ scale: 1.01 }}>

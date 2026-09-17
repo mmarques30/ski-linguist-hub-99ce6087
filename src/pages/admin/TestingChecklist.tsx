@@ -20,6 +20,7 @@ import {
 import { toast } from "sonner";
 import { Emails8MinimalCard } from "@/components/admin/Emails8MinimalCard";
 import { CleanupZztestCard } from "@/components/admin/CleanupZztestCard";
+import { ZztestRolesLoginsCard } from "@/components/admin/ZztestRolesLoginsCard";
 
 interface TestItem {
   id: string;
@@ -300,6 +301,8 @@ export default function TestingChecklist() {
         </div>
 
         <Emails8MinimalCard />
+
+        <ZztestRolesLoginsCard />
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
