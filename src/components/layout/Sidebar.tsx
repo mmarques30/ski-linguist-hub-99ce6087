@@ -21,6 +21,7 @@ import {
   Mail,
   Clock,
   PieChart,
+  FileText,
 } from "lucide-react";
 import fliLogo from "@/assets/fli-marca-yellow.png";
 import { useAuth } from "@/hooks/useAuth";
@@ -111,6 +112,7 @@ const navigationSections: NavSection[] = [
     items: [
       { name: "Import", href: "/admin/import", icon: Upload },
       { name: "Emails", href: "/admin/emails", icon: Mail },
+      { name: "Modèles documents", href: "/admin/registration-documents", icon: FileText },
       { name: "Phrases", href: "/admin/phrases", icon: MessageSquare },
       { name: "Saisons", href: "/admin/seasons", icon: Calendar },
       { name: "Tests QA", href: "/admin/testing", icon: FlaskConical },

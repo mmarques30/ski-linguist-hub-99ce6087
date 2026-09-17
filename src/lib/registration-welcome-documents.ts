@@ -26,6 +26,9 @@ export const REGISTRATION_WELCOME_DOCUMENTS: RegistrationWelcomeDocument[] = [
   },
 ];
 
+/** Préfixe storage (bucket `documents`, objets staff) pour les modèles remplaçables. */
+export const REGISTRATION_TEMPLATE_STORAGE_PREFIX = "staff/registration-templates";
+
 export const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   REGLEMENT: "Critères de prise en charge",
   CONVENTION: "Convention Stage langues Station",
@@ -39,6 +42,26 @@ export const DOCUMENT_TYPE_LABELS: Record<string, string> = {
 
 export function getRegistrationDocumentPublicUrl(internalFile: string): string {
   return `/registration-documents/${internalFile}`;
+}
+
+export function registrationTemplateStoragePath(internalFile: string): string {
+  const safe = internalFile.replace(/[^a-zA-Z0-9._-]/g, "");
+  if (!safe || safe !== internalFile) {
+    throw new Error(`Nom de fichier modèle refusé : ${internalFile}`);
+  }
+  return `${REGISTRATION_TEMPLATE_STORAGE_PREFIX}/${safe}`;
+}
+
+export function isKnownRegistrationTemplate(internalFile: string): boolean {
+  return REGISTRATION_WELCOME_DOCUMENTS.some((d) => d.internalFile === internalFile);
+}
+
+export function acceptMimeForTemplate(internalFile: string): string {
+  if (internalFile.toLowerCase().endsWith(".pdf")) return "application/pdf";
+  if (internalFile.toLowerCase().endsWith(".dotx")) {
+    return "application/vnd.openxmlformats-officedocument.wordprocessingml.template";
+  }
+  return "application/octet-stream";
 }
 
 export function isOnlineInscription(modality: string | null | undefined): boolean {

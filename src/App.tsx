@@ -22,6 +22,7 @@ import Settings from "./pages/Settings";
 import Import from "./pages/admin/Import";
 import ImportPhrases from "./pages/admin/ImportPhrases";
 import AdminEmails from "./pages/admin/Emails";
+import AdminRegistrationDocuments from "./pages/admin/RegistrationDocuments";
 import AdminPhrases from "./pages/admin/Phrases";
 import TestingChecklist from "./pages/admin/TestingChecklist";
 import Seasons from "./pages/admin/Seasons";
@@ -117,6 +118,7 @@ const App = () => (
             <Route path="/admin/import-phrases" element={<ProtectedRoute><ImportPhrases /></ProtectedRoute>} />
             <Route path="/admin/phrases" element={<ProtectedRoute><AdminPhrases /></ProtectedRoute>} />
             <Route path="/admin/emails" element={<ProtectedRoute><AdminEmails /></ProtectedRoute>} />
+            <Route path="/admin/registration-documents" element={<ProtectedRoute><AdminRegistrationDocuments /></ProtectedRoute>} />
             <Route path="/admin/testing" element={<ProtectedRoute><TestingChecklist /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
             <Route path="/admin/seasons" element={<ProtectedRoute><Seasons /></ProtectedRoute>} />

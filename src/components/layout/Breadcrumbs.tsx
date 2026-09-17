@@ -27,6 +27,8 @@ const LABELS: Record<string, string> = {
   admin: "Administration",
   import: "Import",
   "import-phrases": "Import phrases",
+  emails: "Emails",
+  "registration-documents": "Modèles documents",
   phrases: "Phrases",
   testing: "Tests QA",
   users: "Utilisateurs",
