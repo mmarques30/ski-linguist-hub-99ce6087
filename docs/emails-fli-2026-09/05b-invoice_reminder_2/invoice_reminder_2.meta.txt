@@ -1,0 +1,9 @@
+slug: invoice_reminder_2
+titre: Relance de paiement J+15
+sujet: Facture {{invoice_number}} — deuxième rappel
+destinataire: Payeur de la facture
+declencheur: Cron quotidien 9 h ; facture échue depuis 15 jours et relance 1 déjà envoyée ; un seul envoi ; arrêt dès paiement.
+variables: invoice_number, client_name, amount, due_date, days_overdue
+syntaxe: {{variable}} (option A, substitution dans l'app avant envoi)
+expediteur: FLI — France Langues International <noreply@fli.fr>
+reply_to: info@fli.fr

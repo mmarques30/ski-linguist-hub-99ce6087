@@ -1,0 +1,25 @@
+Sujet : Convocation : formation {{language}} à {{course_location}} du {{start_date}} au {{end_date}}
+
+Bonjour {{student_name}},
+
+Voici votre convocation à la formation {{language}} (inscription {{inscription_code}}).
+
+Dates : du {{start_date}} au {{end_date}}
+Groupe et horaires : {{schedule_label}}
+Lieu : {{course_location}} — {{location_details}}
+Formateur·rice : {{instructor_name}} — {{instructor_phone}}
+Durée totale : {{total_hours}} heures
+
+Merci d'arriver quelques minutes avant le début de la première séance. Une feuille d'émargement sera à signer à chaque demi-journée : elle est exigée pour votre prise en charge.
+
+En cas d'empêchement, prévenez-nous dès que possible en répondant à ce message : il arrive directement à info@fli.fr.
+
+Cordialement,
+L'équipe FLI
+
+--
+FLI — France Langues International
+25 avenue de la Gare
+73800 Montmélian
+Tél. : 04 79 28 21 09
+info@fli.fr

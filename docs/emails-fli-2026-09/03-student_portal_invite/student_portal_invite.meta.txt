@@ -1,0 +1,9 @@
+slug: student_portal_invite
+titre: Accès à l'espace stagiaire
+sujet: Votre accès à l'espace stagiaire FLI
+destinataire: Stagiaire
+declencheur: Action manuelle depuis la fiche stagiaire ou envoi groupé. Inactif tant que le portail est hors périmètre saison.
+variables: student_name, magic_link, link_expiry_label
+syntaxe: {{variable}} (option A, substitution dans l'app avant envoi)
+expediteur: FLI — France Langues International <noreply@fli.fr>
+reply_to: info@fli.fr

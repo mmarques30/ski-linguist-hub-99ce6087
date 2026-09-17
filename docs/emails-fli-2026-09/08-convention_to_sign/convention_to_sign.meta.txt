@@ -1,0 +1,9 @@
+slug: convention_to_sign
+titre: Convention école à signer
+sujet: Convention de formation {{language}} — {{course_location}}, du {{start_date}} au {{end_date}}
+destinataire: École de ski (adresse de contact de l'école)
+declencheur: Action manuelle « Envoyer la convention » depuis la fiche école ou l'inscription groupe ; une convention par formation. Renvoi possible avec le sujet préfixé « Rappel : ». Pièces jointes générées par l'app : convention, programme.
+variables: language, course_location, start_date, end_date, client_name, student_count, return_deadline
+syntaxe: {{variable}} (option A, substitution dans l'app avant envoi)
+expediteur: FLI — France Langues International <noreply@fli.fr>
+reply_to: info@fli.fr

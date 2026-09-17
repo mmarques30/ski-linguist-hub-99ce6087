@@ -1,0 +1,9 @@
+slug: training_completion_school_report
+titre: Bilan de formation pour l'école
+sujet: Bilan de la formation {{language}} à {{course_location}} du {{start_date}} au {{end_date}}
+destinataire: École de ski (adresse de contact de l'école)
+declencheur: Préparé automatiquement quand tous les niveaux de sortie du groupe sont saisis et la facture émise ; envoi après validation en un clic (contrôle de la facture). Pièces jointes : facture, certificats individuels, tableau récapitulatif des niveaux atteints (document à générer par l'app).
+variables: language, course_location, start_date, end_date, client_name, invoice_number, student_count
+syntaxe: {{variable}} (option A, substitution dans l'app avant envoi)
+expediteur: FLI — France Langues International <noreply@fli.fr>
+reply_to: info@fli.fr

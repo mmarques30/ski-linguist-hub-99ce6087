@@ -1,0 +1,19 @@
+Sujet : Facture {{invoice_number}} — rappel de règlement
+
+Bonjour,
+
+Sauf erreur de notre part, la facture {{invoice_number}} adressée à {{client_name}}, d'un montant de {{amount}} et échue le {{due_date}}, n'a pas encore été réglée.
+
+Nous vous remercions de procéder au règlement ou de nous indiquer la date prévue.
+
+Si votre paiement est déjà parti, ne tenez pas compte de ce message : nos règlements se croisent parfois.
+
+Cordialement,
+L'équipe FLI
+
+--
+FLI — France Langues International
+25 avenue de la Gare
+73800 Montmélian
+Tél. : 04 79 28 21 09
+info@fli.fr

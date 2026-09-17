@@ -1,0 +1,19 @@
+Sujet : Demain, dernier jour à {{course_location}} : dix minutes pour le questionnaire
+
+Bonjour {{trainer_first_name}},
+
+Ta formation {{language}} à {{course_location}} se termine demain, {{end_date}}.
+
+Les stagiaires recevront demain matin, par email, le lien vers leur questionnaire de satisfaction. Merci de garder dix minutes en fin de séance pour qu'ils le remplissent sur place, sur leur téléphone. C'est ce qui nous permet d'avoir un taux de réponse complet pour Qualiopi.
+
+Si un·e stagiaire n'a pas reçu le mail, il ou elle peut nous écrire à info@fli.fr et nous lui renvoyons le lien.
+
+Merci et bonne dernière journée,
+L'équipe FLI
+
+--
+FLI — France Langues International
+25 avenue de la Gare
+73800 Montmélian
+Tél. : 04 79 28 21 09
+info@fli.fr

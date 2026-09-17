@@ -1,0 +1,9 @@
+slug: inscription_confirmation_group
+titre: Confirmation d'inscription — formation collective
+sujet: Votre inscription à la formation {{language}} est confirmée — {{inscription_code}}
+destinataire: Stagiaire
+declencheur: Inscription soumise sur /register ; envoi immédiat (synchrone). Variante choisie par le type d'inscription : collectif.
+variables: language, inscription_code, student_name, dates_label, course_location, modality_label, slope_label
+syntaxe: {{variable}} (option A, substitution dans l'app avant envoi)
+expediteur: FLI — France Langues International <noreply@fli.fr>
+reply_to: info@fli.fr

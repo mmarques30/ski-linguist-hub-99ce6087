@@ -532,12 +532,31 @@ Deno.serve(async (req) => {
     let emailSent = false;
     let documentsSent = false;
     if (resendApiKey) {
-      const { data: template } = await supabase
+      const isGroup =
+        registration.modality === "in_person" ||
+        registration.modality === "presentiel" ||
+        registration.modality === "online_group" ||
+        registration.modality === "en_ligne_groupe";
+      const confirmationSlug = isGroup
+        ? "inscription_confirmation_group"
+        : "inscription_confirmation_individual";
+
+      // Nouveau slug d'abord ; repli sur l'ancien tant qu'il n'est pas publié.
+      let { data: template } = await supabase
         .from("email_templates")
-        .select("subject_fr, body_fr")
-        .eq("slug", "inscription_confirmation")
+        .select("slug, subject_fr, body_fr")
+        .eq("slug", confirmationSlug)
         .eq("is_active", true)
         .maybeSingle();
+      if (!template) {
+        const fallback = await supabase
+          .from("email_templates")
+          .select("slug, subject_fr, body_fr")
+          .eq("slug", "inscription_confirmation")
+          .eq("is_active", true)
+          .maybeSingle();
+        template = fallback.data;
+      }
 
       const studentName = `${registration.firstName} ${registration.lastName}`;
       const variables = {
@@ -562,18 +581,32 @@ Deno.serve(async (req) => {
       };
 
       if (template) {
-        const subject = applyEmailTemplate(template.subject_fr, variables);
-        const html = applyEmailTemplate(template.body_fr, variables);
-        emailSent = (await sendFliEmail({ resendApiKey, to: email, subject, html })).ok;
+        try {
+          const subject = applyEmailTemplate(template.subject_fr, variables);
+          const html = applyEmailTemplate(template.body_fr, variables);
+          emailSent = (await sendFliEmail({ resendApiKey, to: email, subject, html })).ok;
 
-        await supabase.from("email_log").insert({
-          template_slug: "inscription_confirmation",
-          recipient_email: email,
-          recipient_name: studentName,
-          status: emailSent ? "sent" : "failed",
-          inscription_id: inscription.id,
-          variables_used: variables,
-        });
+          await supabase.from("email_log").insert({
+            template_slug: template.slug,
+            recipient_email: email,
+            recipient_name: studentName,
+            status: emailSent ? "sent" : "failed",
+            inscription_id: inscription.id,
+            variables_used: variables,
+          });
+        } catch (renderError) {
+          const message =
+            renderError instanceof Error ? renderError.message : String(renderError);
+          await supabase.from("email_log").insert({
+            template_slug: template.slug,
+            recipient_email: email,
+            recipient_name: studentName,
+            status: "failed",
+            error_message: message,
+            inscription_id: inscription.id,
+            variables_used: variables,
+          });
+        }
       }
 
       if (shouldSendSkiMonitorOnlineWelcomeDocuments(registration)) {

@@ -1,0 +1,21 @@
+Sujet : Votre accès à l'espace stagiaire FLI
+
+Bonjour {{student_name}},
+
+Votre espace stagiaire est prêt. Vous y trouverez vos documents, vos horaires et le suivi de votre formation.
+
+Accéder à mon espace stagiaire : {{magic_link}}
+
+Ce lien est personnel et valable {{link_expiry_label}}. Passé ce délai, demandez-en un nouveau en répondant à ce message.
+
+Si vous n'êtes pas à l'origine de cette demande, ignorez ce message : aucun accès ne sera ouvert sans votre action.
+
+Cordialement,
+L'équipe FLI
+
+--
+FLI — France Langues International
+25 avenue de la Gare
+73800 Montmélian
+Tél. : 04 79 28 21 09
+info@fli.fr

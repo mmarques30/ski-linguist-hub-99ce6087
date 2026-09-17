@@ -1,0 +1,263 @@
+[
+ {
+  "num": "01a",
+  "slug": "inscription_confirmation_individual",
+  "titre": "Confirmation d'inscription — dossier individuel",
+  "subject": "Votre inscription à la formation {{language}} est confirmée — {{inscription_code}}",
+  "to": "Stagiaire",
+  "trig": "Inscription soumise sur /register ; envoi immédiat (synchrone). Variante choisie par le type d'inscription : individuel.",
+  "vars": [
+   "language",
+   "inscription_code",
+   "student_name",
+   "dates_label",
+   "course_location",
+   "modality_label",
+   "slope_label"
+  ]
+ },
+ {
+  "num": "01b",
+  "slug": "inscription_confirmation_group",
+  "titre": "Confirmation d'inscription — formation collective",
+  "subject": "Votre inscription à la formation {{language}} est confirmée — {{inscription_code}}",
+  "to": "Stagiaire",
+  "trig": "Inscription soumise sur /register ; envoi immédiat (synchrone). Variante choisie par le type d'inscription : collectif.",
+  "vars": [
+   "language",
+   "inscription_code",
+   "student_name",
+   "dates_label",
+   "course_location",
+   "modality_label",
+   "slope_label"
+  ]
+ },
+ {
+  "num": "02",
+  "slug": "inscription_documents",
+  "titre": "Dossier de formation (documents FIF-PL)",
+  "subject": "Votre dossier de formation {{language}} — {{inscription_code}}",
+  "to": "Stagiaire payeur (uniquement si le payeur de l'inscription est le stagiaire lui-même)",
+  "trig": "Tâche planifiée 30 minutes après l'inscription ; un seul envoi par inscription. Pièces jointes générées par l'app : convention de formation, programme (avec les données du stagiaire et de la formation), critères FIF-PL, tutoriel de demande de prise en charge.",
+  "vars": [
+   "language",
+   "inscription_code",
+   "student_name"
+  ]
+ },
+ {
+  "num": "03",
+  "slug": "student_portal_invite",
+  "titre": "Accès à l'espace stagiaire",
+  "subject": "Votre accès à l'espace stagiaire FLI",
+  "to": "Stagiaire",
+  "trig": "Action manuelle depuis la fiche stagiaire ou envoi groupé. Inactif tant que le portail est hors périmètre saison.",
+  "vars": [
+   "student_name",
+   "magic_link",
+   "link_expiry_label"
+  ]
+ },
+ {
+  "num": "04",
+  "slug": "schedule_validation_reminder",
+  "titre": "Rappel interne — horaires à répartir",
+  "subject": "{{days_before}} jour(s) avant le début : {{total_count}} inscription(s) à répartir pour le {{start_date}}",
+  "to": "info@fli.fr (ou ADMIN_EMAIL). Message interne : pas de signature, pas de pied de page.",
+  "trig": "Cron : premier envoi à J-11 (7 h 15) ; puis à partir de J-10 toutes les deux heures de 8 h à 20 h tant qu'il reste des inscriptions sans groupe ou sans formateur·rice ; arrêt dès que tout est réparti. days_before = nombre de jours avant le début.",
+  "vars": [
+   "days_before",
+   "total_count",
+   "start_date",
+   "groups_html",
+   "dashboard_url",
+   "groups_text"
+  ]
+ },
+ {
+  "num": "05a",
+  "slug": "invoice_reminder_1",
+  "titre": "Relance de paiement J+7",
+  "subject": "Facture {{invoice_number}} — rappel de règlement",
+  "to": "Payeur de la facture (stagiaire, école, partenaire) — jamais le stagiaire par défaut",
+  "trig": "Cron quotidien 9 h ; facture échue depuis 7 jours ; un seul envoi par palier ; arrêt dès paiement.",
+  "vars": [
+   "invoice_number",
+   "client_name",
+   "amount",
+   "due_date"
+  ]
+ },
+ {
+  "num": "05b",
+  "slug": "invoice_reminder_2",
+  "titre": "Relance de paiement J+15",
+  "subject": "Facture {{invoice_number}} — deuxième rappel",
+  "to": "Payeur de la facture",
+  "trig": "Cron quotidien 9 h ; facture échue depuis 15 jours et relance 1 déjà envoyée ; un seul envoi ; arrêt dès paiement.",
+  "vars": [
+   "invoice_number",
+   "client_name",
+   "amount",
+   "due_date",
+   "days_overdue"
+  ]
+ },
+ {
+  "num": "05c",
+  "slug": "invoice_reminder_3",
+  "titre": "Dernier rappel avant mise en demeure J+30",
+  "subject": "Dernier rappel avant mise en demeure — facture {{invoice_number}}",
+  "to": "Payeur de la facture",
+  "trig": "Cron quotidien 9 h ; facture échue depuis 30 jours et relance 2 déjà envoyée ; un seul envoi ; arrêt dès paiement.",
+  "vars": [
+   "invoice_number",
+   "client_name",
+   "amount",
+   "due_date",
+   "days_overdue"
+  ]
+ },
+ {
+  "num": "06a",
+  "slug": "satisfaction_survey_day0",
+  "titre": "Questionnaire de satisfaction — dernier jour",
+  "subject": "Votre avis sur votre formation {{language}} — deux minutes aujourd'hui",
+  "to": "Stagiaire (tous les inscrits de la formation)",
+  "trig": "Cron du matin (7 h 15) le jour de end_date ; jeton d'enquête créé à ce moment s'il n'existe pas. La page d'enquête doit être accessible sans connexion, sur téléphone.",
+  "vars": [
+   "language",
+   "student_name",
+   "survey_link"
+  ]
+ },
+ {
+  "num": "06b",
+  "slug": "satisfaction_survey_trainer_notice",
+  "titre": "Consigne questionnaire au formateur·rice (veille du dernier jour)",
+  "subject": "Demain, dernier jour à {{course_location}} : dix minutes pour le questionnaire",
+  "to": "Formateur·rice affecté·e au groupe (email de la fiche formateur·rice). Tutoiement : seule exception au vouvoiement.",
+  "trig": "Cron dédié à 17 h 30 la veille de end_date ; un envoi par formateur·rice et par formation. Nécessite l'affectation formateur·rice validée, sinon aucun destinataire.",
+  "vars": [
+   "course_location",
+   "trainer_first_name",
+   "language",
+   "end_date"
+  ]
+ },
+ {
+  "num": "06c",
+  "slug": "satisfaction_survey_reminder_1",
+  "titre": "Questionnaire — rappel J+5",
+  "subject": "Votre avis sur votre formation {{language}}",
+  "to": "Stagiaire n'ayant pas répondu",
+  "trig": "Cron quotidien 8 h 15 ; end_date + 5 jours ; uniquement si le questionnaire n'est pas rempli ; arrêt dès réponse.",
+  "vars": [
+   "language",
+   "student_name",
+   "end_date",
+   "survey_link"
+  ]
+ },
+ {
+  "num": "06d",
+  "slug": "satisfaction_survey_reminder_2",
+  "titre": "Questionnaire — dernier rappel J+30",
+  "subject": "Dernier rappel : votre avis sur votre formation {{language}}",
+  "to": "Stagiaire n'ayant pas répondu",
+  "trig": "Cron quotidien 8 h 15 ; end_date + 30 jours ; uniquement si le questionnaire n'est pas rempli ; dernier envoi.",
+  "vars": [
+   "language",
+   "student_name",
+   "end_date",
+   "survey_link"
+  ]
+ },
+ {
+  "num": "07",
+  "slug": "schedule_convocation",
+  "titre": "Convocation (formation collective)",
+  "subject": "Convocation : formation {{language}} à {{course_location}} du {{start_date}} au {{end_date}}",
+  "to": "Stagiaire",
+  "trig": "Validation des horaires sur une inscription (écran horaires) ; envoi immédiat ; une fois par inscription. Si les horaires sont modifiés ensuite : renvoi avec le sujet préfixé « Modification : ». instructor_phone affiché seulement si le formateur·rice a consenti à sa communication (sinon vide). Pièce jointe optionnelle : convocation PDF générée par l'app.",
+  "vars": [
+   "language",
+   "course_location",
+   "start_date",
+   "end_date",
+   "student_name",
+   "inscription_code",
+   "schedule_label",
+   "location_details",
+   "instructor_name",
+   "instructor_phone",
+   "total_hours"
+  ]
+ },
+ {
+  "num": "08",
+  "slug": "convention_to_sign",
+  "titre": "Convention école à signer",
+  "subject": "Convention de formation {{language}} — {{course_location}}, du {{start_date}} au {{end_date}}",
+  "to": "École de ski (adresse de contact de l'école)",
+  "trig": "Action manuelle « Envoyer la convention » depuis la fiche école ou l'inscription groupe ; une convention par formation. Renvoi possible avec le sujet préfixé « Rappel : ». Pièces jointes générées par l'app : convention, programme.",
+  "vars": [
+   "language",
+   "course_location",
+   "start_date",
+   "end_date",
+   "client_name",
+   "student_count",
+   "return_deadline"
+  ]
+ },
+ {
+  "num": "10a",
+  "slug": "training_completion_pack_student",
+  "titre": "Documents de fin de formation — payeur stagiaire",
+  "subject": "Fin de votre formation {{language}} : certificat, attestation et facture",
+  "to": "Stagiaire (payeur = stagiaire)",
+  "trig": "Automatique, via le cron du matin : formation terminée, niveau de sortie saisi par le formateur·rice (formulaire de sortie) et paiement enregistré. Certificat généré au passage ; bloqué sans formulaire de sortie (RG02). Pièces jointes : certificat, attestation de présence, facture acquittée.",
+  "vars": [
+   "language",
+   "student_name",
+   "inscription_code",
+   "end_date",
+   "invoice_number",
+   "survey_link"
+  ]
+ },
+ {
+  "num": "10b",
+  "slug": "training_completion_pack_school",
+  "titre": "Certificat de fin de formation — payeur école",
+  "subject": "Votre certificat de fin de formation {{language}}",
+  "to": "Stagiaire (payeur = école de ski)",
+  "trig": "Automatique, via le cron du matin : formation terminée et niveau de sortie saisi par le formateur·rice. Pièce jointe : certificat uniquement.",
+  "vars": [
+   "language",
+   "student_name",
+   "inscription_code",
+   "end_date",
+   "survey_link"
+  ]
+ },
+ {
+  "num": "11",
+  "slug": "training_completion_school_report",
+  "titre": "Bilan de formation pour l'école",
+  "subject": "Bilan de la formation {{language}} à {{course_location}} du {{start_date}} au {{end_date}}",
+  "to": "École de ski (adresse de contact de l'école)",
+  "trig": "Préparé automatiquement quand tous les niveaux de sortie du groupe sont saisis et la facture émise ; envoi après validation en un clic (contrôle de la facture). Pièces jointes : facture, certificats individuels, tableau récapitulatif des niveaux atteints (document à générer par l'app).",
+  "vars": [
+   "language",
+   "course_location",
+   "start_date",
+   "end_date",
+   "client_name",
+   "invoice_number",
+   "student_count"
+  ]
+ }
+]

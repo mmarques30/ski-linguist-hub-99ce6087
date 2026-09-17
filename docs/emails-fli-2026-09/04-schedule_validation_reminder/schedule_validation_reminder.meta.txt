@@ -1,0 +1,9 @@
+slug: schedule_validation_reminder
+titre: Rappel interne — horaires à répartir
+sujet: {{days_before}} jour(s) avant le début : {{total_count}} inscription(s) à répartir pour le {{start_date}}
+destinataire: info@fli.fr (ou ADMIN_EMAIL). Message interne : pas de signature, pas de pied de page.
+declencheur: Cron : premier envoi à J-11 (7 h 15) ; puis à partir de J-10 toutes les deux heures de 8 h à 20 h tant qu'il reste des inscriptions sans groupe ou sans formateur·rice ; arrêt dès que tout est réparti. days_before = nombre de jours avant le début.
+variables: days_before, total_count, start_date, groups_html, dashboard_url, groups_text
+syntaxe: {{variable}} (option A, substitution dans l'app avant envoi)
+expediteur: FLI — France Langues International <noreply@fli.fr>
+reply_to: info@fli.fr

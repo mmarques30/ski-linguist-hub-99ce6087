@@ -1,0 +1,9 @@
+slug: inscription_documents
+titre: Dossier de formation (documents FIF-PL)
+sujet: Votre dossier de formation {{language}} — {{inscription_code}}
+destinataire: Stagiaire payeur (uniquement si le payeur de l'inscription est le stagiaire lui-même)
+declencheur: Tâche planifiée 30 minutes après l'inscription ; un seul envoi par inscription. Pièces jointes générées par l'app : convention de formation, programme (avec les données du stagiaire et de la formation), critères FIF-PL, tutoriel de demande de prise en charge.
+variables: language, inscription_code, student_name
+syntaxe: {{variable}} (option A, substitution dans l'app avant envoi)
+expediteur: FLI — France Langues International <noreply@fli.fr>
+reply_to: info@fli.fr

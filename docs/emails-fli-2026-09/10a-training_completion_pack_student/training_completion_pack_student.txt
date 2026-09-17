@@ -1,0 +1,25 @@
+Sujet : Fin de votre formation {{language}} : certificat, attestation et facture
+
+Bonjour {{student_name}},
+
+Votre formation {{language}} (inscription {{inscription_code}}) s'est terminée le {{end_date}}. Vous trouverez en pièces jointes :
+
+- Certificat de fin de formation
+- Attestation de présence
+- Facture acquittée {{invoice_number}}
+
+Ces documents constituent votre dossier de remboursement FIF-PL. Transmettez-les à votre organisme dès que possible.
+
+Si vous ne l'avez pas encore fait, donnez-nous votre avis sur la formation, deux minutes depuis votre téléphone :
+
+Donner mon avis : {{survey_link}}
+
+Cordialement,
+L'équipe FLI
+
+--
+FLI — France Langues International
+25 avenue de la Gare
+73800 Montmélian
+Tél. : 04 79 28 21 09
+info@fli.fr

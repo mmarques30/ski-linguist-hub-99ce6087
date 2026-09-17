@@ -1,0 +1,23 @@
+Sujet : Bilan de la formation {{language}} à {{course_location}} du {{start_date}} au {{end_date}}
+
+Bonjour,
+
+La formation {{language}} organisée pour {{client_name}} à {{course_location}}, du {{start_date}} au {{end_date}}, s'est achevée. Vous trouverez en pièces jointes :
+
+- Facture {{invoice_number}}
+- Certificats de fin de formation de vos {{student_count}} moniteur·rices, un par personne
+- Tableau récapitulatif des niveaux atteints en fin de formation
+
+Le tableau vous donne, pour chaque moniteur·rice, le niveau atteint en fin de formation. Il peut servir de base pour la saison prochaine.
+
+Pour toute question sur la facture ou les résultats, répondez à ce message : il arrive directement à info@fli.fr.
+
+Cordialement,
+L'équipe FLI
+
+--
+FLI — France Langues International
+25 avenue de la Gare
+73800 Montmélian
+Tél. : 04 79 28 21 09
+info@fli.fr

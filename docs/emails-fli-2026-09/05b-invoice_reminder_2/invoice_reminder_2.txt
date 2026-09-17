@@ -1,0 +1,17 @@
+Sujet : Facture {{invoice_number}} — deuxième rappel
+
+Bonjour,
+
+Malgré notre premier rappel, la facture {{invoice_number}} adressée à {{client_name}}, d'un montant de {{amount}} et échue le {{due_date}}, reste impayée ({{days_overdue}} jours de retard).
+
+Nous vous remercions de régulariser cette facture. Si un échelonnement vous aiderait, appelez-nous au 04 79 28 21 09 : nous trouverons une solution.
+
+Cordialement,
+L'équipe FLI
+
+--
+FLI — France Langues International
+25 avenue de la Gare
+73800 Montmélian
+Tél. : 04 79 28 21 09
+info@fli.fr

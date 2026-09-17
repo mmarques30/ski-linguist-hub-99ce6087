@@ -1,0 +1,19 @@
+Sujet : Dernier rappel avant mise en demeure — facture {{invoice_number}}
+
+Bonjour,
+
+Nos deux rappels précédents sont restés sans réponse. La facture {{invoice_number}} adressée à {{client_name}}, d'un montant de {{amount}} et échue le {{due_date}}, présente {{days_overdue}} jours de retard.
+
+Ce message est le dernier rappel avant mise en demeure. Sans règlement sous huit jours, nous engagerons une procédure de recouvrement et appliquerons les pénalités de retard et l'indemnité forfaitaire de 40 € pour frais de recouvrement prévues par la loi.
+
+Pour régler ou nous signaler une difficulté : 04 79 28 21 09 ou info@fli.fr.
+
+Cordialement,
+L'équipe FLI
+
+--
+FLI — France Langues International
+25 avenue de la Gare
+73800 Montmélian
+Tél. : 04 79 28 21 09
+info@fli.fr

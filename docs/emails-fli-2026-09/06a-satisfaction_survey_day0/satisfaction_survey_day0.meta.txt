@@ -1,0 +1,9 @@
+slug: satisfaction_survey_day0
+titre: Questionnaire de satisfaction — dernier jour
+sujet: Votre avis sur votre formation {{language}} — deux minutes aujourd'hui
+destinataire: Stagiaire (tous les inscrits de la formation)
+declencheur: Cron du matin (7 h 15) le jour de end_date ; jeton d'enquête créé à ce moment s'il n'existe pas. La page d'enquête doit être accessible sans connexion, sur téléphone.
+variables: language, student_name, survey_link
+syntaxe: {{variable}} (option A, substitution dans l'app avant envoi)
+expediteur: FLI — France Langues International <noreply@fli.fr>
+reply_to: info@fli.fr

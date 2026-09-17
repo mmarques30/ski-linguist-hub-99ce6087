@@ -37,14 +37,25 @@ export interface SendFliEmailInput {
   attachments?: Array<{ filename: string; content: string }>;
 }
 
+/**
+ * Substitue {{variable}} (doubles accolades, Option A).
+ * Si une variable reste non remplacée, lève une erreur : l'appelant doit
+ * journaliser `failed` et ne pas appeler Resend (consignes 17/09/2026).
+ */
 export function applyEmailTemplate(
   template: string,
   variables: Record<string, string>
 ): string {
-  return Object.entries(variables).reduce(
-    (html, [key, value]) => html.replaceAll(`{{${key}}}`, value),
-    template
-  );
+  let rendered = template;
+  for (const [key, value] of Object.entries(variables)) {
+    rendered = rendered.replaceAll(`{{${key}}}`, value ?? "");
+  }
+  const leftover = rendered.match(/\{\{[a-zA-Z0-9_]+\}\}/g);
+  if (leftover?.length) {
+    const unique = [...new Set(leftover)];
+    throw new Error(`Variables manquantes dans le modèle : ${unique.join(", ")}`);
+  }
+  return rendered;
 }
 
 import {
