@@ -112,8 +112,13 @@ ON CONFLICT (model_key) DO UPDATE SET
 UPDATE public.email_models SET position = 90,
   title_fr = title_fr || ' (obsolète — remplacé)',
   trigger_fr = 'Remplacé par le pack 17/09/2026. Ne plus utiliser.'
-WHERE model_key IN ('inscription_ski_monitor_welcome')
+WHERE model_key IN ('inscription_ski_monitor_welcome', 'satisfaction_survey_reminder')
   AND title_fr NOT LIKE '%obsolète%';
+
+UPDATE public.email_template_drafts
+SET model_key = 'satisfaction_survey'
+WHERE model_key = 'satisfaction_survey_reminder'
+  AND slug IN ('satisfaction_survey_reminder_1', 'satisfaction_survey_reminder_2');
 
 -- ---------------------------------------------------------------------------
 -- 2. Brouillons (tous les 17 textes)
