@@ -75,6 +75,7 @@ Deno.serve(async (req) => {
         amount_ttc,
         due_date,
         status,
+        client_type,
         reminder_1_sent_at,
         reminder_2_sent_at,
         reminder_3_sent_at,
@@ -84,6 +85,11 @@ Deno.serve(async (req) => {
             first_name,
             last_name,
             email
+          ),
+          partners!inscriptions_partner_id_fkey (
+            name,
+            contact_name,
+            contact_email
           )
         )
       `)
@@ -115,15 +121,29 @@ Deno.serve(async (req) => {
     for (const invoice of invoices || []) {
       const inscription = (invoice as any).inscriptions
       const student = inscription?.students
+      const partner = inscription?.partners
+      const clientType = (invoice as any).client_type || 'stagiaire'
 
-      if (!student?.email) {
+      // Payeur = destinataire de facturation (jamais le stagiaire par défaut si école / partenaire).
+      let payerEmail: string | null = null
+      let payerName = ''
+      if (clientType === 'ecole_ski' || clientType === 'dsf' || clientType === 'autre') {
+        payerEmail = partner?.contact_email || null
+        payerName = (partner?.contact_name || partner?.name || '').trim()
+      }
+      if (!payerEmail) {
+        payerEmail = student?.email || null
+        payerName = `${student?.first_name || ''} ${student?.last_name || ''}`.trim()
+      }
+
+      if (!payerEmail) {
         results.skipped++
         results.details.push({
           invoiceNumber: invoice.invoice_number,
           email: 'N/A',
           daysOverdue: 0,
           reminderLevel: null,
-          action: 'IGNOREE - aucune adresse',
+          action: 'IGNOREE - aucune adresse payeur',
         })
         continue
       }
@@ -150,7 +170,7 @@ Deno.serve(async (req) => {
         results.skipped++
         results.details.push({
           invoiceNumber: invoice.invoice_number,
-          email: student.email,
+          email: payerEmail,
           daysOverdue,
           reminderLevel: null,
           action: `IGNOREE - ${reason}`,
@@ -163,7 +183,7 @@ Deno.serve(async (req) => {
         results.skipped++
         results.details.push({
           invoiceNumber: invoice.invoice_number,
-          email: student.email,
+          email: payerEmail,
           daysOverdue,
           reminderLevel: level,
           action: `IGNOREE - modèle ${REMINDER_SLUGS[level]} non validé`,
@@ -172,7 +192,7 @@ Deno.serve(async (req) => {
       }
 
       const variables = {
-        client_name: `${student.first_name} ${student.last_name}`.trim(),
+        client_name: payerName || 'client',
         invoice_number: invoice.invoice_number,
         amount: formatAmount(invoice.amount_ttc || invoice.amount_ht),
         due_date: formatDateFr(invoice.due_date),
@@ -182,10 +202,10 @@ Deno.serve(async (req) => {
       if (dryRun) {
         results.details.push({
           invoiceNumber: invoice.invoice_number,
-          email: student.email,
+          email: payerEmail,
           daysOverdue,
           reminderLevel: level,
-          action: `ESSAI - relance ${level} prête (${REMINDER_SLUGS[level]})`,
+          action: `ESSAI - relance ${level} prête (${REMINDER_SLUGS[level]}) payeur=${clientType}`,
         })
         if (level === 1) results.reminder1Sent++
         if (level === 2) results.reminder2Sent++
@@ -197,19 +217,19 @@ Deno.serve(async (req) => {
         const rendered = renderEmailTemplate(template, variables)
         const outcome = await sendFliEmail({
           resendApiKey,
-          to: student.email,
+          to: payerEmail,
           subject: rendered.subject,
           html: rendered.html,
         })
 
         await supabase.from('email_log').insert({
           template_slug: REMINDER_SLUGS[level],
-          recipient_email: student.email,
+          recipient_email: payerEmail,
           recipient_name: variables.client_name,
           inscription_id: inscription?.id ?? null,
           status: outcome.ok ? 'sent' : outcome.skipped ? 'skipped' : 'failed',
           error_message: outcome.error ?? null,
-          variables_used: variables,
+          variables_used: { ...variables, client_type: clientType },
         })
 
         if (!outcome.ok) {
@@ -229,10 +249,10 @@ Deno.serve(async (req) => {
 
         results.details.push({
           invoiceNumber: invoice.invoice_number,
-          email: student.email,
+          email: payerEmail,
           daysOverdue,
           reminderLevel: level,
-          action: `ENVOYEE - relance ${level}`,
+          action: `ENVOYEE - relance ${level} (payeur ${clientType})`,
         })
       } catch (emailError) {
         results.errors.push(`Facture ${invoice.invoice_number}: ${emailError}`)

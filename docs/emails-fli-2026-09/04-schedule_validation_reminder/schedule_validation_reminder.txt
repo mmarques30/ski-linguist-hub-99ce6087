@@ -1,0 +1,11 @@
+Sujet : {{days_before}} jour(s) avant le début : {{total_count}} inscription(s) à répartir pour le {{start_date}}
+
+Bonjour,
+
+Des formations débutent dans {{days_before}} jour(s) ({{start_date}}). {{total_count}} inscription(s) attendent encore la répartition matin / après-midi et l'affectation d'un·e formateur·rice.
+
+{{groups_text}}
+
+Ouvrir les horaires à valider : {{dashboard_url}}
+
+Message interne FLI. Aucun stagiaire n'est en copie.

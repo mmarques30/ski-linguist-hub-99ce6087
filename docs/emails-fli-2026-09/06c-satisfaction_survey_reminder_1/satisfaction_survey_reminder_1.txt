@@ -1,0 +1,21 @@
+Sujet : Votre avis sur votre formation {{language}}
+
+Bonjour {{student_name}},
+
+Nous n'avons pas encore reçu votre questionnaire de satisfaction sur votre formation {{language}}, terminée le {{end_date}}.
+
+Il prend deux minutes. C'est notre seule mesure pour ajuster les contenus, le rythme et la composition des groupes.
+
+Donner mon avis : {{survey_link}}
+
+Vos réponses sont utilisées de façon agrégée dans notre suivi qualité Qualiopi.
+
+Cordialement,
+L'équipe FLI
+
+--
+FLI — France Langues International
+25 avenue de la Gare
+73800 Montmélian
+Tél. : 04 79 28 21 09
+info@fli.fr

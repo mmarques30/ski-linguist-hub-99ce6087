@@ -1,0 +1,9 @@
+slug: satisfaction_survey_trainer_notice
+titre: Consigne questionnaire au formateur·rice (veille du dernier jour)
+sujet: Demain, dernier jour à {{course_location}} : dix minutes pour le questionnaire
+destinataire: Formateur·rice affecté·e au groupe (email de la fiche formateur·rice). Tutoiement : seule exception au vouvoiement.
+declencheur: Cron dédié à 17 h 30 la veille de end_date ; un envoi par formateur·rice et par formation. Nécessite l'affectation formateur·rice validée, sinon aucun destinataire.
+variables: course_location, trainer_first_name, language, end_date
+syntaxe: {{variable}} (option A, substitution dans l'app avant envoi)
+expediteur: FLI — France Langues International <noreply@fli.fr>
+reply_to: info@fli.fr

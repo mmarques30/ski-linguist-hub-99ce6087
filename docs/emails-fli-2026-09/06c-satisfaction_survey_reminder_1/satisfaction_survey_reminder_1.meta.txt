@@ -1,0 +1,9 @@
+slug: satisfaction_survey_reminder_1
+titre: Questionnaire — rappel J+5
+sujet: Votre avis sur votre formation {{language}}
+destinataire: Stagiaire n'ayant pas répondu
+declencheur: Cron quotidien 8 h 15 ; end_date + 5 jours ; uniquement si le questionnaire n'est pas rempli ; arrêt dès réponse.
+variables: language, student_name, end_date, survey_link
+syntaxe: {{variable}} (option A, substitution dans l'app avant envoi)
+expediteur: FLI — France Langues International <noreply@fli.fr>
+reply_to: info@fli.fr

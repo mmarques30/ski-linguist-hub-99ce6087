@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { isFliPlaceholderEmail } from "../_shared/email-guards.ts";
+import { applyEmailTemplate, sendFliEmail } from "../_shared/fli-email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,13 +21,6 @@ interface PendingInscription {
     last_name: string;
     email: string;
   } | null;
-}
-
-function applyTemplate(template: string, variables: Record<string, string>): string {
-  return Object.entries(variables).reduce(
-    (html, [key, value]) => html.replaceAll(`{{${key}}}`, value),
-    template
-  );
 }
 
 function formatDateFr(dateStr: string): string {
@@ -76,38 +69,6 @@ function buildGroupsHtml(
 
   html += `<p><em>Analysez l'ensemble des inscrits par langue avant de valider matin ou après-midi pour chaque stagiaire.</em></p>`;
   return html;
-}
-
-async function sendEmail(
-  resendApiKey: string,
-  to: string,
-  subject: string,
-  html: string
-): Promise<boolean> {
-  if (isFliPlaceholderEmail(to)) {
-    console.error("Adresse @fli.placeholder exclue de tout envoi:", to);
-    return false;
-  }
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${resendApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: "FLI Formation <noreply@fli.fr>",
-      to: [to],
-      subject,
-      html,
-    }),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    console.error("Resend error:", text);
-  }
-
-  return response.ok;
 }
 
 Deno.serve(async (req) => {
@@ -198,6 +159,7 @@ Deno.serve(async (req) => {
 
     const groupsHtml = buildGroupsHtml(pending, appBaseUrl);
     const formattedDate = formatDateFr(targetDateStr);
+    const daysBefore = String(DAYS_BEFORE_START);
 
     const { data: template } = await supabase
       .from("email_templates")
@@ -210,22 +172,53 @@ Deno.serve(async (req) => {
       start_date: formattedDate,
       total_count: String(pending.length),
       groups_html: groupsHtml,
-      dashboard_url: `${appBaseUrl}/inscriptions`,
+      groups_text: pending
+        .map((i) => {
+          const name = i.student
+            ? `${i.student.first_name} ${i.student.last_name}`
+            : "—";
+          return `${i.code || "—"} · ${i.language} · ${name}`;
+        })
+        .join("\n"),
+      dashboard_url: `${appBaseUrl}/inscriptions/schedule-validation`,
+      days_before: daysBefore,
     };
 
-    const subject = template
-      ? applyTemplate(template.subject_fr, variables)
-      : `[FLI] Validation horaires J-10 — ${pending.length} inscription(s) — ${formattedDate}`;
-
-    const html = template
-      ? applyTemplate(template.body_fr, variables)
-      : `<h2>Bonjour Paula,</h2><p>${pending.length} inscription(s) débutent le ${formattedDate}.</p>${groupsHtml}`;
+    let subject: string;
+    let html: string;
+    try {
+      subject = template
+        ? applyEmailTemplate(template.subject_fr, variables)
+        : `[FLI] Validation horaires J-${daysBefore} — ${pending.length} inscription(s) — ${formattedDate}`;
+      html = template
+        ? applyEmailTemplate(template.body_fr, variables)
+        : `<p>Bonjour,</p><p>${pending.length} inscription(s) débutent le ${formattedDate}.</p>${groupsHtml}`;
+    } catch (renderError) {
+      const message = renderError instanceof Error ? renderError.message : String(renderError);
+      await supabase.from("email_log").insert({
+        template_slug: "schedule_validation_reminder",
+        recipient_email: ADMIN_EMAIL,
+        recipient_name: "FLI interne",
+        status: "failed",
+        error_message: message,
+        variables_used: variables,
+      });
+      return new Response(
+        JSON.stringify({ success: false, error: message }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (!dryRun && resendApiKey) {
-      const emailSent = await sendEmail(resendApiKey, ADMIN_EMAIL, subject, html);
-      results.emailSent = emailSent;
+      const outcome = await sendFliEmail({
+        resendApiKey,
+        to: ADMIN_EMAIL,
+        subject,
+        html,
+      });
+      results.emailSent = outcome.ok;
 
-      if (emailSent) {
+      if (outcome.ok) {
         const ids = pending.map((i) => i.id);
         const now = new Date().toISOString();
 
@@ -239,7 +232,7 @@ Deno.serve(async (req) => {
         await supabase.from("email_log").insert({
           template_slug: "schedule_validation_reminder",
           recipient_email: ADMIN_EMAIL,
-          recipient_name: "Paula",
+          recipient_name: "FLI interne",
           status: "sent",
           variables_used: variables,
         });
@@ -253,11 +246,20 @@ Deno.serve(async (req) => {
           await supabase.from("notifications").insert({
             user_id: admin.user_id,
             type: "schedule_validation",
-            title: `⏰ J-10 — ${pending.length} horaire(s) à valider`,
+            title: `J-${daysBefore} — ${pending.length} horaire(s) à valider`,
             message: `Formations du ${formattedDate} : ${pending.length} inscription(s) en attente de validation matin/après-midi.`,
             link: "/inscriptions/schedule-validation",
           });
         }
+      } else {
+        await supabase.from("email_log").insert({
+          template_slug: "schedule_validation_reminder",
+          recipient_email: ADMIN_EMAIL,
+          recipient_name: "FLI interne",
+          status: outcome.skipped ? "skipped" : "failed",
+          error_message: outcome.error ?? null,
+          variables_used: variables,
+        });
       }
     } else {
       results.emailSent = false;

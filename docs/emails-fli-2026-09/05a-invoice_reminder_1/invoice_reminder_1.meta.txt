@@ -1,0 +1,9 @@
+slug: invoice_reminder_1
+titre: Relance de paiement J+7
+sujet: Facture {{invoice_number}} — rappel de règlement
+destinataire: Payeur de la facture (stagiaire, école, partenaire) — jamais le stagiaire par défaut
+declencheur: Cron quotidien 9 h ; facture échue depuis 7 jours ; un seul envoi par palier ; arrêt dès paiement.
+variables: invoice_number, client_name, amount, due_date
+syntaxe: {{variable}} (option A, substitution dans l'app avant envoi)
+expediteur: FLI — France Langues International <noreply@fli.fr>
+reply_to: info@fli.fr

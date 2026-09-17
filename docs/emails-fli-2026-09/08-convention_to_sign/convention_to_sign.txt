@@ -1,0 +1,19 @@
+Sujet : Convention de formation {{language}} — {{course_location}}, du {{start_date}} au {{end_date}}
+
+Bonjour,
+
+Vous trouverez en pièce jointe la convention de formation professionnelle entre {{client_name}} et FLI pour la formation {{language}} à {{course_location}}, du {{start_date}} au {{end_date}}, pour {{student_count}} stagiaire(s).
+
+Merci de nous la retourner signée au plus tard le {{return_deadline}}, en répondant à ce message avec le document en pièce jointe.
+
+Le programme de la formation est joint pour information. Pour toute question sur le contenu ou les modalités de prise en charge, répondez à ce message : il arrive directement à info@fli.fr.
+
+Cordialement,
+L'équipe FLI
+
+--
+FLI — France Langues International
+25 avenue de la Gare
+73800 Montmélian
+Tél. : 04 79 28 21 09
+info@fli.fr

@@ -1,0 +1,9 @@
+slug: training_completion_pack_student
+titre: Documents de fin de formation — payeur stagiaire
+sujet: Fin de votre formation {{language}} : certificat, attestation et facture
+destinataire: Stagiaire (payeur = stagiaire)
+declencheur: Automatique, via le cron du matin : formation terminée, niveau de sortie saisi par le formateur·rice (formulaire de sortie) et paiement enregistré. Certificat généré au passage ; bloqué sans formulaire de sortie (RG02). Pièces jointes : certificat, attestation de présence, facture acquittée.
+variables: language, student_name, inscription_code, end_date, invoice_number, survey_link
+syntaxe: {{variable}} (option A, substitution dans l'app avant envoi)
+expediteur: FLI — France Langues International <noreply@fli.fr>
+reply_to: info@fli.fr

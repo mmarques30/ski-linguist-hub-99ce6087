@@ -1,0 +1,26 @@
+Sujet : Votre inscription à la formation {{language}} est confirmée — {{inscription_code}}
+
+Bonjour {{student_name}},
+
+Nous vous confirmons votre inscription à la formation {{language}}, {{dates_label}}.
+
+Code d'inscription : {{inscription_code}}
+Lieu : {{course_location}}
+Modalité : {{modality_label}}
+Votre piste de départ au test de placement : {{slope_label}}
+
+Prochaines étapes : nous vous enverrons les documents de la formation pour que vous puissiez faire votre demande de prise en charge.
+
+Dès réception de votre dossier signé et confirmation du paiement, nous vous mettrons en contact avec votre formateur·rice pour organiser les séances.
+
+Pour toute question, répondez à ce message : il arrive directement à info@fli.fr.
+
+Cordialement,
+L'équipe FLI
+
+--
+FLI — France Langues International
+25 avenue de la Gare
+73800 Montmélian
+Tél. : 04 79 28 21 09
+info@fli.fr

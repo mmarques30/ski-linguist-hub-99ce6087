@@ -1,0 +1,19 @@
+Sujet : Votre certificat de fin de formation {{language}}
+
+Bonjour {{student_name}},
+
+Votre formation {{language}} (inscription {{inscription_code}}) s'est terminée le {{end_date}}. Vous trouverez en pièce jointe votre certificat de fin de formation.
+
+Si vous ne l'avez pas encore fait, donnez-nous votre avis sur la formation, deux minutes depuis votre téléphone :
+
+Donner mon avis : {{survey_link}}
+
+Cordialement,
+L'équipe FLI
+
+--
+FLI — France Langues International
+25 avenue de la Gare
+73800 Montmélian
+Tél. : 04 79 28 21 09
+info@fli.fr

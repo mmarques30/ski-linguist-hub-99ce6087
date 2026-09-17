@@ -1,0 +1,9 @@
+slug: satisfaction_survey_reminder_2
+titre: Questionnaire — dernier rappel J+30
+sujet: Dernier rappel : votre avis sur votre formation {{language}}
+destinataire: Stagiaire n'ayant pas répondu
+declencheur: Cron quotidien 8 h 15 ; end_date + 30 jours ; uniquement si le questionnaire n'est pas rempli ; dernier envoi.
+variables: language, student_name, end_date, survey_link
+syntaxe: {{variable}} (option A, substitution dans l'app avant envoi)
+expediteur: FLI — France Langues International <noreply@fli.fr>
+reply_to: info@fli.fr

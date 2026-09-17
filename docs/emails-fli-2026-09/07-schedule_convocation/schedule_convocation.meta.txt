@@ -1,0 +1,9 @@
+slug: schedule_convocation
+titre: Convocation (formation collective)
+sujet: Convocation : formation {{language}} à {{course_location}} du {{start_date}} au {{end_date}}
+destinataire: Stagiaire
+declencheur: Validation des horaires sur une inscription (écran horaires) ; envoi immédiat ; une fois par inscription. Si les horaires sont modifiés ensuite : renvoi avec le sujet préfixé « Modification : ». instructor_phone affiché seulement si le formateur·rice a consenti à sa communication (sinon vide). Pièce jointe optionnelle : convocation PDF générée par l'app.
+variables: language, course_location, start_date, end_date, student_name, inscription_code, schedule_label, location_details, instructor_name, instructor_phone, total_hours
+syntaxe: {{variable}} (option A, substitution dans l'app avant envoi)
+expediteur: FLI — France Langues International <noreply@fli.fr>
+reply_to: info@fli.fr
