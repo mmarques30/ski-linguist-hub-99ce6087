@@ -186,7 +186,7 @@ async function sendSkiMonitorWelcomeDocuments(params: {
     ? applyEmailTemplate(template.body_fr, variables)
     : `<p>Bonjour ${studentName},</p><p>Veuillez trouver ci-joint vos documents d'inscription FLI.</p>`;
 
-  const attachments = await buildSkiMonitorWelcomeAttachments();
+  const attachments = await buildSkiMonitorWelcomeAttachments(supabase);
   const sent = (await sendFliEmail({
     resendApiKey,
     to: email,

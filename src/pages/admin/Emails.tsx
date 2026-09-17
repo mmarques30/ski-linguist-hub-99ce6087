@@ -312,8 +312,13 @@ export default function AdminEmails() {
             Modèles d'emails
           </h1>
           <p className="text-sm text-muted-foreground">
-            Six modèles. Un texte ne part qu'après « Valider et activer » ; les crons
-            restent arrêtés jusqu'à votre accord.
+            Textes des emails transactionnels. Un texte ne part qu&apos;après « Valider et
+            activer » ; les crons restent arrêtés jusqu&apos;à votre accord. Les fichiers
+            joints d&apos;inscription (convention, programme, FIF-PL) se gèrent sur{" "}
+            <a href="/admin/registration-documents" className="underline underline-offset-2">
+              Modèles documents
+            </a>
+            .
           </p>
         </div>
 

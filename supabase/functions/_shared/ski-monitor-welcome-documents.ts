@@ -52,18 +52,37 @@ function bytesToBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
-export async function loadSkiMonitorWelcomeDocument(internalFile: string): Promise<Uint8Array> {
+export async function loadSkiMonitorWelcomeDocument(
+  internalFile: string,
+  // deno-lint-ignore no-explicit-any
+  supabase?: any,
+): Promise<Uint8Array> {
+  if (supabase) {
+    try {
+      const path = `staff/registration-templates/${internalFile}`;
+      const { data, error } = await supabase.storage.from("documents").download(path);
+      if (!error && data) {
+        return new Uint8Array(await data.arrayBuffer());
+      }
+    } catch (storageError) {
+      console.warn("registration template storage fallback:", storageError);
+    }
+  }
+
   const fileUrl = new URL(`./registration-documents/${internalFile}`, import.meta.url);
   return await Deno.readFile(fileUrl);
 }
 
-export async function buildSkiMonitorWelcomeAttachments(): Promise<
+export async function buildSkiMonitorWelcomeAttachments(
+  // deno-lint-ignore no-explicit-any
+  supabase?: any,
+): Promise<
   Array<{ filename: string; content: string }>
 > {
   const attachments: Array<{ filename: string; content: string }> = [];
 
   for (const doc of SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS) {
-    const bytes = await loadSkiMonitorWelcomeDocument(doc.internalFile);
+    const bytes = await loadSkiMonitorWelcomeDocument(doc.internalFile, supabase);
     attachments.push({
       filename: doc.filename,
       content: bytesToBase64(bytes),

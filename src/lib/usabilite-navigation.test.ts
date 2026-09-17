@@ -14,6 +14,7 @@ describe("usabilité — navigation et intégration", () => {
     expect(sidebar).toContain('label: "Finance"');
     expect(sidebar).toContain('collapsible="icon"');
     expect(sidebar).toContain("Constitution des groupes");
+    expect(sidebar).toContain("Modèles documents");
     expect(sidebar).not.toContain("Horaires J-10");
     expect(sidebar).not.toMatch(/href: "\/documents"/);
     expect(sidebar).not.toMatch(/href: "\/formation\/sessions"/);
