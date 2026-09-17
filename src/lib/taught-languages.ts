@@ -24,7 +24,7 @@ export function isPortugueseLanguage(value: string | null | undefined): boolean 
   const normalized = value
     .toLowerCase()
     .normalize("NFD")
-    .replace(/\p{M}/gu, "");
+    .replace(/[\u0300-\u036f]/g, "");
   return (
     normalized.includes("portugais") ||
     normalized.includes("portuguese") ||
