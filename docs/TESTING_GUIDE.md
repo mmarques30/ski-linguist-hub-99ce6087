@@ -114,8 +114,8 @@ Quand la clé Resend est posée, le second email de test du § 2 B est le texte 
 La liste `/inscriptions/schedule-validation` ne montre que les inscriptions **en attente d’horaire**, non annulées, dont la **date de début est aujourd’hui ou dans les 10 jours**.
 
 1. Si la session catalogue est plus loin : **Modifier** l’inscription, passer **date de début** à une date dans cette fenêtre (ex. test le 14/09 → début le 18/09/2026) et une date de fin cohérente. Enregistrer. Le statut d’horaire doit rester `pending`.
-2. Sidebar **Horaires J-10** (`/inscriptions/schedule-validation`).
-3. **À l’écran :** titre **Validation horaires J-10**, groupe par langue et date de début, ligne **ZZTEST Camille** avec le code FLI.
+2. Sidebar **Constitution des groupes** (`/inscriptions/schedule-validation`).
+3. **À l’écran :** titre **Constitution des groupes**, uniquement stages collectifs en station, groupe par langue et date de début, ligne **ZZTEST Camille** avec le code FLI (si collectif présentiel).
 4. Cocher la ligne, **Valider matin** ou **Valider après-midi**.
 5. Toast du type « 1 inscription(s) — groupe … validé ». La ligne disparaît de la liste.
 6. Retour fiche : bouton **Horaire** → statut matin ou après-midi renseigné.
