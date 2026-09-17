@@ -14,7 +14,7 @@ const LABELS: Record<string, string> = {
   partenaires: "Partenaires",
   moniteurs: "Moniteurs",
   inscriptions: "Inscriptions",
-  "schedule-validation": "Horaires J-10",
+  "schedule-validation": "Constitution des groupes",
   invoices: "Factures",
   students: "Stagiaires",
   "portal-preview": "Prévisualisation portail",

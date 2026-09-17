@@ -13,7 +13,8 @@ describe("usabilité — navigation et intégration", () => {
     expect(sidebar).toContain('label: "Commercial & partenaires"');
     expect(sidebar).toContain('label: "Finance"');
     expect(sidebar).toContain('collapsible="icon"');
-    expect(sidebar).toContain("Horaires J-10");
+    expect(sidebar).toContain("Constitution des groupes");
+    expect(sidebar).not.toContain("Horaires J-10");
     expect(sidebar).not.toMatch(/href: "\/documents"/);
     expect(sidebar).not.toMatch(/href: "\/formation\/sessions"/);
     expect(sidebar).not.toContain("CollapsibleTrigger");

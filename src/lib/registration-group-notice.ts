@@ -16,6 +16,20 @@ export function expectsStationGroupAssignment(
   return MODALITES_STATION.has(modality.trim().toLowerCase());
 }
 
+/**
+ * Écran « Constitution des groupes » et rappels associés : uniquement les
+ * stages collectifs en présentiel (station). Les individuels, binômes et
+ * formations en ligne n'ont pas de créneau matin / après-midi à valider.
+ */
+export function needsMorningAfternoonGroup(
+  modality?: string | null,
+  courseType?: string | null,
+): boolean {
+  if (!expectsStationGroupAssignment(modality)) return false;
+  if (!courseType) return false;
+  return courseType.trim().toLowerCase().includes("collectif");
+}
+
 export const STATION_GROUP_SIGNATURE = "l'équipe FLI";
 
 /** Avant le test : ce qui se passera après l'inscription. */

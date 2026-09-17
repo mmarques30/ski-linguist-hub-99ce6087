@@ -9,6 +9,17 @@ const corsHeaders = {
 const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") || "info@fli.fr";
 const DAYS_BEFORE_START = 10;
 
+/** Aligné sur src/lib/registration-group-notice.ts — collectifs en station seulement. */
+function needsMorningAfternoonGroup(
+  modality?: string | null,
+  courseType?: string | null,
+): boolean {
+  const mod = (modality ?? "").trim().toLowerCase();
+  if (!["in_person", "presentiel", "présentiel"].includes(mod)) return false;
+  if (!courseType) return false;
+  return courseType.trim().toLowerCase().includes("collectif");
+}
+
 interface PendingInscription {
   id: string;
   code: string | null;
@@ -112,6 +123,8 @@ Deno.serve(async (req) => {
         start_date,
         entry_level,
         schedule_status,
+        modality,
+        course_type,
         students!inscriptions_student_id_fkey (
           first_name,
           last_name,
@@ -125,15 +138,22 @@ Deno.serve(async (req) => {
 
     if (error) throw error;
 
-    const pending: PendingInscription[] = (inscriptions || []).map((row: Record<string, unknown>) => ({
-      id: row.id as string,
-      code: row.code as string | null,
-      language: row.language as string,
-      start_date: row.start_date as string,
-      entry_level: row.entry_level as string | null,
-      schedule_status: row.schedule_status as string,
-      student: row.students as PendingInscription["student"],
-    }));
+    const pending: PendingInscription[] = (inscriptions || [])
+      .filter((row: Record<string, unknown>) =>
+        needsMorningAfternoonGroup(
+          row.modality as string | null,
+          row.course_type as string | null,
+        )
+      )
+      .map((row: Record<string, unknown>) => ({
+        id: row.id as string,
+        code: row.code as string | null,
+        language: row.language as string,
+        start_date: row.start_date as string,
+        entry_level: row.entry_level as string | null,
+        schedule_status: row.schedule_status as string,
+        student: row.students as PendingInscription["student"],
+      }));
 
     const results = {
       dryRun,
@@ -189,7 +209,7 @@ Deno.serve(async (req) => {
     try {
       subject = template
         ? applyEmailTemplate(template.subject_fr, variables)
-        : `[FLI] Validation horaires J-${daysBefore} — ${pending.length} inscription(s) — ${formattedDate}`;
+        : `[FLI] Constitution des groupes J-${daysBefore} — ${pending.length} inscription(s) — ${formattedDate}`;
       html = template
         ? applyEmailTemplate(template.body_fr, variables)
         : `<p>Bonjour,</p><p>${pending.length} inscription(s) débutent le ${formattedDate}.</p>${groupsHtml}`;
@@ -246,8 +266,8 @@ Deno.serve(async (req) => {
           await supabase.from("notifications").insert({
             user_id: admin.user_id,
             type: "schedule_validation",
-            title: `J-${daysBefore} — ${pending.length} horaire(s) à valider`,
-            message: `Formations du ${formattedDate} : ${pending.length} inscription(s) en attente de validation matin/après-midi.`,
+            title: `J-${daysBefore} — ${pending.length} groupe(s) à constituer`,
+            message: `Stages collectifs du ${formattedDate} : ${pending.length} inscription(s) en attente de groupe matin/après-midi.`,
             link: "/inscriptions/schedule-validation",
           });
         }
