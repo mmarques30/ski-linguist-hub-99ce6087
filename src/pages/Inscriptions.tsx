@@ -34,12 +34,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Filter, Download, Plus, Eye, Edit, Trash2, ClipboardList, Upload, Loader2, Package, MoreHorizontal, CheckCircle, XCircle, Clock } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useInscriptions, useUpdateInscriptionStatus, useDeleteInscription } from "@/hooks/useInscriptions";
-import { getNextStatuses } from "@/lib/inscription-status";
+import { Search, Filter, Download, Plus, Eye, Edit, Trash2, ClipboardList, Upload, Loader2, Package, MoreHorizontal } from "lucide-react";
+import { useInscriptions, useDeleteInscription } from "@/hooks/useInscriptions";
 import { DATES_A_PLANIFIER_LABEL } from "@/lib/registration-dates";
 import { DueStatusAdvanceCard } from "@/components/inscriptions/DueStatusAdvanceCard";
+import { InscriptionStatusMenu } from "@/components/inscriptions/InscriptionStatusMenu";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
@@ -217,25 +216,6 @@ const translations = {
   },
 };
 
-const statusStyles: Record<string, string> = {
-  brouillon: "bg-gray-100 text-gray-800",
-  en_attente: "bg-yellow-100 text-yellow-800",
-  confirmee: "bg-blue-100 text-blue-800",
-  en_cours: "bg-indigo-100 text-indigo-800",
-  terminee: "bg-gray-100 text-gray-800",
-  facturee: "bg-emerald-100 text-emerald-800",
-  annulee: "bg-red-100 text-red-800",
-};
-
-const statusIcons: Record<string, { icon: typeof Clock; color: string }> = {
-  en_attente: { icon: Clock, color: "text-yellow-600" },
-  confirmee: { icon: CheckCircle, color: "text-blue-600" },
-  en_cours: { icon: Clock, color: "text-indigo-600" },
-  terminee: { icon: CheckCircle, color: "text-gray-600" },
-  facturee: { icon: CheckCircle, color: "text-emerald-600" },
-  annulee: { icon: XCircle, color: "text-red-600" },
-};
-
 export default function Inscriptions() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [languageFilter, setLanguageFilter] = useState("all");
@@ -248,7 +228,6 @@ export default function Inscriptions() {
   const { language, t } = useLanguage();
   const { canEdit } = useUserPermissions();
   const editable = canEdit("inscriptions");
-  const updateStatus = useUpdateInscriptionStatus();
   const deleteInscription = useDeleteInscription();
 
   const { data: inscriptions, isLoading, error, refetch } = useInscriptions({
@@ -280,31 +259,6 @@ export default function Inscriptions() {
       style: "currency",
       currency: "EUR",
     }).format(price);
-  };
-
-  const statusLabels: Record<string, string> = {
-    brouillon: language === "pt-BR" ? "Rascunho" : language === "en" ? "Draft" : "Brouillon",
-    en_attente: language === "pt-BR" ? "Pendente" : language === "en" ? "Pending" : "En attente",
-    confirmee: language === "pt-BR" ? "Confirmada" : language === "en" ? "Confirmed" : "Confirmée",
-    en_cours: t(translations.statusInProgress),
-    terminee: t(translations.statusCompleted),
-    facturee: t(translations.statusBilled),
-    annulee: t(translations.statusCancelled),
-  };
-
-  const handleStatusChange = async (inscriptionId: string, newStatus: string) => {
-    try {
-      await updateStatus.mutateAsync({ id: inscriptionId, status: newStatus });
-      toast.success(t(translations.statusUpdated));
-    } catch (error: any) {
-      console.error("Error updating status:", error);
-      const msg = error?.message || "";
-      if (/statut|transition|annuler/i.test(msg)) {
-        toast.error(msg);
-      } else {
-        toast.error(language === "pt-BR" ? "Erro ao atualizar status" : language === "en" ? "Error updating status" : "Erreur lors de la mise à jour du statut");
-      }
-    }
   };
 
   const handleDeleteClick = (inscription: { id: string; student_name: string | null; code: string | null }) => {
@@ -477,49 +431,12 @@ export default function Inscriptions() {
                     </TableCell>
                     <TableCell>{formatPrice(inscription.price)}</TableCell>
                     <TableCell>
-                      {editable ? (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-auto p-0 hover:bg-transparent">
-                              <Badge className={cn(statusStyles[inscription.status] || "bg-gray-100 text-gray-800", "hover:opacity-80 cursor-pointer")}>
-                                {statusLabels[inscription.status] || inscription.status}
-                              </Badge>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start">
-                            {/* Seules les cibles que la base accepte : proposer
-                                « Terminée » depuis « Brouillon » ne produisait
-                                qu'un message d'erreur. */}
-                            {getNextStatuses(inscription.status).map((option) => {
-                              const Icon = statusIcons[option]?.icon ?? Clock;
-                              return (
-                                <DropdownMenuItem
-                                  key={option}
-                                  onClick={() => handleStatusChange(inscription.id, option)}
-                                  disabled={updateStatus.isPending}
-                                >
-                                  <Icon
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      statusIcons[option]?.color ?? "text-muted-foreground"
-                                    )}
-                                  />
-                                  {statusLabels[option]}
-                                </DropdownMenuItem>
-                              );
-                            })}
-                            {getNextStatuses(inscription.status).length === 0 && (
-                              <DropdownMenuItem disabled>
-                                Statut final : aucun changement possible
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      ) : (
-                        <Badge className={cn(statusStyles[inscription.status] || "bg-gray-100 text-gray-800")}>
-                          {statusLabels[inscription.status] || inscription.status}
-                        </Badge>
-                      )}
+                      <InscriptionStatusMenu
+                        inscriptionId={inscription.id}
+                        status={inscription.status || ""}
+                        startDate={inscription.start_date}
+                        readOnly={!editable}
+                      />
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">

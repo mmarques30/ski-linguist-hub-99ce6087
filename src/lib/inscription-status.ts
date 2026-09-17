@@ -13,13 +13,16 @@ export const INSCRIPTION_STATUSES = {
 
 export type InscriptionStatus = typeof INSCRIPTION_STATUSES[keyof typeof INSCRIPTION_STATUSES];
 
-// Allowed transitions: key = from, value = array of allowed "to" statuses
+// Allowed transitions: key = from, value = array of allowed "to" statuses.
+// Depuis « En cours », on autorise aussi les corrections manuelles (retour
+// Confirmée, Annulée, Facturée) : un passage erroné à En cours ne doit pas
+// obliger à passer par Terminée pour rattraper.
 export const STATUS_TRANSITIONS: Record<InscriptionStatus, InscriptionStatus[]> = {
   brouillon: ['en_attente'],
   en_attente: ['confirmee', 'annulee'],
   confirmee: ['en_cours', 'annulee'],
-  en_cours: ['terminee'],
-  terminee: ['facturee'],
+  en_cours: ['terminee', 'confirmee', 'annulee', 'facturee'],
+  terminee: ['facturee', 'en_cours', 'annulee'],
   facturee: [],
   annulee: [],
 };
@@ -91,8 +94,9 @@ export function describeRefusedTransition(from: string, to: string): string {
 }
 
 /**
- * Une formation déjà commencée ne peut plus être annulée : la base refuse la
- * transition confirmée → annulée dans ce cas.
+ * Une formation déjà commencée ne peut plus être annulée depuis « Confirmée » :
+ * la base refuse alors confirmée → annulée. Depuis « En cours » ou « Terminée »,
+ * l'annulation reste possible (correction / abandon).
  */
 export function cancellationBlockedReason(
   status: string,
@@ -101,7 +105,7 @@ export function cancellationBlockedReason(
 ): string | null {
   if (status !== 'confirmee') return null;
   if (!startDate || startDate > today) return null;
-  return `La formation a débuté le ${startDate} : l'annulation n'est plus possible depuis « Confirmée ».`;
+  return `La formation a débuté le ${startDate} : l'annulation n'est plus possible depuis « Confirmée ». Passez d'abord à « En cours » si vous devez annuler.`;
 }
 
 // Translated labels for each status
