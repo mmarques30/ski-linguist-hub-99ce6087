@@ -70,7 +70,7 @@ interface ConfirmationStepProps {
 
 const languageLabels: Record<string, string> = {
   english: "Anglais",
-  portuguese: "Portugais",
+  portuguese: "Portugais brésilien",
   russian: "Russe",
   dutch: "Néerlandais",
   german: "Allemand",

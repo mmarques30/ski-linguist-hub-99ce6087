@@ -19,7 +19,7 @@ const LANGUAGE_KEY_BY_LABEL = Object.fromEntries(
     const label =
       {
         anglais: "Anglais",
-        portugais: "Portugais",
+        portugais: "Portugais brésilien",
         russe: "Russe",
         neerlandais: "Néerlandais",
         allemand: "Allemand",

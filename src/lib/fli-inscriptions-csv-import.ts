@@ -199,8 +199,9 @@ function mapModality(value: string): string | null {
 
 function mapLanguage(value: string): string {
   const map: Record<string, string> = {
-    "portugais bresilien": "Portugais",
-    "portugais brésilien": "Portugais",
+    portugais: "Portugais brésilien",
+    "portugais bresilien": "Portugais brésilien",
+    "portugais brésilien": "Portugais brésilien",
     "fle (francais langue etrangere)": "Français",
     "fle (français langue étrangère)": "Français",
   };

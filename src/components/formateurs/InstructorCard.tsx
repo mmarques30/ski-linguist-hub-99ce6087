@@ -1,8 +1,10 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star } from "lucide-react";
+import { Pencil, Star } from "lucide-react";
 import type { Instructor } from "@/hooks/useInstructors";
+import { displayLanguageLabel } from "@/lib/taught-languages";
 
 const availabilityStyles: Record<string, string> = {
   disponible: "bg-emerald-100 text-emerald-800",
@@ -24,17 +26,24 @@ const statusLabels: Record<string, string> = {
 
 const languageColors: Record<string, string> = {
   anglais: "bg-blue-100 text-blue-800",
+  "portugais brésilien": "bg-green-100 text-green-800",
   portugais: "bg-green-100 text-green-800",
   russe: "bg-red-100 text-red-800",
   néerlandais: "bg-orange-100 text-orange-800",
+  fle: "bg-violet-100 text-violet-800",
+  espagnol: "bg-amber-100 text-amber-800",
+  italien: "bg-rose-100 text-rose-800",
+  allemand: "bg-yellow-100 text-yellow-800",
+  chinois: "bg-cyan-100 text-cyan-800",
 };
 
 interface Props {
   instructor: Instructor;
   onClick: () => void;
+  onEdit?: () => void;
 }
 
-export function InstructorCard({ instructor, onClick }: Props) {
+export function InstructorCard({ instructor, onClick, onEdit }: Props) {
   const initials =
     (instructor.first_name?.[0] || "") + (instructor.last_name?.[0] || "");
 
@@ -53,7 +62,7 @@ export function InstructorCard({ instructor, onClick }: Props) {
             <h3 className="font-semibold truncate">
               {instructor.first_name} {instructor.last_name}
             </h3>
-            <div className="flex shrink-0 gap-1">
+            <div className="flex shrink-0 items-center gap-1">
               {instructor.status && (
                 <Badge className={statusStyles[instructor.status] || statusStyles.inactif}>
                   {statusLabels[instructor.status] || instructor.status}
@@ -69,6 +78,21 @@ export function InstructorCard({ instructor, onClick }: Props) {
                   {instructor.availability_status || "disponible"}
                 </Badge>
               )}
+              {onEdit && (
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8"
+                  title="Modifier"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit();
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
           <div className="flex flex-wrap gap-1">
@@ -78,7 +102,7 @@ export function InstructorCard({ instructor, onClick }: Props) {
                 variant="outline"
                 className={languageColors[l.toLowerCase()] || ""}
               >
-                {l}
+                {displayLanguageLabel(l)}
               </Badge>
             ))}
           </div>

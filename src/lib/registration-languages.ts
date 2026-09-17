@@ -1,7 +1,7 @@
 /** Languages available in public registration + adaptive placement test. */
 export const REGISTRATION_LANGUAGES = [
   { value: "english", label: "Anglais" },
-  { value: "portuguese", label: "Portugais" },
+  { value: "portuguese", label: "Portugais brésilien" },
   { value: "russian", label: "Russe" },
   { value: "dutch", label: "Néerlandais" },
   { value: "german", label: "Allemand" },

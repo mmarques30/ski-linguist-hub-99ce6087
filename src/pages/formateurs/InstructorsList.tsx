@@ -11,12 +11,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Search, UserCog } from "lucide-react";
-import { useInstructors } from "@/hooks/useInstructors";
+import { useInstructors, type Instructor } from "@/hooks/useInstructors";
 import { InstructorCard } from "@/components/formateurs/InstructorCard";
 import { InstructorFormDialog } from "@/components/formateurs/InstructorFormDialog";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { EmptyState } from "@/components/common/EmptyState";
 import { CardGridSkeleton } from "@/components/common/ListSkeleton";
+import { PORTUGUESE_LABEL_LOWER } from "@/lib/taught-languages";
 
 export default function InstructorsList() {
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ export default function InstructorsList() {
   const [availFilter, setAvailFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<"actif" | "inactif" | "candidat" | "all">("actif");
   const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<Instructor | null>(null);
 
   const { data: instructors = [], isLoading } = useInstructors({
     search,
@@ -46,7 +48,7 @@ export default function InstructorsList() {
             </p>
           </div>
           {editable && (
-            <Button onClick={() => setShowForm(true)}>
+            <Button onClick={() => { setEditing(null); setShowForm(true); }}>
               <Plus className="mr-2 h-4 w-4" />
               Ajouter un formateur
             </Button>
@@ -64,15 +66,15 @@ export default function InstructorsList() {
             />
           </div>
           <Select value={langFilter} onValueChange={setLangFilter}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-[190px]">
               <SelectValue placeholder="Langue" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Toutes</SelectItem>
-              <SelectItem value="Anglais">Anglais</SelectItem>
-              <SelectItem value="Portugais">Portugais</SelectItem>
-              <SelectItem value="Russe">Russe</SelectItem>
-              <SelectItem value="Néerlandais">Néerlandais</SelectItem>
+              <SelectItem value="anglais">Anglais</SelectItem>
+              <SelectItem value={PORTUGUESE_LABEL_LOWER}>Portugais brésilien</SelectItem>
+              <SelectItem value="russe">Russe</SelectItem>
+              <SelectItem value="néerlandais">Néerlandais</SelectItem>
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
@@ -109,7 +111,10 @@ export default function InstructorsList() {
             action={editable ? {
               label: "Ajouter un formateur",
               icon: Plus,
-              onClick: () => setShowForm(true),
+              onClick: () => {
+                setEditing(null);
+                setShowForm(true);
+              },
             } : undefined}
           />
         ) : (
@@ -119,13 +124,28 @@ export default function InstructorsList() {
                 key={inst.id}
                 instructor={inst}
                 onClick={() => navigate(`/formateurs/${inst.id}`)}
+                onEdit={
+                  editable
+                    ? () => {
+                        setEditing(inst);
+                        setShowForm(true);
+                      }
+                    : undefined
+                }
               />
             ))}
           </div>
         )}
       </div>
 
-      <InstructorFormDialog open={showForm} onOpenChange={setShowForm} />
+      <InstructorFormDialog
+        open={showForm}
+        onOpenChange={(open) => {
+          setShowForm(open);
+          if (!open) setEditing(null);
+        }}
+        instructor={editing}
+      />
     </MainLayout>
   );
 }

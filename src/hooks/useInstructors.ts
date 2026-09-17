@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { languagesInclude } from "@/lib/taught-languages";
 
 export interface Instructor {
   id: string;
@@ -91,11 +92,7 @@ export function useInstructors(filters?: InstructorFilters) {
 
       let results = (data || []) as Instructor[];
       if (filters?.language) {
-        results = results.filter((i) =>
-          i.languages?.some((l) =>
-            l.toLowerCase().includes(filters.language!.toLowerCase())
-          )
-        );
+        results = results.filter((i) => languagesInclude(i.languages, filters.language!));
       }
       return results;
     },

@@ -116,9 +116,9 @@ const translations = {
     en: "English",
   },
   portuguese: {
-    fr: "Portugais",
-    "pt-BR": "Português",
-    en: "Portuguese",
+    fr: "Portugais brésilien",
+    "pt-BR": "Português brasileiro",
+    en: "Brazilian Portuguese",
   },
   italian: {
     fr: "Italien",

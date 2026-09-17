@@ -1,7 +1,7 @@
 /** Maps registration form language keys to DB inscription language labels. */
 export const REGISTRATION_LANGUAGE_MAP: Record<string, string> = {
   english: "Anglais",
-  portuguese: "Portugais",
+  portuguese: "Portugais brésilien",
   russian: "Russe",
   dutch: "Néerlandais",
   german: "Allemand",
