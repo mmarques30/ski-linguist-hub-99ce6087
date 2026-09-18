@@ -1811,9 +1811,13 @@ export type Database = {
           contact_email: string | null
           contact_name: string
           contact_phone: string | null
+          course_interest: string | null
+          cpf_amount_available: number | null
           created_at: string
           estimated_revenue: number | null
           estimated_students: number | null
+          expansion_channel: string
+          expected_volume: number | null
           id: string
           inscription_id: string | null
           language_interest: string | null
@@ -1822,6 +1826,7 @@ export type Database = {
           next_action_date: string | null
           notes: string | null
           partner_id: string | null
+          project_name: string | null
           season_id: string | null
           source: string
           status: string
@@ -1833,9 +1838,13 @@ export type Database = {
           contact_email?: string | null
           contact_name: string
           contact_phone?: string | null
+          course_interest?: string | null
+          cpf_amount_available?: number | null
           created_at?: string
           estimated_revenue?: number | null
           estimated_students?: number | null
+          expansion_channel?: string
+          expected_volume?: number | null
           id?: string
           inscription_id?: string | null
           language_interest?: string | null
@@ -1844,6 +1853,7 @@ export type Database = {
           next_action_date?: string | null
           notes?: string | null
           partner_id?: string | null
+          project_name?: string | null
           season_id?: string | null
           source?: string
           status?: string
@@ -1855,9 +1865,13 @@ export type Database = {
           contact_email?: string | null
           contact_name?: string
           contact_phone?: string | null
+          course_interest?: string | null
+          cpf_amount_available?: number | null
           created_at?: string
           estimated_revenue?: number | null
           estimated_students?: number | null
+          expansion_channel?: string
+          expected_volume?: number | null
           id?: string
           inscription_id?: string | null
           language_interest?: string | null
@@ -1866,6 +1880,7 @@ export type Database = {
           next_action_date?: string | null
           notes?: string | null
           partner_id?: string | null
+          project_name?: string | null
           season_id?: string | null
           source?: string
           status?: string
