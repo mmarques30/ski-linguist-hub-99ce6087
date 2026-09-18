@@ -2,11 +2,18 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useParams } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { StudentProtectedRoute } from "@/components/auth/StudentProtectedRoute";
+import { AssistStudentRoute } from "@/components/auth/AssistStudentRoute";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import {
+  StudentAssistViewProvider,
+  StudentOwnViewProvider,
+} from "@/contexts/StudentViewContext";
 import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
+import InscriptionSuiviPage from "./pages/suivi/InscriptionSuiviPage";
+import { studentAssistPath } from "@/lib/client-links";
 import Dashboard from "./pages/Dashboard";
 import Inscriptions from "./pages/Inscriptions";
 import InscriptionDetails from "./pages/inscriptions/InscriptionDetails";
@@ -14,7 +21,6 @@ import ScheduleValidation from "./pages/inscriptions/ScheduleValidation";
 import Invoices from "./pages/Invoices";
 import Students from "./pages/Students";
 import StudentDetails from "./pages/students/StudentDetails";
-import StudentPortalPreview from "./pages/students/StudentPortalPreview";
 import PlacementTests from "./pages/PlacementTests";
 import Sessions from "./pages/Sessions";
 import Documents from "./pages/Documents";
@@ -61,6 +67,12 @@ import MoniteursSki from "./pages/moniteurs/MoniteursSki";
 import DashboardGestaoMockupPage from "./pages/mockup/DashboardGestaoMockup";
 import ConditionsGenerales from "./pages/legal/ConditionsGenerales";
 
+function StudentPortalPreviewRedirect() {
+  const { id } = useParams<{ id: string }>();
+  if (!id) return <Navigate to="/students" replace />;
+  return <Navigate to={studentAssistPath(id, "dashboard")} replace />;
+}
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -79,6 +91,7 @@ const App = () => (
             <Route path="/register/payment-success" element={<PaymentSuccessPage />} />
             <Route path="/register/payment-cancel" element={<PaymentCancelPage />} />
             <Route path="/survey/:token" element={<SatisfactionSurvey />} />
+            <Route path="/suivi/:token" element={<InscriptionSuiviPage />} />
             <Route path="/conditions-generales" element={<ConditionsGenerales />} />
 
             {/* Design-validation mockup — staff only */}
@@ -108,7 +121,14 @@ const App = () => (
             <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
             <Route path="/students" element={<ProtectedRoute><Students /></ProtectedRoute>} />
             <Route path="/students/:id" element={<ProtectedRoute><StudentDetails /></ProtectedRoute>} />
-            <Route path="/students/:id/portal-preview" element={<ProtectedRoute><StudentPortalPreview /></ProtectedRoute>} />
+            <Route
+              path="/students/:id/portal-preview"
+              element={
+                <ProtectedRoute>
+                  <StudentPortalPreviewRedirect />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/tests" element={<ProtectedRoute><PlacementTests /></ProtectedRoute>} />
             <Route path="/classes" element={<Navigate to="/formation/sessions" replace />} />
             <Route path="/formation/sessions" element={<ProtectedRoute><Sessions /></ProtectedRoute>} />
@@ -135,11 +155,75 @@ const App = () => (
             <Route path="/qualite/historique" element={<ProtectedRoute><AuditHistory /></ProtectedRoute>} />
 
             {/* Student portal routes */}
-            <Route path="/student/dashboard" element={<StudentProtectedRoute><StudentDashboard /></StudentProtectedRoute>} />
-            <Route path="/student/test" element={<StudentProtectedRoute><StudentTest /></StudentProtectedRoute>} />
-            <Route path="/student/planning" element={<StudentProtectedRoute><StudentPlanning /></StudentProtectedRoute>} />
-            <Route path="/student/documents" element={<StudentProtectedRoute><StudentDocuments /></StudentProtectedRoute>} />
-            <Route path="/student/evaluation" element={<StudentProtectedRoute><StudentEvaluation /></StudentProtectedRoute>} />
+            <Route
+              path="/student/dashboard"
+              element={
+                <StudentProtectedRoute>
+                  <StudentOwnViewProvider>
+                    <StudentDashboard />
+                  </StudentOwnViewProvider>
+                </StudentProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/test"
+              element={
+                <StudentProtectedRoute>
+                  <StudentOwnViewProvider>
+                    <StudentTest />
+                  </StudentOwnViewProvider>
+                </StudentProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/planning"
+              element={
+                <StudentProtectedRoute>
+                  <StudentOwnViewProvider>
+                    <StudentPlanning />
+                  </StudentOwnViewProvider>
+                </StudentProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/documents"
+              element={
+                <StudentProtectedRoute>
+                  <StudentOwnViewProvider>
+                    <StudentDocuments />
+                  </StudentOwnViewProvider>
+                </StudentProtectedRoute>
+              }
+            />
+            <Route
+              path="/student/evaluation"
+              element={
+                <StudentProtectedRoute>
+                  <StudentOwnViewProvider>
+                    <StudentEvaluation />
+                  </StudentOwnViewProvider>
+                </StudentProtectedRoute>
+              }
+            />
+
+            {/* Mode Assister — mêmes pages /student/* sous bandeau admin */}
+            <Route
+              path="/portails/stagiaire/:studentId"
+              element={
+                <AssistStudentRoute>
+                  <StudentAssistViewProvider>
+                    <Outlet />
+                  </StudentAssistViewProvider>
+                </AssistStudentRoute>
+              }
+            >
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<StudentDashboard />} />
+              <Route path="test" element={<StudentTest />} />
+              <Route path="planning" element={<StudentPlanning />} />
+              <Route path="documents" element={<StudentDocuments />} />
+              <Route path="evaluation" element={<StudentEvaluation />} />
+            </Route>
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

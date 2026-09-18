@@ -104,6 +104,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
   const [failure, setFailure] = useState<RegistrationFailureNotice | null>(null);
   const [result, setResult] = useState<{
     inscriptionCode: string;
+    accessToken?: string | null;
     needsAdminCall: boolean;
     emailSent: boolean;
     documentsSent?: boolean;
@@ -192,6 +193,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
         console.error("Registration checkout error:", error);
         setResult({
           inscriptionCode: submission.inscriptionCode,
+          accessToken: submission.accessToken,
           needsAdminCall: submission.needsAdminCall,
           emailSent: submission.emailSent,
           documentsSent: submission.documentsSent,
@@ -207,6 +209,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
 
     setResult({
       inscriptionCode: submission.inscriptionCode,
+      accessToken: submission.accessToken,
       needsAdminCall: submission.needsAdminCall,
       emailSent: submission.emailSent,
       documentsSent: submission.documentsSent,
@@ -218,6 +221,11 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
   };
 
   if (result) {
+    const suiviUrl =
+      result.accessToken && typeof window !== "undefined"
+        ? `${window.location.origin}/suivi/${result.accessToken}`
+        : null;
+
     return (
       <Card>
         <CardContent className="pt-6">
@@ -234,10 +242,33 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                   ? " Un email de confirmation vous a été envoyé."
                   : " Notre équipe vous contactera prochainement."}
             </p>
-            <div className="pt-2">
+            <div className="pt-2 space-y-3">
               <Badge variant="outline" className="text-lg px-4 py-2">
                 Code : {result.inscriptionCode}
               </Badge>
+              {suiviUrl && (
+                <div className="rounded-lg border bg-muted/40 px-4 py-3 text-left max-w-md mx-auto space-y-2">
+                  <p className="text-sm font-medium">Votre lien de suivi</p>
+                  <p className="text-xs text-muted-foreground break-all">{suiviUrl}</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => copyToClipboard(suiviUrl)}
+                    >
+                      <Copy className="h-3.5 w-3.5 mr-1.5" />
+                      Copier
+                    </Button>
+                    <Button type="button" size="sm" variant="secondary" asChild>
+                      <a href={suiviUrl} target="_blank" rel="noreferrer">
+                        <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                        Ouvrir
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {result.checkoutFailure && (

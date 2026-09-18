@@ -4,9 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Mail, Link2, CreditCard, Copy, Check, Eye } from "lucide-react";
+import { Loader2, Mail, Link2, CreditCard, Copy, Check, Eye, RefreshCw } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CopyLinkRow } from "@/components/shared/CopyLinkRow";
 import {
   paymentMethodLabel,
@@ -16,10 +18,12 @@ import {
 import { useInscriptionClientAccess } from "@/hooks/useInscriptionClientAccess";
 import { useCreateSurveyForInscription } from "@/hooks/useSatisfactionSurvey";
 import {
+  buildInscriptionSuiviUrl,
   buildPublicRegistrationUrl,
-  buildStudentPortalPreviewUrl,
   buildSurveyUrl,
+  studentAssistPath,
 } from "@/lib/client-links";
+import { supabase } from "@/integrations/supabase/client";
 
 interface InscriptionClientAccessCardProps {
   inscriptionId: string;
@@ -48,12 +52,45 @@ export function InscriptionClientAccessCard({
   paymentMethod,
 }: InscriptionClientAccessCardProps) {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const queryClient = useQueryClient();
   const { data, isLoading, refetch } = useInscriptionClientAccess(inscriptionId);
   const createSurvey = useCreateSurveyForInscription();
   const [codeCopied, setCodeCopied] = useState(false);
 
+  const { data: accessToken, isLoading: tokenLoading } = useQuery({
+    queryKey: ["inscription-access-token", inscriptionId],
+    queryFn: async () => {
+      const { data: row, error } = await supabase
+        .from("inscriptions")
+        .select("access_token")
+        .eq("id", inscriptionId)
+        .maybeSingle();
+      if (error) throw error;
+      return (row as { access_token?: string } | null)?.access_token ?? null;
+    },
+  });
+
+  const regenerateToken = useMutation({
+    mutationFn: async () => {
+      const { data: token, error } = await supabase.rpc(
+        "regenerate_inscription_access_token",
+        { p_inscription_id: inscriptionId }
+      );
+      if (error) throw error;
+      return token as string;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["inscription-access-token", inscriptionId] });
+      toast.success("Lien de suivi renouvelé");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Impossible de renouveler le lien");
+    },
+  });
+
   const registrationUrl = buildPublicRegistrationUrl(origin, language);
-  const portalPreviewUrl = buildStudentPortalPreviewUrl(origin, studentId);
+  const assistUrl = `${origin}${studentAssistPath(studentId, "dashboard")}`;
+  const suiviUrl = accessToken ? buildInscriptionSuiviUrl(origin, accessToken) : null;
   const latestSurvey = data?.surveys[0];
 
   const handleCopyCode = async () => {
@@ -78,7 +115,7 @@ export function InscriptionClientAccessCard({
     }
   };
 
-  if (isLoading) {
+  if (isLoading || tokenLoading) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-10">
@@ -104,7 +141,7 @@ export function InscriptionClientAccessCard({
             <Link2 className="h-4 w-4" />
             Liens publics
           </CardTitle>
-          <CardDescription>Inscription, enquête et espace stagiaire</CardDescription>
+          <CardDescription>Suivi, inscription, enquête et espace stagiaire</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {inscriptionCode && (
@@ -130,12 +167,41 @@ export function InscriptionClientAccessCard({
             </div>
           )}
 
+          {suiviUrl ? (
+            <div className="space-y-2">
+              <CopyLinkRow
+                label="Lien de suivi"
+                description="Page publique sans login — statut, dates, documents, paiement"
+                url={suiviUrl}
+                badge="Client"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={regenerateToken.isPending}
+                onClick={() => regenerateToken.mutate()}
+              >
+                {regenerateToken.isPending ? (
+                  <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="mr-2 h-3.5 w-3.5" />
+                )}
+                Renouveler le lien
+              </Button>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Lien de suivi indisponible (jeton manquant).
+            </p>
+          )}
+
           <Alert className="border-amber-200 bg-amber-50 text-amber-950">
             <Eye className="h-4 w-4" />
-            <AlertTitle>Prévisualisation admin</AlertTitle>
+            <AlertTitle>Mode Assister (staff)</AlertTitle>
             <AlertDescription>
-              Le lien « Espace stagiaire » ci-dessous est réservé au staff. Ne
-              pas l&apos;envoyer au stagiaire : il n&apos;ouvre pas son portail.
+              « Voir comme le stagiaire » ouvre les vrais écrans du portail sous
+              bandeau ambre. Ne pas envoyer ce lien au client.
             </AlertDescription>
           </Alert>
 
@@ -184,9 +250,9 @@ export function InscriptionClientAccessCard({
           )}
 
           <CopyLinkRow
-            label="Espace stagiaire (prévisualisation admin)"
-            description="Voir ce que le stagiaire verra dans son portail — lecture seule"
-            url={portalPreviewUrl}
+            label="Assister stagiaire (staff)"
+            description="Vrais composants /student/* — lecture seule"
+            url={assistUrl}
             badge="Admin"
             badgeVariant="outline"
           />
@@ -269,10 +335,10 @@ export function InscriptionClientAccessCard({
 
       <div className="flex justify-end">
         <Button type="button" variant="ghost" size="sm" asChild>
-          <a href={portalPreviewUrl} target="_blank" rel="noreferrer">
+          <Link to={studentAssistPath(studentId, "dashboard")}>
             <Eye className="mr-2 h-4 w-4" />
-            Ouvrir la prévisualisation stagiaire
-          </a>
+            Voir comme le stagiaire
+          </Link>
         </Button>
       </div>
     </div>

@@ -20,7 +20,6 @@ import {
   Award,
   Mail,
   Clock,
-  PieChart,
   FileText,
 } from "lucide-react";
 import fliLogo from "@/assets/fli-marca-yellow.png";
@@ -53,6 +52,7 @@ interface NavItem {
   name: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  badge?: string;
 }
 
 interface NavSection {
@@ -62,9 +62,8 @@ interface NavSection {
 
 /**
  * Navigation produit — 2 niveaux (section fixe + liens).
- * Pas de sous-menus repliables : les anciennes sous-pages Finance /
- * Inscriptions sont des items frères. Documents et Sessions (coquilles)
- * restent hors menu jusqu'à implémentation réelle.
+ * Finance réduit à Factures · Paiements · Pilotage (sous-pages via onglets).
+ * Évaluations orales distinctes de Formateurs (CRM équipe).
  */
 const navigationSections: NavSection[] = [
   {
@@ -75,7 +74,7 @@ const navigationSections: NavSection[] = [
       { name: "Stagiaires", href: "/students", icon: Users },
       { name: "Formateurs", href: "/formateurs", icon: UserCog },
       { name: "Tests de niveau", href: "/tests", icon: GraduationCap },
-      { name: "Évaluations", href: "/formateur/evaluations", icon: ClipboardList },
+      { name: "Évaluations orales", href: "/formateur/evaluations", icon: ClipboardList },
     ],
   },
   {
@@ -83,7 +82,7 @@ const navigationSections: NavSection[] = [
     items: [
       { name: "Pipeline commercial", href: "/gestion/commercial", icon: TrendingUp },
       { name: "Partenaires", href: "/gestion/partenaires", icon: Briefcase },
-      { name: "Moniteurs de ski", href: "/gestion/moniteurs", icon: Users },
+      { name: "Moniteurs de ski", href: "/gestion/moniteurs", icon: Users, badge: "gelé" },
     ],
   },
   {
@@ -91,11 +90,7 @@ const navigationSections: NavSection[] = [
     items: [
       { name: "Factures", href: "/invoices", icon: Receipt },
       { name: "Paiements", href: "/finance/payments", icon: Wallet },
-      { name: "Vue d'ensemble", href: "/finance", icon: LayoutDashboard },
-      { name: "Analyses", href: "/finance/analyses", icon: BarChart3 },
-      { name: "Rentabilité", href: "/finance/rentabilite", icon: PieChart },
-      { name: "Trésorerie", href: "/finance/tresorerie", icon: TrendingUp },
-      { name: "Charges fixes", href: "/finance/charges-fixes", icon: Wallet },
+      { name: "Pilotage", href: "/finance", icon: LayoutDashboard },
     ],
   },
   {
@@ -135,6 +130,9 @@ function isItemActive(pathname: string, href: string): boolean {
   }
   if (href === "/gestion/partenaires") {
     return pathname === "/gestion/partenaires" || pathname.startsWith("/gestion/partenaires/");
+  }
+  if (href === "/finance") {
+    return pathname === "/finance";
   }
   if (href === "/formateur/evaluations") {
     return pathname.startsWith("/formateur/");
@@ -255,7 +253,12 @@ export function AppSidebar() {
                           >
                             <NavLink to={item.href}>
                               <item.icon className="h-4 w-4" />
-                              <span>{item.name}</span>
+                              <span className="flex-1">{item.name}</span>
+                              {item.badge && !isCollapsed && (
+                                <span className="ml-auto text-[10px] uppercase tracking-wide text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                                  {item.badge}
+                                </span>
+                              )}
                             </NavLink>
                           </SidebarMenuButton>
                         </TooltipTrigger>
