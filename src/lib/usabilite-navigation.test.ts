@@ -32,7 +32,7 @@ describe("usabilité — navigation et intégration", () => {
     const card = source("src/components/inscriptions/InscriptionClientAccessCard.tsx");
     expect(card).toContain("handleCopyCode");
     expect(card).toContain("Code d'inscription copié");
-    expect(card).toContain("Prévisualisation admin");
+    expect(card).toContain("Mode Assister");
   });
 
   it("corrige les SelectItem vides", () => {
