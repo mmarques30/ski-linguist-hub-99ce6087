@@ -18,6 +18,10 @@ describe("Vague A fin — Assister formateur, portail, pistes", () => {
     expect(source("src/pages/formateurs/InstructorDetails.tsx")).toContain(
       "Voir comme le formateur"
     );
+    // Garde SPA : attendre le rôle (isPending / roleResolved) avant redirect
+    expect(source("src/hooks/useUserPermissions.ts")).toContain("isPending");
+    expect(source("src/hooks/useUserPermissions.ts")).toContain("user-role-check");
+    expect(source("src/components/auth/AssistFormateurRoute.tsx")).toContain("roleResolved");
   });
 
   it("pilote le portail via app_settings", () => {
