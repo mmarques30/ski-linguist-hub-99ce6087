@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +39,7 @@ import { useInscriptions, useDeleteInscription } from "@/hooks/useInscriptions";
 import { DATES_A_PLANIFIER_LABEL } from "@/lib/registration-dates";
 import { DueStatusAdvanceCard } from "@/components/inscriptions/DueStatusAdvanceCard";
 import { InscriptionStatusMenu } from "@/components/inscriptions/InscriptionStatusMenu";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -217,7 +217,11 @@ const translations = {
 };
 
 export default function Inscriptions() {
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchParams] = useSearchParams();
+  const statusFromUrl = searchParams.get("status");
+  const [statusFilter, setStatusFilter] = useState(
+    () => statusFromUrl || "all"
+  );
   const [languageFilter, setLanguageFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [endPackInscription, setEndPackInscription] = useState<any>(null);
@@ -229,6 +233,10 @@ export default function Inscriptions() {
   const { canEdit } = useUserPermissions();
   const editable = canEdit("inscriptions");
   const deleteInscription = useDeleteInscription();
+
+  useEffect(() => {
+    if (statusFromUrl) setStatusFilter(statusFromUrl);
+  }, [statusFromUrl]);
 
   const { data: inscriptions, isLoading, error, refetch } = useInscriptions({
     status: statusFilter,

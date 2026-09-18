@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -20,6 +21,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useInscriptions } from "@/hooks/useInscriptions";
 import { useUpcomingTests } from "@/hooks/useUpcomingTests";
 import { useDashboardStats, useRevenueProjections } from "@/hooks/useDashboardStats";
+import { DashboardActionRail } from "@/components/dashboard/DashboardActionRail";
 import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
 
@@ -60,9 +62,14 @@ const translations = {
     en: "Next 7 days",
   },
   monthlyForecast: {
-    fr: "Prévision Mensuelle",
-    "pt-BR": "Previsão Mensal",
-    en: "Monthly Forecast",
+    fr: "CA facturé du mois",
+    "pt-BR": "Faturado no mês",
+    en: "Billed this month",
+  },
+  seeAll: {
+    fr: "Voir tout",
+    "pt-BR": "Ver tudo",
+    en: "See all",
   },
   activeClasses: {
     fr: "Formations Actives",
@@ -276,78 +283,95 @@ export function DashboardGestao() {
         </CardHeader>
       </Card>
 
-      {/* KPI Cards */}
+      {/* KPI Cards — cliquables */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t(translations.newInscriptions)}
-            </CardTitle>
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-              <UserPlus className="h-5 w-5 text-primary" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats?.newInscriptions.total || 0}</div>
-            <p className="text-sm text-muted-foreground">
-              {stats?.newInscriptions.confirmed || 0} {t(translations.confirmed)}
-            </p>
-          </CardContent>
-        </Card>
+        <Link to="/inscriptions" className="block transition-opacity hover:opacity-90">
+          <Card className="h-full cursor-pointer hover:border-primary/40">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {t(translations.newInscriptions)}
+              </CardTitle>
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                <UserPlus className="h-5 w-5 text-primary" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{stats?.newInscriptions.total || 0}</div>
+              <p className="text-sm text-muted-foreground">
+                {stats?.newInscriptions.confirmed || 0} {t(translations.confirmed)}
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t(translations.scheduledTests)}
-            </CardTitle>
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[hsl(var(--fli-blue)/0.1)]">
-              <GraduationCap className="h-5 w-5 text-[hsl(var(--fli-blue))]" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats?.upcomingTests.total || 0}</div>
-            <p className="text-sm text-muted-foreground">{t(translations.next7Days)}</p>
-          </CardContent>
-        </Card>
+        <button
+          type="button"
+          className="text-left block w-full transition-opacity hover:opacity-90"
+          onClick={() => setActiveTab("tests")}
+        >
+          <Card className="h-full cursor-pointer hover:border-primary/40">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {t(translations.scheduledTests)}
+              </CardTitle>
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[hsl(var(--fli-blue)/0.1)]">
+                <GraduationCap className="h-5 w-5 text-[hsl(var(--fli-blue))]" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{stats?.upcomingTests.total || 0}</div>
+              <p className="text-sm text-muted-foreground">{t(translations.next7Days)}</p>
+            </CardContent>
+          </Card>
+        </button>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t(translations.monthlyForecast)}
-            </CardTitle>
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[hsl(var(--fli-teal)/0.1)]">
-              <Euro className="h-5 w-5 text-[hsl(var(--fli-teal))]" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {formatCurrency(stats?.monthlyRevenue.projected || 0)}
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {formatCurrency(stats?.monthlyRevenue.confirmed || 0)} {t(translations.confirmed)}
-            </p>
-          </CardContent>
-        </Card>
+        <Link to="/invoices" className="block transition-opacity hover:opacity-90">
+          <Card className="h-full cursor-pointer hover:border-primary/40">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {t(translations.monthlyForecast)}
+              </CardTitle>
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[hsl(var(--fli-teal)/0.1)]">
+                <Euro className="h-5 w-5 text-[hsl(var(--fli-teal))]" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">
+                {formatCurrency(stats?.monthlyRevenue.projected || 0)}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {formatCurrency(stats?.monthlyRevenue.confirmed || 0)} {t(translations.confirmed)}
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t(translations.activeClasses)}
-            </CardTitle>
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[hsl(var(--fli-purple)/0.1)]">
-              <BookOpen className="h-5 w-5 text-[hsl(var(--fli-purple))]" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats?.activeClasses.total || 0}</div>
-            <p className="text-sm text-muted-foreground">
-              {(stats?.activeClasses.total || 0) === 0
-                ? t(translations.noActiveClasses)
-                : `${stats?.activeClasses.validated || 0} ${t(translations.confirmed_classes)}`}
-            </p>
-          </CardContent>
-        </Card>
+        <Link
+          to="/inscriptions?status=en_cours"
+          className="block transition-opacity hover:opacity-90"
+        >
+          <Card className="h-full cursor-pointer hover:border-primary/40">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {t(translations.activeClasses)}
+              </CardTitle>
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[hsl(var(--fli-purple)/0.1)]">
+                <BookOpen className="h-5 w-5 text-[hsl(var(--fli-purple))]" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{stats?.activeClasses.total || 0}</div>
+              <p className="text-sm text-muted-foreground">
+                {(stats?.activeClasses.total || 0) === 0
+                  ? t(translations.noActiveClasses)
+                  : `${stats?.activeClasses.validated || 0} ${t(translations.confirmed_classes)}`}
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
+
+      <DashboardActionRail />
 
       {/* Tabs Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -373,12 +397,20 @@ export function DashboardGestao() {
         {/* Inscriptions Tab */}
         <TabsContent value="inscriptions">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserPlus className="h-5 w-5 text-primary" />
-                {t(translations.recentInscriptions)}
-              </CardTitle>
-              <CardDescription>{t(translations.recentInscriptionsDesc)}</CardDescription>
+            <CardHeader className="flex flex-row items-start justify-between gap-2">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <UserPlus className="h-5 w-5 text-primary" />
+                  {t(translations.recentInscriptions)}
+                </CardTitle>
+                <CardDescription>{t(translations.recentInscriptionsDesc)}</CardDescription>
+              </div>
+              <Link
+                to="/inscriptions"
+                className="text-sm text-primary hover:underline shrink-0"
+              >
+                {t(translations.seeAll)}
+              </Link>
             </CardHeader>
             <CardContent>
               {loadingInscriptions ? (
@@ -390,8 +422,9 @@ export function DashboardGestao() {
               ) : (
                 <div className="space-y-4">
                   {recentInscriptions.map((inscription) => (
-                    <div
+                    <Link
                       key={inscription.id}
+                      to={`/inscriptions/${inscription.id}`}
                       className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
                     >
                       <div className="flex items-center gap-4">
@@ -422,7 +455,7 @@ export function DashboardGestao() {
                             : t(translations.statusPending)}
                         </Badge>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}

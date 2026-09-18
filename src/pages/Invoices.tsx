@@ -308,7 +308,9 @@ const statusStyles: Record<string, string> = {
 
 export default function Invoices() {
   const [searchParams] = useSearchParams();
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState(
+    () => searchParams.get("status") || "all"
+  );
   const [typeFilter, setTypeFilter] = useState("all");
   const [clientTypeFilter, setClientTypeFilter] = useState("all");
   const [periodFilter, setPeriodFilter] = useState("all");
@@ -324,6 +326,8 @@ export default function Invoices() {
   useEffect(() => {
     const q = searchParams.get("q");
     if (q) setSearch(q);
+    const status = searchParams.get("status");
+    if (status) setStatusFilter(status);
   }, [searchParams]);
 
   // Bornes d'exercice fiscal FLI (libellé AA-AA)
