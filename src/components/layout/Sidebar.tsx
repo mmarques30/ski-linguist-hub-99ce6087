@@ -131,6 +131,9 @@ function isItemActive(pathname: string, href: string): boolean {
   if (href === "/gestion/partenaires") {
     return pathname === "/gestion/partenaires" || pathname.startsWith("/gestion/partenaires/");
   }
+  if (href === "/finance") {
+    return pathname === "/finance";
+  }
   if (href === "/formateur/evaluations") {
     return pathname.startsWith("/formateur/");
   }
