@@ -399,7 +399,7 @@ Deno.serve(async (req) => {
         season_id: season?.id || null,
         status: "en_attente",
       })
-      .select("id, code")
+      .select("id, code, access_token")
       .single();
 
     if (inscriptionError) {
@@ -511,6 +511,13 @@ Deno.serve(async (req) => {
       }
 
       const studentName = `${registration.firstName} ${registration.lastName}`;
+      const appUrl = (Deno.env.get("APP_URL") || "https://ski-linguist-hub.lovable.app").replace(
+        /\/$/,
+        ""
+      );
+      const suiviUrl = inscription.access_token
+        ? `${appUrl}/suivi/${inscription.access_token}`
+        : "";
       const variables = {
         student_name: studentName,
         language,
@@ -530,6 +537,7 @@ Deno.serve(async (req) => {
         payment_label: registration.paymentOption
           ? paymentLabels[registration.paymentOption] || registration.paymentOption
           : "Devis à établir",
+        suivi_url: suiviUrl,
       };
 
       if (template) {
@@ -622,6 +630,7 @@ Deno.serve(async (req) => {
         data: {
           inscriptionId: inscription.id,
           inscriptionCode: inscription.code,
+          accessToken: inscription.access_token ?? null,
           studentId,
           needsAdminCall,
           emailSent,

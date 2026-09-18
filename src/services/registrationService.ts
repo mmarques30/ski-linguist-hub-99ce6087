@@ -6,6 +6,7 @@ import { messageFromFunctionsInvoke } from "@/lib/supabase-error";
 export interface RegistrationSubmissionResult {
   inscriptionId: string;
   inscriptionCode: string;
+  accessToken?: string | null;
   studentId: string;
   needsAdminCall: boolean;
   emailSent: boolean;

@@ -31,3 +31,24 @@ export function buildSurveyUrl(origin: string, token: string): string {
 export function buildStudentPortalPreviewUrl(origin: string, studentId: string): string {
   return `${origin.replace(/\/$/, "")}/students/${studentId}/portal-preview`;
 }
+
+/** Lien de suivi public (sans login) pour une inscription. */
+export function buildInscriptionSuiviUrl(origin: string, accessToken: string): string {
+  return `${origin.replace(/\/$/, "")}/suivi/${accessToken}`;
+}
+
+/** Mode Assister — vrais composants /student/* sous bandeau admin. */
+export function buildStudentAssistUrl(
+  origin: string,
+  studentId: string,
+  page: "dashboard" | "test" | "planning" | "documents" | "evaluation" = "dashboard"
+): string {
+  return `${origin.replace(/\/$/, "")}/portails/stagiaire/${studentId}/${page}`;
+}
+
+export function studentAssistPath(
+  studentId: string,
+  page: "dashboard" | "test" | "planning" | "documents" | "evaluation" = "dashboard"
+): string {
+  return `/portails/stagiaire/${studentId}/${page}`;
+}
