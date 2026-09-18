@@ -8,8 +8,9 @@ import { isFliPlaceholderEmail } from "../_shared/email-guards.ts";
 
 /**
  * Envoi de test des modèles actifs.
- * Body optionnel : { recipients?: string[], to?: string, slugs?: string[] }
- * Défaut : tous les modèles actifs vers info@fli.fr.
+ * Body optionnel :
+ *   { "slugs": ["…"], "recipients": ["a@b.c", …], "to": "…" }
+ * Sans recipients/to → info@fli.fr. Sans slugs → tous les actifs.
  * Sans RESEND_API_KEY : refuse proprement, n'appelle pas Resend.
  */
 const TEST_VARIABLES: Record<string, string> = {
@@ -44,9 +45,11 @@ const TEST_VARIABLES: Record<string, string> = {
   total_count: "3",
   days_before: "10",
   return_deadline: "10 octobre 2026",
-  payment_label: "Virement",
   suivi_url: "https://ski-linguist-hub.lovable.app/suivi/zztest-token-demo",
+  payment_label: "Virement",
 };
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -72,49 +75,53 @@ Deno.serve(async (req) => {
       );
     }
 
-    let slugs: string[] | null = null;
-    let recipients: string[] = [];
+    let requestedSlugs: string[] | null = null;
+    let recipients: string[] = [FLI_TEST_RECIPIENT];
     try {
       const raw = await req.text();
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed?.slugs)) {
-          const list = parsed.slugs.filter(
+      if (raw.trim()) {
+        const body = JSON.parse(raw);
+        if (Array.isArray(body?.slugs)) {
+          const list = body.slugs.filter(
             (s: unknown) => typeof s === "string" && s.trim().length > 0
-          );
-          if (list.length) slugs = list.map((s: string) => s.trim());
+          ) as string[];
+          if (list.length) requestedSlugs = list;
         }
-        if (Array.isArray(parsed?.recipients)) {
-          recipients = parsed.recipients
-            .filter((s: unknown) => typeof s === "string" && s.trim().length > 0)
-            .map((s: string) => s.trim());
-        } else if (typeof parsed?.to === "string" && parsed.to.trim()) {
-          recipients = [parsed.to.trim()];
+        const rawRecipients = Array.isArray(body?.recipients)
+          ? body.recipients
+          : typeof body?.to === "string"
+            ? [body.to]
+            : null;
+        if (rawRecipients) {
+          const cleaned = rawRecipients
+            .filter((s: unknown) => typeof s === "string")
+            .map((s: string) => s.trim().toLowerCase())
+            .filter((s: string) => EMAIL_RE.test(s) && !isFliPlaceholderEmail(s));
+          if (!cleaned.length) {
+            return new Response(
+              JSON.stringify({
+                success: false,
+                error: "Aucun destinataire valide dans recipients / to.",
+              }),
+              { status: 400, headers: { ...adminCorsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          recipients = [...new Set(cleaned)];
         }
       }
     } catch {
-      // body optionnel / invalide : valeurs par défaut
+      // body vide / invalide → défauts
     }
 
-    if (!recipients.length) recipients = [FLI_TEST_RECIPIENT];
-
-    const invalid = recipients.filter((r) => isFliPlaceholderEmail(r));
-    if (invalid.length) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: `Adresses non délivrables exclues : ${invalid.join(", ")}`,
-        }),
-        { status: 400, headers: { ...adminCorsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    let templatesQuery = adminClient
+    let query = adminClient
       .from("email_templates")
       .select("slug, subject_fr, body_fr")
-      .eq("is_active", true);
-    if (slugs) templatesQuery = templatesQuery.in("slug", slugs);
-    const { data: templates, error: tplError } = await templatesQuery.order("slug");
+      .eq("is_active", true)
+      .order("slug");
+    if (requestedSlugs?.length) {
+      query = query.in("slug", requestedSlugs);
+    }
+    const { data: templates, error: tplError } = await query;
     if (tplError) throw tplError;
 
     if (!templates?.length) {
@@ -129,27 +136,27 @@ Deno.serve(async (req) => {
 
     const results: Array<{
       slug: string;
-      recipient: string;
+      to: string;
       ok: boolean;
       error?: string;
       status?: number;
       skipped?: boolean;
     }> = [];
 
-    for (const recipient of recipients) {
+    for (const to of recipients) {
       for (const tpl of templates) {
         try {
           const subject = applyEmailTemplate(tpl.subject_fr ?? "", TEST_VARIABLES);
           const html = applyEmailTemplate(tpl.body_fr ?? "", TEST_VARIABLES);
           const send = await sendFliEmail({
             resendApiKey,
-            to: recipient,
+            to,
             subject: `[TEST] ${subject}`,
             html,
           });
           results.push({
             slug: tpl.slug,
-            recipient,
+            to,
             ok: send.ok,
             error: send.error,
             status: send.status,
@@ -157,7 +164,7 @@ Deno.serve(async (req) => {
           });
           await adminClient.from("email_log").insert({
             template_slug: tpl.slug,
-            recipient_email: recipient,
+            recipient_email: to,
             recipient_name: "TEST FLI",
             status: send.ok ? "sent" : "failed",
             error_message: send.error ?? null,
@@ -166,10 +173,10 @@ Deno.serve(async (req) => {
         } catch (renderError) {
           const message =
             renderError instanceof Error ? renderError.message : String(renderError);
-          results.push({ slug: tpl.slug, recipient, ok: false, error: message });
+          results.push({ slug: tpl.slug, to, ok: false, error: message });
           await adminClient.from("email_log").insert({
             template_slug: tpl.slug,
-            recipient_email: recipient,
+            recipient_email: to,
             recipient_name: "TEST FLI",
             status: "failed",
             error_message: message,
