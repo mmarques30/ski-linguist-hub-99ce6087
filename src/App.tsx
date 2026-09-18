@@ -29,6 +29,7 @@ import StudentDetails from "./pages/students/StudentDetails";
 import PlacementTests from "./pages/PlacementTests";
 import Sessions from "./pages/Sessions";
 import Documents from "./pages/Documents";
+import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
 import Import from "./pages/admin/Import";
 import ImportPhrases from "./pages/admin/ImportPhrases";
@@ -140,6 +141,7 @@ const App = () => (
             <Route path="/classes" element={<Navigate to="/formation/sessions" replace />} />
             <Route path="/formation/sessions" element={<ProtectedRoute><Sessions /></ProtectedRoute>} />
             <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
+            <Route path="/notifications" element={<ProtectedRoute routeKey="dashboard"><Notifications /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/admin/import" element={<ProtectedRoute><Import /></ProtectedRoute>} />
             <Route path="/admin/import-phrases" element={<ProtectedRoute><ImportPhrases /></ProtectedRoute>} />
