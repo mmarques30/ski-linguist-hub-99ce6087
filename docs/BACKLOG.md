@@ -2,7 +2,7 @@
 
 Règle : noter ici, **ne pas corriger** tant que le point courant n’est pas validé.
 
-Dernière mise à jour : 2026-09-15 (intégration du journal de recette, sessions 1 à 4 du 11 au 15/09).
+Dernière mise à jour : 2026-09-18 (plan produit UX A–D fusionné ; rattrapage validations points / BL vague 1).
 
 ## Conventions de lecture
 
@@ -45,7 +45,7 @@ corrigées, et `/register`, les emails et le portail par lien magique restent ho
 | 1.6 | Message d’échec en français, saisie conservée, consigne de contact | gênant | BL-025 |
 | 1.7 | Dates flexibles : ne plus hériter des dates de saison | gênant | BL-029 |
 
-1.3 attend la règle OPCO ; les six autres sont développables tout de suite. La connexion
+1.3 attend la règle OPCO (**seul reste ouvert de la vague 1**) ; 1.1–1.2 et 1.4–1.7 sont **fusionnés** (PR #44 / #45). La connexion
 (`/auth` en portugais) est déjà en français dans le dépôt : elle relève de la vague 0.
 
 ### Vague 2 — tableau de bord et données
@@ -61,9 +61,8 @@ corrigées, et `/register`, les emails et le portail par lien magique restent ho
 | 2.7 | Compteurs plafonnés à 1 000 et listes sans pagination | gênant | BL-037 |
 | 2.8 | `/finance` : objectifs de trimestre codés en dur | gênant | BL-039 |
 
-2.1 d’abord : tant que les accents sont faux en base, chaque convention et chaque
-certificat édité fige une faute sur un nom propre. 2.4 avant 2.2/2.3 si Paula veut remplir
-l’identité elle-même, puisque c’est aujourd’hui impossible.
+2.1 **clos** (PR #42). 2.4 **clos** (PR #44). 2.5 **partiel** (Vague B PR #63). 2.6 **clos** (PR #30/#43).
+2.2 / 2.3 / 2.7 / 2.8 restent ouverts.
 
 ### Vague 3 — reste bloquant et gênant
 
@@ -95,20 +94,20 @@ BL-022 : dette antérieure, non remontée par la recette.
 
 | ID | Écran / chemin | Constat | Gravité | État |
 |----|----------------|---------|---------|------|
-| BL-023 | `/register` étape 7 | La case « J’accepte les conditions générales » ne donne accès à aucun texte. Attendu : un lien vers les conditions générales de formation, ouvert dans un nouvel onglet, placé avant la case | bloquant | ouvert (`ConfirmationStep.tsx`) |
-| BL-024 | `/register` étape 6 | « 150 € en ligne (Stripe) + solde par chèque » est présélectionné alors que Stripe n’est pas validé (point 6). **Décision Paula : aucun moyen coché par défaut tant que le point 6 n’est pas validé.** À passer bloquant si Stripe n’est pas opérationnel au 1er octobre | gênant | ouvert (`PaymentStep.tsx`, présélection `STRIPE_DEPOSIT_CHEQUE`) |
-| BL-025 | `/register` étape 7 | En cas d’échec, le message brut de la fonction Edge est affiché tel quel, en anglais et sans consigne. Attendu : message en français, vouvoiement, saisie conservée, consigne (réessayer, `info@fli.fr`, 04 79 28 21 09) | gênant | ouvert (`ConfirmationStep.tsx` renvoie `error.message`) |
-| BL-026 | `/register` (résultat du test, récapitulatif) et espace stagiaire | Un·e stagiaire qui ne valide pas la piste verte lit « Piste atteinte : Vocabulaire ski » ou « Début de parcours ». Attendu : « Piste verte », même règle sur tous les écrans stagiaire | gênant | ouvert (`placement-test-engine.ts`) |
-| BL-027 | `/register` étapes 1 et 6 | « OPCO / FIFPL » est un choix unique qui applique toujours la règle FIFPL (150 € de frais de dossier + solde par chèque). **Décision Paula : deux choix distincts, la règle OPCO viendra d’elle** | gênant | ouvert (`registration-utils.ts`, `CourseSelectionStep.tsx`, `TrainingConfigStep.tsx`) |
-| BL-028 | `/register`, test de niveau | Le message sur l’attribution du groupe matin / après-midi s’affiche quelle que soit la modalité et nomme la directrice par son prénom. **Décision Paula : réservé aux groupes en station, signé « l’équipe FLI »** | gênant | ouvert (`PlacementTestStep.tsx`) |
-| BL-029 | `/register`, dates flexibles | `submit-registration` retombe sur les dates de la saison : une inscription sans dates hérite de dates fausses, ce qui fausse aussi le J-10. Attendu : exiger une date ou laisser « à planifier » | gênant | ouvert (`submit-registration/index.ts`) |
+| BL-023 | `/register` étape 7 | La case « J’accepte les conditions générales » ne donne accès à aucun texte. Attendu : un lien vers les conditions générales de formation, ouvert dans un nouvel onglet, placé avant la case | bloquant | **clos** — PR #44 ; page `/conditions-generales` |
+| BL-024 | `/register` étape 6 | « 150 € en ligne (Stripe) + solde par chèque » est présélectionné alors que Stripe n’est pas validé (point 6). **Décision Paula : aucun moyen coché par défaut tant que le point 6 n’est pas validé.** À passer bloquant si Stripe n’est pas opérationnel au 1er octobre | gênant | **clos** — PR #44 |
+| BL-025 | `/register` étape 7 | En cas d’échec, le message brut de la fonction Edge est affiché tel quel, en anglais et sans consigne. Attendu : message en français, vouvoiement, saisie conservée, consigne (réessayer, `info@fli.fr`, 04 79 28 21 09) | gênant | **clos** — PR #44 |
+| BL-026 | `/register` (résultat du test, récapitulatif) et espace stagiaire | Un·e stagiaire qui ne valide pas la piste verte lit « Piste atteinte : Vocabulaire ski » ou « Début de parcours ». Attendu : « Piste verte », même règle sur tous les écrans stagiaire | gênant | **clos** — PR #44 |
+| BL-027 | `/register` étapes 1 et 6 | « OPCO / FIFPL » est un choix unique qui applique toujours la règle FIFPL (150 € de frais de dossier + solde par chèque). **Décision Paula : deux choix distincts, la règle OPCO viendra d’elle** | gênant | ouvert (`registration-utils.ts`, `CourseSelectionStep.tsx`, `TrainingConfigStep.tsx`) — **hors vague 1**, attend règle Paula |
+| BL-028 | `/register`, test de niveau | Le message sur l’attribution du groupe matin / après-midi s’affiche quelle que soit la modalité et nomme la directrice par son prénom. **Décision Paula : réservé aux groupes en station, signé « l’équipe FLI »** | gênant | **clos** — PR #44 |
+| BL-029 | `/register`, dates flexibles | `submit-registration` retombe sur les dates de la saison : une inscription sans dates hérite de dates fausses, ce qui fausse aussi le J-10. Attendu : exiger une date ou laisser « à planifier » | gênant | **clos** — PR #45 |
 | BL-030 | `/register`, libellés | En-tête « pour moniteurs de ski » y compris pour « Autre profession », pas de point médian, bouton « Continuer vers la configuration de la formation » qui mène au test, « Piste verte: 3/5 », score affiché « 8/20 » puis « 3 bonnes réponses ». En-tête à valider par la direction | cosmétique | ouvert |
 | BL-031 | `/auth` | Page de connexion lue en portugais (« Painel Administrativo », « Senha », « Entrar ») | gênant | dépôt OK / à déployer — `AuthCard.tsx` et `Auth.tsx` sont en français, la langue par défaut est `fr` |
-| BL-032 | `/` (accueil) | KPI « Prévision Mensuelle » et « Prévision de Facturation » contraires à `SPEC_UI`. Les intitulés portugais relevés venaient du front publié : la langue par défaut est `fr` dans le dépôt | gênant | ouvert pour les KPI (`DashboardGestao.tsx`) ; traduction = vague 0 |
-| BL-033 | Données (lot d’import) | Accents perdus en Mac Roman : les octets `0x8D` / `0x8E` / `0x8F` sont restés tels quels au lieu de `ç` / `é` / `è`. *(live)* `inscriptions` 679 lignes sur 886, `students` 186 sur 664, `partners` 20 sur 1033, `ski_monitors` 1 sur 4047. Colonnes : `inscriptions.code` 577, `language` 261 (« Portugais brsilien » 216, « Nerlandais » 43), `course_address` 233, `course_location` 202, `expectations` 194, `rhythm` 124, `students.street_address` 85, `city` 56, `first_name` 45, `last_name` 33. `invoices` et `payments` (import du point 9) sont propres | gênant, **bloquant si des documents nominatifs sont générés** | ouvert |
+| BL-032 | `/` (accueil) | KPI « Prévision Mensuelle » et « Prévision de Facturation » contraires à `SPEC_UI`. Les intitulés portugais relevés venaient du front publié : la langue par défaut est `fr` dans le dépôt | gênant | **partiel** — Vague B (PR #63) : KPI mensuel = « CA facturé du mois » + rail « À traiter » ; reste l’onglet / carte « Prévision de Facturation » (`DashboardGestao.tsx`) |
+| BL-033 | Données (lot d’import) | Accents perdus en Mac Roman : les octets `0x8D` / `0x8E` / `0x8F` sont restés tels quels au lieu de `ç` / `é` / `è`. *(live)* `inscriptions` 679 lignes sur 886, `students` 186 sur 664, `partners` 20 sur 1033, `ski_monitors` 1 sur 4047. Colonnes : `inscriptions.code` 577, `language` 261 (« Portugais brsilien » 216, « Nerlandais » 43), `course_address` 233, `course_location` 202, `expectations` 194, `rhythm` 124, `students.street_address` 85, `city` 56, `first_name` 45, `last_name` 33. `invoices` et `payments` (import du point 9) sont propres | gênant, **bloquant si des documents nominatifs sont générés** | **clos** — PR #42 ; `docs/POINT_BL033_ACCENTS.md` |
 | BL-034 | `/admin/seasons` | *(live)* la saison courante « Saison 2026-2027 » va du 01/12/2026 au 31/03/2027. **Décision Paula : saison = exercice comptable, 01/07 → 30/06.** Le statut `en_cours` est déjà traduit dans le dépôt | gênant | ouvert (donnée à corriger) |
 | BL-035 | `/admin/users` | *(live)* le compte « Utilisateur Test » (`teste@fli.fr`) a les droits admin, donc l’accès à toutes les données personnelles. **Décision Paula : suppression** | gênant | ouvert |
-| BL-036 | `/settings` | L’identité de l’organisation est vide, et le bouton « Enregistrer les modifications » n’écrit rien : `handleSave` se limite à un `console.log` puis affiche « Modifications enregistrées ». **Paula veut la remplir elle-même : c’est aujourd’hui impossible, et le succès affiché est trompeur** | bloquant (proposé, écart nouveau) | ouvert (`Settings.tsx`) |
+| BL-036 | `/settings` | L’identité de l’organisation est vide, et le bouton « Enregistrer les modifications » n’écrit rien : `handleSave` se limite à un `console.log` puis affiche « Modifications enregistrées ». **Paula veut la remplir elle-même : c’est aujourd’hui impossible, et le succès affiché est trompeur** | bloquant (proposé, écart nouveau) | **clos** — PR #44 ; `OrganizationIdentityCard` → `app_settings.fli_identity` |
 | BL-037 | `/gestion/moniteurs`, `/gestion/partenaires` | Les compteurs affichent 1 000 parce que la requête lit des lignes au lieu de demander un comptage, et les listes sont plafonnées à 1 000. *(live)* 4 047 moniteurs, 1 033 partenaires. Attendu : comptage serveur et pagination | gênant | ouvert |
 | BL-038 | `/gestion/partenaires` | *(live)* 23 fiches nommées par une adresse email, 4 fiches « À l’attention de… », doublons entre une fiche « directeur / prospect » et la fiche « ESF … / actif » de la même école, 20 fiches à accents cassés (voir BL-033) | gênant | ouvert |
 | BL-039 | `/finance` | Objectifs de trimestre codés en dur (50 000 € de CA, 15 stagiaires, 60 %), jamais fournis par la direction. Attendu : les retirer, ou les rendre paramétrables et vides par défaut | gênant | ouvert (`FinanceDashboard.tsx`) |
@@ -129,11 +128,11 @@ BL-022 : dette antérieure, non remontée par la recette.
 | ID | Constat | Priorité |
 |----|---------|----------|
 | BL-001 | Cartes FLI import sans dry-run/audit alignés `/admin/import` | Avant point 9 |
-| BL-002 | Niveaux importés hors référentiel. *(live)* `inscriptions.entry_level` est propre (A1/A2/B1/B2 ou vide) ; il reste `placement_tests.determined_level` qui contient des réponses libres (« Je n’ai jamais été évalué(e) » 39, « Je ne connais pas mon niveau » 4, phrases libres 9) et 537 valeurs vides affichées « ? » sur `/tests` | SQL — vague 2 |
-| BL-007 | Crons `pg_net` | Point 8 |
+| BL-002 | Niveaux importés hors référentiel — **clos** PR #30 (entry_level) + #43 (`determined_level` CECRL) ; `docs/POINT_ENTRY_LEVEL.md` | SQL — vague 2 |
+| BL-007 | Crons `pg_net` — partiel point 8 ; producteurs notifs UX Vague D (`paiement`, `evaluation`) ; activation `keep_active` reste ouverte | Point 8 / UX D |
 | BL-008 | STRIPE_SETUP obsolète | Point 6 |
 | BL-009 | Docs « purger toutes les données » | Faible |
-| BL-010 | Phrases 321 vs 540 | Point 7 |
+| BL-010 | Phrases 321 vs 540 — point 7 fusionné | Point 7 |
 | BL-011 | `soustraitance` vs `sous_traitance` | Plus tard |
 | BL-014 | UI candidat → actif | Recrutement |
 | BL-015 | Backfill formateur CSV (si restes) | Avant rattachement |
@@ -174,6 +173,7 @@ BL-022 : dette antérieure, non remontée par la recette.
 
 | ID | Note |
 |----|------|
+| BL-002 | entry_level + determined_level CECRL — PR #30 / #43 |
 | BL-003 | Colonnes formateur — point 3 |
 | BL-004 | Exercice fiscal + numérotation — point 2 |
 | BL-005 | CECRL hors UI stagiaire (pistes) — point 4 |
@@ -181,6 +181,9 @@ BL-022 : dette antérieure, non remontée par la recette.
 | BL-018 | Mapping certificat→piste remplacé par bilan Entrée/Sortie |
 | BL-021 | Bucket `documents` privé — point A2, `docs/SECURITE_A2_BUCKET_DOCUMENTS.md` |
 | BL-006 | Outreach sans unsubscribe — traité par le gel, point 5, `docs/GEL_PROSPECTION_MONITEURS.md`. Condition de réouverture vérifiée à l'exécution. |
+| BL-023…026, 028, 036 | Vague 1 — PR #44 |
+| BL-029 | Dates flexibles — PR #45 |
+| BL-033 | Accents Mac Roman — PR #42 |
 
 ---
 
@@ -212,10 +215,22 @@ BL-022 : dette antérieure, non remontée par la recette.
 | A — `test_evaluations` + certificats | **Livré** — `docs/SECURITE_A_TEST_EVALUATIONS.md` |
 | A2 — buckets privés | **Livré** — `docs/SECURITE_A2_BUCKET_DOCUMENTS.md` |
 | 5 — Gel prospection moniteurs | Fusionné main (PR #18) — `docs/GEL_PROSPECTION_MONITEURS.md` ; fonction Edge à déployer |
-| 8-minimal emails | Fusionné main (PR #20) — attente `RESEND_API_KEY` + déploiement `send-test-email` — `docs/EMAILS_8_MINIMAL.md` |
+| 7 — Import phrases | Fusionné main — `docs/POINT_7_IMPORT_PHRASES.md` |
+| 8 / emails | Pack modèles + tests (PR #34, #49, #50, #62…) — `docs/POINT_8_EMAILS_COMPLET.md` / `EMAILS_8_MINIMAL.md` ; ops Resend selon déploiement |
+| 9 — Import facturation | Fusionné main (PR #38…) — `docs/POINT_9_IMPORT_HISTORIQUE.md` |
+| 10 — Cycle de vie inscription | Fusionné main (PR #37) ; front à déployer si retard (BL-046) |
 | Kit ZZTEST | Fusionné main (PR #21) |
-| C.1 — rôle formateur | Fusionné main (PR #22) — front SHA `9a14475` — `docs/POINT_C1_ROLE_FORMATEUR.md` |
-| C.2–C.6 | Non démarrés (attente validation écrite C.1) |
-| 9 — Import facturation | Fusionné main (PR #38, import CSV) ; liaison paiements + nettoyage ZZTEST sur PR #40 — `docs/POINT_9_IMPORT_HISTORIQUE.md` |
-| 10 — Cycle de vie inscription | Fusionné main (PR #37) ; front à déployer (BL-046) |
-| 6, 7 | Non démarrés. Confirmation email (lieu, modalité, piste, paiement) : texte au point 8 complet |
+| C.1 — rôle formateur | Fusionné main (PR #22) — `docs/POINT_C1_ROLE_FORMATEUR.md` |
+| C.2 — sponsor type | Fusionné main — `docs/POINT_C2_SPONSOR_TYPE.md` |
+| C.3 — saisie formateur | Fusionné main — `docs/POINT_C3_SAISIE_FORMATEUR.md` |
+| C.4 — vérification Paula | Fusionné main — `docs/POINT_C4_VERIFICATION.md` |
+| C.5 — PDF habillages | Fusionné main (PR #28) — `docs/POINT_C5_PDF_HABILLAGES.md` |
+| C.6 — export XLSX DSF | Fusionné main (PR #31) — `docs/POINT_C6_XLSX_DSF.md` |
+| Vague 1 register/settings (hors OPCO) | Fusionné main (PR #44) — BL-023…026, 028, 036 ; BL-029 = PR #45 ; BL-027 reste ouvert |
+| BL-033 accents | Fusionné main (PR #42) — `docs/POINT_BL033_ACCENTS.md` |
+| BL-002 niveaux | Fusionné main (PR #30, #43) |
+| **Plan produit UX — Vague A** | Fusionné main (PR #60, #61) — `/suivi/:token`, Assister stagiaire/formateur, portail via `app_settings`, `/tests` pistes |
+| **Plan produit UX — Vague B** | Fusionné main (PR #63) — checklist fiche, Financier paiements, rail « À traiter », `/student/test` |
+| **Plan produit UX — Vague C** | Fusionné main (PR #64) — sidebar Portails/Trésorerie, Pilotage, `canView` |
+| **Plan produit UX — Vague D** | Fusionné main (PR #65) — états vides, recherche globale, `/notifications`, pont éval↔stagiaire |
+| 6 — Stripe docs | Non démarré (hors emails déjà livrés) |
