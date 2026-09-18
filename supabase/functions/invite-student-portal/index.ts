@@ -202,6 +202,8 @@ Deno.serve(async (req) => {
           const variables = {
             student_name: studentName,
             magic_link: actionLink,
+            // Durée de validité des liens magiques Supabase (1 h par défaut).
+            link_expiry_label: "1 heure",
           };
           const subject = template
             ? applyEmailTemplate(template.subject_fr, variables)
