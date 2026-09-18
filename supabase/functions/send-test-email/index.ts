@@ -4,11 +4,13 @@ import {
   FLI_TEST_RECIPIENT,
   sendFliEmail,
 } from "../_shared/fli-email.ts";
+import { isFliPlaceholderEmail } from "../_shared/email-guards.ts";
 
 /**
- * Envoi de test de TOUS les modèles actifs vers info@fli.fr.
+ * Envoi de test des modèles actifs.
+ * Body optionnel : { recipients?: string[], to?: string, slugs?: string[] }
+ * Défaut : tous les modèles actifs vers info@fli.fr.
  * Sans RESEND_API_KEY : refuse proprement, n'appelle pas Resend.
- * Variables fictives ZZTEST — couvrent le set documenté (consignes 17/09/2026).
  */
 const TEST_VARIABLES: Record<string, string> = {
   student_name: "ZZTEST Camille Martin",
@@ -71,6 +73,7 @@ Deno.serve(async (req) => {
     }
 
     let slugs: string[] | null = null;
+    let recipients: string[] = [];
     try {
       const raw = await req.text();
       if (raw) {
@@ -79,11 +82,31 @@ Deno.serve(async (req) => {
           const list = parsed.slugs.filter(
             (s: unknown) => typeof s === "string" && s.trim().length > 0
           );
-          if (list.length) slugs = list;
+          if (list.length) slugs = list.map((s: string) => s.trim());
+        }
+        if (Array.isArray(parsed?.recipients)) {
+          recipients = parsed.recipients
+            .filter((s: unknown) => typeof s === "string" && s.trim().length > 0)
+            .map((s: string) => s.trim());
+        } else if (typeof parsed?.to === "string" && parsed.to.trim()) {
+          recipients = [parsed.to.trim()];
         }
       }
     } catch {
-      // body optionnel / invalide : on envoie tous les modèles actifs
+      // body optionnel / invalide : valeurs par défaut
+    }
+
+    if (!recipients.length) recipients = [FLI_TEST_RECIPIENT];
+
+    const invalid = recipients.filter((r) => isFliPlaceholderEmail(r));
+    if (invalid.length) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Adresses non délivrables exclues : ${invalid.join(", ")}`,
+        }),
+        { status: 400, headers: { ...adminCorsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     let templatesQuery = adminClient
@@ -106,49 +129,53 @@ Deno.serve(async (req) => {
 
     const results: Array<{
       slug: string;
+      recipient: string;
       ok: boolean;
       error?: string;
       status?: number;
       skipped?: boolean;
     }> = [];
 
-    for (const tpl of templates) {
-      try {
-        const subject = applyEmailTemplate(tpl.subject_fr ?? "", TEST_VARIABLES);
-        const html = applyEmailTemplate(tpl.body_fr ?? "", TEST_VARIABLES);
-        const send = await sendFliEmail({
-          resendApiKey,
-          to: FLI_TEST_RECIPIENT,
-          subject: `[TEST] ${subject}`,
-          html,
-        });
-        results.push({
-          slug: tpl.slug,
-          ok: send.ok,
-          error: send.error,
-          status: send.status,
-          skipped: send.skipped,
-        });
-        await adminClient.from("email_log").insert({
-          template_slug: tpl.slug,
-          recipient_email: FLI_TEST_RECIPIENT,
-          recipient_name: "TEST FLI",
-          status: send.ok ? "sent" : "failed",
-          error_message: send.error ?? null,
-          variables_used: { test: true, bulk_test: true, ...TEST_VARIABLES },
-        });
-      } catch (renderError) {
-        const message =
-          renderError instanceof Error ? renderError.message : String(renderError);
-        results.push({ slug: tpl.slug, ok: false, error: message });
-        await adminClient.from("email_log").insert({
-          template_slug: tpl.slug,
-          recipient_email: FLI_TEST_RECIPIENT,
-          recipient_name: "TEST FLI",
-          status: "failed",
-          error_message: message,
-          variables_used: { test: true, bulk_test: true },
-        });
+    for (const recipient of recipients) {
+      for (const tpl of templates) {
+        try {
+          const subject = applyEmailTemplate(tpl.subject_fr ?? "", TEST_VARIABLES);
+          const html = applyEmailTemplate(tpl.body_fr ?? "", TEST_VARIABLES);
+          const send = await sendFliEmail({
+            resendApiKey,
+            to: recipient,
+            subject: `[TEST] ${subject}`,
+            html,
+          });
+          results.push({
+            slug: tpl.slug,
+            recipient,
+            ok: send.ok,
+            error: send.error,
+            status: send.status,
+            skipped: send.skipped,
+          });
+          await adminClient.from("email_log").insert({
+            template_slug: tpl.slug,
+            recipient_email: recipient,
+            recipient_name: "TEST FLI",
+            status: send.ok ? "sent" : "failed",
+            error_message: send.error ?? null,
+            variables_used: { test: true, bulk_test: true, ...TEST_VARIABLES },
+          });
+        } catch (renderError) {
+          const message =
+            renderError instanceof Error ? renderError.message : String(renderError);
+          results.push({ slug: tpl.slug, recipient, ok: false, error: message });
+          await adminClient.from("email_log").insert({
+            template_slug: tpl.slug,
+            recipient_email: recipient,
+            recipient_name: "TEST FLI",
+            status: "failed",
+            error_message: message,
+            variables_used: { test: true, bulk_test: true },
+          });
+        }
       }
     }
 
@@ -158,7 +185,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: allOk,
         sent: allOk,
-        recipient: FLI_TEST_RECIPIENT,
+        recipients,
         total: results.length,
         ok: okCount,
         failed: results.length - okCount,
