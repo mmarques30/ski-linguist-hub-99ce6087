@@ -10,7 +10,7 @@ const FLI_PLACEHOLDER_DOMAINS = new Set([
   "fli.import",
 ]);
 
-/** Portail stagiaire hors périmètre de la saison en cours. */
+/** @deprecated Préférer `app_settings.student_portal_enabled` via useStudentPortalEnabled. */
 export const STUDENT_PORTAL_IN_SEASON_SCOPE = false;
 
 export const STUDENT_EMAIL_MISSING_LABEL = "Email manquant";

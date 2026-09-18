@@ -56,6 +56,8 @@ import {
   uniqueSorted,
   type EvaluationListFilters,
 } from "@/lib/dsf-evaluation-export";
+import { useFormateurView } from "@/contexts/FormateurViewContext";
+import { FormateurAssistBanner } from "@/components/formateur/FormateurAssistBanner";
 
 const ALL = "all";
 const PDF_SIGNED_TTL_SEC = 7 * 24 * 3600;
@@ -78,8 +80,9 @@ export default function EvaluationsList() {
   const [filters, setFilters] = useState<EvaluationListFilters>(emptyFilters);
   const [exporting, setExporting] = useState(false);
   const { canEdit, isFormateur, isAdmin } = useUserPermissions();
-  const editable = canEdit("evaluations");
-  const canExportDsf = !isFormateur;
+  const { basePath, isAssistMode } = useFormateurView();
+  const editable = canEdit("evaluations") && !isAssistMode;
+  const canExportDsf = !isFormateur && !isAssistMode;
 
   const { data: allCompleted, isLoading: pendingLoading, refetch: refetchPending } =
     useTestBookingsToEvaluate();
@@ -161,11 +164,14 @@ export default function EvaluationsList() {
   return (
     <MainLayout>
       <div className="space-y-6">
+        <FormateurAssistBanner />
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Évaluations</h1>
             <p className="text-muted-foreground">
-              Gérer les évaluations de tests
+              {isAssistMode
+                ? "Prévisualisation des évaluations de ce formateur"
+                : "Gérer les évaluations de tests"}
             </p>
           </div>
           <div className="flex gap-2">
@@ -473,8 +479,8 @@ export default function EvaluationsList() {
                                   onClick={() =>
                                     navigate(
                                       booking.evaluation_id
-                                        ? `/formateur/evaluation/${booking.id}/edit`
-                                        : `/formateur/evaluation/${booking.id}`
+                                        ? `${basePath}/evaluation/${booking.id}/edit`
+                                        : `${basePath}/evaluation/${booking.id}`
                                     )
                                   }
                                 >
@@ -588,7 +594,7 @@ export default function EvaluationsList() {
                                     size="sm"
                                     onClick={() =>
                                       navigate(
-                                        `/formateur/evaluations/${booking.evaluation_id}/verifier`
+                                        `${basePath}/evaluations/${booking.evaluation_id}/verifier`
                                       )
                                     }
                                   >
@@ -600,7 +606,7 @@ export default function EvaluationsList() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() =>
-                                  navigate(`/formateur/evaluation-view/${booking.evaluation_id}`)
+                                  navigate(`${basePath}/evaluation-view/${booking.evaluation_id}`)
                                 }
                               >
                                 <Eye className="h-4 w-4" />
@@ -610,7 +616,7 @@ export default function EvaluationsList() {
                                   size="sm"
                                   variant="outline"
                                   onClick={() =>
-                                    navigate(`/formateur/evaluation/${booking.id}/edit`)
+                                    navigate(`${basePath}/evaluation/${booking.id}/edit`)
                                   }
                                 >
                                   <Edit className="h-4 w-4" />

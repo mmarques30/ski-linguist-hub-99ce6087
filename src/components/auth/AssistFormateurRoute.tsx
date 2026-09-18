@@ -7,16 +7,14 @@ interface Props {
   children: React.ReactNode;
 }
 
-/**
- * Garde staff pour le mode Assister stagiaire.
- * Admin et users staff (rôle != student/formateur) peuvent ouvrir le portail.
- */
-export function AssistStudentRoute({ children }: Props) {
+/** Garde staff pour Assister formateur. */
+export function AssistFormateurRoute({ children }: Props) {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { isAdmin, isFormateur, role, loading: permsLoading } = useUserPermissions();
 
   const isStaff = isAdmin || (!!role && role !== "student" && !isFormateur);
+  // role === undefined ⇒ query pas encore résolue pour cet user (ne pas rediriger)
   const roleResolved = role !== undefined;
 
   useEffect(() => {

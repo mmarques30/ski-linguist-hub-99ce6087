@@ -52,3 +52,16 @@ export function studentAssistPath(
 ): string {
   return `/portails/stagiaire/${studentId}/${page}`;
 }
+
+/** Mode Assister formateur — évaluations orales filtrées. */
+export function formateurAssistPath(
+  instructorId: string,
+  page:
+    | "evaluations"
+    | `evaluation/${string}`
+    | `evaluation/${string}/edit`
+    | `evaluation-view/${string}`
+    | `evaluations/${string}/verifier` = "evaluations"
+): string {
+  return `/portails/formateur/${instructorId}/${page}`;
+}

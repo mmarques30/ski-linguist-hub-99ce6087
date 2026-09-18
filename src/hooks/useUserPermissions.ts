@@ -5,8 +5,9 @@ import { useAuth } from "@/hooks/useAuth";
 export function useUserPermissions() {
   const { user } = useAuth();
 
-  const { data: role, isLoading: roleLoading } = useQuery({
-    queryKey: ["user-role", user?.id],
+  // Même clé que ProtectedRoute pour partager le cache (évite course SPA Assister).
+  const { data: role, isPending: rolePending } = useQuery({
+    queryKey: ["user-role-check", user?.id],
     queryFn: async () => {
       if (!user) return null;
       const { data } = await supabase
@@ -23,7 +24,7 @@ export function useUserPermissions() {
   const isAdmin = role === "admin";
   const isFormateur = role === "formateur";
 
-  const { data: permissions = [], isLoading: permsLoading } = useQuery({
+  const { data: permissions = [], isPending: permsPending } = useQuery({
     queryKey: ["user-permissions", user?.id],
     queryFn: async () => {
       if (!user) return [];
@@ -54,7 +55,14 @@ export function useUserPermissions() {
     isFormateur,
     canView,
     canEdit,
-    loading: roleLoading || permsLoading,
+    // Sans user : ne pas bloquer (la garde auth gère). Avec user : attendre le rôle
+    // via isPending (v5) — isLoading est false sur query désactivée et faisait
+    // rediriger trop tôt les routes Assister en navigation SPA.
+    loading:
+      !!user &&
+      (rolePending ||
+        role === undefined ||
+        (permsPending && !isAdmin && !isFormateur && role != null)),
     role,
   };
 }

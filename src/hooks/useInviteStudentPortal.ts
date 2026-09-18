@@ -18,10 +18,12 @@ export function useInviteStudentPortal() {
       studentIds,
       sendEmail = true,
       confirmedCount,
+      inscriptionId,
     }: {
       studentIds: string[];
       sendEmail?: boolean;
       confirmedCount?: number;
+      inscriptionId?: string;
     }) => {
       if (!isMassSendConfirmed(studentIds.length, confirmedCount)) {
         throw new Error(
@@ -30,7 +32,7 @@ export function useInviteStudentPortal() {
       }
 
       const { data, error } = await supabase.functions.invoke("invite-student-portal", {
-        body: { studentIds, sendEmail, confirmedCount },
+        body: { studentIds, sendEmail, confirmedCount, inscriptionId },
       });
 
       if (error) {
@@ -51,6 +53,8 @@ export function useInviteStudentPortal() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["students"] });
       queryClient.invalidateQueries({ queryKey: ["student-details"] });
+      queryClient.invalidateQueries({ queryKey: ["portal-invite-log"] });
+      queryClient.invalidateQueries({ queryKey: ["portal-invite-candidates"] });
     },
   });
 }

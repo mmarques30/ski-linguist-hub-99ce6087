@@ -67,19 +67,17 @@ const translations = {
     en: "Average Score",
   },
   levelDistribution: {
-    fr: "Répartition par niveau",
-    "pt-BR": "Distribuição por nível",
-    en: "Level Distribution",
+    fr: "Répartition par piste",
+    "pt-BR": "Distribuição por pista",
+    en: "Distribution by slope",
   },
 };
 
 const levelColors: Record<string, string> = {
-  A1: "bg-red-100 text-red-800",
-  A2: "bg-orange-100 text-orange-800",
-  B1: "bg-yellow-100 text-yellow-800",
-  B2: "bg-emerald-100 text-emerald-800",
-  C1: "bg-blue-100 text-blue-800",
-  C2: "bg-purple-100 text-purple-800",
+  "Piste verte": "bg-emerald-100 text-emerald-800",
+  "Piste bleue": "bg-blue-100 text-blue-800",
+  "Piste rouge": "bg-red-100 text-red-800",
+  "Piste noire": "bg-zinc-800 text-zinc-50",
   [NIVEAU_NON_RENSEIGNE]: "bg-muted text-muted-foreground",
 };
 

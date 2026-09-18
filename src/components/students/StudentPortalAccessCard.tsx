@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,13 +10,18 @@ import { toast } from "sonner";
 import { CopyLinkRow } from "@/components/shared/CopyLinkRow";
 import { studentAssistPath } from "@/lib/client-links";
 import { useInviteStudentPortal } from "@/hooks/useInviteStudentPortal";
-import { isFliPlaceholderEmail, STUDENT_PORTAL_IN_SEASON_SCOPE } from "@/lib/email-guards";
+import { isFliPlaceholderEmail } from "@/lib/email-guards";
+import {
+  useStudentPortalEnabled,
+  useStudentPortalInviteLog,
+} from "@/hooks/useStudentPortalSettings";
 
 interface StudentPortalAccessCardProps {
   studentId: string;
   studentName: string;
   email?: string | null;
   authUserId?: string | null;
+  inscriptionId?: string | null;
 }
 
 export function StudentPortalAccessCard({
@@ -22,23 +29,26 @@ export function StudentPortalAccessCard({
   studentName,
   email,
   authUserId,
+  inscriptionId,
 }: StudentPortalAccessCardProps) {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const assistPath = studentAssistPath(studentId, "dashboard");
   const assistUrl = `${origin}${assistPath}`;
   const hasPortalAccount = Boolean(authUserId);
   const invitePortal = useInviteStudentPortal();
+  const { data: portalEnabled = false, isLoading: settingLoading } = useStudentPortalEnabled();
+  const { data: lastInvite } = useStudentPortalInviteLog(studentId);
 
   const canSendInvite =
-    STUDENT_PORTAL_IN_SEASON_SCOPE && Boolean(email) && !isFliPlaceholderEmail(email);
+    portalEnabled && Boolean(email) && !isFliPlaceholderEmail(email);
 
   const handleInvite = async () => {
     if (!email) {
       toast.error("Email manquant pour ce stagiaire");
       return;
     }
-    if (!STUDENT_PORTAL_IN_SEASON_SCOPE) {
-      toast.error("Le portail stagiaire est hors périmètre cette saison");
+    if (!portalEnabled) {
+      toast.error("Le portail stagiaire est désactivé (Paramètres)");
       return;
     }
     if (isFliPlaceholderEmail(email)) {
@@ -51,6 +61,7 @@ export function StudentPortalAccessCard({
         studentIds: [studentId],
         sendEmail: true,
         confirmedCount: 1,
+        inscriptionId: inscriptionId ?? undefined,
       });
       if (result.succeeded) {
         toast.success("Invitation portail envoyée par email");
@@ -83,7 +94,21 @@ export function StudentPortalAccessCard({
             {hasPortalAccount ? "Compte lié" : "Compte non créé"}
           </Badge>
           {email && <Badge variant="secondary">{email}</Badge>}
+          {!settingLoading && (
+            <Badge variant={portalEnabled ? "default" : "outline"}>
+              {portalEnabled ? "Invitations ouvertes" : "Invitations fermées"}
+            </Badge>
+          )}
         </div>
+
+        {lastInvite && (
+          <p className="text-sm text-muted-foreground">
+            Invité le{" "}
+            {format(new Date(lastInvite.sent_at), "dd MMM yyyy à HH:mm", { locale: fr })}
+            {" · "}
+            statut {lastInvite.status}
+          </p>
+        )}
 
         {!hasPortalAccount && canSendInvite && (
           <Alert>
@@ -107,6 +132,15 @@ export function StudentPortalAccessCard({
                 )}
                 Envoyer l&apos;invitation
               </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {!portalEnabled && !settingLoading && (
+          <Alert>
+            <AlertTitle>Portail hors saison</AlertTitle>
+            <AlertDescription>
+              Activez les invitations dans Paramètres → Portail stagiaire.
             </AlertDescription>
           </Alert>
         )}
