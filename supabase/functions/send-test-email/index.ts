@@ -43,6 +43,7 @@ const TEST_VARIABLES: Record<string, string> = {
   days_before: "10",
   return_deadline: "10 octobre 2026",
   payment_label: "Virement",
+  suivi_url: "https://ski-linguist-hub.lovable.app/suivi/zztest-token-demo",
 };
 
 Deno.serve(async (req) => {
