@@ -1,12 +1,32 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useStudentView } from "@/contexts/StudentViewContext";
 
+/**
+ * Profil stagiaire : session auth en mode own, ou studentId du contexte Assister.
+ */
 export function useStudentProfile() {
   const { user } = useAuth();
+  const { isAssistMode, studentId: assistStudentId } = useStudentView();
+
   return useQuery({
-    queryKey: ["student-profile", user?.id],
+    queryKey: [
+      "student-profile",
+      isAssistMode ? "assist" : "own",
+      isAssistMode ? assistStudentId : user?.id,
+    ],
     queryFn: async () => {
+      if (isAssistMode) {
+        if (!assistStudentId) return null;
+        const { data, error } = await supabase
+          .from("students")
+          .select("*")
+          .eq("id", assistStudentId)
+          .maybeSingle();
+        if (error) throw error;
+        return data;
+      }
       if (!user) return null;
       const { data, error } = await supabase
         .from("students")
@@ -16,7 +36,7 @@ export function useStudentProfile() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user,
+    enabled: isAssistMode ? Boolean(assistStudentId) : Boolean(user),
   });
 }
 
@@ -104,7 +124,6 @@ export function useStudentDocuments(studentId: string | undefined) {
     queryKey: ["student-documents", studentId],
     queryFn: async () => {
       if (!studentId) return [];
-      // Get inscriptions first to find their IDs
       const { data: inscriptions } = await supabase
         .from("inscriptions")
         .select("id, code")

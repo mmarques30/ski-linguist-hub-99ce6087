@@ -1040,6 +1040,7 @@ export type Database = {
           status_changed_at: string | null
           status_changed_by: string | null
           student_id: string
+          access_token: string
           updated_at: string
         }
         Insert: {
@@ -1082,6 +1083,7 @@ export type Database = {
           formateur_email?: string | null
           formateur_telephone?: string | null
           funding_details?: string | null
+          access_token?: string
           funding_organization?: string | null
           group_name?: string | null
           group_size?: number | null
@@ -1206,6 +1208,7 @@ export type Database = {
           status_changed_at?: string | null
           status_changed_by?: string | null
           student_id?: string
+          access_token?: string
           updated_at?: string
         }
         Relationships: [
@@ -3762,6 +3765,11 @@ export type Database = {
       }
       funding_object_is_linked: { Args: { _name: string }; Returns: boolean }
       generate_inscription_code: { Args: never; Returns: string }
+      get_inscription_suivi_by_token: { Args: { p_token: string }; Returns: Json }
+      regenerate_inscription_access_token: {
+        Args: { p_inscription_id: string }
+        Returns: string
+      }
       get_fiscal_year: { Args: { invoice_date: string }; Returns: string }
       get_instructor_contract_by_signature_token: {
         Args: { p_token: string }

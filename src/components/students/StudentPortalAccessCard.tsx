@@ -3,10 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Eye, UserCheck, UserX, ExternalLink, Mail, Loader2 } from "lucide-react";
+import { Eye, UserCheck, UserX, Mail, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { CopyLinkRow } from "@/components/shared/CopyLinkRow";
-import { buildStudentPortalPreviewUrl } from "@/lib/client-links";
+import { studentAssistPath } from "@/lib/client-links";
 import { useInviteStudentPortal } from "@/hooks/useInviteStudentPortal";
 import { isFliPlaceholderEmail, STUDENT_PORTAL_IN_SEASON_SCOPE } from "@/lib/email-guards";
 
@@ -24,7 +24,8 @@ export function StudentPortalAccessCard({
   authUserId,
 }: StudentPortalAccessCardProps) {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const previewUrl = buildStudentPortalPreviewUrl(origin, studentId);
+  const assistPath = studentAssistPath(studentId, "dashboard");
+  const assistUrl = `${origin}${assistPath}`;
   const hasPortalAccount = Boolean(authUserId);
   const invitePortal = useInviteStudentPortal();
 
@@ -128,28 +129,20 @@ export function StudentPortalAccessCard({
         )}
 
         <CopyLinkRow
-          label="Prévisualisation admin"
-          description="Voir le portail stagiaire en lecture seule"
-          url={previewUrl}
+          label="Mode Assister (staff)"
+          description="Vrais écrans du portail sous bandeau ambre"
+          url={assistUrl}
           badge="Admin"
           badgeVariant="outline"
         />
 
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="default" size="sm">
-            <Link to={`/students/${studentId}/portal-preview`}>
+            <Link to={assistPath}>
               <Eye className="mr-2 h-4 w-4" />
               Voir comme le stagiaire
             </Link>
           </Button>
-          {hasPortalAccount && (
-            <Button asChild variant="outline" size="sm">
-              <a href="/student/dashboard" target="_blank" rel="noreferrer">
-                <ExternalLink className="mr-2 h-4 w-4" />
-                Portail (compte lié)
-              </a>
-            </Button>
-          )}
         </div>
       </CardContent>
     </Card>
