@@ -70,11 +70,28 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { data: templates, error: tplError } = await adminClient
+    let slugs: string[] | null = null;
+    try {
+      const raw = await req.text();
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed?.slugs)) {
+          const list = parsed.slugs.filter(
+            (s: unknown) => typeof s === "string" && s.trim().length > 0
+          );
+          if (list.length) slugs = list;
+        }
+      }
+    } catch {
+      // body optionnel / invalide : on envoie tous les modèles actifs
+    }
+
+    let templatesQuery = adminClient
       .from("email_templates")
       .select("slug, subject_fr, body_fr")
-      .eq("is_active", true)
-      .order("slug");
+      .eq("is_active", true);
+    if (slugs) templatesQuery = templatesQuery.in("slug", slugs);
+    const { data: templates, error: tplError } = await templatesQuery.order("slug");
     if (tplError) throw tplError;
 
     if (!templates?.length) {
