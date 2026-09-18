@@ -2,17 +2,17 @@
 
 Analyse produit des parcours, menus, fiches et corrélations entre modules.
 Base initiale : `main` post-PR usabilité (#48), emails dossier (#55/#58), rôles test (#57).
-**Statut feuille de route : Vagues A–D fusionnées dans `main` (PR #60–#65), SHA `d1e8bd9`.**
+**Statut feuille de route : Vagues A–D + PLANO Onda D (D1–D4) fusionnés dans `main` (PR #60–#65, #67/#68), SHA `82ae4a1`.**
 
 Ce document **ne remplace pas** `BACKLOG.md` (points bloquants octobre). Il propose l’ordre produit après / en parallèle.
 
 ---
 
-## Verdict (après A–D)
+## Verdict (après A–D + Onda D)
 
-Accès client durable (`/suivi/:token`), modes **Assister** stagiaire/formateur, navigation Pilotage/`canView`, et robustesse UX (vides, search, notifs, pont éval) sont **dans le dépôt**.
+Accès client durable (`/suivi/:token`), modes **Assister** stagiaire/formateur, navigation Pilotage/`canView`, robustesse UX, et consolidation Onda D (finance, langues, saison, journal envois) sont **dans le dépôt**.
 
-Reste produit notable (hors backlog octobre) : consolidation Finance 6→3 (PLANO Onda D), taxonomie langues, filtre saison global, journal des envois, fin de « Prévision de Facturation » (BL-032), Documents réels.
+Reste produit notable (hors backlog octobre) : fin de « Prévision de Facturation » (BL-032), Documents réels, Onda D5–D8 (identité org sur docs, i18n chrome, import idempotent, CRM leads).
 
 ---
 
@@ -66,10 +66,17 @@ Sidebar 2 niveaux + Pilotage + Trésorerie + Portails + `canView`. Documents/Ses
 
 États vides honnêtes, recherche globale enrichie, notifications multi-types (`/notifications`), pont évaluation ↔ inscription / stagiaire.
 
+### PLANO Onda D — Consolidation (D1–D4) — **fait** (PR #67, hotfix #68)
+
+1. Finance : glossaire KPI, dépenses réelles, objectifs `revenue_target` (BL-039), anti double comptage trésorerie
+2. Taxonomie langues unique (`language-catalog`)
+3. Filtre saison global (`SeasonContext` + bornes dates ; défaut « toutes »)
+4. Journal des envois (`email_log` sur `/admin/emails`)
+
 ---
 
 ## Suite possible
 
-1. Docs backlog/état (ce refresh) puis déploiement front si BL-046
-2. PLANO Onda D : Finance consolidée, taxonomie, saison, journal envois
+1. Déploiement front si BL-046
+2. PLANO Onda D5–D8 (identité org, i18n chrome, import, CRM)
 3. BL octobre restants : OPCO (BL-027), saison comptable (BL-034), compte test (BL-035), pagination (BL-037)…

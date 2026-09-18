@@ -409,7 +409,7 @@ Remover "Prévision Mensuelle", aba "Facturation" e a checklist simulada (BL-032
 
 ### 9.8 Finance consolidado
 
-`/finance` com abas Vue d'ensemble · Analyses · Rentabilité, **um** seletor de período+temporada, **uma** definição de cada KPI (glossário), cards clicáveis, "Dépenses" real (`formation_costs` + `fixed_costs`), objetivos vindos de `seasons.revenue_target` (que hoje é gravado e não lido). Projeções por média móvel ficam em **uma** aba, rotuladas "Tendance (moyenne mobile 3 mois)".
+`/finance` com abas Vue d'ensemble · Analyses · Rentabilité, **um** seletor de período+temporada, **uma** definição de cada KPI (glossário), cards clicáveis, "Dépenses" real (`formation_costs` + `fixed_costs`), objetivos vindos de `seasons.revenue_target` (**lido** desde PR #67 ; `≤ 0` = não definido, PR #68). Projeções por média móvel ficam em **uma** aba, rotuladas "Tendance (moyenne mobile 3 mois)".
 
 ---
 
@@ -455,16 +455,16 @@ Esforço: **P** ≤ 1 dia · **M** 2–4 dias · **G** 1–2 semanas. IDs BL-* r
 
 ### Onda D — Consolidação
 
-| # | Item | Esforço |
-|---|---|---|
-| D1 | Finance 6 → 3 páginas com abas (§9.8); glossário de KPIs; "Dépenses" real; objetivos de `seasons.revenue_target` (BL-039); corrigir dupla contagem da tesouraria | G |
-| D2 | Taxonomia única de idiomas e modalidades em tabela referencial (ou `app_settings.taught_languages`, hoje gravado e não lido) consumida por register, inscrição, pricing, sessions, intakes, filtros | M |
-| D3 | Filtro de temporada global (contexto `SeasonContext`) em Inscriptions, Stagiaires, Facturation, Planning, Commercial | M |
-| D4 | Journal des envois (`email_log` global, por aluno/lead/parceiro, falhas); "Envoyer un test" de qualquer template em qualquer idioma | M |
-| D5 | Identidade da organização consumida por faturas e e-mails (promessa do card de Settings); upload de logo | P |
-| D6 | i18n do *chrome* (sidebar, header, breadcrumbs, auth) e das páginas 100 % em francês; hoje 34 de ~190 arquivos traduzidos | G |
-| D7 | Import: upsert idempotente por chave natural, export antes do purge, erros na tela (não no console), importadores de leads/parceiros/tarifs | M |
-| D8 | Comercial: `loss_reason`, `assigned_to`, `estimated_students` na conversão, datas do projeto, delete de lead, ligação Moniteurs ↔ `ski_monitors` | M |
+| # | Item | Esforço | Status |
+|---|---|---|---|
+| D1 | Finance 6 → 3 páginas com abas (§9.8); glossário de KPIs; "Dépenses" real; objetivos de `seasons.revenue_target` (BL-039); corrigir dupla contagem da tesouraria | G | **feito** PR #67/#68 |
+| D2 | Taxonomia única de idiomas e modalidades em tabela referencial (ou `app_settings.taught_languages`, hoje gravado e não lido) consumida por register, inscrição, pricing, sessions, intakes, filtros | M | **feito** PR #67 |
+| D3 | Filtro de temporada global (contexto `SeasonContext`) em Inscriptions, Stagiaires, Facturation, Planning, Commercial | M | **feito** PR #67/#68 (bornes datas + défaut « toutes ») |
+| D4 | Journal des envois (`email_log` global, por aluno/lead/parceiro, falhas); "Envoyer un test" de qualquer template em qualquer idioma | M | **feito** PR #67 (journal ; test multi-langue selon templates) |
+| D5 | Identidade da organização consumida por faturas e e-mails (promessa do card de Settings); upload de logo | P | aberto |
+| D6 | i18n do *chrome* (sidebar, header, breadcrumbs, auth) e das páginas 100 % em francês; hoje 34 de ~190 arquivos traduzidos | G | aberto |
+| D7 | Import: upsert idempotente por chave natural, export antes do purge, erros na tela (não no console), importadores de leads/parceiros/tarifs | M | aberto |
+| D8 | Comercial: `loss_reason`, `assigned_to`, `estimated_students` na conversão, datas do projeto, delete de lead, ligação Moniteurs ↔ `ski_monitors` | M | aberto |
 
 ---
 
