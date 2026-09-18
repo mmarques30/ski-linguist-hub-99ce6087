@@ -50,6 +50,7 @@ import ContinuousImprovement from "./pages/ContinuousImprovement";
 import SatisfactionStats from "./pages/SatisfactionStats";
 import PortalStudentPicker from "./pages/portails/PortalStudentPicker";
 import PortalFormateurPicker from "./pages/portails/PortalFormateurPicker";
+import FinanceDashboard from "./pages/finance/FinanceDashboard";
 import FinanceAnalyses from "./pages/finance/FinanceAnalyses";
 import FinanceRentabilite from "./pages/finance/FinanceRentabilite";
 import FinanceTresorerie from "./pages/finance/FinanceTresorerie";
