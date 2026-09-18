@@ -52,6 +52,14 @@ const MODALITY_MAP: Record<string, string> = {
   online_group: "en_ligne_groupe",
 };
 
+// Format du cours : sans lui, l'écran « Constitution des groupes » et les
+// rappels J-10 excluent les inscriptions venues du formulaire en ligne.
+const COURSE_TYPE_MAP: Record<string, string> = {
+  in_person: "Collectif",
+  online_group: "Collectif",
+  online_individual: "Individuel",
+};
+
 const FUNDING_MAP: Record<string, string> = {
   opco: "OPCO / FIFPL",
   company: "Entreprise",
@@ -360,6 +368,7 @@ Deno.serve(async (req) => {
         price,
         entry_level: registration.currentLevel || null,
         modality: MODALITY_MAP[registration.modality] || registration.modality,
+        course_type: COURSE_TYPE_MAP[registration.modality] || null,
         course_location: courseLocation,
         funding_organization: FUNDING_MAP[registration.fundingType] || registration.fundingType || null,
         certification_type: registration.certification || null,
