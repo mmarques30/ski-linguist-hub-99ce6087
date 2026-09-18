@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { routeKeyParent } from "@/lib/route-permissions";
 
 export function useUserPermissions() {
   const { user } = useAuth();
@@ -38,16 +39,32 @@ export function useUserPermissions() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const hasFlag = (routeKey: string, flag: "can_view" | "can_edit"): boolean => {
+    if (permissions.some((p) => p.route_key === routeKey && p[flag])) return true;
+    const parent = routeKeyParent(routeKey);
+    if (parent && permissions.some((p) => p.route_key === parent && p[flag])) {
+      return true;
+    }
+    return false;
+  };
+
   const canView = (routeKey: string): boolean => {
     if (isAdmin) return true;
-    if (isFormateur) return routeKey === "evaluations";
-    return permissions.some((p) => p.route_key === routeKey && p.can_view);
+    if (routeKey === "dashboard") return true;
+    if (isFormateur) {
+      return routeKey === "evaluations" || routeKey.startsWith("evaluations.");
+    }
+    if (routeKey === "admin") return false;
+    return hasFlag(routeKey, "can_view");
   };
 
   const canEdit = (routeKey: string): boolean => {
     if (isAdmin) return true;
-    if (isFormateur) return routeKey === "evaluations";
-    return permissions.some((p) => p.route_key === routeKey && p.can_edit);
+    if (isFormateur) {
+      return routeKey === "evaluations" || routeKey.startsWith("evaluations.");
+    }
+    if (routeKey === "admin" || routeKey === "dashboard") return false;
+    return hasFlag(routeKey, "can_edit");
   };
 
   return {
@@ -55,9 +72,6 @@ export function useUserPermissions() {
     isFormateur,
     canView,
     canEdit,
-    // Sans user : ne pas bloquer (la garde auth gère). Avec user : attendre le rôle
-    // via isPending (v5) — isLoading est false sur query désactivée et faisait
-    // rediriger trop tôt les routes Assister en navigation SPA.
     loading:
       !!user &&
       (rolePending ||

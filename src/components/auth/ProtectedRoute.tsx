@@ -1,32 +1,25 @@
 import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { resolveRouteKey, routeKeyLabel } from "@/lib/route-permissions";
+import { AccessDenied } from "@/components/auth/AccessDenied";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  /** Clé explicite ; sinon dérivée du pathname. */
+  routeKey?: string;
 }
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, routeKey: routeKeyProp }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
-  const { data: role, isLoading: roleLoading } = useQuery({
-    queryKey: ["user-role-check", user?.id],
-    queryFn: async () => {
-      if (!user) return null;
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      return data?.role ?? null;
-    },
-    enabled: !!user,
-    staleTime: 5 * 60 * 1000,
-  });
+  const {
+    canView,
+    loading: permsLoading,
+    role,
+  } = useUserPermissions();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -34,20 +27,24 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     }
   }, [user, loading, navigate]);
 
-  // Redirect students to their portal
   useEffect(() => {
-    if (!roleLoading && role === "student") {
+    if (!permsLoading && role === "student") {
       navigate("/student/dashboard", { replace: true });
     }
-  }, [role, roleLoading, navigate]);
+  }, [role, permsLoading, navigate]);
 
   useEffect(() => {
-    if (!roleLoading && role === "formateur" && !location.pathname.startsWith("/formateur")) {
+    if (
+      !permsLoading &&
+      role === "formateur" &&
+      !location.pathname.startsWith("/formateur") &&
+      !location.pathname.startsWith("/portails/formateur")
+    ) {
       navigate("/formateur/evaluations", { replace: true });
     }
-  }, [role, roleLoading, location.pathname, navigate]);
+  }, [role, permsLoading, location.pathname, navigate]);
 
-  if (loading || roleLoading) {
+  if (loading || (user && permsLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -62,8 +59,18 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return null;
   }
 
-  if (role === "formateur" && !location.pathname.startsWith("/formateur")) {
+  if (
+    role === "formateur" &&
+    !location.pathname.startsWith("/formateur") &&
+    !location.pathname.startsWith("/portails/formateur")
+  ) {
     return null;
+  }
+
+  const resolvedKey = routeKeyProp ?? resolveRouteKey(location.pathname);
+  // Clé présente → canView obligatoire (permissions = sécurité).
+  if (resolvedKey && !canView(resolvedKey)) {
+    return <AccessDenied routeLabel={routeKeyLabel(resolvedKey)} />;
   }
 
   return <>{children}</>;
