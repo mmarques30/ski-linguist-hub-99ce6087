@@ -10,11 +10,6 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CopyLinkRow } from "@/components/shared/CopyLinkRow";
-import {
-  paymentMethodLabel,
-  paymentStatusLabel,
-  paymentTypeLabel,
-} from "@/lib/payment-methods";
 import { useInscriptionClientAccess } from "@/hooks/useInscriptionClientAccess";
 import { useCreateSurveyForInscription } from "@/hooks/useSatisfactionSurvey";
 import {
@@ -263,34 +258,22 @@ export function InscriptionClientAccessCard({
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <CreditCard className="h-4 w-4" />
-            Paiement & statut
+            Statut &amp; mode de paiement
           </CardTitle>
+          <CardDescription>
+            Les paiements et relances sont gérés dans l&apos;onglet Financier.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-2">
             {status && <Badge variant="outline">Statut : {status}</Badge>}
             {paymentMethod && <Badge variant="outline">Mode : {paymentMethod}</Badge>}
           </div>
-          {!data?.payments.length ? (
-            <p className="text-sm text-muted-foreground">Aucun paiement enregistré pour cette inscription.</p>
-          ) : (
-            <div className="space-y-2">
-              {data.payments.map((payment) => (
-                <div key={payment.id} className="rounded-lg border px-4 py-3 text-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-medium">{payment.amount} €</span>
-                    <Badge variant="secondary">{paymentStatusLabel(payment.status)}</Badge>
-                  </div>
-                  <p className="text-muted-foreground mt-1">
-                    {paymentMethodLabel(payment.payment_method)} · {paymentTypeLabel(payment.payment_type)}
-                    {payment.payment_date
-                      ? ` · ${format(new Date(payment.payment_date), "dd/MM/yyyy")}`
-                      : ""}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
+          <Button type="button" variant="outline" size="sm" asChild>
+            <Link to={`/inscriptions/${inscriptionId}?tab=financial`}>
+              Voir paiements &amp; relances
+            </Link>
+          </Button>
         </CardContent>
       </Card>
 

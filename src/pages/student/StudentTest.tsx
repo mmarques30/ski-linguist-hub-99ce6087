@@ -1,7 +1,6 @@
 import { StudentLayout } from "@/components/layout/StudentLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ClipboardList, CheckCircle, Clock } from "lucide-react";
 import { useStudentProfile, useStudentTests } from "@/hooks/useStudentPortal";
 import { format } from "date-fns";
@@ -10,6 +9,10 @@ import {
   studentFacingPisteFromCecrl,
 } from "@/lib/placement-test-engine";
 
+/**
+ * Résultats du test de niveau — le passage du test se fait à l'inscription
+ * publique (/register), pas depuis le portail (Vague B : pas de CTA mort).
+ */
 export default function StudentTest() {
   const { data: student } = useStudentProfile();
   const { data: tests, isLoading } = useStudentTests(student?.id);
@@ -27,7 +30,8 @@ export default function StudentTest() {
         <div>
           <h1 className="text-2xl font-bold">Test de niveau</h1>
           <p className="text-muted-foreground text-sm">
-            Passez votre test de niveau pour déterminer votre profil linguistique
+            Consultez ici le résultat de votre test. Le passage se fait lors de
+            l&apos;inscription en ligne.
           </p>
         </div>
 
@@ -37,7 +41,6 @@ export default function StudentTest() {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Pending tests */}
             {pendingTests.length > 0 && (
               <Card>
                 <CardHeader className="pb-3">
@@ -57,6 +60,10 @@ export default function StudentTest() {
                         <p className="text-xs text-muted-foreground">
                           Commencé le {format(new Date(t.created_at), "dd/MM/yyyy")}
                         </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Reprenez le test via le lien d&apos;inscription reçu
+                          par e-mail, ou contactez FLI.
+                        </p>
                       </div>
                       <Badge variant="outline">En cours</Badge>
                     </div>
@@ -65,7 +72,6 @@ export default function StudentTest() {
               </Card>
             )}
 
-            {/* Completed tests */}
             {completedTests.length > 0 && (
               <Card>
                 <CardHeader className="pb-3">
@@ -101,15 +107,15 @@ export default function StudentTest() {
               </Card>
             )}
 
-            {/* No tests at all */}
             {tests?.length === 0 && (
               <Card>
                 <CardContent className="py-12 text-center">
                   <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="font-semibold mb-2">Aucun test disponible</h3>
+                  <h3 className="font-semibold mb-2">Aucun résultat pour l&apos;instant</h3>
                   <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                    Votre test de niveau sera disponible une fois votre inscription
-                    confirmée. Vous recevrez une notification par email.
+                    Le test de niveau se passe lors de l&apos;inscription
+                    publique. Une fois complété, votre piste apparaîtra ici.
+                    Contactez FLI si vous devez le (re)passer.
                   </p>
                 </CardContent>
               </Card>
