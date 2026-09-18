@@ -4,11 +4,13 @@ import {
   FLI_TEST_RECIPIENT,
   sendFliEmail,
 } from "../_shared/fli-email.ts";
+import { isFliPlaceholderEmail } from "../_shared/email-guards.ts";
 
 /**
- * Envoi de test de TOUS les modèles actifs vers info@fli.fr.
- * Sans RESEND_API_KEY : refuse proprement, n'appelle pas Resend.
- * Variables fictives ZZTEST — couvrent le set documenté (consignes 17/09/2026).
+ * Envoi de test des modèles actifs.
+ * Body optionnel :
+ *   { "slugs": ["…"], "recipients": ["a@b.c", …] }
+ * Sans recipients → info@fli.fr. Sans slugs → tous les actifs.
  */
 const TEST_VARIABLES: Record<string, string> = {
   student_name: "ZZTEST Camille Martin",
@@ -42,11 +44,11 @@ const TEST_VARIABLES: Record<string, string> = {
   total_count: "3",
   days_before: "10",
   return_deadline: "10 octobre 2026",
-  // Vague A — lien de suivi public
   suivi_url: "https://ski-linguist-hub.lovable.app/suivi/zztest-token-demo",
-  // Anciens modèles 8-minimal
   payment_label: "Virement",
 };
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -73,13 +75,41 @@ Deno.serve(async (req) => {
     }
 
     let requestedSlugs: string[] | null = null;
+    let recipients: string[] = [FLI_TEST_RECIPIENT];
     try {
-      const body = await req.json();
-      if (Array.isArray(body?.slugs) && body.slugs.every((s: unknown) => typeof s === "string")) {
-        requestedSlugs = body.slugs as string[];
+      const raw = await req.text();
+      if (raw.trim()) {
+        const body = JSON.parse(raw);
+        if (Array.isArray(body?.slugs)) {
+          const list = body.slugs.filter(
+            (s: unknown) => typeof s === "string" && s.trim().length > 0
+          ) as string[];
+          if (list.length) requestedSlugs = list;
+        }
+        const rawRecipients = Array.isArray(body?.recipients)
+          ? body.recipients
+          : typeof body?.to === "string"
+            ? [body.to]
+            : null;
+        if (rawRecipients) {
+          const cleaned = rawRecipients
+            .filter((s: unknown) => typeof s === "string")
+            .map((s: string) => s.trim().toLowerCase())
+            .filter((s: string) => EMAIL_RE.test(s) && !isFliPlaceholderEmail(s));
+          if (!cleaned.length) {
+            return new Response(
+              JSON.stringify({
+                success: false,
+                error: "Aucun destinataire valide dans recipients / to.",
+              }),
+              { status: 400, headers: { ...adminCorsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          recipients = [...new Set(cleaned)];
+        }
       }
     } catch {
-      // body vide / non JSON → tous les modèles actifs
+      // body vide / invalide → défauts
     }
 
     let query = adminClient
@@ -105,49 +135,53 @@ Deno.serve(async (req) => {
 
     const results: Array<{
       slug: string;
+      to: string;
       ok: boolean;
       error?: string;
       status?: number;
       skipped?: boolean;
     }> = [];
 
-    for (const tpl of templates) {
-      try {
-        const subject = applyEmailTemplate(tpl.subject_fr ?? "", TEST_VARIABLES);
-        const html = applyEmailTemplate(tpl.body_fr ?? "", TEST_VARIABLES);
-        const send = await sendFliEmail({
-          resendApiKey,
-          to: FLI_TEST_RECIPIENT,
-          subject: `[TEST] ${subject}`,
-          html,
-        });
-        results.push({
-          slug: tpl.slug,
-          ok: send.ok,
-          error: send.error,
-          status: send.status,
-          skipped: send.skipped,
-        });
-        await adminClient.from("email_log").insert({
-          template_slug: tpl.slug,
-          recipient_email: FLI_TEST_RECIPIENT,
-          recipient_name: "TEST FLI",
-          status: send.ok ? "sent" : "failed",
-          error_message: send.error ?? null,
-          variables_used: { test: true, bulk_test: true, ...TEST_VARIABLES },
-        });
-      } catch (renderError) {
-        const message =
-          renderError instanceof Error ? renderError.message : String(renderError);
-        results.push({ slug: tpl.slug, ok: false, error: message });
-        await adminClient.from("email_log").insert({
-          template_slug: tpl.slug,
-          recipient_email: FLI_TEST_RECIPIENT,
-          recipient_name: "TEST FLI",
-          status: "failed",
-          error_message: message,
-          variables_used: { test: true, bulk_test: true },
-        });
+    for (const to of recipients) {
+      for (const tpl of templates) {
+        try {
+          const subject = applyEmailTemplate(tpl.subject_fr ?? "", TEST_VARIABLES);
+          const html = applyEmailTemplate(tpl.body_fr ?? "", TEST_VARIABLES);
+          const send = await sendFliEmail({
+            resendApiKey,
+            to,
+            subject: `[TEST] ${subject}`,
+            html,
+          });
+          results.push({
+            slug: tpl.slug,
+            to,
+            ok: send.ok,
+            error: send.error,
+            status: send.status,
+            skipped: send.skipped,
+          });
+          await adminClient.from("email_log").insert({
+            template_slug: tpl.slug,
+            recipient_email: to,
+            recipient_name: "TEST FLI",
+            status: send.ok ? "sent" : "failed",
+            error_message: send.error ?? null,
+            variables_used: { test: true, bulk_test: true, ...TEST_VARIABLES },
+          });
+        } catch (renderError) {
+          const message =
+            renderError instanceof Error ? renderError.message : String(renderError);
+          results.push({ slug: tpl.slug, to, ok: false, error: message });
+          await adminClient.from("email_log").insert({
+            template_slug: tpl.slug,
+            recipient_email: to,
+            recipient_name: "TEST FLI",
+            status: "failed",
+            error_message: message,
+            variables_used: { test: true, bulk_test: true },
+          });
+        }
       }
     }
 
@@ -157,7 +191,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: allOk,
         sent: allOk,
-        recipient: FLI_TEST_RECIPIENT,
+        recipients,
         total: results.length,
         ok: okCount,
         failed: results.length - okCount,
