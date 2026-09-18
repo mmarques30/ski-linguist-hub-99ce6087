@@ -11,6 +11,7 @@ import { PeriodSelector } from "@/components/finance/PeriodSelector";
 import { SeasonSelector } from "@/components/finance/SeasonSelector";
 import { FinanceKPICard } from "@/components/finance/FinanceKPICard";
 import { InstructorPaymentDialog } from "@/components/finance/InstructorPaymentDialog";
+import { PilotageSubnav } from "@/components/finance/PilotageSubnav";
 import { useCurrentSeason } from "@/hooks/useSeasons";
 import { cn } from "@/lib/utils";
 import { 
@@ -34,14 +35,6 @@ const BRAND_NAVY = 'hsl(219, 52%, 16%)';
 const BRAND_GRAY = 'hsl(0, 0%, 90%)';
 const BRAND_BLACK = 'hsl(0, 0%, 9%)';
 const CHART_COLORS = [BRAND_GOLD, BRAND_NAVY, BRAND_GRAY, BRAND_BLACK];
-
-const PILOTAGE_TABS = [
-  { id: "overview", label: "Vue d'ensemble", href: "/finance" },
-  { id: "analyses", label: "Analyses", href: "/finance/analyses" },
-  { id: "rentabilite", label: "Rentabilité", href: "/finance/rentabilite" },
-  { id: "tresorerie", label: "Trésorerie", href: "/finance/tresorerie" },
-  { id: "charges", label: "Charges fixes", href: "/finance/charges-fixes" },
-] as const;
 
 const translations = {
   revenueVsExpenses: { fr: 'Recettes vs Dépenses', 'pt-BR': 'Receitas vs Despesas', en: 'Revenue vs Expenses' },
@@ -136,29 +129,11 @@ export default function FinanceDashboard() {
         <div>
           <h1 className="text-2xl font-bold">Pilotage financier</h1>
           <p className="text-muted-foreground">
-            Vue d&apos;ensemble et analyses — Factures et Paiements restent des menus séparés
+            Vue d&apos;ensemble, analyses et rentabilité — Factures, Paiements et Trésorerie ont leurs menus
           </p>
         </div>
 
-        <nav className="flex flex-wrap gap-1 border-b pb-px" aria-label="Sous-pages pilotage">
-          {PILOTAGE_TABS.map((tab) => {
-            const active = tab.href === "/finance";
-            return (
-              <Link
-                key={tab.id}
-                to={tab.href}
-                className={cn(
-                  "px-3 py-2 text-sm rounded-t-md border-b-2 -mb-px transition-colors",
-                  active
-                    ? "border-primary text-foreground font-medium"
-                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30"
-                )}
-              >
-                {tab.label}
-              </Link>
-            );
-          })}
-        </nav>
+        <PilotageSubnav />
 
         <div className="flex flex-wrap items-center gap-4">
           <PeriodSelector

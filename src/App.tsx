@@ -48,7 +48,8 @@ import { PaymentSuccessPage, PaymentCancelPage } from "./pages/register/PaymentR
 import SatisfactionSurvey from "./pages/survey/SatisfactionSurvey";
 import ContinuousImprovement from "./pages/ContinuousImprovement";
 import SatisfactionStats from "./pages/SatisfactionStats";
-import FinanceDashboard from "./pages/finance/FinanceDashboard";
+import PortalStudentPicker from "./pages/portails/PortalStudentPicker";
+import PortalFormateurPicker from "./pages/portails/PortalFormateurPicker";
 import FinanceAnalyses from "./pages/finance/FinanceAnalyses";
 import FinanceRentabilite from "./pages/finance/FinanceRentabilite";
 import FinanceTresorerie from "./pages/finance/FinanceTresorerie";
@@ -257,6 +258,10 @@ const App = () => (
 
             {/* Mode Assister — mêmes pages /student/* sous bandeau admin */}
             <Route
+              path="/portails/stagiaire"
+              element={<ProtectedRoute routeKey="portails.stagiaire"><PortalStudentPicker /></ProtectedRoute>}
+            />
+            <Route
               path="/portails/stagiaire/:studentId"
               element={
                 <AssistStudentRoute>
@@ -275,6 +280,10 @@ const App = () => (
             </Route>
 
             {/* Mode Assister formateur — évaluations filtrées */}
+            <Route
+              path="/portails/formateur"
+              element={<ProtectedRoute routeKey="portails.formateur"><PortalFormateurPicker /></ProtectedRoute>}
+            />
             <Route
               path="/portails/formateur/:instructorId"
               element={

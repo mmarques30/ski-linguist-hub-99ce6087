@@ -20,6 +20,7 @@ import { format, startOfMonth, subMonths, isBefore } from "date-fns";
 import { fr } from "date-fns/locale";
 import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { TresorerieSubnav } from "@/components/finance/PilotageSubnav";
 
 const BRAND_GOLD = 'hsl(40, 97%, 54%)';
 const BRAND_NAVY = 'hsl(219, 52%, 16%)';
@@ -178,13 +179,19 @@ export default function FinanceChargesFixes() {
   return (
     <MainLayout>
       <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">Trésorerie &amp; charges</h1>
+          <p className="text-muted-foreground">
+            Gestion des charges récurrentes mensuelles
+          </p>
+        </div>
+
+        <TresorerieSubnav activeTab="charges" />
+
         {/* Header with global month filter */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold">Charges Fixes</h1>
-            <p className="text-muted-foreground">
-              Gestion des charges récurrentes mensuelles
-            </p>
+            <h2 className="text-lg font-semibold">Charges du mois</h2>
           </div>
           <select
             value={selectedMonth}

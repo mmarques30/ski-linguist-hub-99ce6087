@@ -4,18 +4,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { FinanceKPICard } from "@/components/finance/FinanceKPICard";
+import {
+  TresorerieSubnav,
+  useTresorerieTab,
+} from "@/components/finance/PilotageSubnav";
 import { useTresoreriePrevisionnelle } from "@/hooks/useFinancialDashboard";
 import { AlertTriangle, Wallet, ArrowUpRight, ArrowDownRight, Scale } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart,
 } from "recharts";
+import { Navigate } from "react-router-dom";
 
 const BRAND_GOLD = 'hsl(40, 97%, 54%)';
 const BRAND_NAVY = 'hsl(219, 52%, 16%)';
 
 export default function FinanceTresorerie() {
+  const tab = useTresorerieTab();
   const { data: tresorerie, isLoading } = useTresoreriePrevisionnelle(6);
+
+  if (tab === "charges") {
+    return <Navigate to="/finance/charges-fixes" replace />;
+  }
 
   const formatPrice = (value: number) => {
     return new Intl.NumberFormat('fr-FR', {
@@ -56,11 +66,13 @@ export default function FinanceTresorerie() {
     <MainLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">Trésorerie Prévisionnelle</h1>
+          <h1 className="text-2xl font-bold">Trésorerie &amp; charges</h1>
           <p className="text-muted-foreground">
-            Projection des flux de trésorerie sur les 6 prochains mois
+            Projection des flux de trésorerie et charges fixes
           </p>
         </div>
+
+        <TresorerieSubnav activeTab="previsionnel" />
 
         {/* KPI Cards */}
         <div className="grid gap-4 md:grid-cols-4">

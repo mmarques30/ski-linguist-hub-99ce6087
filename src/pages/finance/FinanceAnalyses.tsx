@@ -9,6 +9,7 @@ import { AnalysesKPIGrid } from "@/components/finance/AnalysesKPIGrid";
 import { RevenueChart } from "@/components/finance/RevenueChart";
 import { RevenueSources } from "@/components/finance/RevenueSources";
 import { QuarterlyForecast } from "@/components/finance/QuarterlyForecast";
+import { PilotageSubnav } from "@/components/finance/PilotageSubnav";
 import { useCAByType, useCAByMonth, useInstructorBalance, useFinancialKPIs } from "@/hooks/useFinancialDashboard";
 import { Download } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
@@ -85,11 +86,13 @@ export default function FinanceAnalyses() {
     <MainLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">Analyses Financières</h1>
+          <h1 className="text-2xl font-bold">Pilotage financier</h1>
           <p className="text-muted-foreground">
             Analyse détaillée par activité, client et formateur
           </p>
         </div>
+
+        <PilotageSubnav />
 
         <PeriodSelector startDate={startDate} endDate={endDate} onPeriodChange={handlePeriodChange} />
 

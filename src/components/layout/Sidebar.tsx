@@ -21,6 +21,7 @@ import {
   Mail,
   Clock,
   FileText,
+  Landmark,
 } from "lucide-react";
 import fliLogo from "@/assets/fli-marca-yellow.png";
 import { useAuth } from "@/hooks/useAuth";
@@ -62,8 +63,8 @@ interface NavSection {
 
 /**
  * Navigation produit — 2 niveaux (section fixe + liens).
- * Finance réduit à Factures · Paiements · Pilotage (sous-pages via onglets).
- * Évaluations orales distinctes de Formateurs (CRM équipe).
+ * Finance : Factures · Paiements · Pilotage · Trésorerie.
+ * Portails : entrée Assister via listes stagiaires / formateurs.
  */
 const navigationSections: NavSection[] = [
   {
@@ -91,6 +92,7 @@ const navigationSections: NavSection[] = [
       { name: "Factures", href: "/invoices", icon: Receipt },
       { name: "Paiements", href: "/finance/payments", icon: Wallet },
       { name: "Pilotage", href: "/finance", icon: LayoutDashboard },
+      { name: "Trésorerie", href: "/finance/tresorerie", icon: Landmark },
     ],
   },
   {
@@ -100,6 +102,13 @@ const navigationSections: NavSection[] = [
       { name: "Amélioration", href: "/amelioration", icon: TrendingUp },
       { name: "Audit Qualiopi", href: "/qualite/audit", icon: Award },
       { name: "Journal d'audit", href: "/qualite/historique", icon: ClipboardList },
+    ],
+  },
+  {
+    label: "Portails",
+    items: [
+      { name: "Espace stagiaire", href: "/portails/stagiaire", icon: Users },
+      { name: "Espace formateur", href: "/portails/formateur", icon: UserCog },
     ],
   },
   {
@@ -132,7 +141,26 @@ function isItemActive(pathname: string, href: string): boolean {
     return pathname === "/gestion/partenaires" || pathname.startsWith("/gestion/partenaires/");
   }
   if (href === "/finance") {
-    return pathname === "/finance";
+    return (
+      pathname === "/finance" ||
+      pathname.startsWith("/finance/analyses") ||
+      pathname.startsWith("/finance/rentabilite")
+    );
+  }
+  if (href === "/finance/tresorerie") {
+    return (
+      pathname.startsWith("/finance/tresorerie") ||
+      pathname.startsWith("/finance/charges-fixes")
+    );
+  }
+  if (href === "/finance/payments") {
+    return pathname.startsWith("/finance/payments");
+  }
+  if (href === "/portails/stagiaire") {
+    return pathname === "/portails/stagiaire" || pathname.startsWith("/portails/stagiaire/");
+  }
+  if (href === "/portails/formateur") {
+    return pathname === "/portails/formateur" || pathname.startsWith("/portails/formateur/");
   }
   if (href === "/formateur/evaluations") {
     return pathname.startsWith("/formateur/");

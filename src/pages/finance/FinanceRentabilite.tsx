@@ -9,6 +9,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { PeriodSelector } from "@/components/finance/PeriodSelector";
 import { RentabiliteDashboard } from "@/components/finance/RentabiliteDashboard";
 import { AddCostDialog } from "@/components/finance/AddCostDialog";
+import { PilotageSubnav } from "@/components/finance/PilotageSubnav";
 import { useFormationProfitability } from "@/hooks/useFinancialDashboard";
 import { Plus, ChevronDown, ChevronRight } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
@@ -64,7 +65,7 @@ export default function FinanceRentabilite() {
       <div className="space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Rentabilité des Formations</h1>
+            <h1 className="text-2xl font-bold">Pilotage financier</h1>
             <p className="text-muted-foreground">Analyse de la marge par formation</p>
           </div>
           {editable && (
@@ -74,6 +75,8 @@ export default function FinanceRentabilite() {
             </Button>
           )}
         </div>
+
+        <PilotageSubnav />
 
         <PeriodSelector startDate={startDate} endDate={endDate} onPeriodChange={handlePeriodChange} />
 
