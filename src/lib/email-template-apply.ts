@@ -9,7 +9,7 @@ export function applyEmailTemplate(
 ): string {
   let rendered = template;
   for (const [key, value] of Object.entries(variables)) {
-    rendered = rendered.replaceAll(`{{${key}}}`, value ?? "");
+    rendered = rendered.split(`{{${key}}}`).join(value ?? "");
   }
   const leftover = rendered.match(/\{\{[a-zA-Z0-9_]+\}\}/g);
   if (leftover?.length) {
