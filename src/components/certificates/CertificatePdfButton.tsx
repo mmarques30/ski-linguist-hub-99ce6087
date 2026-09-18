@@ -49,7 +49,18 @@ export function CertificatePdfButton({
       toast.error("Document indisponible");
       return;
     }
-    window.open(url, "_blank", "noopener,noreferrer");
+    // window.open hors geste utilisateur est bloqué par Safari / Chrome :
+    // on passe par un lien cliqué, jamais bloqué, avec repli même onglet.
+    const opened = window.open(url, "_blank", "noopener,noreferrer");
+    if (!opened) {
+      const a = document.createElement("a");
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
   };
 
   return (
