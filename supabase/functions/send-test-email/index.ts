@@ -42,6 +42,8 @@ const TEST_VARIABLES: Record<string, string> = {
   total_count: "3",
   days_before: "10",
   return_deadline: "10 octobre 2026",
+  // Vague A — lien de suivi public
+  suivi_url: "https://ski-linguist-hub.lovable.app/suivi/zztest-token-demo",
   // Anciens modèles 8-minimal
   payment_label: "Virement",
 };
@@ -70,11 +72,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { data: templates, error: tplError } = await adminClient
+    let requestedSlugs: string[] | null = null;
+    try {
+      const body = await req.json();
+      if (Array.isArray(body?.slugs) && body.slugs.every((s: unknown) => typeof s === "string")) {
+        requestedSlugs = body.slugs as string[];
+      }
+    } catch {
+      // body vide / non JSON → tous les modèles actifs
+    }
+
+    let query = adminClient
       .from("email_templates")
       .select("slug, subject_fr, body_fr")
       .eq("is_active", true)
       .order("slug");
+    if (requestedSlugs?.length) {
+      query = query.in("slug", requestedSlugs);
+    }
+    const { data: templates, error: tplError } = await query;
     if (tplError) throw tplError;
 
     if (!templates?.length) {
