@@ -11,6 +11,7 @@ import { StripeSettingsCard } from "@/components/settings/StripeSettingsCard";
 import { InvoiceSequenceFloorCard } from "@/components/settings/InvoiceSequenceFloorCard";
 import { OrganizationIdentityCard } from "@/components/settings/OrganizationIdentityCard";
 import { TaughtLanguagesCard } from "@/components/settings/TaughtLanguagesCard";
+import { StudentPortalEnabledCard } from "@/components/settings/StudentPortalEnabledCard";
 import { SCHEDULE_ASSIGNMENT_DAYS_BEFORE } from "@/lib/placement-test-engine";
 
 /**
@@ -89,6 +90,7 @@ export default function Settings() {
 
           <TabsContent value="general" className="space-y-6">
             <OrganizationIdentityCard />
+            <StudentPortalEnabledCard />
 
             <Card>
               <CardHeader>

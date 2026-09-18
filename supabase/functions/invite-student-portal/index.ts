@@ -93,12 +93,35 @@ Deno.serve(async (req) => {
       studentIds,
       sendEmail: shouldSendEmail = true,
       confirmedCount,
+      inscriptionId,
     } = await req.json();
 
     if (!Array.isArray(studentIds) || studentIds.length === 0) {
       return new Response(
         JSON.stringify({ success: false, error: "studentIds requis (tableau non vide)" }),
         { status: 400, headers: { ...adminCorsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { data: portalSetting } = await adminClient
+      .from("app_settings")
+      .select("value")
+      .eq("key", "student_portal_enabled")
+      .maybeSingle();
+    const portalEnabled =
+      portalSetting?.value === true ||
+      portalSetting?.value === "true" ||
+      (typeof portalSetting?.value === "object" &&
+        portalSetting?.value !== null &&
+        Boolean((portalSetting.value as { enabled?: boolean }).enabled));
+
+    if (!portalEnabled) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Portail stagiaire désactivé (app_settings.student_portal_enabled)",
+        }),
+        { status: 403, headers: { ...adminCorsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -200,7 +223,11 @@ Deno.serve(async (req) => {
             recipient_email: student.email,
             recipient_name: studentName,
             status: sent.skipped ? "skipped" : emailSent ? "sent" : "failed",
-            variables_used: { student_id: student.id },
+            inscription_id: inscriptionId || null,
+            variables_used: {
+              student_id: student.id,
+              ...(inscriptionId ? { inscription_id: inscriptionId } : {}),
+            },
           });
         }
 

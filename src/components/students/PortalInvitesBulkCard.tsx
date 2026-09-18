@@ -9,16 +9,15 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useInviteStudentPortal } from "@/hooks/useInviteStudentPortal";
-import {
-  STUDENT_PORTAL_IN_SEASON_SCOPE,
-  isFliPlaceholderEmail,
-} from "@/lib/email-guards";
+import { isFliPlaceholderEmail } from "@/lib/email-guards";
+import { useStudentPortalEnabled } from "@/hooks/useStudentPortalSettings";
 import { MassEmailConfirmDialog } from "@/components/email/MassEmailConfirmDialog";
 
 export function PortalInvitesBulkCard() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [confirmOpen, setConfirmOpen] = useState(false);
   const invitePortal = useInviteStudentPortal();
+  const { data: portalEnabled = false, isLoading: settingLoading } = useStudentPortalEnabled();
 
   const { data: candidates = [], isLoading } = useQuery({
     queryKey: ["portal-invite-candidates"],
@@ -34,10 +33,11 @@ export function PortalInvitesBulkCard() {
       if (error) throw error;
       return (data ?? []).filter((s) => !isFliPlaceholderEmail(s.email));
     },
-    enabled: STUDENT_PORTAL_IN_SEASON_SCOPE,
+    enabled: portalEnabled,
   });
 
-  if (!STUDENT_PORTAL_IN_SEASON_SCOPE) {
+  if (settingLoading) return null;
+  if (!portalEnabled) {
     return null;
   }
 

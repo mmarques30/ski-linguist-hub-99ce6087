@@ -8,6 +8,7 @@ const FLI_PLACEHOLDER_DOMAINS = new Set([
   "fli.import",
 ]);
 
+/** @deprecated Préférer `app_settings.student_portal_enabled`. */
 export const STUDENT_PORTAL_IN_SEASON_SCOPE = false;
 
 export const STUDENT_EMAIL_MISSING_LABEL = "Email manquant";
