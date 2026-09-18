@@ -1,42 +1,36 @@
-# État de l’application FLI Formation — 09/09/2026
+# État de l’application FLI Formation — 18/09/2026
 
-Photographie exhaustive destinée à une analyse externe. **Aucune donnée personnelle.**  
+Photographie destinée à une analyse externe. **Aucune donnée personnelle.**  
 Convention : **livré** = fusionné dans `main` **et** déployé sur l’app publiée ; sinon **prêt sur branche** / **sur main non déployé**.
 
 ---
 
 ## 0. Fusion & déploiement (tête de rapport)
 
-### Fusionné dans `main` le 09/09/2026
+### Fusionné dans `main` (rafraîchi 18/09/2026)
 
-| Élément | PR | SHA / note |
-|---------|----|----|
-| Point 4A — pistes UI stagiaire + certificat bilan Entrée/Sortie | #10 | inclus dans `e7571a2` puis `d84b056` |
-| Point 1 — import `/admin/import` sécurisé | #11 | `d84b056` |
-| Point 2 — exercice fiscal + numérotation | #11 | `d84b056` |
-| Point 3 — formateur·rices (import, candidat, matching) | #11 | `d84b056` |
+| Élément | PR | Note |
+|---------|----|------|
+| Points 1–4A, certificat, A/A2, C.1–C.6, 5, 7–10, emails | divers | Voir `docs/BACKLOG.md` § Validations |
+| Vague 1 register/settings (hors OPCO) | #44 | + BL-029 #45, BL-033 #42, BL-002 #30/#43 |
+| **Plan produit UX Vague A** | #60, #61 | `/suivi/:token`, Assister stagiaire/formateur, `student_portal_enabled`, `/tests` pistes |
+| **Plan produit UX Vague B** | #63 | Checklist inscription, Financier, rail « À traiter », `/student/test` |
+| **Plan produit UX Vague C** | #64 | Sidebar Portails/Trésorerie, Pilotage, `canView` |
+| **Plan produit UX Vague D** | #65 | États vides, GlobalSearch, `/notifications`, pont éval↔stagiaire |
 
-**SHA `main` au moment du rapport :** `1c59712` (merge #13) ; points 1–4A + certificat fusionnés via #10/#11 (`d84b056`).
+**SHA `main` au moment de ce refresh :** `d1e8bd9` (merge #65).
 
 ### Déploiement app publiée
 
 | Statut | Détail |
 |--------|--------|
-| **Livré (main + déployé)** | Lovable `deploy_project` sur `34e71e1a-49f7-433e-bb36-fc4d26e86f8e` — **https://ski-linguist-hub.lovable.app** (HTTP 200, `x-deployment-id` `57a31204-49e7-4bee-8c1a-4f90ab80e18a`) |
-| Lovable commit publié | `1c597124` (= `main` post-#13) |
-| Points 1–4A + certificat | **livré** (code sur `main` + app publiée) |
-| Migration certificat DB | **appliquée live** — vue `inscriptions_complete` recréée avec colonnes bilan ; backfill déjà fait (435 `niveau_general_entree`) ; entrée `audit_log` `certificat_bilan` sans PII |
+| App | **https://ski-linguist-hub.lovable.app** |
+| Alignement front ↔ `main` | À revérifier (BL-046 peut encore s’appliquer selon dernier `deploy_project`) |
+| Edges / Resend | Selon ops ; pack emails et notifs UX présents dans le dépôt |
 
 ### Branches non fusionnées (reste)
 
-| Branche | Raison |
-|---------|--------|
-| `cursor/point3-complement-backfill-7435` | Historique large / divergent ; **code utile** déjà repris dans #11 ; reste docs/ops hors dépôt + audits DB |
-| `cursor/audit-pre-cutover-2026-09-7435` | Doc audit cutover — pas validé comme point produit |
-| `cursor/auditoria-plano-refatoracao-fli-6852` | Plan refactor (PT) — hors plan points 1–10 |
-| `cursor/dashboard-gestao-redesign-mockup-7ad2` | Mockup déjà partiellement sur main ; commits locaux restants |
-| `cursor/update-ski-monitor-docs-a412` | Docs welcome pack Station 2022 — non validé |
-| Anciennes `cursor/*-a412` / setup | Historique / déjà absorbées ou obsolètes |
+Historique / hors plan : voir anciennes notes ; les vagues UX A–D et C.1–C.6 sont sur `main`.
 
 ---
 
@@ -45,13 +39,12 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 | Champ | Valeur |
 |-------|--------|
 | Dépôt | `mmarques30/ski-linguist-hub-99ce6087` |
-| Branche de référence | `main` @ `1c59712` |
+| Branche de référence | `main` @ `d1e8bd9` |
 | App | SPA Vite + React 18 + TypeScript « FLI Formation » (Lovable) |
 | Projet Lovable | `34e71e1a-49f7-433e-bb36-fc4d26e86f8e` (Ski School Connect / ski-linguist-hub) |
 | Backend | Supabase hébergé `nghkrmvakjomzmfwdhbo` — `https://nghkrmvakjomzmfwdhbo.supabase.co` |
 | App publiée (URL) | **https://ski-linguist-hub.lovable.app** |
 | Preview Lovable | https://id-preview--34e71e1a-49f7-433e-bb36-fc4d26e86f8e.lovable.app |
-| Dernier déploiement | **09/09/2026** via Lovable MCP `deploy_project` |
 | Package manager | npm (`package-lock.json` ; bun.lock aussi présent) |
 
 ---
@@ -125,27 +118,36 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 | `/register/payment-success` | public | Retour Stripe | Fonctionnel |
 | `/register/payment-cancel` | public | Annulation Stripe | Fonctionnel |
 | `/survey/:token` | public | Satisfaction | Fonctionnel |
-| `/mockup/dashboard-gestao` | public | Mockup dashboard | Maquette |
-| `/` | staff | Dashboard gestão | Fonctionnel |
-| `/finance` (+ analyses, rentabilité, trésorerie, payments, charges-fixes) | staff | Finance | Fonctionnel |
+| `/suivi/:token` | public | Suivi inscription (Vague A) | Fonctionnel |
+| `/conditions-generales` | public | CG formation | Fonctionnel |
+| `/mockup/dashboard-gestao` | staff | Mockup dashboard | Maquette (protégé) |
+| `/` | staff | Dashboard + rail « À traiter » | Fonctionnel (Vague B) |
+| `/finance` (+ analyses, rentabilité) | staff | Pilotage (sous-nav) | Fonctionnel (Vague C) |
+| `/finance/tresorerie` (+ charges-fixes) | staff | Trésorerie | Fonctionnel |
+| `/finance/payments` | staff | Paiements | Fonctionnel |
 | `/gestion/commercial` | staff | Leads | Fonctionnel |
 | `/gestion/moniteurs` | staff | Moniteurs ski | Fonctionnel |
 | `/gestion/partenaires` `/:id` | staff | Partenaires | Fonctionnel |
 | `/inscriptions` | staff | Liste | Fonctionnel |
 | `/inscriptions/schedule-validation` | staff | Horaires J-10 | Fonctionnel (valeurs horaires FLI → BL-019) |
-| `/inscriptions/:id` | staff | Détail + bilan + end pack | Fonctionnel |
+| `/inscriptions/:id` | staff | Détail + checklist + Financier | Fonctionnel (Vague B) |
 | `/invoices` | staff | Factures | Fonctionnel |
-| `/students` `/:id` `/:id/portal-preview` | staff | Stagiaires | Fonctionnel |
-| `/tests` | staff | Placement / candidats tests | Fonctionnel |
-| `/formation/sessions` | staff | Sessions | Fonctionnel |
+| `/students` `/:id` | staff | Stagiaires | Fonctionnel |
+| `/students/:id/portal-preview` | staff | redirect Assister | Redirige (Vague A) |
+| `/portails/stagiaire` `/:id/*` | staff | Assister stagiaire | Fonctionnel (Vague A) |
+| `/portails/formateur` `/:id/*` | staff | Assister formateur | Fonctionnel (Vague A) |
+| `/tests` | staff | Placement / pistes | Fonctionnel |
+| `/formation/sessions` | staff | Sessions | Fonctionnel (vide honnête — Vague D) |
 | `/classes` | redirect | → sessions | Legacy |
-| `/documents` | staff | Bibliothèque docs | Maquette (liste vide) |
-| `/settings` | staff | Paramètres | Partiel (Stripe OK ; prefs générales non persistées) |
+| `/documents` | staff | Bibliothèque docs | Maquette annoncée (Vague D) |
+| `/notifications` | staff | Centre de notifications | Fonctionnel (Vague D) |
+| `/settings` | staff | Paramètres + identité org | Fonctionnel (BL-036) |
 | `/admin/import` | staff | Import sécurisé | Fonctionnel (point 1) |
 | `/admin/import-phrases` `/admin/phrases` | staff | Phrases | Fonctionnel |
 | `/admin/testing` | staff | Checklist manuelle | Fonctionnel |
 | `/admin/users` `/admin/seasons` | staff | Users / saisons | Fonctionnel |
-| `/formateur/evaluations` (+ form/view) | staff | Évals SNMSF | Fonctionnel |
+| `/admin/emails` | staff | Modèles email | Fonctionnel |
+| `/formateur/evaluations` (+ form/view/verifier) | staff / formateur | Évals SNMSF | Fonctionnel (+ pont stagiaire Vague D) |
 | `/formateurs` `/:id` | staff | Formateur·rices | Fonctionnel |
 | `/amelioration` | staff | Amélioration continue | Fonctionnel |
 | `/satisfaction-stats` | staff | Stats satisfaction | Fonctionnel |
@@ -259,25 +261,28 @@ Déclarés dans migrations (`pg_cron` + `pg_net` vers edge) :
 
 | Module | Fonctionne | Partiel | Absent |
 |--------|------------|---------|--------|
-| Inscriptions | CRUD, statuts, détail, timeline, accès client | Encodage `entry_level` | — |
-| Stagiaires | Liste, détail, invites portail | — | — |
-| Formateur·rices | CRUD, candidat, import 69, matching | UI candidat→actif (BL-014) ; rattachement ligne à ligne | Portail formateur bilan (admin only) |
+| Inscriptions | CRUD, statuts, détail, checklist, Financier, suivi public | Encodage `entry_level` | — |
+| Stagiaires | Liste, détail, invites portail, Assister | — | — |
+| Formateur·rices | CRUD, candidat, import, Assister | UI candidat→actif (BL-014) | — |
 | Placement | Test adaptatif pistes, admin CECRL | — | — |
-| Évaluations SNMSF | Formulaire + PDF + phrases | Prix test non unifié | — |
+| Évaluations SNMSF | Formulaire + PDF + phrases + pont stagiaire | Prix test non unifié | — |
 | Certificats | Bilan Entrée/Sortie, garde sortie, PDF, vue live OK | PDF storage policies (reste BL-020 partiel) | Lien email formateur |
 | Facturation | CRUD, TVA, numérotation fiscale | Import historique point 9 | — |
-| Paiements | Stripe + chèques/virements | — | — |
-| Finance | Dashboards, rentabilité, charges | — | — |
+| Paiements | Stripe + chèques/virements + notif admin | — | — |
+| Finance / Pilotage | Vue d’ensemble, analyses, rentabilité, trésorerie | Objectifs BL-039 ; reste « Prévision de Facturation » (BL-032) | — |
 | CRM / leads | Kanban commercial | — | — |
-| Moniteurs | CRM + intakes + outreach | Unsubscribe (BL-006) | — |
+| Moniteurs | CRM + intakes + outreach | Gel prospection | — |
 | Partenaires | ESF + import directeurs | — | — |
-| Portail stagiaire | Dashboard, docs, planning, pistes | — | — |
+| Portail stagiaire | Dashboard, docs, planning, pistes | Gate `app_settings` | — |
 | Qualiopi | Indicateurs + PROC-026 | — | — |
 | Satisfaction | Survey token + stats | — | — |
 | Amélioration continue | CRUD | — | — |
-| Documents | Envois welcome pack | Page `/documents` maquette | — |
+| Documents | Envois welcome pack | Page `/documents` maquette honnête | Bibliothèque réelle |
+| Notifications | `/notifications` + producteurs inscription/paiement/évaluation | Crons BL-007 | — |
+| Recherche globale | ⌘K multi-entités (Vague D) | — | — |
+| Permissions | `canView` dans `ProtectedRoute` | — | — |
 | Import | Moteur dry-run/purge/audit | Cartes FLI (BL-001) | — |
-| Paramètres | Stripe | Prefs générales non persistées | — |
+| Paramètres | Stripe + identité org | Autres prefs non branchées | — |
 
 Fichiers clés : `src/pages/**`, `src/hooks/**`, `src/lib/**`, `supabase/functions/**`.
 
@@ -307,29 +312,28 @@ Fichiers clés : `src/pages/**`, `src/hooks/**`, `src/lib/**`, `supabase/functio
 | `npm run build` | **OK** |
 | `npm run lint` | **FAIL** — 102 errors / 16 warnings (surtout `@typescript-eslint/no-explicit-any`) — préexistant (AGENTS.md) |
 | Dépendances majeures | React 18.3 · Vite 5.4 · Supabase-js 2.90 · TanStack Query 5.83 · Vitest 4.1 · jspdf 4 · Tailwind 3.4 |
-| Dette | Voir §11 + BL-* ; `/documents` maquette ; Settings partiel ; policies storage certificats |
+| Dette | Voir §11 + `BACKLOG.md` ; `/documents` maquette ; BL-032 reste ; policies storage certificats |
 
 ---
 
 ## 11. Backlog & plan points 1–10
 
-Intégré depuis `docs/BACKLOG.md` :
+Intégré depuis `docs/BACKLOG.md` (refresh 18/09/2026) :
 
-**Ouvert :** BL-001, 002, 006, 007, 008, 009, 010, 011, 014, 015, 017, 019, 020 (reste policies storage).
+**Ouvert (extraits) :** BL-027 (OPCO), BL-030, BL-032 (reste prévision), BL-034, BL-035, BL-037…045 (affichage), BL-046/047 (ops déploiement), BL-001, 007 (crons), 008, 011, 014, 015, 017, 019, 020, 022.
 
-| Point | État |
-|-------|------|
-| 1 Import sécurisé | **Livré** (main + déployé) |
-| 2 Fiscal | **Livré** |
-| 3 Formateurs | **Livré** |
-| 4A Pistes | **Livré** |
-| Certificat bilan | **Livré** (vue + colonnes + backfill live OK) |
-| 5 Outreach | Non démarré |
+| Point / vague | État |
+|---------------|------|
+| 1–4A, certificat, A/A2 | **Livré** (main + déployé historiquement) |
+| 5 Gel | Fusionné main |
 | 6 Stripe docs | Non démarré |
-| 7 Phrases | Non démarré |
-| 8 Crons / relances | Non démarré |
-| 9 Import factures / données | Non démarré |
-| 10 J-10 horaires FLI | Non démarré (BL-019) |
+| 7 Phrases | Fusionné main |
+| 8 Emails | Fusionné main (pack étendu) ; crons `keep_active` = BL-007 |
+| 9 Facturation import | Fusionné main |
+| 10 Cycle inscription | Fusionné main (reste BL-019 horaires exacts) |
+| C.1–C.6 | Fusionnés main |
+| Vague 1 (hors OPCO) | Fusionnée main |
+| Plan UX A–D | Fusionnés main (PR #60–#65) |
 
 ---
 
@@ -337,7 +341,7 @@ Intégré depuis `docs/BACKLOG.md` :
 
 | Sujet | État |
 |-------|------|
-| Rôles | `admin` / staff (`is_staff`) / `student` ; permissions par route (`user_permissions`) |
+| Rôles | `admin` / `formateur` / staff (`is_staff`) / `student` ; `canView` via `ProtectedRoute` + `user_permissions` |
 | Secrets (noms) | Frontend : `VITE_SUPABASE_*` ; Edge : `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_*`, `RESEND_API_KEY`, `IMPORT_SECRET`, `ADMIN_EMAIL`, `APP_URL` |
 | Valeurs | **Jamais** dans ce rapport ni dans les bundles |
 | Dépôt | GitHub privé/équipe (accès agent limité en écriture PR) |
