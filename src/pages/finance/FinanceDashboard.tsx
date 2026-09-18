@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +12,6 @@ import { FinanceKPICard } from "@/components/finance/FinanceKPICard";
 import { InstructorPaymentDialog } from "@/components/finance/InstructorPaymentDialog";
 import { PilotageSubnav } from "@/components/finance/PilotageSubnav";
 import { useCurrentSeason } from "@/hooks/useSeasons";
-import { cn } from "@/lib/utils";
 import { 
   useFinancialKPIs, 
   useCAByMonth, 
