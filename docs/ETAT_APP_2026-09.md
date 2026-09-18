@@ -17,8 +17,10 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 | **Plan produit UX Vague B** | #63 | Checklist inscription, Financier, rail « À traiter », `/student/test` |
 | **Plan produit UX Vague C** | #64 | Sidebar Portails/Trésorerie, Pilotage, `canView` |
 | **Plan produit UX Vague D** | #65 | États vides, GlobalSearch, `/notifications`, pont éval↔stagiaire |
+| **PLANO Onda D (D1–D4)** | #67 | Pilotage finance, taxonomie langues, `SeasonContext`, journal `email_log` |
+| Hotfix saison / objectif CA | #68 | Défaut filtre « toutes », bornes dates, `revenue_target ≤ 0` → non défini |
 
-**SHA `main` au moment de ce refresh :** `d1e8bd9` (merge #65).
+**SHA `main` au moment de ce refresh :** `82ae4a1` (merge #68).
 
 ### Déploiement app publiée
 
@@ -39,7 +41,7 @@ Historique / hors plan : voir anciennes notes ; les vagues UX A–D et C.1–C.6
 | Champ | Valeur |
 |-------|--------|
 | Dépôt | `mmarques30/ski-linguist-hub-99ce6087` |
-| Branche de référence | `main` @ `d1e8bd9` |
+| Branche de référence | `main` @ `82ae4a1` |
 | App | SPA Vite + React 18 + TypeScript « FLI Formation » (Lovable) |
 | Projet Lovable | `34e71e1a-49f7-433e-bb36-fc4d26e86f8e` (Ski School Connect / ski-linguist-hub) |
 | Backend | Supabase hébergé `nghkrmvakjomzmfwdhbo` — `https://nghkrmvakjomzmfwdhbo.supabase.co` |
@@ -75,7 +77,7 @@ Historique / hors plan : voir anciennes notes ; les vagues UX A–D et C.1–C.6
 | `components/settings/` | Stripe settings |
 | `components/students/` | Accès portail stagiaire (staff) |
 | `components/survey/` | Satisfaction |
-| `contexts/` | i18n |
+| `contexts/` | i18n + `SeasonContext` (filtre saison header) |
 | `data/` | Questions placement, phrases |
 | `hooks/` | React Query / Supabase |
 | `integrations/supabase/` | Client + `types.ts` généré |
@@ -269,8 +271,9 @@ Déclarés dans migrations (`pg_cron` + `pg_net` vers edge) :
 | Certificats | Bilan Entrée/Sortie, garde sortie, PDF, vue live OK | PDF storage policies (reste BL-020 partiel) | Lien email formateur |
 | Facturation | CRUD, TVA, numérotation fiscale | Import historique point 9 | — |
 | Paiements | Stripe + chèques/virements + notif admin | — | — |
-| Finance / Pilotage | Vue d’ensemble, analyses, rentabilité, trésorerie | Objectifs BL-039 ; reste « Prévision de Facturation » (BL-032) | — |
-| CRM / leads | Kanban commercial | — | — |
+| Finance / Pilotage | Vue d’ensemble, glossaire KPI, dépenses réelles, objectifs `revenue_target` (BL-039) | Reste « Prévision de Facturation » (BL-032) ; saisie `revenue_target` en admin | — |
+| Saison globale | Header `SeasonFilterControl` + bornes dates (Onda D + #68) | Données historiques souvent sans `season_id` (BL-034 dates) | — |
+| CRM / leads | Kanban commercial + filtre saison | — | — |
 | Moniteurs | CRM + intakes + outreach | Gel prospection | — |
 | Partenaires | ESF + import directeurs | — | — |
 | Portail stagiaire | Dashboard, docs, planning, pistes | Gate `app_settings` | — |

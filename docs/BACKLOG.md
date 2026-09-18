@@ -61,7 +61,7 @@ corrigées, et `/register`, les emails et le portail par lien magique restent ho
 | 2.7 | Compteurs plafonnés à 1 000 et listes sans pagination | gênant | BL-037 |
 | 2.8 | `/finance` : objectifs de trimestre codés en dur | gênant | BL-039 |
 
-2.1 **clos** (PR #42). 2.4 **clos** (PR #44). 2.5 **partiel** (Vague B PR #63). 2.6 **clos** (PR #30/#43).
+2.1 **clos** (PR #42). 2.4 **clos** (PR #44). 2.5 **partiel** (Vague B PR #63). 2.6 **clos** (PR #30/#43). 2.8 **clos** (Onda D PR #67/#68).
 2.2 / 2.3 / 2.7 / 2.8 restent ouverts.
 
 ### Vague 3 — reste bloquant et gênant
@@ -110,7 +110,7 @@ BL-022 : dette antérieure, non remontée par la recette.
 | BL-036 | `/settings` | L’identité de l’organisation est vide, et le bouton « Enregistrer les modifications » n’écrit rien : `handleSave` se limite à un `console.log` puis affiche « Modifications enregistrées ». **Paula veut la remplir elle-même : c’est aujourd’hui impossible, et le succès affiché est trompeur** | bloquant (proposé, écart nouveau) | **clos** — PR #44 ; `OrganizationIdentityCard` → `app_settings.fli_identity` |
 | BL-037 | `/gestion/moniteurs`, `/gestion/partenaires` | Les compteurs affichent 1 000 parce que la requête lit des lignes au lieu de demander un comptage, et les listes sont plafonnées à 1 000. *(live)* 4 047 moniteurs, 1 033 partenaires. Attendu : comptage serveur et pagination | gênant | ouvert |
 | BL-038 | `/gestion/partenaires` | *(live)* 23 fiches nommées par une adresse email, 4 fiches « À l’attention de… », doublons entre une fiche « directeur / prospect » et la fiche « ESF … / actif » de la même école, 20 fiches à accents cassés (voir BL-033) | gênant | ouvert |
-| BL-039 | `/finance` | Objectifs de trimestre codés en dur (50 000 € de CA, 15 stagiaires, 60 %), jamais fournis par la direction. Attendu : les retirer, ou les rendre paramétrables et vides par défaut | gênant | ouvert (`FinanceDashboard.tsx`) |
+| BL-039 | `/finance` | Objectifs de trimestre codés en dur (50 000 € de CA, 15 stagiaires, 60 %), jamais fournis par la direction. Attendu : les retirer, ou les rendre paramétrables et vides par défaut | gênant | **clos** — PR #67/#68 : lecture `seasons.revenue_target` ; `≤ 0` / vide → « Aucun objectif » |
 | BL-040 | `/students` | La recherche ne combine pas prénom et nom : « Prénom Nom » ne renvoie rien, « ZZTEST » seul fonctionne. Attendu : rechercher sur la concaténation | gênant | ouvert (`useStudents.ts`, `or()` sur champs séparés) |
 | BL-041 | `/formateurs`, fiche | Planning et Historique lisent `instructor_sessions` — *(live)* 0 ligne — au lieu des inscriptions rattachées : aucune activité n’apparaît | gênant | ouvert |
 | BL-042 | `/formateurs`, fiche | Aucun suivi du contrat signé, de l’attestation de vigilance ni du statut administratif, alors que des dossiers sont à régulariser et que `SPEC_UI` le prévoit | gênant (manque) | ouvert |
@@ -233,4 +233,5 @@ BL-022 : dette antérieure, non remontée par la recette.
 | **Plan produit UX — Vague B** | Fusionné main (PR #63) — checklist fiche, Financier paiements, rail « À traiter », `/student/test` |
 | **Plan produit UX — Vague C** | Fusionné main (PR #64) — sidebar Portails/Trésorerie, Pilotage, `canView` |
 | **Plan produit UX — Vague D** | Fusionné main (PR #65) — états vides, recherche globale, `/notifications`, pont éval↔stagiaire |
+| **PLANO Onda D (D1–D4)** | Fusionné main (PR #67) — pilotage finance, taxonomie langues, `SeasonContext`, journal envois ; hotfix #68 (filtre dates + objectif CA) |
 | 6 — Stripe docs | Non démarré (hors emails déjà livrés) |
