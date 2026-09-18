@@ -36,6 +36,8 @@ export function useInscriptions(filters?: {
   language?: string;
   search?: string;
   seasonId?: string | null;
+  seasonStart?: string | null;
+  seasonEnd?: string | null;
 }) {
   return useQuery({
     queryKey: ["inscriptions", filters],
@@ -53,7 +55,12 @@ export function useInscriptions(filters?: {
         query = query.eq("language", filters.language);
       }
 
-      if (filters?.seasonId) {
+      // Prefer date range: live data has season_id NULL almost everywhere.
+      if (filters?.seasonStart && filters?.seasonEnd) {
+        query = query
+          .gte("start_date", filters.seasonStart)
+          .lte("start_date", filters.seasonEnd);
+      } else if (filters?.seasonId) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         query = (query as any).eq("season_id", filters.seasonId);
       }

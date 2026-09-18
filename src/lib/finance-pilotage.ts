@@ -37,14 +37,17 @@ export function tresorerieSolde(params: {
   return params.entrees - params.chargesFixes - params.formateursAPayer;
 }
 
-/** Objectif CA : `seasons.revenue_target` ou undefined si non renseigné (BL-039). */
+/**
+ * Objectif CA : `seasons.revenue_target`.
+ * `null` / NaN / ≤ 0 → non défini (en live la saison courante a `0`, pas NULL).
+ */
 export function resolveRevenueTarget(
   season: { revenue_target: number | null } | null | undefined
 ): number | null {
   if (!season) return null;
-  const t = season.revenue_target;
-  if (t == null || Number.isNaN(Number(t))) return null;
-  return Number(t);
+  const t = Number(season.revenue_target);
+  if (!Number.isFinite(t) || t <= 0) return null;
+  return t;
 }
 
 export function progressTowardTarget(current: number, target: number | null): number | null {

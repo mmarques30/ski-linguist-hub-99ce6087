@@ -42,7 +42,7 @@ const HOURS = Array.from({ length: 12 }, (_, i) => i + 7); // 7h-18h
 
 export default function Sessions() {
   const { t } = useLanguage();
-  const { seasonId } = useSeasonFilter();
+  const { seasonId, seasonStart, seasonEnd } = useSeasonFilter();
   const { canEdit } = useUserPermissions();
   const editable = canEdit("classes");
 
@@ -71,6 +71,8 @@ export default function Sessions() {
     language: filterLang,
     instructorId: filterInstructor,
     seasonId,
+    seasonStart,
+    seasonEnd,
   });
 
   const { data: instructors } = useQuery({

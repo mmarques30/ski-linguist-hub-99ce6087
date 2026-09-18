@@ -232,7 +232,7 @@ export default function Inscriptions() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [inscriptionToDelete, setInscriptionToDelete] = useState<{ id: string; name: string } | null>(null);
   const { language, t } = useLanguage();
-  const { seasonId } = useSeasonFilter();
+  const { seasonId, seasonStart, seasonEnd } = useSeasonFilter();
   const { canEdit } = useUserPermissions();
   const editable = canEdit("inscriptions");
   const deleteInscription = useDeleteInscription();
@@ -246,6 +246,8 @@ export default function Inscriptions() {
     language: languageFilter,
     search: search || undefined,
     seasonId,
+    seasonStart,
+    seasonEnd,
   });
 
   const getDateLocale = () => {

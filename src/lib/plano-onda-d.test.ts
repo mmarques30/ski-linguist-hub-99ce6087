@@ -52,8 +52,12 @@ describe("Onda D1 — finance pilotage", () => {
     expect(tresorerieSolde({ entrees: 500, chargesFixes: 100, formateursAPayer: 50 })).toBe(350);
     expect(resolveRevenueTarget({ revenue_target: 80000 })).toBe(80000);
     expect(resolveRevenueTarget({ revenue_target: null })).toBeNull();
+    // Live: seasons.revenue_target = 0 (pas NULL) → traité comme non défini
+    expect(resolveRevenueTarget({ revenue_target: 0 })).toBeNull();
+    expect(resolveRevenueTarget({ revenue_target: -1 })).toBeNull();
     expect(progressTowardTarget(40000, 80000)).toBe(50);
     expect(progressTowardTarget(100, null)).toBeNull();
+    expect(progressTowardTarget(100, 0)).toBeNull();
   });
 
   it("branche dépenses réelles et glossaire sur le dashboard", () => {
@@ -82,11 +86,20 @@ describe("Onda D2 — taxonomie langues", () => {
 describe("Onda D3 — SeasonContext", () => {
   it("expose le provider et filtre les listes", () => {
     expect(source("src/App.tsx")).toContain("SeasonProvider");
-    expect(source("src/contexts/SeasonContext.tsx")).toContain("useSeasonFilter");
-    expect(source("src/hooks/useInscriptions.ts")).toContain("seasonId");
-    expect(source("src/hooks/useInvoices.ts")).toContain("seasonId");
-    expect(source("src/hooks/useSessions.ts")).toContain("seasonId");
-    expect(source("src/hooks/useLeads.ts")).toContain("seasonId");
+    const ctx = source("src/contexts/SeasonContext.tsx");
+    expect(ctx).toContain("useSeasonFilter");
+    expect(ctx).toContain("seasonStart");
+    expect(ctx).toContain("seasonEnd");
+    // Défaut « toutes » : en prod season_id est quasi partout NULL
+    expect(ctx).toMatch(/return "all"/);
+    expect(source("src/hooks/useInscriptions.ts")).toContain("seasonStart");
+    expect(source("src/hooks/useInvoices.ts")).toContain("seasonStart");
+    expect(source("src/hooks/useSessions.ts")).toContain("seasonStart");
+    expect(source("src/hooks/useLeads.ts")).toContain("seasonStart");
+    expect(source("src/pages/Inscriptions.tsx")).toContain("seasonStart");
+    expect(source("src/pages/Invoices.tsx")).toContain("seasonEnd");
+    expect(source("src/pages/Sessions.tsx")).toContain("seasonStart");
+    expect(source("src/pages/commercial/CommercialDashboard.tsx")).toContain("seasonEnd");
     expect(source("src/components/layout/TopHeader.tsx")).toContain("SeasonFilterControl");
   });
 });

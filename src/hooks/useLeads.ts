@@ -68,6 +68,8 @@ export function useLeads(filters?: {
   search?: string;
   expansion_channel?: ExpansionChannel;
   seasonId?: string | null;
+  seasonStart?: string | null;
+  seasonEnd?: string | null;
 }) {
   return useQuery({
     queryKey: ["leads", filters],
@@ -86,7 +88,11 @@ export function useLeads(filters?: {
       if (filters?.expansion_channel) {
         query = query.eq("expansion_channel", filters.expansion_channel);
       }
-      if (filters?.seasonId) {
+      if (filters?.seasonStart && filters?.seasonEnd) {
+        query = query
+          .gte("created_at", filters.seasonStart)
+          .lte("created_at", `${filters.seasonEnd}T23:59:59`);
+      } else if (filters?.seasonId) {
         query = query.eq("season_id", filters.seasonId);
       }
       if (filters?.search) {

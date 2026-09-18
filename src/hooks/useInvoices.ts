@@ -53,6 +53,8 @@ export function useInvoices(filters?: {
   dateFrom?: string;
   dateTo?: string;
   seasonId?: string | null;
+  seasonStart?: string | null;
+  seasonEnd?: string | null;
 }) {
   return useQuery({
     queryKey: ["invoices", filters],
@@ -74,7 +76,11 @@ export function useInvoices(filters?: {
         query = query.eq("client_type", filters.clientType);
       }
 
-      if (filters?.seasonId) {
+      if (filters?.seasonStart && filters?.seasonEnd) {
+        query = query
+          .gte("invoice_date", filters.seasonStart)
+          .lte("invoice_date", filters.seasonEnd);
+      } else if (filters?.seasonId) {
         query = query.eq("season_id", filters.seasonId);
       }
 
