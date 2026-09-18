@@ -38,6 +38,8 @@ import {
   type SpellingProposal,
 } from "@/lib/evaluation-spellcheck";
 import { useToast } from "@/hooks/use-toast";
+import { useFormateurView } from "@/contexts/FormateurViewContext";
+import { FormateurAssistBanner } from "@/components/formateur/FormateurAssistBanner";
 
 function blocField(category: (typeof BLOC_CATEGORIES)[number]) {
   return `bloc_${category}` as const;
@@ -46,6 +48,7 @@ function blocField(category: (typeof BLOC_CATEGORIES)[number]) {
 export default function EvaluationVerify() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { basePath, isAssistMode } = useFormateurView();
   const { user } = useAuth();
   const { isAdmin, isFormateur } = useUserPermissions();
   const { toast } = useToast();
@@ -107,7 +110,7 @@ export default function EvaluationVerify() {
       verified_at: new Date().toISOString(),
     });
     toast({ title: "Évaluation validée" });
-    navigate("/formateur/evaluations");
+    navigate(`${basePath}/evaluations`);
   };
 
   const handleRefuse = async () => {
@@ -128,7 +131,7 @@ export default function EvaluationVerify() {
       reviewed_by: user.id,
     });
     toast({ title: "Renvoyée en brouillon" });
-    navigate("/formateur/evaluations");
+    navigate(`${basePath}/evaluations`);
   };
 
   if (isLoading) {
@@ -147,7 +150,7 @@ export default function EvaluationVerify() {
       <MainLayout>
         <div className="text-center py-12">
           <p className="text-muted-foreground">Évaluation non trouvée</p>
-          <Button variant="outline" className="mt-4" onClick={() => navigate("/formateur/evaluations")}>
+          <Button variant="outline" className="mt-4" onClick={() => navigate(`${basePath}/evaluations`)}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour
           </Button>
@@ -156,13 +159,13 @@ export default function EvaluationVerify() {
     );
   }
 
-  const actionsEnabled = isAdmin && evaluation.status === "a_verifier";
+  const actionsEnabled = isAdmin && !isAssistMode && evaluation.status === "a_verifier";
 
   return (
     <MainLayout>
       <div className="space-y-6 max-w-5xl">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/formateur/evaluations")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(`${basePath}/evaluations`)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1">

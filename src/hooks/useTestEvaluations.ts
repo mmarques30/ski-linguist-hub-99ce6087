@@ -2,20 +2,28 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
+import { useFormateurView } from "@/contexts/FormateurViewContext";
 
 export type TestEvaluation = Tables<"test_evaluations">;
 export type TestBookingComplete = Tables<"test_bookings_complete">;
 
 export function useTestBookingsToEvaluate() {
+  const { isAssistMode, instructorId } = useFormateurView();
+
   return useQuery({
-    queryKey: ["test-bookings-to-evaluate"],
+    queryKey: ["test-bookings-to-evaluate", isAssistMode ? instructorId : "all"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("test_bookings_complete")
         .select("*")
         .eq("status", "completed")
         .order("datetime", { ascending: false });
-      
+
+      if (isAssistMode && instructorId) {
+        query = query.eq("instructor_id", instructorId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as TestBookingComplete[];
     },
@@ -23,15 +31,22 @@ export function useTestBookingsToEvaluate() {
 }
 
 export function useCompletedEvaluations() {
+  const { isAssistMode, instructorId } = useFormateurView();
+
   return useQuery({
-    queryKey: ["completed-evaluations"],
+    queryKey: ["completed-evaluations", isAssistMode ? instructorId : "all"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("test_bookings_complete")
         .select("*")
         .not("evaluation_id", "is", null)
         .order("datetime", { ascending: false });
-      
+
+      if (isAssistMode && instructorId) {
+        query = query.eq("instructor_id", instructorId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as TestBookingComplete[];
     },

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import {
   CreditCard,
   User,
   Clock,
+  Eye,
 } from "lucide-react";
 import {
   useInstructorDetails,
@@ -27,6 +28,7 @@ import { InstructorFormDialog } from "@/components/formateurs/InstructorFormDial
 import { SessionFormDialog } from "@/components/formateurs/SessionFormDialog";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { displayLanguageLabel } from "@/lib/taught-languages";
+import { formateurAssistPath } from "@/lib/client-links";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -142,11 +144,21 @@ export default function InstructorDetails() {
               ))}
             </div>
           </div>
-          {editable && (
-            <Button variant="outline" onClick={() => setShowEdit(true)}>
-              Modifier
-            </Button>
-          )}
+          <div className="flex flex-wrap gap-2">
+            {id && (
+              <Button variant="secondary" asChild>
+                <Link to={formateurAssistPath(id, "evaluations")}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  Voir comme le formateur
+                </Link>
+              </Button>
+            )}
+            {editable && (
+              <Button variant="outline" onClick={() => setShowEdit(true)}>
+                Modifier
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Tabs */}

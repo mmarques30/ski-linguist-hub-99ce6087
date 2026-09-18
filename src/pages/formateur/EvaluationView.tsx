@@ -12,11 +12,14 @@ import { EvaluationPDFPreview } from "@/components/evaluation/EvaluationPDFPrevi
 import { CertificatePdfButton } from "@/components/certificates/CertificatePdfButton";
 import { EVALUATION_PDF_BUCKET } from "@/lib/evaluation-pdf";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { useFormateurView } from "@/contexts/FormateurViewContext";
+import { FormateurAssistBanner } from "@/components/formateur/FormateurAssistBanner";
 
 export default function EvaluationView() {
   const { evaluationId } = useParams<{ evaluationId: string }>();
   const navigate = useNavigate();
   const { isAdmin, role } = useUserPermissions();
+  const { basePath, isAssistMode } = useFormateurView();
   const { data, isLoading } = useEvaluationWithBooking(evaluationId || "");
   const generatePdf = useGenerateEvaluationPdf();
   const isStaff = isAdmin || role === "user";
@@ -39,7 +42,7 @@ export default function EvaluationView() {
           <p className="text-muted-foreground">Évaluation non trouvée</p>
           <Button 
             variant="outline" 
-            onClick={() => navigate("/formateur/evaluations")}
+            onClick={() => navigate(`${basePath}/evaluations`)}
             className="mt-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -55,12 +58,13 @@ export default function EvaluationView() {
   return (
     <MainLayout>
       <div className="space-y-6">
+        <FormateurAssistBanner />
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => navigate("/formateur/evaluations")}
+            onClick={() => navigate(`${basePath}/evaluations`)}
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -74,6 +78,7 @@ export default function EvaluationView() {
           </div>
           <div className="flex gap-2">
             {isStaff &&
+              !isAssistMode &&
               (evaluation.status === "valide" || evaluation.status === "envoye") && (
                 <Button
                   onClick={() => void generatePdf.mutateAsync(evaluation.id)}
@@ -90,13 +95,15 @@ export default function EvaluationView() {
                 label="Ouvrir le PDF"
               />
             )}
-            <Button 
-              variant="outline"
-              onClick={() => navigate(`/formateur/evaluation/${booking.id}/edit`)}
-            >
-              <Edit className="h-4 w-4 mr-2" />
-              Modifier
-            </Button>
+            {!isAssistMode && (
+              <Button 
+                variant="outline"
+                onClick={() => navigate(`${basePath}/evaluation/${booking.id}/edit`)}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Modifier
+              </Button>
+            )}
           </div>
         </div>
 

@@ -11,6 +11,11 @@ import {
   StudentAssistViewProvider,
   StudentOwnViewProvider,
 } from "@/contexts/StudentViewContext";
+import {
+  FormateurAssistViewProvider,
+  FormateurOwnViewProvider,
+} from "@/contexts/FormateurViewContext";
+import { AssistFormateurRoute } from "@/components/auth/AssistFormateurRoute";
 import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
 import InscriptionSuiviPage from "./pages/suivi/InscriptionSuiviPage";
 import { studentAssistPath } from "@/lib/client-links";
@@ -142,12 +147,56 @@ const App = () => (
             <Route path="/admin/testing" element={<ProtectedRoute><TestingChecklist /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
             <Route path="/admin/seasons" element={<ProtectedRoute><Seasons /></ProtectedRoute>} />
-            <Route path="/formateur/evaluations" element={<ProtectedRoute><EvaluationsList /></ProtectedRoute>} />
-            <Route path="/formateur/evaluations/:id/verifier" element={<ProtectedRoute><EvaluationVerify /></ProtectedRoute>} />
-            <Route path="/formateur/evaluation/:bookingId" element={<ProtectedRoute><EvaluationForm /></ProtectedRoute>} />
-            <Route path="/formateur/evaluation/:bookingId/edit" element={<ProtectedRoute><EvaluationForm /></ProtectedRoute>} />
-            <Route path="/formateur/evaluation-view/:evaluationId" element={<ProtectedRoute><EvaluationView /></ProtectedRoute>} />
-            <Route path="/amelioration" element={<ProtectedRoute><ContinuousImprovement /></ProtectedRoute>} />
+            <Route
+              path="/formateur/evaluations"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <EvaluationsList />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/formateur/evaluations/:id/verifier"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <EvaluationVerify />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/formateur/evaluation/:bookingId"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <EvaluationForm />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/formateur/evaluation/:bookingId/edit"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <EvaluationForm />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/formateur/evaluation-view/:evaluationId"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <EvaluationView />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />            <Route path="/amelioration" element={<ProtectedRoute><ContinuousImprovement /></ProtectedRoute>} />
             <Route path="/satisfaction-stats" element={<ProtectedRoute><SatisfactionStats /></ProtectedRoute>} />
             <Route path="/formateurs" element={<ProtectedRoute><InstructorsList /></ProtectedRoute>} />
             <Route path="/formateurs/:id" element={<ProtectedRoute><InstructorDetails /></ProtectedRoute>} />
@@ -223,6 +272,25 @@ const App = () => (
               <Route path="planning" element={<StudentPlanning />} />
               <Route path="documents" element={<StudentDocuments />} />
               <Route path="evaluation" element={<StudentEvaluation />} />
+            </Route>
+
+            {/* Mode Assister formateur — évaluations filtrées */}
+            <Route
+              path="/portails/formateur/:instructorId"
+              element={
+                <AssistFormateurRoute>
+                  <FormateurAssistViewProvider>
+                    <Outlet />
+                  </FormateurAssistViewProvider>
+                </AssistFormateurRoute>
+              }
+            >
+              <Route index element={<Navigate to="evaluations" replace />} />
+              <Route path="evaluations" element={<EvaluationsList />} />
+              <Route path="evaluations/:id/verifier" element={<EvaluationVerify />} />
+              <Route path="evaluation/:bookingId" element={<EvaluationForm />} />
+              <Route path="evaluation/:bookingId/edit" element={<EvaluationForm />} />
+              <Route path="evaluation-view/:evaluationId" element={<EvaluationView />} />
             </Route>
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

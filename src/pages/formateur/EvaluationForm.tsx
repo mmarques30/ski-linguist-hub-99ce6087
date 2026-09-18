@@ -47,6 +47,8 @@ import { blocCommentsWithoutPhrases, phraseIdsForBloc } from "@/lib/test-phrases
 import { collectTutoiement } from "@/lib/vouvoiement";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useFormateurView } from "@/contexts/FormateurViewContext";
+import { FormateurAssistBanner } from "@/components/formateur/FormateurAssistBanner";
 
 interface SectionState {
   selectedIds: string[];
@@ -69,6 +71,7 @@ function blocKey(category: (typeof BLOC_CATEGORIES)[number]) {
 }
 
 export default function EvaluationForm() {
+  const { basePath, isAssistMode } = useFormateurView();
   const { bookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -176,6 +179,14 @@ export default function EvaluationForm() {
   const canSubmit = adjustmentOk && !hasVouvoiementIssue;
 
   const handleSave = async (submitForReview: boolean) => {
+    if (isAssistMode) {
+      toast({
+        variant: "destructive",
+        title: "Mode Assister",
+        description: "Lecture seule — aucune modification n'est enregistrée.",
+      });
+      return;
+    }
     if (!bookingId || !booking) return;
 
     if (!adjustmentOk) {
@@ -235,7 +246,7 @@ export default function EvaluationForm() {
         await createMutation.mutateAsync(evaluationData);
       }
       if (submitForReview) {
-        navigate("/formateur/evaluations");
+        navigate(`${basePath}/evaluations`);
       }
     } catch {
       // toast via mutation
@@ -244,8 +255,16 @@ export default function EvaluationForm() {
 
   const isLoading = bookingLoading || evalLoading;
   const isSaving = createMutation.isPending || updateMutation.isPending;
-  const draftDisabled = isSaving || !adjustmentOk;
-  const actionButtons = (
+  const draftDisabled = isSaving || !adjustmentOk || isAssistMode;
+  const actionButtons = isAssistMode ? (
+    <Alert>
+      <AlertTriangle className="h-4 w-4" />
+      <AlertTitle>Mode Assister — lecture seule</AlertTitle>
+      <AlertDescription>
+        Les évaluations ne peuvent pas être modifiées depuis cette prévisualisation.
+      </AlertDescription>
+    </Alert>
+  ) : (
     <div className="flex flex-wrap gap-4 bg-background p-4 border rounded-lg shadow-sm">
       <Button
         variant="outline"
@@ -287,7 +306,7 @@ export default function EvaluationForm() {
       <MainLayout>
         <div className="text-center py-12">
           <p className="text-muted-foreground">Test non trouvé</p>
-          <Button variant="outline" onClick={() => navigate("/formateur/evaluations")} className="mt-4">
+          <Button variant="outline" onClick={() => navigate(`${basePath}/evaluations`)} className="mt-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour à la liste
           </Button>
@@ -312,7 +331,7 @@ export default function EvaluationForm() {
             }[existingEvaluation.status] ?? existingEvaluation.status}
             . Score général : {existingEvaluation.score_general}
           </p>
-          <Button variant="outline" onClick={() => navigate("/formateur/evaluations")}>
+          <Button variant="outline" onClick={() => navigate(`${basePath}/evaluations`)}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour à la liste
           </Button>
@@ -324,8 +343,9 @@ export default function EvaluationForm() {
   return (
     <MainLayout>
       <div className="space-y-6">
+        <FormateurAssistBanner />
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/formateur/evaluations")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(`${basePath}/evaluations`)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1">
