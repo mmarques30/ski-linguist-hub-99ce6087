@@ -321,7 +321,7 @@ export default function Invoices() {
   const [editOpen, setEditOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const { language, t } = useLanguage();
-  const { seasonId } = useSeasonFilter();
+  const { seasonId, seasonStart, seasonEnd } = useSeasonFilter();
   const { canEdit } = useUserPermissions();
   const editable = canEdit("invoices");
 
@@ -404,6 +404,8 @@ export default function Invoices() {
     dateFrom: dateRange.from,
     dateTo: dateRange.to,
     seasonId,
+    seasonStart,
+    seasonEnd,
   });
 
   const updateInvoice = useUpdateInvoice();

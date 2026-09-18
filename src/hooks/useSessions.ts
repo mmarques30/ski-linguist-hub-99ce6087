@@ -45,6 +45,8 @@ export function useSessions(filters?: {
   language?: string;
   instructorId?: string;
   seasonId?: string | null;
+  seasonStart?: string | null;
+  seasonEnd?: string | null;
 }) {
   return useQuery({
     queryKey: ["sessions", filters],
@@ -60,7 +62,11 @@ export function useSessions(filters?: {
       if (filters?.endDate) {
         query = query.lte("start_datetime", filters.endDate);
       }
-      if (filters?.seasonId) {
+      if (filters?.seasonStart && filters?.seasonEnd) {
+        query = query
+          .gte("start_datetime", filters.seasonStart)
+          .lte("start_datetime", `${filters.seasonEnd}T23:59:59`);
+      } else if (filters?.seasonId) {
         query = query.eq("season_id", filters.seasonId);
       }
       if (filters?.language && filters.language !== "all") {

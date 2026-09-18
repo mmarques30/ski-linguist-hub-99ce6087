@@ -96,8 +96,14 @@ function ChannelPipeline({
   editable: boolean;
   onEdit: (lead: Lead) => void;
 }) {
-  const { seasonId } = useSeasonFilter();
-  const { data: leads = [] } = useLeads({ search, expansion_channel: channel, seasonId });
+  const { seasonId, seasonStart, seasonEnd } = useSeasonFilter();
+  const { data: leads = [] } = useLeads({
+    search,
+    expansion_channel: channel,
+    seasonId,
+    seasonStart,
+    seasonEnd,
+  });
   const { data: kpis } = useLeadKPIs(channel);
   const updateLead = useUpdateLead();
 
