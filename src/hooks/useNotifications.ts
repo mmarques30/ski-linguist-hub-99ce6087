@@ -37,6 +37,7 @@ export function useUnreadCount() {
         () => {
           queryClient.invalidateQueries({ queryKey: ['notifications-unread-count', user.id] });
           queryClient.invalidateQueries({ queryKey: ['notifications-recent', user.id] });
+          queryClient.invalidateQueries({ queryKey: ['notifications-all', user.id] });
         }
       )
       .subscribe();
@@ -65,6 +66,25 @@ export function useRecentNotifications() {
   });
 }
 
+export function useAllNotifications() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['notifications-all', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+}
+
 export function useMarkAsRead() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -79,6 +99,7 @@ export function useMarkAsRead() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications-unread-count', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['notifications-recent', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['notifications-all', user?.id] });
     },
   });
 }
@@ -99,6 +120,7 @@ export function useMarkAllAsRead() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications-unread-count', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['notifications-recent', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['notifications-all', user?.id] });
     },
   });
 }

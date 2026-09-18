@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 import { useFormateurView } from "@/contexts/FormateurViewContext";
+import { notifyAdmins } from "@/lib/notify-admins";
 
 export type TestEvaluation = Tables<"test_evaluations">;
 export type TestBookingComplete = Tables<"test_bookings_complete">;
@@ -160,6 +161,14 @@ export function useCreateTestEvaluation() {
         .single();
       
       if (error) throw error;
+      if (data.status === "a_verifier") {
+        await notifyAdmins({
+          type: "evaluation",
+          title: "Évaluation à vérifier",
+          message: "Un formateur a soumis une évaluation orale.",
+          link: `/formateur/evaluations/${data.id}/verifier`,
+        });
+      }
       return data;
     },
     onSuccess: (data) => {
@@ -197,6 +206,14 @@ export function useUpdateTestEvaluation() {
         .single();
       
       if (error) throw error;
+      if (data.status === "a_verifier" && updates.status === "a_verifier") {
+        await notifyAdmins({
+          type: "evaluation",
+          title: "Évaluation à vérifier",
+          message: "Une évaluation orale attend une validation admin.",
+          link: `/formateur/evaluations/${data.id}/verifier`,
+        });
+      }
       return data;
     },
     onSuccess: () => {

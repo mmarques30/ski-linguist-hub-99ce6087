@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { notifyAdmins } from "@/lib/notify-admins";
 
 export interface Payment {
   id: string;
@@ -205,6 +206,21 @@ export function useCreatePayment() {
         .select()
         .single();
       if (error) throw error;
+
+      if (payment.status === "recu") {
+        const amountLabel = `${payment.amount} €`;
+        await notifyAdmins({
+          type: "paiement",
+          title: `Paiement reçu — ${amountLabel}`,
+          message: payment.payer_name
+            ? `${payment.payer_name} · ${payment.payment_method}`
+            : `Méthode : ${payment.payment_method}`,
+          link: payment.inscription_id
+            ? `/inscriptions/${payment.inscription_id}?tab=financial`
+            : "/finance/payments",
+        });
+      }
+
       return data;
     },
     onSuccess: () => {

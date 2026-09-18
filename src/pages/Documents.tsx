@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { FileText, Download, Upload, Search, Eye, Trash2, FolderOpen } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { FileText, Upload, Search, FolderOpen, Info } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { EmptyState } from "@/components/common/EmptyState";
 
 const translations = {
   title: {
@@ -44,19 +46,14 @@ const translations = {
     en: "Browse and manage all uploaded documents",
   },
   noDocumentsTitle: {
-    fr: "Aucun document téléversé",
-    "pt-BR": "Nenhum documento enviado",
-    en: "No documents uploaded",
+    fr: "Bibliothèque documents non branchée",
+    "pt-BR": "Biblioteca de documentos ainda não ligada",
+    en: "Document library not connected",
   },
   noDocumentsDesc: {
-    fr: "Téléversez votre premier document pour commencer à organiser vos ressources.",
-    "pt-BR": "Envie seu primeiro documento para começar a organizar seus recursos.",
-    en: "Upload your first document to start organizing your resources.",
-  },
-  downloads: {
-    fr: "téléchargements",
-    "pt-BR": "downloads",
-    en: "downloads",
+    fr: "Cette page est une maquette : aucun fichier n'est stocké ici. Les envois par inscription restent dans la fiche inscription (onglet Documents).",
+    "pt-BR": "Esta página é uma maquete: nenhum arquivo é armazenado aqui. Os envios por inscrição ficam na ficha (aba Documentos).",
+    en: "This page is a mockup: no files are stored here. Per-enrollment sends remain on the enrollment Documents tab.",
   },
   // Categories
   catFifpl: {
@@ -99,19 +96,22 @@ const translations = {
     "pt-BR": "Atestados CFP e certificados de idiomas",
     en: "CFP attestations and language certificates",
   },
+  comingSoon: {
+    fr: "Catégorie prévue — pas encore de fichiers",
+    "pt-BR": "Categoria prevista — ainda sem arquivos",
+    en: "Planned category — no files yet",
+  },
+  bannerTitle: {
+    fr: "Module en construction",
+    "pt-BR": "Módulo em construção",
+    en: "Module under construction",
+  },
+  bannerDesc: {
+    fr: "Téléversement, recherche et téléchargement ne sont pas encore disponibles. Utilisez les documents liés à chaque inscription.",
+    "pt-BR": "Upload, busca e download ainda não estão disponíveis. Use os documentos de cada inscrição.",
+    en: "Upload, search and download are not available yet. Use documents on each enrollment.",
+  },
 };
-
-interface Document {
-  id: string;
-  name: string;
-  category: string;
-  type: string;
-  size: string;
-  uploadedAt: string;
-  downloads: number;
-}
-
-const documents: Document[] = [];
 
 export default function Documents() {
   const { t } = useLanguage();
@@ -144,32 +144,38 @@ export default function Documents() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">{t(translations.title)}</h1>
-            <p className="text-muted-foreground">
-              {t(translations.subtitle)}
-            </p>
+            <p className="text-muted-foreground">{t(translations.subtitle)}</p>
           </div>
           {editable && (
-            <Button>
+            <Button disabled title={t(translations.bannerDesc)}>
               <Upload className="mr-2 h-4 w-4" />
               {t(translations.uploadDocument)}
             </Button>
           )}
         </div>
 
-        {/* Search */}
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertTitle>{t(translations.bannerTitle)}</AlertTitle>
+          <AlertDescription>{t(translations.bannerDesc)}</AlertDescription>
+        </Alert>
+
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder={t(translations.searchPlaceholder)} className="pl-10" />
+          <Input
+            placeholder={t(translations.searchPlaceholder)}
+            className="pl-10"
+            disabled
+            title={t(translations.bannerDesc)}
+          />
         </div>
 
-        {/* Categories */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {documentCategories.map((category) => (
-            <Card key={category.name} className="cursor-pointer hover:shadow-md transition-shadow">
+            <Card key={category.name} className="opacity-90">
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-3">
                   <div className="rounded-lg bg-primary/10 p-2">
@@ -185,66 +191,24 @@ export default function Documents() {
               </CardHeader>
               <CardContent>
                 <CardDescription>{category.description}</CardDescription>
+                <p className="mt-2 text-xs text-muted-foreground">{t(translations.comingSoon)}</p>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {/* Document List */}
         <Card>
           <CardHeader>
             <CardTitle>{t(translations.allDocuments)}</CardTitle>
-            <CardDescription>
-              {t(translations.allDocumentsDesc)}
-            </CardDescription>
+            <CardDescription>{t(translations.allDocumentsDesc)}</CardDescription>
           </CardHeader>
           <CardContent>
-            {documents.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                <h3 className="text-lg font-medium">{t(translations.noDocumentsTitle)}</h3>
-                <p className="text-muted-foreground mt-1 max-w-sm">
-                  {t(translations.noDocumentsDesc)}
-                </p>
-              </div>
-            ) : (
-              <div className="divide-y">
-                {documents.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className="flex items-center justify-between py-4 hover:bg-muted/50 -mx-4 px-4 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="rounded-lg bg-muted p-2">
-                        <FileText className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{doc.name}</p>
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                          <span>{doc.category}</span>
-                          <span>{doc.type}</span>
-                          <span>{doc.size}</span>
-                          <span>{doc.downloads} {t(translations.downloads)}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      {editable && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <EmptyState
+              icon={FileText}
+              title={t(translations.noDocumentsTitle)}
+              description={t(translations.noDocumentsDesc)}
+              className="border-0 bg-transparent py-10"
+            />
           </CardContent>
         </Card>
       </div>

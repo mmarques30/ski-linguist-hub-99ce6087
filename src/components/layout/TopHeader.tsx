@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, User, BookOpen, CreditCard, ClipboardCheck, GraduationCap, CheckCheck } from "lucide-react";
+import { Bell, BookOpen, CreditCard, ClipboardCheck, GraduationCap, CheckCheck, CalendarClock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -18,6 +18,7 @@ const typeIcons: Record<string, React.ElementType> = {
   paiement: CreditCard,
   test: ClipboardCheck,
   evaluation: GraduationCap,
+  schedule_validation: CalendarClock,
 };
 
 export function TopHeader() {
@@ -149,6 +150,19 @@ export function TopHeader() {
                   );
                 })
               )}
+            </div>
+            <div className="border-t p-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-center text-xs"
+                onClick={() => {
+                  setOpen(false);
+                  navigate("/notifications");
+                }}
+              >
+                Voir toutes les notifications
+              </Button>
             </div>
           </PopoverContent>
         </Popover>

@@ -6,7 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ChevronLeft, ChevronRight, Plus, Info } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { useSessions, type Session } from "@/hooks/useSessions";
@@ -198,6 +199,20 @@ export default function Sessions() {
               </Select>
             </div>
           </div>
+
+          {(sessions?.length ?? 0) === 0 && (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertTitle>Aucune session sur cette période</AlertTitle>
+              <AlertDescription>
+                Le planning est vide pour les dates affichées
+                {filterLang !== "all" || filterInstructor !== "all"
+                  ? " (avec les filtres actifs)"
+                  : ""}
+                . Ce n&apos;est pas un bug : créez une session ou changez de semaine / mois.
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* Calendar */}
           {viewMode === "week" ? (

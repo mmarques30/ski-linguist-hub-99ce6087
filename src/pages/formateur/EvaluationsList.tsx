@@ -58,6 +58,7 @@ import {
 } from "@/lib/dsf-evaluation-export";
 import { useFormateurView } from "@/contexts/FormateurViewContext";
 import { FormateurAssistBanner } from "@/components/formateur/FormateurAssistBanner";
+import { EvaluationStudentBridge } from "@/components/evaluations/EvaluationStudentBridge";
 
 const ALL = "all";
 const PDF_SIGNED_TTL_SEC = 7 * 24 * 3600;
@@ -400,6 +401,7 @@ export default function EvaluationsList() {
                       <TableHead>École</TableHead>
                       <TableHead>Langue</TableHead>
                       <TableHead>Profession</TableHead>
+                      <TableHead>Stagiaire</TableHead>
                       <TableHead className="w-24"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -412,15 +414,19 @@ export default function EvaluationsList() {
                           <TableCell><Skeleton className="h-4 w-28" /></TableCell>
                           <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                           <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-28" /></TableCell>
                           <TableCell><Skeleton className="h-8 w-20" /></TableCell>
                         </TableRow>
                       ))
                     ) : pendingBookings.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8">
-                          <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-2" />
-                          <p className="text-muted-foreground">
-                            Toutes les évaluations sont à jour !
+                        <TableCell colSpan={7} className="text-center py-8">
+                          <ClipboardCheck className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                          <p className="font-medium">Aucune évaluation en attente</p>
+                          <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
+                            {(allCompleted ?? []).length === 0
+                              ? "Aucun test oral terminé n'est encore enregistré. Les réservations apparaîtront ici une fois marquées comme complétées."
+                              : "Tous les tests terminés ont déjà une évaluation (hors brouillon)."}
                           </p>
                         </TableCell>
                       </TableRow>
@@ -458,6 +464,15 @@ export default function EvaluationsList() {
                             <Badge variant="outline">
                               {booking.candidate_profession || "-"}
                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <EvaluationStudentBridge
+                              candidateId={booking.candidate_id}
+                              studentId={booking.student_id}
+                              candidateName={booking.candidate_name}
+                              candidateEmail={booking.candidate_email}
+                              editable={editable && !isFormateur}
+                            />
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
@@ -519,6 +534,7 @@ export default function EvaluationsList() {
                       <TableHead>Station</TableHead>
                       <TableHead>Langue</TableHead>
                       <TableHead>Score</TableHead>
+                      <TableHead>Stagiaire</TableHead>
                       <TableHead className="w-32"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -532,12 +548,13 @@ export default function EvaluationsList() {
                           <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                           <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                           <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-28" /></TableCell>
                           <TableCell><Skeleton className="h-8 w-24" /></TableCell>
                         </TableRow>
                       ))
                     ) : completedBookings.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8">
+                        <TableCell colSpan={8} className="text-center py-8">
                           <ClipboardCheck className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
                           <p className="text-muted-foreground">
                             Aucune évaluation complétée
@@ -584,6 +601,15 @@ export default function EvaluationsList() {
                                   : ""}
                               </Badge>
                             )}
+                          </TableCell>
+                          <TableCell>
+                            <EvaluationStudentBridge
+                              candidateId={booking.candidate_id}
+                              studentId={booking.student_id}
+                              candidateName={booking.candidate_name}
+                              candidateEmail={booking.candidate_email}
+                              editable={editable && !isFormateur}
+                            />
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
