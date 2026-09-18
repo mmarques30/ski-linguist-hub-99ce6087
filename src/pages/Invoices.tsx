@@ -37,6 +37,7 @@ import { format, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOf
 import { fr, ptBR, enUS } from "date-fns/locale";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSeasonFilter } from "@/contexts/SeasonContext";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { ListSkeleton } from "@/components/common/ListSkeleton";
 import {
@@ -320,6 +321,7 @@ export default function Invoices() {
   const [editOpen, setEditOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const { language, t } = useLanguage();
+  const { seasonId } = useSeasonFilter();
   const { canEdit } = useUserPermissions();
   const editable = canEdit("invoices");
 
@@ -401,6 +403,7 @@ export default function Invoices() {
     search: search || undefined,
     dateFrom: dateRange.from,
     dateTo: dateRange.to,
+    seasonId,
   });
 
   const updateInvoice = useUpdateInvoice();

@@ -9,12 +9,14 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ChevronLeft, ChevronRight, Plus, Info } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSeasonFilter } from "@/contexts/SeasonContext";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { useSessions, type Session } from "@/hooks/useSessions";
 import { SessionFormDialog } from "@/components/sessions/SessionFormDialog";
 import { SessionDetailPanel } from "@/components/sessions/SessionDetailPanel";
 import { UnassignedSidebar } from "@/components/sessions/UnassignedSidebar";
 import { LANG_BG } from "@/lib/session-utils";
+import { LANGUAGE_LABELS } from "@/lib/language-catalog";
 import {
   startOfWeek, endOfWeek, startOfMonth, endOfMonth,
   addWeeks, subWeeks, addMonths, subMonths,
@@ -40,6 +42,7 @@ const HOURS = Array.from({ length: 12 }, (_, i) => i + 7); // 7h-18h
 
 export default function Sessions() {
   const { t } = useLanguage();
+  const { seasonId } = useSeasonFilter();
   const { canEdit } = useUserPermissions();
   const editable = canEdit("classes");
 
@@ -67,6 +70,7 @@ export default function Sessions() {
     endDate: rangeEnd.toISOString(),
     language: filterLang,
     instructorId: filterInstructor,
+    seasonId,
   });
 
   const { data: instructors } = useQuery({
@@ -181,7 +185,7 @@ export default function Sessions() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t(translations.allLangs)}</SelectItem>
-                  {["Anglais", "Portugais brésilien", "Russe", "Néerlandais", "Italien", "Allemand", "Espagnol"].map((l) => (
+                  {LANGUAGE_LABELS.map((l) => (
                     <SelectItem key={l} value={l}>{l}</SelectItem>
                   ))}
                 </SelectContent>

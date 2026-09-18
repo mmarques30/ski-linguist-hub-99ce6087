@@ -1,5 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  formateursAPayerDuMois,
+  tresorerieEntrees,
+  tresorerieSolde,
+} from "@/lib/finance-pilotage";
 
 // Types
 export interface FormationCost {
@@ -248,6 +253,45 @@ export function useCAByMonth(startDate: string, endDate: string, withComparison 
       }
       
       return Array.from(byMonth.values()).sort((a, b) => a.month.localeCompare(b.month));
+    },
+  });
+}
+
+/** Dépenses réelles par mois : formation_costs HT + fixed_costs (Onda D1). */
+export function useExpensesByMonth(startDate: string, endDate: string) {
+  return useQuery({
+    queryKey: ["expenses-by-month", startDate, endDate],
+    queryFn: async () => {
+      const [{ data: costs }, { data: fixed }] = await Promise.all([
+        supabase
+          .from("formation_costs")
+          .select("date_cout, montant_ht")
+          .gte("date_cout", startDate)
+          .lte("date_cout", endDate),
+        supabase
+          .from("fixed_costs")
+          .select("mois, montant")
+          .gte("mois", startDate.substring(0, 7) + "-01")
+          .lte("mois", endDate.substring(0, 7) + "-01"),
+      ]);
+
+      const byMonth = new Map<string, number>();
+
+      costs?.forEach((c) => {
+        if (!c.date_cout) return;
+        const month = c.date_cout.substring(0, 7);
+        byMonth.set(month, (byMonth.get(month) || 0) + Number(c.montant_ht || 0));
+      });
+
+      fixed?.forEach((fc) => {
+        if (!fc.mois) return;
+        const month = fc.mois.substring(0, 7);
+        byMonth.set(month, (byMonth.get(month) || 0) + Number(fc.montant || 0));
+      });
+
+      return Array.from(byMonth.entries())
+        .map(([month, total]) => ({ month, total }))
+        .sort((a, b) => a.month.localeCompare(b.month));
     },
   });
 }
@@ -609,17 +653,11 @@ export function useTresoreriePrevisionnelle(moisCount: number = 6) {
         months.push({ mois: moisStr, moisLabel, startOfMonth, endOfMonth });
       }
       
-      // Get pending invoices (expected income)
+      // Get pending invoices (expected income) — sole inflow source (no inscription.price double-count)
       const { data: pendingInvoices } = await supabase
         .from('invoices')
         .select('amount_ttc, amount_ht, due_date')
         .in('status', ['draft', 'sent']);
-      
-      // Get planned inscriptions (future income)
-      const { data: plannedInscriptions } = await supabase
-        .from('inscriptions')
-        .select('price, start_date')
-        .gte('start_date', months[0].startOfMonth);
       
       // Get fixed costs
       const { data: fixedCosts } = await supabase
@@ -635,35 +673,32 @@ export function useTresoreriePrevisionnelle(moisCount: number = 6) {
       
       // Calculate per month
       return months.map(m => {
-        // Factures à encaisser (dues this month)
         const facturesAEncaisser = pendingInvoices?.filter(inv => 
           inv.due_date && inv.due_date >= m.startOfMonth && inv.due_date <= m.endOfMonth
         ).reduce((sum, inv) => sum + Number(inv.amount_ttc || inv.amount_ht || 0), 0) || 0;
         
-        // Formations planifiées (starting this month)
-        const formationsPlanifiees = plannedInscriptions?.filter(ins =>
-          ins.start_date && ins.start_date >= m.startOfMonth && ins.start_date <= m.endOfMonth
-        ).reduce((sum, ins) => sum + Number(ins.price || 0), 0) || 0;
-        
-        // Charges fixes
         const chargesFixes = fixedCosts?.filter(fc => fc.mois.startsWith(m.mois.substring(0, 7)) && !fc.paye)
           .reduce((sum, fc) => sum + Number(fc.montant || 0), 0) || 0;
         
-        // Formateurs à payer
-        const formateursAPayer = unpaidInstructors?.filter(p =>
-          p.periode_fin && p.periode_fin <= m.endOfMonth
-        ).reduce((sum, p) => sum + Number(p.montant || 0), 0) || 0;
+        const formateursAPayer = formateursAPayerDuMois({
+          unpaid: unpaidInstructors || [],
+          startOfMonth: m.startOfMonth,
+          endOfMonth: m.endOfMonth,
+        });
+
+        const entrees = tresorerieEntrees({ facturesAEncaisser });
+        const sorties = chargesFixes + formateursAPayer;
         
         return {
           mois: m.mois,
           moisLabel: m.moisLabel,
-          entrees: facturesAEncaisser + formationsPlanifiees,
+          entrees,
           facturesAEncaisser,
-          formationsPlanifiees,
-          sorties: chargesFixes + formateursAPayer,
+          formationsPlanifiees: 0,
+          sorties,
           chargesFixes,
           formateursAPayer,
-          solde: facturesAEncaisser + formationsPlanifiees - chargesFixes - formateursAPayer,
+          solde: tresorerieSolde({ entrees, chargesFixes, formateursAPayer }),
         };
       });
     },

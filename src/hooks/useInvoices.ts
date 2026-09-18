@@ -52,6 +52,7 @@ export function useInvoices(filters?: {
   search?: string;
   dateFrom?: string;
   dateTo?: string;
+  seasonId?: string | null;
 }) {
   return useQuery({
     queryKey: ["invoices", filters],
@@ -71,6 +72,10 @@ export function useInvoices(filters?: {
 
       if (filters?.clientType && filters.clientType !== "all") {
         query = query.eq("client_type", filters.clientType);
+      }
+
+      if (filters?.seasonId) {
+        query = query.eq("season_id", filters.seasonId);
       }
 
       if (filters?.search) {

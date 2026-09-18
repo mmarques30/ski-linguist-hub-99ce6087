@@ -1,18 +1,15 @@
-/** Languages available in public registration + adaptive placement test. */
-export const REGISTRATION_LANGUAGES = [
-  { value: "english", label: "Anglais" },
-  { value: "portuguese", label: "Portugais brésilien" },
-  { value: "russian", label: "Russe" },
-  { value: "dutch", label: "Néerlandais" },
-  { value: "german", label: "Allemand" },
-  { value: "spanish", label: "Espagnol" },
-  { value: "italian", label: "Italien" },
-  { value: "chinese", label: "Chinois" },
-  { value: "french", label: "Français" },
-] as const;
+/** Languages available in public registration + adaptive placement test.
+ *  Délègue au catalogue unique (PLANO Onda D2).
+ */
+import { LANGUAGE_CATALOG, type LanguageCatalogKey } from "@/lib/language-catalog";
 
-export type RegistrationLanguageKey = (typeof REGISTRATION_LANGUAGES)[number]["value"];
+export const REGISTRATION_LANGUAGES = LANGUAGE_CATALOG.map((l) => ({
+  value: l.key,
+  label: l.label,
+})) as ReadonlyArray<{ value: LanguageCatalogKey; label: string }>;
+
+export type RegistrationLanguageKey = LanguageCatalogKey;
 
 export function isRegistrationLanguageKey(value: string): value is RegistrationLanguageKey {
-  return REGISTRATION_LANGUAGES.some((l) => l.value === value);
+  return LANGUAGE_CATALOG.some((l) => l.key === value);
 }

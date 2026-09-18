@@ -52,6 +52,7 @@ import {
   useSetEmailCronActive,
   useUnpublishEmailTemplate,
 } from "@/hooks/useEmailModels";
+import { EmailSendJournal } from "@/components/admin/EmailSendJournal";
 
 const AUDIENCE_LABELS: Record<string, string> = {
   candidat: "Stagiaire",
@@ -309,12 +310,11 @@ export default function AdminEmails() {
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold">
             <Mail className="h-6 w-6" />
-            Modèles d'emails
+            Communications
           </h1>
           <p className="text-sm text-muted-foreground">
-            Textes des emails transactionnels. Un texte ne part qu&apos;après « Valider et
-            activer » ; les crons restent arrêtés jusqu&apos;à votre accord. Les fichiers
-            joints d&apos;inscription (convention, programme, FIF-PL) se gèrent sur{" "}
+            Modèles transactionnels et journal des envois (`email_log`). Les fichiers
+            joints d&apos;inscription se gèrent sur{" "}
             <a href="/admin/registration-documents" className="underline underline-offset-2">
               Modèles documents
             </a>
@@ -322,6 +322,17 @@ export default function AdminEmails() {
           </p>
         </div>
 
+        <Tabs defaultValue="modeles">
+          <TabsList>
+            <TabsTrigger value="modeles">Modèles</TabsTrigger>
+            <TabsTrigger value="journal">Journal des envois</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="journal" className="mt-4 space-y-4">
+            <EmailSendJournal />
+          </TabsContent>
+
+          <TabsContent value="modeles" className="mt-4 space-y-6">
         <div className="grid gap-4 sm:grid-cols-3">
           <Card>
             <CardContent className="pt-6">
@@ -484,6 +495,8 @@ export default function AdminEmails() {
             )}
           </CardContent>
         </Card>
+          </TabsContent>
+        </Tabs>
       </div>
 
       <AlertDialog

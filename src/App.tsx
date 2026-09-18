@@ -7,6 +7,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { StudentProtectedRoute } from "@/components/auth/StudentProtectedRoute";
 import { AssistStudentRoute } from "@/components/auth/AssistStudentRoute";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { SeasonProvider } from "@/contexts/SeasonContext";
 import {
   StudentAssistViewProvider,
   StudentOwnViewProvider,
@@ -87,6 +88,7 @@ const App = () => (
   <ErrorBoundary>
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
+      <SeasonProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -310,6 +312,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+      </SeasonProvider>
     </LanguageProvider>
   </QueryClientProvider>
   </ErrorBoundary>

@@ -1,23 +1,20 @@
 /**
  * Libellés de langues enseignées / filtrées dans l'app.
  * Règle produit : jamais « Portugais » seul — toujours « Portugais brésilien ».
+ * Catalogue unique : `language-catalog.ts` (Onda D2).
  */
 
-export const PORTUGUESE_LABEL = "Portugais brésilien";
-export const PORTUGUESE_LABEL_LOWER = "portugais brésilien";
+import {
+  INSTRUCTOR_LANGUAGE_VALUES,
+  PORTUGUESE_LABEL as CAT_PT,
+  PORTUGUESE_LABEL_LOWER as CAT_PT_LOWER,
+} from "./language-catalog";
+
+export const PORTUGUESE_LABEL = CAT_PT;
+export const PORTUGUESE_LABEL_LOWER = CAT_PT_LOWER;
 
 /** Langues proposées sur les fiches formateurs (stockage en minuscules, comme en base). */
-export const INSTRUCTOR_LANGUAGES = [
-  "anglais",
-  "portugais brésilien",
-  "russe",
-  "néerlandais",
-  "fle",
-  "espagnol",
-  "italien",
-  "allemand",
-  "chinois",
-] as const;
+export const INSTRUCTOR_LANGUAGES = INSTRUCTOR_LANGUAGE_VALUES;
 
 export function isPortugueseLanguage(value: string | null | undefined): boolean {
   if (!value) return false;

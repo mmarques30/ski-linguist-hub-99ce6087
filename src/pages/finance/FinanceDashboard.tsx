@@ -9,17 +9,20 @@ import { Progress } from "@/components/ui/progress";
 import { PeriodSelector } from "@/components/finance/PeriodSelector";
 import { SeasonSelector } from "@/components/finance/SeasonSelector";
 import { FinanceKPICard } from "@/components/finance/FinanceKPICard";
+import { FinanceKpiGlossary } from "@/components/finance/FinanceKpiGlossary";
 import { InstructorPaymentDialog } from "@/components/finance/InstructorPaymentDialog";
 import { PilotageSubnav } from "@/components/finance/PilotageSubnav";
-import { useCurrentSeason } from "@/hooks/useSeasons";
+import { useSeasons } from "@/hooks/useSeasons";
 import { 
   useFinancialKPIs, 
-  useCAByMonth, 
+  useCAByMonth,
+  useExpensesByMonth,
   useCAByType, 
   usePendingInvoices, 
   useInstructorBalance,
 } from "@/hooks/useFinancialDashboard";
 import { useFinancialRealtime } from "@/hooks/useFinancialRealtime";
+import { progressTowardTarget, resolveRevenueTarget } from "@/lib/finance-pilotage";
 import { AlertCircle, DollarSign, CreditCard, Users, TrendingUp } from "lucide-react";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { format, startOfMonth, endOfMonth } from "date-fns";
@@ -45,7 +48,7 @@ const translations = {
 
 export default function FinanceDashboard() {
   const today = new Date();
-  const { data: currentSeason } = useCurrentSeason();
+  const { data: seasons } = useSeasons();
   const [startDate, setStartDate] = useState(format(startOfMonth(today), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(endOfMonth(today), 'yyyy-MM-dd'));
   const [selectedSeasonId, setSelectedSeasonId] = useState<string | undefined>();
@@ -59,9 +62,16 @@ export default function FinanceDashboard() {
 
   const { data: kpis } = useFinancialKPIs(startDate, endDate, true);
   const { data: caByMonth } = useCAByMonth(startDate, endDate, true);
+  const { data: expensesByMonth } = useExpensesByMonth(startDate, endDate);
   const { data: caByType } = useCAByType(startDate, endDate);
   const { data: pendingInvoices } = usePendingInvoices();
   const { data: instructorBalance } = useInstructorBalance();
+
+  const selectedSeason = useMemo(
+    () => seasons?.find((s) => s.id === selectedSeasonId) ?? seasons?.find((s) => s.is_current) ?? null,
+    [seasons, selectedSeasonId]
+  );
+  const revenueTarget = resolveRevenueTarget(selectedSeason);
 
   const handlePeriodChange = (start: string, end: string) => {
     setStartDate(start);
@@ -90,35 +100,37 @@ export default function FinanceDashboard() {
     }).format(value);
   };
 
-  // Horizontal bars data: revenue vs expenses per month
+  // Horizontal bars: revenue vs real expenses per month
   const revenueVsExpenses = useMemo(() => {
     if (!caByMonth) return [];
-    return caByMonth.map(m => {
-      const date = new Date(m.month + '-01');
+    const expenseMap = new Map((expensesByMonth || []).map((e) => [e.month, e.total]));
+    return caByMonth.map((m) => {
+      const date = new Date(m.month + "-01");
       return {
-        label: date.toLocaleDateString('fr-FR', { month: 'short' }),
+        label: date.toLocaleDateString("fr-FR", { month: "short" }),
         revenue: m.total,
-        expenses: m.totalN1 || 0, // using N-1 as comparison
+        expenses: expenseMap.get(m.month) ?? 0,
       };
     });
-  }, [caByMonth]);
+  }, [caByMonth, expensesByMonth]);
 
   const maxBarValue = useMemo(() => {
     if (!revenueVsExpenses.length) return 1;
-    return Math.max(...revenueVsExpenses.flatMap(m => [m.revenue, m.expenses]), 1);
+    return Math.max(...revenueVsExpenses.flatMap((m) => [m.revenue, m.expenses]), 1);
   }, [revenueVsExpenses]);
 
-  // Quarterly goals (hardcoded targets for now)
+  // Objectifs depuis seasons.revenue_target (BL-039) — plus de cibles inventées
   const quarterlyGoals = useMemo(() => {
     const caTotal = kpis?.caFacture || 0;
-    const margeActuelle = kpis?.margePourcent || 0;
-    const nbFormateurs = kpis?.formateursConcernes || 0;
-    return [
-      { label: t(translations.quarterlyRevenue), current: caTotal, target: 50000, format: 'price' as const },
-      { label: t(translations.newTrainees), current: nbFormateurs, target: 15, format: 'number' as const },
-      { label: 'Marge cible', current: margeActuelle, target: 60, format: 'percent' as const },
-    ];
-  }, [kpis]);
+    const cible = revenueTarget;
+    const pct = progressTowardTarget(caTotal, cible);
+    return {
+      caTotal,
+      cible,
+      pct,
+      seasonName: selectedSeason?.name ?? null,
+    };
+  }, [kpis, revenueTarget, selectedSeason?.name]);
 
   return (
     <MainLayout>
@@ -268,34 +280,41 @@ export default function FinanceDashboard() {
           </Card>
         </div>
 
-        {/* Metas do Trimestre */}
+        {/* Objectifs saison (revenue_target) */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">{t(translations.quarterlyGoals)}</CardTitle>
+            <CardTitle className="text-lg">
+              Objectif CA
+              {quarterlyGoals.seasonName ? ` — ${quarterlyGoals.seasonName}` : ""}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-6 md:grid-cols-3">
-              {quarterlyGoals.map((goal, idx) => {
-                const progress = Math.min((goal.current / goal.target) * 100, 100);
-                const displayCurrent = goal.format === 'price' ? formatPrice(goal.current) 
-                  : goal.format === 'percent' ? `${goal.current.toFixed(1)}%`
-                  : goal.current.toString();
-                const displayTarget = goal.format === 'price' ? formatPrice(goal.target)
-                  : goal.format === 'percent' ? `${goal.target}%`
-                  : goal.target.toString();
-                return (
-                  <div key={idx} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium">{goal.label}</span>
-                      <span className="text-muted-foreground">{displayCurrent} / {displayTarget}</span>
-                    </div>
-                    <Progress value={progress} className="h-2.5 [&>div]:bg-[hsl(var(--fli-yellow))]" />
-                  </div>
-                );
-              })}
-            </div>
+            {quarterlyGoals.cible == null ? (
+              <p className="text-sm text-muted-foreground">
+                Aucun objectif renseigné pour cette saison. Saisissez{" "}
+                <code className="text-xs">revenue_target</code> dans Administration → Saisons
+                (BL-039). Les anciennes cibles 50&nbsp;000&nbsp;€ / 15 stagiaires / 60&nbsp;% ont
+                été retirées.
+              </p>
+            ) : (
+              <div className="space-y-2 max-w-md">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium">{t(translations.quarterlyRevenue)}</span>
+                  <span className="text-muted-foreground">
+                    {formatPrice(quarterlyGoals.caTotal)} / {formatPrice(quarterlyGoals.cible)}
+                    {quarterlyGoals.pct != null ? ` (${quarterlyGoals.pct}%)` : ""}
+                  </span>
+                </div>
+                <Progress
+                  value={quarterlyGoals.pct ?? 0}
+                  className="h-2.5 [&>div]:bg-[hsl(var(--fli-yellow))]"
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
+
+        <FinanceKpiGlossary />
 
         {/* CA Evolution */}
         <Card>

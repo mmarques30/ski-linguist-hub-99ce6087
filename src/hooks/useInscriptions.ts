@@ -35,6 +35,7 @@ export function useInscriptions(filters?: {
   status?: string;
   language?: string;
   search?: string;
+  seasonId?: string | null;
 }) {
   return useQuery({
     queryKey: ["inscriptions", filters],
@@ -50,6 +51,11 @@ export function useInscriptions(filters?: {
 
       if (filters?.language && filters.language !== "all") {
         query = query.eq("language", filters.language);
+      }
+
+      if (filters?.seasonId) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        query = (query as any).eq("season_id", filters.seasonId);
       }
 
       if (filters?.search) {
