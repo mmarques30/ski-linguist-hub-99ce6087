@@ -48,17 +48,41 @@ export interface PartnerContact {
 }
 
 // ─── Partners ────────────────────────────────────────────
-export function usePartners(filters?: { type?: string; status?: string; search?: string }) {
+export interface PartnerListResult {
+  rows: Partner[];
+  total: number;
+}
+
+export function usePartners(filters?: {
+  type?: string;
+  status?: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}) {
+  const page = filters?.page ?? 1;
+  const pageSize = filters?.pageSize ?? 50;
+
   return useQuery({
-    queryKey: ["partners", filters],
+    queryKey: ["partners", filters, page, pageSize],
     queryFn: async () => {
-      let q = supabase.from("partners").select("*").order("name");
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+
+      let q = supabase
+        .from("partners")
+        .select("*", { count: "exact" })
+        .order("name")
+        .range(from, to);
       if (filters?.type) q = q.eq("type", filters.type);
       if (filters?.status) q = q.eq("status", filters.status);
       if (filters?.search) q = q.ilike("name", `%${filters.search}%`);
-      const { data, error } = await q;
+      const { data, error, count } = await q;
       if (error) throw error;
-      return data as Partner[];
+      return {
+        rows: (data || []) as Partner[],
+        total: count ?? 0,
+      } satisfies PartnerListResult;
     },
   });
 }
@@ -268,17 +292,27 @@ export function usePartnerStats() {
   return useQuery({
     queryKey: ["partner-stats"],
     queryFn: async () => {
-      const { data: partners, error: pErr } = await supabase.from("partners").select("id, name, status");
-      if (pErr) throw pErr;
-      const activePartners = partners?.filter((p) => p.status === "actif").length || 0;
-      const { count: totalInscriptions } = await supabase
+      const { count: totalPartners, error: totalError } = await supabase
+        .from("partners")
+        .select("*", { count: "exact", head: true });
+      if (totalError) throw totalError;
+
+      const { count: activePartners, error: activeError } = await supabase
+        .from("partners")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "actif");
+      if (activeError) throw activeError;
+
+      const { count: totalInscriptions, error: inscriptionsError } = await supabase
         .from("inscriptions")
         .select("id", { count: "exact", head: true })
         .not("partner_id", "is", null);
+      if (inscriptionsError) throw inscriptionsError;
+
       return {
-        totalPartners: partners?.length || 0,
-        activePartners,
-        totalInscriptions: totalInscriptions || 0,
+        totalPartners: totalPartners ?? 0,
+        activePartners: activePartners ?? 0,
+        totalInscriptions: totalInscriptions ?? 0,
       };
     },
   });

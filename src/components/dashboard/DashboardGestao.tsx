@@ -20,7 +20,7 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useInscriptions } from "@/hooks/useInscriptions";
 import { useUpcomingTests } from "@/hooks/useUpcomingTests";
-import { useDashboardStats, useRevenueProjections } from "@/hooks/useDashboardStats";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { DashboardActionRail } from "@/components/dashboard/DashboardActionRail";
 import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
@@ -101,11 +101,6 @@ const translations = {
     "pt-BR": "Preparação",
     en: "Preparation",
   },
-  tabBilling: {
-    fr: "Facturation",
-    "pt-BR": "Faturamento",
-    en: "Billing",
-  },
   recentInscriptions: {
     fr: "Inscriptions récentes",
     "pt-BR": "Inscrições recentes",
@@ -136,16 +131,6 @@ const translations = {
     "pt-BR": "Status de validação e preparação em tempo real",
     en: "Real-time validation and preparation status",
   },
-  billingForecast: {
-    fr: "Prévision de Facturation",
-    "pt-BR": "Previsão de Faturamento",
-    en: "Billing Forecast",
-  },
-  billingForecastDesc: {
-    fr: "Projections et montants confirmés par mois",
-    "pt-BR": "Projeções e valores confirmados por mês",
-    en: "Projections and confirmed amounts by month",
-  },
   statusConfirmed: {
     fr: "Confirmée",
     "pt-BR": "Confirmada",
@@ -160,11 +145,6 @@ const translations = {
     fr: "En cours",
     "pt-BR": "Em andamento",
     en: "In Progress",
-  },
-  projected: {
-    fr: "Projeté",
-    "pt-BR": "Projetado",
-    en: "Projected",
   },
   noData: {
     fr: "Aucune donnée disponible",
@@ -211,7 +191,6 @@ export function DashboardGestao() {
   const { data: inscriptions, isLoading: loadingInscriptions } = useInscriptions();
   const { data: upcomingTests, isLoading: loadingTests } = useUpcomingTests();
   const { data: stats, isLoading: loadingStats } = useDashboardStats();
-  const { data: projections, isLoading: loadingProjections } = useRevenueProjections(3);
 
   const getDateLocale = () => {
     switch (language) {
@@ -375,7 +354,7 @@ export function DashboardGestao() {
 
       {/* Tabs Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
           <TabsTrigger value="inscriptions" className="gap-2">
             <UserPlus className="h-4 w-4" />
             <span className="hidden sm:inline">{t(translations.tabInscriptions)}</span>
@@ -387,10 +366,6 @@ export function DashboardGestao() {
           <TabsTrigger value="preparation" className="gap-2">
             <ClipboardCheck className="h-4 w-4" />
             <span className="hidden sm:inline">{t(translations.tabPreparation)}</span>
-          </TabsTrigger>
-          <TabsTrigger value="billing" className="gap-2">
-            <Euro className="h-4 w-4" />
-            <span className="hidden sm:inline">{t(translations.tabBilling)}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -599,61 +574,6 @@ export function DashboardGestao() {
                             {t(translations.materialsReady)}
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Billing Tab */}
-        <TabsContent value="billing">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-[hsl(var(--fli-teal))]" />
-                {t(translations.billingForecast)}
-              </CardTitle>
-              <CardDescription>{t(translations.billingForecastDesc)}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loadingProjections ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Clock className="h-8 w-8 mx-auto mb-2 animate-spin" />
-                </div>
-              ) : !projections || projections.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">{t(translations.noData)}</div>
-              ) : (
-                <div className="space-y-6">
-                  {projections.map((projection, index) => {
-                    const percentage =
-                      projection.projected > 0
-                        ? (projection.confirmed / projection.projected) * 100
-                        : 0;
-
-                    return (
-                      <div key={index} className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-medium capitalize">{projection.month}</h4>
-                          <Badge variant="outline">{percentage.toFixed(0)}% {t(translations.confirmed)}</Badge>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-sm text-muted-foreground">{t(translations.projected)}</p>
-                            <p className="text-xl font-bold">{formatCurrency(projection.projected)}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">{t(translations.confirmed)}</p>
-                            <p className="text-xl font-bold text-[hsl(var(--fli-teal))]">
-                              {formatCurrency(projection.confirmed)}
-                            </p>
-                          </div>
-                        </div>
-
-                        <Progress value={percentage} className="h-2" />
                       </div>
                     );
                   })}

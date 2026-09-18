@@ -97,38 +97,3 @@ export function useDashboardStats() {
     },
   });
 }
-
-export function useRevenueProjections(monthsCount: number = 3) {
-  return useQuery({
-    queryKey: ["revenue-projections", monthsCount],
-    queryFn: async () => {
-      const projections = [];
-      const today = new Date();
-
-      for (let i = 0; i < monthsCount; i++) {
-        const monthDate = new Date(today.getFullYear(), today.getMonth() + i, 1);
-        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + i + 1, 0);
-
-        const { data: invoices } = await supabase
-          .from("invoices")
-          .select("amount_ttc, status")
-          .gte("invoice_date", monthDate.toISOString().split("T")[0])
-          .lte("invoice_date", endOfMonth.toISOString().split("T")[0]);
-
-        const projected = invoices?.reduce((sum, i) => sum + (Number(i.amount_ttc) || 0), 0) || 0;
-        const confirmed =
-          invoices
-            ?.filter((i) => i.status === "paid")
-            .reduce((sum, i) => sum + (Number(i.amount_ttc) || 0), 0) || 0;
-
-        projections.push({
-          month: monthDate.toLocaleDateString("fr-FR", { month: "long" }),
-          projected,
-          confirmed,
-        });
-      }
-
-      return projections;
-    },
-  });
-}
