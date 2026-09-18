@@ -91,12 +91,14 @@ export default function EvaluationForm() {
     technique: 0,
     conversation: 0,
   });
-  const [general, setGeneral] = useState(0);
+  // null = l'évaluateur n'a pas ajusté la note : on suit la moyenne calculée.
+  const [generalOverride, setGeneral] = useState<number | null>(null);
   const [noteMethodologique, setNoteMethodologique] = useState("");
   const [sections, setSections] = useState<SectionStates>(emptySections);
   const [initialized, setInitialized] = useState(false);
 
   const calcule = useMemo(() => scoreGeneralCalcule(scores), [scores]);
+  const general = generalOverride ?? calcule;
   const determinedLevel = useMemo(() => scoreToLevel(general, "sur_5"), [general]);
   const adjustmentOk = isScoreAdjustmentAllowed(general, calcule);
   const methodoSuggested = suggestsMethodoNote(general, calcule);
