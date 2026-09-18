@@ -12,7 +12,9 @@ import { GlobalSearch } from "./GlobalSearch";
 import { SeasonFilterControl } from "./SeasonFilterControl";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
-import { fr } from "date-fns/locale";
+import { fr, enUS, ptBR } from "date-fns/locale";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { CHROME_UI, CHROME_NAV } from "@/lib/chrome-i18n";
 
 const typeIcons: Record<string, React.ElementType> = {
   inscription: BookOpen,
@@ -27,6 +29,7 @@ export function TopHeader() {
   const lastScrollY = useRef(0);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t, language } = useLanguage();
   const unreadCount = useUnreadCount();
   const { data: notifications = [] } = useRecentNotifications();
   const markAsRead = useMarkAsRead();
@@ -35,7 +38,9 @@ export function TopHeader() {
 
   const initials = user?.email
     ? user.email.substring(0, 2).toUpperCase()
-    : "US";
+    : "FL";
+
+  const dateLocale = language === "pt-BR" ? ptBR : language === "en" ? enUS : fr;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -91,7 +96,7 @@ export function TopHeader() {
           <PopoverTrigger asChild>
             <button
               className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-white/70 transition-all duration-200 hover:scale-110 hover:bg-white/20 hover:text-white hover:shadow-md"
-              aria-label="Notifications"
+              aria-label={t(CHROME_UI.notifications)}
             >
               <Bell className="h-[18px] w-[18px]" />
               {unreadCount > 0 && (
@@ -103,7 +108,7 @@ export function TopHeader() {
           </PopoverTrigger>
           <PopoverContent align="end" className="w-80 p-0">
             <div className="flex items-center justify-between border-b px-4 py-3">
-              <h4 className="text-sm font-semibold">Notifications</h4>
+              <h4 className="text-sm font-semibold">{t(CHROME_UI.notifications)}</h4>
               {unreadCount > 0 && (
                 <Button
                   variant="ghost"
@@ -112,14 +117,14 @@ export function TopHeader() {
                   onClick={() => markAllAsRead.mutate()}
                 >
                   <CheckCheck className="mr-1 h-3 w-3" />
-                  Tout marquer lu
+                  {t(CHROME_UI.markAllRead)}
                 </Button>
               )}
             </div>
             <div className="max-h-80 overflow-y-auto">
               {notifications.length === 0 ? (
                 <p className="px-4 py-6 text-center text-sm text-muted-foreground">
-                  Aucune notification
+                  {t(CHROME_UI.noNotifications)}
                 </p>
               ) : (
                 notifications.map((notif) => {
@@ -144,7 +149,10 @@ export function TopHeader() {
                           </p>
                         )}
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true, locale: fr })}
+                          {formatDistanceToNow(new Date(notif.created_at), {
+                            addSuffix: true,
+                            locale: dateLocale,
+                          })}
                         </p>
                       </div>
                       {!notif.is_read && (
@@ -165,7 +173,7 @@ export function TopHeader() {
                   navigate("/notifications");
                 }}
               >
-                Voir toutes les notifications
+                {t(CHROME_UI.seeAll)}
               </Button>
             </div>
           </PopoverContent>
@@ -175,7 +183,7 @@ export function TopHeader() {
         <button
           type="button"
           className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-white/70 transition-all duration-200 hover:scale-110 hover:bg-white/20 hover:text-white hover:shadow-md"
-          aria-label="Paramètres du compte"
+          aria-label={t(CHROME_NAV["/settings"])}
           onClick={() => navigate("/settings")}
         >
           <Avatar className="h-7 w-7">

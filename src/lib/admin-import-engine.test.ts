@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   IMPORT_HISTORIQUE_LIMITE,
   IMPORT_TABLE_LABELS,
+  IMPORT_UPSERT_KEYS,
   prepareImport,
 } from "@/lib/admin-import-engine";
 
@@ -176,5 +177,35 @@ describe("import des paiements", () => {
     );
     expect(r.acceptedCount).toBe(0);
     expect(r.rejections[0].reason).toContain("amount manquant");
+  });
+});
+
+describe("IMPORT_UPSERT_KEYS", () => {
+  it("utilise email comme clé naturelle pour students", () => {
+    expect(IMPORT_UPSERT_KEYS.students).toBe("email");
+  });
+});
+
+describe("import des leads", () => {
+  it("accepte une ligne valide avec valeurs par défaut", () => {
+    const r = prepareImport(
+      [
+        {
+          contact_name: "Marie Dupont",
+          contact_email: "marie@example.com",
+          company: "ESF Test",
+        },
+      ],
+      "leads",
+    );
+    expect(r.rejectedCount).toBe(0);
+    expect(r.accepted[0]).toMatchObject({
+      contact_name: "Marie Dupont",
+      contact_email: "marie@example.com",
+      company: "ESF Test",
+      source: "autre",
+      expansion_channel: "b2b",
+      status: "nouveau",
+    });
   });
 });

@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, TrendingUp, Euro, Clock, Target, AlertTriangle } from "lucide-react";
+import { Plus, Search, TrendingUp, Euro, Clock, Target, AlertTriangle, Link2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import {
   useLeads, useLeadKPIs, useUpdateLead,
   LEAD_STATUSES, LEAD_SOURCES, EXPANSION_CHANNELS,
@@ -125,6 +126,24 @@ function ChannelPipeline({
 
   const handleDragOver = (e: React.DragEvent) => e.preventDefault();
 
+  const handleMarkLost = async (lead: Lead) => {
+    const reason = window.prompt("Motif de perte (obligatoire) :");
+    if (!reason?.trim()) {
+      if (reason !== null) toast.error("Motif de perte requis");
+      return;
+    }
+    try {
+      await updateLead.mutateAsync({
+        id: lead.id,
+        status: "perdu",
+        loss_reason: reason.trim(),
+      });
+      toast.success("Lead marqué comme perdu");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Erreur");
+    }
+  };
+
   const sourceChartData = kpis
     ? Object.entries(kpis.sourceCount).map(([key, count]) => ({
         name: LEAD_SOURCES.find((s) => s.key === key)?.label || key,
@@ -171,13 +190,38 @@ function ChannelPipeline({
                 </div>
                 <div className="space-y-2">
                   {colLeads.map((lead) => (
-                    <LeadCard
-                      key={lead.id}
-                      lead={lead}
-                      onClick={() => onEdit(lead)}
-                      draggable={editable}
-                      onDragStart={(e) => handleDragStart(e, lead.id)}
-                    />
+                    <div key={lead.id} className="space-y-1">
+                      <LeadCard
+                        lead={lead}
+                        onClick={() => onEdit(lead)}
+                        draggable={editable}
+                        onDragStart={(e) => handleDragStart(e, lead.id)}
+                      />
+                      {lead.ski_monitor_id && (
+                        <Link
+                          to="/gestion/moniteurs"
+                          className="flex items-center gap-1 text-[10px] text-primary hover:underline px-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Link2 className="h-3 w-3" />
+                          Moniteur lié
+                        </Link>
+                      )}
+                      {editable && !["converti", "perdu"].includes(lead.status) && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-[10px] text-muted-foreground w-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMarkLost(lead);
+                          }}
+                        >
+                          Marquer perdu
+                        </Button>
+                      )}
+                    </div>
                   ))}
                   {colLeads.length === 0 && (
                     <p className="text-xs text-muted-foreground text-center py-8">Aucun lead</p>
@@ -195,7 +239,24 @@ function ChannelPipeline({
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
               {lostLeads.slice(0, 8).map((lead) => (
-                <LeadCard key={lead.id} lead={lead} onClick={() => onEdit(lead)} />
+                <div key={lead.id} className="space-y-1">
+                  <LeadCard lead={lead} onClick={() => onEdit(lead)} />
+                  {lead.loss_reason && (
+                    <p className="text-[10px] text-muted-foreground px-1 line-clamp-2">
+                      Motif : {lead.loss_reason}
+                    </p>
+                  )}
+                  {lead.ski_monitor_id && (
+                    <Link
+                      to="/gestion/moniteurs"
+                      className="flex items-center gap-1 text-[10px] text-primary hover:underline px-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Link2 className="h-3 w-3" />
+                      Moniteur lié
+                    </Link>
+                  )}
+                </div>
               ))}
             </div>
           </div>

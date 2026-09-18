@@ -1,54 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
 import { ChevronRight, Home } from "lucide-react";
 import { Fragment } from "react";
-
-const LABELS: Record<string, string> = {
-  finance: "Finance",
-  analyses: "Analyses",
-  rentabilite: "Rentabilité",
-  tresorerie: "Trésorerie",
-  payments: "Paiements",
-  "charges-fixes": "Charges fixes",
-  gestion: "Gestion",
-  commercial: "Commercial",
-  partenaires: "Partenaires",
-  moniteurs: "Moniteurs",
-  inscriptions: "Inscriptions",
-  "schedule-validation": "Constitution des groupes",
-  invoices: "Factures",
-  students: "Stagiaires",
-  "portal-preview": "Prévisualisation portail",
-  tests: "Tests de niveau",
-  classes: "Planning",
-  formation: "Formation",
-  sessions: "Sessions",
-  documents: "Documents",
-  settings: "Paramètres",
-  admin: "Administration",
-  import: "Import",
-  "import-phrases": "Import phrases",
-  emails: "Emails",
-  "registration-documents": "Modèles documents",
-  phrases: "Phrases",
-  testing: "Tests QA",
-  users: "Utilisateurs",
-  seasons: "Saisons",
-  formateur: "Formateur",
-  evaluations: "Évaluations",
-  evaluation: "Évaluation",
-  "evaluation-view": "Évaluation",
-  verifier: "Vérification",
-  amelioration: "Amélioration",
-  "satisfaction-stats": "Satisfaction",
-  formateurs: "Formateurs",
-  qualite: "Qualité",
-  audit: "Audit Qualiopi",
-  historique: "Historique",
-  student: "Espace stagiaire",
-  dashboard: "Tableau de bord",
-  test: "Test",
-  planning: "Planning",
-};
+import { useLanguage } from "@/contexts/LanguageContext";
+import { CHROME_BREADCRUMB, CHROME_UI } from "@/lib/chrome-i18n";
 
 /**
  * Préfixes qui n'ont pas de page dédiée : les afficher en texte, pas en lien,
@@ -63,18 +17,19 @@ const NON_NAVIGABLE_PATHS = new Set([
   "/student",
 ]);
 
-function labelize(seg: string): string {
-  if (LABELS[seg]) return LABELS[seg];
-  if (/^[0-9a-f]{8}-/i.test(seg) || /^\d+$/.test(seg)) return "Détails";
-  return seg.charAt(0).toUpperCase() + seg.slice(1);
-}
-
 export function Breadcrumbs() {
   const { pathname } = useLocation();
+  const { t } = useLanguage();
   if (pathname === "/" || pathname === "/auth") return null;
 
   const segments = pathname.split("/").filter(Boolean);
   if (segments.length === 0) return null;
+
+  const labelize = (seg: string): string => {
+    if (CHROME_BREADCRUMB[seg]) return t(CHROME_BREADCRUMB[seg]);
+    if (/^[0-9a-f]{8}-/i.test(seg) || /^\d+$/.test(seg)) return t(CHROME_UI.details);
+    return seg.charAt(0).toUpperCase() + seg.slice(1);
+  };
 
   const crumbs = segments.map((seg, idx) => {
     const path = "/" + segments.slice(0, idx + 1).join("/");
@@ -86,6 +41,8 @@ export function Breadcrumbs() {
     };
   });
 
+  const homeLabel = t(CHROME_BREADCRUMB.dashboard);
+
   return (
     <nav
       aria-label="Fil d'Ariane"
@@ -96,7 +53,7 @@ export function Breadcrumbs() {
         className="flex items-center gap-1 hover:text-foreground transition-colors"
       >
         <Home className="h-3.5 w-3.5" />
-        <span>Tableau de bord</span>
+        <span>{homeLabel}</span>
       </Link>
       {crumbs.map((c) => (
         <Fragment key={c.path}>

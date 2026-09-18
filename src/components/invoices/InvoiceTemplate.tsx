@@ -2,6 +2,11 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import fliLogo from "@/assets/fli-invoice-logo.png";
 import factureAcquitteeStamp from "@/assets/facture-acquittee-stamp.png";
+import { useOrganizationIdentity } from "@/hooks/useOrganizationIdentity";
+import {
+  EMPTY_ORGANIZATION_IDENTITY,
+  organizationInvoiceHeader,
+} from "@/lib/organization-identity";
 
 export type InvoiceType = "formation" | "test" | "soustraitance";
 
@@ -88,6 +93,9 @@ interface InvoiceTemplateProps {
 
 export function InvoiceTemplate({ data, className = "" }: InvoiceTemplateProps) {
   const config = templateConfig[data.invoiceType];
+  const { data: identity } = useOrganizationIdentity();
+  const header = organizationInvoiceHeader(identity ?? EMPTY_ORGANIZATION_IDENTITY);
+  const logoSrc = header.logoUrl || fliLogo;
 
   const formatPrice = (amount: number) => {
     return new Intl.NumberFormat("fr-FR", {
@@ -123,13 +131,13 @@ export function InvoiceTemplate({ data, className = "" }: InvoiceTemplateProps) 
       {/* Header */}
       <div className="flex justify-between items-start mb-8">
         <div>
-          <img src={fliLogo} alt="FLI Logo" className="h-16 mb-4" />
+          <img src={logoSrc} alt="Logo organisme" className="h-16 mb-4" />
           <div className="text-sm text-gray-600 space-y-0.5">
-            <p className="font-semibold text-gray-900">{FLI_INFO.name}</p>
-            <p>{FLI_INFO.address}</p>
-            <p>{FLI_INFO.city}</p>
-            <p>Tél: {FLI_INFO.phone}</p>
-            <p>{FLI_INFO.email}</p>
+            <p className="font-semibold text-gray-900">{header.name}</p>
+            <p>{header.address}</p>
+            <p>{header.cityLine}</p>
+            <p>Tél: {header.phone}</p>
+            <p>{header.email}</p>
           </div>
         </div>
         <div className="text-right">
@@ -274,7 +282,7 @@ export function InvoiceTemplate({ data, className = "" }: InvoiceTemplateProps) 
             <p><span className="text-gray-500">BIC:</span> {FLI_INFO.bic}</p>
           </div>
           <div className="text-right">
-            <p><span className="text-gray-500">SIRET:</span> {FLI_INFO.siret}</p>
+            <p><span className="text-gray-500">SIRET:</span> {header.siret}</p>
             {config.showTVANumber && (
               <p><span className="text-gray-500">N° TVA:</span> {FLI_INFO.tvaNumber}</p>
             )}
