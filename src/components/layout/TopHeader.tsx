@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUnreadCount, useRecentNotifications, useMarkAsRead, useMarkAllAsRead } from "@/hooks/useNotifications";
 import fliLogo from "@/assets/fli-marca-yellow.png";
 import { GlobalSearch } from "./GlobalSearch";
+import { SeasonFilterControl } from "./SeasonFilterControl";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -78,6 +79,9 @@ export function TopHeader() {
 
       {/* Right: dock icons */}
       <div className="flex items-center gap-1">
+        <div className="mr-2 hidden lg:block">
+          <SeasonFilterControl />
+        </div>
         {/* Global search */}
         <div className="mr-2">
           <GlobalSearch />

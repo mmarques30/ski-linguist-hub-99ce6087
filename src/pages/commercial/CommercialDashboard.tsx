@@ -14,6 +14,7 @@ import {
 import { LeadCard } from "@/components/commercial/LeadCard";
 import { LeadFormDialog } from "@/components/commercial/LeadFormDialog";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { useSeasonFilter } from "@/contexts/SeasonContext";
 import { toast } from "sonner";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
@@ -95,7 +96,8 @@ function ChannelPipeline({
   editable: boolean;
   onEdit: (lead: Lead) => void;
 }) {
-  const { data: leads = [] } = useLeads({ search, expansion_channel: channel });
+  const { seasonId } = useSeasonFilter();
+  const { data: leads = [] } = useLeads({ search, expansion_channel: channel, seasonId });
   const { data: kpis } = useLeadKPIs(channel);
   const updateLead = useUpdateLead();
 

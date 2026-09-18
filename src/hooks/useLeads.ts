@@ -67,6 +67,7 @@ export function useLeads(filters?: {
   source?: string;
   search?: string;
   expansion_channel?: ExpansionChannel;
+  seasonId?: string | null;
 }) {
   return useQuery({
     queryKey: ["leads", filters],
@@ -84,6 +85,9 @@ export function useLeads(filters?: {
       }
       if (filters?.expansion_channel) {
         query = query.eq("expansion_channel", filters.expansion_channel);
+      }
+      if (filters?.seasonId) {
+        query = query.eq("season_id", filters.seasonId);
       }
       if (filters?.search) {
         query = query.or(

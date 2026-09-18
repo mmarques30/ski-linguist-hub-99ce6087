@@ -44,6 +44,7 @@ export function useSessions(filters?: {
   endDate?: string;
   language?: string;
   instructorId?: string;
+  seasonId?: string | null;
 }) {
   return useQuery({
     queryKey: ["sessions", filters],
@@ -58,6 +59,9 @@ export function useSessions(filters?: {
       }
       if (filters?.endDate) {
         query = query.lte("start_datetime", filters.endDate);
+      }
+      if (filters?.seasonId) {
+        query = query.eq("season_id", filters.seasonId);
       }
       if (filters?.language && filters.language !== "all") {
         query = query.eq("language", filters.language);

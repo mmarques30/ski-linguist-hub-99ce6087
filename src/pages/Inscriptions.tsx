@@ -43,6 +43,8 @@ import { Link, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSeasonFilter } from "@/contexts/SeasonContext";
+import { LANGUAGE_LABELS } from "@/lib/language-catalog";
 import { EndPackDialog } from "@/components/endpack/EndPackDialog";
 import { InscriptionFormDialog } from "@/components/inscriptions/InscriptionFormDialog";
 import { toast } from "sonner";
@@ -230,6 +232,7 @@ export default function Inscriptions() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [inscriptionToDelete, setInscriptionToDelete] = useState<{ id: string; name: string } | null>(null);
   const { language, t } = useLanguage();
+  const { seasonId } = useSeasonFilter();
   const { canEdit } = useUserPermissions();
   const editable = canEdit("inscriptions");
   const deleteInscription = useDeleteInscription();
@@ -242,6 +245,7 @@ export default function Inscriptions() {
     status: statusFilter,
     language: languageFilter,
     search: search || undefined,
+    seasonId,
   });
 
   const getDateLocale = () => {
@@ -355,10 +359,11 @@ export default function Inscriptions() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t(translations.allLanguages)}</SelectItem>
-              <SelectItem value="Anglais">{t(translations.english)}</SelectItem>
-              <SelectItem value="Portugais brésilien">{t(translations.portuguese)}</SelectItem>
-              <SelectItem value="Italien">{t(translations.italian)}</SelectItem>
-              <SelectItem value="Allemand">{t(translations.german)}</SelectItem>
+              {LANGUAGE_LABELS.map((label) => (
+                <SelectItem key={label} value={label}>
+                  {label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
