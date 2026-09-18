@@ -9,8 +9,9 @@ import { isFliPlaceholderEmail } from "../_shared/email-guards.ts";
 /**
  * Envoi de test des modèles actifs.
  * Body optionnel :
- *   { "slugs": ["…"], "recipients": ["a@b.c", …] }
- * Sans recipients → info@fli.fr. Sans slugs → tous les actifs.
+ *   { "slugs": ["…"], "recipients": ["a@b.c", …], "to": "…" }
+ * Sans recipients/to → info@fli.fr. Sans slugs → tous les actifs.
+ * Sans RESEND_API_KEY : refuse proprement, n'appelle pas Resend.
  */
 const TEST_VARIABLES: Record<string, string> = {
   student_name: "ZZTEST Camille Martin",

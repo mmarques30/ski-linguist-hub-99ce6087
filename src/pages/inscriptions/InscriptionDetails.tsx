@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -8,6 +8,21 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { InscriptionOpsChecklist } from "@/components/inscriptions/InscriptionOpsChecklist";
+import { InscriptionFinancialPayments } from "@/components/inscriptions/InscriptionFinancialPayments";
+import { useInscriptionClientAccess } from "@/hooks/useInscriptionClientAccess";
+import { useInscriptionDocuments } from "@/hooks/useInscriptionDocuments";
+import {
+  isEntryFormComplete,
+  isExitFormComplete,
+  listMissingFormationDocuments,
+  OBJECTIF_ATTEINT_LABELS,
+  type ObjectifAtteint,
+} from "@/lib/certificate-progression";
+import {
+  useInscriptionCertificates,
+  useInscriptionProgression,
+} from "@/hooks/useInscriptionProgression";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,17 +68,10 @@ import { InscriptionClientAccessCard } from "@/components/inscriptions/Inscripti
 import { InscriptionTimelineCard } from "@/components/inscriptions/InscriptionTimelineCard";
 import { FormateurEntryFormDialog } from "@/components/inscriptions/FormateurEntryFormDialog";
 import { FormateurExitFormDialog } from "@/components/inscriptions/FormateurExitFormDialog";
-import { useInscriptionProgression } from "@/hooks/useInscriptionProgression";
 import { pisteLabelFromPlacementAnswers } from "@/lib/placement-test-engine";
 import { invoiceStatusLabel, paymentTypeLabel } from "@/lib/payment-methods";
 import { DATES_A_PLANIFIER_LABEL } from "@/lib/registration-dates";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  isEntryFormComplete,
-  isExitFormComplete,
-  OBJECTIF_ATTEINT_LABELS,
-  type ObjectifAtteint,
-} from "@/lib/certificate-progression";
 
 const translations = {
   back: { fr: "Retour", "pt-BR": "Voltar", en: "Back" },
@@ -121,9 +129,19 @@ const statusStyles: Record<string, string> = {
   annulee: "bg-red-100 text-red-800",
 };
 
+const VALID_TABS = new Set([
+  "general",
+  "training",
+  "financial",
+  "access",
+  "timeline",
+  "documents",
+]);
+
 export default function InscriptionDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t, language } = useLanguage();
   const { canEdit } = useUserPermissions();
   const editable = canEdit("inscriptions");
@@ -135,6 +153,14 @@ export default function InscriptionDetails() {
   const [entryFormOpen, setEntryFormOpen] = useState(false);
   const [exitFormOpen, setExitFormOpen] = useState(false);
   const deleteInscription = useDeleteInscription();
+  const tabParam = searchParams.get("tab") || "general";
+  const activeTab = VALID_TABS.has(tabParam) ? tabParam : "general";
+  const setActiveTab = (value: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (value === "general") next.delete("tab");
+    else next.set("tab", value);
+    setSearchParams(next, { replace: true });
+  };
   const getDateLocale = () => {
     switch (language) {
       case "pt-BR": return ptBR;
@@ -164,6 +190,38 @@ export default function InscriptionDetails() {
   });
 
   const { data: progression } = useInscriptionProgression(id);
+  const { data: certificates = [] } = useInscriptionCertificates(id);
+  const { data: clientAccess } = useInscriptionClientAccess(id);
+  const { data: documentSendings = [] } = useInscriptionDocuments(id);
+
+  const { data: opsFields } = useQuery({
+    queryKey: ["inscription-ops-fields", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("inscriptions")
+        .select("schedule_status, schedule, documents_sent_at, student_id")
+        .eq("id", id!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+
+  const studentIdForPortal = opsFields?.student_id || inscription?.student_id;
+  const { data: studentPortal } = useQuery({
+    queryKey: ["student-portal-flag", studentIdForPortal],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("students")
+        .select("auth_user_id")
+        .eq("id", studentIdForPortal!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!studentIdForPortal,
+  });
 
   const { data: placementSuggestion } = useQuery({
     queryKey: ["inscription-placement-piste", id, inscription?.entry_test_id],
@@ -195,6 +253,62 @@ export default function InscriptionDetails() {
     },
     enabled: !!id,
   });
+
+  const checklistInput = useMemo(() => {
+    if (!id) return null;
+
+    const expectExitDocuments = (() => {
+      if (!progression) return false;
+      if (["terminee", "facturee"].includes(progression.status)) return true;
+      if (progression.end_date) {
+        return new Date(progression.end_date) <= new Date();
+      }
+      return false;
+    })();
+
+    const missingDocs = progression
+      ? listMissingFormationDocuments({
+          entryFormComplete: isEntryFormComplete(progression),
+          exitFormComplete: isExitFormComplete(progression),
+          hasCertificate: certificates.length > 0,
+          expectExitDocuments,
+        })
+      : [];
+
+    const paymentsReceivedTotal = (clientAccess?.payments || [])
+      .filter((p) => p.status === "recu" || p.status === "valide")
+      .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+    const latestSurvey = clientAccess?.surveys?.[0];
+    const portalInviteSent = (clientAccess?.emails || []).some(
+      (e) => e.template_slug === "student_portal_invite" && e.status === "sent"
+    );
+
+    return {
+      inscriptionId: id,
+      scheduleStatus: opsFields?.schedule_status ?? null,
+      schedule: opsFields?.schedule ?? inscription?.schedule ?? null,
+      documentsSentAt:
+        opsFields?.documents_sent_at || documentSendings[0]?.sent_at || null,
+      missingDocsCount: progression ? missingDocs.length : undefined,
+      paymentsReceivedTotal,
+      invoicesCount: invoices?.length ?? 0,
+      hasPortalAccount: Boolean(studentPortal?.auth_user_id),
+      portalInviteSent,
+      hasSurvey: Boolean(latestSurvey),
+      surveyCompleted: Boolean(latestSurvey?.completed_at),
+    };
+  }, [
+    id,
+    progression,
+    certificates.length,
+    clientAccess,
+    opsFields,
+    inscription?.schedule,
+    documentSendings,
+    invoices?.length,
+    studentPortal?.auth_user_id,
+  ]);
 
   const skiSchoolId = (inscription as { ski_school_id?: string | null } | null)?.ski_school_id;
   const { data: skiSchoolPartnerId } = useQuery({
@@ -329,7 +443,9 @@ export default function InscriptionDetails() {
           )}
         </div>
 
-        <Tabs defaultValue="general" className="space-y-4">
+        {checklistInput && <InscriptionOpsChecklist input={checklistInput} />}
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList>
             <TabsTrigger value="general">{t(translations.generalInfo)}</TabsTrigger>
             <TabsTrigger value="training">{t(translations.training)}</TabsTrigger>
@@ -785,6 +901,13 @@ export default function InscriptionDetails() {
                 </CardContent>
               </Card>
             )}
+
+            <InscriptionFinancialPayments
+              inscriptionId={inscription.id}
+              studentName={inscription.student_name}
+              editable={editable}
+              price={inscription.price}
+            />
           </TabsContent>
 
           {/* Client Access Tab */}
@@ -967,8 +1090,12 @@ export default function InscriptionDetails() {
               language: inscription.language,
               start_date: inscription.start_date,
               entry_level: inscription.entry_level,
-              schedule_status: (inscription as { schedule_status?: string }).schedule_status,
-              schedule: (inscription as { schedule?: string }).schedule,
+              schedule_status:
+                opsFields?.schedule_status ??
+                (inscription as { schedule_status?: string }).schedule_status,
+              schedule:
+                opsFields?.schedule ??
+                (inscription as { schedule?: string }).schedule,
             }}
           />
         </>
