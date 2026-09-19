@@ -130,6 +130,11 @@ const translations = {
     "pt-BR": "Exibindo",
     en: "Showing"
   },
+  studentSingular: {
+    fr: "stagiaire",
+    "pt-BR": "estagiário",
+    en: "student",
+  },
   students: {
     fr: "stagiaires",
     "pt-BR": "estagiários",
@@ -469,7 +474,11 @@ export default function Students() {
         {/* Pagination */}
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            {t(translations.showing)} {students?.length || 0} {t(translations.students)}
+            {t(translations.showing)}{" "}
+            {students?.length || 0}{" "}
+            {(students?.length || 0) === 1
+              ? t(translations.studentSingular)
+              : t(translations.students)}
           </p>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" disabled>

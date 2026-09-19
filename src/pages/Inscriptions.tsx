@@ -196,6 +196,11 @@ const translations = {
     "pt-BR": "Exibindo",
     en: "Showing",
   },
+  inscriptionSingular: {
+    fr: "inscription",
+    "pt-BR": "inscrição",
+    en: "enrollment",
+  },
   inscriptions: {
     fr: "inscriptions",
     "pt-BR": "inscrições",
@@ -520,7 +525,11 @@ export default function Inscriptions() {
         {/* Pagination */}
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            {t(translations.showing)} {inscriptions?.length || 0} {t(translations.inscriptions)}
+            {t(translations.showing)}{" "}
+            {inscriptions?.length || 0}{" "}
+            {(inscriptions?.length || 0) === 1
+              ? t(translations.inscriptionSingular)
+              : t(translations.inscriptions)}
           </p>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" disabled>

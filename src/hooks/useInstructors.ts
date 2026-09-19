@@ -115,6 +115,22 @@ export function useInstructorDetails(id: string | undefined) {
   });
 }
 
+export function useInstructorInscriptions(instructorId: string | undefined) {
+  return useQuery({
+    queryKey: ["instructor-inscriptions", instructorId],
+    enabled: !!instructorId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("inscriptions_complete")
+        .select("id, code, language, start_date, end_date, status, student_name, course_location")
+        .eq("instructor_id", instructorId!)
+        .order("start_date", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
 export function useInstructorSessions(instructorId: string | undefined) {
   return useQuery({
     queryKey: ["instructor-sessions", instructorId],
