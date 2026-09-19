@@ -2,7 +2,7 @@
 
 Analyse produit des parcours, menus, fiches et corrélations entre modules.
 Base initiale : `main` post-PR usabilité (#48), emails dossier (#55/#58), rôles test (#57).
-**Statut feuille de route : Vagues A–D + PLANO Onda D (D1–D4) fusionnés dans `main` (PR #60–#65, #67/#68), SHA `82ae4a1`.**
+**Statut feuille de route : Vagues A–D + PLANO Onda D (D1–D8) fusionnés dans `main` (PR #60–#65, #67/#68, #70), SHA `fb6ed5f`.**
 
 Ce document **ne remplace pas** `BACKLOG.md` (points bloquants octobre). Il propose l’ordre produit après / en parallèle.
 
@@ -12,7 +12,7 @@ Ce document **ne remplace pas** `BACKLOG.md` (points bloquants octobre). Il prop
 
 Accès client durable (`/suivi/:token`), modes **Assister** stagiaire/formateur, navigation Pilotage/`canView`, robustesse UX, et consolidation Onda D (finance, langues, saison, journal envois) sont **dans le dépôt**.
 
-Reste produit notable (hors backlog octobre) : fin de « Prévision de Facturation » (BL-032), Documents réels, Onda D5–D8 (identité org sur docs, i18n chrome, import idempotent, CRM leads).
+Reste produit notable (hors backlog octobre) : Documents réels (C5). BL-032 et Onda D5–D8 sont fusionnés (PR #71, #70). BL octobre restants : OPCO (BL-027), saison comptable (BL-034), compte test (BL-035), partenaires (BL-038), vigilance formateur (BL-042).
 
 ---
 
@@ -75,8 +75,17 @@ Sidebar 2 niveaux + Pilotage + Trésorerie + Portails + `canView`. Documents/Ses
 
 ---
 
+### PLANO Onda D — Suite (D5–D8) — **fait** (PR #70)
+
+1. Identité org consommée par factures, emails et logo (`OrganizationIdentityCard`)
+2. Chrome i18n FR (sidebar, header, breadcrumbs)
+3. Import upsert idempotent, export avant purge, erreurs à l’écran
+4. CRM leads : `loss_reason`, `assigned_to`, conversion enrichie
+
+---
+
 ## Suite possible
 
 1. Déploiement front si BL-046
-2. PLANO Onda D5–D8 (identité org, i18n chrome, import, CRM)
-3. BL octobre restants : OPCO (BL-027), saison comptable (BL-034), compte test (BL-035), pagination (BL-037)…
+2. BL octobre restants : OPCO (BL-027), saison comptable (BL-034), compte test (BL-035), partenaires (BL-038), vigilance formateur (BL-042)
+3. Documents réels (C5) et planning unifié (C3)

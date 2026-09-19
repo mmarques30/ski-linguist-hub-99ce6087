@@ -15,6 +15,14 @@ import { Loader2 } from "lucide-react";
 import { useCreateSeason, useUpdateSeason, type Season } from "@/hooks/useSeasons";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getCurrentFiscalYear, getFiscalYearBounds } from "@/lib/fiscal-year";
+
+function formatDateForInput(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
 
 const translations = {
   create: { fr: "Nouvelle saison", "pt-BR": "Nova temporada", en: "New Season" },
@@ -69,6 +77,15 @@ export function SeasonFormDialog({ open, onOpenChange, season }: Props) {
         end_date: season.end_date,
         revenue_target: Number(season.revenue_target) || 0,
         notes: season.notes || "",
+      });
+    } else if (open && !season) {
+      const { start, end } = getFiscalYearBounds(getCurrentFiscalYear());
+      form.reset({
+        name: "",
+        start_date: formatDateForInput(start),
+        end_date: formatDateForInput(end),
+        revenue_target: 0,
+        notes: "",
       });
     } else if (!open) {
       form.reset({ name: "", start_date: "", end_date: "", revenue_target: 0, notes: "" });

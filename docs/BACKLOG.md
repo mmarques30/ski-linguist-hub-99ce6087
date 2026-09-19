@@ -2,7 +2,7 @@
 
 Règle : noter ici, **ne pas corriger** tant que le point courant n’est pas validé.
 
-Dernière mise à jour : 2026-09-18 (plan produit UX A–D fusionné ; rattrapage validations points / BL vague 1).
+Dernière mise à jour : 2026-09-19 (Onda D5–D8 PR #70 ; lots BL octobre PR #71–#73).
 
 ## Conventions de lecture
 
@@ -61,8 +61,8 @@ corrigées, et `/register`, les emails et le portail par lien magique restent ho
 | 2.7 | Compteurs plafonnés à 1 000 et listes sans pagination | gênant | BL-037 |
 | 2.8 | `/finance` : objectifs de trimestre codés en dur | gênant | BL-039 |
 
-2.1 **clos** (PR #42). 2.4 **clos** (PR #44). 2.5 **partiel** (Vague B PR #63). 2.6 **clos** (PR #30/#43). 2.8 **clos** (Onda D PR #67/#68).
-2.2 / 2.3 / 2.7 / 2.8 restent ouverts.
+2.1 **clos** (PR #42). 2.2 **clos** (suite3 — migration saison exercice). 2.4 **clos** (PR #44). 2.5 **clos** (PR #71). 2.6 **clos** (PR #30/#43). 2.7 **clos** (PR #71). 2.8 **clos** (Onda D PR #67/#68).
+2.3 (BL-035 compte test) reste ouvert.
 
 ### Vague 3 — reste bloquant et gênant
 
@@ -76,10 +76,11 @@ corrigées, et `/register`, les emails et le portail par lien magique restent ho
 | 3.6 | Fiche formateur·rice : bloc contrat / vigilance / statut administratif | gênant | BL-042 |
 | 3.7 | Fiche inscription : rafraîchir après affectation (à revérifier une fois déployé) | gênant | BL-043 |
 
+3.1–3.3, 3.5–3.7 **fusionnés** (PR #71–#73 + suite3). 3.4 (BL-038) reste ouvert.
+
 ### Vague 4 — cosmétique, si le temps le permet
 
-BL-030 (libellés `/register`), BL-048 (libellés et accords back-office), BL-049 (état vide
-de recherche `/students`), BL-050 (banque chinoise 10 questions, lié au point 7).
+BL-030 (libellés `/register`), BL-050 (banque chinoise 10 questions, lié au point 7). BL-048 et BL-049 **fusionnés** (PR #72 / #71).
 
 ### Hors périmètre du 1er octobre
 
@@ -103,24 +104,24 @@ BL-022 : dette antérieure, non remontée par la recette.
 | BL-029 | `/register`, dates flexibles | `submit-registration` retombe sur les dates de la saison : une inscription sans dates hérite de dates fausses, ce qui fausse aussi le J-10. Attendu : exiger une date ou laisser « à planifier » | gênant | **clos** — PR #45 |
 | BL-030 | `/register`, libellés | En-tête « pour moniteurs de ski » y compris pour « Autre profession », pas de point médian, bouton « Continuer vers la configuration de la formation » qui mène au test, « Piste verte: 3/5 », score affiché « 8/20 » puis « 3 bonnes réponses ». En-tête à valider par la direction | cosmétique | ouvert |
 | BL-031 | `/auth` | Page de connexion lue en portugais (« Painel Administrativo », « Senha », « Entrar ») | gênant | dépôt OK / à déployer — `AuthCard.tsx` et `Auth.tsx` sont en français, la langue par défaut est `fr` |
-| BL-032 | `/` (accueil) | KPI « Prévision Mensuelle » et « Prévision de Facturation » contraires à `SPEC_UI`. Les intitulés portugais relevés venaient du front publié : la langue par défaut est `fr` dans le dépôt | gênant | **partiel** — Vague B (PR #63) : KPI mensuel = « CA facturé du mois » + rail « À traiter » ; reste l’onglet / carte « Prévision de Facturation » (`DashboardGestao.tsx`) |
+| BL-032 | `/` (accueil) | KPI « Prévision Mensuelle » et « Prévision de Facturation » contraires à `SPEC_UI`. Les intitulés portugais relevés venaient du front publié : la langue par défaut est `fr` dans le dépôt | gênant | **clos** — PR #71 ; retrait onglet / carte « Prévision de Facturation » (`DashboardGestao.tsx`) |
 | BL-033 | Données (lot d’import) | Accents perdus en Mac Roman : les octets `0x8D` / `0x8E` / `0x8F` sont restés tels quels au lieu de `ç` / `é` / `è`. *(live)* `inscriptions` 679 lignes sur 886, `students` 186 sur 664, `partners` 20 sur 1033, `ski_monitors` 1 sur 4047. Colonnes : `inscriptions.code` 577, `language` 261 (« Portugais brsilien » 216, « Nerlandais » 43), `course_address` 233, `course_location` 202, `expectations` 194, `rhythm` 124, `students.street_address` 85, `city` 56, `first_name` 45, `last_name` 33. `invoices` et `payments` (import du point 9) sont propres | gênant, **bloquant si des documents nominatifs sont générés** | **clos** — PR #42 ; `docs/POINT_BL033_ACCENTS.md` |
-| BL-034 | `/admin/seasons` | *(live)* la saison courante « Saison 2026-2027 » va du 01/12/2026 au 31/03/2027. **Décision Paula : saison = exercice comptable, 01/07 → 30/06.** Le statut `en_cours` est déjà traduit dans le dépôt | gênant | ouvert (donnée à corriger) |
+| BL-034 | `/admin/seasons` | *(live)* la saison courante « Saison 2026-2027 » va du 01/12/2026 au 31/03/2027. **Décision Paula : saison = exercice comptable, 01/07 → 30/06.** Le statut `en_cours` est déjà traduit dans le dépôt | gênant | **clos** — migration `20260919120000_bl034_…` + défauts `SeasonFormDialog` (PR suite3) |
 | BL-035 | `/admin/users` | *(live)* le compte « Utilisateur Test » (`teste@fli.fr`) a les droits admin, donc l’accès à toutes les données personnelles. **Décision Paula : suppression** | gênant | ouvert |
 | BL-036 | `/settings` | L’identité de l’organisation est vide, et le bouton « Enregistrer les modifications » n’écrit rien : `handleSave` se limite à un `console.log` puis affiche « Modifications enregistrées ». **Paula veut la remplir elle-même : c’est aujourd’hui impossible, et le succès affiché est trompeur** | bloquant (proposé, écart nouveau) | **clos** — PR #44 ; `OrganizationIdentityCard` → `app_settings.fli_identity` |
-| BL-037 | `/gestion/moniteurs`, `/gestion/partenaires` | Les compteurs affichent 1 000 parce que la requête lit des lignes au lieu de demander un comptage, et les listes sont plafonnées à 1 000. *(live)* 4 047 moniteurs, 1 033 partenaires. Attendu : comptage serveur et pagination | gênant | ouvert |
+| BL-037 | `/gestion/moniteurs`, `/gestion/partenaires` | Les compteurs affichent 1 000 parce que la requête lit des lignes au lieu de demander un comptage, et les listes sont plafonnées à 1 000. *(live)* 4 047 moniteurs, 1 033 partenaires. Attendu : comptage serveur et pagination | gênant | **clos** — PR #71 ; `count: "exact"` + `.range()` (`useSkiMonitors`, `usePartners`) |
 | BL-038 | `/gestion/partenaires` | *(live)* 23 fiches nommées par une adresse email, 4 fiches « À l’attention de… », doublons entre une fiche « directeur / prospect » et la fiche « ESF … / actif » de la même école, 20 fiches à accents cassés (voir BL-033) | gênant | ouvert |
 | BL-039 | `/finance` | Objectifs de trimestre codés en dur (50 000 € de CA, 15 stagiaires, 60 %), jamais fournis par la direction. Attendu : les retirer, ou les rendre paramétrables et vides par défaut | gênant | **clos** — PR #67/#68 : lecture `seasons.revenue_target` ; `≤ 0` / vide → « Aucun objectif » |
-| BL-040 | `/students` | La recherche ne combine pas prénom et nom : « Prénom Nom » ne renvoie rien, « ZZTEST » seul fonctionne. Attendu : rechercher sur la concaténation | gênant | ouvert (`useStudents.ts`, `or()` sur champs séparés) |
-| BL-041 | `/formateurs`, fiche | Planning et Historique lisent `instructor_sessions` — *(live)* 0 ligne — au lieu des inscriptions rattachées : aucune activité n’apparaît | gênant | ouvert |
-| BL-042 | `/formateurs`, fiche | Aucun suivi du contrat signé, de l’attestation de vigilance ni du statut administratif, alors que des dossiers sont à régulariser et que `SPEC_UI` le prévoit | gênant (manque) | ouvert |
-| BL-043 | Fiche inscription, affectation formateur·rice | Après enregistrement, la fiche affiche « Non spécifié » jusqu’au rechargement | gênant | à revérifier après déploiement — `useInscriptions.ts` invalide déjà `inscription-details` |
-| BL-044 | `/admin/testing`, nettoyage | Le bouton ne couvre pas `test_phrases`. *(live)* la banque compte 445 phrases dont 0 ZZTEST : les huit phrases de test ont disparu avec l’import du point 7, mais le périmètre reste à élargir | gênant | ouvert |
-| BL-045 | `/students` | *(live)* 35 fiches portent une adresse `import.csv…@fli.placeholder.local` présentée comme valide. Les garde-fous d’envoi existent dans le dépôt (`email-guards.ts`, exclusion dans `PortalInvitesBulkCard`), reste l’affichage « email manquant » | gênant | partiel : garde-fous `dépôt OK / à déployer`, affichage ouvert |
+| BL-040 | `/students` | La recherche ne combine pas prénom et nom : « Prénom Nom » ne renvoie rien, « ZZTEST » seul fonctionne. Attendu : rechercher sur la concaténation | gênant | **clos** — PR #71 ; `buildStudentSearchFilter` (`useStudents.ts`) |
+| BL-041 | `/formateurs`, fiche | Planning et Historique lisent `instructor_sessions` — *(live)* 0 ligne — au lieu des inscriptions rattachées : aucune activité n’apparaît | gênant | **clos** — PR #72 ; `useInstructorInscriptions` sur la fiche |
+| BL-042 | `/formateurs`, fiche | Aucun suivi du contrat signé, de l’attestation de vigilance ni du statut administratif, alors que des dossiers sont à régulariser et que `SPEC_UI` le prévoit | gênant (manque) | **clos** — PR #73 (Administratif, statut, contrats) + suite3 (colonnes / UI vigilance) |
+| BL-043 | Fiche inscription, affectation formateur·rice | Après enregistrement, la fiche affiche « Non spécifié » jusqu’au rechargement | gênant | **clos** — PR #73 ; invalidation `inscription-details` + `inscription-ops-fields` (`InscriptionFormDialog`) |
+| BL-044 | `/admin/testing`, nettoyage | Le bouton ne couvre pas `test_phrases`. *(live)* la banque compte 445 phrases dont 0 ZZTEST : les huit phrases de test ont disparu avec l’import du point 7, mais le périmètre reste à élargir | gênant | **clos** — PR #72 ; `CleanupZztestCard` + migration `test_phrases` |
+| BL-045 | `/students` | *(live)* 35 fiches portent une adresse `import.csv…@fli.placeholder.local` présentée comme valide. Les garde-fous d’envoi existent dans le dépôt (`email-guards.ts`, exclusion dans `PortalInvitesBulkCard`), reste l’affichage « email manquant » | gênant | **clos** — PR #71 ; `studentEmailLabel` (`email-guards.ts`) sur `/students` et fiches liées |
 | BL-046 | Déploiement front | Le front publié est en retard sur `main` depuis `cab5b71` (11/09) : constaté aux quatre sessions. Il masque les correctifs invitations en masse, adresses placeholder, checklist et `/auth` en français, réglage de statut, libellés du pack de fin | bloquant (conséquence) | ouvert — action ops |
 | BL-047 | Fonctions Edge | Non déployées et `RESEND_API_KEY` absente : `/register`, les emails et le portail par lien magique restent hors recette ; le correctif de nettoyage ZZTEST a lui aussi besoin du déploiement de `cleanup-zztest` | bloquant (conséquence) | ouvert — action ops |
-| BL-048 | Back-office, libellés | « Affichage de 1 stagiaires », « 1 tests complétés », « Nouvelle Facture », « Test de Anglais » / « Test de Espagnol », `auto_entrepreneur` brut, « Note moyenne 0.0 » sans note, titres « Formateurs » / « Ajouter un formateur » non inclusifs, filtres sans libellé sur `/formateurs`, nom de fichier fautif sur `/admin/import` | cosmétique | ouvert |
-| BL-049 | `/students` | Une recherche sans résultat affiche « Aucun stagiaire inscrit — les stagiaires apparaîtront ici après leurs inscriptions » au lieu d’un message d’absence de résultat | cosmétique | ouvert |
+| BL-048 | Back-office, libellés | « Affichage de 1 stagiaires », « 1 tests complétés », « Nouvelle Facture », « Test de Anglais » / « Test de Espagnol », `auto_entrepreneur` brut, « Note moyenne 0.0 » sans note, titres « Formateurs » / « Ajouter un formateur » non inclusifs, filtres sans libellé sur `/formateurs`, nom de fichier fautif sur `/admin/import` | cosmétique | **clos** — PR #72 |
+| BL-049 | `/students` | Une recherche sans résultat affiche « Aucun stagiaire inscrit — les stagiaires apparaîtront ici après leurs inscriptions » au lieu d’un message d’absence de résultat | cosmétique | **clos** — PR #71 ; état `noSearchResults` |
 | BL-050 | `/tests` | Banque de questions chinoise à 10 questions contre 90 pour les autres langues | cosmétique (lié au point 7) | ouvert |
 
 ### Dette antérieure à la recette
@@ -159,7 +160,7 @@ BL-022 : dette antérieure, non remontée par la recette.
 | Paiement non rattachable à une facture ni à une inscription (S4) | gênant (proposé) | Corrigé branche PR #40 — `invoice_id` obligatoire, inscription reprise de la facture |
 | Marquer une facture « Payée » ne crée aucun encaissement (S4) | gênant (proposé) | Corrigé branche PR #40 — `ensureInvoicePayment` |
 | Données de test résiduelles hors convention ZZTEST (S2) | gênant | Clos — *(live)* 0 stagiaire et 0 inscription ZZTEST, aucun paiement hors « Reçu » ; jeu ZZTEST Camille supprimé avec journal |
-| Huit phrases ZZTEST dans la banque (S2) | gênant | Clos côté données — *(live)* 0 / 445 ; le périmètre du nettoyage reste BL-044 |
+| Huit phrases ZZTEST dans la banque (S2) | gênant | Clos côté données — *(live)* 0 / 445 ; périmètre nettoyage élargi — PR #72 (BL-044) |
 | Code postal « 0000 » sur la fiche stagiaire (S2 2.8) | à confirmer | Clos en session 3.1 : venait de la saisie, pas un défaut |
 | `/admin/testing` en portugais, « Resetar » en rouge (S1) | gênant | Corrigé `cab5b71` (PR #26) ; reste BL-046 |
 | Écran de succès du pack de fin sans numéro de facture (S4) | cosmétique | Corrigé branche PR #40 |
@@ -184,6 +185,10 @@ BL-022 : dette antérieure, non remontée par la recette.
 | BL-023…026, 028, 036 | Vague 1 — PR #44 |
 | BL-029 | Dates flexibles — PR #45 |
 | BL-033 | Accents Mac Roman — PR #42 |
+| BL-032, 037, 040, 045, 049 | Lot octobre actionnable — PR #71 |
+| BL-041, 044, 048 | Suite octobre (fiche formateur, libellés, ZZTEST) — PR #72 |
+| BL-042 (partiel), 043 | Suite 2 octobre — PR #73 ; vigilance BL-042 reste ouverte |
+| Onda D5–D8 | Identité org, chrome i18n, import idempotent, CRM leads — PR #70 |
 
 ---
 
@@ -234,4 +239,8 @@ BL-022 : dette antérieure, non remontée par la recette.
 | **Plan produit UX — Vague C** | Fusionné main (PR #64) — sidebar Portails/Trésorerie, Pilotage, `canView` |
 | **Plan produit UX — Vague D** | Fusionné main (PR #65) — états vides, recherche globale, `/notifications`, pont éval↔stagiaire |
 | **PLANO Onda D (D1–D4)** | Fusionné main (PR #67) — pilotage finance, taxonomie langues, `SeasonContext`, journal envois ; hotfix #68 (filtre dates + objectif CA) |
+| **PLANO Onda D (D5–D8)** | Fusionné main (PR #70) — identité org sur PDF/emails + logo ; chrome i18n FR ; import upsert/export ; CRM leads (`loss_reason`, `assigned_to`, conversion) |
+| **BL octobre lot 1** | Fusionné main (PR #71) — BL-032, 037, 040, 045 (affichage), 049 |
+| **BL octobre lot 2** | Fusionné main (PR #72) — BL-041, 044, 048 |
+| **BL octobre lot 3** | Fusionné main (PR #73) — BL-043 ; BL-042 partiel (statut + contrats, vigilance ouverte) |
 | 6 — Stripe docs | Non démarré (hors emails déjà livrés) |

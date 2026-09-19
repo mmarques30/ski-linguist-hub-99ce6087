@@ -39,6 +39,9 @@ export interface Instructor {
   cv_url: string | null;
   formulaire_2026: boolean | null;
   date_naissance: string | null;
+  vigilance_attestation_url: string | null;
+  vigilance_attestation_received_at: string | null;
+  vigilance_attestation_expires_at: string | null;
   created_at: string;
   updated_at: string | null;
 }

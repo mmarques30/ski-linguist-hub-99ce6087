@@ -77,6 +77,9 @@ type FormState = {
   consentement_photo: string;
   date_naissance: string;
   formulaire_2026: boolean;
+  vigilance_attestation_url: string;
+  vigilance_attestation_received_at: string;
+  vigilance_attestation_expires_at: string;
 };
 
 const emptyForm = (): FormState => ({
@@ -107,6 +110,9 @@ const emptyForm = (): FormState => ({
   consentement_photo: "",
   date_naissance: "",
   formulaire_2026: false,
+  vigilance_attestation_url: "",
+  vigilance_attestation_received_at: "",
+  vigilance_attestation_expires_at: "",
 });
 
 export function InstructorFormDialog({ open, onOpenChange, instructor }: Props) {
@@ -151,6 +157,9 @@ export function InstructorFormDialog({ open, onOpenChange, instructor }: Props) 
         consentement_photo: instructor.consentement_photo || "",
         date_naissance: instructor.date_naissance || "",
         formulaire_2026: instructor.formulaire_2026 === true,
+        vigilance_attestation_url: instructor.vigilance_attestation_url || "",
+        vigilance_attestation_received_at: instructor.vigilance_attestation_received_at || "",
+        vigilance_attestation_expires_at: instructor.vigilance_attestation_expires_at || "",
       });
     } else {
       setForm(emptyForm());
@@ -202,6 +211,9 @@ export function InstructorFormDialog({ open, onOpenChange, instructor }: Props) 
       consentement_photo: form.consentement_photo || null,
       date_naissance: form.date_naissance || null,
       formulaire_2026: form.formulaire_2026,
+      vigilance_attestation_url: form.vigilance_attestation_url || null,
+      vigilance_attestation_received_at: form.vigilance_attestation_received_at || null,
+      vigilance_attestation_expires_at: form.vigilance_attestation_expires_at || null,
     };
 
     if (isEdit) {
@@ -492,6 +504,48 @@ export function InstructorFormDialog({ open, onOpenChange, instructor }: Props) 
             />
             Formulaire saison 2026 reçu
           </label>
+          <div className="rounded-lg border p-3 space-y-3">
+            <p className="text-sm font-medium">Attestation de vigilance</p>
+            <div>
+              <Label>URL du document</Label>
+              <Input
+                type="url"
+                placeholder="https://…"
+                value={form.vigilance_attestation_url}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, vigilance_attestation_url: e.target.value }))
+                }
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Reçue le</Label>
+                <Input
+                  type="date"
+                  value={form.vigilance_attestation_received_at}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      vigilance_attestation_received_at: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <Label>Expire le</Label>
+                <Input
+                  type="date"
+                  value={form.vigilance_attestation_expires_at}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      vigilance_attestation_expires_at: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+          </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Annuler

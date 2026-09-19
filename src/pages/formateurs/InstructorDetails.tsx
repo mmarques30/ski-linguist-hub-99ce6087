@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -117,10 +119,33 @@ export default function InstructorDetails() {
   const { data: contracts = [] } = useInstructorContracts(id);
   const updateInstructor = useUpdateInstructor();
   const [adminStatut, setAdminStatut] = useState("");
+  const [vigilanceUrl, setVigilanceUrl] = useState("");
+  const [vigilanceReceived, setVigilanceReceived] = useState("");
+  const [vigilanceExpires, setVigilanceExpires] = useState("");
 
   useEffect(() => {
     setAdminStatut(instructor?.statut_administratif || "");
   }, [instructor?.statut_administratif]);
+
+  useEffect(() => {
+    setVigilanceUrl(instructor?.vigilance_attestation_url || "");
+    setVigilanceReceived(instructor?.vigilance_attestation_received_at || "");
+    setVigilanceExpires(instructor?.vigilance_attestation_expires_at || "");
+  }, [
+    instructor?.vigilance_attestation_url,
+    instructor?.vigilance_attestation_received_at,
+    instructor?.vigilance_attestation_expires_at,
+  ]);
+
+  const saveVigilance = () => {
+    if (!id) return;
+    updateInstructor.mutate({
+      id,
+      vigilance_attestation_url: vigilanceUrl || null,
+      vigilance_attestation_received_at: vigilanceReceived || null,
+      vigilance_attestation_expires_at: vigilanceExpires || null,
+    });
+  };
 
   const adminStatutOptions = useMemo(() => {
     const options = [...ADMIN_STATUT_OPTIONS];
@@ -467,9 +492,94 @@ export default function InstructorDetails() {
                   ) : (
                     <p className="font-medium">{adminStatutLabel(instructor.statut_administratif)}</p>
                   )}
-                  <p className="text-muted-foreground">
-                    Attestation de vigilance : à venir (pas de colonne en base pour l&apos;instant).
-                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Attestation de vigilance</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                  {editable ? (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="vigilance-url">URL du document</Label>
+                        <Input
+                          id="vigilance-url"
+                          type="url"
+                          placeholder="https://…"
+                          value={vigilanceUrl}
+                          onChange={(e) => setVigilanceUrl(e.target.value)}
+                          onBlur={saveVigilance}
+                          disabled={updateInstructor.isPending}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="vigilance-received">Reçue le</Label>
+                          <Input
+                            id="vigilance-received"
+                            type="date"
+                            value={vigilanceReceived}
+                            onChange={(e) => setVigilanceReceived(e.target.value)}
+                            onBlur={saveVigilance}
+                            disabled={updateInstructor.isPending}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="vigilance-expires">Expire le</Label>
+                          <Input
+                            id="vigilance-expires"
+                            type="date"
+                            value={vigilanceExpires}
+                            onChange={(e) => setVigilanceExpires(e.target.value)}
+                            onBlur={saveVigilance}
+                            disabled={updateInstructor.isPending}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="flex justify-between gap-4">
+                        <span className="text-muted-foreground">Reçue le</span>
+                        <span className="font-medium">
+                          {instructor.vigilance_attestation_received_at
+                            ? format(
+                                new Date(instructor.vigilance_attestation_received_at),
+                                "d MMM yyyy",
+                                { locale: fr },
+                              )
+                            : "—"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <span className="text-muted-foreground">Expire le</span>
+                        <span className="font-medium">
+                          {instructor.vigilance_attestation_expires_at
+                            ? format(
+                                new Date(instructor.vigilance_attestation_expires_at),
+                                "d MMM yyyy",
+                                { locale: fr },
+                              )
+                            : "—"}
+                        </span>
+                      </div>
+                      {instructor.vigilance_attestation_url ? (
+                        <a
+                          href={instructor.vigilance_attestation_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-primary underline"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          Voir l&apos;attestation
+                        </a>
+                      ) : (
+                        <p className="text-muted-foreground">Aucun document renseigné.</p>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
