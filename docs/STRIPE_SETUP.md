@@ -2,18 +2,22 @@
 
 Flux de travail : **GitHub** (code + migrations) + **Supabase** (secrets + déploiement fonctions) + **SQL direct** (données).
 
-## État actuel (production)
+## État actuel — vérifier dans l'admin
 
-| Secret | Statut |
-|--------|--------|
-| `STRIPE_SECRET_KEY` | Configuré (mode **test**, clé valide) |
-| `STRIPE_WEBHOOK_SECRET` | **Manquant** — bloque l'enregistrement automatique des paiements |
+Ne pas se fier à un statut figé dans ce fichier : la configuration évolue selon l'environnement.
 
-Sans le webhook secret, le checkout Stripe peut fonctionner visuellement, mais l'inscription ne sera pas mise à jour dans la base de données.
+1. Ouvrir **Settings → Intégration de paiement** (`StripeSettingsCard`).
+2. La carte appelle l'edge function **`check-stripe-config`** et affiche deux lignes **`StatusRow`** :
+   - `STRIPE_SECRET_KEY` — clé présente et valide
+   - `STRIPE_WEBHOOK_SECRET` — signing secret présent (Supabase Secrets ou `app_settings`)
+3. Badge **Opérationnel** = les deux secrets OK + clé valide.
+4. Si le webhook manque, utiliser **Configurer le webhook automatiquement** (edge `provision-stripe-webhook`) ou suivre les étapes manuelles ci-dessous.
+
+Sans webhook, le checkout Stripe peut s'afficher, mais l'inscription n'est pas mise à jour automatiquement en base.
 
 ---
 
-## Étape 1 — Clé API Stripe (déjà fait)
+## Étape 1 — Clé API Stripe
 
 1. [Stripe Dashboard → API Keys (test)](https://dashboard.stripe.com/test/apikeys)
 2. Secret key : `sk_test_...`
@@ -29,9 +33,9 @@ supabase secrets set STRIPE_SECRET_KEY=sk_test_...
 
 ### Option A — Automatique (recommandé)
 
-1. Déployer les fonctions (voir ci-dessous)
-2. Dans l'app : **Settings → Intégration de paiement** → **Configurer le webhook automatiquement**
-3. Le secret est enregistré dans `app_settings` (lecture réservée aux edge functions + admins)
+1. Déployer les fonctions (voir ci-dessous), notamment `check-stripe-config` et `provision-stripe-webhook`.
+2. Dans l'app : **Settings → Intégration de paiement** → **Configurer le webhook automatiquement**.
+3. Le secret est enregistré dans `app_settings` (lecture réservée aux edge functions + admins). Vérifier le badge et les `StatusRow` dans Settings.
 
 ### Option B — Script CLI
 
@@ -44,7 +48,7 @@ export SUPABASE_ACCESS_TOKEN=...     # optionnel — enregistre le secret + dép
 ### Option C — Manuel
 
 1. [Stripe → Webhooks (test)](https://dashboard.stripe.com/test/webhooks) → **Add endpoint**
-2. URL :
+2. URL (affichée aussi dans Settings après déploiement de `check-stripe-config`) :
 
 ```
 https://nghkrmvakjomzmfwdhbo.supabase.co/functions/v1/stripe-webhook
@@ -64,7 +68,7 @@ supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
 git clone https://github.com/mmarques30/ski-linguist-hub-99ce6087.git
 cd ski-linguist-hub-99ce6087
 supabase link --project-ref nghkrmvakjomzmfwdhbo
-supabase functions deploy stripe-webhook verify-registration-checkout check-stripe-config create-registration-checkout submit-registration
+supabase functions deploy stripe-webhook provision-stripe-webhook verify-registration-checkout check-stripe-config create-registration-checkout submit-registration
 ```
 
 ---
@@ -72,7 +76,8 @@ supabase functions deploy stripe-webhook verify-registration-checkout check-stri
 ## Étape 3 — Vérifier dans l'admin
 
 1. **Settings → Intégration de paiement**
-2. Badge **Opérationnel** = les deux secrets OK + clé valide
+2. Confirmer via `check-stripe-config` : badge **Opérationnel**, `StatusRow` OK pour les deux secrets.
+3. Bouton **Vérifier à nouveau** pour rafraîchir l'état après un changement de secret ou de déploiement.
 
 ---
 
@@ -99,9 +104,10 @@ LIMIT 5;
 |---------|------|
 | `supabase/functions/create-registration-checkout/` | Crée la session Stripe Checkout |
 | `supabase/functions/stripe-webhook/` | Enregistre le paiement après checkout |
-| `supabase/functions/check-stripe-config/` | Vérifie la config (Settings admin) |
+| `supabase/functions/check-stripe-config/` | Vérifie la config (Settings admin, `StatusRow`) |
+| `supabase/functions/provision-stripe-webhook/` | Provisionnement automatique du webhook |
 | `supabase/functions/_shared/registration-payments.ts` | Logique montants (150 € / total) |
-| `src/components/settings/StripeSettingsCard.tsx` | UI admin |
+| `src/components/settings/StripeSettingsCard.tsx` | UI admin (badge, `StatusRow`, bouton auto) |
 
 ---
 
@@ -122,6 +128,7 @@ LIMIT 5;
 3. Nouveau webhook live → même URL Supabase
 4. `supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...` (live)
 5. Redéployer les fonctions + test réel
+6. Re-vérifier **Settings → Intégration de paiement** (mode live, `StatusRow` OK)
 
 ---
 
@@ -129,9 +136,10 @@ LIMIT 5;
 
 | Problème | Solution |
 |----------|----------|
-| « Paiement en ligne non configuré » | `STRIPE_SECRET_KEY` manquant dans Supabase Secrets |
-| Checkout OK mais pas de paiement en BD | Configurer `STRIPE_WEBHOOK_SECRET` + redéployer `stripe-webhook` et `verify-registration-checkout` |
+| « Paiement en ligne non configuré » | `STRIPE_SECRET_KEY` manquant dans Supabase Secrets ; vérifier `StatusRow` dans Settings |
+| Impossible de vérifier Stripe | Déployer `check-stripe-config` depuis GitHub puis **Vérifier à nouveau** |
+| Checkout OK mais pas de paiement en BD | Configurer `STRIPE_WEBHOOK_SECRET` (auto ou manuel) + redéployer `stripe-webhook` et `verify-registration-checkout` |
 | Paiement confirmé mais rien sur Stripe / carte | Vérifier le **mode test** ([dashboard test](https://dashboard.stripe.com/test/payments)) ; carte test `4242…` = pas de débit réel |
-| Page « Paiement confirmé » sans trace | La page vérifie désormais la session Stripe ; sans `session_id` valide, le paiement n'est pas confirmé |
+| Page « Paiement confirmé » sans trace | La page vérifie la session Stripe ; sans `session_id` valide, le paiement n'est pas confirmé |
 | « Invalid signature » | Vérifier que le `whsec_` correspond au bon mode test/live |
 | Fonction introuvable | `supabase functions deploy` depuis la branche `main` GitHub |
