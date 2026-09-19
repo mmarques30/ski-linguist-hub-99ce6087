@@ -99,7 +99,7 @@ const emptyForm = (): FormState => ({
   pays: "",
   civilite: "",
   geographic_zones: [],
-  status: "actif",
+  status: "candidat",
   availability_status: "disponible",
   specialty_details: "",
   status_notes: "",

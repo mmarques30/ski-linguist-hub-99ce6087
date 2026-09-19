@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -268,9 +268,7 @@ function IndicatorFormDialog({
     status: indicator?.status || "en_cours",
   });
 
-  // Reset form when indicator changes
-  const key = indicator?.id || "new";
-  useState(() => {
+  useEffect(() => {
     setForm({
       criterion_number: indicator?.criterion_number?.toString() || "1",
       indicator_number: indicator?.indicator_number || "",
@@ -282,7 +280,7 @@ function IndicatorFormDialog({
       evidence_description: indicator?.evidence_description || "",
       status: indicator?.status || "en_cours",
     });
-  });
+  }, [indicator?.id]);
 
   const handleSubmit = async () => {
     await onSave({
@@ -302,7 +300,7 @@ function IndicatorFormDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} key={key}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>

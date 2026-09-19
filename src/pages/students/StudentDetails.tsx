@@ -35,6 +35,7 @@ import {
   studentEmailForSend,
   studentEmailLabel,
 } from "@/lib/email-guards";
+import { getStatusLabel, getStatusStyle } from "@/lib/inscription-status";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -49,21 +50,6 @@ export default function StudentDetails() {
       return format(new Date(dateStr), "dd/MM/yyyy", { locale: fr });
     } catch {
       return dateStr;
-    }
-  };
-
-  const getStatusColor = (status: string | null) => {
-    switch (status) {
-      case "Terminé":
-        return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
-      case "Facturé":
-        return "bg-blue-500/10 text-blue-600 border-blue-500/20";
-      case "En cours":
-        return "bg-primary/10 text-primary border-primary/20";
-      case "Annulé":
-        return "bg-destructive/10 text-destructive border-destructive/20";
-      default:
-        return "bg-muted text-muted-foreground border-muted";
     }
   };
 
@@ -375,7 +361,7 @@ export default function StudentDetails() {
                   <TabsContent value="completed" className="m-0">
                     <InscriptionTable
                       inscriptions={student.inscriptions.filter(
-                        (i) => i.status === "Terminé" || i.status === "Facturé"
+                        (i) => i.status === "terminee" || i.status === "facturee"
                       )}
                     />
                   </TabsContent>
@@ -406,21 +392,6 @@ function InscriptionTable({ inscriptions }: { inscriptions: any[] }) {
       return format(new Date(dateStr), "dd/MM/yyyy", { locale: fr });
     } catch {
       return dateStr;
-    }
-  };
-
-  const getStatusColor = (status: string | null) => {
-    switch (status) {
-      case "Terminé":
-        return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
-      case "Facturé":
-        return "bg-blue-500/10 text-blue-600 border-blue-500/20";
-      case "En cours":
-        return "bg-primary/10 text-primary border-primary/20";
-      case "Annulé":
-        return "bg-destructive/10 text-destructive border-destructive/20";
-      default:
-        return "bg-muted text-muted-foreground border-muted";
     }
   };
 
@@ -491,8 +462,8 @@ function InscriptionTable({ inscriptions }: { inscriptions: any[] }) {
                 )}
               </TableCell>
               <TableCell>
-                <Badge variant="outline" className={getStatusColor(inscription.status)}>
-                  {inscription.status || "-"}
+                <Badge variant="outline" className={getStatusStyle(inscription.status)}>
+                  {inscription.status ? getStatusLabel(inscription.status, "fr") : "-"}
                 </Badge>
               </TableCell>
             </TableRow>
