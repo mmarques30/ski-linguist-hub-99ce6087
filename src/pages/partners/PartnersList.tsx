@@ -18,6 +18,7 @@ import {
   PROSPECTION_MONITEURS_GELEE,
 } from "@/lib/prospection-gel";
 import { partnerNeedsReview } from "@/lib/partner-name-quality";
+import { usePartnerDedupIndex } from "@/hooks/usePartnerDedup";
 
 const TYPE_LABELS: Record<string, string> = {
   esf: "ESF",
@@ -50,13 +51,21 @@ export default function PartnersList() {
     status: statusFilter || undefined,
     search: search || undefined,
     needsReview: qualityFilter === "a_verifier" ? true : undefined,
-    page,
-    pageSize,
+    page: qualityFilter === "doublons" ? 1 : page,
+    pageSize: qualityFilter === "doublons" ? 1000 : pageSize,
   });
-  const partners = partnersResult?.rows ?? [];
-  const partnerTotal = partnersResult?.total ?? 0;
+  const partnersRaw = partnersResult?.rows ?? [];
+  const { duplicateIds, map: dedupMap, isLoading: dedupLoading } = usePartnerDedupIndex();
+
+  const partners =
+    qualityFilter === "doublons"
+      ? partnersRaw.filter((p) => duplicateIds.has(p.id) && !dedupMap[p.id])
+      : partnersRaw.filter((p) => !dedupMap[p.id]);
+  const partnerTotal =
+    qualityFilter === "doublons" ? partners.length : Math.max(0, (partnersResult?.total ?? 0) - Object.keys(dedupMap).length);
   const totalPages = Math.max(1, Math.ceil(partnerTotal / pageSize));
   const { data: stats } = usePartnerStats();
+  const listLoading = isLoading || (qualityFilter === "doublons" && dedupLoading);
 
   return (
     <MainLayout>
@@ -182,19 +191,23 @@ export default function PartnersList() {
             <SelectContent>
               <SelectItem value="all">Tous</SelectItem>
               <SelectItem value="a_verifier">À vérifier</SelectItem>
+              <SelectItem value="doublons">Doublons</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         {/* List */}
-        {isLoading ? (
+        {listLoading ? (
           <p className="text-muted-foreground text-center py-8">Chargement...</p>
         ) : partners.length === 0 ? (
           <Card><CardContent className="py-12 text-center text-muted-foreground">Aucun partenaire trouvé</CardContent></Card>
         ) : (
           <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {partners.map((p) => (
+            {(qualityFilter === "doublons"
+              ? partners.slice((page - 1) * pageSize, page * pageSize)
+              : partners
+            ).map((p) => (
               <Card
                 key={p.id}
                 className="cursor-pointer hover:shadow-md transition-shadow"
@@ -211,6 +224,11 @@ export default function PartnersList() {
                       {partnerNeedsReview(p.name) && (
                         <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800">
                           À vérifier
+                        </Badge>
+                      )}
+                      {duplicateIds.has(p.id) && (
+                        <Badge variant="outline" className="border-violet-300 bg-violet-50 text-violet-800">
+                          Doublon
                         </Badge>
                       )}
                     </div>
