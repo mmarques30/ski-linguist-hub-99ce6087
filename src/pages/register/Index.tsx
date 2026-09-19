@@ -54,6 +54,7 @@ export interface RegistrationData {
   currentLevel: string;
   testScore: number;
   correctAnswers?: number;
+  totalAnswered?: number;
   needsAdminCall?: boolean;
   testAnswers?: Record<string, string>;
   testSummary?: {

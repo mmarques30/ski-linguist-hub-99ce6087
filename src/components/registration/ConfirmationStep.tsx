@@ -473,7 +473,14 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             {data.correctAnswers !== undefined && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Score test</span>
-                <span className="font-medium">{data.correctAnswers} bonnes réponses</span>
+                <span className="font-medium">
+                  {data.correctAnswers}
+                  /
+                  {data.totalAnswered ??
+                    data.testSummary?.slopeResults.reduce((sum, sr) => sum + sr.total, 0) ??
+                    "—"}{" "}
+                  bonnes réponses
+                </span>
               </div>
             )}
             <div className="flex justify-between">

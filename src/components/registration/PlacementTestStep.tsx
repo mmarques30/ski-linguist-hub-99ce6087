@@ -90,6 +90,7 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
       hasBeenEvaluated: false,
       testScore: Math.round((testResult.correctAnswers / testResult.totalAnswered) * 100),
       correctAnswers: testResult.correctAnswers,
+      totalAnswered: testResult.totalAnswered,
       currentLevel: testResult.determinedLevel,
       needsAdminCall: testResult.needsAdminCall,
       testAnswers: testResult.answers,
@@ -212,7 +213,7 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
                   variant={sr.passed ? "default" : "secondary"}
                   className={sr.passed ? SLOPE_COLORS[sr.slope] : ""}
                 >
-                  {SLOPE_LABELS[sr.slope]}: {sr.correct}/{sr.total}
+                  {SLOPE_LABELS[sr.slope]} · {sr.correct}/{sr.total}
                 </Badge>
               ))}
             </div>
