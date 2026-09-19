@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Filter, Download, Eye, Mail, Phone, Grid, List, Users, Loader2, Building2, Plus, Pencil } from "lucide-react";
+import { Search, Eye, Mail, Phone, Grid, List, Users, Building2, Plus, Pencil } from "lucide-react";
 import { useStudents } from "@/hooks/useStudents";
 import { format } from "date-fns";
 import { fr, enUS, ptBR } from "date-fns/locale";
@@ -39,11 +39,6 @@ const translations = {
     fr: "Gérez votre base de données et profils de stagiaires",
     "pt-BR": "Gerencie seu banco de dados e perfis de estagiários",
     en: "Manage your student database and profiles"
-  },
-  export: {
-    fr: "Exporter",
-    "pt-BR": "Exportar",
-    en: "Export"
   },
   searchPlaceholder: {
     fr: "Rechercher par nom, email ou entreprise...",
@@ -139,16 +134,6 @@ const translations = {
     fr: "stagiaires",
     "pt-BR": "estagiários",
     en: "students"
-  },
-  previous: {
-    fr: "Précédent",
-    "pt-BR": "Anterior",
-    en: "Previous"
-  },
-  next: {
-    fr: "Suivant",
-    "pt-BR": "Próximo",
-    en: "Next"
   },
   newStudent: {
     fr: "Nouveau stagiaire",
@@ -471,24 +456,15 @@ export default function Students() {
           </div>
         )}
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between">
+        {students && students.length > 0 && (
           <p className="text-sm text-muted-foreground">
             {t(translations.showing)}{" "}
-            {students?.length || 0}{" "}
-            {(students?.length || 0) === 1
+            {students.length}{" "}
+            {students.length === 1
               ? t(translations.studentSingular)
               : t(translations.students)}
           </p>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" disabled>
-              {t(translations.previous)}
-            </Button>
-            <Button variant="outline" size="sm" disabled>
-              {t(translations.next)}
-            </Button>
-          </div>
-        </div>
+        )}
       </div>
 
       <StudentFormDialog 

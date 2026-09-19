@@ -34,7 +34,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Filter, Download, Plus, Eye, Edit, Trash2, ClipboardList, Upload, Loader2, Package, MoreHorizontal } from "lucide-react";
+import { Search, Plus, Eye, Edit, Trash2, ClipboardList, Upload, Loader2, Package, MoreHorizontal } from "lucide-react";
 import { useInscriptions, useDeleteInscription } from "@/hooks/useInscriptions";
 import { DATES_A_PLANIFIER_LABEL } from "@/lib/registration-dates";
 import { DueStatusAdvanceCard } from "@/components/inscriptions/DueStatusAdvanceCard";
@@ -65,11 +65,6 @@ const translations = {
     fr: "Importer CSV",
     "pt-BR": "Importar CSV",
     en: "Import CSV",
-  },
-  export: {
-    fr: "Exporter",
-    "pt-BR": "Exportar",
-    en: "Export",
   },
   newInscription: {
     fr: "Nouvelle inscription",
@@ -205,16 +200,6 @@ const translations = {
     fr: "inscriptions",
     "pt-BR": "inscrições",
     en: "enrollments",
-  },
-  previous: {
-    fr: "Précédent",
-    "pt-BR": "Anterior",
-    en: "Previous",
-  },
-  next: {
-    fr: "Suivant",
-    "pt-BR": "Próximo",
-    en: "Next",
   },
   statusUpdated: {
     fr: "Statut mis à jour",
@@ -522,24 +507,15 @@ export default function Inscriptions() {
           )}
         </div>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between">
+        {inscriptions && inscriptions.length > 0 && (
           <p className="text-sm text-muted-foreground">
             {t(translations.showing)}{" "}
-            {inscriptions?.length || 0}{" "}
-            {(inscriptions?.length || 0) === 1
+            {inscriptions.length}{" "}
+            {inscriptions.length === 1
               ? t(translations.inscriptionSingular)
               : t(translations.inscriptions)}
           </p>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" disabled>
-              {t(translations.previous)}
-            </Button>
-            <Button variant="outline" size="sm" disabled>
-              {t(translations.next)}
-            </Button>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* End Pack Dialog */}

@@ -13,11 +13,12 @@ describe("Vague D — états vides honnêtes", () => {
     expect(list).toContain("Aucune évaluation en attente");
   });
 
-  it("Documents annonce la maquette et désactive l'upload", () => {
+  it("Documents oriente vers les inscriptions sans faux upload", () => {
     const docs = source("src/pages/Documents.tsx");
-    expect(docs).toContain("Module en construction");
-    expect(docs).toContain("disabled");
-    expect(docs).toContain("Bibliothèque documents non branchée");
+    expect(docs).toContain('to="/inscriptions"');
+    expect(docs).toContain('to="/admin/registration-documents"');
+    expect(docs).not.toContain("disabled");
+    expect(docs).not.toContain("Module en construction");
   });
 
   it("Sessions explique un planning vide", () => {
@@ -43,9 +44,8 @@ describe("Vague D — notifications multi-types", () => {
   it("expose /notifications et producteurs paiement/évaluation", () => {
     expect(source("src/App.tsx")).toContain('path="/notifications"');
     expect(source("src/pages/Notifications.tsx")).toContain("useAllNotifications");
-    expect(source("src/components/layout/TopHeader.tsx")).toContain(
-      "Voir toutes les notifications"
-    );
+    expect(source("src/components/layout/TopHeader.tsx")).toContain("CHROME_UI.seeAll");
+    expect(source("src/lib/chrome-i18n.ts")).toContain("seeAll");
     expect(source("src/lib/notify-admins.ts")).toContain("notifyAdmins");
     expect(source("src/hooks/usePayments.ts")).toContain('type: "paiement"');
     expect(source("src/hooks/useTestEvaluations.ts")).toContain('type: "evaluation"');
