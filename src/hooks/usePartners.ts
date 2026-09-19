@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { assertProspectionNonGelee } from "@/lib/prospection-gel";
+import { buildPartnerNeedsReviewFilter } from "@/lib/partner-name-quality";
 
 // ─── Types ───────────────────────────────────────────────
 export interface Partner {
@@ -57,6 +58,7 @@ export function usePartners(filters?: {
   type?: string;
   status?: string;
   search?: string;
+  needsReview?: boolean;
   page?: number;
   pageSize?: number;
 }) {
@@ -77,6 +79,7 @@ export function usePartners(filters?: {
       if (filters?.type) q = q.eq("type", filters.type);
       if (filters?.status) q = q.eq("status", filters.status);
       if (filters?.search) q = q.ilike("name", `%${filters.search}%`);
+      if (filters?.needsReview) q = q.or(buildPartnerNeedsReviewFilter());
       const { data, error, count } = await q;
       if (error) throw error;
       return {

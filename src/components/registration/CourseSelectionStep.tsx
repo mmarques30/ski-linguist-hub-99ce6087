@@ -509,10 +509,22 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                     className="space-y-2"
                   >
                     <div className="flex items-center space-x-3 rounded-lg border p-3 hover:bg-muted/50">
-                      <RadioGroupItem value="opco" id="opco" />
-                      <Label htmlFor="opco" className="font-normal cursor-pointer flex-1">
-                        OPCO / FIFPL
+                      <RadioGroupItem value="fifpl" id="fifpl" />
+                      <Label htmlFor="fifpl" className="font-normal cursor-pointer flex-1">
+                        FIFPL
                       </Label>
+                    </div>
+                    <div className="flex flex-col rounded-lg border p-3 hover:bg-muted/50 space-y-1">
+                      <div className="flex items-center space-x-3">
+                        <RadioGroupItem value="opco" id="opco" />
+                        <Label htmlFor="opco" className="font-normal cursor-pointer flex-1">
+                          OPCO
+                        </Label>
+                      </div>
+                      <p className="text-xs text-muted-foreground pl-7">
+                        Financement par votre OPCO — contactez FLI pour les modalités. Aucun frais
+                        de dossier n&apos;est demandé automatiquement à cette étape.
+                      </p>
                     </div>
                     <div className="flex items-center space-x-3 rounded-lg border p-3 hover:bg-muted/50">
                       <RadioGroupItem value="company" id="company" />

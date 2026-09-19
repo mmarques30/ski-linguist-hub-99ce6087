@@ -59,10 +59,22 @@ export function TrainingConfigStep({ data, onUpdate, onNext }: TrainingConfigSte
               className="space-y-2"
             >
               <div className="flex items-center space-x-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors">
-                <RadioGroupItem value="opco" id="opco" />
-                <Label htmlFor="opco" className="font-normal cursor-pointer flex-1">
-                  OPCO / FIFPL (Financé par l'organisme)
+                <RadioGroupItem value="fifpl" id="fifpl" />
+                <Label htmlFor="fifpl" className="font-normal cursor-pointer flex-1">
+                  FIFPL (Financé par le FIFPL)
                 </Label>
+              </div>
+              <div className="flex flex-col rounded-lg border p-3 hover:bg-muted/50 transition-colors space-y-1">
+                <div className="flex items-center space-x-3">
+                  <RadioGroupItem value="opco" id="opco" />
+                  <Label htmlFor="opco" className="font-normal cursor-pointer flex-1">
+                    OPCO (Financé par votre OPCO)
+                  </Label>
+                </div>
+                <p className="text-xs text-muted-foreground pl-7">
+                  Contactez FLI pour les modalités de prise en charge. Aucun frais de dossier
+                  automatique à cette étape.
+                </p>
               </div>
               <div className="flex items-center space-x-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors">
                 <RadioGroupItem value="company" id="company" />

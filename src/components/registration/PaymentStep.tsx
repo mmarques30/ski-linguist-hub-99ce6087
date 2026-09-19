@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,7 @@ import {
   type RegistrationPaymentOption,
 } from "@/lib/registration-payments";
 import { formatPriceEUR, isCustomFormatDuration } from "@/lib/registration-offerings";
+import { isOpcoFunding } from "@/lib/registration-utils";
 import { toast } from "sonner";
 
 interface PaymentStepProps {
@@ -40,11 +41,18 @@ const paymentOptions: Array<{
 
 export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
   const isCustomFormat = data.isCustomFormat || isCustomFormatDuration(data.duration);
+  const isOpco = isOpcoFunding(data.fundingType ?? "");
   const coursePrice = data.price ?? 0;
   const hasPrice = coursePrice > 0;
 
   // Décision Paula : aucun mode de règlement coché par défaut.
   const selectedOption: RegistrationPaymentOption | null = data.paymentOption ?? null;
+
+  useEffect(() => {
+    if (isOpco && data.paymentOption) {
+      onUpdate({ paymentOption: undefined });
+    }
+  }, [isOpco, data.paymentOption, onUpdate]);
 
   const summary = useMemo(
     () =>
@@ -62,6 +70,31 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
     }
     onNext();
   };
+
+  if (isOpco) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Paiement</CardTitle>
+          <CardDescription>
+            Financement OPCO — les modalités de règlement vous seront communiquées par FLI.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Alert>
+            <AlertDescription>
+              Vous avez choisi un financement par OPCO. Aucun frais de dossier n&apos;est demandé
+              automatiquement à cette étape. Notre équipe vous contactera pour finaliser les
+              modalités de prise en charge avec votre organisme financeur.
+            </AlertDescription>
+          </Alert>
+          <Button type="button" onClick={onNext} className="w-full mt-6">
+            Continuer
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isCustomFormat || !hasPrice) {
     return (

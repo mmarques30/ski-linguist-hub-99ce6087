@@ -63,6 +63,10 @@ import {
   REGISTRATION_FAILURE_TITLE,
   type RegistrationFailureNotice,
 } from "@/lib/registration-error-message";
+import {
+  isOpcoFunding,
+  REGISTRATION_FUNDING_MAP,
+} from "@/lib/registration-utils";
 
 interface ConfirmationStepProps {
   data: RegistrationData;
@@ -84,12 +88,6 @@ const modalityLabels: Record<string, string> = {
   in_person: "Présentiel (collectif)",
   online_individual: "En ligne (individuel)",
   online_group: "En ligne (groupe)",
-};
-
-const fundingLabels: Record<string, string> = {
-  opco: "OPCO / FIFPL",
-  company: "Entreprise",
-  self: "Autofinancement",
 };
 
 const certificationLabels: Record<string, string> = {
@@ -117,8 +115,9 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
   const testCompleted = Boolean(data.testAnswers && data.currentLevel);
   const isStationGroup = expectsStationGroupAssignment(data.modality);
   const isCustomFormat = data.isCustomFormat || isCustomFormatDuration(data.duration);
+  const isOpco = isOpcoFunding(data.fundingType);
   const coursePrice = data.price ?? 0;
-  const hasPaymentStep = !isCustomFormat && coursePrice > 0;
+  const hasPaymentStep = !isCustomFormat && coursePrice > 0 && !isOpco;
   // Décision Paula : aucun mode de règlement coché par défaut, donc aucun repli ici.
   const paymentOption = data.paymentOption ?? null;
   const paymentMissing = hasPaymentStep && !paymentOption;
@@ -347,6 +346,17 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                 </Alert>
               )}
 
+            {isOpco && (
+              <Alert>
+                <Phone className="h-4 w-4" />
+                <AlertDescription>
+                  Financement OPCO : notre équipe vous contactera pour finaliser les modalités de
+                  prise en charge avec votre organisme financeur. Aucun règlement n&apos;est demandé
+                  en ligne à cette étape.
+                </AlertDescription>
+              </Alert>
+            )}
+
             {isStationGroup && (
               <Alert>
                 <Mountain className="h-4 w-4" />
@@ -456,7 +466,9 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             )}
             <div className="flex justify-between">
               <span className="text-muted-foreground">Financement</span>
-              <span className="font-medium">{fundingLabels[data.fundingType] || data.fundingType}</span>
+              <span className="font-medium">
+                {REGISTRATION_FUNDING_MAP[data.fundingType] || data.fundingType}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Votre piste</span>
@@ -489,6 +501,16 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             </div>
           </div>
         </div>
+
+        {isOpco && (
+          <Alert>
+            <Phone className="h-4 w-4" />
+            <AlertDescription>
+              Financement OPCO : aucun règlement n&apos;est demandé à cette étape. FLI vous
+              contactera pour les modalités de prise en charge.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {paymentSummary && (
           <>

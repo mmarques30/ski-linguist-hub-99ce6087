@@ -25,6 +25,11 @@ import {
   MESSAGE_GEL_PROSPECTION,
   PROSPECTION_MONITEURS_GELEE,
 } from "@/lib/prospection-gel";
+import {
+  partnerNeedsReview,
+  partnerReviewLabel,
+  partnerReviewReasons,
+} from "@/lib/partner-name-quality";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
@@ -58,6 +63,8 @@ export default function PartnerDetails() {
 
   const totalInvoiced = invoices.reduce((s, i) => s + (i.amount_ttc || i.amount_ht || 0), 0);
   const totalPaid = invoices.filter((i) => i.status === "paid").reduce((s, i) => s + (i.amount_ttc || i.amount_ht || 0), 0);
+  const reviewReasons = partnerReviewReasons(partner.name);
+  const needsReview = partnerNeedsReview(partner.name);
 
   const handleDelete = async () => {
     if (PROSPECTION_MONITEURS_GELEE) {
@@ -78,9 +85,14 @@ export default function PartnerDetails() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-2xl font-bold text-foreground">{partner.name}</h1>
               <Badge className={STATUS_COLORS[partner.status] || ""}>{partner.status}</Badge>
+              {needsReview && (
+                <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800">
+                  À vérifier
+                </Badge>
+              )}
               <span className="text-sm text-muted-foreground">{TYPE_LABELS[partner.type]}</span>
             </div>
             {partner.station && (
@@ -112,6 +124,16 @@ export default function PartnerDetails() {
             <Snowflake className="h-4 w-4" />
             <AlertTitle>Prospection gelée</AlertTitle>
             <AlertDescription>{MESSAGE_GEL_PROSPECTION}</AlertDescription>
+          </Alert>
+        )}
+
+        {needsReview && (
+          <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-950/20">
+            <AlertTitle>Fiche à vérifier</AlertTitle>
+            <AlertDescription>
+              Ce nom de partenaire semble inhabituel ({partnerReviewLabel(reviewReasons)}).
+              Pensez à le normaliser ou à fusionner les doublons éventuels.
+            </AlertDescription>
           </Alert>
         )}
 

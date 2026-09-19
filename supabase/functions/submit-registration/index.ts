@@ -61,10 +61,15 @@ const COURSE_TYPE_MAP: Record<string, string> = {
 };
 
 const FUNDING_MAP: Record<string, string> = {
-  opco: "OPCO / FIFPL",
+  fifpl: "FIFPL",
+  opco: "OPCO",
   company: "Entreprise",
   self: "Autofinancement",
 };
+
+function isOpcoFunding(type: string): boolean {
+  return type === "opco";
+}
 
 const LOCATION_LABELS: Record<string, string> = {
   valdisere: "Val d'Isère",
@@ -218,7 +223,9 @@ Deno.serve(async (req) => {
     const correctAnswers = registration.correctAnswers ?? 0;
     const needsAdminCall = registration.needsAdminCall ?? false;
 
-    if (!isCustomFormat && (registration.price ?? 0) > 0) {
+    const isOpco = isOpcoFunding(registration.fundingType);
+
+    if (!isCustomFormat && !isOpco && (registration.price ?? 0) > 0) {
       if (!registration.paymentOption || !isValidPaymentOption(registration.paymentOption)) {
         return new Response(
           JSON.stringify({ success: false, error: "Veuillez choisir un mode de paiement" }),
@@ -337,7 +344,11 @@ Deno.serve(async (req) => {
       null;
 
     const paymentFields =
-      !isCustomFormat && price != null && price > 0 && registration.paymentOption &&
+      !isCustomFormat &&
+      !isOpco &&
+      price != null &&
+      price > 0 &&
+      registration.paymentOption &&
       isValidPaymentOption(registration.paymentOption)
         ? getInscriptionPaymentFields(price, normalizePaymentOption(registration.paymentOption))
         : null;
@@ -393,6 +404,9 @@ Deno.serve(async (req) => {
           needsAdminCall ? "⚠️ ALERTE: Niveau très faible — contacter le stagiaire" : null,
           registration.testSummary
             ? `Test adaptatif: ${registration.testSummary.passedSlopes.join(" → ") || "vocab ski"}`
+            : null,
+          isOpco
+            ? "Financement OPCO — modalités de règlement à convenir avec FLI (pas de frais de dossier automatique)"
             : null,
           registration.paymentOption
             ? `Paiement: ${paymentLabels[registration.paymentOption] || registration.paymentOption}`

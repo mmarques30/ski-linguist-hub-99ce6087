@@ -17,6 +17,7 @@ import {
   MESSAGE_GEL_REACTIVATION,
   PROSPECTION_MONITEURS_GELEE,
 } from "@/lib/prospection-gel";
+import { partnerNeedsReview } from "@/lib/partner-name-quality";
 
 const TYPE_LABELS: Record<string, string> = {
   esf: "ESF",
@@ -38,6 +39,7 @@ export default function PartnersList() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("");
+  const [qualityFilter, setQualityFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const pageSize = 50;
   const [formOpen, setFormOpen] = useState(false);
@@ -47,6 +49,7 @@ export default function PartnersList() {
     type: typeFilter || undefined,
     status: statusFilter || undefined,
     search: search || undefined,
+    needsReview: qualityFilter === "a_verifier" ? true : undefined,
     page,
     pageSize,
   });
@@ -166,6 +169,21 @@ export default function PartnersList() {
               <SelectItem value="inactif">Inactif</SelectItem>
             </SelectContent>
           </Select>
+          <Select
+            value={qualityFilter}
+            onValueChange={(v) => {
+              setQualityFilter(v);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Qualité" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous</SelectItem>
+              <SelectItem value="a_verifier">À vérifier</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* List */}
@@ -183,12 +201,19 @@ export default function PartnersList() {
                 onClick={() => navigate(`/gestion/partenaires/${p.id}`)}
               >
                 <CardContent className="p-5 space-y-3">
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between gap-2">
                     <div>
                       <h3 className="font-semibold text-foreground">{p.name}</h3>
                       <span className="text-sm text-muted-foreground">{TYPE_LABELS[p.type] || p.type}</span>
                     </div>
-                    <Badge className={STATUS_COLORS[p.status] || ""}>{p.status}</Badge>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge className={STATUS_COLORS[p.status] || ""}>{p.status}</Badge>
+                      {partnerNeedsReview(p.name) && (
+                        <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800">
+                          À vérifier
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                   {p.station && (
                     <div className="flex items-center text-sm text-muted-foreground">
