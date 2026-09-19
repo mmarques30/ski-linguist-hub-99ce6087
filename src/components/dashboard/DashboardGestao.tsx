@@ -2,19 +2,14 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Users,
   Calendar,
   Euro,
-  CheckCircle2,
-  AlertCircle,
   Clock,
   BookOpen,
   TrendingUp,
   UserPlus,
-  ClipboardCheck,
   GraduationCap,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -96,11 +91,6 @@ const translations = {
     "pt-BR": "Testes",
     en: "Tests",
   },
-  tabPreparation: {
-    fr: "Préparation",
-    "pt-BR": "Preparação",
-    en: "Preparation",
-  },
   recentInscriptions: {
     fr: "Inscriptions récentes",
     "pt-BR": "Inscrições recentes",
@@ -121,16 +111,6 @@ const translations = {
     "pt-BR": "Testes de nível e avaliações agendadas",
     en: "Scheduled placement tests and assessments",
   },
-  classPreparation: {
-    fr: "Préparation des Formations",
-    "pt-BR": "Preparação das Turmas",
-    en: "Class Preparation",
-  },
-  classPreparationDesc: {
-    fr: "État de validation et préparation en temps réel",
-    "pt-BR": "Status de validação e preparação em tempo real",
-    en: "Real-time validation and preparation status",
-  },
   statusConfirmed: {
     fr: "Confirmée",
     "pt-BR": "Confirmada",
@@ -150,36 +130,6 @@ const translations = {
     fr: "Aucune donnée disponible",
     "pt-BR": "Nenhum dado disponível",
     en: "No data available",
-  },
-  complete: {
-    fr: "Complet",
-    "pt-BR": "Completo",
-    en: "Complete",
-  },
-  students: {
-    fr: "stagiaires",
-    "pt-BR": "alunos",
-    en: "students",
-  },
-  enoughStudents: {
-    fr: "Effectif suffisant",
-    "pt-BR": "Alunos suficientes",
-    en: "Enough students",
-  },
-  locationConfirmed: {
-    fr: "Lieu confirmé",
-    "pt-BR": "Local confirmado",
-    en: "Location confirmed",
-  },
-  instructorConfirmed: {
-    fr: "Formateur confirmé",
-    "pt-BR": "Formador confirmado",
-    en: "Instructor confirmed",
-  },
-  materialsReady: {
-    fr: "Matériel prêt",
-    "pt-BR": "Material pronto",
-    en: "Materials ready",
   },
 };
 
@@ -222,22 +172,6 @@ export function DashboardGestao() {
   };
 
   const recentInscriptions = inscriptions?.slice(0, 5) || [];
-
-  // Group inscriptions by language for class preparation
-  const classPreparation = inscriptions
-    ?.filter((i) => i.status === "en_cours")
-    .reduce(
-      (acc, i) => {
-        const lang = i.language || "Autre";
-        if (!acc[lang]) {
-          acc[lang] = { count: 0, items: [] };
-        }
-        acc[lang].count++;
-        acc[lang].items.push(i);
-        return acc;
-      },
-      {} as Record<string, { count: number; items: typeof inscriptions }>
-    ) || {};
 
   return (
     <div className="space-y-6">
@@ -354,7 +288,7 @@ export function DashboardGestao() {
 
       {/* Tabs Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:inline-grid">
           <TabsTrigger value="inscriptions" className="gap-2">
             <UserPlus className="h-4 w-4" />
             <span className="hidden sm:inline">{t(translations.tabInscriptions)}</span>
@@ -362,10 +296,6 @@ export function DashboardGestao() {
           <TabsTrigger value="tests" className="gap-2">
             <GraduationCap className="h-4 w-4" />
             <span className="hidden sm:inline">{t(translations.tabTests)}</span>
-          </TabsTrigger>
-          <TabsTrigger value="preparation" className="gap-2">
-            <ClipboardCheck className="h-4 w-4" />
-            <span className="hidden sm:inline">{t(translations.tabPreparation)}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -477,106 +407,6 @@ export function DashboardGestao() {
                       </div>
                     </div>
                   ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Preparation Tab */}
-        <TabsContent value="preparation">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ClipboardCheck className="h-5 w-5 text-[hsl(var(--fli-purple))]" />
-                {t(translations.classPreparation)}
-              </CardTitle>
-              <CardDescription>{t(translations.classPreparationDesc)}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loadingInscriptions ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Clock className="h-8 w-8 mx-auto mb-2 animate-spin" />
-                </div>
-              ) : Object.keys(classPreparation).length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">{t(translations.noData)}</div>
-              ) : (
-                <div className="space-y-6">
-                  {Object.entries(classPreparation).map(([lang, data]) => {
-                    // Simulated validation progress based on student count
-                    const hasEnoughStudents = data.count >= 1;
-                    const locationConfirmed = data.count >= 1;
-                    const instructorConfirmed = data.items.some((i) => i.instructor_name);
-                    const materialsReady = data.count >= 2;
-
-                    const validations = [hasEnoughStudents, locationConfirmed, instructorConfirmed, materialsReady];
-                    const progress = (validations.filter(Boolean).length / validations.length) * 100;
-                    const isValidated = progress === 100;
-
-                    return (
-                      <div key={lang} className="rounded-lg border p-4 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-semibold">Formation {lang}</h4>
-                              {isValidated && (
-                                <Badge className="bg-[hsl(var(--fli-teal)/0.1)] border-[hsl(var(--fli-teal)/0.3)] text-[hsl(var(--fli-teal))]">
-                                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                                  {t(translations.confirmed_classes)}
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-3 mt-1">
-                              <Badge variant="outline">
-                                {data.count} {t(translations.students)}
-                              </Badge>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <span className="text-2xl font-bold">{progress.toFixed(0)}%</span>
-                            <p className="text-sm text-muted-foreground">{t(translations.complete)}</p>
-                          </div>
-                        </div>
-
-                        <Progress value={progress} className="h-2" />
-
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div className="flex items-center gap-2">
-                            {hasEnoughStudents ? (
-                              <CheckCircle2 className="h-4 w-4 text-[hsl(var(--fli-teal))]" />
-                            ) : (
-                              <AlertCircle className="h-4 w-4 text-[hsl(var(--fli-orange))]" />
-                            )}
-                            {t(translations.enoughStudents)}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {locationConfirmed ? (
-                              <CheckCircle2 className="h-4 w-4 text-[hsl(var(--fli-teal))]" />
-                            ) : (
-                              <AlertCircle className="h-4 w-4 text-[hsl(var(--fli-orange))]" />
-                            )}
-                            {t(translations.locationConfirmed)}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {instructorConfirmed ? (
-                              <CheckCircle2 className="h-4 w-4 text-[hsl(var(--fli-teal))]" />
-                            ) : (
-                              <AlertCircle className="h-4 w-4 text-[hsl(var(--fli-orange))]" />
-                            )}
-                            {t(translations.instructorConfirmed)}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {materialsReady ? (
-                              <CheckCircle2 className="h-4 w-4 text-[hsl(var(--fli-teal))]" />
-                            ) : (
-                              <AlertCircle className="h-4 w-4 text-[hsl(var(--fli-orange))]" />
-                            )}
-                            {t(translations.materialsReady)}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
                 </div>
               )}
             </CardContent>

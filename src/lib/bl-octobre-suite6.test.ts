@@ -1,0 +1,58 @@
+import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+function source(relatif: string): string {
+  return readFileSync(join(process.cwd(), relatif), "utf8");
+}
+
+describe("DashboardGestao — retrait checklist Préparation fictive", () => {
+  it("n'expose plus l'onglet Préparation ni la progression simulée", () => {
+    const dash = source("src/components/dashboard/DashboardGestao.tsx");
+    expect(dash).not.toContain('value="preparation"');
+    expect(dash).not.toContain("tabPreparation");
+    expect(dash).not.toContain("classPreparation");
+    expect(dash).not.toContain("Simulated validation progress");
+    expect(dash).not.toContain("enoughStudents");
+    expect(dash).not.toContain("materialsReady");
+    expect(dash).toContain("grid-cols-2");
+  });
+});
+
+describe("BL-014 — candidat → actif", () => {
+  it("InstructorDetails propose un CTA Passer en actif·ve pour les candidat·es", () => {
+    const details = source("src/pages/formateurs/InstructorDetails.tsx");
+    expect(details).toContain('instructor.status === "candidat"');
+    expect(details).toContain("Passer en actif·ve");
+    expect(details).toMatch(/status:\s*"actif"/);
+    expect(details).toMatch(/is_active:\s*true/);
+    expect(details).toContain("updateInstructor.mutate");
+  });
+
+  it("InstructorFormDialog crée les nouveaux formateurs en statut candidat", () => {
+    const dialog = source("src/components/formateurs/InstructorFormDialog.tsx");
+    expect(dialog).toMatch(/emptyForm[\s\S]*status:\s*"candidat"/);
+    expect(dialog).toContain('is_active: form.status === "actif"');
+  });
+});
+
+describe("A6 — QualiopiAudit reset formulaire", () => {
+  it("réinitialise le formulaire via useEffect sur indicator.id", () => {
+    const page = source("src/pages/qualite/QualiopiAudit.tsx");
+    expect(page).toContain("useEffect");
+    expect(page).toMatch(/indicator\?\.id/);
+    expect(page).not.toMatch(/useState\(\s*\(\)\s*=>\s*\{[\s\S]*setForm/);
+  });
+});
+
+describe("A6 — StudentDetails codes statut", () => {
+  it("filtre et badges utilisent les codes DB terminee/facturee", () => {
+    const page = source("src/pages/students/StudentDetails.tsx");
+    expect(page).toContain('"terminee"');
+    expect(page).toContain('"facturee"');
+    expect(page).toContain("getStatusLabel");
+    expect(page).toContain("getStatusStyle");
+    expect(page).not.toContain('status === "Terminé"');
+    expect(page).not.toContain('status === "Facturé"');
+  });
+});

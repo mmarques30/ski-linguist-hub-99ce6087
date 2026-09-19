@@ -245,6 +245,21 @@ export default function InstructorDetails() {
                 </Link>
               </Button>
             )}
+            {editable && instructor.status === "candidat" && (
+              <Button
+                onClick={() => {
+                  if (!id) return;
+                  updateInstructor.mutate({
+                    id,
+                    status: "actif",
+                    is_active: true,
+                  });
+                }}
+                disabled={updateInstructor.isPending}
+              >
+                Passer en actif·ve
+              </Button>
+            )}
             {editable && (
               <Button variant="outline" onClick={() => setShowEdit(true)}>
                 Modifier
