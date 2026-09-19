@@ -38,6 +38,8 @@ import { format } from "date-fns";
 import { useCurrentSeason, usePriceLookup } from "@/hooks/useSeasons";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { describeCaughtError } from "@/lib/supabase-error";
+import { studentEmailLabel } from "@/lib/email-guards";
+import { buildStudentSearchFilter } from "@/hooks/useStudents";
 
 const translations = {
   titleCreate: {
@@ -297,8 +299,9 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
         .order("last_name")
         .limit(50);
       
-      if (studentSearch) {
-        query = query.or(`first_name.ilike.%${studentSearch}%,last_name.ilike.%${studentSearch}%,email.ilike.%${studentSearch}%`);
+      const searchFilter = buildStudentSearchFilter(studentSearch);
+      if (searchFilter) {
+        query = query.or(searchFilter);
       }
       
       const { data, error } = await query;
@@ -491,7 +494,7 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
                       </div>
                       {students?.map((student) => (
                         <SelectItem key={student.id} value={student.id}>
-                          {student.first_name} {student.last_name} - {student.email}
+                          {student.first_name} {student.last_name} - {studentEmailLabel(student.email)}
                         </SelectItem>
                       ))}
                     </SelectContent>

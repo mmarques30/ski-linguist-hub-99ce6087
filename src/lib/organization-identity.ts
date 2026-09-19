@@ -27,6 +27,7 @@ export interface OrganizationIdentity {
   activity_authority: string;
   representative: string;
   website: string;
+  logo_url: string;
 }
 
 export type OrganizationIdentityField = keyof OrganizationIdentity;
@@ -76,7 +77,37 @@ export const EMPTY_ORGANIZATION_IDENTITY: OrganizationIdentity = {
   activity_authority: "",
   representative: "",
   website: "",
+  logo_url: "",
 };
+
+const FLI_INVOICE_DEFAULTS = {
+  name: "France Langues International",
+  address: "25 avenue de la gare",
+  postalCode: "73800",
+  city: "Montmélian",
+  phone: "+33 (0)6 27 13 45 16",
+  email: "contact@france-langues-international.com",
+  siret: "484 772 041 00048",
+} as const;
+
+const FLI_EMAIL_FOOTER_DEFAULTS = {
+  displayName: "FLI — France Langues International",
+  address: "25 avenue de la Gare",
+  postalCode: "73800",
+  city: "Montmélian",
+  phone: "04 79 28 21 09",
+  email: "info@fli.fr",
+} as const;
+
+export interface OrganizationInvoiceHeader {
+  name: string;
+  address: string;
+  cityLine: string;
+  phone: string;
+  email: string;
+  siret: string;
+  logoUrl: string;
+}
 
 function texte(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
@@ -89,6 +120,7 @@ export function parseOrganizationIdentity(value: unknown): OrganizationIdentity 
   for (const field of ORGANIZATION_IDENTITY_FIELDS) {
     identity[field.key] = texte(rec[field.key]);
   }
+  identity.logo_url = texte(rec.logo_url);
   return identity;
 }
 
@@ -100,6 +132,7 @@ export function organizationIdentityToJson(
   for (const field of ORGANIZATION_IDENTITY_FIELDS) {
     json[field.key] = identity[field.key].trim();
   }
+  json.logo_url = identity.logo_url.trim();
   return json;
 }
 
@@ -115,10 +148,60 @@ export function isOrganizationIdentityComplete(identity: OrganizationIdentity): 
   return missingRequiredIdentityFields(identity).length === 0;
 }
 
+/** « 73800 Montmélian » — les parties vides disparaissent. */
+export function formatOrganizationCityLine(identity: OrganizationIdentity): string {
+  return [identity.postal_code, identity.city].filter(Boolean).join(" ");
+}
+
 /** « 25 avenue de la Gare, 73800 Montmélian » — les parties vides disparaissent. */
 export function formatOrganizationAddress(identity: OrganizationIdentity): string {
-  const ville = [identity.postal_code, identity.city].filter(Boolean).join(" ");
+  const ville = formatOrganizationCityLine(identity);
   return [identity.address_line, ville].filter(Boolean).join(", ");
+}
+
+/** Pied d'email HTML aligné sur FLI_FOOTER_HTML, alimenté par l'identité saisie. */
+export function buildOrganizationEmailFooterHtml(identity: OrganizationIdentity): string {
+  const name = identity.legal_name.trim() || FLI_EMAIL_FOOTER_DEFAULTS.displayName;
+  const address = identity.address_line.trim() || FLI_EMAIL_FOOTER_DEFAULTS.address;
+  const cityLine =
+    formatOrganizationCityLine(identity) ||
+    `${FLI_EMAIL_FOOTER_DEFAULTS.postalCode} ${FLI_EMAIL_FOOTER_DEFAULTS.city}`;
+  const phone = identity.phone.trim() || FLI_EMAIL_FOOTER_DEFAULTS.phone;
+  const email = identity.email.trim() || FLI_EMAIL_FOOTER_DEFAULTS.email;
+
+  return `<p style="margin-top:24px">Cordialement,</p>
+<p>
+  <strong>${escapeHtml(name)}</strong><br/>
+  ${escapeHtml(address)}<br/>
+  ${escapeHtml(cityLine)}<br/>
+  Tél. : ${escapeHtml(phone)}<br/>
+  <a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a>
+</p>`;
+}
+
+/** En-tête facture : repli sur les coordonnées FLI historiques si un champ est vide. */
+export function organizationInvoiceHeader(
+  identity: OrganizationIdentity
+): OrganizationInvoiceHeader {
+  return {
+    name: identity.legal_name.trim() || FLI_INVOICE_DEFAULTS.name,
+    address: identity.address_line.trim() || FLI_INVOICE_DEFAULTS.address,
+    cityLine:
+      formatOrganizationCityLine(identity) ||
+      `${FLI_INVOICE_DEFAULTS.postalCode} ${FLI_INVOICE_DEFAULTS.city}`,
+    phone: identity.phone.trim() || FLI_INVOICE_DEFAULTS.phone,
+    email: identity.email.trim() || FLI_INVOICE_DEFAULTS.email,
+    siret: identity.siret.trim() || FLI_INVOICE_DEFAULTS.siret,
+    logoUrl: identity.logo_url.trim(),
+  };
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }
 
 /** Mentions légales d'un pied de document : rien si elles ne sont pas saisies. */

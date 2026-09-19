@@ -46,15 +46,20 @@ const translations = {
     "pt-BR": "Os resultados das novas inscrições aparecerão aqui.",
     en: "Results from new registrations will appear here.",
   },
-  testOf: {
-    fr: "Test de",
-    "pt-BR": "Teste de",
-    en: "Test of",
+  testTitle: {
+    fr: "Test —",
+    "pt-BR": "Teste —",
+    en: "Test —",
   },
   questions: {
     fr: "questions",
     "pt-BR": "perguntas",
     en: "questions",
+  },
+  testCompleted: {
+    fr: "test complété",
+    "pt-BR": "teste concluído",
+    en: "test completed",
   },
   testsCompleted: {
     fr: "tests complétés",
@@ -155,14 +160,17 @@ export default function PlacementTests() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle>
-                      {t(translations.testOf)} {test.languageLabel}
+                      {t(translations.testTitle)} {test.languageLabel}
                     </CardTitle>
                     <Badge variant="outline">
                       {test.totalQuestions} {t(translations.questions)}
                     </Badge>
                   </div>
                   <CardDescription>
-                    {test.completedTests} {t(translations.testsCompleted)}
+                    {test.completedTests}{" "}
+                    {test.completedTests === 1
+                      ? t(translations.testCompleted)
+                      : t(translations.testsCompleted)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">

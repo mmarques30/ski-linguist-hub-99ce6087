@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Plus, Search, Calendar, MapPin, Users, Mail, Send,
-  Building2, Globe, Lock, Upload, Snowflake,
+  Building2, Globe, Lock, Upload, Snowflake, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { format } from "date-fns";
@@ -114,6 +114,8 @@ function IntakeCard({
 
 export default function MoniteursSki() {
   const [searchMonitors, setSearchMonitors] = useState("");
+  const [monitorPage, setMonitorPage] = useState(1);
+  const monitorPageSize = 50;
   const [monitorFormOpen, setMonitorFormOpen] = useState(false);
   const [editMonitor, setEditMonitor] = useState<SkiMonitor | null>(null);
   const [intakeFormOpen, setIntakeFormOpen] = useState(false);
@@ -122,7 +124,14 @@ export default function MoniteursSki() {
   const [importOpen, setImportOpen] = useState(false);
 
   const { data: intakes = [], isLoading: intakesLoading } = useCourseIntakes();
-  const { data: monitors = [], isLoading: monitorsLoading } = useSkiMonitors({ search: searchMonitors });
+  const { data: monitorsResult, isLoading: monitorsLoading } = useSkiMonitors({
+    search: searchMonitors || undefined,
+    page: monitorPage,
+    pageSize: monitorPageSize,
+  });
+  const monitors = monitorsResult?.rows ?? [];
+  const monitorTotal = monitorsResult?.total ?? 0;
+  const monitorTotalPages = Math.max(1, Math.ceil(monitorTotal / monitorPageSize));
   const { data: stats } = useSkiMonitorStats();
   const sendOutreach = useSendIntakeOutreach();
 
@@ -214,7 +223,10 @@ export default function MoniteursSki() {
                   placeholder="Rechercher nom, email, station..."
                   className="pl-8"
                   value={searchMonitors}
-                  onChange={(e) => setSearchMonitors(e.target.value)}
+                  onChange={(e) => {
+                    setSearchMonitors(e.target.value);
+                    setMonitorPage(1);
+                  }}
                 />
               </div>
               <Button
@@ -244,6 +256,7 @@ export default function MoniteursSki() {
                 </CardContent>
               </Card>
             ) : (
+              <>
               <div className="rounded-lg border overflow-hidden">
                 <table className="w-full text-sm">
                   <thead className="bg-muted/50">
@@ -280,6 +293,32 @@ export default function MoniteursSki() {
                   </tbody>
                 </table>
               </div>
+              {monitorTotalPages > 1 && (
+                <div className="flex items-center justify-between pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={monitorPage <= 1}
+                    onClick={() => setMonitorPage((p) => Math.max(1, p - 1))}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Précédent
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Page {monitorPage} / {monitorTotalPages} ({monitorTotal} au total)
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={monitorPage >= monitorTotalPages}
+                    onClick={() => setMonitorPage((p) => Math.min(monitorTotalPages, p + 1))}
+                  >
+                    Suivant
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+              )}
+              </>
             )}
           </TabsContent>
         </Tabs>

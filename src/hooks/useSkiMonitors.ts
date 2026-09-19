@@ -19,18 +19,34 @@ export interface SkiMonitor {
   ski_school?: { name: string } | null;
 }
 
+export interface SkiMonitorListResult {
+  rows: SkiMonitor[];
+  total: number;
+}
+
 export function useSkiMonitors(filters?: {
   search?: string;
   status?: string;
   partnerId?: string;
+  page?: number;
+  pageSize?: number;
 }) {
+  const page = filters?.page ?? 1;
+  const pageSize = filters?.pageSize ?? 50;
+
   return useQuery({
-    queryKey: ["ski-monitors", filters],
+    queryKey: ["ski-monitors", filters, page, pageSize],
     queryFn: async () => {
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+
       let query = supabase
         .from("ski_monitors")
-        .select("*, partner:partner_id(name, station), ski_school:ski_school_id(name)")
-        .order("last_name", { ascending: true });
+        .select("*, partner:partner_id(name, station), ski_school:ski_school_id(name)", {
+          count: "exact",
+        })
+        .order("last_name", { ascending: true })
+        .range(from, to);
 
       if (filters?.status && filters.status !== "all") {
         query = query.eq("status", filters.status);
@@ -44,9 +60,12 @@ export function useSkiMonitors(filters?: {
         );
       }
 
-      const { data, error } = await query;
+      const { data, error, count } = await query;
       if (error) throw error;
-      return (data || []) as SkiMonitor[];
+      return {
+        rows: (data || []) as SkiMonitor[],
+        total: count ?? 0,
+      } satisfies SkiMonitorListResult;
     },
   });
 }
@@ -55,18 +74,28 @@ export function useSkiMonitorStats() {
   return useQuery({
     queryKey: ["ski-monitor-stats"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { count: total, error: totalError } = await supabase
         .from("ski_monitors")
-        .select("status, partner_id, home_station");
-      if (error) throw error;
+        .select("*", { count: "exact", head: true });
+      if (totalError) throw totalError;
 
-      const all = data || [];
-      const active = all.filter((m) => m.status === "active").length;
-      const stations = new Set(all.map((m) => m.home_station).filter(Boolean));
+      const { count: active, error: activeError } = await supabase
+        .from("ski_monitors")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "active");
+      if (activeError) throw activeError;
+
+      const { data: stationRows, error: stationsError } = await supabase
+        .from("ski_monitors")
+        .select("home_station")
+        .not("home_station", "is", null);
+      if (stationsError) throw stationsError;
+
+      const stations = new Set(stationRows?.map((m) => m.home_station).filter(Boolean));
 
       return {
-        total: all.length,
-        active,
+        total: total ?? 0,
+        active: active ?? 0,
         stations: stations.size,
       };
     },

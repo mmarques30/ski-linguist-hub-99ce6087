@@ -24,7 +24,7 @@ import {
   normalizeInstructorLanguage,
 } from "@/lib/taught-languages";
 
-const TAX_STATUSES = [
+export const TAX_STATUSES = [
   { value: "auto_entrepreneur", label: "Auto-entrepreneur" },
   { value: "salarie", label: "Salarié" },
   { value: "portage", label: "Portage salarial" },

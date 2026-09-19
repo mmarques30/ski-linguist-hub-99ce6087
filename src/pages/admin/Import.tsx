@@ -47,28 +47,18 @@ import {
 import {
   IMPORT_HISTORIQUE_LIMITE,
   IMPORT_TABLE_LABELS,
+  IMPORT_UPSERT_KEYS,
   prepareImport,
+  rowsToCsv,
   type ImportTableType,
   type PreparedImport,
 } from "@/lib/admin-import-engine";
 
-interface TableCounts {
-  instructors: number;
-  ski_schools: number;
-  students: number;
-  inscriptions: number;
-  invoices: number;
-  payments: number;
-}
+type TableCounts = Record<ImportTableType, number>;
 
-const EMPTY_COUNTS: TableCounts = {
-  instructors: 0,
-  ski_schools: 0,
-  students: 0,
-  inscriptions: 0,
-  invoices: 0,
-  payments: 0,
-};
+const EMPTY_COUNTS: TableCounts = Object.fromEntries(
+  (Object.keys(IMPORT_TABLE_LABELS) as ImportTableType[]).map((key) => [key, 0])
+) as TableCounts;
 
 /** Tables de l'import historique (point 9) : la barrière de date s'applique. */
 const TABLES_HISTORIQUE: ImportTableType[] = ["invoices", "payments"];
@@ -97,7 +87,6 @@ async function writeAuditLog(params: {
     old_values: (params.oldValues ?? null) as unknown as import("@/integrations/supabase/types").Json,
   });
   if (error) {
-    console.error("audit_log insert failed", error);
     throw new Error(`Journalisation audit_log échouée : ${error.message}`);
   }
 }
@@ -132,23 +121,13 @@ export default function Import() {
   const refreshCounts = useCallback(async () => {
     setCountsLoading(true);
     try {
-      const [instructors, ski_schools, students, inscriptions, invoices, payments] =
-        await Promise.all([
-          countTable("instructors"),
-          countTable("ski_schools"),
-          countTable("students"),
-          countTable("inscriptions"),
-          countTable("invoices"),
-          countTable("payments"),
-        ]);
-      setCounts({
-        instructors,
-        ski_schools,
-        students,
-        inscriptions,
-        invoices,
-        payments,
-      });
+      const entries = await Promise.all(
+        (Object.keys(IMPORT_TABLE_LABELS) as ImportTableType[]).map(async (table) => [
+          table,
+          await countTable(table),
+        ])
+      );
+      setCounts(Object.fromEntries(entries) as TableCounts);
     } catch (error) {
       toast({
         variant: "destructive",
@@ -270,10 +249,15 @@ export default function Import() {
     let imported = 0;
     const batchSize = 50;
     const records = prepared.accepted;
+    const upsertKey = IMPORT_UPSERT_KEYS[selectedTable];
 
     for (let i = 0; i < records.length; i += batchSize) {
       const batch = records.slice(i, i + batchSize);
-      const { error } = await supabase.from(selectedTable).insert(batch as never[]);
+      const { error } = upsertKey
+        ? await supabase
+            .from(selectedTable)
+            .upsert(batch as never[], { onConflict: upsertKey })
+        : await supabase.from(selectedTable).insert(batch as never[]);
       if (error) {
         errors.push(`Lot ${Math.floor(i / batchSize) + 1}: ${error.message}`);
       } else {
@@ -309,7 +293,7 @@ export default function Import() {
 
     toast({
       title: "Import terminé",
-      description: `${imported} enregistrement(s) écrit(s) dans ${selectedTable}.`,
+      description: `${imported} enregistrement(s) écrit(s) (insert/upsert) dans ${selectedTable}.`,
     });
   };
 
@@ -322,6 +306,34 @@ export default function Import() {
     setIsPurging(true);
     try {
       const beforeCount = selectedCount;
+
+      const { data: exportRows, error: exportSelectError } = await supabase
+        .from(selectedTable)
+        .select("*")
+        .limit(10000);
+      if (exportSelectError) {
+        toast({
+          variant: "destructive",
+          title: "Export avant purge impossible",
+          description: exportSelectError.message,
+        });
+        return;
+      }
+
+      try {
+        const csv = rowsToCsv((exportRows ?? []) as Record<string, unknown>[]);
+        const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+        downloadTextFile(`purge-backup-${selectedTable}-${stamp}.csv`, csv);
+      } catch (exportError) {
+        toast({
+          variant: "destructive",
+          title: "Export avant purge impossible",
+          description:
+            exportError instanceof Error ? exportError.message : "Erreur inconnue",
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from(selectedTable)
         .delete()
@@ -410,7 +422,7 @@ export default function Import() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
               {(Object.keys(IMPORT_TABLE_LABELS) as ImportTableType[]).map((key) => (
                 <div
                   key={key}
@@ -520,8 +532,8 @@ export default function Import() {
                     <strong className="text-foreground">{selectedCount}</strong>
                   </p>
                   <p className="text-destructive font-medium">
-                    Action irréversible. Aucune suppression sans validation
-                    métier.
+                    Action irréversible. Un export CSV de sauvegarde (max 10 000
+                    lignes) sera téléchargé avant suppression.
                   </p>
                   <div className="space-y-2 pt-2">
                     <Label htmlFor="purge-confirm">
@@ -794,8 +806,8 @@ export default function Import() {
             </CardHeader>
             <CardContent className="space-y-3">
               <p>
-                <strong>{importResult.imported}</strong> ligne(s) insérée(s) dans{" "}
-                <code>{selectedTable}</code>.
+                <strong>{importResult.imported}</strong> ligne(s) écrite(s)
+                (insert/upsert) dans <code>{selectedTable}</code>.
               </p>
               {importResult.errors.length > 0 && (
                 <Alert variant="destructive">

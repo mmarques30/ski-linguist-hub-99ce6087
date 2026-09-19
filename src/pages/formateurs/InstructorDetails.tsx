@@ -12,7 +12,6 @@ import {
   Phone,
   MapPin,
   Star,
-  Plus,
   Calendar,
   CreditCard,
   User,
@@ -30,25 +29,18 @@ import {
 } from "@/components/ui/select";
 import {
   useInstructorDetails,
-  useInstructorSessions,
+  useInstructorInscriptions,
   useInstructorPayments,
   useInstructorContracts,
   useUpdateInstructor,
 } from "@/hooks/useInstructors";
-import { InstructorFormDialog } from "@/components/formateurs/InstructorFormDialog";
-import { SessionFormDialog } from "@/components/formateurs/SessionFormDialog";
+import { InstructorFormDialog, TAX_STATUSES } from "@/components/formateurs/InstructorFormDialog";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { displayLanguageLabel } from "@/lib/taught-languages";
 import { formateurAssistPath } from "@/lib/client-links";
+import { getStatusLabel, getStatusStyle } from "@/lib/inscription-status";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-
-const statusColors: Record<string, string> = {
-  planifiee: "bg-blue-100 text-blue-800",
-  en_cours: "bg-amber-100 text-amber-800",
-  realisee: "bg-emerald-100 text-emerald-800",
-  annulee: "bg-red-100 text-red-800",
-};
 
 const paymentStatusColors: Record<string, string> = {
   a_payer: "bg-amber-100 text-amber-800",
@@ -82,16 +74,45 @@ function adminStatutLabel(value: string | null | undefined): string {
   return found?.label ?? value;
 }
 
+type InstructorInscription = {
+  id: string;
+  code: string | null;
+  language: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  status: string | null;
+  student_name: string | null;
+  course_location: string | null;
+};
+
+function formatInscriptionDates(startDate: string | null, endDate: string | null): string {
+  if (!startDate && !endDate) return "—";
+  const start = startDate
+    ? format(new Date(startDate), "d MMM yyyy", { locale: fr })
+    : "—";
+  const end = endDate ? format(new Date(endDate), "d MMM yyyy", { locale: fr }) : "—";
+  return `${start} – ${end}`;
+}
+
+function isUpcomingInscription(inscription: InstructorInscription, today: string): boolean {
+  if (inscription.end_date) return inscription.end_date >= today;
+  if (inscription.start_date) return inscription.start_date >= today;
+  return false;
+}
+
+function isPastInscription(inscription: InstructorInscription, today: string): boolean {
+  return !!inscription.end_date && inscription.end_date < today;
+}
+
 export default function InstructorDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { canEdit } = useUserPermissions();
   const editable = canEdit("formateurs");
   const [showEdit, setShowEdit] = useState(false);
-  const [showSession, setShowSession] = useState(false);
 
   const { data: instructor, isLoading } = useInstructorDetails(id);
-  const { data: sessions = [] } = useInstructorSessions(id);
+  const { data: inscriptions = [] } = useInstructorInscriptions(id);
   const { data: payments = [] } = useInstructorPayments(id);
   const { data: contracts = [] } = useInstructorContracts(id);
   const updateInstructor = useUpdateInstructor();
@@ -123,12 +144,11 @@ export default function InstructorDetails() {
     );
   }
 
+  const today = format(new Date(), "yyyy-MM-dd");
   const initials =
     (instructor.first_name?.[0] || "") + (instructor.last_name?.[0] || "");
-  const upcomingSessions = sessions.filter(
-    (s: any) => s.status === "planifiee" || s.status === "en_cours"
-  );
-  const pastSessions = sessions.filter((s: any) => s.status === "realisee");
+  const upcomingInscriptions = inscriptions.filter((i) => isUpcomingInscription(i, today));
+  const pastInscriptions = inscriptions.filter((i) => isPastInscription(i, today));
 
   return (
     <MainLayout>
@@ -249,7 +269,11 @@ export default function InstructorDetails() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Statut fiscal</span>
-                    <span className="font-medium">{instructor.tax_status || "—"}</span>
+                    <span className="font-medium">
+                      {TAX_STATUSES.find((s) => s.value === instructor.tax_status)?.label ||
+                        instructor.tax_status ||
+                        "—"}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">SIRET</span>
@@ -258,8 +282,14 @@ export default function InstructorDetails() {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Note moyenne</span>
                     <span className="flex items-center gap-1 font-medium">
-                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                      {Number(instructor.rating_average || 0).toFixed(1)}
+                      {instructor.rating_average != null ? (
+                        <>
+                          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                          {Number(instructor.rating_average).toFixed(1)}
+                        </>
+                      ) : (
+                        "—"
+                      )}
                     </span>
                   </div>
                 </CardContent>
@@ -285,60 +315,88 @@ export default function InstructorDetails() {
           </TabsContent>
 
           <TabsContent value="planning">
-            <div className="space-y-4">
-              {editable && (
-                <Button size="sm" onClick={() => setShowSession(true)}>
-                  <Plus className="mr-2 h-4 w-4" /> Nouvelle session
-                </Button>
-              )}
-              {upcomingSessions.length === 0 ? (
-                <p className="text-muted-foreground text-sm py-8 text-center">
-                  Aucune session planifiée.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {upcomingSessions.map((s: any) => (
-                    <Card key={s.id}>
-                      <CardContent className="p-4 flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">
-                            {format(new Date(s.session_date), "EEEE d MMMM yyyy", { locale: fr })}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {s.start_time?.slice(0, 5)} - {s.end_time?.slice(0, 5)}
-                            {s.location && ` • ${s.location}`}
-                          </p>
-                        </div>
-                        <Badge className={statusColors[s.status] || ""}>
-                          {s.status}
-                        </Badge>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="historique">
-            {pastSessions.length === 0 ? (
+            {upcomingInscriptions.length === 0 ? (
               <p className="text-muted-foreground text-sm py-8 text-center">
-                Aucune session passée.
+                Aucune formation à venir
               </p>
             ) : (
               <div className="space-y-2">
-                {pastSessions.map((s: any) => (
-                  <Card key={s.id}>
-                    <CardContent className="p-4 flex items-center justify-between">
-                      <div>
+                {upcomingInscriptions.map((inscription) => (
+                  <Card key={inscription.id}>
+                    <CardContent className="p-4 flex items-center justify-between gap-4">
+                      <div className="min-w-0">
                         <p className="font-medium">
-                          {format(new Date(s.session_date), "d MMM yyyy", { locale: fr })}
+                          <Link
+                            to={`/inscriptions/${inscription.id}`}
+                            className="text-primary hover:underline"
+                          >
+                            {inscription.code || "—"}
+                          </Link>
+                          {inscription.language && (
+                            <Badge variant="outline" className="ml-2">
+                              {displayLanguageLabel(inscription.language)}
+                            </Badge>
+                          )}
+                        </p>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {inscription.student_name || "—"}
+                          {inscription.course_location && ` • ${inscription.course_location}`}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {s.duration_hours}h • {s.location || "—"}
+                          {formatInscriptionDates(inscription.start_date, inscription.end_date)}
                         </p>
                       </div>
-                      <Badge className="bg-emerald-100 text-emerald-800">Réalisée</Badge>
+                      <Badge
+                        variant="outline"
+                        className={getStatusStyle(inscription.status || "")}
+                      >
+                        {getStatusLabel(inscription.status || "", "fr")}
+                      </Badge>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="historique">
+            {pastInscriptions.length === 0 ? (
+              <p className="text-muted-foreground text-sm py-8 text-center">
+                Aucune formation passée
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {pastInscriptions.map((inscription) => (
+                  <Card key={inscription.id}>
+                    <CardContent className="p-4 flex items-center justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="font-medium">
+                          <Link
+                            to={`/inscriptions/${inscription.id}`}
+                            className="text-primary hover:underline"
+                          >
+                            {inscription.code || "—"}
+                          </Link>
+                          {inscription.language && (
+                            <Badge variant="outline" className="ml-2">
+                              {displayLanguageLabel(inscription.language)}
+                            </Badge>
+                          )}
+                        </p>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {inscription.student_name || "—"}
+                          {inscription.course_location && ` • ${inscription.course_location}`}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {formatInscriptionDates(inscription.start_date, inscription.end_date)}
+                        </p>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className={getStatusStyle(inscription.status || "")}
+                      >
+                        {getStatusLabel(inscription.status || "", "fr")}
+                      </Badge>
                     </CardContent>
                   </Card>
                 ))}
@@ -477,12 +535,6 @@ export default function InstructorDetails() {
         open={showEdit}
         onOpenChange={setShowEdit}
         instructor={instructor}
-      />
-      <SessionFormDialog
-        open={showSession}
-        onOpenChange={setShowSession}
-        instructorId={instructor.id}
-        instructorName={`${instructor.first_name || ""} ${instructor.last_name}`}
       />
     </MainLayout>
   );
