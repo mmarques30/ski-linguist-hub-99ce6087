@@ -22,9 +22,11 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 | **PLANO Onda D (D5–D8)** | #70 | Identité org sur PDF/emails + logo ; chrome i18n FR ; import upsert/export ; CRM leads |
 | **BL octobre lot 1** | #71 | BL-032, 037, 040, 045 (affichage), 049 |
 | **BL octobre lot 2** | #72 | BL-041, 044, 048 |
-| **BL octobre lot 3** | #73 | BL-043 ; BL-042 partiel (statut + contrats ; vigilance ouverte) |
+| **BL octobre lot 3** | #73 | BL-043 ; BL-042 Administratif (statut + contrats) |
+| **BL octobre lot 4** | #74 | BL-034 saison ; vigilance ; GlobalSearch multi-jetons |
+| **BL octobre lot 5** | suite4 | BL-035 compte test ; BL-030 en-tête ; BL-050 badge banque |
 
-**SHA `main` au moment de ce refresh :** `fb6ed5f` (merge #73).
+**SHA `main` au moment de ce refresh :** `426cbe9` (merge #74).
 
 ### Déploiement app publiée
 

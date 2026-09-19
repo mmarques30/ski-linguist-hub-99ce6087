@@ -1,6 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { PLACEMENT_QUESTION_LANGUAGE_MAP } from "@/lib/placement-questions-data";
+import {
+  getPlacementQuestions,
+  PLACEMENT_QUESTION_LANGUAGE_MAP,
+} from "@/lib/placement-questions-data";
 import { studentFacingPisteFromCecrl } from "@/lib/placement-test-engine";
 
 /** BL-002 : un test sans niveau CECRL s'affiche en clair, pas « ? ». */
@@ -35,23 +38,31 @@ export interface PlacementTestStatsRow {
   levelDistribution: { level: string; count: number; percentage: number }[];
 }
 
+const LANGUAGE_LABEL_BY_BANK: Record<string, string> = {
+  anglais: "Anglais",
+  portugais: "Portugais brésilien",
+  russe: "Russe",
+  neerlandais: "Néerlandais",
+  allemand: "Allemand",
+  espagnol: "Espagnol",
+  italien: "Italien",
+  chinois: "Chinois",
+  fle: "Français",
+};
+
 const LANGUAGE_KEY_BY_LABEL = Object.fromEntries(
   Object.entries(PLACEMENT_QUESTION_LANGUAGE_MAP).map(([key, bank]) => {
-    const label =
-      {
-        anglais: "Anglais",
-        portugais: "Portugais brésilien",
-        russe: "Russe",
-        neerlandais: "Néerlandais",
-        allemand: "Allemand",
-        espagnol: "Espagnol",
-        italien: "Italien",
-        chinois: "Chinois",
-        fle: "Français",
-      }[bank] || bank;
+    const label = LANGUAGE_LABEL_BY_BANK[bank] || bank;
     return [label, key];
   })
 );
+
+/** Taille de la banque adaptative JSON (pas le total_questions des imports Google Form). */
+export function adaptiveBankSizeForLabel(languageLabel: string): number {
+  const regKey = LANGUAGE_KEY_BY_LABEL[languageLabel];
+  if (!regKey) return 0;
+  return getPlacementQuestions(regKey).length;
+}
 
 export function usePlacementTestStats() {
   return useQuery({
@@ -59,25 +70,22 @@ export function usePlacementTestStats() {
     queryFn: async (): Promise<PlacementTestStatsRow[]> => {
       const { data, error } = await supabase
         .from("placement_tests")
-        .select("language, total_questions, score_percentage, determined_level, status")
+        .select("language, score_percentage, determined_level, status")
         .eq("status", "completed");
 
       if (error) throw error;
 
       const byLanguage = new Map<
         string,
-        { totalQuestions: number; scores: number[]; levels: Record<string, number> }
+        { scores: number[]; levels: Record<string, number> }
       >();
 
       for (const row of data || []) {
         const lang = row.language || "Inconnu";
         if (!byLanguage.has(lang)) {
-          byLanguage.set(lang, { totalQuestions: row.total_questions || 0, scores: [], levels: {} });
+          byLanguage.set(lang, { scores: [], levels: {} });
         }
         const bucket = byLanguage.get(lang)!;
-        if (row.total_questions && row.total_questions > bucket.totalQuestions) {
-          bucket.totalQuestions = row.total_questions;
-        }
         if (row.score_percentage != null) bucket.scores.push(row.score_percentage);
         const level = pisteBucketFromDeterminedLevel(row.determined_level);
         bucket.levels[level] = (bucket.levels[level] || 0) + 1;
@@ -101,10 +109,12 @@ export function usePlacementTestStats() {
               (PISTE_ORDER.indexOf(b.level) === -1 ? 99 : PISTE_ORDER.indexOf(b.level))
           );
 
+        const bankSize = adaptiveBankSizeForLabel(languageLabel);
+
         return {
           languageKey: LANGUAGE_KEY_BY_LABEL[languageLabel] || languageLabel.toLowerCase(),
           languageLabel,
-          totalQuestions: stats.totalQuestions,
+          totalQuestions: bankSize > 0 ? bankSize : 25,
           completedTests,
           averageScore,
           levelDistribution,

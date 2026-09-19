@@ -182,7 +182,11 @@ export default function Register() {
             <img src={fliLogo} alt="FLI" className="h-12 w-auto" />
             <div className="text-right">
               <p className="text-sm text-muted-foreground">Formulaire d'inscription</p>
-              <p className="font-semibold">Formation linguistique pour moniteurs de ski</p>
+              <p className="font-semibold">
+                {formData.profession === "other"
+                  ? "Formation linguistique"
+                  : "Formation linguistique pour moniteurs de ski"}
+              </p>
             </div>
           </div>
         </div>
@@ -252,7 +256,10 @@ export default function Register() {
       <footer className="border-t bg-card mt-auto">
         <div className="container mx-auto px-4 py-4">
           <p className="text-center text-sm text-muted-foreground">
-            France Langues International - Formation linguistique pour moniteurs de ski
+            France Langues International -{" "}
+            {formData.profession === "other"
+              ? "Formation linguistique"
+              : "Formation linguistique pour moniteurs de ski"}
           </p>
         </div>
       </footer>
