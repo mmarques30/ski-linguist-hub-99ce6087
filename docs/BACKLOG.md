@@ -234,7 +234,7 @@ BL-022 : dette antérieure, non remontée par la recette.
 | C.4 — vérification Paula | Fusionné main — `docs/POINT_C4_VERIFICATION.md` |
 | C.5 — PDF habillages | Fusionné main (PR #28) — `docs/POINT_C5_PDF_HABILLAGES.md` |
 | C.6 — export XLSX DSF | Fusionné main (PR #31) — `docs/POINT_C6_XLSX_DSF.md` |
-| Vague 1 register/settings (hors OPCO) | Fusionné main (PR #44) — BL-023…026, 028, 036 ; BL-029 = PR #45 ; BL-027 reste ouvert |
+| Vague 1 register/settings (hors règle OPCO) | Fusionné main (PR #44) — BL-023…026, 028, 036 ; BL-029 = PR #45 ; BL-027 partiel (#76) |
 | BL-033 accents | Fusionné main (PR #42) — `docs/POINT_BL033_ACCENTS.md` |
 | BL-002 niveaux | Fusionné main (PR #30, #43) |
 | **Plan produit UX — Vague A** | Fusionné main (PR #60, #61) — `/suivi/:token`, Assister stagiaire/formateur, portail via `app_settings`, `/tests` pistes |
