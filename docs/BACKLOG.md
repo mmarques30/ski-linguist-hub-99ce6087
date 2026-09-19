@@ -2,7 +2,7 @@
 
 Règle : noter ici, **ne pas corriger** tant que le point courant n’est pas validé.
 
-Dernière mise à jour : 2026-09-19 (lots BL octobre PR #74–#78 ; Vague 0 front+edges déployés ; BL-046/047 clos).
+Dernière mise à jour : 2026-09-19 (BL-038 hard dedup PR #80 ; Vague 0 + lots #74–#78).
 
 ## Conventions de lecture
 
@@ -74,11 +74,11 @@ quatre fois de suite qu’un correctif fusionné mais non publié ne compte pas.
 | 3.6 | Fiche formateur·rice : bloc contrat / vigilance / statut administratif | gênant | BL-042 |
 | 3.7 | Fiche inscription : rafraîchir après affectation (à revérifier une fois déployé) | gênant | BL-043 |
 
-3.1–3.3, 3.5–3.7 **fusionnés** (PR #71–#74). 3.4 (BL-038) : signaux soft « À vérifier » **fusionnés** (PR #76) ; dédoublonnage / fusion de fiches **reste ouvert**.
+3.1–3.7 **fusionnés** (PR #71–#74 + #76 soft + #80 hard dedup). Vague 3 close pour le 1er octobre.
 
 ### Vague 4 — cosmétique, si le temps le permet
 
-BL-038 (hard dedup partenaires) reste ouvert. BL-030 / BL-050 **fusionnés** (PR #73 + #75).
+BL-030 / BL-050 **fusionnés** (PR #73 + #75). Reste éventuel : peaufinage BL-014, cosmétique hors recette.
 
 ### Hors périmètre du 1er octobre
 
@@ -108,7 +108,7 @@ BL-022 : dette antérieure, non remontée par la recette.
 | BL-035 | `/admin/users` | *(live)* le compte « Utilisateur Test » (`teste@fli.fr`) a les droits admin, donc l’accès à toutes les données personnelles. **Décision Paula : suppression** | gênant | **clos** — compte supprimé en live (suite4) |
 | BL-036 | `/settings` | L’identité de l’organisation est vide, et le bouton « Enregistrer les modifications » n’écrit rien : `handleSave` se limite à un `console.log` puis affiche « Modifications enregistrées ». **Paula veut la remplir elle-même : c’est aujourd’hui impossible, et le succès affiché est trompeur** | bloquant (proposé, écart nouveau) | **clos** — PR #44 ; `OrganizationIdentityCard` → `app_settings.fli_identity` |
 | BL-037 | `/gestion/moniteurs`, `/gestion/partenaires` | Les compteurs affichent 1 000 parce que la requête lit des lignes au lieu de demander un comptage, et les listes sont plafonnées à 1 000. *(live)* 4 047 moniteurs, 1 033 partenaires. Attendu : comptage serveur et pagination | gênant | **clos** — PR #71 ; `count: "exact"` + `.range()` (`useSkiMonitors`, `usePartners`) |
-| BL-038 | `/gestion/partenaires` | *(live)* 23 fiches nommées par une adresse email, 4 fiches « À l’attention de… », doublons entre une fiche « directeur / prospect » et la fiche « ESF … / actif » de la même école, 20 fiches à accents cassés (voir BL-033) | gênant | **partiel** — badge / filtre « À vérifier » (PR #76) ; **hard dedup / fusion fiches** ouvert |
+| BL-038 | `/gestion/partenaires` | *(live)* 23 fiches nommées par une adresse email, 4 fiches « À l’attention de… », doublons entre une fiche « directeur / prospect » et la fiche « ESF … / actif » de la même école, 20 fiches à accents cassés (voir BL-033) | gênant | **clos** — signaux soft PR #76 ; hard dedup / fusion PR #80 (`partner-dedup`, filtre Doublons, `app_settings.partner_dedup_map` sous gel) |
 | BL-039 | `/finance` | Objectifs de trimestre codés en dur (50 000 € de CA, 15 stagiaires, 60 %), jamais fournis par la direction. Attendu : les retirer, ou les rendre paramétrables et vides par défaut | gênant | **clos** — PR #67/#68 : lecture `seasons.revenue_target` ; `≤ 0` / vide → « Aucun objectif » |
 | BL-040 | `/students` | La recherche ne combine pas prénom et nom : « Prénom Nom » ne renvoie rien, « ZZTEST » seul fonctionne. Attendu : rechercher sur la concaténation | gênant | **clos** — PR #71 ; `buildStudentSearchFilter` (`useStudents.ts`) |
 | BL-041 | `/formateurs`, fiche | Planning et Historique lisent `instructor_sessions` — *(live)* 0 ligne — au lieu des inscriptions rattachées : aucune activité n’apparaît | gênant | **clos** — PR #72 ; `useInstructorInscriptions` sur la fiche |
@@ -188,6 +188,7 @@ BL-022 : dette antérieure, non remontée par la recette.
 | BL-042, 043 | Suite 2–3 octobre — PR #73 + #74 (vigilance) |
 | BL-030, 035, 050 | Suite 4 octobre — PR #75 |
 | BL-027 (partiel), 038 (soft) | Suite 5 octobre — PR #76 |
+| BL-038 (hard) | Hard dedup partenaires — PR #80 |
 | BL-014 (partiel), Qualiopi/statuts/dashboard | Suite 6 octobre — PR #77 |
 | `/documents`, pagination morte, STRIPE_SETUP | Suite 7 octobre — PR #78 |
 | BL-046, 047, 031 | Vague 0 deploy 19/09 — front + edges + Resend |
@@ -252,4 +253,5 @@ BL-022 : dette antérieure, non remontée par la recette.
 | **BL octobre lot 7** | Fusionné main (PR #77) — Qualiopi reset ; statuts stagiaire ; dashboard ; BL-014 CTA candidat |
 | **BL octobre lot 8** | Fusionné main (PR #78) — `/documents` honnête ; boutons pagination morts ; STRIPE_SETUP |
 | **Vague 0 ops** | **Livré** 19/09 — BL-046 front + BL-047 edges/Resend |
+| **BL-038 hard dedup** | Fusionné main (PR #80) — détection + fusion partenaires |
 | 6 — Stripe | Config test OK via Settings / `check-stripe-config` ; docs STRIPE_SETUP rafraîchis (#78) ; mode live hors scope |
