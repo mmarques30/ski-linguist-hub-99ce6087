@@ -1835,8 +1835,11 @@ export type Database = {
           next_action_date: string | null
           notes: string | null
           partner_id: string | null
+          project_end: string | null
           project_name: string | null
+          project_start: string | null
           season_id: string | null
+          ski_monitor_id: string | null
           source: string
           status: string
           updated_at: string
@@ -1862,8 +1865,11 @@ export type Database = {
           next_action_date?: string | null
           notes?: string | null
           partner_id?: string | null
+          project_end?: string | null
           project_name?: string | null
+          project_start?: string | null
           season_id?: string | null
+          ski_monitor_id?: string | null
           source?: string
           status?: string
           updated_at?: string
@@ -1889,8 +1895,11 @@ export type Database = {
           next_action_date?: string | null
           notes?: string | null
           partner_id?: string | null
+          project_end?: string | null
           project_name?: string | null
+          project_start?: string | null
           season_id?: string | null
+          ski_monitor_id?: string | null
           source?: string
           status?: string
           updated_at?: string
@@ -1922,6 +1931,13 @@ export type Database = {
             columns: ["season_id"]
             isOneToOne: false
             referencedRelation: "seasons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_ski_monitor_id_fkey"
+            columns: ["ski_monitor_id"]
+            isOneToOne: false
+            referencedRelation: "ski_monitors"
             referencedColumns: ["id"]
           },
         ]
