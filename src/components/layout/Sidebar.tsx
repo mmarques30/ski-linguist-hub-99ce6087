@@ -43,6 +43,8 @@ import {
 } from "@/components/ui/sidebar";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { PATH_TO_ROUTE_KEY } from "@/lib/route-permissions";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { CHROME_NAV, CHROME_SECTIONS, CHROME_UI, CHROME_BREADCRUMB } from "@/lib/chrome-i18n";
 import {
   Tooltip,
   TooltipContent,
@@ -50,78 +52,76 @@ import {
 } from "@/components/ui/tooltip";
 
 interface NavItem {
-  name: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  badge?: string;
+  badgeKey?: "frozen";
 }
 
 interface NavSection {
-  label: string;
+  sectionKey: keyof typeof CHROME_SECTIONS;
   items: NavItem[];
 }
 
 /**
  * Navigation produit — 2 niveaux (section fixe + liens).
- * Finance : Factures · Paiements · Pilotage · Trésorerie.
- * Portails : entrée Assister via listes stagiaires / formateurs.
+ * Libellés via chrome-i18n (Onda D6).
  */
 const navigationSections: NavSection[] = [
   {
-    label: "Opérations",
+    sectionKey: "operations",
     items: [
-      { name: "Inscriptions", href: "/inscriptions", icon: ClipboardList },
-      { name: "Constitution des groupes", href: "/inscriptions/schedule-validation", icon: Clock },
-      { name: "Stagiaires", href: "/students", icon: Users },
-      { name: "Formateurs", href: "/formateurs", icon: UserCog },
-      { name: "Tests de niveau", href: "/tests", icon: GraduationCap },
-      { name: "Évaluations orales", href: "/formateur/evaluations", icon: ClipboardList },
+      { href: "/inscriptions", icon: ClipboardList },
+      { href: "/inscriptions/schedule-validation", icon: Clock },
+      { href: "/students", icon: Users },
+      { href: "/formateurs", icon: UserCog },
+      { href: "/tests", icon: GraduationCap },
+      { href: "/formateur/evaluations", icon: ClipboardList },
     ],
   },
   {
-    label: "Commercial & partenaires",
+    sectionKey: "commercial",
     items: [
-      { name: "Pipeline commercial", href: "/gestion/commercial", icon: TrendingUp },
-      { name: "Partenaires", href: "/gestion/partenaires", icon: Briefcase },
-      { name: "Moniteurs de ski", href: "/gestion/moniteurs", icon: Users, badge: "gelé" },
+      { href: "/gestion/commercial", icon: TrendingUp },
+      { href: "/gestion/partenaires", icon: Briefcase },
+      { href: "/gestion/moniteurs", icon: Users, badgeKey: "frozen" },
     ],
   },
   {
-    label: "Finance",
+    sectionKey: "finance",
     items: [
-      { name: "Factures", href: "/invoices", icon: Receipt },
-      { name: "Paiements", href: "/finance/payments", icon: Wallet },
-      { name: "Pilotage", href: "/finance", icon: LayoutDashboard },
-      { name: "Trésorerie", href: "/finance/tresorerie", icon: Landmark },
+      { href: "/invoices", icon: Receipt },
+      { href: "/finance/payments", icon: Wallet },
+      { href: "/finance", icon: LayoutDashboard },
+      { href: "/finance/tresorerie", icon: Landmark },
     ],
   },
   {
-    label: "Qualité",
+    sectionKey: "qualite",
     items: [
-      { name: "Satisfaction", href: "/satisfaction-stats", icon: BarChart3 },
-      { name: "Amélioration", href: "/amelioration", icon: TrendingUp },
-      { name: "Audit Qualiopi", href: "/qualite/audit", icon: Award },
-      { name: "Journal d'audit", href: "/qualite/historique", icon: ClipboardList },
+      { href: "/satisfaction-stats", icon: BarChart3 },
+      { href: "/amelioration", icon: TrendingUp },
+      { href: "/qualite/audit", icon: Award },
+      { href: "/qualite/historique", icon: ClipboardList },
     ],
   },
   {
-    label: "Portails",
+    sectionKey: "portails",
     items: [
-      { name: "Espace stagiaire", href: "/portails/stagiaire", icon: Users },
-      { name: "Espace formateur", href: "/portails/formateur", icon: UserCog },
+      { href: "/portails/stagiaire", icon: Users },
+      { href: "/portails/formateur", icon: UserCog },
     ],
   },
   {
-    label: "Administration",
+    sectionKey: "administration",
     items: [
-      { name: "Import", href: "/admin/import", icon: Upload },
-      { name: "Emails", href: "/admin/emails", icon: Mail },
-      { name: "Modèles documents", href: "/admin/registration-documents", icon: FileText },
-      { name: "Phrases", href: "/admin/phrases", icon: MessageSquare },
-      { name: "Saisons", href: "/admin/seasons", icon: Calendar },
-      { name: "Tests QA", href: "/admin/testing", icon: FlaskConical },
-      { name: "Utilisateurs", href: "/admin/users", icon: UserCog },
-      { name: "Paramètres", href: "/settings", icon: Settings },
+      { href: "/admin/import", icon: Upload },
+      { href: "/admin/emails", icon: Mail },
+      { href: "/admin/registration-documents", icon: FileText },
+      { href: "/admin/phrases", icon: MessageSquare },
+      { href: "/admin/seasons", icon: Calendar },
+      { href: "/admin/testing", icon: FlaskConical },
+      { href: "/admin/users", icon: UserCog },
+      { href: "/settings", icon: Settings },
     ],
   },
 ];
@@ -176,6 +176,14 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
   const { isAdmin, isFormateur, canView } = useUserPermissions();
+  const { t } = useLanguage();
+
+  const navLabel = (href: string) =>
+    CHROME_NAV[href] ? t(CHROME_NAV[href]) : href;
+  const sectionLabel = (key: keyof typeof CHROME_SECTIONS) =>
+    t(CHROME_SECTIONS[key]);
+  const dashboardLabel = t(CHROME_BREADCRUMB.dashboard);
+  const logoutLabel = t(CHROME_UI.logout);
 
   const handleLogout = async () => {
     const { error } = await signOut();
@@ -193,19 +201,13 @@ export function AppSidebar() {
   const filteredSections = isFormateur
     ? [
         {
-          label: "Espace formateur",
-          items: [
-            {
-              name: "Évaluations",
-              href: "/formateur/evaluations",
-              icon: ClipboardList,
-            },
-          ],
+          sectionKey: "portails" as const,
+          items: [{ href: "/formateur/evaluations", icon: ClipboardList }],
         },
       ]
     : navigationSections
         .filter((section) => {
-          if (section.label === "Administration") return isAdmin;
+          if (section.sectionKey === "administration") return isAdmin;
           return true;
         })
         .map((section) => ({
@@ -243,16 +245,16 @@ export function AppSidebar() {
                       <SidebarMenuButton
                         asChild
                         isActive={location.pathname === "/"}
-                        tooltip="Tableau de bord"
+                        tooltip={dashboardLabel}
                       >
                         <NavLink to="/">
                           <LayoutDashboard className="h-4 w-4" />
-                          <span>Tableau de bord</span>
+                          <span>{dashboardLabel}</span>
                         </NavLink>
                       </SidebarMenuButton>
                     </TooltipTrigger>
                     {isCollapsed && (
-                      <TooltipContent side="right">Tableau de bord</TooltipContent>
+                      <TooltipContent side="right">{dashboardLabel}</TooltipContent>
                     )}
                   </Tooltip>
                 </SidebarMenuItem>
@@ -262,14 +264,17 @@ export function AppSidebar() {
         )}
 
         {filteredSections.map((section) => (
-          <SidebarGroup key={section.label}>
+          <SidebarGroup key={section.sectionKey}>
             <SidebarGroupLabel className="text-[0.65rem] tracking-wider uppercase text-sidebar-foreground/50">
-              {section.label}
+              {sectionLabel(section.sectionKey)}
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {section.items.map((item) => {
                   const active = isItemActive(location.pathname, item.href);
+                  const name = navLabel(item.href);
+                  const badge =
+                    item.badgeKey === "frozen" ? t(CHROME_UI.frozen) : undefined;
                   return (
                     <SidebarMenuItem key={item.href}>
                       <Tooltip>
@@ -277,21 +282,21 @@ export function AppSidebar() {
                           <SidebarMenuButton
                             asChild
                             isActive={active}
-                            tooltip={item.name}
+                            tooltip={name}
                           >
                             <NavLink to={item.href}>
                               <item.icon className="h-4 w-4" />
-                              <span className="flex-1">{item.name}</span>
-                              {item.badge && !isCollapsed && (
+                              <span className="flex-1">{name}</span>
+                              {badge && !isCollapsed && (
                                 <span className="ml-auto text-[10px] uppercase tracking-wide text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
-                                  {item.badge}
+                                  {badge}
                                 </span>
                               )}
                             </NavLink>
                           </SidebarMenuButton>
                         </TooltipTrigger>
                         {isCollapsed && (
-                          <TooltipContent side="right">{item.name}</TooltipContent>
+                          <TooltipContent side="right">{name}</TooltipContent>
                         )}
                       </Tooltip>
                     </SidebarMenuItem>
@@ -313,11 +318,11 @@ export function AppSidebar() {
               <TooltipTrigger asChild>
                 <SidebarMenuButton onClick={handleLogout}>
                   <LogOut className="h-4 w-4" />
-                  <span>Déconnexion</span>
+                  <span>{logoutLabel}</span>
                 </SidebarMenuButton>
               </TooltipTrigger>
               {isCollapsed && (
-                <TooltipContent side="right">Déconnexion</TooltipContent>
+                <TooltipContent side="right">{logoutLabel}</TooltipContent>
               )}
             </Tooltip>
           </SidebarMenuItem>

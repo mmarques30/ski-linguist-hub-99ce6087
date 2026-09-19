@@ -1,3 +1,11 @@
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  buildOrganizationEmailFooterHtml,
+  ORGANIZATION_IDENTITY_KEY,
+  parseOrganizationIdentity,
+  type OrganizationIdentity,
+} from "./organization-identity.ts";
+
 /**
  * Expéditeur unique des emails transactionnels FLI (point 8-minimal).
  *
@@ -21,6 +29,32 @@ export const FLI_FOOTER_HTML = `<p style="margin-top:24px">Cordialement,</p>
   Tél. : 04 79 28 21 09<br/>
   <a href="mailto:info@fli.fr">info@fli.fr</a>
 </p>`;
+
+function hasOrganizationIdentityContent(identity: OrganizationIdentity): boolean {
+  return Object.values(identity).some((value) => value.trim() !== "");
+}
+
+/** Pied d'email : identité saisie si disponible, sinon FLI_FOOTER_HTML historique. */
+export function buildFliFooterHtml(identity?: OrganizationIdentity | null): string {
+  if (identity && hasOrganizationIdentityContent(identity)) {
+    return buildOrganizationEmailFooterHtml(identity);
+  }
+  return FLI_FOOTER_HTML;
+}
+
+/** Lit `app_settings.fli_identity` via un client admin/service-role. */
+export async function loadOrganizationIdentity(
+  supabaseAdmin: SupabaseClient
+): Promise<OrganizationIdentity | null> {
+  const { data, error } = await supabaseAdmin
+    .from("app_settings")
+    .select("value")
+    .eq("key", ORGANIZATION_IDENTITY_KEY)
+    .maybeSingle();
+
+  if (error || !data?.value) return null;
+  return parseOrganizationIdentity(data.value);
+}
 
 export interface SendFliEmailResult {
   ok: boolean;

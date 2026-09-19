@@ -5,6 +5,7 @@
 
 import {
   type CsvRow,
+  csvEscape,
   parseFrenchNumber,
 } from "@/lib/csv-import-parser";
 import { mapEntryLevelToCecrl } from "@/lib/entry-level-cecrl";
@@ -15,7 +16,10 @@ export type ImportTableType =
   | "students"
   | "inscriptions"
   | "invoices"
-  | "payments";
+  | "payments"
+  | "leads"
+  | "partners"
+  | "pricing_rules";
 
 /**
  * Bascule de l'historique FLI : l'exercice courant commence le 01/10/2025.
@@ -52,6 +56,26 @@ export const IMPORT_TABLE_LABELS: Record<ImportTableType, string> = {
   inscriptions: "inscriptions",
   invoices: "invoices (factures)",
   payments: "payments (paiements)",
+  leads: "leads (prospects commerciaux)",
+  partners: "partners (partenaires)",
+  pricing_rules: "pricing_rules (grilles tarifaires)",
+};
+
+/**
+ * Clé naturelle pour upsert Supabase (`onConflict`).
+ * - `payments` : insert uniquement (pas de clé stable).
+ * - `pricing_rules` : insert uniquement tant qu'il n'existe pas de contrainte UNIQUE
+ *   sur (season_id, language, modality) ; un upsert idempotent pourrait utiliser `id`
+ *   si la colonne est présente dans le CSV.
+ */
+export const IMPORT_UPSERT_KEYS: Partial<Record<ImportTableType, string>> = {
+  instructors: "email",
+  students: "email",
+  ski_schools: "name",
+  inscriptions: "code",
+  invoices: "invoice_number",
+  leads: "contact_email",
+  partners: "name",
 };
 
 /** Tables concernées par une purge « chaînée » historique (ordre FK). */
@@ -495,6 +519,143 @@ const PAYMENT_TYPES: Record<string, string> = {
   intégral: "total",
 };
 
+function mapLeadRow(row: CsvRow): Record<string, unknown> {
+  const contactName = cell(row, "contact_name", "nom", "Nom", "name");
+  if (isEmpty(contactName)) {
+    throw new Error("Champ obligatoire manquant : contact_name");
+  }
+
+  const emailRaw = cell(row, "contact_email", "email", "Email");
+  const contactEmail = isEmpty(emailRaw) ? null : emailRaw.toLowerCase();
+  if (contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+    throw new Error(`Email invalide : ${emailRaw}`);
+  }
+
+  const sourceRaw = cell(row, "source", "Source");
+  const source = isEmpty(sourceRaw) ? "autre" : sourceRaw.trim().toLowerCase();
+
+  const channelRaw = cell(row, "expansion_channel", "canal", "Canal");
+  const expansionChannel = isEmpty(channelRaw) ? "b2b" : channelRaw.trim().toLowerCase();
+
+  const statusRaw = cell(row, "status", "statut", "Statut");
+  const status = isEmpty(statusRaw) ? "nouveau" : statusRaw.trim().toLowerCase();
+
+  const estimatedRaw = cell(row, "estimated_students", "stagiaires_estimes", "volume");
+  let estimatedStudents: number | null = null;
+  if (!isEmpty(estimatedRaw)) {
+    const n = parseFrenchNumber(estimatedRaw);
+    if (n === null || !Number.isInteger(n)) {
+      throw new Error(`estimated_students non entier : ${estimatedRaw}`);
+    }
+    estimatedStudents = n;
+  }
+
+  const sanitizedId = sanitizeUUID(cell(row, "id"));
+
+  return {
+    ...(sanitizedId && { id: sanitizedId }),
+    contact_name: contactName,
+    contact_email: contactEmail,
+    company: (() => {
+      const c = cell(row, "company", "entreprise", "Entreprise");
+      return isEmpty(c) ? null : c;
+    })(),
+    source,
+    expansion_channel: expansionChannel,
+    status,
+    estimated_students: estimatedStudents,
+    notes: (() => {
+      const n = cell(row, "notes", "Notes");
+      return isEmpty(n) ? null : n;
+    })(),
+  };
+}
+
+function mapPartnerRow(row: CsvRow): Record<string, unknown> {
+  const name = cell(row, "name", "nom", "Nom");
+  if (isEmpty(name)) {
+    throw new Error("Champ obligatoire manquant : name");
+  }
+
+  const typeRaw = cell(row, "type", "Type");
+  const type = isEmpty(typeRaw) ? "esf" : typeRaw.trim().toLowerCase();
+
+  const statusRaw = cell(row, "status", "statut", "Statut");
+  const status = isEmpty(statusRaw) ? "prospect" : statusRaw.trim().toLowerCase();
+
+  const emailRaw = cell(row, "email", "contact_email", "Email");
+  const contactEmail = isEmpty(emailRaw) ? null : emailRaw.toLowerCase();
+  if (contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+    throw new Error(`Email invalide : ${emailRaw}`);
+  }
+
+  const sanitizedId = sanitizeUUID(cell(row, "id"));
+
+  return {
+    ...(sanitizedId && { id: sanitizedId }),
+    name,
+    type,
+    status,
+    contact_email: contactEmail,
+    contact_phone: (() => {
+      const p = cell(row, "phone", "contact_phone", "telephone", "Téléphone");
+      return isEmpty(p) ? null : p;
+    })(),
+    station: (() => {
+      const s = cell(row, "city", "ville", "station", "Ville", "Station");
+      return isEmpty(s) ? null : s;
+    })(),
+  };
+}
+
+function mapPricingRuleRow(row: CsvRow): Record<string, unknown> {
+  const seasonIdRaw = cell(row, "season_id", "saison_id", "season");
+  const seasonId = sanitizeUUID(seasonIdRaw);
+  if (!seasonId) {
+    throw new Error("season_id UUID manquant ou invalide");
+  }
+
+  const language = cell(row, "language", "langue", "Langue");
+  if (isEmpty(language)) {
+    throw new Error("Champ obligatoire manquant : language");
+  }
+
+  const modality = cell(row, "modality", "modalite", "Modalité", "Modalite");
+  if (isEmpty(modality)) {
+    throw new Error("Champ obligatoire manquant : modality");
+  }
+
+  const priceRaw = cell(row, "price", "base_price", "prix", "Prix");
+  const basePrice = parseFrenchNumber(priceRaw);
+  if (basePrice === null) {
+    throw new Error(`price / base_price manquant ou non numérique : ${priceRaw}`);
+  }
+
+  const hoursRaw = cell(row, "hours", "duration_hours", "duree", "Durée");
+  const durationHours = isEmpty(hoursRaw) ? null : parseFrenchNumber(hoursRaw);
+  if (isEmpty(hoursRaw)) {
+    throw new Error("Champ obligatoire manquant : hours / duration_hours");
+  }
+  if (durationHours === null) {
+    throw new Error(`hours / duration_hours non numérique : ${hoursRaw}`);
+  }
+
+  const levelRaw = cell(row, "level", "niveau", "Niveau");
+  const level = isEmpty(levelRaw) ? "A1" : levelRaw;
+
+  const sanitizedId = sanitizeUUID(cell(row, "id"));
+
+  return {
+    ...(sanitizedId && { id: sanitizedId }),
+    season_id: seasonId,
+    language,
+    modality,
+    level,
+    base_price: basePrice,
+    duration_hours: durationHours,
+  };
+}
+
 function mapPaymentRow(
   row: CsvRow,
   options: PrepareImportOptions = {}
@@ -585,9 +746,43 @@ function mapRow(
       return mapInvoiceRow(row, options);
     case "payments":
       return mapPaymentRow(row, options);
+    case "leads":
+      return mapLeadRow(row);
+    case "partners":
+      return mapPartnerRow(row);
+    case "pricing_rules":
+      return mapPricingRuleRow(row);
     default:
       throw new Error(`Table non supportée : ${table}`);
   }
+}
+
+/** Exporte des lignes tabulaires en CSV (séparateur `;`, UTF-8). */
+export function rowsToCsv(rows: Record<string, unknown>[]): string {
+  if (rows.length === 0) return "";
+
+  const headers = Array.from(
+    rows.reduce((set, row) => {
+      for (const key of Object.keys(row)) set.add(key);
+      return set;
+    }, new Set<string>())
+  );
+
+  const lines = [headers.join(";")];
+  for (const row of rows) {
+    lines.push(
+      headers
+        .map((header) => {
+          const value = row[header];
+          if (value === null || value === undefined) return "";
+          const text =
+            typeof value === "object" ? JSON.stringify(value) : String(value);
+          return csvEscape(text);
+        })
+        .join(";")
+    );
+  }
+  return lines.join("\n");
 }
 
 /**

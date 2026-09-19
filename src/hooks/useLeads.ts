@@ -24,6 +24,9 @@ export interface Lead {
   next_action: string | null;
   next_action_date: string | null;
   loss_reason: string | null;
+  project_start: string | null;
+  project_end: string | null;
+  ski_monitor_id: string | null;
   notes: string | null;
   inscription_id: string | null;
   season_id: string | null;
@@ -285,8 +288,9 @@ export function useConvertLead() {
       }
 
       const language = LANGUAGE_MAP[lead.language_interest || ""] || "Anglais";
-      const startDate = season?.start_date || new Date().toISOString().split("T")[0];
-      const endDate = season?.end_date || startDate;
+      const today = new Date().toISOString().split("T")[0];
+      const startDate = lead.project_start || season?.start_date || today;
+      const endDate = lead.project_end || season?.end_date || startDate;
 
       const { data: inscription, error: inscError } = await supabase
         .from("inscriptions")
@@ -304,6 +308,7 @@ export function useConvertLead() {
             `Converti depuis lead ${lead.expansion_channel.toUpperCase()}`,
             lead.project_name ? `Projet: ${lead.project_name}` : null,
             lead.course_interest ? `Formation: ${lead.course_interest}` : null,
+            lead.estimated_students ? `Effectif estimé: ${lead.estimated_students}` : null,
           ]
             .filter(Boolean)
             .join("\n"),

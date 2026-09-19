@@ -4,11 +4,14 @@ import { join } from "node:path";
 import {
   EMPTY_ORGANIZATION_IDENTITY,
   formatOrganizationAddress,
+  buildOrganizationEmailFooterHtml,
   isOrganizationIdentityComplete,
   missingRequiredIdentityFields,
+  organizationInvoiceHeader,
   organizationLegalMentions,
   ORGANIZATION_IDENTITY_FIELDS,
   ORGANIZATION_IDENTITY_KEY,
+  organizationIdentityToJson,
   parseOrganizationIdentity,
 } from "./organization-identity";
 import { parseFliIdentity } from "./evaluation-pdf";
@@ -74,6 +77,36 @@ describe("identité de l'organisation", () => {
     expect(formatOrganizationAddress(parseOrganizationIdentity(IDENTITE_LIVE))).toBe(
       "25 avenue de la Gare, 73800 Montmélian"
     );
+  });
+
+  it("relit et persiste logo_url hors formulaire", () => {
+    const avecLogo = parseOrganizationIdentity({
+      ...IDENTITE_LIVE,
+      logo_url: "  https://example.test/logo/org-logo.png  ",
+    });
+    expect(avecLogo.logo_url).toBe("https://example.test/logo/org-logo.png");
+    expect(parseOrganizationIdentity({ legal_name: "FLI" }).logo_url).toBe("");
+    expect(organizationIdentityToJson(avecLogo).logo_url).toBe(
+      "https://example.test/logo/org-logo.png"
+    );
+  });
+
+  it("construit un pied d'email HTML avec la raison sociale", () => {
+    const html = buildOrganizationEmailFooterHtml(parseOrganizationIdentity(IDENTITE_LIVE));
+    expect(html).toContain("France Langues International");
+    expect(html).toContain("Cordialement,");
+    expect(html).toContain("mailto:info@fli.fr");
+  });
+
+  it("repli sur les coordonnées FLI pour l'en-tête facture", () => {
+    const header = organizationInvoiceHeader(EMPTY_ORGANIZATION_IDENTITY);
+    expect(header.name).toBe("France Langues International");
+    expect(header.address).toBe("25 avenue de la gare");
+    expect(header.cityLine).toBe("73800 Montmélian");
+    expect(header.phone).toBe("+33 (0)6 27 13 45 16");
+    expect(header.email).toBe("contact@france-langues-international.com");
+    expect(header.siret).toBe("484 772 041 00048");
+    expect(header.logoUrl).toBe("");
   });
 
   it("couvre les mentions attendues sur une convention", () => {

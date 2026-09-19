@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Info } from "lucide-react";
-import fliLogo from "@/assets/fli-logo.png";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { StripeSettingsCard } from "@/components/settings/StripeSettingsCard";
 import { InvoiceSequenceFloorCard } from "@/components/settings/InvoiceSequenceFloorCard";
@@ -91,26 +90,6 @@ export default function Settings() {
           <TabsContent value="general" className="space-y-6">
             <OrganizationIdentityCard />
             <StudentPortalEnabledCard />
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Identité visuelle</CardTitle>
-                <CardDescription>
-                  Logo utilisé dans l&apos;application et sur les documents générés.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <img src={fliLogo} alt="Logo FLI" className="h-16 w-auto" />
-                <Alert>
-                  <Info className="h-4 w-4" />
-                  <AlertDescription>
-                    Le logo fait partie du dépôt (<code>src/assets/fli-logo.png</code>) :
-                    il se remplace par une mise à jour de l&apos;application, pas
-                    depuis cet écran.
-                  </AlertDescription>
-                </Alert>
-              </CardContent>
-            </Card>
 
             <Card>
               <CardHeader>
