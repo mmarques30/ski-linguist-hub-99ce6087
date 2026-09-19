@@ -12,6 +12,7 @@ import {
   CalendarDays,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { buildStudentSearchFilter } from "@/hooks/useStudents";
 import { supabase } from "@/integrations/supabase/client";
 import {
   CommandDialog,
@@ -23,6 +24,29 @@ import {
 } from "@/components/ui/command";
 
 const DEBOUNCE_MS = 300;
+
+function escapeIlike(s: string): string {
+  return s.replace(/%/g, "\\%").replace(/_/g, "\\_").replace(/,/g, "");
+}
+
+/** PostgREST `.or()` filter for instructor search (single- or multi-token). */
+function buildInstructorSearchFilter(search: string): string | null {
+  const trimmed = search.trim();
+  if (!trimmed) return null;
+
+  const tokens = trimmed.split(/\s+/).filter(Boolean).map(escapeIlike);
+
+  if (tokens.length === 1) {
+    const t = tokens[0];
+    return `first_name.ilike.%${t}%,last_name.ilike.%${t}%,email.ilike.%${t}%`;
+  }
+
+  const andParts = tokens
+    .map((t) => `or(first_name.ilike.%${t}%,last_name.ilike.%${t}%)`)
+    .join(",");
+  const full = escapeIlike(trimmed);
+  return `and(${andParts}),email.ilike.%${full}%`;
+}
 
 export function GlobalSearch() {
   const [open, setOpen] = useState(false);
@@ -51,6 +75,8 @@ export function GlobalSearch() {
     enabled: open && debounced.length >= 2,
     queryFn: async () => {
       const term = `%${debounced}%`;
+      const studentFilter = buildStudentSearchFilter(debounced);
+      const instructorFilter = buildInstructorSearchFilter(debounced);
       const [
         students,
         inscriptionsByCode,
@@ -61,11 +87,13 @@ export function GlobalSearch() {
         payments,
         sessions,
       ] = await Promise.all([
-        supabase
-          .from("students")
-          .select("id, first_name, last_name, email")
-          .or(`first_name.ilike.${term},last_name.ilike.${term},email.ilike.${term}`)
-          .limit(5),
+        studentFilter
+          ? supabase
+              .from("students")
+              .select("id, first_name, last_name, email")
+              .or(studentFilter)
+              .limit(5)
+          : Promise.resolve({ data: [] as { id: string; first_name: string; last_name: string; email: string }[] }),
         supabase
           .from("inscriptions")
           .select("id, code, language, students(first_name, last_name)")
@@ -76,11 +104,13 @@ export function GlobalSearch() {
           .select("id, invoice_number, amount_ttc")
           .ilike("invoice_number", term)
           .limit(5),
-        supabase
-          .from("instructors")
-          .select("id, first_name, last_name, email")
-          .or(`first_name.ilike.${term},last_name.ilike.${term},email.ilike.${term}`)
-          .limit(5),
+        instructorFilter
+          ? supabase
+              .from("instructors")
+              .select("id, first_name, last_name, email")
+              .or(instructorFilter)
+              .limit(5)
+          : Promise.resolve({ data: [] as { id: string; first_name: string | null; last_name: string; email: string | null }[] }),
         supabase
           .from("partners")
           .select("id, name, station, esf_code")

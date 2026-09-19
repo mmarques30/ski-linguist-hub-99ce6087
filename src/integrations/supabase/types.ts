@@ -1565,6 +1565,9 @@ export type Database = {
           statut_administratif: string | null
           tax_status: string | null
           updated_at: string | null
+          vigilance_attestation_expires_at: string | null
+          vigilance_attestation_received_at: string | null
+          vigilance_attestation_url: string | null
         }
         Insert: {
           address?: string | null
@@ -1604,6 +1607,9 @@ export type Database = {
           statut_administratif?: string | null
           tax_status?: string | null
           updated_at?: string | null
+          vigilance_attestation_expires_at?: string | null
+          vigilance_attestation_received_at?: string | null
+          vigilance_attestation_url?: string | null
         }
         Update: {
           address?: string | null
@@ -1643,6 +1649,9 @@ export type Database = {
           statut_administratif?: string | null
           tax_status?: string | null
           updated_at?: string | null
+          vigilance_attestation_expires_at?: string | null
+          vigilance_attestation_received_at?: string | null
+          vigilance_attestation_url?: string | null
         }
         Relationships: []
       }

@@ -1,4 +1,4 @@
-# État de l’application FLI Formation — 18/09/2026
+# État de l’application FLI Formation — 19/09/2026
 
 Photographie destinée à une analyse externe. **Aucune donnée personnelle.**  
 Convention : **livré** = fusionné dans `main` **et** déployé sur l’app publiée ; sinon **prêt sur branche** / **sur main non déployé**.
@@ -7,7 +7,7 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 
 ## 0. Fusion & déploiement (tête de rapport)
 
-### Fusionné dans `main` (rafraîchi 18/09/2026)
+### Fusionné dans `main` (rafraîchi 19/09/2026)
 
 | Élément | PR | Note |
 |---------|----|------|
@@ -19,8 +19,12 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 | **Plan produit UX Vague D** | #65 | États vides, GlobalSearch, `/notifications`, pont éval↔stagiaire |
 | **PLANO Onda D (D1–D4)** | #67 | Pilotage finance, taxonomie langues, `SeasonContext`, journal `email_log` |
 | Hotfix saison / objectif CA | #68 | Défaut filtre « toutes », bornes dates, `revenue_target ≤ 0` → non défini |
+| **PLANO Onda D (D5–D8)** | #70 | Identité org sur PDF/emails + logo ; chrome i18n FR ; import upsert/export ; CRM leads |
+| **BL octobre lot 1** | #71 | BL-032, 037, 040, 045 (affichage), 049 |
+| **BL octobre lot 2** | #72 | BL-041, 044, 048 |
+| **BL octobre lot 3** | #73 | BL-043 ; BL-042 partiel (statut + contrats ; vigilance ouverte) |
 
-**SHA `main` au moment de ce refresh :** `82ae4a1` (merge #68).
+**SHA `main` au moment de ce refresh :** `fb6ed5f` (merge #73).
 
 ### Déploiement app publiée
 
@@ -41,7 +45,7 @@ Historique / hors plan : voir anciennes notes ; les vagues UX A–D et C.1–C.6
 | Champ | Valeur |
 |-------|--------|
 | Dépôt | `mmarques30/ski-linguist-hub-99ce6087` |
-| Branche de référence | `main` @ `82ae4a1` |
+| Branche de référence | `main` @ `fb6ed5f` |
 | App | SPA Vite + React 18 + TypeScript « FLI Formation » (Lovable) |
 | Projet Lovable | `34e71e1a-49f7-433e-bb36-fc4d26e86f8e` (Ski School Connect / ski-linguist-hub) |
 | Backend | Supabase hébergé `nghkrmvakjomzmfwdhbo` — `https://nghkrmvakjomzmfwdhbo.supabase.co` |
@@ -271,7 +275,7 @@ Déclarés dans migrations (`pg_cron` + `pg_net` vers edge) :
 | Certificats | Bilan Entrée/Sortie, garde sortie, PDF, vue live OK | PDF storage policies (reste BL-020 partiel) | Lien email formateur |
 | Facturation | CRUD, TVA, numérotation fiscale | Import historique point 9 | — |
 | Paiements | Stripe + chèques/virements + notif admin | — | — |
-| Finance / Pilotage | Vue d’ensemble, glossaire KPI, dépenses réelles, objectifs `revenue_target` (BL-039) | Reste « Prévision de Facturation » (BL-032) ; saisie `revenue_target` en admin | — |
+| Finance / Pilotage | Vue d’ensemble, glossaire KPI, dépenses réelles, objectifs `revenue_target` (BL-039), retrait prévisions (BL-032) | Saisie `revenue_target` en admin | — |
 | Saison globale | Header `SeasonFilterControl` + bornes dates (Onda D + #68) | Données historiques souvent sans `season_id` (BL-034 dates) | — |
 | CRM / leads | Kanban commercial + filtre saison | — | — |
 | Moniteurs | CRM + intakes + outreach | Gel prospection | — |
@@ -282,7 +286,7 @@ Déclarés dans migrations (`pg_cron` + `pg_net` vers edge) :
 | Amélioration continue | CRUD | — | — |
 | Documents | Envois welcome pack | Page `/documents` maquette honnête | Bibliothèque réelle |
 | Notifications | `/notifications` + producteurs inscription/paiement/évaluation | Crons BL-007 | — |
-| Recherche globale | ⌘K multi-entités (Vague D) | — | — |
+| Recherche globale | ⌘K multi-entités (Vague D) ; recherche prénom+nom stagiaires/formateurs (BL-040 / suite 3) | — | — |
 | Permissions | `canView` dans `ProtectedRoute` | — | — |
 | Import | Moteur dry-run/purge/audit | Cartes FLI (BL-001) | — |
 | Paramètres | Stripe + identité org | Autres prefs non branchées | — |
@@ -315,15 +319,15 @@ Fichiers clés : `src/pages/**`, `src/hooks/**`, `src/lib/**`, `supabase/functio
 | `npm run build` | **OK** |
 | `npm run lint` | **FAIL** — 102 errors / 16 warnings (surtout `@typescript-eslint/no-explicit-any`) — préexistant (AGENTS.md) |
 | Dépendances majeures | React 18.3 · Vite 5.4 · Supabase-js 2.90 · TanStack Query 5.83 · Vitest 4.1 · jspdf 4 · Tailwind 3.4 |
-| Dette | Voir §11 + `BACKLOG.md` ; `/documents` maquette ; BL-032 reste ; policies storage certificats |
+| Dette | Voir §11 + `BACKLOG.md` ; `/documents` maquette ; BL-042 vigilance ; policies storage certificats |
 
 ---
 
 ## 11. Backlog & plan points 1–10
 
-Intégré depuis `docs/BACKLOG.md` (refresh 18/09/2026) :
+Intégré depuis `docs/BACKLOG.md` (refresh 19/09/2026) :
 
-**Ouvert (extraits) :** BL-027 (OPCO), BL-030, BL-032 (reste prévision), BL-034, BL-035, BL-037…045 (affichage), BL-046/047 (ops déploiement), BL-001, 007 (crons), 008, 011, 014, 015, 017, 019, 020, 022.
+**Ouvert (extraits) :** BL-027 (OPCO), BL-030, BL-034, BL-035, BL-038, BL-042 (vigilance), BL-046/047 (ops déploiement), BL-001, 007 (crons), 008, 011, 014, 015, 017, 019, 020, 022.
 
 | Point / vague | État |
 |---------------|------|
@@ -337,6 +341,8 @@ Intégré depuis `docs/BACKLOG.md` (refresh 18/09/2026) :
 | C.1–C.6 | Fusionnés main |
 | Vague 1 (hors OPCO) | Fusionnée main |
 | Plan UX A–D | Fusionnés main (PR #60–#65) |
+| Onda D5–D8 | Fusionné main (PR #70) |
+| BL octobre #71–#73 | Fusionnés main — BL-032, 037, 040, 041, 043, 044, 045, 048, 049 ; BL-042 partiel |
 
 ---
 
@@ -374,4 +380,4 @@ Exclusions bundle : `node_modules`, `dist`, `.env`, images/binaires, CSV/JSON de
 
 ---
 
-*Fin du rapport d’état — 09/09/2026 (rafraîchi : counts live + déploiement).*
+*Fin du rapport d’état — 09/09/2026 (rafraîchi 19/09/2026 : PR #70–#73, SHA `fb6ed5f`).*
