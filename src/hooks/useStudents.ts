@@ -1,6 +1,29 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+function escapeIlike(s: string): string {
+  return s.replace(/%/g, "\\%").replace(/_/g, "\\_").replace(/,/g, "");
+}
+
+/** PostgREST `.or()` filter for student search (single- or multi-token). */
+export function buildStudentSearchFilter(search: string): string | null {
+  const trimmed = search.trim();
+  if (!trimmed) return null;
+
+  const tokens = trimmed.split(/\s+/).filter(Boolean).map(escapeIlike);
+
+  if (tokens.length === 1) {
+    const t = tokens[0];
+    return `first_name.ilike.%${t}%,last_name.ilike.%${t}%,email.ilike.%${t}%,company.ilike.%${t}%`;
+  }
+
+  const andParts = tokens
+    .map((t) => `or(first_name.ilike.%${t}%,last_name.ilike.%${t}%)`)
+    .join(",");
+  const full = escapeIlike(trimmed);
+  return `and(${andParts}),email.ilike.%${full}%,company.ilike.%${full}%`;
+}
+
 export interface Student {
   id: string;
   first_name: string;
@@ -29,10 +52,11 @@ export function useStudents(filters?: {
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (filters?.search) {
-        query = query.or(
-          `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,company.ilike.%${filters.search}%`
-        );
+      const searchFilter = filters?.search
+        ? buildStudentSearchFilter(filters.search)
+        : null;
+      if (searchFilter) {
+        query = query.or(searchFilter);
       }
 
       const { data, error } = await query.limit(100);

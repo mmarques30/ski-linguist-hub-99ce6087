@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Building2, MapPin, Mail, Phone, Users, Upload, Snowflake } from "lucide-react";
+import { Plus, Search, Building2, MapPin, Mail, Phone, Users, Upload, Snowflake, ChevronLeft, ChevronRight } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { usePartners, usePartnerStats } from "@/hooks/usePartners";
 import { PartnerFormDialog } from "@/components/partners/PartnerFormDialog";
@@ -38,14 +38,21 @@ export default function PartnersList() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("");
+  const [page, setPage] = useState(1);
+  const pageSize = 50;
   const [formOpen, setFormOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
 
-  const { data: partners = [], isLoading } = usePartners({
+  const { data: partnersResult, isLoading } = usePartners({
     type: typeFilter || undefined,
     status: statusFilter || undefined,
     search: search || undefined,
+    page,
+    pageSize,
   });
+  const partners = partnersResult?.rows ?? [];
+  const partnerTotal = partnersResult?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(partnerTotal / pageSize));
   const { data: stats } = usePartnerStats();
 
   return (
@@ -115,11 +122,20 @@ export default function PartnersList() {
             <Input
               placeholder="Rechercher un partenaire..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               className="pl-10"
             />
           </div>
-          <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v === "all" ? "" : v)}>
+          <Select
+            value={typeFilter}
+            onValueChange={(v) => {
+              setTypeFilter(v === "all" ? "" : v);
+              setPage(1);
+            }}
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Type" />
             </SelectTrigger>
@@ -133,7 +149,13 @@ export default function PartnersList() {
               <SelectItem value="autre">Autre</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v === "all" ? "" : v)}>
+          <Select
+            value={statusFilter}
+            onValueChange={(v) => {
+              setStatusFilter(v === "all" ? "" : v);
+              setPage(1);
+            }}
+          >
             <SelectTrigger className="w-[160px]">
               <SelectValue placeholder="Statut" />
             </SelectTrigger>
@@ -152,6 +174,7 @@ export default function PartnersList() {
         ) : partners.length === 0 ? (
           <Card><CardContent className="py-12 text-center text-muted-foreground">Aucun partenaire trouvé</CardContent></Card>
         ) : (
+          <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {partners.map((p) => (
               <Card
@@ -186,6 +209,32 @@ export default function PartnersList() {
               </Card>
             ))}
           </div>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Précédent
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Page {page} / {totalPages} ({partnerTotal} au total)
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                Suivant
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          )}
+          </>
         )}
       </div>
 

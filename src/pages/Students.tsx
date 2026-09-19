@@ -65,6 +65,21 @@ const translations = {
     "pt-BR": "Os estagiários aparecerão aqui após completarem suas inscrições ou após importação.",
     en: "Students will appear here after completing their registrations or after import."
   },
+  noSearchResults: {
+    fr: "Aucun résultat pour cette recherche",
+    "pt-BR": "Nenhum resultado para esta pesquisa",
+    en: "No results for this search"
+  },
+  noSearchResultsDescription: {
+    fr: "Essayez un autre nom, e-mail ou entreprise.",
+    "pt-BR": "Tente outro nome, e-mail ou empresa.",
+    en: "Try a different name, email, or company."
+  },
+  clearSearch: {
+    fr: "Effacer la recherche",
+    "pt-BR": "Limpar pesquisa",
+    en: "Clear search"
+  },
   student: {
     fr: "Stagiaire",
     "pt-BR": "Estagiário",
@@ -152,8 +167,10 @@ export default function Students() {
   const { canEdit } = useUserPermissions();
   const editable = canEdit("students");
 
+  const hasSearch = search.trim().length > 0;
+
   const { data: students, isLoading, error } = useStudents({
-    search: search || undefined,
+    search: hasSearch ? search : undefined,
   });
 
   const handleCreateStudent = () => {
@@ -252,16 +269,28 @@ export default function Students() {
             <p className="text-muted-foreground mt-1 max-w-sm">{error.message}</p>
           </div>
         ) : !students || students.length === 0 ? (
-          <EmptyState
-            icon={Users}
-            title={t(translations.noStudents)}
-            description={t(translations.noStudentsDescription)}
-            action={editable ? {
-              label: "Ajouter un stagiaire",
-              icon: Plus,
-              onClick: handleCreateStudent,
-            } : undefined}
-          />
+          hasSearch ? (
+            <EmptyState
+              icon={Search}
+              title={t(translations.noSearchResults)}
+              description={t(translations.noSearchResultsDescription)}
+              action={{
+                label: t(translations.clearSearch),
+                onClick: () => setSearch(""),
+              }}
+            />
+          ) : (
+            <EmptyState
+              icon={Users}
+              title={t(translations.noStudents)}
+              description={t(translations.noStudentsDescription)}
+              action={editable ? {
+                label: "Ajouter un stagiaire",
+                icon: Plus,
+                onClick: handleCreateStudent,
+              } : undefined}
+            />
+          )
         ) : viewMode === "list" ? (
           <div className="rounded-lg border bg-card">
             <Table>
