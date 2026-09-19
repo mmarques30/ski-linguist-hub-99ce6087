@@ -18,10 +18,16 @@ export const REGISTRATION_MODALITY_MAP: Record<string, string> = {
 };
 
 export const REGISTRATION_FUNDING_MAP: Record<string, string> = {
-  opco: "OPCO / FIFPL",
+  fifpl: "FIFPL",
+  opco: "OPCO",
   company: "Entreprise",
   self: "Autofinancement",
 };
+
+/** Financement OPCO : pas de frais de dossier automatiques à l'inscription. */
+export function isOpcoFunding(type: string): boolean {
+  return type === "opco";
+}
 
 export const LOCATION_LABELS: Record<string, string> = {
   valdisere: "Val d'Isère",

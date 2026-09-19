@@ -3,9 +3,11 @@ import { isStudentPayer } from "./inscription-payer";
 import { REGISTRATION_FUNDING_MAP } from "./registration-utils";
 
 describe("isStudentPayer", () => {
-  it("reconnaît OPCO / FIFPL et Autofinancement", () => {
+  it("reconnaît FIFPL, OPCO et Autofinancement", () => {
+    expect(isStudentPayer({ funding_organization: REGISTRATION_FUNDING_MAP.fifpl })).toBe(true);
     expect(isStudentPayer({ funding_organization: REGISTRATION_FUNDING_MAP.opco })).toBe(true);
     expect(isStudentPayer({ funding_organization: REGISTRATION_FUNDING_MAP.self })).toBe(true);
+    expect(isStudentPayer({ funding_organization: "FIFPL" })).toBe(true);
     expect(isStudentPayer({ funding_organization: "OPCO" })).toBe(true);
   });
 
