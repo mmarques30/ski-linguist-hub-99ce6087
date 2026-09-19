@@ -22,9 +22,11 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 | **PLANO Onda D (D5–D8)** | #70 | Identité org sur PDF/emails + logo ; chrome i18n FR ; import upsert/export ; CRM leads |
 | **BL octobre lot 1** | #71 | BL-032, 037, 040, 045 (affichage), 049 |
 | **BL octobre lot 2** | #72 | BL-041, 044, 048 |
-| **BL octobre lot 3** | #73 | BL-043 ; BL-042 partiel (statut + contrats ; vigilance ouverte) |
+| **BL octobre lot 3** | #73 | BL-043 ; BL-042 Administratif (statut + contrats) |
+| **BL octobre lot 4** | #74 | BL-034 saison ; vigilance ; GlobalSearch multi-jetons |
+| **BL octobre lot 5** | suite4 | BL-035 compte test ; BL-030 en-tête ; BL-050 badge banque |
 
-**SHA `main` au moment de ce refresh :** `fb6ed5f` (merge #73).
+**SHA `main` au moment de ce refresh :** `426cbe9` (merge #74).
 
 ### Déploiement app publiée
 
@@ -45,7 +47,7 @@ Historique / hors plan : voir anciennes notes ; les vagues UX A–D et C.1–C.6
 | Champ | Valeur |
 |-------|--------|
 | Dépôt | `mmarques30/ski-linguist-hub-99ce6087` |
-| Branche de référence | `main` @ `fb6ed5f` |
+| Branche de référence | `main` @ `426cbe9` |
 | App | SPA Vite + React 18 + TypeScript « FLI Formation » (Lovable) |
 | Projet Lovable | `34e71e1a-49f7-433e-bb36-fc4d26e86f8e` (Ski School Connect / ski-linguist-hub) |
 | Backend | Supabase hébergé `nghkrmvakjomzmfwdhbo` — `https://nghkrmvakjomzmfwdhbo.supabase.co` |
@@ -380,4 +382,4 @@ Exclusions bundle : `node_modules`, `dist`, `.env`, images/binaires, CSV/JSON de
 
 ---
 
-*Fin du rapport d’état — 09/09/2026 (rafraîchi 19/09/2026 : PR #70–#73, SHA `fb6ed5f`).*
+*Fin du rapport d’état — 09/09/2026 (rafraîchi 19/09/2026 : PR #70–#74 + suite4, SHA `426cbe9`).*
