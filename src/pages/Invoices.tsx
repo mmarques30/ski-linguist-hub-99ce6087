@@ -69,7 +69,7 @@ const translations = {
     en: "CSV export downloaded",
   },
   newInvoice: {
-    fr: "Nouvelle Facture",
+    fr: "Nouvelle facture",
     "pt-BR": "Nova Fatura",
     en: "New Invoice",
   },

@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Plus, Search, UserCog } from "lucide-react";
 import { useInstructors, type Instructor } from "@/hooks/useInstructors";
 import { InstructorCard } from "@/components/formateurs/InstructorCard";
@@ -42,7 +43,7 @@ export default function InstructorsList() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Formateurs</h1>
+            <h1 className="text-2xl font-bold">Formateur·rices</h1>
             <p className="text-muted-foreground">
               Gérez les formateurs, leur planning et leurs paiements
             </p>
@@ -50,7 +51,7 @@ export default function InstructorsList() {
           {editable && (
             <Button onClick={() => { setEditing(null); setShowForm(true); }}>
               <Plus className="mr-2 h-4 w-4" />
-              Ajouter un formateur
+              Ajouter un·e formateur·rice
             </Button>
           )}
         </div>
@@ -65,40 +66,49 @@ export default function InstructorsList() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <Select value={langFilter} onValueChange={setLangFilter}>
-            <SelectTrigger className="w-[190px]">
-              <SelectValue placeholder="Langue" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes</SelectItem>
-              <SelectItem value="anglais">Anglais</SelectItem>
-              <SelectItem value={PORTUGUESE_LABEL_LOWER}>Portugais brésilien</SelectItem>
-              <SelectItem value="russe">Russe</SelectItem>
-              <SelectItem value="néerlandais">Néerlandais</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Statut" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="actif">Actif·ves</SelectItem>
-              <SelectItem value="inactif">Inactif·ves</SelectItem>
-              <SelectItem value="candidat">Candidat·es</SelectItem>
-              <SelectItem value="all">Tous</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={availFilter} onValueChange={setAvailFilter}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Disponibilité" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous</SelectItem>
-              <SelectItem value="disponible">Disponible</SelectItem>
-              <SelectItem value="occupe">Occupé</SelectItem>
-              <SelectItem value="indisponible">Indisponible</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="space-y-1">
+            <Label htmlFor="instructor-lang-filter">Langue</Label>
+            <Select value={langFilter} onValueChange={setLangFilter}>
+              <SelectTrigger id="instructor-lang-filter" className="w-[190px]">
+                <SelectValue placeholder="Langue" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes</SelectItem>
+                <SelectItem value="anglais">Anglais</SelectItem>
+                <SelectItem value={PORTUGUESE_LABEL_LOWER}>Portugais brésilien</SelectItem>
+                <SelectItem value="russe">Russe</SelectItem>
+                <SelectItem value="néerlandais">Néerlandais</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="instructor-status-filter">Statut</Label>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+              <SelectTrigger id="instructor-status-filter" className="w-[160px]">
+                <SelectValue placeholder="Statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="actif">Actif·ves</SelectItem>
+                <SelectItem value="inactif">Inactif·ves</SelectItem>
+                <SelectItem value="candidat">Candidat·es</SelectItem>
+                <SelectItem value="all">Tous</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="instructor-avail-filter">Disponibilité</Label>
+            <Select value={availFilter} onValueChange={setAvailFilter}>
+              <SelectTrigger id="instructor-avail-filter" className="w-[160px]">
+                <SelectValue placeholder="Disponibilité" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="disponible">Disponible</SelectItem>
+                <SelectItem value="occupe">Occupé</SelectItem>
+                <SelectItem value="indisponible">Indisponible</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {isLoading ? (
@@ -109,7 +119,7 @@ export default function InstructorsList() {
             title="Aucun formateur"
             description="Ajoutez votre premier formateur pour commencer à organiser le planning et les paiements."
             action={editable ? {
-              label: "Ajouter un formateur",
+              label: "Ajouter un·e formateur·rice",
               icon: Plus,
               onClick: () => {
                 setEditing(null);

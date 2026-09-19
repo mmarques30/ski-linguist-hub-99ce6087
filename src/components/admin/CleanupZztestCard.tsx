@@ -144,7 +144,8 @@ export function CleanupZztestCard() {
           Supprime uniquement les stagiaires dont le nom commence par {ZZTEST_PREFIX} et
           l&apos;email se termine par @{ZZTEST_EMAIL_DOMAIN}, plus inscriptions, factures,
           paiements, certificats, fichiers, comptes liés et phrases de référentiel
-          dont le code commence par {ZZTEST_PREFIX}. Les fichiers du stockage sont
+          (<code>test_phrases</code>) dont le <code>code</code> commence par{" "}
+          {ZZTEST_PREFIX} ou dont <code>text_fr</code> contient ZZTEST. Les fichiers du stockage sont
           supprimés via l&apos;API Storage (clé service) puis le SQL suit : un seul
           bouton, y compris s&apos;il existe un certificat. La prochaine facture
           reprend le dernier numéro réel. Journal sans donnée personnelle.

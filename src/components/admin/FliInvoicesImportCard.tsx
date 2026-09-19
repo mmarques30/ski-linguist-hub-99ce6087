@@ -162,7 +162,7 @@ export function FliInvoicesImportCard() {
           ) : (
             <p className="text-sm text-muted-foreground">
               <Upload className="inline h-4 w-4 mr-1" />
-              Déposer facturation_FLI_2026_09_15.csv
+              Déposer un fichier CSV de facturation
             </p>
           )}
         </div>
