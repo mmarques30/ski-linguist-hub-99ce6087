@@ -30,6 +30,8 @@ import {
   partnerReviewLabel,
   partnerReviewReasons,
 } from "@/lib/partner-name-quality";
+import { PartnerDedupPanel } from "@/components/partners/PartnerDedupPanel";
+import { usePartnerDedupIndex } from "@/hooks/usePartnerDedup";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
@@ -65,6 +67,9 @@ export default function PartnerDetails() {
   const totalPaid = invoices.filter((i) => i.status === "paid").reduce((s, i) => s + (i.amount_ttc || i.amount_ht || 0), 0);
   const reviewReasons = partnerReviewReasons(partner.name);
   const needsReview = partnerNeedsReview(partner.name);
+  const { matchesFor, map: dedupMap } = usePartnerDedupIndex();
+  const dedupMatches = matchesFor(partner.id);
+  const supersededBy = dedupMap[partner.id];
 
   const handleDelete = async () => {
     if (PROSPECTION_MONITEURS_GELEE) {
@@ -136,6 +141,26 @@ export default function PartnerDetails() {
             </AlertDescription>
           </Alert>
         )}
+
+        {supersededBy && (
+          <Alert>
+            <AlertTitle>Fiche déjà fusionnée</AlertTitle>
+            <AlertDescription>
+              Cette fiche a été fusionnée dans une autre.{" "}
+              <Link to={`/gestion/partenaires/${supersededBy}`} className="underline">
+                Ouvrir la fiche conservée
+              </Link>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <PartnerDedupPanel
+          partner={partner}
+          matches={dedupMatches}
+          onMerged={(keeperId) => {
+            if (keeperId !== partner.id) navigate(`/gestion/partenaires/${keeperId}`);
+          }}
+        />
 
         {/* KPIs row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
