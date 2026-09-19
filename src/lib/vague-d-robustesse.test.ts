@@ -44,9 +44,8 @@ describe("Vague D — notifications multi-types", () => {
   it("expose /notifications et producteurs paiement/évaluation", () => {
     expect(source("src/App.tsx")).toContain('path="/notifications"');
     expect(source("src/pages/Notifications.tsx")).toContain("useAllNotifications");
-    expect(source("src/components/layout/TopHeader.tsx")).toContain(
-      "Voir toutes les notifications"
-    );
+    expect(source("src/components/layout/TopHeader.tsx")).toContain("CHROME_UI.seeAll");
+    expect(source("src/lib/chrome-i18n.ts")).toContain("seeAll");
     expect(source("src/lib/notify-admins.ts")).toContain("notifyAdmins");
     expect(source("src/hooks/usePayments.ts")).toContain('type: "paiement"');
     expect(source("src/hooks/useTestEvaluations.ts")).toContain('type: "evaluation"');
