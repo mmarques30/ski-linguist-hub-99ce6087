@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -18,11 +18,22 @@ import {
   User,
   Clock,
   Eye,
+  FileText,
+  ExternalLink,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   useInstructorDetails,
   useInstructorSessions,
   useInstructorPayments,
+  useInstructorContracts,
+  useUpdateInstructor,
 } from "@/hooks/useInstructors";
 import { InstructorFormDialog } from "@/components/formateurs/InstructorFormDialog";
 import { SessionFormDialog } from "@/components/formateurs/SessionFormDialog";
@@ -56,6 +67,21 @@ const instructorStatusLabels: Record<string, string> = {
   candidat: "Candidat·e",
 };
 
+const ADMIN_STATUT_OPTIONS = [
+  { value: "candidat", label: "Candidat·e" },
+  { value: "actif", label: "Actif·ve" },
+  { value: "inactif", label: "Inactif·ve" },
+  { value: "a_regulariser", label: "À régulariser" },
+  { value: "dossier_complet", label: "Dossier complet" },
+  { value: "dossier_incomplet", label: "Dossier incomplet" },
+];
+
+function adminStatutLabel(value: string | null | undefined): string {
+  if (!value) return "Non renseigné";
+  const found = ADMIN_STATUT_OPTIONS.find((option) => option.value === value);
+  return found?.label ?? value;
+}
+
 export default function InstructorDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -67,6 +93,27 @@ export default function InstructorDetails() {
   const { data: instructor, isLoading } = useInstructorDetails(id);
   const { data: sessions = [] } = useInstructorSessions(id);
   const { data: payments = [] } = useInstructorPayments(id);
+  const { data: contracts = [] } = useInstructorContracts(id);
+  const updateInstructor = useUpdateInstructor();
+  const [adminStatut, setAdminStatut] = useState("");
+
+  useEffect(() => {
+    setAdminStatut(instructor?.statut_administratif || "");
+  }, [instructor?.statut_administratif]);
+
+  const adminStatutOptions = useMemo(() => {
+    const options = [...ADMIN_STATUT_OPTIONS];
+    if (
+      instructor?.statut_administratif &&
+      !options.some((option) => option.value === instructor.statut_administratif)
+    ) {
+      options.push({
+        value: instructor.statut_administratif,
+        label: instructor.statut_administratif,
+      });
+    }
+    return options;
+  }, [instructor?.statut_administratif]);
 
   if (isLoading || !instructor) {
     return (
@@ -175,6 +222,9 @@ export default function InstructorDetails() {
             </TabsTrigger>
             <TabsTrigger value="paiements">
               <CreditCard className="mr-1 h-4 w-4" /> Paiements
+            </TabsTrigger>
+            <TabsTrigger value="administratif">
+              <FileText className="mr-1 h-4 w-4" /> Administratif
             </TabsTrigger>
           </TabsList>
 
@@ -321,6 +371,104 @@ export default function InstructorDetails() {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="administratif">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Statut administratif</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                  {editable ? (
+                    <Select
+                      value={adminStatut || "unset"}
+                      onValueChange={(value) => {
+                        const nextValue = value === "unset" ? "" : value;
+                        setAdminStatut(nextValue);
+                        if (!id) return;
+                        updateInstructor.mutate({
+                          id,
+                          statut_administratif: nextValue || null,
+                        });
+                      }}
+                      disabled={updateInstructor.isPending}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner un statut" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unset">Non renseigné</SelectItem>
+                        {adminStatutOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="font-medium">{adminStatutLabel(instructor.statut_administratif)}</p>
+                  )}
+                  <p className="text-muted-foreground">
+                    Attestation de vigilance : à venir (pas de colonne en base pour l&apos;instant).
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Contrats</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {contracts.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">Aucun contrat enregistré.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {contracts.map((contract) => (
+                        <div
+                          key={contract.id}
+                          className="rounded-lg border p-3 flex items-start justify-between gap-3"
+                        >
+                          <div className="space-y-1">
+                            <p className="font-medium text-sm">
+                              {contract.contract_number ||
+                                `Contrat du ${format(new Date(contract.created_at), "d MMM yyyy", { locale: fr })}`}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {contract.student_or_company || "Mission non renseignée"}
+                              {contract.start_date && contract.end_date && (
+                                <>
+                                  {" "}
+                                  · {format(new Date(contract.start_date), "d MMM yyyy", { locale: fr })}
+                                  {" — "}
+                                  {format(new Date(contract.end_date), "d MMM yyyy", { locale: fr })}
+                                </>
+                              )}
+                            </p>
+                            {contract.pdf_url && (
+                              <a
+                                href={contract.pdf_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-xs text-primary underline"
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                                Voir le PDF
+                              </a>
+                            )}
+                          </div>
+                          <Badge variant={contract.signed_at ? "default" : "secondary"}>
+                            {contract.signed_at
+                              ? `Signé le ${format(new Date(contract.signed_at), "d MMM yyyy", { locale: fr })}`
+                              : "Non signé"}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

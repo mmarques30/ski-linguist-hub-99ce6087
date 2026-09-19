@@ -436,6 +436,8 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
 
       queryClient.invalidateQueries({ queryKey: ["inscriptions"] });
       queryClient.invalidateQueries({ queryKey: ["inscription-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["inscription-details"] });
+      queryClient.invalidateQueries({ queryKey: ["inscription-ops-fields"] });
       onOpenChange(false);
     } catch (error: unknown) {
       console.error("Error saving inscription:", error);

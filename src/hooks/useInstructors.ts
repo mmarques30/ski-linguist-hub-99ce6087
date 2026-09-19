@@ -131,6 +131,37 @@ export function useInstructorSessions(instructorId: string | undefined) {
   });
 }
 
+export interface InstructorContract {
+  id: string;
+  instructor_id: string;
+  inscription_id: string | null;
+  contract_number: string | null;
+  signed_at: string | null;
+  pdf_url: string | null;
+  created_at: string;
+  start_date: string;
+  end_date: string;
+  student_or_company: string | null;
+}
+
+export function useInstructorContracts(instructorId: string | undefined) {
+  return useQuery({
+    queryKey: ["instructor-contracts", instructorId],
+    enabled: !!instructorId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("instructor_contracts")
+        .select(
+          "id, instructor_id, inscription_id, contract_number, signed_at, pdf_url, created_at, start_date, end_date, student_or_company"
+        )
+        .eq("instructor_id", instructorId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as InstructorContract[];
+    },
+  });
+}
+
 export function useInstructorPayments(instructorId: string | undefined) {
   return useQuery({
     queryKey: ["instructor-payments", instructorId],

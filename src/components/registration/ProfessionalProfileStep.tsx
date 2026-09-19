@@ -92,7 +92,7 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
             className="w-full"
             disabled={!data.profession || (data.profession === "ski_instructor" && !data.skiSchool)}
           >
-            Continuer vers la configuration de la formation
+            Continuer vers le test de niveau
           </Button>
         </form>
       </CardContent>
