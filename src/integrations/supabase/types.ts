@@ -3878,6 +3878,15 @@ export type Database = {
         }[]
       }
       map_entry_level_to_cecrl: { Args: { _raw: string }; Returns: string }
+      notify_admins: {
+        Args: {
+          p_link?: string
+          p_message?: string
+          p_title: string
+          p_type: string
+        }
+        Returns: number
+      }
       owns_test_booking: { Args: { _booking_id: string }; Returns: boolean }
       publish_email_template_draft: { Args: { p_slug: string }; Returns: Json }
       regenerate_inscription_access_token: {
