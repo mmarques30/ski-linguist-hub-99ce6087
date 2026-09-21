@@ -7,7 +7,7 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 
 ## 0. Fusion & déploiement (tête de rapport)
 
-### Fusionné dans `main` (rafraîchi 21/09/2026 — incl. #85)
+### Fusionné dans `main` (rafraîchi 21/09/2026 — incl. #87)
 
 | Élément | PR | Note |
 |---------|----|------|
@@ -32,16 +32,17 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 | **BL-027 règle OPCO** | #82 | Questionnaire register ; propositions BO ; montants éditables |
 | **Édition admin partout** | #83 | `useConfirmAction` ; confirmation avant chaque mutation BO |
 | **BL-007 crons + notifs** | #85 | Crons email + avancement actifs ; producteurs notifs BO |
+| **BL-014 peaufinage** | #87 | Bannière gaps, confirm enrichie, CTA liste, presets admin, inactif |
 | Sync types Lovable | — | `types.ts` leads + `funding_requests.payer_type` |
 
-**SHA `main` au moment de ce refresh :** `aa7098e` (republish edge + merge #85).
+**SHA `main` au moment de ce refresh :** `e2d385d` (merge #87 BL-014).
 
 ### Déploiement app publiée
 
 | Statut | Détail |
 |--------|--------|
 | App | **https://plateforme.fli.fr** (alias Lovable → `ski-linguist-hub.lovable.app`) |
-| Alignement front ↔ `main` | **Aligné** 21/09 — publié après #82–#85 |
+| Alignement front ↔ `main` | **À republier** 21/09 — `main` inclut #87 (BL-014) ; vérifier deploy live |
 | Edges / Resend | **19/19** ; `RESEND_API_KEY` OK ; Stripe OK ; BL-047 **clos** ; crons BL-007 **actifs** ; `process-invoice-reminders` **republie** 21/09 (notif facture échue) |
 
 ### Branches non fusionnées (reste)
@@ -55,7 +56,7 @@ Historique / hors plan : voir anciennes notes ; les vagues UX A–D et C.1–C.6
 | Champ | Valeur |
 |-------|--------|
 | Dépôt | `mmarques30/ski-linguist-hub-99ce6087` |
-| Branche de référence | `main` @ `a2d13ab` |
+| Branche de référence | `main` @ `e2d385d` |
 | App | SPA Vite + React 18 + TypeScript « FLI Formation » (Lovable) |
 | Projet Lovable | `34e71e1a-49f7-433e-bb36-fc4d26e86f8e` (Ski School Connect / ski-linguist-hub) |
 | Backend | Supabase hébergé `nghkrmvakjomzmfwdhbo` — `https://nghkrmvakjomzmfwdhbo.supabase.co` |
@@ -279,7 +280,7 @@ Déclarés dans migrations (`pg_cron` + `pg_net` vers edge) :
 |--------|------------|---------|--------|
 | Inscriptions | CRUD, statuts, détail, checklist, Financier, suivi public | Encodage `entry_level` | — |
 | Stagiaires | Liste, détail, invites portail, Assister | — | — |
-| Formateur·rices | CRUD, candidat, import, Assister, CTA actif (#77) | UI candidat→actif (BL-014 reste à peaufiner) | — |
+| Formateur·rices | CRUD, candidat→actif (#77+#87), import, Assister | — | — |
 | Placement | Test adaptatif pistes, admin CECRL | — | — |
 | Évaluations SNMSF | Formulaire + PDF + phrases + pont stagiaire | Prix test non unifié | — |
 | Certificats | Bilan Entrée/Sortie, garde sortie, PDF, vue live OK | PDF storage policies (reste BL-020 partiel) | Lien email formateur |
@@ -335,9 +336,9 @@ Fichiers clés : `src/pages/**`, `src/hooks/**`, `src/lib/**`, `supabase/functio
 
 ## 11. Backlog & plan points 1–10
 
-Intégré depuis `docs/BACKLOG.md` (refresh 21/09/2026 — BL-007 clos) :
+Intégré depuis `docs/BACKLOG.md` (refresh 21/09/2026 — BL-014 clos) :
 
-**Ouvert (extraits) :** BL-001, 008, 011, 014 (peaufinage), 015, 017, 019, 020, 022.
+**Ouvert (extraits) :** BL-001, 008, 011, 015, 017, 019, 020, 022.
 
 | Point / vague | État |
 |---------------|------|
@@ -358,6 +359,7 @@ Intégré depuis `docs/BACKLOG.md` (refresh 21/09/2026 — BL-007 clos) :
 | BL-027 règle OPCO | Fusionné main (PR #82) |
 | Édition admin partout | Fusionné main (PR #83) |
 | BL-007 crons + notifs | Fusionné main (PR #85) |
+| BL-014 peaufinage | Fusionné main (PR #87) |
 
 ---
 

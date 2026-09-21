@@ -2,7 +2,7 @@
 
 Règle : noter ici, **ne pas corriger** tant que le point courant n’est pas validé.
 
-Dernière mise à jour : 2026-09-21 (BL-007 clos PR #85 ; crons actifs + notifs).
+Dernière mise à jour : 2026-09-21 (BL-014 peaufinage clos PR #87).
 
 ## Conventions de lecture
 
@@ -78,11 +78,11 @@ quatre fois de suite qu’un correctif fusionné mais non publié ne compte pas.
 
 ### Vague 4 — cosmétique, si le temps le permet
 
-BL-030 / BL-050 **fusionnés** (PR #73 + #75). Reste éventuel : peaufinage BL-014, cosmétique hors recette.
+BL-030 / BL-050 **fusionnés** (PR #73 + #75). BL-014 peaufinage **clos** (#87). Reste éventuel : cosmétique hors recette.
 
 ### Hors périmètre du 1er octobre
 
-BL-001, BL-008, BL-009, BL-010, BL-011, BL-014, BL-015, BL-017, BL-019, BL-020,
+BL-001, BL-008, BL-009, BL-010, BL-011, BL-015, BL-017, BL-019, BL-020,
 BL-022 : dette antérieure, non remontée par la recette.
 
 ---
@@ -133,7 +133,7 @@ BL-022 : dette antérieure, non remontée par la recette.
 | BL-009 | Docs « purger toutes les données » | Faible |
 | BL-010 | Phrases 321 vs 540 — point 7 fusionné | Point 7 |
 | BL-011 | `soustraitance` vs `sous_traitance` | Plus tard |
-| BL-014 | UI candidat → actif — **partiel** PR #77 (CTA « Passer en actif·ve », défaut `candidat`) | Recrutement |
+| BL-014 | UI candidat → actif — **clos** PR #77 (CTA) + #87 (bannière gaps, confirm enrichie, liste, presets admin, inactif) | Recrutement |
 | BL-015 | Backfill formateur CSV (si restes) | Avant rattachement |
 | BL-017 | Imports massifs hors UI | Avant point 9 |
 | BL-019 | J-10 horaires FLI exacts + pas de code depuis horaires | Point 10 |
@@ -193,6 +193,7 @@ BL-022 : dette antérieure, non remontée par la recette.
 | BL-007 | Crons actifs + producteurs notifs — PR #85 |
 | BL-038 (hard) | Hard dedup partenaires — PR #80 |
 | BL-014 (partiel), Qualiopi/statuts/dashboard | Suite 6 octobre — PR #77 |
+| BL-014 (peaufinage) | Bannière gaps, confirm, liste, presets, inactif — PR #87 |
 | `/documents`, pagination morte, STRIPE_SETUP | Suite 7 octobre — PR #78 |
 | BL-046, 047, 031 | Vague 0 deploy 19/09 — front + edges + Resend |
 | Onda D5–D8 | Identité org, chrome i18n, import idempotent, CRM leads — PR #70 |
@@ -261,4 +262,5 @@ BL-022 : dette antérieure, non remontée par la recette.
 | **BL-027 règle OPCO** | Fusionné main (PR #82) — questionnaire register ; propositions BO ; montants éditables |
 | **Édition admin partout** | Fusionné main (PR #83) — `useConfirmAction` ; confirmation avant chaque mutation BO |
 | **BL-007 crons + notifs** | Fusionné main (PR #85) — crons email + avancement actifs ; producteurs notifs BO |
+| **BL-014 peaufinage** | Fusionné main (PR #87) — candidat→actif : gaps soft, confirm, liste, presets, inactif |
 | 6 — Stripe | Config test OK via Settings / `check-stripe-config` ; docs STRIPE_SETUP rafraîchis (#78) ; mode live hors scope |
