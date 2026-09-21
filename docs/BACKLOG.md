@@ -2,7 +2,7 @@
 
 Règle : noter ici, **ne pas corriger** tant que le point courant n’est pas validé.
 
-Dernière mise à jour : 2026-09-19 (BL-038 hard dedup PR #80 ; Vague 0 + lots #74–#78).
+Dernière mise à jour : 2026-09-21 (BL-027 clos PR #82 ; édition admin partout PR #83).
 
 ## Conventions de lecture
 
@@ -38,13 +38,13 @@ quatre fois de suite qu’un correctif fusionné mais non publié ne compte pas.
 |-------|-------|---------|----|
 | 1.1 | Lien vers les conditions générales avant la case à cocher | bloquant | BL-023 |
 | 1.2 | Aucun moyen de paiement coché par défaut (décision Paula) | gênant | BL-024 |
-| 1.3 | « FIFPL » et « OPCO » séparés (règle OPCO attendue de Paula) | gênant | BL-027 |
+| 1.3 | « FIFPL » et « OPCO » séparés (règle OPCO) | gênant | BL-027 |
 | 1.4 | Message du test réservé aux groupes en station, signé « l’équipe FLI » | gênant | BL-028 |
 | 1.5 | Piste affichée « Piste verte » quand la verte n’est pas validée | gênant | BL-026 |
 | 1.6 | Message d’échec en français, saisie conservée, consigne de contact | gênant | BL-025 |
 | 1.7 | Dates flexibles : ne plus hériter des dates de saison | gênant | BL-029 |
 
-1.3 : choix FIFPL / OPCO **séparés** (PR #76) ; **règle de paiement OPCO** toujours attendue de Paula. 1.1–1.2 et 1.4–1.7 **fusionnés** (PR #44 / #45). `/auth` FR **déployé** (Vague 0).
+1.3 **clos** (PR #82) — règle OPCO Paula 21/09 : aucun frais à l’inscription ; questionnaire OPCO/NAF ; propositions de règlement au cas par cas en BO. Choix séparés déjà en #76. 1.1–1.2 et 1.4–1.7 **fusionnés** (PR #44 / #45). `/auth` FR **déployé** (Vague 0).
 
 ### Vague 2 — tableau de bord et données
 
@@ -97,7 +97,7 @@ BL-022 : dette antérieure, non remontée par la recette.
 | BL-024 | `/register` étape 6 | « 150 € en ligne (Stripe) + solde par chèque » est présélectionné alors que Stripe n’est pas validé (point 6). **Décision Paula : aucun moyen coché par défaut tant que le point 6 n’est pas validé.** À passer bloquant si Stripe n’est pas opérationnel au 1er octobre | gênant | **clos** — PR #44 |
 | BL-025 | `/register` étape 7 | En cas d’échec, le message brut de la fonction Edge est affiché tel quel, en anglais et sans consigne. Attendu : message en français, vouvoiement, saisie conservée, consigne (réessayer, `info@fli.fr`, 04 79 28 21 09) | gênant | **clos** — PR #44 |
 | BL-026 | `/register` (résultat du test, récapitulatif) et espace stagiaire | Un·e stagiaire qui ne valide pas la piste verte lit « Piste atteinte : Vocabulaire ski » ou « Début de parcours ». Attendu : « Piste verte », même règle sur tous les écrans stagiaire | gênant | **clos** — PR #44 |
-| BL-027 | `/register` étapes 1 et 6 | « OPCO / FIFPL » était un choix unique (règle FIFPL). **Décision Paula : deux choix distincts ; règle OPCO à venir** | gênant | **partiel** — choix séparés + FIFPL 150 € + OPCO sans frais auto (PR #76) ; **règle paiement OPCO** attend Paula |
+| BL-027 | `/register` étapes 1 et 6 + BO Financier | « OPCO / FIFPL » était un choix unique. **Décision Paula 21/09 :** deux choix distincts ; OPCO = aucun frais à l’inscription ; questionnaire (OPCO connu / NAF / notes) ; propositions de règlement case-by-case en BO (payeur stagiaire / entreprise / OPCO) | gênant | **clos** — choix séparés #76 ; règle complète + BO propositions #82 |
 | BL-028 | `/register`, test de niveau | Le message sur l’attribution du groupe matin / après-midi s’affiche quelle que soit la modalité et nomme la directrice par son prénom. **Décision Paula : réservé aux groupes en station, signé « l’équipe FLI »** | gênant | **clos** — PR #44 |
 | BL-029 | `/register`, dates flexibles | `submit-registration` retombe sur les dates de la saison : une inscription sans dates hérite de dates fausses, ce qui fausse aussi le J-10. Attendu : exiger une date ou laisser « à planifier » | gênant | **clos** — PR #45 |
 | BL-030 | `/register`, libellés | En-tête « pour moniteurs de ski » y compris pour « Autre profession », pas de point médian, bouton « Continuer vers la configuration de la formation » qui mène au test, « Piste verte: 3/5 », score affiché « 8/20 » puis « 3 bonnes réponses ». En-tête à valider par la direction | cosmétique | **clos** — PR #73 (bouton, middot, score) + suite4 (en-tête selon profession) |
@@ -188,6 +188,8 @@ BL-022 : dette antérieure, non remontée par la recette.
 | BL-042, 043 | Suite 2–3 octobre — PR #73 + #74 (vigilance) |
 | BL-030, 035, 050 | Suite 4 octobre — PR #75 |
 | BL-027 (partiel), 038 (soft) | Suite 5 octobre — PR #76 |
+| BL-027 (complet) | Règle OPCO + propositions BO — PR #82 |
+| Édition admin + confirm | Mutation BO avec confirmation — PR #83 |
 | BL-038 (hard) | Hard dedup partenaires — PR #80 |
 | BL-014 (partiel), Qualiopi/statuts/dashboard | Suite 6 octobre — PR #77 |
 | `/documents`, pagination morte, STRIPE_SETUP | Suite 7 octobre — PR #78 |
@@ -203,7 +205,8 @@ BL-022 : dette antérieure, non remontée par la recette.
 | Compte « Utilisateur Test » | Supprimé | BL-035 |
 | Saison | = exercice comptable, 01/07 → 30/06 | BL-034 |
 | Moyen de paiement dans `/register` | Aucun coché par défaut tant que le point 6 n’est pas validé | BL-024 |
-| « OPCO / FIFPL » | Deux choix distincts ; la règle OPCO viendra de Paula | BL-027 |
+| « OPCO / FIFPL » | Deux choix distincts | BL-027 |
+| Règle OPCO (21/09) | Aucun frais à l’inscription ; questionnaire OPCO/NAF ; propositions de règlement au cas par cas en BO (payeur stagiaire / entreprise / OPCO) ; admin peut tout corriger | BL-027 |
 | Message d’accueil du test | Signé « l’équipe FLI », réservé aux groupes en station | BL-028 |
 | Identité de l’organisation | Paula la remplit elle-même — suppose que `/settings` l’enregistre | BL-036 |
 | Certificat | Niveau de sortie en CECRL avec mention SNMSF : conforme ; une piste comme niveau final serait un écart | — |
@@ -235,7 +238,7 @@ BL-022 : dette antérieure, non remontée par la recette.
 | C.4 — vérification Paula | Fusionné main — `docs/POINT_C4_VERIFICATION.md` |
 | C.5 — PDF habillages | Fusionné main (PR #28) — `docs/POINT_C5_PDF_HABILLAGES.md` |
 | C.6 — export XLSX DSF | Fusionné main (PR #31) — `docs/POINT_C6_XLSX_DSF.md` |
-| Vague 1 register/settings (hors règle OPCO) | Fusionné main (PR #44) — BL-023…026, 028, 036 ; BL-029 = PR #45 ; BL-027 partiel (#76) |
+| Vague 1 register/settings | Fusionné main (PR #44) — BL-023…026, 028, 036 ; BL-029 = PR #45 ; BL-027 **clos** (#76 + #82) |
 | BL-033 accents | Fusionné main (PR #42) — `docs/POINT_BL033_ACCENTS.md` |
 | BL-002 niveaux | Fusionné main (PR #30, #43) |
 | **Plan produit UX — Vague A** | Fusionné main (PR #60, #61) — `/suivi/:token`, Assister stagiaire/formateur, portail via `app_settings`, `/tests` pistes |
@@ -254,4 +257,6 @@ BL-022 : dette antérieure, non remontée par la recette.
 | **BL octobre lot 8** | Fusionné main (PR #78) — `/documents` honnête ; boutons pagination morts ; STRIPE_SETUP |
 | **Vague 0 ops** | **Livré** 19/09 — BL-046 front + BL-047 edges/Resend |
 | **BL-038 hard dedup** | Fusionné main (PR #80) — détection + fusion partenaires |
+| **BL-027 règle OPCO** | Fusionné main (PR #82) — questionnaire register ; propositions BO ; montants éditables |
+| **Édition admin partout** | Fusionné main (PR #83) — `useConfirmAction` ; confirmation avant chaque mutation BO |
 | 6 — Stripe | Config test OK via Settings / `check-stripe-config` ; docs STRIPE_SETUP rafraîchis (#78) ; mode live hors scope |

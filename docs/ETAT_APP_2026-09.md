@@ -1,4 +1,4 @@
-# État de l’application FLI Formation — 19/09/2026
+# État de l’application FLI Formation — 21/09/2026
 
 Photographie destinée à une analyse externe. **Aucune donnée personnelle.**  
 Convention : **livré** = fusionné dans `main` **et** déployé sur l’app publiée ; sinon **prêt sur branche** / **sur main non déployé**.
@@ -7,12 +7,12 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 
 ## 0. Fusion & déploiement (tête de rapport)
 
-### Fusionné dans `main` (rafraîchi 19/09/2026)
+### Fusionné dans `main` (rafraîchi 21/09/2026)
 
 | Élément | PR | Note |
 |---------|----|------|
 | Points 1–4A, certificat, A/A2, C.1–C.6, 5, 7–10, emails | divers | Voir `docs/BACKLOG.md` § Validations |
-| Vague 1 register/settings (hors OPCO) | #44 | + BL-029 #45, BL-033 #42, BL-002 #30/#43 |
+| Vague 1 register/settings | #44 | + BL-029 #45, BL-033 #42, BL-002 #30/#43 |
 | **Plan produit UX Vague A** | #60, #61 | `/suivi/:token`, Assister stagiaire/formateur, `student_portal_enabled`, `/tests` pistes |
 | **Plan produit UX Vague B** | #63 | Checklist inscription, Financier, rail « À traiter », `/student/test` |
 | **Plan produit UX Vague C** | #64 | Sidebar Portails/Trésorerie, Pilotage, `canView` |
@@ -29,17 +29,19 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 | **BL octobre lot 7** | #77 | Qualiopi ; statuts stagiaire ; dashboard ; BL-014 CTA candidat |
 | **BL octobre lot 8** | #78 | `/documents` honnête ; pagination morte ; STRIPE_SETUP |
 | **BL-038 hard dedup** | #80 | Détection doublons + fusion (filtre Doublons, mapping sous gel) |
-| Sync types Lovable | — | `types.ts` leads (`project_*`, `ski_monitor_id`) — `bf5f341` |
+| **BL-027 règle OPCO** | #82 | Questionnaire register ; propositions BO ; montants éditables |
+| **Édition admin partout** | #83 | `useConfirmAction` ; confirmation avant chaque mutation BO |
+| Sync types Lovable | — | `types.ts` leads + `funding_requests.payer_type` |
 
-**SHA `main` au moment de ce refresh :** `c6656dc` (merge #80).
+**SHA `main` au moment de ce refresh :** `43abd65` (merge #83).
 
 ### Déploiement app publiée
 
 | Statut | Détail |
 |--------|--------|
 | App | **https://plateforme.fli.fr** (alias Lovable → `ski-linguist-hub.lovable.app`) |
-| Alignement front ↔ `main` | **Aligné** 19/09 — redeploy après #80 (BL-038) |
-| Edges / Resend | **19/19** republishées 19/09 ; `RESEND_API_KEY` OK ; Stripe opérationnel ; BL-047 **clos** |
+| Alignement front ↔ `main` | **Aligné** 21/09 — publié après #82 / #83 (Paula) |
+| Edges / Resend | **19/19** republishées 19/09 ; `RESEND_API_KEY` OK ; Stripe opérationnel ; BL-047 **clos** ; `submit-registration` à jour pour OPCO (#82) |
 
 ### Branches non fusionnées (reste)
 
@@ -52,7 +54,7 @@ Historique / hors plan : voir anciennes notes ; les vagues UX A–D et C.1–C.6
 | Champ | Valeur |
 |-------|--------|
 | Dépôt | `mmarques30/ski-linguist-hub-99ce6087` |
-| Branche de référence | `main` @ `c6656dc` |
+| Branche de référence | `main` @ `43abd65` |
 | App | SPA Vite + React 18 + TypeScript « FLI Formation » (Lovable) |
 | Projet Lovable | `34e71e1a-49f7-433e-bb36-fc4d26e86f8e` (Ski School Connect / ski-linguist-hub) |
 | Backend | Supabase hébergé `nghkrmvakjomzmfwdhbo` — `https://nghkrmvakjomzmfwdhbo.supabase.co` |
@@ -326,15 +328,15 @@ Fichiers clés : `src/pages/**`, `src/hooks/**`, `src/lib/**`, `supabase/functio
 | `npm run build` | **OK** |
 | `npm run lint` | **FAIL** — 102 errors / 16 warnings (surtout `@typescript-eslint/no-explicit-any`) — préexistant (AGENTS.md) |
 | Dépendances majeures | React 18.3 · Vite 5.4 · Supabase-js 2.90 · TanStack Query 5.83 · Vitest 4.1 · jspdf 4 · Tailwind 3.4 |
-| Dette | Voir §11 + `BACKLOG.md` ; BL-027 règle OPCO ; policies storage certificats |
+| Dette | Voir §11 + `BACKLOG.md` ; BL-007 crons ; policies storage certificats |
 
 ---
 
 ## 11. Backlog & plan points 1–10
 
-Intégré depuis `docs/BACKLOG.md` (refresh 19/09/2026) :
+Intégré depuis `docs/BACKLOG.md` (refresh 21/09/2026) :
 
-**Ouvert (extraits) :** BL-027 (règle paiement OPCO), BL-001, 007 (crons), 008, 011, 014 (peaufinage), 015, 017, 019, 020, 022.
+**Ouvert (extraits) :** BL-001, 007 (crons), 008, 011, 014 (peaufinage), 015, 017, 019, 020, 022.
 
 | Point / vague | État |
 |---------------|------|
@@ -347,11 +349,13 @@ Intégré depuis `docs/BACKLOG.md` (refresh 19/09/2026) :
 | 10 Cycle inscription | **Livré** (BL-019 horaires exacts reste) |
 | C.1–C.6 | Fusionnés main |
 | Vague 0 ops | **Livré** 19/09 — BL-046 / BL-047 |
-| Vague 1 (hors règle OPCO) | Fusionnée main ; choix OPCO/FIFPL #76 |
+| Vague 1 | Fusionnée main ; BL-027 **clos** (#76 + #82) |
 | Plan UX A–D | Fusionnés main (PR #60–#65) |
 | Onda D5–D8 | Fusionné main (PR #70) |
 | BL octobre #71–#78 | Fusionnés main — voir `BACKLOG.md` § Validations |
 | BL-038 hard dedup | Fusionné main (PR #80) |
+| BL-027 règle OPCO | Fusionné main (PR #82) |
+| Édition admin partout | Fusionné main (PR #83) |
 
 ---
 
