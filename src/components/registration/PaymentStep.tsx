@@ -21,6 +21,13 @@ import {
 } from "@/lib/registration-payments";
 import { formatPriceEUR, isCustomFormatDuration } from "@/lib/registration-offerings";
 import { isOpcoFunding } from "@/lib/registration-utils";
+import {
+  OPCO_REGISTER_COPY,
+  validateOpcoQuestionnaire,
+  type OpcoQuestionnaire,
+} from "@/lib/opco-funding";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 interface PaymentStepProps {
@@ -72,23 +79,102 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
   };
 
   if (isOpco) {
+    const questionnaire: OpcoQuestionnaire = {
+      knowsOpco: data.opcoKnowsOpco ?? null,
+      opcoName: data.opcoName ?? "",
+      nafCode: data.opcoNafCode ?? "",
+      caseNotes: data.opcoCaseNotes ?? "",
+    };
+
+    const handleOpcoContinue = () => {
+      const error = validateOpcoQuestionnaire(questionnaire);
+      if (error) {
+        toast.error(error);
+        return;
+      }
+      onNext();
+    };
+
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Paiement</CardTitle>
-          <CardDescription>
-            Financement OPCO — les modalités de règlement vous seront communiquées par FLI.
-          </CardDescription>
+          <CardTitle>{OPCO_REGISTER_COPY.paymentTitle}</CardTitle>
+          <CardDescription>{OPCO_REGISTER_COPY.paymentDescription}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           <Alert>
-            <AlertDescription>
-              Vous avez choisi un financement par OPCO. Aucun frais de dossier n&apos;est demandé
-              automatiquement à cette étape. Notre équipe vous contactera pour finaliser les
-              modalités de prise en charge avec votre organisme financeur.
-            </AlertDescription>
+            <AlertDescription>{OPCO_REGISTER_COPY.paymentAlert}</AlertDescription>
           </Alert>
-          <Button type="button" onClick={onNext} className="w-full mt-6">
+
+          <div className="space-y-3">
+            <Label>Connaissez-vous l&apos;OPCO qui vous prendra en charge ? *</Label>
+            <RadioGroup
+              value={
+                questionnaire.knowsOpco === true
+                  ? "yes"
+                  : questionnaire.knowsOpco === false
+                    ? "no"
+                    : ""
+              }
+              onValueChange={(value) =>
+                onUpdate({
+                  opcoKnowsOpco: value === "yes",
+                  ...(value === "yes" ? { opcoNafCode: "" } : { opcoName: "" }),
+                })
+              }
+              className="space-y-2"
+            >
+              <div className="flex items-center space-x-3 rounded-lg border p-3">
+                <RadioGroupItem value="yes" id="opco-known-yes" />
+                <Label htmlFor="opco-known-yes" className="font-normal cursor-pointer flex-1">
+                  Oui
+                </Label>
+              </div>
+              <div className="flex items-center space-x-3 rounded-lg border p-3">
+                <RadioGroupItem value="no" id="opco-known-no" />
+                <Label htmlFor="opco-known-no" className="font-normal cursor-pointer flex-1">
+                  Non
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          {questionnaire.knowsOpco === true && (
+            <div className="space-y-2">
+              <Label htmlFor="opco-name">Quel OPCO ? *</Label>
+              <Input
+                id="opco-name"
+                value={questionnaire.opcoName}
+                onChange={(e) => onUpdate({ opcoName: e.target.value })}
+                placeholder="Ex. AKTO, Uniformation, AFDAS…"
+              />
+            </div>
+          )}
+
+          {questionnaire.knowsOpco === false && (
+            <div className="space-y-2">
+              <Label htmlFor="opco-naf">Code NAF de votre activité *</Label>
+              <Input
+                id="opco-naf"
+                value={questionnaire.nafCode}
+                onChange={(e) => onUpdate({ opcoNafCode: e.target.value })}
+                placeholder="Ex. 8551Z"
+              />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="opco-notes">Précisez votre situation (facultatif)</Label>
+            <Textarea
+              id="opco-notes"
+              value={questionnaire.caseNotes}
+              onChange={(e) => onUpdate({ opcoCaseNotes: e.target.value })}
+              placeholder="Expliquez votre cas : entreprise, demande en cours, questions…"
+              rows={4}
+            />
+          </div>
+
+          <Button type="button" onClick={handleOpcoContinue} className="w-full">
             Continuer
           </Button>
         </CardContent>

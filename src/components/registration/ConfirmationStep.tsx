@@ -67,6 +67,7 @@ import {
   isOpcoFunding,
   REGISTRATION_FUNDING_MAP,
 } from "@/lib/registration-utils";
+import { OPCO_REGISTER_COPY } from "@/lib/opco-funding";
 
 interface ConfirmationStepProps {
   data: RegistrationData;
@@ -350,9 +351,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
               <Alert>
                 <Phone className="h-4 w-4" />
                 <AlertDescription>
-                  Financement OPCO : notre équipe vous contactera pour finaliser les modalités de
-                  prise en charge avec votre organisme financeur. Aucun règlement n&apos;est demandé
-                  en ligne à cette étape.
+                  {OPCO_REGISTER_COPY.confirmationAlert}
                 </AlertDescription>
               </Alert>
             )}
@@ -506,8 +505,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
           <Alert>
             <Phone className="h-4 w-4" />
             <AlertDescription>
-              Financement OPCO : aucun règlement n&apos;est demandé à cette étape. FLI vous
-              contactera pour les modalités de prise en charge.
+              {OPCO_REGISTER_COPY.confirmationAlert}
             </AlertDescription>
           </Alert>
         )}

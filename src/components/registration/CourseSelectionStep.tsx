@@ -522,8 +522,8 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                         </Label>
                       </div>
                       <p className="text-xs text-muted-foreground pl-7">
-                        Financement par votre OPCO — contactez FLI pour les modalités. Aucun frais
-                        de dossier n&apos;est demandé automatiquement à cette étape.
+                        Financement par votre OPCO — votre dossier sera étudié par FLI. Aucun frais
+                        ne sera facturé pour le moment.
                       </p>
                     </div>
                     <div className="flex items-center space-x-3 rounded-lg border p-3 hover:bg-muted/50">
