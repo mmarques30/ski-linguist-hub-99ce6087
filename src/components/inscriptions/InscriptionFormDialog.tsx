@@ -237,6 +237,7 @@ const inscriptionSchema = z.object({
   modality: z.string().optional(),
   course_location: z.string().optional(),
   observations: z.string().optional(),
+  funding_organization: z.string().optional(),
 });
 
 type InscriptionFormData = z.infer<typeof inscriptionSchema>;
@@ -255,6 +256,7 @@ interface InscriptionToEdit {
   modality?: string | null;
   course_location?: string | null;
   observations?: string | null;
+  funding_organization?: string | null;
 }
 
 interface InscriptionFormDialogProps {
@@ -286,6 +288,7 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
       modality: "Présentiel",
       course_location: "",
       observations: "",
+      funding_organization: "",
     },
   });
 
@@ -356,6 +359,7 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
         modality: inscription.modality || "Présentiel",
         course_location: inscription.course_location || "",
         observations: inscription.observations || "",
+        funding_organization: inscription.funding_organization || "",
       });
     } else if (!open) {
       form.reset();
@@ -403,6 +407,7 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
             modality: data.modality || null,
             course_location: data.course_location || null,
             observations: data.observations || null,
+            funding_organization: data.funding_organization || null,
           })
           .eq("id", inscription.id);
 
@@ -429,6 +434,7 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
           modality: data.modality || null,
           course_location: data.course_location || null,
           observations: data.observations || null,
+          funding_organization: data.funding_organization || null,
           season_id: currentSeason?.id || null,
           status: "brouillon",
         });
@@ -724,6 +730,35 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Financement */}
+            <FormField
+              control={form.control}
+              name="funding_organization"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Financement</FormLabel>
+                  <Select
+                    onValueChange={(v) => field.onChange(v === "__none__" ? "" : v)}
+                    value={field.value || "__none__"}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Mode de financement" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="__none__">Non renseigné</SelectItem>
+                      <SelectItem value="FIFPL">FIFPL</SelectItem>
+                      <SelectItem value="OPCO">OPCO</SelectItem>
+                      <SelectItem value="Entreprise">Entreprise</SelectItem>
+                      <SelectItem value="Autofinancement">Autofinancement</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

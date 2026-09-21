@@ -154,6 +154,39 @@ interface RegistrationPayload {
   expectations: string;
   certification: string;
   paymentOption?: string;
+  /** BL-027 questionnaire OPCO */
+  opcoKnowsOpco?: boolean | null;
+  opcoName?: string;
+  opcoNafCode?: string;
+  opcoCaseNotes?: string;
+}
+
+function buildOpcoFundingDetails(registration: RegistrationPayload): string | null {
+  if (!isOpcoFunding(registration.fundingType)) return null;
+  return JSON.stringify({
+    version: 1,
+    source: "register",
+    opco: {
+      knowsOpco: registration.opcoKnowsOpco ?? null,
+      opcoName: (registration.opcoName ?? "").trim(),
+      nafCode: (registration.opcoNafCode ?? "").trim(),
+      caseNotes: (registration.opcoCaseNotes ?? "").trim(),
+    },
+  });
+}
+
+function formatOpcoObservation(registration: RegistrationPayload): string {
+  const lines = [
+    "Financement OPCO — dossier à analyser par FLI pour définir les modalités du contrat (aucun frais facturé pour le moment).",
+  ];
+  if (registration.opcoKnowsOpco === true) {
+    lines.push(`OPCO connu : ${(registration.opcoName ?? "").trim() || "(non précisé)"}`);
+  } else if (registration.opcoKnowsOpco === false) {
+    lines.push(`OPCO inconnu — code NAF : ${(registration.opcoNafCode ?? "").trim() || "(non précisé)"}`);
+  }
+  const notes = (registration.opcoCaseNotes ?? "").trim();
+  if (notes) lines.push(`Précisions du candidat :\n${notes}`);
+  return lines.join("\n");
 }
 
 function parseDurationHours(duration?: string): number | null {
@@ -224,6 +257,30 @@ Deno.serve(async (req) => {
     const needsAdminCall = registration.needsAdminCall ?? false;
 
     const isOpco = isOpcoFunding(registration.fundingType);
+
+    if (isOpco) {
+      if (registration.opcoKnowsOpco !== true && registration.opcoKnowsOpco !== false) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "Indiquez si vous connaissez l’OPCO qui prendra en charge votre dossier.",
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (registration.opcoKnowsOpco === true && !(registration.opcoName ?? "").trim()) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Précisez le nom de l’OPCO." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (registration.opcoKnowsOpco === false && !(registration.opcoNafCode ?? "").trim()) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Indiquez le code NAF de votre activité." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
 
     if (!isCustomFormat && !isOpco && (registration.price ?? 0) > 0) {
       if (!registration.paymentOption || !isValidPaymentOption(registration.paymentOption)) {
@@ -382,6 +439,7 @@ Deno.serve(async (req) => {
         course_type: COURSE_TYPE_MAP[registration.modality] || null,
         course_location: courseLocation,
         funding_organization: FUNDING_MAP[registration.fundingType] || registration.fundingType || null,
+        funding_details: buildOpcoFundingDetails(registration),
         certification_type: registration.certification || null,
         expectations: registration.expectations || null,
         schedule_status: "pending",
@@ -405,9 +463,7 @@ Deno.serve(async (req) => {
           registration.testSummary
             ? `Test adaptatif: ${registration.testSummary.passedSlopes.join(" → ") || "vocab ski"}`
             : null,
-          isOpco
-            ? "Financement OPCO — modalités de règlement à convenir avec FLI (pas de frais de dossier automatique)"
-            : null,
+          isOpco ? formatOpcoObservation(registration) : null,
           registration.paymentOption
             ? `Paiement: ${paymentLabels[registration.paymentOption] || registration.paymentOption}`
             : null,
@@ -628,14 +684,18 @@ Deno.serve(async (req) => {
         .eq("role", "admin");
 
       for (const admin of adminUsers || []) {
-        const notifTitle = isCustomFormat
-          ? `📋 Devis à préparer — ${registration.firstName}`
-          : needsAdminCall
-            ? `⚠️ Inscription — appeler ${registration.firstName}`
-            : `Nouvelle inscription — ${registration.firstName}`;
-        const notifMessage = isCustomFormat
-          ? `Inscription ${inscription.code} — format personnalisé (${language}). Envoyer une proposition.`
-          : `Inscription ${inscription.code} pour ${language}. Niveau: ${registration.currentLevel}. Horaire: en attente de validation.`;
+        const notifTitle = isOpco
+          ? `OPCO à analyser — ${registration.firstName}`
+          : isCustomFormat
+            ? `📋 Devis à préparer — ${registration.firstName}`
+            : needsAdminCall
+              ? `⚠️ Inscription — appeler ${registration.firstName}`
+              : `Nouvelle inscription — ${registration.firstName}`;
+        const notifMessage = isOpco
+          ? `Inscription ${inscription.code} — financement OPCO. Définir les modalités du contrat.`
+          : isCustomFormat
+            ? `Inscription ${inscription.code} — format personnalisé (${language}). Envoyer une proposition.`
+            : `Inscription ${inscription.code} pour ${language}. Niveau: ${registration.currentLevel}. Horaire: en attente de validation.`;
 
         await supabase.from("notifications").insert({
           user_id: admin.user_id,

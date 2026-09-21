@@ -30,7 +30,9 @@ describe("BL-027 — FIFPL et OPCO séparés", () => {
     expect(paymentStep).toContain("isOpcoFunding");
     expect(paymentStep).toMatch(/if \(isOpco\)/);
     expect(paymentStep).toContain("paymentOption: undefined");
-    expect(paymentStep).toContain("Aucun frais de dossier");
+    expect(paymentStep).toContain("OPCO_REGISTER_COPY");
+    expect(paymentStep).toContain("validateOpcoQuestionnaire");
+    expect(paymentStep).toContain("opcoKnowsOpco");
   });
 
   it("ConfirmationStep traite OPCO comme sans paiement", () => {
@@ -38,7 +40,7 @@ describe("BL-027 — FIFPL et OPCO séparés", () => {
     expect(confirmation).toContain("isOpcoFunding");
     expect(confirmation).toContain("REGISTRATION_FUNDING_MAP");
     expect(confirmation).toMatch(/hasPaymentStep = .*!isOpco/);
-    expect(confirmation).toContain("Financement OPCO");
+    expect(confirmation).toContain("OPCO_REGISTER_COPY");
   });
 
   it("submit-registration ignore paiement et inserts pour OPCO", () => {
@@ -47,9 +49,26 @@ describe("BL-027 — FIFPL et OPCO séparés", () => {
     expect(edge).toContain('opco: "OPCO"');
     expect(edge).toContain("isOpcoFunding");
     expect(edge).toMatch(/!isOpco &&/);
-    expect(edge).toContain(
-      "Financement OPCO — modalités de règlement à convenir avec FLI"
-    );
+    expect(edge).toContain("funding_details");
+    expect(edge).toContain("OPCO à analyser");
+    expect(edge).toContain("formatOpcoObservation");
+  });
+
+  it("CourseSelectionStep affiche le texte OPCO validé", () => {
+    const step = source("src/components/registration/CourseSelectionStep.tsx");
+    expect(step).toContain("votre dossier sera étudié par FLI");
+    expect(step).toContain("Aucun frais");
+    expect(step).toContain("ne sera facturé pour le moment");
+  });
+
+  it("le back-office expose financement et propositions", () => {
+    const card = source("src/components/inscriptions/InscriptionFundingCard.tsx");
+    expect(card).toContain("useCreateFundingProposal");
+    expect(card).toContain("PROPOSAL_PAYER_TYPES");
+    expect(card).toContain("Mode de financement");
+    const details = source("src/pages/inscriptions/InscriptionDetails.tsx");
+    expect(details).toContain("InscriptionFundingCard");
+    expect(details).toContain("funding_organization");
   });
 });
 

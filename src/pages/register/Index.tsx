@@ -70,6 +70,12 @@ export interface RegistrationData {
 
   // Paiement
   paymentOption?: RegistrationPaymentOption;
+
+  /** BL-027 — questionnaire OPCO (uniquement si fundingType === opco) */
+  opcoKnowsOpco?: boolean | null;
+  opcoName?: string;
+  opcoNafCode?: string;
+  opcoCaseNotes?: string;
 }
 
 const steps = [

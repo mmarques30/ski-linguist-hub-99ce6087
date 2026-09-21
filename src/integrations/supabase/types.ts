@@ -894,6 +894,8 @@ export type Database = {
           notes: string | null
           payment_amount: number | null
           payment_date: string | null
+          payment_formula: string | null
+          payer_type: string | null
           reference_number: string | null
           request_date: string
           status: string
@@ -915,6 +917,8 @@ export type Database = {
           notes?: string | null
           payment_amount?: number | null
           payment_date?: string | null
+          payment_formula?: string | null
+          payer_type?: string | null
           reference_number?: string | null
           request_date?: string
           status?: string
@@ -936,6 +940,8 @@ export type Database = {
           notes?: string | null
           payment_amount?: number | null
           payment_date?: string | null
+          payment_formula?: string | null
+          payer_type?: string | null
           reference_number?: string | null
           request_date?: string
           status?: string

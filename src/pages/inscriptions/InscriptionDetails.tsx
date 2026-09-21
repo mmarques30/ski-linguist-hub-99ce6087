@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InscriptionOpsChecklist } from "@/components/inscriptions/InscriptionOpsChecklist";
 import { InscriptionFinancialPayments } from "@/components/inscriptions/InscriptionFinancialPayments";
+import { InscriptionFundingCard } from "@/components/inscriptions/InscriptionFundingCard";
 import { useInscriptionClientAccess } from "@/hooks/useInscriptionClientAccess";
 import { useInscriptionDocuments } from "@/hooks/useInscriptionDocuments";
 import {
@@ -199,7 +200,7 @@ export default function InscriptionDetails() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("inscriptions")
-        .select("schedule_status, schedule, documents_sent_at, student_id")
+        .select("schedule_status, schedule, documents_sent_at, student_id, funding_organization, funding_details")
         .eq("id", id!)
         .maybeSingle();
       if (error) throw error;
@@ -820,6 +821,12 @@ export default function InscriptionDetails() {
 
           {/* Financial Tab */}
           <TabsContent value="financial" className="space-y-4">
+            <InscriptionFundingCard
+              inscriptionId={id!}
+              fundingOrganization={opsFields?.funding_organization ?? null}
+              fundingDetails={opsFields?.funding_details ?? null}
+            />
+
             <div className="grid gap-4 md:grid-cols-3">
               <Card>
                 <CardHeader className="pb-3">
@@ -997,6 +1004,7 @@ export default function InscriptionDetails() {
               modality: inscription.modality,
               course_location: inscription.course_location,
               observations: inscription.observations,
+              funding_organization: opsFields?.funding_organization ?? null,
             }}
           />
 
