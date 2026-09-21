@@ -1000,6 +1000,8 @@ export default function InscriptionDetails() {
               duration_hours: inscription.duration_hours,
               hours_followed: progression?.hours_followed ?? null,
               price: inscription.price,
+              deposit_amount: inscription.deposit_amount,
+              balance_after_deposit: inscription.balance_after_deposit,
               code: inscription.code,
               course_location: inscription.course_location,
               modality: inscription.modality,

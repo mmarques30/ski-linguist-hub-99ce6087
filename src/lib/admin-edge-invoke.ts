@@ -55,12 +55,18 @@ export async function invokeAdminEdgeFunction<T = unknown>(
   }
 
   if (!response.ok) {
-    throw new Error(
-      messageFromFunctionsInvoke(
-        { message: `HTTP ${response.status}` },
-        payload
-      )
+    const fromBody = messageFromFunctionsInvoke(
+      { message: `HTTP ${response.status}` },
+      payload
     );
+    // Ne jamais remonter un « Erreur » nu : ajouter le statut HTTP.
+    const enriched =
+      !fromBody || fromBody === "Erreur" || fromBody === "Erreur interne"
+        ? `Échec Edge ${functionName} (HTTP ${response.status})${
+            raw.trim() ? ` — ${raw.trim().slice(0, 200)}` : ""
+          }`
+        : fromBody;
+    throw new Error(enriched);
   }
 
   if (payload && typeof payload === "object" && "error" in payload) {
