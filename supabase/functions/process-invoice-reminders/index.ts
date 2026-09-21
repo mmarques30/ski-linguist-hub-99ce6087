@@ -254,6 +254,29 @@ Deno.serve(async (req) => {
           reminderLevel: level,
           action: `ENVOYEE - relance ${level} (payeur ${clientType})`,
         })
+
+        // BL-007 — notif BO facture échue
+        try {
+          const { data: adminUsers } = await supabase
+            .from('user_roles')
+            .select('user_id')
+            .eq('role', 'admin')
+          const title =
+            level === 3
+              ? `Mise en demeure — ${invoice.invoice_number}`
+              : `Facture échue (relance ${level}) — ${invoice.invoice_number}`
+          for (const admin of adminUsers || []) {
+            await supabase.from('notifications').insert({
+              user_id: admin.user_id,
+              type: 'paiement',
+              title,
+              message: `${daysOverdue} j de retard · ${formatAmount(invoice.amount_ttc || invoice.amount_ht)}`,
+              link: `/invoices?q=${encodeURIComponent(invoice.invoice_number || invoice.id)}`,
+            })
+          }
+        } catch (notifError) {
+          console.warn('Notification facture échue impossible:', notifError)
+        }
       } catch (emailError) {
         results.errors.push(`Facture ${invoice.invoice_number}: ${emailError}`)
       }

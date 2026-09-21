@@ -177,6 +177,18 @@ export async function ensureInvoicePayment(params: {
     cheque_date: params.paymentMethod === "cheque" ? params.paymentDate : null,
   } as never);
   if (error) throw error;
+
+  await notifyAdmins({
+    type: "paiement",
+    title: `Paiement reçu — ${remaining} €`,
+    message: params.payerName
+      ? `${params.payerName} · ${params.paymentMethod}`
+      : `Méthode : ${params.paymentMethod}`,
+    link: params.inscriptionId
+      ? `/inscriptions/${params.inscriptionId}?tab=financial`
+      : "/finance/payments",
+  });
+
   return "created";
 }
 
