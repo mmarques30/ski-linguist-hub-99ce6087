@@ -84,7 +84,11 @@ export interface EndPackStore {
   ): Promise<{ id: string; invoice_number: string | null } | null>;
   getInscriptionAmounts(
     inscriptionId: string
-  ): Promise<{ price: number | null; deposit_amount: number | null } | null>;
+  ): Promise<{
+    price: number | null;
+    deposit_amount: number | null;
+    balance_after_deposit?: number | null;
+  } | null>;
   insertInvoice(row: {
     inscription_id: string;
     invoice_type: "formation";
@@ -214,6 +218,28 @@ function progressionLabel(objectif: ObjectifAtteint): string {
   return "Non";
 }
 
+/**
+ * Montant d'acompte à déduire de la facture de solde.
+ * Priorité à `deposit_amount` ; sinon reconstitution via
+ * `price - balance_after_deposit` (inscriptions FIFPL / OPCO créées avant
+ * que `deposit_amount` soit renseigné à la soumission).
+ */
+export function resolveEndPackDeposit(amounts: {
+  price: number | null;
+  deposit_amount: number | null;
+  balance_after_deposit?: number | null;
+}): number {
+  if (amounts.deposit_amount != null && amounts.deposit_amount > 0) {
+    return amounts.deposit_amount;
+  }
+  const price = amounts.price ?? 0;
+  const balance = amounts.balance_after_deposit;
+  if (balance != null && balance >= 0 && price > balance) {
+    return price - balance;
+  }
+  return 0;
+}
+
 export async function generateEndPack(
   store: EndPackStore,
   data: EndPackInput
@@ -248,7 +274,7 @@ export async function generateEndPack(
           throw new Error("Inscription introuvable, facture impossible.");
         }
         const amount = amounts.price || 0;
-        const deposit = amounts.deposit_amount || 0;
+        const deposit = resolveEndPackDeposit(amounts);
         const finalAmount = amount - deposit;
         const invoice = await store.insertInvoice({
           inscription_id: data.inscriptionId,

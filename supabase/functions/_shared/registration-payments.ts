@@ -70,7 +70,7 @@ export function getInscriptionPaymentFields(
     return {
       paymentMethod: "virement",
       balanceAfterDeposit,
-      depositAmount: null,
+      depositAmount: FRAIS_DOSSIER_EUR,
       paymentFlow: "virement",
       paymentType: "acompte",
       stripeAmount: 0,
@@ -81,7 +81,7 @@ export function getInscriptionPaymentFields(
   return {
     paymentMethod: "cheque",
     balanceAfterDeposit,
-    depositAmount: null,
+    depositAmount: FRAIS_DOSSIER_EUR,
     paymentFlow: "stripe",
     paymentType: "acompte",
     stripeAmount: FRAIS_DOSSIER_EUR,

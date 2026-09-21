@@ -52,9 +52,18 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } =
-      await callerClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+
+    let userId: string | null = null;
+    const { data: claimsData } = await callerClient.auth.getClaims(token);
+    if (claimsData?.claims?.sub && typeof claimsData.claims.sub === "string") {
+      userId = claimsData.claims.sub;
+    } else {
+      const { data: userData, error: userError } = await callerClient.auth.getUser(token);
+      if (!userError && userData?.user?.id) {
+        userId = userData.user.id;
+      }
+    }
+    if (!userId) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -65,7 +74,7 @@ Deno.serve(async (req) => {
       auth: { persistSession: false, autoRefreshToken: false },
     });
     const { data: isAdmin } = await admin.rpc("has_role", {
-      _user_id: claimsData.claims.sub,
+      _user_id: userId,
       _role: "admin",
     });
     if (!isAdmin) {

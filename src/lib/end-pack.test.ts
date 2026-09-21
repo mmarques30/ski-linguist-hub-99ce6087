@@ -4,6 +4,7 @@ import { join } from "node:path";
 import {
   describeEndPackRollback,
   generateEndPack,
+  resolveEndPackDeposit,
   type EndPackCloseFields,
   type EndPackInput,
   type EndPackStore,
@@ -27,6 +28,7 @@ type MemoryInscription = {
   id: string;
   price: number | null;
   deposit_amount: number | null;
+  balance_after_deposit: number | null;
   status: string;
   end_pack_sent_at: string | null;
 };
@@ -79,6 +81,7 @@ function createMemoryStore(options?: {
     id: "ins-1",
     price: 1200,
     deposit_amount: 150,
+    balance_after_deposit: 1050,
     status: "en_cours",
     end_pack_sent_at: null,
   };
@@ -99,6 +102,7 @@ function createMemoryStore(options?: {
       return {
         price: inscription.price,
         deposit_amount: inscription.deposit_amount,
+        balance_after_deposit: inscription.balance_after_deposit,
       };
     },
     async insertInvoice(row) {
@@ -327,9 +331,61 @@ describe("generateEndPack — ordre et compensation", () => {
     expect(memory.inscription.status).toBe("en_cours");
   });
 
+  it("déduit l'acompte même si deposit_amount est null (repli balance_after_deposit)", async () => {
+    const memory = createMemoryStore();
+    memory.inscription.price = 300;
+    memory.inscription.deposit_amount = null;
+    memory.inscription.balance_after_deposit = 150;
+
+    let inserted: { amount_ht: number; payment_type: string } | null = null;
+    const baseInsert = memory.store.insertInvoice.bind(memory.store);
+    memory.store.insertInvoice = async (row) => {
+      inserted = { amount_ht: row.amount_ht, payment_type: row.payment_type };
+      return baseInsert(row);
+    };
+
+    await generateEndPack(
+      memory.store,
+      input({ generateCertificate: false, sendSurvey: false })
+    );
+    expect(inserted).toEqual({ amount_ht: 150, payment_type: "saldo" });
+  });
+
   it("le hook délègue au module et n'écrit plus le statut en premier", () => {
     const hook = readFileSync(join(process.cwd(), "src/hooks/useEndPack.ts"), "utf8");
     expect(hook).toContain("generateEndPack(createSupabaseEndPackStore(), data)");
     expect(hook).not.toMatch(/status:\s*"terminee"[\s\S]*generateInvoice/);
+  });
+});
+
+describe("resolveEndPackDeposit", () => {
+  it("privilégie deposit_amount quand il est renseigné", () => {
+    expect(
+      resolveEndPackDeposit({
+        price: 300,
+        deposit_amount: 150,
+        balance_after_deposit: 150,
+      })
+    ).toBe(150);
+  });
+
+  it("reconstitue l'acompte via price − balance_after_deposit", () => {
+    expect(
+      resolveEndPackDeposit({
+        price: 300,
+        deposit_amount: null,
+        balance_after_deposit: 150,
+      })
+    ).toBe(150);
+  });
+
+  it("renvoie 0 sans acompte ni solde partiel", () => {
+    expect(
+      resolveEndPackDeposit({
+        price: 300,
+        deposit_amount: null,
+        balance_after_deposit: null,
+      })
+    ).toBe(0);
   });
 });
