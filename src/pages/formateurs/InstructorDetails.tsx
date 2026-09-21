@@ -41,9 +41,15 @@ import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { displayLanguageLabel } from "@/lib/taught-languages";
 import { formateurAssistPath } from "@/lib/client-links";
 import { getStatusLabel, getStatusStyle } from "@/lib/inscription-status";
+import {
+  activationConfirmDescription,
+  candidatActivationGaps,
+  STATUT_ADMINISTRATIF_PRESETS,
+} from "@/lib/instructor-candidat";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const paymentStatusColors: Record<string, string> = {
   a_payer: "bg-amber-100 text-amber-800",
@@ -62,18 +68,9 @@ const instructorStatusLabels: Record<string, string> = {
   candidat: "Candidat·e",
 };
 
-const ADMIN_STATUT_OPTIONS = [
-  { value: "candidat", label: "Candidat·e" },
-  { value: "actif", label: "Actif·ve" },
-  { value: "inactif", label: "Inactif·ve" },
-  { value: "a_regulariser", label: "À régulariser" },
-  { value: "dossier_complet", label: "Dossier complet" },
-  { value: "dossier_incomplet", label: "Dossier incomplet" },
-];
-
 function adminStatutLabel(value: string | null | undefined): string {
   if (!value) return "Non renseigné";
-  const found = ADMIN_STATUT_OPTIONS.find((option) => option.value === value);
+  const found = STATUT_ADMINISTRATIF_PRESETS.find((option) => option.value === value);
   return found?.label ?? value;
 }
 
@@ -150,7 +147,10 @@ export default function InstructorDetails() {
   };
 
   const adminStatutOptions = useMemo(() => {
-    const options = [...ADMIN_STATUT_OPTIONS];
+    const options = STATUT_ADMINISTRATIF_PRESETS.map((option) => ({
+      value: option.value,
+      label: option.label,
+    }));
     if (
       instructor?.statut_administratif &&
       !options.some((option) => option.value === instructor.statut_administratif)
@@ -176,6 +176,39 @@ export default function InstructorDetails() {
     (instructor.first_name?.[0] || "") + (instructor.last_name?.[0] || "");
   const upcomingInscriptions = inscriptions.filter((i) => isUpcomingInscription(i, today));
   const pastInscriptions = inscriptions.filter((i) => isPastInscription(i, today));
+  const activationGaps =
+    instructor.status === "candidat" ? candidatActivationGaps(instructor) : [];
+
+  const activateCandidat = () => {
+    if (!id) return;
+    confirm({
+      title: "Passer en actif·ve ?",
+      description: activationConfirmDescription(activationGaps),
+      actionLabel: "Confirmer",
+      run: () =>
+        updateInstructor.mutateAsync({
+          id,
+          status: "actif",
+          is_active: true,
+        }),
+    });
+  };
+
+  const deactivateInstructor = () => {
+    if (!id) return;
+    confirm({
+      title: "Passer en inactif·ve ?",
+      description:
+        "La personne ne pourra plus être affectée aux nouvelles inscriptions. Les missions en cours ne sont pas annulées.",
+      actionLabel: "Confirmer",
+      run: () =>
+        updateInstructor.mutateAsync({
+          id,
+          status: "inactif",
+          is_active: false,
+        }),
+    });
+  };
 
   return (
     <MainLayout>
@@ -248,25 +281,17 @@ export default function InstructorDetails() {
               </Button>
             )}
             {editable && instructor.status === "candidat" && (
+              <Button onClick={activateCandidat} disabled={updateInstructor.isPending}>
+                Passer en actif·ve
+              </Button>
+            )}
+            {editable && instructor.status === "actif" && (
               <Button
-                onClick={() => {
-                  if (!id) return;
-                  confirm({
-                    title: "Passer en actif·ve ?",
-                    description:
-                      "Le statut du formateur passera de candidat·e à actif·ve.",
-                    actionLabel: "Confirmer",
-                    run: () =>
-                      updateInstructor.mutateAsync({
-                        id,
-                        status: "actif",
-                        is_active: true,
-                      }),
-                  });
-                }}
+                variant="outline"
+                onClick={deactivateInstructor}
                 disabled={updateInstructor.isPending}
               >
-                Passer en actif·ve
+                Passer en inactif·ve
               </Button>
             )}
             {editable && (
@@ -276,6 +301,31 @@ export default function InstructorDetails() {
             )}
           </div>
         </div>
+
+        {instructor.status === "candidat" && (
+          <Alert className="border-sky-200 bg-sky-50 text-sky-950">
+            <AlertTitle>Candidat·e — pas encore affectable aux inscriptions</AlertTitle>
+            <AlertDescription>
+              {activationGaps.length === 0 ? (
+                <p>
+                  Dossier prêt. Vous pouvez passer la personne en actif·ve pour
+                  l&apos;affecter aux formations.
+                </p>
+              ) : (
+                <>
+                  <p className="mb-2">
+                    Points encore à compléter (n&apos;empêchent pas l&apos;activation) :
+                  </p>
+                  <ul className="list-disc pl-5 space-y-0.5">
+                    {activationGaps.map((gap) => (
+                      <li key={gap}>{gap}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Tabs */}
         <Tabs defaultValue="profil">

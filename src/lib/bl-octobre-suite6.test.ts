@@ -24,15 +24,37 @@ describe("BL-014 — candidat → actif", () => {
     const details = source("src/pages/formateurs/InstructorDetails.tsx");
     expect(details).toContain('instructor.status === "candidat"');
     expect(details).toContain("Passer en actif·ve");
+    expect(details).toContain("activationConfirmDescription");
+    expect(details).toContain("candidatActivationGaps");
+    expect(details).toContain("STATUT_ADMINISTRATIF_PRESETS");
+    expect(details).toContain("Passer en inactif·ve");
     expect(details).toMatch(/status:\s*"actif"/);
     expect(details).toMatch(/is_active:\s*true/);
     expect(details).toContain("updateInstructor.mutate");
+    expect(details).not.toContain('value: "candidat"');
+  });
+
+  it("InstructorsList active depuis la liste candidat·es", () => {
+    const list = source("src/pages/formateurs/InstructorsList.tsx");
+    expect(list).toContain("onActivate");
+    expect(list).toContain("activateCandidat");
+    expect(list).toContain("activationConfirmDescription");
+    expect(list).toContain("Aucun·e candidat·e");
+  });
+
+  it("InstructorCard affiche le CTA d'activation pour les candidat·es", () => {
+    const card = source("src/components/formateurs/InstructorCard.tsx");
+    expect(card).toContain("onActivate");
+    expect(card).toContain("Passer en actif·ve");
+    expect(card).toContain("candidatActivationGaps");
   });
 
   it("InstructorFormDialog crée les nouveaux formateurs en statut candidat", () => {
     const dialog = source("src/components/formateurs/InstructorFormDialog.tsx");
     expect(dialog).toMatch(/emptyForm[\s\S]*status:\s*"candidat"/);
     expect(dialog).toContain('is_active: form.status === "actif"');
+    expect(dialog).toContain("STATUT_ADMINISTRATIF_PRESETS");
+    expect(dialog).toContain("statut candidat·e");
   });
 });
 

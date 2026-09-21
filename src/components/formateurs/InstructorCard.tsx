@@ -2,9 +2,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Pencil, Star } from "lucide-react";
+import { CheckCircle2, Pencil, Star } from "lucide-react";
 import type { Instructor } from "@/hooks/useInstructors";
 import { displayLanguageLabel } from "@/lib/taught-languages";
+import { candidatActivationGaps } from "@/lib/instructor-candidat";
 
 const availabilityStyles: Record<string, string> = {
   disponible: "bg-emerald-100 text-emerald-800",
@@ -41,11 +42,14 @@ interface Props {
   instructor: Instructor;
   onClick: () => void;
   onEdit?: () => void;
+  onActivate?: () => void;
 }
 
-export function InstructorCard({ instructor, onClick, onEdit }: Props) {
+export function InstructorCard({ instructor, onClick, onEdit, onActivate }: Props) {
   const initials =
     (instructor.first_name?.[0] || "") + (instructor.last_name?.[0] || "");
+  const isCandidat = instructor.status === "candidat";
+  const gaps = isCandidat ? candidatActivationGaps(instructor) : [];
 
   return (
     <Card
@@ -117,6 +121,32 @@ export function InstructorCard({ instructor, onClick, onEdit }: Props) {
               </span>
             )}
           </div>
+          {isCandidat && (
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              {gaps.length > 0 ? (
+                <span className="text-xs text-sky-800">
+                  {gaps.length} point{gaps.length > 1 ? "s" : ""} à compléter
+                </span>
+              ) : (
+                <span className="text-xs text-emerald-700">Dossier prêt</span>
+              )}
+              {onActivate && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  className="h-7"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onActivate();
+                  }}
+                >
+                  <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
+                  Passer en actif·ve
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
