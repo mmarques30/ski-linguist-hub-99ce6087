@@ -42,7 +42,7 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 |--------|--------|
 | App | **https://plateforme.fli.fr** (alias Lovable → `ski-linguist-hub.lovable.app`) |
 | Alignement front ↔ `main` | **Aligné** 21/09 — publié après #82–#85 |
-| Edges / Resend | **19/19** ; `RESEND_API_KEY` OK ; Stripe OK ; BL-047 **clos** ; crons BL-007 **actifs** ; `process-invoice-reminders` à republier pour notif facture échue |
+| Edges / Resend | **19/19** ; `RESEND_API_KEY` OK ; Stripe OK ; BL-047 **clos** ; crons BL-007 **actifs** ; `process-invoice-reminders` **republie** 21/09 (notif facture échue) |
 
 ### Branches non fusionnées (reste)
 
@@ -335,7 +335,7 @@ Fichiers clés : `src/pages/**`, `src/hooks/**`, `src/lib/**`, `supabase/functio
 
 ## 11. Backlog & plan points 1–10
 
-Intégré depuis `docs/BACKLOG.md` (refresh 21/09/2026) :
+Intégré depuis `docs/BACKLOG.md` (refresh 21/09/2026 — BL-007 clos) :
 
 **Ouvert (extraits) :** BL-001, 008, 011, 014 (peaufinage), 015, 017, 019, 020, 022.
 
