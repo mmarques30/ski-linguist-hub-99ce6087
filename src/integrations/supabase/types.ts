@@ -892,10 +892,14 @@ export type Database = {
           id: string
           inscription_id: string
           notes: string | null
+          payer_type: string | null
           payment_amount: number | null
           payment_date: string | null
           payment_formula: string | null
+<<<<<<< HEAD
           payer_type: string | null
+=======
+>>>>>>> origin/main
           reference_number: string | null
           request_date: string
           status: string
@@ -915,10 +919,14 @@ export type Database = {
           id?: string
           inscription_id: string
           notes?: string | null
+          payer_type?: string | null
           payment_amount?: number | null
           payment_date?: string | null
           payment_formula?: string | null
+<<<<<<< HEAD
           payer_type?: string | null
+=======
+>>>>>>> origin/main
           reference_number?: string | null
           request_date?: string
           status?: string
@@ -938,10 +946,14 @@ export type Database = {
           id?: string
           inscription_id?: string
           notes?: string | null
+          payer_type?: string | null
           payment_amount?: number | null
           payment_date?: string | null
           payment_formula?: string | null
+<<<<<<< HEAD
           payer_type?: string | null
+=======
+>>>>>>> origin/main
           reference_number?: string | null
           request_date?: string
           status?: string
