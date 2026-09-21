@@ -228,6 +228,7 @@ export function useCreateInvoice() {
           amount_ht: invoiceData.amount_ht,
           tva_rate: invoiceData.tva_rate,
           notes: invoiceData.notes,
+          origin: "app",
         })
         .select()
         .single();

@@ -49,7 +49,13 @@ En fin de campagne de test : `/admin/testing` → **Simuler (dry-run)** → si l
 
 1. Fusionner et déployer les branches `cursor/emails-8-minimal-7435` puis `cursor/kit-test-zztest-7435` (ou la seconde, qui contient déjà la première).
 2. Poser `RESEND_API_KEY` seulement après le DNS du point 8-minimal (voir `docs/EMAILS_8_MINIMAL.md`). Tant que la clé n’est pas là, `/register` enregistre quand même l’inscription ; l’écran de confirmation dira que l’équipe recontactera, et le journal d’emails restera vide ou en erreur « clé absente ».
-3. Ne pas activer de cron.
+3. Crons email (`process-invoice-reminders`, `process-schedule-reminders`,
+   `process-survey-reminders`) : **laisser inactifs** jusqu’à preuve ZZTEST
+   (destinataire, texte, `email_log`) puis réactivation **un job à la fois**.
+   Tant que `app_settings.email_crons_live` ≠ true, un cron actif tourne en
+   `?dry_run=true` (même paramètre que « Essai sans envoi ») et doit produire
+   un récap à `info@fli.fr`. Ne pas passer `email_crons_live` à true avant
+   trois jours de récapitulatifs conformes.
 
 ---
 
@@ -133,7 +139,10 @@ La liste `/inscriptions/schedule-validation` ne montre que les inscriptions **en
 5. Toast du type « 1 inscription(s) — groupe … validé ». La ligne disparaît de la liste.
 6. Retour fiche : bouton **Horaire** → statut matin ou après-midi renseigné.
 
-Aucun cron de relance J-10 n’est activé ; cette étape est manuelle.
+Aucun cron de relance horaires n’est activé pour ce scénario ; l’étape reste
+manuelle. (Écart connu vs cadrage 17/09 : le modèle 4 devrait être J-11 à
+7 h 15 puis toutes les deux heures de 8 h à 20 h tant que la répartition
+n’est pas faite — aujourd’hui un seul déclenchement quotidien à 7 h 15.)
 
 ---
 
@@ -208,5 +217,6 @@ Ne pas exporter de CSV nominatif dans le dépôt.
 
 - Évaluations SNMSF / DSF (point C, après validation de ce kit).
 - Prospection moniteurs (gelée).
-- Relances facture automatiques (cron existant, hors scénario).
+- Relances facture automatiques : crons en dry_run tant que
+  `email_crons_live` est false ; pas d’activation live sans preuve ZZTEST.
 - Paiement Stripe de `/register` (volontairement évité ici).
