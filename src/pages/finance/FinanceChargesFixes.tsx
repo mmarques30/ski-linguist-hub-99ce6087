@@ -21,6 +21,7 @@ import { fr } from "date-fns/locale";
 import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { TresorerieSubnav } from "@/components/finance/PilotageSubnav";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
 
 const BRAND_GOLD = 'hsl(40, 97%, 54%)';
 const BRAND_NAVY = 'hsl(219, 52%, 16%)';
@@ -49,6 +50,7 @@ export default function FinanceChargesFixes() {
   const { toast } = useToast();
   const { canEdit } = useUserPermissions();
   const editable = canEdit("finance.charges_fixes");
+  const { confirm, dialog: confirmDialog } = useConfirmAction();
   const currentMonth = format(startOfMonth(new Date()), 'yyyy-MM-dd');
   
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
@@ -158,7 +160,7 @@ export default function FinanceChargesFixes() {
     }
   };
 
-  const handleTogglePaid = async (id: string, currentPaid: boolean) => {
+  const persistTogglePaid = async (id: string, currentPaid: boolean) => {
     try {
       await updateFixedCost.mutateAsync({ 
         id, 
@@ -169,6 +171,17 @@ export default function FinanceChargesFixes() {
     } catch (error: any) {
       toast({ variant: "destructive", title: "Erreur", description: error.message });
     }
+  };
+
+  const handleTogglePaid = (id: string, currentPaid: boolean) => {
+    confirm({
+      title: currentPaid ? "Marquer comme non payé ?" : "Marquer comme payé ?",
+      description: currentPaid
+        ? "Cette charge sera marquée comme non payée."
+        : "Cette charge sera marquée comme payée à la date du jour.",
+      actionLabel: "Confirmer",
+      run: () => persistTogglePaid(id, currentPaid),
+    });
   };
 
   const totalTemplates = templates?.filter(t => t.actif).reduce((sum, t) => sum + Number(t.montant_mensuel), 0) || 0;
@@ -518,6 +531,7 @@ export default function FinanceChargesFixes() {
           </CardContent>
         </Card>
       </div>
+      {confirmDialog}
     </MainLayout>
   );
 }

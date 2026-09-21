@@ -66,7 +66,7 @@ describe("BL-027 — FIFPL et OPCO séparés", () => {
     expect(card).toContain("useCreateFundingProposal");
     expect(card).toContain("PROPOSAL_PAYER_TYPES");
     expect(card).toContain("Mode de financement");
-    expect(card).toContain("AlertDialog");
+    expect(card).toContain("useConfirmAction");
     expect(card).toContain("Enregistrer les montants");
     expect(card).toContain("openEdit");
     expect(card).toContain("__custom__");

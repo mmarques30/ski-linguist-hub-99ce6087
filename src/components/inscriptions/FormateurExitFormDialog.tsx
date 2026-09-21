@@ -28,6 +28,7 @@ import {
   type ProgressionEntryFields,
   type ProgressionExitFields,
 } from "@/lib/certificate-progression";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
 
 interface FormateurExitFormDialogProps {
   open: boolean;
@@ -49,6 +50,7 @@ export function FormateurExitFormDialog({
   existingEntry,
 }: FormateurExitFormDialogProps) {
   const save = useSaveExitForm();
+  const { confirm, dialog: confirmDialog } = useConfirmAction();
   const [fields, setFields] = useState<ProgressionExitFields>({
     niveau_general_sortie: "B1",
     niveau_technique_sortie: "B1",
@@ -68,7 +70,7 @@ export function FormateurExitFormDialog({
     setHours(hoursFollowed ?? durationHours ?? "");
   }, [open, initial, hoursFollowed, durationHours]);
 
-  const handleSave = async () => {
+  const persistExit = async () => {
     await save.mutateAsync({
       inscriptionId,
       fields,
@@ -76,6 +78,15 @@ export function FormateurExitFormDialog({
       existingEntry: existingEntry || undefined,
     });
     onOpenChange(false);
+  };
+
+  const handleSave = () => {
+    confirm({
+      title: "Enregistrer le formulaire de sortie ?",
+      description: "Les niveaux de sortie formateur seront enregistrés pour cette inscription.",
+      actionLabel: "Enregistrer",
+      run: () => persistExit(),
+    });
   };
 
   return (
@@ -202,6 +213,7 @@ export function FormateurExitFormDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+      {confirmDialog}
     </Dialog>
   );
 }

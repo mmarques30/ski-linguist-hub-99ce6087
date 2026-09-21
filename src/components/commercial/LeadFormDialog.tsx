@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Trash2, UserPlus } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
 
 interface Props {
   open: boolean;
@@ -38,6 +39,7 @@ export function LeadFormDialog({ open, onOpenChange, lead, defaultChannel = "cpf
   const deleteLead = useDeleteLead();
   const isEdit = !!lead;
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const { confirm, dialog: confirmDialog } = useConfirmAction();
 
   const [form, setForm] = useState({
     contact_name: "",
@@ -129,15 +131,7 @@ export function LeadFormDialog({ open, onOpenChange, lead, defaultChannel = "cpf
 
   const { data: skiMonitors = [] } = useSkiMonitors({ status: "active" });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.contact_name.trim()) return;
-
-    if (form.status === "perdu" && !form.loss_reason.trim()) {
-      toast.error("Motif de perte requis pour un lead perdu");
-      return;
-    }
-
+  const persistLead = async () => {
     const payload = {
       ...form,
       partner_id: form.partner_id || null,
@@ -167,6 +161,25 @@ export function LeadFormDialog({ open, onOpenChange, lead, defaultChannel = "cpf
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Erreur");
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.contact_name.trim()) return;
+
+    if (form.status === "perdu" && !form.loss_reason.trim()) {
+      toast.error("Motif de perte requis pour un lead perdu");
+      return;
+    }
+
+    confirm({
+      title: isEdit ? "Enregistrer les modifications ?" : "Créer ce lead ?",
+      description: isEdit
+        ? "Les informations du lead seront mises à jour."
+        : "Un nouveau lead sera ajouté au pipeline.",
+      actionLabel: isEdit ? "Enregistrer" : "Créer",
+      run: () => persistLead(),
+    });
   };
 
   const handleConvert = async () => {
@@ -483,6 +496,7 @@ export function LeadFormDialog({ open, onOpenChange, lead, defaultChannel = "cpf
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {confirmDialog}
     </>
   );
 }

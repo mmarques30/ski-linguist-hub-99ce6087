@@ -816,6 +816,8 @@ export default function InscriptionDetails() {
             <PlacementTestSummaryCard
               testId={(inscription as { entry_test_id?: string | null }).entry_test_id}
               fallbackScore={inscription.entry_test_score}
+              editable={editable}
+              inscriptionEntryLevel={inscription.entry_level}
             />
           </TabsContent>
 
@@ -964,12 +966,23 @@ export default function InscriptionDetails() {
               start_date: inscription.start_date,
               end_date: inscription.end_date,
               duration_hours: inscription.duration_hours,
+              duration_days: inscription.duration_days,
+              hours_per_day: inscription.hours_per_day,
               price: inscription.price,
+              pedagogical_cost: inscription.pedagogical_cost,
               entry_level: inscription.entry_level,
+              exit_level: inscription.exit_level,
               modality: inscription.modality,
               course_location: inscription.course_location,
               observations: inscription.observations,
+              expectations: inscription.expectations,
               funding_organization: opsFields?.funding_organization ?? null,
+              group_name: inscription.group_name,
+              groupe_code: (inscription as { groupe_code?: string | null }).groupe_code ?? null,
+              dates_to_confirm: inscription.dates_to_confirm,
+              certification_type: inscription.certification_type,
+              certification_result: inscription.certification_result,
+              certification_date: inscription.certification_date,
             }}
           />
 

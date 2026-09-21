@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreatePartner, useUpdatePartner, type Partner } from "@/hooks/usePartners";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
 
 interface Props {
   open: boolean;
@@ -32,6 +33,7 @@ export function PartnerFormDialog({ open, onOpenChange, partner }: Props) {
   const create = useCreatePartner();
   const update = useUpdatePartner();
   const isEdit = !!partner;
+  const { confirm, dialog: confirmDialog } = useConfirmAction();
 
   const [form, setForm] = useState({
     name: "",
@@ -63,14 +65,25 @@ export function PartnerFormDialog({ open, onOpenChange, partner }: Props) {
     }
   }, [partner, open]);
 
-  const handleSubmit = async () => {
-    if (!form.name.trim()) return;
+  const persistPartner = async () => {
     if (isEdit) {
       await update.mutateAsync({ id: partner.id, ...form });
     } else {
       await create.mutateAsync(form);
     }
     onOpenChange(false);
+  };
+
+  const handleSubmit = () => {
+    if (!form.name.trim()) return;
+    confirm({
+      title: isEdit ? "Enregistrer les modifications ?" : "Créer ce partenaire ?",
+      description: isEdit
+        ? "Les informations du partenaire seront mises à jour."
+        : "Un nouveau partenaire sera ajouté.",
+      actionLabel: isEdit ? "Enregistrer" : "Créer",
+      run: () => persistPartner(),
+    });
   };
 
   const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
@@ -142,6 +155,7 @@ export function PartnerFormDialog({ open, onOpenChange, partner }: Props) {
           </Button>
         </DialogFooter>
       </DialogContent>
+      {confirmDialog}
     </Dialog>
   );
 }

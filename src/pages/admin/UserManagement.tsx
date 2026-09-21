@@ -15,30 +15,54 @@ import { useUserManagement } from "@/hooks/useUserManagement";
 import { UserFormDialog } from "@/components/admin/UserFormDialog";
 import { EditPermissionsDialog } from "@/components/admin/EditPermissionsDialog";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
 
 export default function UserManagement() {
   const { users, isLoading, createUser, toggleUserActive } = useUserManagement();
   const [formOpen, setFormOpen] = useState(false);
   const [editUserId, setEditUserId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { confirm, dialog: confirmDialog } = useConfirmAction();
 
-  const handleCreate = async (data: Parameters<typeof createUser.mutateAsync>[0]) => {
-    try {
-      await createUser.mutateAsync(data);
-      toast({ title: "Utilisateur créé avec succès" });
-      setFormOpen(false);
-    } catch (err: any) {
-      toast({ variant: "destructive", title: "Erreur", description: err.message });
-    }
+  const handleCreate = (data: Parameters<typeof createUser.mutateAsync>[0]) => {
+    confirm({
+      title: "Créer cet utilisateur ?",
+      description: "Un compte d'accès sera créé avec le rôle choisi.",
+      run: async () => {
+        try {
+          await createUser.mutateAsync(data);
+          toast({ title: "Utilisateur créé avec succès" });
+          setFormOpen(false);
+        } catch (err: unknown) {
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: err instanceof Error ? err.message : "Erreur",
+          });
+        }
+      },
+    });
   };
 
-  const handleToggleActive = async (userId: string, currentActive: boolean) => {
-    try {
-      await toggleUserActive.mutateAsync({ userId, isActive: !currentActive });
-      toast({ title: currentActive ? "Utilisateur désactivé" : "Utilisateur activé" });
-    } catch (err: any) {
-      toast({ variant: "destructive", title: "Erreur", description: err.message });
-    }
+  const handleToggleActive = (userId: string, currentActive: boolean) => {
+    confirm({
+      title: currentActive ? "Désactiver cet utilisateur ?" : "Activer cet utilisateur ?",
+      description: currentActive
+        ? "L'utilisateur ne pourra plus se connecter."
+        : "L'utilisateur retrouvera l'accès à l'application.",
+      run: async () => {
+        try {
+          await toggleUserActive.mutateAsync({ userId, isActive: !currentActive });
+          toast({ title: currentActive ? "Utilisateur désactivé" : "Utilisateur activé" });
+        } catch (err: unknown) {
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: err instanceof Error ? err.message : "Erreur",
+          });
+        }
+      },
+    });
   };
 
   return (
@@ -167,6 +191,7 @@ export default function UserManagement() {
         open={!!editUserId}
         onOpenChange={(open) => { if (!open) setEditUserId(null); }}
       />
+      {confirmDialog}
     </MainLayout>
   );
 }

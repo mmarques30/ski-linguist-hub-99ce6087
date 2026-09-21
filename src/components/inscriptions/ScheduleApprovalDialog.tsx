@@ -19,6 +19,7 @@ import {
 } from "@/lib/placement-test-engine";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
 
 interface ScheduleApprovalDialogProps {
   open: boolean;
@@ -47,13 +48,14 @@ export function ScheduleApprovalDialog({
   inscription,
 }: ScheduleApprovalDialogProps) {
   const approveSchedule = useApproveSchedule();
+  const { confirm, dialog: confirmDialog } = useConfirmAction();
   const scheduleStatus = (inscription.schedule_status || inscription.schedule || "pending") as ScheduleStatus;
   const isDue = inscription.start_date
     ? isScheduleAssignmentDue(inscription.start_date)
     : false;
   const isApproved = scheduleStatus === "matin" || scheduleStatus === "apres-midi";
 
-  const handleApprove = async (slot: "matin" | "apres-midi") => {
+  const persistApprove = async (slot: "matin" | "apres-midi") => {
     try {
       await approveSchedule.mutateAsync({
         inscriptionId: inscription.id,
@@ -64,6 +66,18 @@ export function ScheduleApprovalDialog({
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "Erreur lors de la validation");
     }
+  };
+
+  const handleApprove = (slot: "matin" | "apres-midi") => {
+    confirm({
+      title:
+        slot === "matin"
+          ? "Valider le groupe du matin ?"
+          : "Valider le groupe de l'après-midi ?",
+      description: `L'affectation horaire de ${inscription.student_name || "ce stagiaire"} (${inscription.code || "—"}) sera enregistrée.`,
+      actionLabel: "Valider",
+      run: () => persistApprove(slot),
+    });
   };
 
   return (
@@ -141,6 +155,7 @@ export function ScheduleApprovalDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+      {confirmDialog}
     </Dialog>
   );
 }

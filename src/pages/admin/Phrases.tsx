@@ -58,6 +58,7 @@ import {
   RefreshCw
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
 import {
   useTestPhrases,
   useCreateTestPhrase,
@@ -102,6 +103,7 @@ interface PhraseFormData {
 
 export default function AdminPhrases() {
   const { toast } = useToast();
+  const { confirm, dialog: confirmDialog } = useConfirmAction();
   
   // Filters
   const [languageFilter, setLanguageFilter] = useState<string>("_all");
@@ -220,10 +222,18 @@ export default function AdminPhrases() {
     }
   };
 
-  const handleToggleActive = async (phrase: TestPhrase) => {
-    await updateMutation.mutateAsync({
-      id: phrase.id,
-      active: !phrase.active,
+  const handleToggleActive = (phrase: TestPhrase) => {
+    confirm({
+      title: phrase.active ? "Désactiver cette phrase ?" : "Activer cette phrase ?",
+      description: phrase.active
+        ? "La phrase ne sera plus proposée dans les tests."
+        : "La phrase redeviendra disponible pour les tests.",
+      run: async () => {
+        await updateMutation.mutateAsync({
+          id: phrase.id,
+          active: !phrase.active,
+        });
+      },
     });
   };
 
@@ -770,6 +780,7 @@ export default function AdminPhrases() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {confirmDialog}
     </MainLayout>
   );
 }
