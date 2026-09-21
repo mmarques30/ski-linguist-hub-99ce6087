@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
@@ -40,6 +41,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { describeCaughtError } from "@/lib/supabase-error";
 import { studentEmailLabel } from "@/lib/email-guards";
 import { buildStudentSearchFilter } from "@/hooks/useStudents";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
+import { FUNDING_ORGANIZATION_OPTIONS } from "@/lib/opco-funding";
 
 const translations = {
   titleCreate: {
@@ -232,12 +235,23 @@ const inscriptionSchema = z.object({
   start_date: z.string().min(1, "Required"),
   end_date: z.string().min(1, "Required"),
   duration_hours: z.coerce.number().optional(),
+  duration_days: z.coerce.number().optional(),
+  hours_per_day: z.coerce.number().optional(),
   price: z.coerce.number().optional(),
+  pedagogical_cost: z.coerce.number().optional(),
   entry_level: z.string().optional(),
+  exit_level: z.string().optional(),
   modality: z.string().optional(),
   course_location: z.string().optional(),
   observations: z.string().optional(),
+  expectations: z.string().optional(),
   funding_organization: z.string().optional(),
+  group_name: z.string().optional(),
+  groupe_code: z.string().optional(),
+  dates_to_confirm: z.boolean().optional(),
+  certification_type: z.string().optional(),
+  certification_result: z.string().optional(),
+  certification_date: z.string().optional(),
 });
 
 type InscriptionFormData = z.infer<typeof inscriptionSchema>;
@@ -251,12 +265,23 @@ interface InscriptionToEdit {
   start_date: string;
   end_date: string;
   duration_hours?: number | null;
+  duration_days?: number | null;
+  hours_per_day?: number | null;
   price?: number | null;
+  pedagogical_cost?: number | null;
   entry_level?: string | null;
+  exit_level?: string | null;
   modality?: string | null;
   course_location?: string | null;
   observations?: string | null;
+  expectations?: string | null;
   funding_organization?: string | null;
+  group_name?: string | null;
+  groupe_code?: string | null;
+  dates_to_confirm?: boolean | null;
+  certification_type?: string | null;
+  certification_result?: string | null;
+  certification_date?: string | null;
 }
 
 interface InscriptionFormDialogProps {
@@ -272,6 +297,7 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
   const { t, language: uiLanguage } = useLanguage();
   const isEditMode = !!inscription;
   const { data: currentSeason } = useCurrentSeason();
+  const { confirm, dialog: confirmDialog } = useConfirmAction();
 
   const form = useForm<InscriptionFormData>({
     resolver: zodResolver(inscriptionSchema),
@@ -283,12 +309,23 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
       start_date: format(new Date(), "yyyy-MM-dd"),
       end_date: "",
       duration_hours: undefined,
+      duration_days: undefined,
+      hours_per_day: undefined,
       price: undefined,
+      pedagogical_cost: undefined,
       entry_level: "",
+      exit_level: "",
       modality: "Présentiel",
       course_location: "",
       observations: "",
+      expectations: "",
       funding_organization: "",
+      group_name: "",
+      groupe_code: "",
+      dates_to_confirm: false,
+      certification_type: "",
+      certification_result: "",
+      certification_date: "",
     },
   });
 
@@ -345,7 +382,6 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
 
   useEffect(() => {
     if (open && inscription) {
-      // Populate form with inscription data for edit mode
       form.reset({
         student_id: inscription.student_id || "",
         instructor_id: inscription.instructor_id || "",
@@ -354,12 +390,25 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
         start_date: inscription.start_date || "",
         end_date: inscription.end_date || "",
         duration_hours: inscription.duration_hours ?? undefined,
+        duration_days: inscription.duration_days ?? undefined,
+        hours_per_day: inscription.hours_per_day ?? undefined,
         price: inscription.price ?? undefined,
+        pedagogical_cost: inscription.pedagogical_cost ?? undefined,
         entry_level: inscription.entry_level || "",
+        exit_level: inscription.exit_level || "",
         modality: inscription.modality || "Présentiel",
         course_location: inscription.course_location || "",
         observations: inscription.observations || "",
+        expectations: inscription.expectations || "",
         funding_organization: inscription.funding_organization || "",
+        group_name: inscription.group_name || "",
+        groupe_code: inscription.groupe_code || "",
+        dates_to_confirm: !!inscription.dates_to_confirm,
+        certification_type: inscription.certification_type || "",
+        certification_result: inscription.certification_result || "",
+        certification_date: inscription.certification_date
+          ? inscription.certification_date.slice(0, 10)
+          : "",
       });
     } else if (!open) {
       form.reset();
@@ -387,54 +436,54 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
     }
   }, [priceLookup, isEditMode]);
 
-  const onSubmit = async (data: InscriptionFormData) => {
+  const persistInscription = async (data: InscriptionFormData) => {
     setIsSubmitting(true);
     try {
+      const payload = {
+        student_id: data.student_id,
+        instructor_id: data.instructor_id === "none" ? null : data.instructor_id || null,
+        ski_school_id: data.ski_school_id === "none" ? null : data.ski_school_id || null,
+        language: data.language,
+        start_date: data.start_date,
+        end_date: data.end_date,
+        duration_hours: data.duration_hours || null,
+        duration_days: data.duration_days || null,
+        hours_per_day: data.hours_per_day || null,
+        price: data.price || null,
+        pedagogical_cost: data.pedagogical_cost || null,
+        entry_level: data.entry_level || null,
+        exit_level: data.exit_level || null,
+        modality: data.modality || null,
+        course_location: data.course_location || null,
+        observations: data.observations || null,
+        expectations: data.expectations || null,
+        funding_organization: data.funding_organization || null,
+        group_name: data.group_name || null,
+        groupe_code: data.groupe_code || null,
+        dates_to_confirm: !!data.dates_to_confirm,
+        certification_type: data.certification_type || null,
+        certification_result: data.certification_result || null,
+        certification_date: data.certification_date || null,
+      };
+
       if (isEditMode && inscription) {
-        // Update existing inscription
         const { error } = await supabase
           .from("inscriptions")
-          .update({
-            student_id: data.student_id,
-            instructor_id: data.instructor_id === "none" ? null : data.instructor_id || null,
-            ski_school_id: data.ski_school_id === "none" ? null : data.ski_school_id || null,
-            language: data.language,
-            start_date: data.start_date,
-            end_date: data.end_date,
-            duration_hours: data.duration_hours || null,
-            price: data.price || null,
-            entry_level: data.entry_level || null,
-            modality: data.modality || null,
-            course_location: data.course_location || null,
-            observations: data.observations || null,
-            funding_organization: data.funding_organization || null,
-          })
+          .update(payload)
           .eq("id", inscription.id);
 
         if (error) throw error;
         toast.success(t(translations.successEdit));
       } else {
-        // Create new inscription
-        const { data: codeResult, error: codeError } = await supabase
-          .rpc("generate_inscription_code");
+        const { data: codeResult, error: codeError } = await supabase.rpc(
+          "generate_inscription_code"
+        );
 
         if (codeError) throw codeError;
 
         const { error } = await supabase.from("inscriptions").insert({
+          ...payload,
           code: codeResult,
-          student_id: data.student_id,
-          instructor_id: data.instructor_id === "none" ? null : data.instructor_id || null,
-          ski_school_id: data.ski_school_id === "none" ? null : data.ski_school_id || null,
-          language: data.language,
-          start_date: data.start_date,
-          end_date: data.end_date,
-          duration_hours: data.duration_hours || null,
-          price: data.price || null,
-          entry_level: data.entry_level || null,
-          modality: data.modality || null,
-          course_location: data.course_location || null,
-          observations: data.observations || null,
-          funding_organization: data.funding_organization || null,
           season_id: currentSeason?.id || null,
           status: "brouillon",
         });
@@ -446,6 +495,7 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
       queryClient.invalidateQueries({ queryKey: ["inscriptions"] });
       queryClient.invalidateQueries({ queryKey: ["inscription-stats"] });
       queryClient.invalidateQueries({ queryKey: ["inscription-details"] });
+      queryClient.invalidateQueries({ queryKey: ["inscription"] });
       queryClient.invalidateQueries({ queryKey: ["inscription-ops-fields"] });
       onOpenChange(false);
     } catch (error: unknown) {
@@ -461,6 +511,17 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const onSubmit = (data: InscriptionFormData) => {
+    confirm({
+      title: isEditMode ? "Enregistrer les modifications ?" : "Créer cette inscription ?",
+      description: isEditMode
+        ? "Toutes les infos de la fiche (stagiaire, formation, montants, niveaux, groupe, certification) seront mises à jour."
+        : "Une nouvelle inscription brouillon sera créée avec les informations saisies.",
+      actionLabel: isEditMode ? t(translations.save) : t(translations.create),
+      run: () => persistInscription(data),
+    });
   };
 
   return (
@@ -753,16 +814,203 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="__none__">Non renseigné</SelectItem>
-                      <SelectItem value="FIFPL">FIFPL</SelectItem>
-                      <SelectItem value="OPCO">OPCO</SelectItem>
-                      <SelectItem value="Entreprise">Entreprise</SelectItem>
-                      <SelectItem value="Autofinancement">Autofinancement</SelectItem>
+                      {FUNDING_ORGANIZATION_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="duration_days"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Durée (jours)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={(e) =>
+                          field.onChange(e.target.value === "" ? undefined : Number(e.target.value))
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="hours_per_day"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Heures / jour</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={(e) =>
+                          field.onChange(e.target.value === "" ? undefined : Number(e.target.value))
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="pedagogical_cost"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Coût pédagogique €</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={(e) =>
+                          field.onChange(e.target.value === "" ? undefined : Number(e.target.value))
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="exit_level"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Niveau sortie</FormLabel>
+                    <Select
+                      onValueChange={(v) => field.onChange(v === "__none__" ? "" : v)}
+                      value={field.value || "__none__"}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="—" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="__none__">—</SelectItem>
+                        {levels.map((l) => (
+                          <SelectItem key={l} value={l}>
+                            {l}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="group_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Groupe (libellé)</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="groupe_code"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Code groupe</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="dates_to_confirm"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
+                  <FormControl>
+                    <Checkbox
+                      checked={!!field.value}
+                      onCheckedChange={(checked) => field.onChange(checked === true)}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Dates à confirmer</FormLabel>
+                    <p className="text-xs text-muted-foreground">
+                      Cochez si les dates restent flexibles / à valider avec le client.
+                    </p>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-3 gap-3">
+              <FormField
+                control={form.control}
+                name="certification_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Certification</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Type" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="certification_result"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Résultat</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="B2…" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="certification_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date certif.</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             {/* Observations */}
             <FormField
@@ -771,6 +1019,20 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t(translations.observations)}</FormLabel>
+                  <FormControl>
+                    <Textarea rows={2} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="expectations"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Attentes</FormLabel>
                   <FormControl>
                     <Textarea rows={2} {...field} />
                   </FormControl>
@@ -808,6 +1070,7 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
           </form>
         </Form>
       </DialogContent>
+      {confirmDialog}
     </Dialog>
   );
 }

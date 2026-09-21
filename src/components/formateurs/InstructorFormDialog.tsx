@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCreateInstructor, useUpdateInstructor, type Instructor } from "@/hooks/useInstructors";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
 import {
   INSTRUCTOR_LANGUAGES,
   displayLanguageLabel,
@@ -119,6 +120,7 @@ export function InstructorFormDialog({ open, onOpenChange, instructor }: Props) 
   const create = useCreateInstructor();
   const update = useUpdateInstructor();
   const isEdit = !!instructor;
+  const { confirm, dialog: confirmDialog } = useConfirmAction();
 
   const [form, setForm] = useState<FormState>(emptyForm);
 
@@ -176,7 +178,7 @@ export function InstructorFormDialog({ open, onOpenChange, instructor }: Props) 
     }));
   };
 
-  const handleSubmit = async () => {
+  const persistInstructor = async () => {
     const payload: Partial<Instructor> = {
       first_name: form.first_name || null,
       last_name: form.last_name,
@@ -222,6 +224,18 @@ export function InstructorFormDialog({ open, onOpenChange, instructor }: Props) 
       await create.mutateAsync(payload);
     }
     onOpenChange(false);
+  };
+
+  const handleSubmit = () => {
+    if (!form.last_name) return;
+    confirm({
+      title: isEdit ? "Enregistrer les modifications ?" : "Créer ce formateur ?",
+      description: isEdit
+        ? "Les informations du formateur seront mises à jour."
+        : "Un nouveau formateur sera ajouté.",
+      actionLabel: isEdit ? "Enregistrer" : "Créer",
+      run: () => persistInstructor(),
+    });
   };
 
   return (
@@ -559,6 +573,7 @@ export function InstructorFormDialog({ open, onOpenChange, instructor }: Props) 
           </div>
         </div>
       </DialogContent>
+      {confirmDialog}
     </Dialog>
   );
 }

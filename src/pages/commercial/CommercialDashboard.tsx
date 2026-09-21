@@ -17,6 +17,7 @@ import { LeadFormDialog } from "@/components/commercial/LeadFormDialog";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { useSeasonFilter } from "@/contexts/SeasonContext";
 import { toast } from "sonner";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
 } from "recharts";
@@ -107,41 +108,61 @@ function ChannelPipeline({
   });
   const { data: kpis } = useLeadKPIs(channel);
   const updateLead = useUpdateLead();
+  const { confirm, dialog: confirmDialog } = useConfirmAction();
 
   const handleDragStart = (e: React.DragEvent, leadId: string) => {
     e.dataTransfer.setData("leadId", leadId);
   };
 
-  const handleDrop = async (e: React.DragEvent, newStatus: string) => {
+  const handleDrop = (e: React.DragEvent, newStatus: string) => {
     e.preventDefault();
     const leadId = e.dataTransfer.getData("leadId");
     if (!leadId) return;
-    try {
-      await updateLead.mutateAsync({ id: leadId, status: newStatus } as Partial<Lead> & { id: string });
-      toast.success("Statut mis à jour");
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Erreur");
-    }
+    const statusLabel =
+      LEAD_STATUSES.find((s) => s.key === newStatus)?.label || newStatus;
+    confirm({
+      title: `Passer le lead en « ${statusLabel} » ?`,
+      description: "Le statut commercial du lead sera mis à jour.",
+      run: async () => {
+        try {
+          await updateLead.mutateAsync({
+            id: leadId,
+            status: newStatus,
+          } as Partial<Lead> & { id: string });
+          toast.success("Statut mis à jour");
+        } catch (err: unknown) {
+          toast.error(err instanceof Error ? err.message : "Erreur");
+        }
+      },
+    });
   };
 
   const handleDragOver = (e: React.DragEvent) => e.preventDefault();
 
-  const handleMarkLost = async (lead: Lead) => {
+  const handleMarkLost = (lead: Lead) => {
     const reason = window.prompt("Motif de perte (obligatoire) :");
     if (!reason?.trim()) {
       if (reason !== null) toast.error("Motif de perte requis");
       return;
     }
-    try {
-      await updateLead.mutateAsync({
-        id: lead.id,
-        status: "perdu",
-        loss_reason: reason.trim(),
-      });
-      toast.success("Lead marqué comme perdu");
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Erreur");
-    }
+    confirm({
+      title: "Marquer ce lead comme perdu ?",
+      description: `Motif : ${reason.trim()}`,
+      destructive: true,
+      actionLabel: "Marquer perdu",
+      run: async () => {
+        try {
+          await updateLead.mutateAsync({
+            id: lead.id,
+            status: "perdu",
+            loss_reason: reason.trim(),
+          });
+          toast.success("Lead marqué comme perdu");
+        } catch (err: unknown) {
+          toast.error(err instanceof Error ? err.message : "Erreur");
+        }
+      },
+    });
   };
 
   const sourceChartData = kpis
@@ -161,6 +182,7 @@ function ChannelPipeline({
   const lostLeads = leads.filter((l) => l.status === "perdu");
 
   return (
+    <>
     <Tabs defaultValue="kanban">
       <TabsList>
         <TabsTrigger value="kanban">Pipeline</TabsTrigger>
@@ -309,6 +331,8 @@ function ChannelPipeline({
         </div>
       </TabsContent>
     </Tabs>
+    {confirmDialog}
+    </>
   );
 }
 

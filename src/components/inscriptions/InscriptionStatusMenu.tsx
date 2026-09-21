@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { toast } from "sonner";
 import {
   CheckCircle,
@@ -21,18 +20,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { useUpdateInscriptionStatus } from "@/hooks/useInscriptions";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
 import {
   cancellationBlockedReason,
   describeRefusedTransition,
@@ -73,7 +63,7 @@ export function InscriptionStatusMenu({
   readOnly = false,
 }: InscriptionStatusMenuProps) {
   const updateStatus = useUpdateInscriptionStatus();
-  const [pendingCancel, setPendingCancel] = useState(false);
+  const { confirm, dialog } = useConfirmAction();
 
   const nextStatuses = getNextStatuses(status);
   const cancelBlocked = cancellationBlockedReason(status, startDate, todayKey());
@@ -91,13 +81,27 @@ export function InscriptionStatusMenu({
       toast.success(`Statut : ${getStatusLabel(cible, "fr")}`);
     } catch (error) {
       const brut = error instanceof Error ? error.message : "";
-      // La base renvoie déjà une phrase française depuis le point 10 ; on
-      // garde une reformulation locale pour les bases pas encore migrées.
       const message = /statut|transition/i.test(brut)
         ? brut
         : describeRefusedTransition(status, cible);
       toast.error(message);
     }
+  };
+
+  const requestTransition = (cible: InscriptionStatus) => {
+    const isCancel = cible === "annulee";
+    confirm({
+      title: isCancel
+        ? "Annuler cette inscription ?"
+        : `Passer à « ${getStatusLabel(cible, "fr")} » ?`,
+      description: isCancel
+        ? "« Annulée » est un statut final : l'inscription ne pourra plus changer d'état ensuite."
+        : `Statut actuel : ${getStatusLabel(status, "fr")}. Confirmez le changement.`,
+      actionLabel: isCancel ? "Annuler l'inscription" : "Confirmer",
+      cancelLabel: "Revenir",
+      destructive: isCancel,
+      run: () => apply(cible),
+    });
   };
 
   if (readOnly || available.length === 0) {
@@ -144,16 +148,7 @@ export function InscriptionStatusMenu({
           {available.map((cible) => {
             const Icon = STATUS_ICON[cible];
             return (
-              <DropdownMenuItem
-                key={cible}
-                onClick={() => {
-                  if (cible === "annulee") {
-                    setPendingCancel(true);
-                    return;
-                  }
-                  void apply(cible);
-                }}
-              >
+              <DropdownMenuItem key={cible} onClick={() => requestTransition(cible)}>
                 <Icon className="mr-2 h-4 w-4" />
                 {getStatusLabel(cible, "fr")}
               </DropdownMenuItem>
@@ -169,29 +164,7 @@ export function InscriptionStatusMenu({
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <AlertDialog open={pendingCancel} onOpenChange={setPendingCancel}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Annuler cette inscription ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              « Annulée » est un statut final : l&apos;inscription ne pourra plus changer
-              d&apos;état ensuite.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Revenir</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setPendingCancel(false);
-                void apply("annulee");
-              }}
-            >
-              Annuler l&apos;inscription
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {dialog}
     </>
   );
 }

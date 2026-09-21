@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { useSaveEntryForm } from "@/hooks/useInscriptionProgression";
 import type { ProgressionEntryFields } from "@/lib/certificate-progression";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
 
 interface FormateurEntryFormDialogProps {
   open: boolean;
@@ -31,6 +32,7 @@ export function FormateurEntryFormDialog({
   initial,
 }: FormateurEntryFormDialogProps) {
   const save = useSaveEntryForm();
+  const { confirm, dialog: confirmDialog } = useConfirmAction();
   const [fields, setFields] = useState<ProgressionEntryFields>({
     niveau_general_entree: "",
     niveau_technique_entree: "",
@@ -47,9 +49,18 @@ export function FormateurEntryFormDialog({
     });
   }, [open, initial, suggestedGeneralEntry]);
 
-  const handleSave = async () => {
+  const persistEntry = async () => {
     await save.mutateAsync({ inscriptionId, fields });
     onOpenChange(false);
+  };
+
+  const handleSave = () => {
+    confirm({
+      title: "Enregistrer le formulaire d'entrée ?",
+      description: "Les niveaux d'entrée formateur seront enregistrés pour cette inscription.",
+      actionLabel: "Enregistrer",
+      run: () => persistEntry(),
+    });
   };
 
   return (
@@ -122,6 +133,7 @@ export function FormateurEntryFormDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+      {confirmDialog}
     </Dialog>
   );
 }

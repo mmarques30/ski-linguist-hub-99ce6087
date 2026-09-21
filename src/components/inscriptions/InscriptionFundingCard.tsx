@@ -19,17 +19,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Pencil, Plus, Trash2 } from "lucide-react";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
 import {
   FUNDING_ORGANIZATION_OPTIONS,
   FUNDING_PROPOSAL_STATUSES,
@@ -120,14 +111,6 @@ function parseOptionalNumber(raw: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-type PendingConfirm = {
-  title: string;
-  description: string;
-  actionLabel?: string;
-  destructive?: boolean;
-  run: () => Promise<void>;
-};
-
 export function InscriptionFundingCard({
   inscriptionId,
   fundingOrganization,
@@ -143,6 +126,7 @@ export function InscriptionFundingCard({
   const createProposal = useCreateFundingProposal();
   const updateProposal = useUpdateFundingProposal();
   const deleteProposal = useDeleteFundingProposal();
+  const { confirm: requestConfirm, dialog: confirmDialog } = useConfirmAction();
 
   const parsed = useMemo(() => parseFundingDetails(fundingDetails), [fundingDetails]);
   const opco = parsed?.opco;
@@ -183,26 +167,11 @@ export function InscriptionFundingCard({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<ProposalDraft>(() => emptyDraft(fundingOrganization || "OPCO"));
-  const [pending, setPending] = useState<PendingConfirm | null>(null);
-  const [confirmBusy, setConfirmBusy] = useState(false);
 
   const resolvedOrg = (): string | null => {
     if (orgSelect === "__none__") return null;
     if (orgSelect === "__custom__") return orgCustom.trim() || null;
     return orgSelect;
-  };
-
-  const requestConfirm = (cfg: PendingConfirm) => setPending(cfg);
-
-  const runConfirmed = async () => {
-    if (!pending) return;
-    setConfirmBusy(true);
-    try {
-      await pending.run();
-      setPending(null);
-    } finally {
-      setConfirmBusy(false);
-    }
   };
 
   const saveOrganization = () => {
@@ -597,36 +566,7 @@ export function InscriptionFundingCard({
         </DialogContent>
       </Dialog>
 
-      <AlertDialog
-        open={!!pending}
-        onOpenChange={(open) => {
-          if (!open && !confirmBusy) setPending(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{pending?.title}</AlertDialogTitle>
-            <AlertDialogDescription>{pending?.description}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={confirmBusy}>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={confirmBusy}
-              className={
-                pending?.destructive
-                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  : undefined
-              }
-              onClick={(e) => {
-                e.preventDefault();
-                void runConfirmed();
-              }}
-            >
-              {pending?.actionLabel || "Confirmer"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {confirmDialog}
     </Card>
   );
 }

@@ -27,6 +27,7 @@ import {
 } from "@/lib/payment-methods";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
 
 interface InvoiceEditDialogProps {
   invoice: InvoiceWithInscription | null;
@@ -36,6 +37,7 @@ interface InvoiceEditDialogProps {
 
 export function InvoiceEditDialog({ invoice, open, onOpenChange }: InvoiceEditDialogProps) {
   const updateInvoice = useUpdateInvoice();
+  const { confirm, dialog: confirmDialog } = useConfirmAction();
   
   const [formData, setFormData] = useState({
     invoice_date: "",
@@ -69,17 +71,10 @@ export function InvoiceEditDialog({ invoice, open, onOpenChange }: InvoiceEditDi
     }
   }, [invoice]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const persistInvoice = async () => {
     if (!invoice) return;
 
     try {
-      if (formData.status === "paid") {
-        if (!formData.payment_method || !formData.payment_date) {
-          toast.error("Une facture payée exige un moyen et une date de paiement");
-          return;
-        }
-      }
       const method =
         formData.payment_method === HISTORICAL_PAYMENT_METHOD
           ? HISTORICAL_PAYMENT_METHOD
@@ -114,6 +109,25 @@ export function InvoiceEditDialog({ invoice, open, onOpenChange }: InvoiceEditDi
     } catch (error) {
       toast.error("Erreur lors de la mise à jour de la facture");
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!invoice) return;
+
+    if (formData.status === "paid") {
+      if (!formData.payment_method || !formData.payment_date) {
+        toast.error("Une facture payée exige un moyen et une date de paiement");
+        return;
+      }
+    }
+
+    confirm({
+      title: "Enregistrer les modifications ?",
+      description: `La facture ${invoice.invoice_number} sera mise à jour.`,
+      actionLabel: "Enregistrer",
+      run: () => persistInvoice(),
+    });
   };
 
   const calculatedTTC = formData.amount_ht * (1 + formData.tva_rate / 100);
@@ -373,6 +387,7 @@ export function InvoiceEditDialog({ invoice, open, onOpenChange }: InvoiceEditDi
           </DialogFooter>
         </form>
       </DialogContent>
+      {confirmDialog}
     </Dialog>
   );
 }

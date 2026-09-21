@@ -43,6 +43,7 @@ import { formateurAssistPath } from "@/lib/client-links";
 import { getStatusLabel, getStatusStyle } from "@/lib/inscription-status";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
 
 const paymentStatusColors: Record<string, string> = {
   a_payer: "bg-amber-100 text-amber-800",
@@ -112,6 +113,7 @@ export default function InstructorDetails() {
   const { canEdit } = useUserPermissions();
   const editable = canEdit("formateurs");
   const [showEdit, setShowEdit] = useState(false);
+  const { confirm, dialog: confirmDialog } = useConfirmAction();
 
   const { data: instructor, isLoading } = useInstructorDetails(id);
   const { data: inscriptions = [] } = useInstructorInscriptions(id);
@@ -249,10 +251,17 @@ export default function InstructorDetails() {
               <Button
                 onClick={() => {
                   if (!id) return;
-                  updateInstructor.mutate({
-                    id,
-                    status: "actif",
-                    is_active: true,
+                  confirm({
+                    title: "Passer en actif·ve ?",
+                    description:
+                      "Le statut du formateur passera de candidat·e à actif·ve.",
+                    actionLabel: "Confirmer",
+                    run: () =>
+                      updateInstructor.mutateAsync({
+                        id,
+                        status: "actif",
+                        is_active: true,
+                      }),
                   });
                 }}
                 disabled={updateInstructor.isPending}
@@ -661,6 +670,7 @@ export default function InstructorDetails() {
         onOpenChange={setShowEdit}
         instructor={instructor}
       />
+      {confirmDialog}
     </MainLayout>
   );
 }

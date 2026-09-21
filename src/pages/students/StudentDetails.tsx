@@ -28,9 +28,13 @@ import {
   User,
   GraduationCap,
   Languages,
+  Pencil,
 } from "lucide-react";
+import { useState } from "react";
 import { useStudentDetails } from "@/hooks/useStudentDetails";
 import { StudentPortalAccessCard } from "@/components/students/StudentPortalAccessCard";
+import { StudentFormDialog } from "@/components/students/StudentFormDialog";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 import {
   studentEmailForSend,
   studentEmailLabel,
@@ -43,6 +47,8 @@ export default function StudentDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: student, isLoading, error } = useStudentDetails(id);
+  const { canEdit } = useUserPermissions();
+  const [editOpen, setEditOpen] = useState(false);
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "-";
@@ -156,6 +162,12 @@ export default function StudentDetails() {
             </div>
           </div>
           <div className="flex gap-2">
+            {canEdit("students") && (
+              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Modifier
+              </Button>
+            )}
             {studentEmailForSend(student.email) ? (
               <Button variant="outline" size="sm" asChild>
                 <a href={`mailto:${student.email}`}>
@@ -379,6 +391,22 @@ export default function StudentDetails() {
           </div>
         </div>
       </div>
+      <StudentFormDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        student={{
+          id: student.id,
+          civility: student.civility,
+          first_name: student.first_name,
+          last_name: student.last_name,
+          email: student.email,
+          phone: student.phone,
+          company: student.company,
+          street_address: student.street_address,
+          postal_code: student.postal_code,
+          city: student.city,
+        }}
+      />
     </MainLayout>
   );
 }

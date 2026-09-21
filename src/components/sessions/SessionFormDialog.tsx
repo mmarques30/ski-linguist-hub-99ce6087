@@ -22,6 +22,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { format } from "date-fns";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
 
 const LANGUAGES = ["Anglais", "Portugais brésilien", "Italien", "Allemand", "Espagnol", "Russe", "Néerlandais"];
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
@@ -59,6 +60,7 @@ export function SessionFormDialog({ open, onOpenChange, session, defaultStart }:
   const updateMutation = useUpdateSession();
   const isEdit = !!session;
   const [conflict, setConflict] = useState<string | null>(null);
+  const { confirm, dialog: confirmDialog } = useConfirmAction();
 
   const { data: instructors } = useQuery({
     queryKey: ["instructors-active"],
@@ -136,23 +138,7 @@ export function SessionFormDialog({ open, onOpenChange, session, defaultStart }:
     setConflict(null);
   }, [open, session]);
 
-  const onSubmit = async (data: FormData) => {
-    setConflict(null);
-
-    // Check instructor conflict
-    if (data.instructor_id && data.instructor_id !== "none") {
-      const hasConflict = await checkInstructorConflict(
-        data.instructor_id,
-        new Date(data.start_datetime).toISOString(),
-        new Date(data.end_datetime).toISOString(),
-        session?.id
-      );
-      if (hasConflict) {
-        setConflict("Ce formateur a déjà une session au même créneau !");
-        return;
-      }
-    }
-
+  const persistSession = async (data: FormData) => {
     try {
       const payload = {
         title: data.title,
@@ -181,6 +167,33 @@ export function SessionFormDialog({ open, onOpenChange, session, defaultStart }:
     } catch (e: any) {
       toast.error(e.message);
     }
+  };
+
+  const onSubmit = async (data: FormData) => {
+    setConflict(null);
+
+    // Check instructor conflict
+    if (data.instructor_id && data.instructor_id !== "none") {
+      const hasConflict = await checkInstructorConflict(
+        data.instructor_id,
+        new Date(data.start_datetime).toISOString(),
+        new Date(data.end_datetime).toISOString(),
+        session?.id
+      );
+      if (hasConflict) {
+        setConflict("Ce formateur a déjà une session au même créneau !");
+        return;
+      }
+    }
+
+    confirm({
+      title: isEdit ? "Enregistrer les modifications ?" : "Créer cette session ?",
+      description: isEdit
+        ? "Les informations de la session seront mises à jour."
+        : "Une nouvelle session sera planifiée.",
+      actionLabel: isEdit ? "Enregistrer" : "Créer",
+      run: () => persistSession(data),
+    });
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
@@ -354,6 +367,7 @@ export function SessionFormDialog({ open, onOpenChange, session, defaultStart }:
           </form>
         </Form>
       </DialogContent>
+      {confirmDialog}
     </Dialog>
   );
 }

@@ -33,6 +33,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
 
 const translations = {
   createTitle: {
@@ -203,6 +204,7 @@ export function StudentFormDialog({ open, onOpenChange, student }: StudentFormDi
   const queryClient = useQueryClient();
   const { t } = useLanguage();
   const isEditing = !!student;
+  const { confirm, dialog: confirmDialog } = useConfirmAction();
 
   const form = useForm<StudentFormData>({
     resolver: zodResolver(studentSchema),
@@ -247,7 +249,7 @@ export function StudentFormDialog({ open, onOpenChange, student }: StudentFormDi
     }
   }, [student, form, open]);
 
-  const onSubmit = async (data: StudentFormData) => {
+  const persistStudent = async (data: StudentFormData) => {
     setIsSubmitting(true);
     try {
       if (isEditing && student) {
@@ -286,13 +288,25 @@ export function StudentFormDialog({ open, onOpenChange, student }: StudentFormDi
       }
 
       queryClient.invalidateQueries({ queryKey: ["students"] });
+      queryClient.invalidateQueries({ queryKey: ["student-details"] });
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error saving student:", error);
       toast.error(isEditing ? t(translations.errorEdit) : t(translations.errorCreate));
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const onSubmit = (data: StudentFormData) => {
+    confirm({
+      title: isEditing ? "Enregistrer le stagiaire ?" : "Créer ce stagiaire ?",
+      description: isEditing
+        ? "Les informations du stagiaire seront mises à jour."
+        : "Un nouveau stagiaire sera ajouté au fichier.",
+      actionLabel: isEditing ? t(translations.save) : t(translations.create),
+      run: () => persistStudent(data),
+    });
   };
 
   return (
@@ -474,6 +488,7 @@ export function StudentFormDialog({ open, onOpenChange, student }: StudentFormDi
           </form>
         </Form>
       </DialogContent>
+      {confirmDialog}
     </Dialog>
   );
 }

@@ -39,6 +39,7 @@ import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSeasonFilter } from "@/contexts/SeasonContext";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
 import { ListSkeleton } from "@/components/common/ListSkeleton";
 import {
   getCurrentFiscalYear,
@@ -409,6 +410,7 @@ export default function Invoices() {
   });
 
   const updateInvoice = useUpdateInvoice();
+  const { confirm, dialog: confirmDialog } = useConfirmAction();
 
   const getDateLocale = () => {
     switch (language) {
@@ -471,16 +473,22 @@ export default function Invoices() {
     return "-";
   };
 
-  const handleMarkAsSent = async (invoice: InvoiceWithInscription) => {
-    try {
-      await updateInvoice.mutateAsync({ id: invoice.id, status: "sent" });
-      toast.success(t(translations.markedAsSent));
-    } catch (err) {
-      toast.error(t(translations.updateError));
-    }
+  const handleMarkAsSent = (invoice: InvoiceWithInscription) => {
+    confirm({
+      title: "Marquer la facture comme envoyée ?",
+      description: `Facture ${invoice.invoice_number || invoice.id} : le statut passera à « Envoyée ».`,
+      run: async () => {
+        try {
+          await updateInvoice.mutateAsync({ id: invoice.id, status: "sent" });
+          toast.success(t(translations.markedAsSent));
+        } catch {
+          toast.error(t(translations.updateError));
+        }
+      },
+    });
   };
 
-  const handleMarkAsPaid = async (invoice: InvoiceWithInscription) => {
+  const handleMarkAsPaid = (invoice: InvoiceWithInscription) => {
     const method = canonicalPaymentMethod(invoice.payment_method);
     if (!method) {
       toast.error("Saisissez un moyen de paiement dans la fiche facture avant de marquer Payée");
@@ -489,25 +497,31 @@ export default function Invoices() {
       return;
     }
     const paymentDate = invoice.payment_date || new Date().toISOString().split("T")[0];
-    try {
-      await updateInvoice.mutateAsync({
-        id: invoice.id,
-        status: "paid",
-        payment_date: paymentDate,
-        payment_method: method,
-      });
-      await ensureInvoicePayment({
-        invoiceId: invoice.id,
-        inscriptionId: invoice.inscription_id,
-        amount: invoice.amount_ttc || invoice.amount_ht,
-        paymentMethod: method,
-        paymentDate,
-        payerName: invoice.inscription?.student_name ?? null,
-      });
-      toast.success(t(translations.markedAsPaid));
-    } catch (err) {
-      toast.error(t(translations.updateError));
-    }
+    confirm({
+      title: "Marquer la facture comme payée ?",
+      description: `Facture ${invoice.invoice_number || invoice.id} : statut « Payée » et enregistrement du paiement.`,
+      run: async () => {
+        try {
+          await updateInvoice.mutateAsync({
+            id: invoice.id,
+            status: "paid",
+            payment_date: paymentDate,
+            payment_method: method,
+          });
+          await ensureInvoicePayment({
+            invoiceId: invoice.id,
+            inscriptionId: invoice.inscription_id,
+            amount: invoice.amount_ttc || invoice.amount_ht,
+            paymentMethod: method,
+            paymentDate,
+            payerName: invoice.inscription?.student_name ?? null,
+          });
+          toast.success(t(translations.markedAsPaid));
+        } catch {
+          toast.error(t(translations.updateError));
+        }
+      },
+    });
   };
 
   const handleExportCSV = () => {
@@ -905,6 +919,7 @@ export default function Invoices() {
 
       {/* Create Dialog */}
       <InvoiceCreateDialog open={createOpen} onOpenChange={setCreateOpen} />
+      {confirmDialog}
     </MainLayout>
   );
 }
