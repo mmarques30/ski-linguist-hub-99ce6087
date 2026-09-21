@@ -34,7 +34,7 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 | **BL-007 crons + notifs** | #85 | Crons email + avancement actifs ; producteurs notifs BO |
 | Sync types Lovable | — | `types.ts` leads + `funding_requests.payer_type` |
 
-**SHA `main` au moment de ce refresh :** `a2d13ab` (merge #85).
+**SHA `main` au moment de ce refresh :** `aa7098e` (republish edge + merge #85).
 
 ### Déploiement app publiée
 
