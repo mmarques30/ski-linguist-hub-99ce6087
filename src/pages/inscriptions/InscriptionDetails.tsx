@@ -825,54 +825,19 @@ export default function InscriptionDetails() {
               inscriptionId={id!}
               fundingOrganization={opsFields?.funding_organization ?? null}
               fundingDetails={opsFields?.funding_details ?? null}
+              price={inscription.price}
+              depositAmount={inscription.deposit_amount}
+              depositDate={inscription.deposit_date}
+              balanceAfterDeposit={inscription.balance_after_deposit}
+              paymentMethod={inscription.payment_method}
             />
 
-            <div className="grid gap-4 md:grid-cols-3">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Euro className="h-4 w-4" />
-                    {t(translations.price)}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">{formatPrice(inscription.price)}</p>
-                  {inscription.pedagogical_cost && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Coût pédagogique: {formatPrice(inscription.pedagogical_cost)}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">{t(translations.deposit)}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">{formatPrice(inscription.deposit_amount)}</p>
-                  {inscription.deposit_date && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Reçu le {formatDate(inscription.deposit_date)}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">{t(translations.balance)}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">{formatPrice(inscription.balance_after_deposit)}</p>
-                  {inscription.payment_method && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {inscription.payment_method}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+            {inscription.pedagogical_cost != null && (
+              <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                <Euro className="h-3.5 w-3.5" />
+                Coût pédagogique : {formatPrice(inscription.pedagogical_cost)}
+              </p>
+            )}
 
             {/* Invoices List */}
             {invoices && invoices.length > 0 && (

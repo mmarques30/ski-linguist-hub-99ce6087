@@ -66,9 +66,15 @@ describe("BL-027 — FIFPL et OPCO séparés", () => {
     expect(card).toContain("useCreateFundingProposal");
     expect(card).toContain("PROPOSAL_PAYER_TYPES");
     expect(card).toContain("Mode de financement");
+    expect(card).toContain("AlertDialog");
+    expect(card).toContain("Enregistrer les montants");
+    expect(card).toContain("openEdit");
+    expect(card).toContain("__custom__");
     const details = source("src/pages/inscriptions/InscriptionDetails.tsx");
     expect(details).toContain("InscriptionFundingCard");
     expect(details).toContain("funding_organization");
+    expect(details).toContain("depositAmount");
+    expect(details).toContain("balanceAfterDeposit");
   });
 });
 

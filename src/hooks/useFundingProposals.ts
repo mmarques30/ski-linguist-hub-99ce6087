@@ -91,7 +91,7 @@ export function useCreateFundingProposal() {
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ["funding-proposals", vars.inscription_id] });
-      toast({ title: "Proposition enregistrée" });
+      toast({ title: "Proposition enregistrée", description: "La nouvelle proposition a été créée." });
     },
     onError: (e: Error) =>
       toast({ variant: "destructive", title: "Erreur", description: e.message }),
@@ -119,7 +119,7 @@ export function useUpdateFundingProposal() {
     },
     onSuccess: (inscriptionId) => {
       qc.invalidateQueries({ queryKey: ["funding-proposals", inscriptionId] });
-      toast({ title: "Proposition mise à jour" });
+      toast({ title: "Proposition mise à jour", description: "Les modifications ont bien été prises en compte." });
     },
     onError: (e: Error) =>
       toast({ variant: "destructive", title: "Erreur", description: e.message }),
@@ -137,7 +137,7 @@ export function useDeleteFundingProposal() {
     },
     onSuccess: (inscriptionId) => {
       qc.invalidateQueries({ queryKey: ["funding-proposals", inscriptionId] });
-      toast({ title: "Proposition supprimée" });
+      toast({ title: "Proposition supprimée", description: "La proposition a été retirée." });
     },
     onError: (e: Error) =>
       toast({ variant: "destructive", title: "Erreur", description: e.message }),
@@ -150,17 +150,23 @@ export function useUpdateInscriptionFunding() {
   return useMutation({
     mutationFn: async ({
       id,
-      funding_organization,
-      funding_details,
+      ...fields
     }: {
       id: string;
-      funding_organization: string | null;
+      funding_organization?: string | null;
       funding_details?: string | null;
+      price?: number | null;
+      deposit_amount?: number | null;
+      deposit_date?: string | null;
+      balance_after_deposit?: number | null;
+      payment_method?: string | null;
+      observations?: string | null;
     }) => {
-      const payload: Record<string, string | null> = {
-        funding_organization,
-      };
-      if (funding_details !== undefined) payload.funding_details = funding_details;
+      const payload: Record<string, string | number | null> = {};
+      for (const [key, value] of Object.entries(fields)) {
+        if (value !== undefined) payload[key] = value as string | number | null;
+      }
+      if (Object.keys(payload).length === 0) return;
       const { error } = await supabase.from("inscriptions").update(payload).eq("id", id);
       if (error) throw error;
     },
@@ -168,7 +174,11 @@ export function useUpdateInscriptionFunding() {
       qc.invalidateQueries({ queryKey: ["inscription", vars.id] });
       qc.invalidateQueries({ queryKey: ["inscription-ops-fields", vars.id] });
       qc.invalidateQueries({ queryKey: ["inscription-funding", vars.id] });
-      toast({ title: "Financement mis à jour" });
+      qc.invalidateQueries({ queryKey: ["inscriptions"] });
+      toast({
+        title: "Enregistré",
+        description: "Les modifications ont bien été prises en compte.",
+      });
     },
     onError: (e: Error) =>
       toast({ variant: "destructive", title: "Erreur", description: e.message }),
