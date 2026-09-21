@@ -3802,6 +3802,7 @@ export type Database = {
         Returns: number
       }
       dsf_partner_id: { Args: never; Returns: string }
+      email_crons_dispatch_query: { Args: never; Returns: string }
       email_models_overview: { Args: never; Returns: Json }
       fix_macroman: { Args: { v: string }; Returns: string }
       formateur_owns_booking: {
