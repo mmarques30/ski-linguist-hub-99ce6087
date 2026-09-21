@@ -913,6 +913,7 @@ export function toInvoiceInsert(
     payment_type: "integral",
     notes,
     inscription_id: inscriptionId,
+    origin: "import_historique",
   };
 }
 

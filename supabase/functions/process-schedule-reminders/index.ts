@@ -284,6 +284,34 @@ Deno.serve(async (req) => {
     } else {
       results.emailSent = false;
       console.log(`[DRY-RUN] Would email ${ADMIN_EMAIL} for ${pending.length} inscriptions`);
+
+      await supabase.from("email_log").insert({
+        template_slug: "schedule_validation_reminder",
+        recipient_email: ADMIN_EMAIL,
+        recipient_name: "FLI interne",
+        status: "dry_run",
+        variables_used: { ...variables, dry_run: true, pending_count: pending.length },
+      });
+
+      if (resendApiKey) {
+        try {
+          await sendFliEmail({
+            resendApiKey,
+            to: ADMIN_EMAIL,
+            subject: `[FLI][ESSAI] Horaires J-${daysBefore} — ${pending.length} inscription(s) simulée(s)`,
+            html: `<p>Récapitulatif simulation — <code>process-schedule-reminders</code></p>
+              <ul>
+                <li>modèle : schedule_validation_reminder</li>
+                <li>destinataire : interne (ADMIN_EMAIL)</li>
+                <li>inscriptions concernées : ${pending.length}</li>
+                <li>date cible : ${formattedDate}</li>
+              </ul>
+              <p>Aucun email opérationnel envoyé (dry_run).</p>`,
+          });
+        } catch (recapError) {
+          console.warn("Récap dry_run horaires impossible:", recapError);
+        }
+      }
     }
 
     return new Response(

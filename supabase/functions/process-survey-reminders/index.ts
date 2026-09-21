@@ -97,6 +97,7 @@ Deno.serve(async (req) => {
       reminder1Sent: 0,
       reminder2Sent: 0,
       skipped: 0,
+      byRecipientType: { stagiaire: 0 } as Record<string, number>,
       errors: [] as string[],
     }
 
@@ -138,6 +139,16 @@ Deno.serve(async (req) => {
       if (dryRun) {
         if (level === 1) results.reminder1Sent++
         if (level === 2) results.reminder2Sent++
+        results.byRecipientType.stagiaire++
+
+        await supabase.from('email_log').insert({
+          template_slug: REMINDER_SLUGS[level],
+          recipient_email: student.email,
+          recipient_name: `${student.first_name || ''} ${student.last_name || ''}`.trim(),
+          inscription_id: survey.inscription_id,
+          status: 'dry_run',
+          variables_used: { ...variables, dry_run: true },
+        })
         continue
       }
 
@@ -181,6 +192,27 @@ Deno.serve(async (req) => {
     const summary = dryRun
       ? `[ESSAI] ${results.reminder1Sent} relances J+5 et ${results.reminder2Sent} relances J+30 prêtes`
       : `${results.reminder1Sent} relances J+5 et ${results.reminder2Sent} relances J+30 envoyées`
+
+    if (dryRun && resendApiKey) {
+      const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'info@fli.fr'
+      try {
+        await sendFliEmail({
+          resendApiKey,
+          to: adminEmail,
+          subject: `[FLI][ESSAI] Relances satisfaction — ${results.reminder1Sent + results.reminder2Sent} envoi(s) simulé(s)`,
+          html: `<p>Récapitulatif simulation — <code>process-survey-reminders</code></p>
+            <ul>
+              <li>satisfaction_survey_reminder_1 (J+5) : ${results.reminder1Sent}</li>
+              <li>satisfaction_survey_reminder_2 (J+30) : ${results.reminder2Sent}</li>
+              <li>destinataire : stagiaire (${results.byRecipientType.stagiaire})</li>
+              <li>ignorés : ${results.skipped}</li>
+            </ul>
+            <p>${summary}</p>`,
+        })
+      } catch (recapError) {
+        console.warn('Récap dry_run satisfaction impossible:', recapError)
+      }
+    }
 
     return new Response(
       JSON.stringify({ success: true, results, summary }),

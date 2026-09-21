@@ -174,6 +174,7 @@ describe("parseFliInvoicesCsv", () => {
     expect(insert.invoice_number).toBe("20-21.13010");
     expect(insert.sequence_number).toBe(13010);
     expect(insert.fiscal_year).toBe("20-21");
+    expect(insert.origin).toBe("import_historique");
     expect(insert).not.toHaveProperty("amount_ttc");
     expect(String(insert.notes)).toContain("Dupont Marie");
   });

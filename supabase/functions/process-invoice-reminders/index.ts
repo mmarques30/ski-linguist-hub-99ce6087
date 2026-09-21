@@ -76,6 +76,7 @@ Deno.serve(async (req) => {
         due_date,
         status,
         client_type,
+        origin,
         reminder_1_sent_at,
         reminder_2_sent_at,
         reminder_3_sent_at,
@@ -95,6 +96,7 @@ Deno.serve(async (req) => {
       `)
       .lt('due_date', today)
       .in('status', ['draft', 'sent'])
+      .eq('origin', 'app')
 
     if (error) {
       throw error
@@ -108,6 +110,7 @@ Deno.serve(async (req) => {
       reminder2Sent: 0,
       reminder3Sent: 0,
       skipped: 0,
+      byRecipientType: {} as Record<string, number>,
       details: [] as Array<{
         invoiceNumber: string
         email: string
@@ -210,6 +213,17 @@ Deno.serve(async (req) => {
         if (level === 1) results.reminder1Sent++
         if (level === 2) results.reminder2Sent++
         if (level === 3) results.reminder3Sent++
+        results.byRecipientType[clientType] = (results.byRecipientType[clientType] || 0) + 1
+
+        await supabase.from('email_log').insert({
+          template_slug: REMINDER_SLUGS[level],
+          recipient_email: payerEmail,
+          recipient_name: variables.client_name,
+          inscription_id: inscription?.id ?? null,
+          status: 'dry_run',
+          error_message: null,
+          variables_used: { ...variables, client_type: clientType, dry_run: true },
+        })
         continue
       }
 
@@ -246,6 +260,7 @@ Deno.serve(async (req) => {
         if (level === 1) results.reminder1Sent++
         if (level === 2) results.reminder2Sent++
         if (level === 3) results.reminder3Sent++
+        results.byRecipientType[clientType] = (results.byRecipientType[clientType] || 0) + 1
 
         results.details.push({
           invoiceNumber: invoice.invoice_number,
@@ -287,6 +302,37 @@ Deno.serve(async (req) => {
       : `${results.reminder1Sent} premières, ${results.reminder2Sent} secondes, ${results.reminder3Sent} mises en demeure`
 
     console.log(summary)
+
+    // Récap observation (dry_run planifié) → info@fli.fr / ADMIN_EMAIL
+    if (dryRun && resendApiKey) {
+      const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'info@fli.fr'
+      const recipientLines = Object.entries(results.byRecipientType)
+        .map(([k, n]) => `<li>${k} : ${n}</li>`)
+        .join('')
+      const html = `
+        <p>Récapitulatif simulation — <code>process-invoice-reminders</code></p>
+        <ul>
+          <li>invoice_reminder_1 : ${results.reminder1Sent}</li>
+          <li>invoice_reminder_2 : ${results.reminder2Sent}</li>
+          <li>invoice_reminder_3 : ${results.reminder3Sent}</li>
+          <li>ignorés : ${results.skipped}</li>
+          <li>périmètre : origin=app uniquement (import historique exclu)</li>
+        </ul>
+        <p>Par type de destinataire (client_type) :</p>
+        <ul>${recipientLines || '<li>aucun</li>'}</ul>
+        <p>${summary}</p>
+      `
+      try {
+        await sendFliEmail({
+          resendApiKey,
+          to: adminEmail,
+          subject: `[FLI][ESSAI] Relances facture — ${results.reminder1Sent + results.reminder2Sent + results.reminder3Sent} envoi(s) simulé(s)`,
+          html,
+        })
+      } catch (recapError) {
+        console.warn('Récap dry_run facture impossible:', recapError)
+      }
+    }
 
     return new Response(
       JSON.stringify({ success: true, results, summary }),
