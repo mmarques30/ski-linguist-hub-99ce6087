@@ -32,10 +32,24 @@ describe("session 5 — /admin/testing et type de cours BO", () => {
     expect(form).toContain("course_type: data.course_type || null");
   });
 
-  it("requireAdmin et cleanup-zztest ont un repli getUser", () => {
-    const auth = source("supabase/functions/_shared/admin-auth.ts");
+  it("EndPackDialog affiche le solde via resolveEndPackDeposit, pas le prix brut", () => {
+    const dialog = source("src/components/endpack/EndPackDialog.tsx");
+    expect(dialog).toContain("resolveEndPackDeposit");
+    expect(dialog).toContain("invoiceRemaining");
+    expect(dialog).not.toMatch(/Montant restant \(\{inscription\.price/);
+  });
+
+  it("cleanup-zztest appelle l'RPC avec le JWT utilisateur et décrit l'erreur", () => {
     const cleanup = source("supabase/functions/cleanup-zztest/index.ts");
-    expect(auth).toContain("getUser");
-    expect(cleanup).toContain("getUser");
+    expect(cleanup).toContain("callerClient.rpc(\"cleanup_zztest_data\"");
+    expect(cleanup).toContain("describeCleanupError");
+    expect(cleanup).not.toMatch(/admin\.rpc\("cleanup_zztest_data"/);
+    expect(cleanup).not.toMatch(/error instanceof Error \? error\.message : "Erreur"/);
+  });
+
+  it("Autre profession pointe vers info@fli.fr", () => {
+    const step = source("src/components/registration/ProfessionalProfileStep.tsx");
+    expect(step).toContain("info@fli.fr");
+    expect(step).not.toContain("fli-langues.fr");
   });
 });

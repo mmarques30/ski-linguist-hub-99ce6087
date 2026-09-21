@@ -477,6 +477,12 @@ export default function Inscriptions() {
                                     end_date: inscription.end_date,
                                     duration_hours: inscription.duration_hours,
                                     price: inscription.price,
+                                    deposit_amount:
+                                      (inscription as { deposit_amount?: number | null })
+                                        .deposit_amount ?? null,
+                                    balance_after_deposit:
+                                      (inscription as { balance_after_deposit?: number | null })
+                                        .balance_after_deposit ?? null,
                                     code: inscription.code,
                                     course_location: inscription.course_location,
                                     modality: inscription.modality,

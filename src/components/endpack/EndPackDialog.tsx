@@ -36,6 +36,7 @@ import {
   getStatusLabel,
   getStatusStyle,
 } from "@/lib/inscription-status";
+import { resolveEndPackDeposit } from "@/lib/end-pack";
 
 interface EndPackDialogProps {
   open: boolean;
@@ -50,6 +51,8 @@ interface EndPackDialogProps {
     duration_hours?: number | null;
     hours_followed?: number | null;
     price?: number | null;
+    deposit_amount?: number | null;
+    balance_after_deposit?: number | null;
     code?: string | null;
     course_location?: string | null;
     modality?: string | null;
@@ -132,6 +135,14 @@ export function EndPackDialog({
     ? endPackBlockedReason(statut, inscription.end_pack_sent_at ?? null)
     : null;
   const clotureFermee = statut ? !canCloseWithEndPack(statut) : false;
+
+  const price = Number(inscription.price) || 0;
+  const deposit = resolveEndPackDeposit({
+    price,
+    deposit_amount: inscription.deposit_amount ?? null,
+    balance_after_deposit: inscription.balance_after_deposit ?? null,
+  });
+  const invoiceRemaining = Math.max(price - deposit, 0);
 
   const handleGenerate = async () => {
     if (generateCertificate && !exitReady) return;
@@ -290,7 +301,9 @@ export function EndPackDialog({
                       Facture de solde
                     </label>
                     <p className="text-xs text-muted-foreground">
-                      Montant restant ({inscription.price || 0}€ HT)
+                      {deposit > 0
+                        ? `Montant restant (${invoiceRemaining} € HT) — acompte ${deposit} € déduit`
+                        : `Montant restant (${invoiceRemaining} € HT)`}
                     </p>
                   </div>
                 </div>

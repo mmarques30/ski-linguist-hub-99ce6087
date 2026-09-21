@@ -8,6 +8,21 @@ const corsHeaders = {
 
 const BUCKETS = ["certificates", "documents", "funding-documents"] as const;
 
+/** PostgREST / Deno : les erreurs ne sont pas toujours des `Error`. */
+function describeCleanupError(error: unknown): string {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message.trim();
+  }
+  if (error && typeof error === "object") {
+    const rec = error as Record<string, unknown>;
+    for (const key of ["message", "error", "details", "hint"] as const) {
+      const value = rec[key];
+      if (typeof value === "string" && value.trim()) return value.trim();
+    }
+  }
+  return "Erreur interne de nettoyage (sans détail)";
+}
+
 async function listPrefix(
   admin: SupabaseClient,
   bucket: string,
@@ -84,6 +99,9 @@ Deno.serve(async (req) => {
       });
     }
 
+    // RPC en JWT utilisateur : cleanup_zztest_data vérifie is_admin() via
+    // auth.uid(). Un client service-role laisse auth.uid() NULL → 42501
+    // « Réservé à un compte administrateur », souvent remonté comme « Erreur ».
     const body = (await req.json().catch(() => ({}))) as { dry_run?: boolean };
     const dryRun = body.dry_run !== false;
 
@@ -106,7 +124,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      const { data, error } = await admin.rpc("cleanup_zztest_data", {
+      const { data, error } = await callerClient.rpc("cleanup_zztest_data", {
         _dry_run: false,
       });
       if (error) throw error;
@@ -119,7 +137,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { data, error } = await admin.rpc("cleanup_zztest_data", {
+    const { data, error } = await callerClient.rpc("cleanup_zztest_data", {
       _dry_run: true,
     });
     if (error) throw error;
@@ -127,8 +145,8 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Erreur";
-    return new Response(JSON.stringify({ error: message }), {
+    const message = describeCleanupError(error);
+    return new Response(JSON.stringify({ error: message, success: false }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
