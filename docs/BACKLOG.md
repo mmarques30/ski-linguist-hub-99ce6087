@@ -2,7 +2,7 @@
 
 Règle : noter ici, **ne pas corriger** tant que le point courant n’est pas validé.
 
-Dernière mise à jour : 2026-09-21 (BL-027 clos PR #82 ; édition admin partout PR #83).
+Dernière mise à jour : 2026-09-21 (BL-007 clos PR #85 ; crons actifs + notifs).
 
 ## Conventions de lecture
 
@@ -82,7 +82,7 @@ BL-030 / BL-050 **fusionnés** (PR #73 + #75). Reste éventuel : peaufinage BL-0
 
 ### Hors périmètre du 1er octobre
 
-BL-001, BL-007, BL-008, BL-009, BL-010, BL-011, BL-014, BL-015, BL-017, BL-019, BL-020,
+BL-001, BL-008, BL-009, BL-010, BL-011, BL-014, BL-015, BL-017, BL-019, BL-020,
 BL-022 : dette antérieure, non remontée par la recette.
 
 ---
@@ -128,7 +128,7 @@ BL-022 : dette antérieure, non remontée par la recette.
 |----|---------|----------|
 | BL-001 | Cartes FLI import sans dry-run/audit alignés `/admin/import` | Avant point 9 |
 | BL-002 | Niveaux importés hors référentiel — **clos** PR #30 (entry_level) + #43 (`determined_level` CECRL) ; `docs/POINT_ENTRY_LEVEL.md` | SQL — vague 2 |
-| BL-007 | Crons `pg_net` — partiel point 8 ; producteurs notifs UX Vague D (`paiement`, `evaluation`) ; activation `keep_active` reste ouverte | Point 8 / UX D |
+| BL-007 | Crons `pg_net` + producteurs notifs + `keep_active` | Point 8 / UX D — **clos** PR #85 : crons email + `avancer-statuts` actifs ; notifs paiement / évaluation / demande de test / sans formateur / facture échue |
 | BL-008 | STRIPE_SETUP — **rafraîchi** PR #78 (vérifier via Settings) | Point 6 |
 | BL-009 | Docs « purger toutes les données » | Faible |
 | BL-010 | Phrases 321 vs 540 — point 7 fusionné | Point 7 |
@@ -190,6 +190,7 @@ BL-022 : dette antérieure, non remontée par la recette.
 | BL-027 (partiel), 038 (soft) | Suite 5 octobre — PR #76 |
 | BL-027 (complet) | Règle OPCO + propositions BO — PR #82 |
 | Édition admin + confirm | Mutation BO avec confirmation — PR #83 |
+| BL-007 | Crons actifs + producteurs notifs — PR #85 |
 | BL-038 (hard) | Hard dedup partenaires — PR #80 |
 | BL-014 (partiel), Qualiopi/statuts/dashboard | Suite 6 octobre — PR #77 |
 | `/documents`, pagination morte, STRIPE_SETUP | Suite 7 octobre — PR #78 |
@@ -259,4 +260,5 @@ BL-022 : dette antérieure, non remontée par la recette.
 | **BL-038 hard dedup** | Fusionné main (PR #80) — détection + fusion partenaires |
 | **BL-027 règle OPCO** | Fusionné main (PR #82) — questionnaire register ; propositions BO ; montants éditables |
 | **Édition admin partout** | Fusionné main (PR #83) — `useConfirmAction` ; confirmation avant chaque mutation BO |
+| **BL-007 crons + notifs** | Fusionné main (PR #85) — crons email + avancement actifs ; producteurs notifs BO |
 | 6 — Stripe | Config test OK via Settings / `check-stripe-config` ; docs STRIPE_SETUP rafraîchis (#78) ; mode live hors scope |

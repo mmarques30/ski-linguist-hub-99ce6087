@@ -7,7 +7,7 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 
 ## 0. Fusion & déploiement (tête de rapport)
 
-### Fusionné dans `main` (rafraîchi 21/09/2026)
+### Fusionné dans `main` (rafraîchi 21/09/2026 — incl. #85)
 
 | Élément | PR | Note |
 |---------|----|------|
@@ -31,17 +31,18 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 | **BL-038 hard dedup** | #80 | Détection doublons + fusion (filtre Doublons, mapping sous gel) |
 | **BL-027 règle OPCO** | #82 | Questionnaire register ; propositions BO ; montants éditables |
 | **Édition admin partout** | #83 | `useConfirmAction` ; confirmation avant chaque mutation BO |
+| **BL-007 crons + notifs** | #85 | Crons email + avancement actifs ; producteurs notifs BO |
 | Sync types Lovable | — | `types.ts` leads + `funding_requests.payer_type` |
 
-**SHA `main` au moment de ce refresh :** `43abd65` (merge #83).
+**SHA `main` au moment de ce refresh :** `aa7098e` (republish edge + merge #85).
 
 ### Déploiement app publiée
 
 | Statut | Détail |
 |--------|--------|
 | App | **https://plateforme.fli.fr** (alias Lovable → `ski-linguist-hub.lovable.app`) |
-| Alignement front ↔ `main` | **Aligné** 21/09 — publié après #82 / #83 (Paula) |
-| Edges / Resend | **19/19** republishées 19/09 ; `RESEND_API_KEY` OK ; Stripe opérationnel ; BL-047 **clos** ; `submit-registration` à jour pour OPCO (#82) |
+| Alignement front ↔ `main` | **Aligné** 21/09 — publié après #82–#85 |
+| Edges / Resend | **19/19** ; `RESEND_API_KEY` OK ; Stripe OK ; BL-047 **clos** ; crons BL-007 **actifs** ; `process-invoice-reminders` **republie** 21/09 (notif facture échue) |
 
 ### Branches non fusionnées (reste)
 
@@ -54,7 +55,7 @@ Historique / hors plan : voir anciennes notes ; les vagues UX A–D et C.1–C.6
 | Champ | Valeur |
 |-------|--------|
 | Dépôt | `mmarques30/ski-linguist-hub-99ce6087` |
-| Branche de référence | `main` @ `43abd65` |
+| Branche de référence | `main` @ `a2d13ab` |
 | App | SPA Vite + React 18 + TypeScript « FLI Formation » (Lovable) |
 | Projet Lovable | `34e71e1a-49f7-433e-bb36-fc4d26e86f8e` (Ski School Connect / ski-linguist-hub) |
 | Backend | Supabase hébergé `nghkrmvakjomzmfwdhbo` — `https://nghkrmvakjomzmfwdhbo.supabase.co` |
@@ -240,7 +241,7 @@ Activée sur les tables métier (migrations 20260406 / 20260412 / 20260731). Pol
 | `import-ski-monitors` | Import moniteurs | HTTP + secret | `IMPORT_SECRET` | Déployée |
 | `process-intake-outreach` | Mails intakes | HTTP / cron | Resend | Déployée ; **BL-006** sans unsubscribe |
 | `process-schedule-reminders` | Alerte J-10 | cron | Resend, `ADMIN_EMAIL` | Déployée |
-| `process-invoice-reminders` | Relances factures | cron | Resend | Déployée ; crons **BL-007** `pg_net` |
+| `process-invoice-reminders` | Relances factures | cron | Resend | Déployée ; cron **actif** (BL-007) |
 | `process-survey-reminders` | Relances survey | cron | Resend | idem |
 | `generate-monthly-charges` | Charges fixes mensuelles | cron | — | idem |
 
@@ -256,7 +257,7 @@ Déclarés dans migrations (`pg_cron` + `pg_net` vers edge) :
 - `process-survey-reminders`
 - `process-schedule-reminders` (quotidien, J-10)
 
-**État :** backlog **BL-007** — jobs actifs mais échecs si `pg_net` absent. Dernier résultat : non consultable sans SQL admin.
+**État :** BL-007 **clos** (PR #85) — jobs email + `avancer-statuts` **actifs** via `dispatch_edge_function` / `pg_net`. Basculables depuis `/admin/emails`.
 
 ---
 
@@ -294,7 +295,7 @@ Déclarés dans migrations (`pg_cron` + `pg_net` vers edge) :
 | Satisfaction | Survey token + stats | — | — |
 | Amélioration continue | CRUD | — | — |
 | Documents | Envois welcome pack ; `/documents` empty state + liens (#78) | Bibliothèque réelle | — |
-| Notifications | `/notifications` + producteurs inscription/paiement/évaluation | Crons BL-007 | — |
+| Notifications | `/notifications` + producteurs inscription / paiement / évaluation / test / sans formateur / facture échue | — | — |
 | Recherche globale | ⌘K multi-entités (Vague D) ; recherche prénom+nom stagiaires/formateurs (BL-040 / suite 3) | — | — |
 | Permissions | `canView` dans `ProtectedRoute` | — | — |
 | Import | Moteur dry-run/purge/audit | Cartes FLI (BL-001) | — |
@@ -328,15 +329,15 @@ Fichiers clés : `src/pages/**`, `src/hooks/**`, `src/lib/**`, `supabase/functio
 | `npm run build` | **OK** |
 | `npm run lint` | **FAIL** — 102 errors / 16 warnings (surtout `@typescript-eslint/no-explicit-any`) — préexistant (AGENTS.md) |
 | Dépendances majeures | React 18.3 · Vite 5.4 · Supabase-js 2.90 · TanStack Query 5.83 · Vitest 4.1 · jspdf 4 · Tailwind 3.4 |
-| Dette | Voir §11 + `BACKLOG.md` ; BL-007 crons ; policies storage certificats |
+| Dette | Voir §11 + `BACKLOG.md` ; policies storage certificats |
 
 ---
 
 ## 11. Backlog & plan points 1–10
 
-Intégré depuis `docs/BACKLOG.md` (refresh 21/09/2026) :
+Intégré depuis `docs/BACKLOG.md` (refresh 21/09/2026 — BL-007 clos) :
 
-**Ouvert (extraits) :** BL-001, 007 (crons), 008, 011, 014 (peaufinage), 015, 017, 019, 020, 022.
+**Ouvert (extraits) :** BL-001, 008, 011, 014 (peaufinage), 015, 017, 019, 020, 022.
 
 | Point / vague | État |
 |---------------|------|
@@ -344,7 +345,7 @@ Intégré depuis `docs/BACKLOG.md` (refresh 21/09/2026) :
 | 5 Gel | **Livré** (main + edges 19/09) |
 | 6 Stripe | Config **test** OK ; mode live hors scope |
 | 7 Phrases | Fusionné main |
-| 8 Emails | Fusionné main ; Resend OK (BL-047 clos) ; crons `keep_active` = BL-007 |
+| 8 Emails | Fusionné main ; Resend OK (BL-047 clos) ; crons **actifs** (BL-007 clos #85) |
 | 9 Facturation import | Fusionné main |
 | 10 Cycle inscription | **Livré** (BL-019 horaires exacts reste) |
 | C.1–C.6 | Fusionnés main |
@@ -356,6 +357,7 @@ Intégré depuis `docs/BACKLOG.md` (refresh 21/09/2026) :
 | BL-038 hard dedup | Fusionné main (PR #80) |
 | BL-027 règle OPCO | Fusionné main (PR #82) |
 | Édition admin partout | Fusionné main (PR #83) |
+| BL-007 crons + notifs | Fusionné main (PR #85) |
 
 ---
 
@@ -369,7 +371,7 @@ Intégré depuis `docs/BACKLOG.md` (refresh 21/09/2026) :
 | Dépôt | GitHub privé/équipe (accès agent limité en écriture PR) |
 | Exposition | Anon key dans `.env` commitée (normal Supabase) ; service-role **ne doit pas** être front |
 | Signups | Désactivés ; users via `create-user` |
-| Incidents connus | Crons `pg_net` (BL-007) ; MCP Lovable rétabli le 09/09 (counts + deploy OK) |
+| Incidents connus | MCP Lovable rétabli le 09/09 (counts + deploy OK) |
 
 ---
 
