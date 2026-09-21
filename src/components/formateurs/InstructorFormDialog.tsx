@@ -24,6 +24,11 @@ import {
   languagesInclude,
   normalizeInstructorLanguage,
 } from "@/lib/taught-languages";
+import {
+  activationConfirmDescription,
+  candidatActivationGaps,
+  STATUT_ADMINISTRATIF_PRESETS,
+} from "@/lib/instructor-candidat";
 
 export const TAX_STATUSES = [
   { value: "auto_entrepreneur", label: "Auto-entrepreneur" },
@@ -228,11 +233,27 @@ export function InstructorFormDialog({ open, onOpenChange, instructor }: Props) 
 
   const handleSubmit = () => {
     if (!form.last_name) return;
+    const becomingActif =
+      form.status === "actif" && (!isEdit || instructor?.status !== "actif");
+    const gaps = becomingActif
+      ? candidatActivationGaps({
+          email: form.email,
+          phone: form.phone,
+          languages: form.languages,
+          siret: form.siret,
+          tax_status: form.tax_status,
+          statut_administratif: form.statut_administratif,
+          vigilance_attestation_url: form.vigilance_attestation_url,
+          vigilance_attestation_received_at: form.vigilance_attestation_received_at,
+        })
+      : [];
     confirm({
       title: isEdit ? "Enregistrer les modifications ?" : "Créer ce formateur ?",
       description: isEdit
-        ? "Les informations du formateur seront mises à jour."
-        : "Un nouveau formateur sera ajouté.",
+        ? becomingActif
+          ? activationConfirmDescription(gaps)
+          : "Les informations du formateur seront mises à jour."
+        : "Un nouveau formateur sera ajouté en statut candidat·e.",
       actionLabel: isEdit ? "Enregistrer" : "Créer",
       run: () => persistInstructor(),
     });
@@ -406,10 +427,35 @@ export function InstructorFormDialog({ open, onOpenChange, instructor }: Props) 
             </div>
             <div>
               <Label>Statut administratif</Label>
-              <Input
-                value={form.statut_administratif}
-                onChange={(e) => setForm((f) => ({ ...f, statut_administratif: e.target.value }))}
-              />
+              <Select
+                value={form.statut_administratif || "unset"}
+                onValueChange={(v) =>
+                  setForm((f) => ({
+                    ...f,
+                    statut_administratif: v === "unset" ? "" : v,
+                  }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unset">Non renseigné</SelectItem>
+                  {STATUT_ADMINISTRATIF_PRESETS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                  {form.statut_administratif &&
+                    !STATUT_ADMINISTRATIF_PRESETS.some(
+                      (option) => option.value === form.statut_administratif,
+                    ) && (
+                      <SelectItem value={form.statut_administratif}>
+                        {form.statut_administratif}
+                      </SelectItem>
+                    )}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <div>

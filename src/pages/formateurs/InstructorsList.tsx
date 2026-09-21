@@ -12,13 +12,18 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Plus, Search, UserCog } from "lucide-react";
-import { useInstructors, type Instructor } from "@/hooks/useInstructors";
+import { useInstructors, useUpdateInstructor, type Instructor } from "@/hooks/useInstructors";
 import { InstructorCard } from "@/components/formateurs/InstructorCard";
 import { InstructorFormDialog } from "@/components/formateurs/InstructorFormDialog";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { EmptyState } from "@/components/common/EmptyState";
 import { CardGridSkeleton } from "@/components/common/ListSkeleton";
 import { PORTUGUESE_LABEL_LOWER } from "@/lib/taught-languages";
+import {
+  activationConfirmDescription,
+  candidatActivationGaps,
+} from "@/lib/instructor-candidat";
+import { useConfirmAction } from "@/hooks/useConfirmAction";
 
 export default function InstructorsList() {
   const navigate = useNavigate();
@@ -30,6 +35,8 @@ export default function InstructorsList() {
   const [statusFilter, setStatusFilter] = useState<"actif" | "inactif" | "candidat" | "all">("actif");
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Instructor | null>(null);
+  const updateInstructor = useUpdateInstructor();
+  const { confirm, dialog: confirmDialog } = useConfirmAction();
 
   const { data: instructors = [], isLoading } = useInstructors({
     search,
@@ -37,6 +44,33 @@ export default function InstructorsList() {
     availability: availFilter !== "all" ? availFilter : undefined,
     status: statusFilter,
   });
+
+  const activateCandidat = (instructor: Instructor) => {
+    const gaps = candidatActivationGaps(instructor);
+    confirm({
+      title: "Passer en actif·ve ?",
+      description: activationConfirmDescription(gaps),
+      actionLabel: "Confirmer",
+      run: () =>
+        updateInstructor.mutateAsync({
+          id: instructor.id,
+          status: "actif",
+          is_active: true,
+        }),
+    });
+  };
+
+  const emptyTitle =
+    statusFilter === "candidat"
+      ? "Aucun·e candidat·e"
+      : statusFilter === "inactif"
+        ? "Aucun·e formateur·rice inactif·ve"
+        : "Aucun formateur";
+
+  const emptyDescription =
+    statusFilter === "candidat"
+      ? "Les nouveaux formateurs créés apparaissent ici en candidat·e jusqu'à activation."
+      : "Ajoutez votre premier formateur pour commencer à organiser le planning et les paiements.";
 
   return (
     <MainLayout>
@@ -116,8 +150,8 @@ export default function InstructorsList() {
         ) : instructors.length === 0 ? (
           <EmptyState
             icon={UserCog}
-            title="Aucun formateur"
-            description="Ajoutez votre premier formateur pour commencer à organiser le planning et les paiements."
+            title={emptyTitle}
+            description={emptyDescription}
             action={editable ? {
               label: "Ajouter un·e formateur·rice",
               icon: Plus,
@@ -142,6 +176,11 @@ export default function InstructorsList() {
                       }
                     : undefined
                 }
+                onActivate={
+                  editable && inst.status === "candidat"
+                    ? () => activateCandidat(inst)
+                    : undefined
+                }
               />
             ))}
           </div>
@@ -156,6 +195,7 @@ export default function InstructorsList() {
         }}
         instructor={editing}
       />
+      {confirmDialog}
     </MainLayout>
   );
 }
