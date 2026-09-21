@@ -445,6 +445,7 @@ Deno.serve(async (req) => {
         schedule_status: "pending",
         entry_test_score: registration.testAnswers ? String(correctAnswers) : null,
         payment_method: paymentFields?.paymentMethod ?? null,
+        deposit_amount: paymentFields?.depositAmount ?? null,
         balance_after_deposit: paymentFields?.balanceAfterDeposit ?? null,
         observations: [
           isCustomFormat

@@ -973,6 +973,7 @@ export default function InscriptionDetails() {
               entry_level: inscription.entry_level,
               exit_level: inscription.exit_level,
               modality: inscription.modality,
+              course_type: (inscription as { course_type?: string | null }).course_type ?? null,
               course_location: inscription.course_location,
               observations: inscription.observations,
               expectations: inscription.expectations,

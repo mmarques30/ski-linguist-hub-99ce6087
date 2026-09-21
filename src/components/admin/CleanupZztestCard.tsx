@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, Trash2, ListChecks } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeAdminEdgeFunction } from "@/lib/admin-edge-invoke";
 import { ZZTEST_EMAIL_DOMAIN, ZZTEST_PREFIX } from "@/lib/zztest";
 
 export type CleanupZztestEntry = {
@@ -87,29 +87,29 @@ function AuteursTable({ entries }: { entries: CleanupZztestEntry[] }) {
 }
 
 async function callCleanup(dryRun: boolean): Promise<CleanupZztestJournal> {
-  const { data, error } = await supabase.functions.invoke("cleanup-zztest", {
-    body: { dry_run: dryRun },
+  return invokeAdminEdgeFunction<CleanupZztestJournal>("cleanup-zztest", {
+    dry_run: dryRun,
   });
-  if (error) throw new Error(error.message);
-  if (data && typeof data === "object" && "error" in data && data.error) {
-    throw new Error(String((data as { error: string }).error));
-  }
-  return data as CleanupZztestJournal;
 }
 
 export function CleanupZztestCard() {
   const [pending, setPending] = useState<"dry" | "run" | null>(null);
   const [journal, setJournal] = useState<CleanupZztestJournal | null>(null);
   const [confirm, setConfirm] = useState("");
+  const [lastError, setLastError] = useState<string | null>(null);
 
   const handleDryRun = async () => {
     setPending("dry");
+    setLastError(null);
     try {
       const result = await callCleanup(true);
       setJournal(result);
       toast.success("Simulation terminée — aucune ligne effacée");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Échec de la simulation");
+      const message =
+        error instanceof Error ? error.message : "Échec de la simulation";
+      setLastError(message);
+      toast.error(message);
     } finally {
       setPending(null);
     }
@@ -121,13 +121,17 @@ export function CleanupZztestCard() {
       return;
     }
     setPending("run");
+    setLastError(null);
     try {
       const result = await callCleanup(false);
       setJournal(result);
       setConfirm("");
       toast.success("Données de test nettoyées");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Échec du nettoyage");
+      const message =
+        error instanceof Error ? error.message : "Échec du nettoyage";
+      setLastError(message);
+      toast.error(message);
     } finally {
       setPending(null);
     }
@@ -161,8 +165,16 @@ export function CleanupZztestCard() {
           </AlertDescription>
         </Alert>
 
+        {lastError && (
+          <Alert variant="destructive">
+            <AlertTitle>Échec de l&apos;appel</AlertTitle>
+            <AlertDescription>{lastError}</AlertDescription>
+          </Alert>
+        )}
+
         <div className="flex flex-wrap gap-2">
           <Button
+            type="button"
             variant="outline"
             onClick={() => void handleDryRun()}
             disabled={pending !== null}
@@ -209,6 +221,7 @@ export function CleanupZztestCard() {
               autoComplete="off"
             />
             <Button
+              type="button"
               variant="destructive"
               onClick={() => void handleCleanup()}
               disabled={pending !== null || confirm !== CONFIRM_WORD}

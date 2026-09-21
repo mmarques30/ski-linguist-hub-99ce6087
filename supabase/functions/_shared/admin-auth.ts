@@ -24,8 +24,22 @@ export async function requireAdmin(
     global: { headers: { Authorization: authHeader } },
   });
   const token = authHeader.replace("Bearer ", "");
-  const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(token);
-  if (claimsError || !claimsData?.claims?.sub) {
+
+  // getClaims (JWT local) puis repli getUser (Auth API) si le runtime
+  // Deno / la lib ne résout pas les claims — sinon les boutons admin
+  // semblent « morts » (401 silencieux côté client mal branché).
+  let userId: string | null = null;
+  const { data: claimsData } = await callerClient.auth.getClaims(token);
+  if (claimsData?.claims?.sub && typeof claimsData.claims.sub === "string") {
+    userId = claimsData.claims.sub;
+  } else {
+    const { data: userData, error: userError } = await callerClient.auth.getUser(token);
+    if (!userError && userData?.user?.id) {
+      userId = userData.user.id;
+    }
+  }
+
+  if (!userId) {
     return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
       status: 401,
       headers: { ...adminCorsHeaders, "Content-Type": "application/json" },
@@ -34,7 +48,7 @@ export async function requireAdmin(
 
   const adminClient = createClient(supabaseUrl, serviceRoleKey);
   const { data: isAdmin } = await adminClient.rpc("has_role", {
-    _user_id: claimsData.claims.sub,
+    _user_id: userId,
     _role: "admin",
   });
 
@@ -45,5 +59,5 @@ export async function requireAdmin(
     });
   }
 
-  return { adminClient, userId: claimsData.claims.sub };
+  return { adminClient, userId };
 }

@@ -62,4 +62,25 @@ describe("modes de règlement /register", () => {
     expect(total.amountDueNow).toBe(600);
     expect(total.balanceAfterDossier).toBe(0);
   });
+
+  it("renseigne depositAmount = 150 € sur les flux acompte (copie Deno)", () => {
+    const deno = readFileSync(
+      join(process.cwd(), "supabase/functions/_shared/registration-payments.ts"),
+      "utf8"
+    );
+    // Les deux retours acompte (virement + stripe) doivent poser depositAmount.
+    const matches = [
+      ...deno.matchAll(/depositAmount:\s*([^,\n]+)/g),
+    ].map((m) => m[1].trim());
+    expect(matches.filter((v) => v === "FRAIS_DOSSIER_EUR")).toHaveLength(2);
+    expect(matches.filter((v) => v === "null")).toHaveLength(2); // totaux Stripe / virement
+  });
+
+  it("écrit deposit_amount à la création d'inscription", () => {
+    const submit = readFileSync(
+      join(process.cwd(), "supabase/functions/submit-registration/index.ts"),
+      "utf8"
+    );
+    expect(submit).toContain("deposit_amount: paymentFields?.depositAmount ?? null");
+  });
 });

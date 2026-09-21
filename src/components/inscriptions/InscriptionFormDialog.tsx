@@ -135,6 +135,21 @@ const translations = {
     "pt-BR": "Modalidade",
     en: "Modality"
   },
+  courseType: {
+    fr: "Type de cours",
+    "pt-BR": "Tipo de curso",
+    en: "Course type"
+  },
+  courseTypeIndividual: {
+    fr: "Individuel",
+    "pt-BR": "Individual",
+    en: "Individual"
+  },
+  courseTypeCollective: {
+    fr: "Collectif",
+    "pt-BR": "Coletivo",
+    en: "Group"
+  },
   location: {
     fr: "Lieu de formation",
     "pt-BR": "Local de formação",
@@ -242,6 +257,7 @@ const inscriptionSchema = z.object({
   entry_level: z.string().optional(),
   exit_level: z.string().optional(),
   modality: z.string().optional(),
+  course_type: z.string().optional(),
   course_location: z.string().optional(),
   observations: z.string().optional(),
   expectations: z.string().optional(),
@@ -272,6 +288,7 @@ interface InscriptionToEdit {
   entry_level?: string | null;
   exit_level?: string | null;
   modality?: string | null;
+  course_type?: string | null;
   course_location?: string | null;
   observations?: string | null;
   expectations?: string | null;
@@ -316,6 +333,7 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
       entry_level: "",
       exit_level: "",
       modality: "Présentiel",
+      course_type: "Individuel",
       course_location: "",
       observations: "",
       expectations: "",
@@ -397,6 +415,7 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
         entry_level: inscription.entry_level || "",
         exit_level: inscription.exit_level || "",
         modality: inscription.modality || "Présentiel",
+        course_type: inscription.course_type || "Individuel",
         course_location: inscription.course_location || "",
         observations: inscription.observations || "",
         expectations: inscription.expectations || "",
@@ -454,6 +473,7 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
         entry_level: data.entry_level || null,
         exit_level: data.exit_level || null,
         modality: data.modality || null,
+        course_type: data.course_type || null,
         course_location: data.course_location || null,
         observations: data.observations || null,
         expectations: data.expectations || null,
@@ -713,7 +733,7 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               {/* Duration */}
               <FormField
                 control={form.control}
@@ -755,7 +775,9 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
                   </FormItem>
                 )}
               />
+            </div>
 
+            <div className="grid grid-cols-2 gap-4">
               {/* Modality */}
               <FormField
                 control={form.control}
@@ -773,6 +795,33 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
                         <SelectItem value="Présentiel">{t(translations.inPerson)}</SelectItem>
                         <SelectItem value="Distanciel">{t(translations.remote)}</SelectItem>
                         <SelectItem value="Hybride">{t(translations.hybrid)}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Type de cours — Constitution des groupes filtre sur « collectif » */}
+              <FormField
+                control={form.control}
+                name="course_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t(translations.courseType)}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || "Individuel"}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Individuel">
+                          {t(translations.courseTypeIndividual)}
+                        </SelectItem>
+                        <SelectItem value="Collectif">
+                          {t(translations.courseTypeCollective)}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

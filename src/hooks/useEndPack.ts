@@ -33,7 +33,7 @@ function createSupabaseEndPackStore(): EndPackStore {
     async getInscriptionAmounts(inscriptionId) {
       const { data, error } = await supabase
         .from("inscriptions")
-        .select("price, deposit_amount")
+        .select("price, deposit_amount, balance_after_deposit")
         .eq("id", inscriptionId)
         .maybeSingle();
       throwIfError(error, "Lecture de l'inscription impossible.");
