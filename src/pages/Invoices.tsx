@@ -33,6 +33,7 @@ import {
 import { useInvoices, useUpdateInvoice, InvoiceWithInscription } from "@/hooks/useInvoices";
 import { ensureInvoicePayment } from "@/hooks/usePayments";
 import { canonicalPaymentMethod } from "@/lib/payment-methods";
+import { resolveInvoiceClientName } from "@/lib/invoice-client-name";
 import { InvoiceTemplate, InvoiceData } from "@/components/invoices/InvoiceTemplate";
 import { InvoiceEditDialog } from "@/components/invoices/InvoiceEditDialog";
 import { InvoiceCreateDialog } from "@/components/invoices/InvoiceCreateDialog";
@@ -99,9 +100,9 @@ const translations = {
     en: "New Invoice",
   },
   searchPlaceholder: {
-    fr: "Rechercher par numéro...",
-    "pt-BR": "Buscar por número...",
-    en: "Search by number...",
+    fr: "N° facture ou nom client…",
+    "pt-BR": "Nº fatura ou nome do cliente…",
+    en: "Invoice no. or client name…",
   },
   allStatuses: {
     fr: "Tous les statuts",
@@ -481,17 +482,29 @@ export default function Invoices() {
     last_season: t(translations.periodLastSeason),
   };
 
-  const { data: invoices, isLoading, error } = useInvoices({
+  const { data: invoicesRaw, isLoading, error } = useInvoices({
     status: statusFilter,
     type: typeFilter,
     clientType: clientTypeFilter,
-    search: search || undefined,
+    // Recherche n° + nom client côté client (notes import sans inscription)
     dateFrom: dateRange.from,
     dateTo: dateRange.to,
     seasonId,
     seasonStart,
     seasonEnd,
   });
+
+  const invoices = useMemo(() => {
+    if (!invoicesRaw) return invoicesRaw;
+    const q = search.trim().toLowerCase();
+    if (!q) return invoicesRaw;
+    return invoicesRaw.filter((invoice) => {
+      const number = (invoice.invoice_number || "").toLowerCase();
+      const client = resolveInvoiceClientName(invoice).toLowerCase();
+      const notes = (invoice.notes || "").toLowerCase();
+      return number.includes(q) || client.includes(q) || notes.includes(q);
+    });
+  }, [invoicesRaw, search]);
 
   const updateInvoice = useUpdateInvoice();
   const { confirm, dialog: confirmDialog } = useConfirmAction();
@@ -615,12 +628,8 @@ export default function Invoices() {
     [summary, language]
   );
 
-  const getClientName = (invoice: InvoiceWithInscription) => {
-    if (invoice.inscription?.student_name) {
-      return invoice.inscription.student_name;
-    }
-    return "-";
-  };
+  const getClientName = (invoice: InvoiceWithInscription) =>
+    resolveInvoiceClientName(invoice);
 
   const handleMarkAsSent = (invoice: InvoiceWithInscription) => {
     confirm({
@@ -663,7 +672,10 @@ export default function Invoices() {
             amount: invoice.amount_ttc || invoice.amount_ht,
             paymentMethod: method,
             paymentDate,
-            payerName: invoice.inscription?.student_name ?? null,
+            payerName: (() => {
+              const name = resolveInvoiceClientName(invoice);
+              return name !== "-" ? name : null;
+            })(),
           });
           toast.success(t(translations.markedAsPaid));
         } catch {
@@ -718,13 +730,14 @@ export default function Invoices() {
 
   const getPreviewData = (invoice: InvoiceWithInscription): InvoiceData => {
     const inscription = invoice.inscription;
+    const clientName = resolveInvoiceClientName(invoice);
     return {
       invoiceNumber: invoice.invoice_number || "",
       invoiceDate: new Date(invoice.invoice_date),
       dueDate: invoice.due_date ? new Date(invoice.due_date) : new Date(),
       invoiceType: invoice.invoice_type,
       status: invoice.status,
-      clientName: inscription?.student_name || "Client non renseigné",
+      clientName: clientName !== "-" ? clientName : "Client non renseigné",
       clientAddress: inscription?.student_address || "",
       clientCity: inscription?.student_city || "",
       clientPostalCode: inscription?.student_postal_code || "",

@@ -195,6 +195,77 @@ export async function ensureInvoicePayment(params: {
   return "created";
 }
 
+/** Ligne de paiement éditable depuis la fiche facture (acompte + solde, etc.). */
+export type InvoicePaymentLineInput = {
+  id?: string;
+  amount: number;
+  payment_method: string;
+  payment_date: string;
+  payment_type: "acompte" | "partial" | "total";
+  cheque_status?: string | null;
+};
+
+/**
+ * Remplace les paiements rattachés à une facture par la liste éditée
+ * (insert / update / delete). Les lignes vides (montant ≤ 0) sont ignorées.
+ */
+export async function syncInvoicePayments(params: {
+  invoiceId: string;
+  inscriptionId?: string | null;
+  payerName?: string | null;
+  lines: InvoicePaymentLineInput[];
+}): Promise<void> {
+  const { data: existing, error: readError } = await supabase
+    .from("payments")
+    .select("id")
+    .eq("invoice_id", params.invoiceId);
+  if (readError) throw readError;
+
+  const keptIds = new Set(
+    params.lines.map((line) => line.id).filter((id): id is string => Boolean(id))
+  );
+  const toDelete = (existing ?? [])
+    .map((row) => row.id)
+    .filter((id) => !keptIds.has(id));
+
+  if (toDelete.length > 0) {
+    const { error: deleteError } = await supabase
+      .from("payments")
+      .delete()
+      .in("id", toDelete);
+    if (deleteError) throw deleteError;
+  }
+
+  for (const line of params.lines) {
+    if (!(line.amount > 0) || !line.payment_method || !line.payment_date) continue;
+    const method = line.payment_method;
+    const payload = {
+      invoice_id: params.invoiceId,
+      inscription_id: params.inscriptionId ?? null,
+      amount: Math.round(line.amount * 100) / 100,
+      payment_type: line.payment_type,
+      payment_method: method,
+      payment_date: line.payment_date,
+      status: "recu" as const,
+      payer_type: "stagiaire",
+      payer_name: params.payerName ?? null,
+      cheque_status: method === "cheque" ? line.cheque_status || "recu" : null,
+      cheque_date: method === "cheque" ? line.payment_date : null,
+    };
+
+    if (line.id) {
+      const { error } = await supabase
+        .from("payments")
+        .update(payload as never)
+        .eq("id", line.id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase.from("payments").insert(payload as never);
+      if (error) throw error;
+    }
+  }
+}
+
 export function useCreatePayment() {
   const queryClient = useQueryClient();
   return useMutation({
