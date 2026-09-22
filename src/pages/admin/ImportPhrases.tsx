@@ -1,10 +1,15 @@
 import { useMemo, useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  CardGrid,
+  PageHeader,
+  PageShell,
+  StatusPill,
+  SurfaceCard,
+} from "@/components/ui-kit";
 import { useToast } from "@/hooks/use-toast";
 import { useBulkImportPhrases, useTestPhrases } from "@/hooks/useTestPhrases";
 import { Upload, FileJson, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
@@ -106,13 +111,21 @@ export default function ImportPhrasesPage() {
 
   return (
     <MainLayout>
-      <div className="p-6 space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Import des Phrases</h1>
-          <p className="text-muted-foreground">
-            Importer les phrases pré-rédigées pour les évaluations
-          </p>
-        </div>
+      <PageShell>
+        <PageHeader
+          title="Import des Phrases"
+          icon={FileJson}
+          tone="purple"
+          description="Importer les phrases pré-rédigées pour les évaluations"
+          meta={
+            <>
+              <StatusPill tone="info">{counts.total} phrases dans le fichier</StatusPill>
+              <StatusPill tone={newPhrases.length > 0 ? "success" : "neutral"}>
+                {newPhrases.length} nouvelle{newPhrases.length > 1 ? "s" : ""}
+              </StatusPill>
+            </>
+          }
+        />
 
         {announced !== phrases.length && (
           <Alert>
@@ -126,79 +139,70 @@ export default function ImportPhrasesPage() {
           </Alert>
         )}
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileJson className="h-5 w-5" />
-                Fichier à importer
-              </CardTitle>
-              <CardDescription>{testPhrasesData.metadata.description}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        <CardGrid cols={2}>
+          <SurfaceCard
+            title="Fichier à importer"
+            icon={FileJson}
+            description={testPhrasesData.metadata.description}
+          >
+            <div className="space-y-4">
               <div className="text-sm text-muted-foreground">
                 Version : {testPhrasesData.metadata.version} · Créé :{" "}
                 {testPhrasesData.metadata.created_date}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <h4 className="font-medium mb-2">Par catégorie</h4>
+                  <h4 className="mb-2 font-medium">Par catégorie</h4>
                   <div className="space-y-1">
                     {Object.entries(counts.byCategory).map(([cat, count]) => (
-                      <div key={cat} className="flex justify-between text-sm">
-                        <span>{fileCategoryLabel(cat)}</span>
-                        <Badge variant="secondary">{count}</Badge>
+                      <div key={cat} className="flex items-center justify-between gap-2 text-sm">
+                        <span className="min-w-0 truncate">{fileCategoryLabel(cat)}</span>
+                        <StatusPill tone="neutral" size="sm">{count}</StatusPill>
                       </div>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-medium mb-2">Par langue</h4>
+                  <h4 className="mb-2 font-medium">Par langue</h4>
                   <div className="space-y-1">
                     {Object.entries(counts.byLanguage).map(([lang, count]) => (
-                      <div key={lang} className="flex justify-between text-sm">
-                        <span>
+                      <div key={lang} className="flex items-center justify-between gap-2 text-sm">
+                        <span className="min-w-0 truncate">
                           {FILE_LANGUAGE_FLAGS[lang] || ""} {fileLanguageLabel(lang)}
                         </span>
-                        <Badge variant="secondary">{count}</Badge>
+                        <StatusPill tone="neutral" size="sm">{count}</StatusPill>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
 
-              <div className="pt-4 border-t space-y-1">
-                <div className="flex items-center gap-2 text-lg font-semibold">
+              <div className="space-y-1 border-t border-border pt-4">
+                <div className="flex items-center gap-2 text-lg font-semibold tabular">
                   Total : {counts.total} phrases
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {corrections} corrections · {counts.total - corrections} explications
                 </p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </SurfaceCard>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Upload className="h-5 w-5" />
-                Options d'import
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 rounded-lg bg-muted/50 space-y-2">
-                <div className="flex justify-between">
+          <SurfaceCard title="Options d'import" icon={Upload}>
+            <div className="space-y-4">
+              <div className="space-y-2 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))] p-4">
+                <div className="flex items-center justify-between gap-2">
                   <span>Phrases déjà existantes:</span>
-                  <Badge variant={duplicatePhrases.length > 0 ? "secondary" : "outline"}>
+                  <StatusPill tone={duplicatePhrases.length > 0 ? "warning" : "neutral"} size="sm">
                     {duplicatePhrases.length}
-                  </Badge>
+                  </StatusPill>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <span>Nouvelles phrases:</span>
-                  <Badge variant="default" className="bg-green-600">
+                  <StatusPill tone="success" size="sm">
                     {newPhrases.length}
-                  </Badge>
+                  </StatusPill>
                 </div>
               </div>
 
@@ -214,12 +218,12 @@ export default function ImportPhrasesPage() {
               </div>
 
               {importResult && (
-                <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-                  <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+                <div className="rounded-[var(--radius)] border border-[hsl(var(--tint-teal-ring))] bg-[hsl(var(--tint-teal-bg))] p-4">
+                  <div className="flex items-center gap-2 text-[hsl(var(--tint-teal-fg))]">
                     <CheckCircle className="h-5 w-5" />
                     <span className="font-medium">Import réussi!</span>
                   </div>
-                  <div className="mt-2 text-sm text-green-600 dark:text-green-500">
+                  <div className="mt-2 text-sm text-[hsl(var(--tint-teal-fg))]">
                     {importResult.success} phrases importées
                     {importResult.skipped > 0 && `, ${importResult.skipped} ignorées (déjà existantes)`}
                   </div>
@@ -227,12 +231,12 @@ export default function ImportPhrasesPage() {
               )}
 
               {duplicatePhrases.length > 0 && !replaceExisting && (
-                <div className="p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
-                  <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-400">
+                <div className="rounded-[var(--radius)] border border-[hsl(var(--tint-gold-ring))] bg-[hsl(var(--tint-gold-bg))] p-4">
+                  <div className="flex items-center gap-2 text-[hsl(var(--tint-gold-fg))]">
                     <AlertCircle className="h-5 w-5" />
                     <span className="font-medium">Attention</span>
                   </div>
-                  <div className="mt-2 text-sm text-yellow-600 dark:text-yellow-500">
+                  <div className="mt-2 text-sm text-[hsl(var(--tint-gold-fg))]">
                     {duplicatePhrases.length} phrases existent déjà et seront ignorées.
                     Cochez l'option ci-dessus pour les réimporter.
                   </div>
@@ -257,10 +261,10 @@ export default function ImportPhrasesPage() {
                   </>
                 )}
               </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            </div>
+          </SurfaceCard>
+        </CardGrid>
+      </PageShell>
     </MainLayout>
   );
 }

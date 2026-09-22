@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Check, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MeterRow, StatusPill } from "@/components/ui-kit";
+import { MeterRow } from "@/components/ui-kit";
 import fliLogo from "@/assets/fli-logo.png";
 import { CourseSelectionStep } from "@/components/registration/CourseSelectionStep";
 import { PersonalInfoStep } from "@/components/registration/PersonalInfoStep";
@@ -265,19 +265,12 @@ export default function Register() {
       {/* Contenu */}
       <main className="container mx-auto flex-1 px-4 py-6 sm:py-8">
         <div className="mx-auto max-w-2xl animate-fade-up space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            {currentStep > 1 ? (
-              <Button variant="ghost" size="sm" onClick={prevStep} className="-ml-2 h-10">
-                <ChevronLeft className="mr-1.5 h-4 w-4" />
-                Retour
-              </Button>
-            ) : (
-              <span />
-            )}
-            <StatusPill tone="neutral" size="sm">
-              {currentStep} / {steps.length} · {currentStepName}
-            </StatusPill>
-          </div>
+          {currentStep > 1 && (
+            <Button variant="ghost" size="sm" onClick={prevStep} className="-ml-2 h-10">
+              <ChevronLeft className="mr-1.5 h-4 w-4" />
+              Retour
+            </Button>
+          )}
           {renderStep()}
         </div>
       </main>

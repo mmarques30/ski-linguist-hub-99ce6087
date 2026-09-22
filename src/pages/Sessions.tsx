@@ -176,7 +176,10 @@ export default function Sessions() {
           }
         />
 
+        {/* Le rail ne disparaît plus sous lg : il reprend sa place dès 1024px
+            et passe sous le calendrier en dessous. */}
         <SplitLayout
+          className="lg:grid-cols-[minmax(0,1fr)_320px]"
           main={
             <>
               {(sessions?.length ?? 0) === 0 && (

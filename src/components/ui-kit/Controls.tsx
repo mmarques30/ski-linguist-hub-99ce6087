@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /**
  * Contrôles récurrents : segments de période, barre de filtres, chips de
@@ -131,6 +132,24 @@ export function SubNav({ items, className }: { items: SubNavItem[]; className?: 
  * Barre de filtres : recherche à gauche, contrôles au centre, actions à droite.
  * Les filtres actifs sont rappelés en chips effaçables sous la barre.
  */
+const FILTER_BAR_LABELS = {
+  activeFilters: {
+    fr: "Filtres actifs",
+    "pt-BR": "Filtros ativos",
+    en: "Active filters",
+  },
+  clearAll: {
+    fr: "Tout effacer",
+    "pt-BR": "Limpar tudo",
+    en: "Clear all",
+  },
+  removeFilter: {
+    fr: "Retirer ce filtre",
+    "pt-BR": "Remover este filtro",
+    en: "Remove this filter",
+  },
+} as const;
+
 export function FilterBar({
   search,
   filters,
@@ -138,6 +157,7 @@ export function FilterBar({
   activeFilters,
   onClearAll,
   className,
+  labels,
 }: {
   search?: {
     value: string;
@@ -151,8 +171,14 @@ export function FilterBar({
   activeFilters?: Array<{ key: string; label: ReactNode; onRemove?: () => void }>;
   onClearAll?: () => void;
   className?: string;
+  /** Surcharge des libellés internes, quand l'écran a sa propre formulation. */
+  labels?: { activeFilters?: string; clearAll?: string; removeFilter?: string };
 }) {
+  const { t } = useLanguage();
   const hasChips = Boolean(activeFilters && activeFilters.length > 0);
+  const activeFiltersLabel = labels?.activeFilters ?? t(FILTER_BAR_LABELS.activeFilters);
+  const clearAllLabel = labels?.clearAll ?? t(FILTER_BAR_LABELS.clearAll);
+  const removeFilterLabel = labels?.removeFilter ?? t(FILTER_BAR_LABELS.removeFilter);
 
   return (
     <div className={cn("space-y-3", className)}>
@@ -181,7 +207,7 @@ export function FilterBar({
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
             <SlidersHorizontal className="h-3.5 w-3.5" />
-            Filtres actifs
+            {activeFiltersLabel}
           </span>
           {activeFilters!.map((filter) => (
             <Badge
@@ -195,7 +221,7 @@ export function FilterBar({
                   type="button"
                   onClick={filter.onRemove}
                   className="ml-0.5 rounded-pill p-0.5 transition-colors hover:bg-foreground/10"
-                  aria-label="Retirer ce filtre"
+                  aria-label={removeFilterLabel}
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -210,7 +236,7 @@ export function FilterBar({
               onClick={onClearAll}
               className="h-7 px-2 text-xs"
             >
-              Tout effacer
+              {clearAllLabel}
             </Button>
           )}
         </div>

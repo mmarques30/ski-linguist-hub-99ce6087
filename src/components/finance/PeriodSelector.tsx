@@ -84,9 +84,9 @@ export function PeriodSelector({ startDate, endDate, onPeriodChange }: PeriodSel
   ];
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
       <Select value={selectedPeriod} onValueChange={(val) => handlePeriodChange(val as Period)}>
-        <SelectTrigger className="w-auto gap-2 h-9">
+        <SelectTrigger className="h-9 w-auto gap-2">
           <CalendarIcon className="h-4 w-4 text-muted-foreground" />
           <SelectValue />
         </SelectTrigger>
@@ -137,7 +137,7 @@ export function PeriodSelector({ startDate, endDate, onPeriodChange }: PeriodSel
         </Popover>
       )}
 
-      <span className="text-sm text-muted-foreground">
+      <span className="text-sm text-muted-foreground tabular">
         {format(new Date(startDate), 'dd MMM yyyy', { locale: fr })} - {format(new Date(endDate), 'dd MMM yyyy', { locale: fr })}
       </span>
     </div>

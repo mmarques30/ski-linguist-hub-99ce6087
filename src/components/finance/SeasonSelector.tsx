@@ -27,10 +27,10 @@ export function SeasonSelector({ value, onChange }: Props) {
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex min-w-0 flex-wrap items-center gap-2">
       <span className="text-sm font-medium text-muted-foreground">{t(translations.label)} :</span>
       <Select value={value || "all"} onValueChange={handleChange}>
-        <SelectTrigger className="w-[220px]">
+        <SelectTrigger className="w-full sm:w-[220px]">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

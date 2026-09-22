@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
@@ -15,13 +12,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
+  CardList,
+  CardListItem,
+  FilterBar,
+  PageHeader,
+  PageShell,
+  StatusPill,
+  SurfaceCard,
   TableCell,
-  TableHead,
-  TableHeader,
+  TableEmpty,
+  TableFrame,
+  TableHeadCell,
+  TableHeadRow,
   TableRow,
-} from "@/components/ui/table";
+  TableSkeleton,
+} from "@/components/ui-kit";
 import {
   Dialog,
   DialogContent,
@@ -46,16 +51,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
-import { 
-  Plus, 
-  Search, 
-  MoreHorizontal, 
-  Pencil, 
-  Archive, 
-  Trash2, 
+import {
+  Plus,
+  MoreHorizontal,
+  Pencil,
+  Archive,
+  Trash2,
   Upload,
   Download,
-  RefreshCw
+  MessageSquareQuote,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
@@ -284,243 +288,297 @@ export default function AdminPhrases() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Gestion des Phrases</h1>
-            <p className="text-muted-foreground">
-              Gérez les phrases pré-rédigées pour les comptes-rendus d'évaluation
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
-              <Upload className="h-4 w-4 mr-2" />
-              Importer
-            </Button>
-            <Button variant="outline" onClick={handleExport} disabled={!phrases?.length}>
-              <Download className="h-4 w-4 mr-2" />
-              Exporter
-            </Button>
-            <Button onClick={openCreateDialog}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nouvelle phrase
-            </Button>
-          </div>
-        </div>
+      <PageShell>
+        <PageHeader
+          title="Gestion des Phrases"
+          icon={MessageSquareQuote}
+          tone="purple"
+          description="Gérez les phrases pré-rédigées pour les comptes-rendus d'évaluation"
+          meta={
+            !isLoading ? (
+              <StatusPill tone="info">
+                {phrases?.length ?? 0} phrase{(phrases?.length ?? 0) > 1 ? "s" : ""} affichée
+                {(phrases?.length ?? 0) > 1 ? "s" : ""}
+              </StatusPill>
+            ) : undefined
+          }
+          actions={
+            <>
+              <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+                <Upload className="h-4 w-4 mr-2" />
+                Importer
+              </Button>
+              <Button variant="outline" onClick={handleExport} disabled={!phrases?.length}>
+                <Download className="h-4 w-4 mr-2" />
+                Exporter
+              </Button>
+              <Button onClick={openCreateDialog}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nouvelle phrase
+              </Button>
+            </>
+          }
+        />
 
-        {/* Filters */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Filtres</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-              <div className="relative col-span-2">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Rechercher..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              
-              <Select value={languageFilter} onValueChange={setLanguageFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Langue" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="_all">Toutes</SelectItem>
-                  {FILE_LANGUAGES.map((lang) => (
-                    <SelectItem key={lang} value={lang}>
-                      {FILE_LANGUAGE_FLAGS[lang]} {FILE_LANGUAGE_LABELS[lang]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        <SurfaceCard
+          flush
+          toolbar={
+            <FilterBar
+              search={{
+                value: searchQuery,
+                onChange: setSearchQuery,
+                placeholder: "Rechercher...",
+                ariaLabel: "Rechercher une phrase",
+              }}
+              filters={
+                <>
+                  <Select value={languageFilter} onValueChange={setLanguageFilter}>
+                    <SelectTrigger className="w-[150px]" aria-label="Langue">
+                      <SelectValue placeholder="Langue" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_all">Toutes</SelectItem>
+                      {FILE_LANGUAGES.map((lang) => (
+                        <SelectItem key={lang} value={lang}>
+                          {FILE_LANGUAGE_FLAGS[lang]} {FILE_LANGUAGE_LABELS[lang]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Catégorie" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="_all">Toutes</SelectItem>
-                  {FILE_CATEGORIES.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {FILE_CATEGORY_LABELS[cat]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                    <SelectTrigger className="w-[160px]" aria-label="Catégorie">
+                      <SelectValue placeholder="Catégorie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_all">Toutes</SelectItem>
+                      {FILE_CATEGORIES.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {FILE_CATEGORY_LABELS[cat]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-              <Select value={professionFilter} onValueChange={setProfessionFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Profession" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="_all">Toutes</SelectItem>
-                  {PROFESSIONS.map((prof) => (
-                    <SelectItem key={prof} value={prof}>
-                      {PROFESSION_LABELS[prof]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                  <Select value={professionFilter} onValueChange={setProfessionFilter}>
+                    <SelectTrigger className="w-[150px]" aria-label="Profession">
+                      <SelectValue placeholder="Profession" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_all">Toutes</SelectItem>
+                      {PROFESSIONS.map((prof) => (
+                        <SelectItem key={prof} value={prof}>
+                          {PROFESSION_LABELS[prof]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-              <Select value={positiveFilter} onValueChange={setPositiveFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Tonalité" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="_all">Toutes</SelectItem>
-                  <SelectItem value="true">Positives</SelectItem>
-                  <SelectItem value="false">Lacunes</SelectItem>
-                </SelectContent>
-              </Select>
+                  <Select value={positiveFilter} onValueChange={setPositiveFilter}>
+                    <SelectTrigger className="w-[130px]" aria-label="Tonalité">
+                      <SelectValue placeholder="Tonalité" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_all">Toutes</SelectItem>
+                      <SelectItem value="true">Positives</SelectItem>
+                      <SelectItem value="false">Lacunes</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-              <Select value={activeFilter} onValueChange={setActiveFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Statut" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="_all">Toutes</SelectItem>
-                  <SelectItem value="true">Actives</SelectItem>
-                  <SelectItem value="false">Archivées</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+                  <Select value={activeFilter} onValueChange={setActiveFilter}>
+                    <SelectTrigger className="w-[130px]" aria-label="Statut">
+                      <SelectValue placeholder="Statut" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_all">Toutes</SelectItem>
+                      <SelectItem value="true">Actives</SelectItem>
+                      <SelectItem value="false">Archivées</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </>
+              }
+            />
+          }
+        >
+          {isLoading ? (
+            <TableSkeleton rows={8} cols={6} />
+          ) : !phrases || phrases.length === 0 ? (
+            <TableEmpty
+              title="Aucune phrase trouvée"
+              description="Aucune phrase ne correspond aux filtres. Élargissez la recherche ou créez une phrase."
+              icon={MessageSquareQuote}
+              action={
+                <Button onClick={openCreateDialog}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nouvelle phrase
+                </Button>
+              }
+            />
+          ) : (
+            <>
+              <TableFrame>
+                <table className="hidden w-full md:table">
+                  <thead>
+                    <TableHeadRow>
+                      <TableHeadCell className="w-24">Code</TableHeadCell>
+                      <TableHeadCell className="w-32">Langue</TableHeadCell>
+                      <TableHeadCell className="hidden w-32 lg:table-cell">Catégorie</TableHeadCell>
+                      <TableHeadCell className="hidden w-28 xl:table-cell">Profession</TableHeadCell>
+                      <TableHeadCell className="hidden w-24 xl:table-cell">Niveaux</TableHeadCell>
+                      <TableHeadCell>Texte</TableHeadCell>
+                      <TableHeadCell className="w-24">Tonalité</TableHeadCell>
+                      <TableHeadCell className="hidden w-20 lg:table-cell">Statut</TableHeadCell>
+                      <TableHeadCell className="w-12">
+                        <span className="sr-only">Actions</span>
+                      </TableHeadCell>
+                    </TableHeadRow>
+                  </thead>
+                  <tbody>
+                    {phrases.map((phrase) => (
+                      <TableRow key={phrase.id}>
+                        <TableCell className="font-mono text-xs">
+                          {phrase.code || "-"}
+                        </TableCell>
+                        <TableCell>
+                          <span className="mr-1">{FILE_LANGUAGE_FLAGS[phrase.language]}</span>
+                          <span className="text-sm">{fileLanguageLabel(phrase.language)}</span>
+                        </TableCell>
+                        <TableCell hideBelow="lg">{fileCategoryLabel(phrase.category)}</TableCell>
+                        <TableCell hideBelow="xl">
+                          {phrase.profession
+                            ? PROFESSION_LABELS[phrase.profession] || phrase.profession
+                            : "Tous"}
+                        </TableCell>
+                        <TableCell hideBelow="xl">
+                          {phrase.level_min && phrase.level_max
+                            ? `${phrase.level_min}-${phrase.level_max}`
+                            : phrase.level_min || phrase.level_max || "Tous"}
+                        </TableCell>
+                        <TableCell>
+                          <span className="line-clamp-2 text-sm" title={phrase.text_fr}>
+                            {phrase.text_fr}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <StatusPill tone={phrase.is_positive ? "success" : "accent"} size="sm">
+                            {phrase.is_positive ? "Positif" : "Lacune"}
+                          </StatusPill>
+                        </TableCell>
+                        <TableCell hideBelow="lg">
+                          <StatusPill tone={phrase.active ? "info" : "neutral"} size="sm" dot>
+                            {phrase.active ? "Actif" : "Archivé"}
+                          </StatusPill>
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label={`Actions sur ${phrase.code || phrase.text_fr.slice(0, 30)}`}
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => openEditDialog(phrase)}>
+                                <Pencil className="h-4 w-4 mr-2" />
+                                Éditer
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleToggleActive(phrase)}>
+                                <Archive className="h-4 w-4 mr-2" />
+                                {phrase.active ? "Archiver" : "Activer"}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => {
+                                  setSelectedPhrase(phrase);
+                                  setDeleteDialogOpen(true);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Supprimer
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </tbody>
+                </table>
+              </TableFrame>
 
-        {/* Table */}
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-24">Code</TableHead>
-                  <TableHead className="w-32">Langue</TableHead>
-                  <TableHead className="w-32">Catégorie</TableHead>
-                  <TableHead className="w-28">Profession</TableHead>
-                  <TableHead className="w-24">Niveaux</TableHead>
-                  <TableHead>Texte</TableHead>
-                  <TableHead className="w-24">Tonalité</TableHead>
-                  <TableHead className="w-20">Statut</TableHead>
-                  <TableHead className="w-12"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8">
-                      <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2" />
-                      Chargement...
-                    </TableCell>
-                  </TableRow>
-                ) : phrases?.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                      Aucune phrase trouvée
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  phrases?.map((phrase) => (
-                    <TableRow key={phrase.id}>
-                      <TableCell className="font-mono text-xs">
-                        {phrase.code || "-"}
-                      </TableCell>
-                      <TableCell>
-                        <span className="mr-1">{FILE_LANGUAGE_FLAGS[phrase.language]}</span>
-                        <span className="text-sm">{fileLanguageLabel(phrase.language)}</span>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {fileCategoryLabel(phrase.category)}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {phrase.profession 
+              {/* Doublure mobile du tableau — mêmes données, mêmes actions. */}
+              <CardList className="md:hidden">
+                {phrases.map((phrase) => (
+                  <CardListItem
+                    key={phrase.id}
+                    title={phrase.text_fr}
+                    subtitle={`${FILE_LANGUAGE_FLAGS[phrase.language] ?? ""} ${fileLanguageLabel(phrase.language)} · ${fileCategoryLabel(phrase.category)}`}
+                    meta={
+                      <StatusPill tone={phrase.is_positive ? "success" : "accent"} size="sm">
+                        {phrase.is_positive ? "Positif" : "Lacune"}
+                      </StatusPill>
+                    }
+                    fields={[
+                      { label: "Code", value: phrase.code || "-" },
+                      {
+                        label: "Profession",
+                        value: phrase.profession
                           ? PROFESSION_LABELS[phrase.profession] || phrase.profession
-                          : "Tous"
-                        }
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {phrase.level_min && phrase.level_max
-                          ? `${phrase.level_min}-${phrase.level_max}`
-                          : phrase.level_min || phrase.level_max || "Tous"
-                        }
-                      </TableCell>
-                      <TableCell>
-                        <span 
-                          className="text-sm line-clamp-2" 
-                          title={phrase.text_fr}
+                          : "Tous",
+                      },
+                      {
+                        label: "Niveaux",
+                        value:
+                          phrase.level_min && phrase.level_max
+                            ? `${phrase.level_min}-${phrase.level_max}`
+                            : phrase.level_min || phrase.level_max || "Tous",
+                      },
+                      { label: "Statut", value: phrase.active ? "Actif" : "Archivé" },
+                    ]}
+                    actions={
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => openEditDialog(phrase)}>
+                          <Pencil className="h-4 w-4 mr-2" />
+                          Éditer
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => handleToggleActive(phrase)}>
+                          <Archive className="h-4 w-4 mr-2" />
+                          {phrase.active ? "Archiver" : "Activer"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          onClick={() => {
+                            setSelectedPhrase(phrase);
+                            setDeleteDialogOpen(true);
+                          }}
                         >
-                          {phrase.text_fr}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={phrase.is_positive ? "default" : "secondary"}
-                          className={phrase.is_positive
-                            ? "bg-green-100 text-green-800 hover:bg-green-100"
-                            : "bg-orange-100 text-orange-800 hover:bg-orange-100"
-                          }
-                        >
-                          {phrase.is_positive ? "Positif" : "Lacune"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={phrase.active ? "default" : "outline"}>
-                          {phrase.active ? "Actif" : "Archivé"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openEditDialog(phrase)}>
-                              <Pencil className="h-4 w-4 mr-2" />
-                              Éditer
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleToggleActive(phrase)}>
-                              <Archive className="h-4 w-4 mr-2" />
-                              {phrase.active ? "Archiver" : "Activer"}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => {
-                                setSelectedPhrase(phrase);
-                                setDeleteDialogOpen(true);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Supprimer
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Supprimer
+                        </Button>
+                      </>
+                    }
+                  />
+                ))}
+              </CardList>
+            </>
+          )}
+        </SurfaceCard>
+      </PageShell>
 
       {/* Edit/Create Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {selectedPhrase ? "Modifier la phrase" : "Nouvelle phrase"}
             </DialogTitle>
           </DialogHeader>
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Code</Label>
               <Input
@@ -624,7 +682,7 @@ export default function AdminPhrases() {
               </Select>
             </div>
 
-            <div className="col-span-2 space-y-2">
+            <div className="space-y-2 sm:col-span-2">
               <Label>Texte de la phrase</Label>
               <Textarea
                 value={formData.text_fr}
@@ -707,7 +765,10 @@ export default function AdminPhrases() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer cette phrase ?</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-4 w-4 text-destructive" aria-hidden />
+              Supprimer cette phrase ?
+            </AlertDialogTitle>
             <AlertDialogDescription>
               Cette action est irréversible. La phrase sera définitivement supprimée.
             </AlertDialogDescription>
@@ -747,7 +808,7 @@ export default function AdminPhrases() {
             </Button>
 
             {importPreview.length > 0 && (
-              <div className="border rounded-lg p-4">
+              <div className="rounded-[var(--radius)] border border-border p-4">
                 <p className="font-medium mb-2">
                   {importPreview.length} phrases à importer
                 </p>

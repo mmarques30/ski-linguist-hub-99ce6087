@@ -152,12 +152,26 @@ export default function Seasons() {
             {seasons.map((season) => {
               const selected = selectedSeason?.id === season.id;
               return (
-                <SurfaceCard
+                <div
                   key={season.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={selected}
+                  aria-label={`Voir la grille tarifaire de ${season.name}`}
+                  onClick={() => setSelectedSeason(season)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setSelectedSeason(season);
+                    }
+                  }}
+                  className="rounded-[var(--radius-card)] focus-visible:outline-none"
+                >
+                <SurfaceCard
                   interactive
                   accent={season.is_current ? "primary" : "none"}
                   className={cn(
-                    "cursor-pointer",
+                    "h-full cursor-pointer",
                     selected && "ring-2 ring-primary ring-offset-2 ring-offset-[hsl(var(--surface-page))]"
                   )}
                   bodyClassName="space-y-3"
@@ -181,12 +195,7 @@ export default function Seasons() {
                     </StatusPill>
                   }
                 >
-                  <button
-                    type="button"
-                    onClick={() => setSelectedSeason(season)}
-                    aria-pressed={selected}
-                    className="block w-full space-y-2 text-left"
-                  >
+                  <div className="space-y-2">
                     <span className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden />
                       <span className="tabular">
@@ -204,7 +213,7 @@ export default function Seasons() {
                         </span>
                       </span>
                     ) : null}
-                  </button>
+                  </div>
 
                   <div className="flex flex-wrap gap-2 pt-1">
                     {!season.is_current && season.status !== "terminee" && (
@@ -228,6 +237,7 @@ export default function Seasons() {
                     )}
                   </div>
                 </SurfaceCard>
+                </div>
               );
             })}
           </CardGrid>

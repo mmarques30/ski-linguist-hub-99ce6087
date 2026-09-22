@@ -736,7 +736,6 @@ export default function Invoices() {
 
         <SurfaceCard
           title={`${invoices?.length || 0} ${t(translations.resultsCount)}`}
-          description={t(translations.subtitle)}
           toolbar={
             <FilterBar
               search={{

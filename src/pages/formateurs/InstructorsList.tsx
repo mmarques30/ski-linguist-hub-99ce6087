@@ -133,9 +133,7 @@ export default function InstructorsList() {
             filters={
               <>
                 <div className="min-w-0 space-y-1">
-                  <Label htmlFor="instructor-lang-filter" className="text-2xs uppercase tracking-wide text-muted-foreground">
-                    Langue
-                  </Label>
+                  <Label htmlFor="instructor-lang-filter">Langue</Label>
                   <Select value={langFilter} onValueChange={setLangFilter}>
                     <SelectTrigger id="instructor-lang-filter" className="w-full sm:w-[190px]">
                       <SelectValue placeholder="Langue" />
@@ -150,9 +148,7 @@ export default function InstructorsList() {
                   </Select>
                 </div>
                 <div className="min-w-0 space-y-1">
-                  <Label htmlFor="instructor-status-filter" className="text-2xs uppercase tracking-wide text-muted-foreground">
-                    Statut
-                  </Label>
+                  <Label htmlFor="instructor-status-filter">Statut</Label>
                   <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
                     <SelectTrigger id="instructor-status-filter" className="w-full sm:w-[160px]">
                       <SelectValue placeholder="Statut" />
@@ -166,9 +162,7 @@ export default function InstructorsList() {
                   </Select>
                 </div>
                 <div className="min-w-0 space-y-1">
-                  <Label htmlFor="instructor-avail-filter" className="text-2xs uppercase tracking-wide text-muted-foreground">
-                    Disponibilité
-                  </Label>
+                  <Label htmlFor="instructor-avail-filter">Disponibilité</Label>
                   <Select value={availFilter} onValueChange={setAvailFilter}>
                     <SelectTrigger id="instructor-avail-filter" className="w-full sm:w-[160px]">
                       <SelectValue placeholder="Disponibilité" />

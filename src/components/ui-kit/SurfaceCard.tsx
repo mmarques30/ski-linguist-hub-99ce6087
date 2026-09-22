@@ -85,13 +85,13 @@ export const SurfaceCard = forwardRef<HTMLDivElement, SurfaceCardProps>(function
         >
           <div className="min-w-0 space-y-0.5">
             {title && (
-              <h3 className="flex items-center gap-2 text-base font-semibold leading-tight text-foreground">
+              <h3 className="flex items-start gap-2 text-base font-semibold leading-tight text-foreground">
                 {Icon && (
                   <span className="fli-icon-chip h-7 w-7 bg-[hsl(var(--tint-neutral-bg))] text-[hsl(var(--tint-neutral-fg))]">
                     <Icon className="h-4 w-4" />
                   </span>
                 )}
-                <span className="truncate">{title}</span>
+                <span className="min-w-0 text-balance">{title}</span>
               </h3>
             )}
             {description && (

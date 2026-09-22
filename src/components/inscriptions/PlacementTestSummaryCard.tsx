@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DefinitionList, SurfaceCard } from "@/components/ui-kit";
+import { DefinitionList, StatusPill, SurfaceCard } from "@/components/ui-kit";
+import type { PillTone } from "@/components/ui-kit";
 import {
   Select,
   SelectContent,
@@ -14,7 +15,7 @@ import { Loader2, Mountain } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { usePlacementTestDetails } from "@/hooks/usePlacementTestStats";
-import { SLOPE_COLORS, SLOPE_LABELS, type SlopeLevel } from "@/lib/placement-test-engine";
+import { SLOPE_LABELS, type SlopeLevel } from "@/lib/placement-test-engine";
 import { CECRL_LEVELS } from "@/lib/certificate-progression";
 import { supabase } from "@/integrations/supabase/client";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
@@ -32,6 +33,19 @@ interface AdaptiveSummary {
   highestSlopeReached?: string;
   endedAtVocab?: boolean;
 }
+
+/**
+ * Teinte de pastille par piste. `SLOPE_COLORS` (moteur de test) porte des
+ * classes Tailwind brutes — dont `bg-gray-900` — illisibles en thème sombre :
+ * on garde ses libellés, pas ses couleurs.
+ */
+const SLOPE_TONES: Record<SlopeLevel, PillTone> = {
+  verte: "success",
+  bleue: "info",
+  rouge: "danger",
+  noire: "neutral",
+  vocab_ski: "warning",
+};
 
 export function PlacementTestSummaryCard({
   testId,
@@ -160,13 +174,13 @@ export function PlacementTestSummaryCard({
         {summary?.slopeResults && summary.slopeResults.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {summary.slopeResults.map((sr) => (
-              <Badge
+              <StatusPill
                 key={sr.slope}
-                variant={sr.passed ? "default" : "secondary"}
-                className={sr.passed ? SLOPE_COLORS[sr.slope as SlopeLevel] : ""}
+                tone={sr.passed ? SLOPE_TONES[sr.slope as SlopeLevel] ?? "neutral" : "neutral"}
+                size="sm"
               >
-                {SLOPE_LABELS[sr.slope as SlopeLevel] || sr.slope}: {sr.correct}/{sr.total}
-              </Badge>
+                {SLOPE_LABELS[sr.slope as SlopeLevel] || sr.slope} : {sr.correct}/{sr.total}
+              </StatusPill>
             ))}
           </div>
         )}
