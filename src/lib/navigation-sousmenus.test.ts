@@ -173,9 +173,36 @@ describe("sidebar repliable", () => {
     expect(sidebar).toContain('collapsible="icon"');
   });
 
-  it("mémorise les groupes ouverts et ouvre celui de la page courante", () => {
-    expect(sidebar).toContain("fli.sidebar.openGroups");
-    expect(sidebar).toContain("activeGroupId");
+  it("replie les sous-menus par défaut, un seul groupe ouvert à la fois", () => {
+    // Un seul identifiant ouvert, pas une liste : ouvrir un groupe ferme l'autre.
+    expect(sidebar).toContain("const [openId, setOpenId] = useState<string | null>(activeGroupId)");
+    expect(sidebar).toContain("setOpenId(next ? item.id : null)");
+    expect(sidebar).toContain("const isOpen = openId === item.id;");
+    // Changer de page réaligne l'ouverture sur le groupe de la page courante.
+    expect(sidebar).toContain("setOpenId(activeGroupId)");
+  });
+
+  it("donne un rendu de bouton aux deux niveaux, le second plus discret", () => {
+    const niveau1 = sidebar.slice(sidebar.indexOf("const LEVEL_1"), sidebar.indexOf("const LEVEL_2"));
+    const niveau2 = sidebar.slice(sidebar.indexOf("const LEVEL_2"), sidebar.indexOf("* Navigation produit"));
+    // Niveau 1 : surface + contour au repos, donc lisible comme un bouton.
+    expect(niveau1).toContain("bg-sidebar-accent/40");
+    expect(niveau1).toContain("border-sidebar-border/40");
+    expect(niveau1).toContain("hover:bg-sidebar-accent");
+    // Niveau 2 : aucune surface au repos, seulement au survol.
+    expect(niveau2).not.toMatch(/(?<!hover:|data-\[active=true\]:)bg-sidebar-accent\/\d/);
+    expect(niveau2).toContain("hover:bg-sidebar-accent/70");
+    // Toute largeur de bordure vient avec sa couleur : le `*{@apply border-border}`
+    // global peindrait sinon un liseré gris clair sur le bleu nuit.
+    expect(niveau1).toContain("border border-sidebar-border/40");
+    expect(sidebar).toContain("border-b border-sidebar-border");
+    expect(sidebar).toContain("border-t border-sidebar-border");
+  });
+
+  it("ne laisse pas de liseré clair entre la sidebar et le contenu", () => {
+    // `border-r-0` nu perd contre `group-data-[side=left]:border-r`, plus spécifique.
+    expect(sidebar).toContain('className="group-data-[side=left]:border-r-0"');
+    expect(sidebar).not.toContain('className="border-r-0"');
   });
 
   it("garde l'arbre hors du composant", () => {

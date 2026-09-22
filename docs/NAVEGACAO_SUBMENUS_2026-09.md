@@ -115,14 +115,20 @@ escondido passou a ser navegável.
 3. **Permissão por folha.** Cada destino resolve sua própria chave
    (`navRouteKey`); um pai cujos filhos foram todos filtrados desaparece, e uma
    seção sem itens desaparece.
-4. **O grupo da página atual abre sozinho**, e os grupos que o usuário abriu ou
-   fechou ficam gravados (`localStorage`, chave `fli.sidebar.openGroups`).
+4. **Submenus recolhidos por padrão, um grupo aberto por vez.** Clicar no pai
+   abre o dele e fecha o anterior; mudar de página abre o grupo da página
+   atual. Nada fica aberto acumulando.
 5. **O item ativo é o mais específico.** Entre irmãos que apontam para a mesma
    página, ganha aquele cujos parâmetros de URL batem
    (`/inscriptions?status=terminee` vence `/inscriptions` quando o filtro está
    aplicado) — lógica em `matchScore` / `activeChildHref`, coberta por testes.
 6. **Modo ícone preservado.** Recolhida, a sidebar continua sendo um trilho de
    ícones com tooltip; os submenus somem e o pai vira link simples.
+7. **Hierarquia visual por afordância.** Primeiro nível tem superfície e
+   contorno em repouso — lê-se como botão, não como texto fixo; o item da
+   página atual ganha barra amarela. Segundo nível não tem superfície em
+   repouso, só no hover, com texto mais discreto e guia de indentação:
+   clicável, mas subordinado.
 
 ## 4. O que mudou no código
 
@@ -130,7 +136,7 @@ escondido passou a ser navegável.
 |---|---|
 | `src/lib/navigation.ts` | **novo** — árvore declarativa + `matchScore`, `activeChildHref`, `isItemActive`, `navRouteKey` |
 | `src/hooks/useTabParam.ts` | **novo** — aba de página sincronizada com `?tab=` (apaga o parâmetro ao voltar à aba padrão) |
-| `src/components/layout/Sidebar.tsx` | reescrito: só renderiza a árvore, filtra por permissão e lembra os grupos abertos |
+| `src/components/layout/Sidebar.tsx` | reescrito: só renderiza a árvore, filtra por permissão e controla a abertura (acordeão) |
 | `src/lib/chrome-i18n.ts` | `CHROME_NAV_GROUPS` — rótulos FR / PT-BR / EN dos pais e submenus |
 | `src/pages/admin/Emails.tsx` | abas Modèles / Journal na URL |
 | `src/pages/Settings.tsx` | abas Organisation / Notifications / Intégrations / Langues na URL |
