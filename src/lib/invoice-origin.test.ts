@@ -32,6 +32,8 @@ describe("invoice origin — Pilotage hors import", () => {
       "supabase/migrations/20260922090000_bl007_cancel_import_overdue.sql"
     );
     expect(mig).toContain("status = 'cancelled'");
+    expect(mig).toContain("status = 'a_verifier'");
+    expect(mig).toContain("fiscal_year >= '25-26'");
     expect(mig).toContain("import_historique");
     expect(mig).not.toMatch(/status\s*=\s*'paid'/);
   });
