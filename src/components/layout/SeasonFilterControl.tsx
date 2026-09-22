@@ -18,7 +18,7 @@ export function SeasonFilterControl({ className }: { className?: string }) {
         value={filter}
         onValueChange={(v) => setFilter(v as SeasonFilterValue)}
       >
-        <SelectTrigger className="h-8 w-[200px] text-xs" aria-label="Filtrer par saison">
+        <SelectTrigger className="h-9 w-[190px] rounded-[var(--radius)] border-white/15 bg-white/10 text-xs text-white/80 hover:bg-white/20 focus:ring-white/30 [&>svg]:text-white/60" aria-label="Filtrer par saison">
           <SelectValue placeholder="Saison" />
         </SelectTrigger>
         <SelectContent>

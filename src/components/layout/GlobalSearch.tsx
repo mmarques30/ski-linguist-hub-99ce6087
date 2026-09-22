@@ -194,7 +194,7 @@ export function GlobalSearch() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="hidden md:flex items-center gap-2 rounded-xl bg-white/10 px-3 py-1.5 text-sm text-white/70 transition-all duration-200 hover:bg-white/20 hover:text-white"
+        className="hidden items-center gap-2 rounded-[var(--radius)] bg-white/10 px-3 py-1.5 text-sm text-white/70 transition-all duration-200 hover:bg-white/20 hover:text-white md:flex"
         aria-label="Recherche globale"
       >
         <Search className="h-4 w-4" />
@@ -205,7 +205,7 @@ export function GlobalSearch() {
       </button>
       <button
         onClick={() => setOpen(true)}
-        className="flex md:hidden h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
+        className="flex h-9 w-9 items-center justify-center rounded-[var(--radius)] bg-white/10 text-white/70 transition-all duration-200 hover:bg-white/20 hover:text-white md:hidden"
         aria-label="Recherche globale"
       >
         <Search className="h-[18px] w-[18px]" />
@@ -238,7 +238,7 @@ export function GlobalSearch() {
                       value={`student-${s.id}`}
                       onSelect={() => go(`/students/${s.id}`)}
                     >
-                      <Users className="mr-2 h-4 w-4 text-blue-500" />
+                      <Users className="mr-2 h-4 w-4 text-[hsl(var(--chart-1))]" />
                       <div className="flex flex-col">
                         <span>
                           {s.first_name} {s.last_name}
@@ -258,7 +258,7 @@ export function GlobalSearch() {
                       value={`insc-${i.id}`}
                       onSelect={() => go(`/inscriptions/${i.id}`)}
                     >
-                      <ClipboardList className="mr-2 h-4 w-4 text-emerald-500" />
+                      <ClipboardList className="mr-2 h-4 w-4 text-[hsl(var(--chart-3))]" />
                       <div className="flex flex-col">
                         <span>
                           {i.code || "Sans code"} — {i.language}
@@ -285,7 +285,7 @@ export function GlobalSearch() {
                         go(`/invoices?q=${encodeURIComponent(inv.invoice_number || "")}`)
                       }
                     >
-                      <Receipt className="mr-2 h-4 w-4 text-amber-500" />
+                      <Receipt className="mr-2 h-4 w-4 text-[hsl(var(--chart-4))]" />
                       <div className="flex flex-col">
                         <span>{inv.invoice_number}</span>
                         <span className="text-xs text-muted-foreground">
@@ -305,7 +305,7 @@ export function GlobalSearch() {
                       value={`partner-${p.id}`}
                       onSelect={() => go(`/gestion/partenaires/${p.id}`)}
                     >
-                      <Building2 className="mr-2 h-4 w-4 text-sky-500" />
+                      <Building2 className="mr-2 h-4 w-4 text-[hsl(var(--chart-1))]" />
                       <div className="flex flex-col">
                         <span>{p.name}</span>
                         <span className="text-xs text-muted-foreground">
@@ -325,7 +325,7 @@ export function GlobalSearch() {
                       value={`lead-${l.id}`}
                       onSelect={() => go(`/gestion/commercial`)}
                     >
-                      <Target className="mr-2 h-4 w-4 text-orange-500" />
+                      <Target className="mr-2 h-4 w-4 text-[hsl(var(--chart-2))]" />
                       <div className="flex flex-col">
                         <span>{l.contact_name}</span>
                         <span className="text-xs text-muted-foreground">
@@ -345,7 +345,7 @@ export function GlobalSearch() {
                       value={`pay-${pay.id}`}
                       onSelect={() => go(`/finance/payments`)}
                     >
-                      <CreditCard className="mr-2 h-4 w-4 text-teal-500" />
+                      <CreditCard className="mr-2 h-4 w-4 text-[hsl(var(--chart-3))]" />
                       <div className="flex flex-col">
                         <span>
                           {pay.amount} € — {pay.payer_name || pay.reference || "Paiement"}
@@ -388,7 +388,7 @@ export function GlobalSearch() {
                       value={`form-${ins.id}`}
                       onSelect={() => go(`/formateurs/${ins.id}`)}
                     >
-                      <UserCog className="mr-2 h-4 w-4 text-purple-500" />
+                      <UserCog className="mr-2 h-4 w-4 text-[hsl(var(--chart-5))]" />
                       <div className="flex flex-col">
                         <span>
                           {ins.first_name} {ins.last_name}
