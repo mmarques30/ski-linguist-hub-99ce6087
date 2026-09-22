@@ -29,6 +29,17 @@ mesmo tempo. Consequências medidas na leitura do código:
 
 Fonte única: `src/lib/navigation.ts` (`NAV_SECTIONS`). A sidebar apenas renderiza.
 
+**O menu pai é a seção.** OPÉRATIONS, COMMERCIAL, FINANCE… deixaram de ser
+rótulos fixos e viraram os botões que se abrem. Dentro deles vêm as páginas, e
+dentro das páginas com filtros vêm os filtros — três níveis:
+
+```
+▸ Opérations            ← nível 1: a seção, botão recolhível
+    ▸ Inscriptions      ← nível 2: a página
+        · À traiter     ← nível 3: o filtro
+      Stagiaires
+```
+
 ```
 Tableau de bord                          /
 
@@ -115,14 +126,21 @@ escondido passou a ser navegável.
 3. **Permissão por folha.** Cada destino resolve sua própria chave
    (`navRouteKey`); um pai cujos filhos foram todos filtrados desaparece, e uma
    seção sem itens desaparece.
-4. **O grupo da página atual abre sozinho**, e os grupos que o usuário abriu ou
-   fechou ficam gravados (`localStorage`, chave `fli.sidebar.openGroups`).
+4. **Tudo recolhido por padrão, uma seção aberta por vez.** Clicar numa seção
+   abre a dela e fecha a anterior; mudar de página abre a seção da página
+   atual, e a página de filtros dentro dela. Nada fica aberto acumulando.
+   Em repouso a sidebar cabe inteira na tela: 1 link + 6 seções.
 5. **O item ativo é o mais específico.** Entre irmãos que apontam para a mesma
    página, ganha aquele cujos parâmetros de URL batem
    (`/inscriptions?status=terminee` vence `/inscriptions` quando o filtro está
    aplicado) — lógica em `matchScore` / `activeChildHref`, coberta por testes.
-6. **Modo ícone preservado.** Recolhida, a sidebar continua sendo um trilho de
-   ícones com tooltip; os submenus somem e o pai vira link simples.
+6. **Modo ícone preservado.** Recolhida, a sidebar vira um trilho de ícones
+   com tooltip. Seções não têm lugar ali (um botão sem rótulo não diz nada),
+   então mostramos as páginas, como antes.
+7. **Hierarquia visual por afordância, em três degraus.** A seção tem
+   superfície *e* contorno em repouso — lê-se como botão, não como texto fixo.
+   A página tem só hover, texto a 75%. O filtro tem hover mais leve, texto a
+   60% e corpo menor. O item da página atual ganha barra amarela.
 
 ## 4. O que mudou no código
 
@@ -130,8 +148,8 @@ escondido passou a ser navegável.
 |---|---|
 | `src/lib/navigation.ts` | **novo** — árvore declarativa + `matchScore`, `activeChildHref`, `isItemActive`, `navRouteKey` |
 | `src/hooks/useTabParam.ts` | **novo** — aba de página sincronizada com `?tab=` (apaga o parâmetro ao voltar à aba padrão) |
-| `src/components/layout/Sidebar.tsx` | reescrito: só renderiza a árvore, filtra por permissão e lembra os grupos abertos |
-| `src/lib/chrome-i18n.ts` | `CHROME_NAV_GROUPS` — rótulos FR / PT-BR / EN dos pais e submenus |
+| `src/components/layout/Sidebar.tsx` | reescrito: só renderiza a árvore, filtra por permissão e controla a abertura (acordeão em dois níveis) |
+| `src/lib/chrome-i18n.ts` | `CHROME_NAV_GROUPS` — rótulos FR / PT-BR / EN dos pais e submenus ; seção `commercial` encurtada para « Commercial » (não cabia no botão, e « Partenaires » já é uma de suas páginas) |
 | `src/pages/admin/Emails.tsx` | abas Modèles / Journal na URL |
 | `src/pages/Settings.tsx` | abas Organisation / Notifications / Intégrations / Langues na URL |
 | `src/pages/moniteurs/MoniteursSki.tsx` | abas Dates / Écoles / Base na URL |

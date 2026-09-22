@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import {
   Award,
+  BadgeCheck,
   BarChart3,
   Briefcase,
   CalendarDays,
@@ -8,15 +9,20 @@ import {
   ClipboardList,
   Cog,
   Database,
+  DoorOpen,
   GraduationCap,
+  Handshake,
+  Layers,
   Landmark,
   LayoutDashboard,
   Mail,
   Receipt,
+  ShieldCheck,
   Smile,
   TrendingUp,
   UserCog,
   Users,
+  Wallet,
 } from "lucide-react";
 import type { Translations } from "@/contexts/LanguageContext";
 import { CHROME_NAV, CHROME_NAV_GROUPS, CHROME_SECTIONS } from "@/lib/chrome-i18n";
@@ -47,9 +53,14 @@ export interface NavItem {
   children?: NavChild[];
 }
 
+/**
+ * Section — premier niveau de la navigation, et **entrée repliable** : c'est
+ * elle que l'on ouvre pour révéler ses pages.
+ */
 export interface NavSection {
   id: keyof typeof CHROME_SECTIONS;
   label: Translations;
+  icon: Icon;
   adminOnly?: boolean;
   items: NavItem[];
 }
@@ -68,6 +79,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     id: "operations",
     label: CHROME_SECTIONS.operations,
+    icon: Layers,
     items: [
       {
         id: "inscriptions",
@@ -114,6 +126,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     id: "commercial",
     label: CHROME_SECTIONS.commercial,
+    icon: Handshake,
     items: [
       {
         id: "commercial",
@@ -148,6 +161,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     id: "finance",
     label: CHROME_SECTIONS.finance,
+    icon: Wallet,
     items: [
       {
         id: "facturation",
@@ -194,6 +208,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     id: "qualite",
     label: CHROME_SECTIONS.qualite,
+    icon: BadgeCheck,
     items: [
       {
         id: "satisfaction",
@@ -230,6 +245,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     id: "portails",
     label: CHROME_SECTIONS.portails,
+    icon: DoorOpen,
     items: [
       {
         id: "portail-stagiaire",
@@ -248,6 +264,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     id: "administration",
     label: CHROME_SECTIONS.administration,
+    icon: ShieldCheck,
     adminOnly: true,
     items: [
       {
@@ -298,6 +315,7 @@ export const FORMATEUR_SECTIONS: NavSection[] = [
   {
     id: "portails",
     label: CHROME_SECTIONS.portails,
+    icon: DoorOpen,
     items: [
       {
         id: "mes-evaluations",
