@@ -234,6 +234,20 @@ describe("sidebar — la section est le menu parent", () => {
     expect(sidebar).toContain("isCollapsed ? renderIconRail() : sections.map(renderSection)");
   });
 
+  it("garde la marque à ses proportions", () => {
+    // La marque fait 2.33:1 : un carré (`h-7 w-7` + object-contain) la réduit
+    // à 28×12. Chaque mode ne contraint que sa dimension utile.
+    expect(sidebar).toContain('isCollapsed ? "mx-auto h-auto w-8" : "h-8 w-auto"');
+    expect(sidebar).not.toContain('alt="FLI" className="h-7 w-7');
+  });
+
+  it("garde les entrées de premier niveau dans une seule liste", () => {
+    // Un SidebarGroup par section rajoutait 24 px entre deux boutons
+    // (padding du groupe × 2 + gap du conteneur).
+    expect(sidebar.match(/<SidebarGroup>/g) ?? []).toHaveLength(1);
+    expect(sidebar).toContain('<SidebarMenu className="gap-1.5">');
+  });
+
   it("garde l'arbre hors du composant", () => {
     expect(sidebar).toContain('from "@/lib/navigation"');
     expect(sidebar).not.toContain("navigationSections");
