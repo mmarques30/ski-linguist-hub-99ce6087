@@ -5,6 +5,7 @@ import {
   tresorerieEntrees,
   tresorerieSolde,
 } from "@/lib/finance-pilotage";
+import { INVOICE_ORIGIN_APP } from "@/lib/invoice-origin";
 
 // Types
 export interface FormationCost {
@@ -380,6 +381,7 @@ export function usePendingInvoices() {
           )
         `)
         .in('status', ['draft', 'sent'])
+        .eq('origin', INVOICE_ORIGIN_APP)
         .order('invoice_date', { ascending: true });
       
       return data?.map(inv => ({
@@ -654,9 +656,11 @@ export function useTresoreriePrevisionnelle(moisCount: number = 6) {
       }
       
       // Get pending invoices (expected income) — sole inflow source (no inscription.price double-count)
+      // BL-007 : hors import historique (faux retard / fausse trésorerie)
       const { data: pendingInvoices } = await supabase
         .from('invoices')
         .select('amount_ttc, amount_ht, due_date')
+        .eq('origin', INVOICE_ORIGIN_APP)
         .in('status', ['draft', 'sent']);
       
       // Get fixed costs

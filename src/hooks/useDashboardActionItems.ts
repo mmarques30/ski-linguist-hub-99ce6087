@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { usePendingSchedules } from "@/hooks/usePendingSchedules";
 import { SCHEDULE_ASSIGNMENT_DAYS_BEFORE } from "@/lib/placement-test-engine";
+import { INVOICE_ORIGIN_APP } from "@/lib/invoice-origin";
 
 export interface DashboardActionItem {
   id: string;
@@ -32,6 +33,7 @@ export function useDashboardActionItems() {
         supabase
           .from("invoices")
           .select("id", { count: "exact", head: true })
+          .eq("origin", INVOICE_ORIGIN_APP)
           .neq("status", "paid")
           .neq("status", "cancelled")
           .neq("status", "annulee")
