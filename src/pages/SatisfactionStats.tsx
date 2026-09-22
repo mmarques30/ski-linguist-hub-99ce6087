@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTabParam } from "@/hooks/useTabParam";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -627,7 +628,7 @@ const scoreTooltip = makeTooltipRenderer({
 });
 
 export default function SatisfactionStats() {
-  const [activeTab, setActiveTab] = useState<"overview" | "comparison">("overview");
+  const [activeTab, setActiveTab] = useTabParam(["overview", "comparison"] as const);
   const [filters, setFilters] = useState<SatisfactionFilters>({
     period: "all",
     language: "all",

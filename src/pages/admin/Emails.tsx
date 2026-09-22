@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTabParam } from "@/hooks/useTabParam";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -122,7 +123,7 @@ function VariantEditor({
   const merged: EmailModelVariant = { ...variant, ...edits };
   const dirty = Object.keys(edits).length > 0;
   const variables = checkVariables(merged);
-  const [tab, setTab] = useState<VariantTab>("fr");
+  const [variantTab, setVariantTab] = useState<VariantTab>("fr");
 
   return (
     <div className="space-y-3 rounded-[var(--radius)] border border-border bg-card p-4">
@@ -150,8 +151,8 @@ function VariantEditor({
       )}
 
       <SegmentedControl<VariantTab>
-        value={tab}
-        onChange={setTab}
+        value={variantTab}
+        onChange={setVariantTab}
         size="sm"
         ariaLabel={`Texte et aperçu — ${variant.slug}`}
         options={[
@@ -160,7 +161,7 @@ function VariantEditor({
         ]}
       />
 
-      {tab === "fr" && (
+      {variantTab === "fr" && (
         <div className="space-y-2 pt-1">
           <Input
             value={merged.subject_fr}
@@ -182,7 +183,7 @@ function VariantEditor({
         </div>
       )}
 
-      {tab === "apercu" && (
+      {variantTab === "apercu" && (
         <div className="space-y-2 pt-1">
           <p className="text-sm">
             <span className="text-muted-foreground">Sujet : </span>
@@ -271,7 +272,7 @@ export default function AdminEmails() {
   const [edits, setEdits] = useState<DraftEdits>({});
   const [openModel, setOpenModel] = useState<string | null>(null);
   const [pendingPublish, setPendingPublish] = useState<EmailModelVariant | null>(null);
-  const [tab, setTab] = useState<EmailsTab>("modeles");
+  const [emailsTab, setEmailsTab] = useTabParam(["modeles", "journal"] as const);
 
   const activeCount = useMemo(
     () => (models ?? []).filter((m) => modelStatus(m) === "actif").length,
@@ -365,8 +366,8 @@ export default function AdminEmails() {
           }
           tabs={
             <SegmentedControl<EmailsTab>
-              value={tab}
-              onChange={setTab}
+              value={emailsTab}
+              onChange={setEmailsTab}
               ariaLabel="Modèles ou journal des envois"
               options={[
                 { value: "modeles", label: "Modèles", icon: FileText, count: models?.length },
@@ -376,9 +377,9 @@ export default function AdminEmails() {
           }
         />
 
-        {tab === "journal" && <EmailSendJournal />}
+        {emailsTab === "journal" && <EmailSendJournal />}
 
-        {tab === "modeles" && (
+        {emailsTab === "modeles" && (
           <div className="space-y-4 lg:space-y-5">
             <StatTileGrid cols={3}>
               <StatTile label="modèles" value={models?.length ?? 0} icon={Mail} tone="blue" loading={isLoading} />

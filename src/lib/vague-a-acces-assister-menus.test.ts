@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { NAV_SECTIONS } from "@/lib/navigation";
 import {
   buildInscriptionSuiviUrl,
   studentAssistPath,
@@ -47,13 +48,25 @@ describe("Vague A — suivi, Assister, menus", () => {
   });
 
   it("réduit Finance à 3 items et sépare Évaluations orales", () => {
-    const sidebar = source("src/components/layout/Sidebar.tsx");
-    expect(sidebar).toContain('name: "Pilotage"');
-    expect(sidebar).toContain('name: "Évaluations orales"');
-    expect(sidebar).toContain('badge: "gelé"');
-    expect(sidebar).not.toContain('name: "Analyses"');
-    expect(sidebar).not.toContain('name: "Rentabilité"');
-    expect(sidebar).not.toContain('name: "Vue d\'ensemble"');
+    const finance = NAV_SECTIONS.find((s) => s.id === "finance");
+    expect(finance?.items.map((i) => i.id)).toEqual([
+      "facturation",
+      "pilotage",
+      "tresorerie",
+    ]);
+    // Analyses / Rentabilité restent des sous-menus de Pilotage, pas des entrées.
+    expect(
+      finance?.items.find((i) => i.id === "pilotage")?.children?.map((c) => c.href),
+    ).toEqual(["/finance", "/finance/analyses", "/finance/rentabilite"]);
+
+    const operations = NAV_SECTIONS.find((s) => s.id === "operations");
+    const evaluations = operations?.items.find((i) => i.id === "evaluations");
+    expect(evaluations?.children?.map((c) => c.href)).toContain("/formateur/evaluations");
+
+    const moniteurs = NAV_SECTIONS.find((s) => s.id === "commercial")?.items.find(
+      (i) => i.id === "moniteurs",
+    );
+    expect(moniteurs?.badgeKey).toBe("frozen");
   });
 
   it("inclut access_token dans la migration et le RPC", () => {

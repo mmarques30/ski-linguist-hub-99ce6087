@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTabParam } from "@/hooks/useTabParam";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import {
@@ -141,7 +142,7 @@ function IntakeCard({
 }
 
 export default function MoniteursSki() {
-  const [tab, setTab] = useState<MoniteursTab>("dates");
+  const [moniteursTab, setMoniteursTab] = useTabParam(["dates", "ecoles", "base"] as const);
   const [searchMonitors, setSearchMonitors] = useState("");
   const [monitorPage, setMonitorPage] = useState(1);
   const monitorPageSize = 50;
@@ -199,12 +200,12 @@ export default function MoniteursSki() {
           }
           actions={
             <>
-              {tab === "dates" && (
+              {moniteursTab === "dates" && (
                 <Button onClick={() => { setEditIntake(null); setIntakeFormOpen(true); }}>
                   <Plus className="mr-2 h-4 w-4" /> Nouvelle date
                 </Button>
               )}
-              {tab === "base" && (
+              {moniteursTab === "base" && (
                 <>
                   <Button
                     variant="outline"
@@ -227,8 +228,8 @@ export default function MoniteursSki() {
           }
           tabs={
             <SegmentedControl<MoniteursTab>
-              value={tab}
-              onChange={setTab}
+              value={moniteursTab}
+              onChange={setMoniteursTab}
               ariaLabel="Sections moniteurs de ski"
               options={[
                 { value: "dates", label: "Dates de formation", icon: Calendar },
@@ -259,7 +260,7 @@ export default function MoniteursSki() {
             icon={Users}
             tone="blue"
             loading={statsLoading}
-            onClick={() => setTab("base")}
+            onClick={() => setMoniteursTab("base")}
           />
           <StatTile
             label="Stations couvertes"
@@ -276,13 +277,13 @@ export default function MoniteursSki() {
             icon={Calendar}
             tone="gold"
             loading={intakesLoading}
-            onClick={() => setTab("dates")}
+            onClick={() => setMoniteursTab("dates")}
           />
         </StatTileGrid>
 
-        {tab === "ecoles" && <SkiSchoolMatchingCard />}
+        {moniteursTab === "ecoles" && <SkiSchoolMatchingCard />}
 
-        {tab === "dates" && (
+        {moniteursTab === "dates" && (
           intakesLoading ? (
             <CardGrid cols={3}>
               {[0, 1, 2].map((index) => (
@@ -317,7 +318,7 @@ export default function MoniteursSki() {
           )
         )}
 
-        {tab === "base" && (
+        {moniteursTab === "base" && (
           <>
             <FilterBar
               search={{

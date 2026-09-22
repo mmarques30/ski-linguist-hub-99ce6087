@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTabParam } from "@/hooks/useTabParam";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -88,7 +89,9 @@ const translations = {
 
 export default function Settings() {
   const { t } = useLanguage();
-  const [tab, setTab] = useState<SettingsTab>("general");
+  const [settingsTab, setSettingsTab] = useTabParam(
+    ["general", "notifications", "integrations", "languages"] as const,
+  );
 
   return (
     <MainLayout>
@@ -100,8 +103,8 @@ export default function Settings() {
           tone="navy"
           tabs={
             <SegmentedControl<SettingsTab>
-              value={tab}
-              onChange={setTab}
+              value={settingsTab}
+              onChange={setSettingsTab}
               ariaLabel={t(translations.title)}
               options={[
                 { value: "general", label: t(translations.tabGeneral), icon: SlidersHorizontal },
@@ -113,7 +116,7 @@ export default function Settings() {
           }
         />
 
-        {tab === "general" && (
+        {settingsTab === "general" && (
           <div className="space-y-4 lg:space-y-5">
             <OrganizationIdentityCard />
             <StudentPortalEnabledCard />
@@ -152,7 +155,7 @@ export default function Settings() {
           </div>
         )}
 
-        {tab === "notifications" && (
+        {settingsTab === "notifications" && (
           <div className="space-y-4 lg:space-y-5">
             <SurfaceCard
               title="Emails automatiques"
@@ -177,7 +180,7 @@ export default function Settings() {
           </div>
         )}
 
-        {tab === "integrations" && (
+        {settingsTab === "integrations" && (
           <div className="space-y-4 lg:space-y-5">
             <SectionHeading
               title={t(translations.paymentIntegration)}
@@ -210,7 +213,7 @@ export default function Settings() {
           </div>
         )}
 
-        {tab === "languages" && (
+        {settingsTab === "languages" && (
           <div className="space-y-4 lg:space-y-5">
             <TaughtLanguagesCard />
           </div>

@@ -1,24 +1,24 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { NAV_SECTIONS } from "@/lib/navigation";
 
 function source(relatif: string): string {
   return readFileSync(join(process.cwd(), relatif), "utf8");
 }
 
 describe("usabilité — navigation et intégration", () => {
-  it("expose une sidebar à 2 niveaux sans Documents ni Sessions", () => {
+  it("expose les sections produit et garde Documents hors menu", () => {
     const sidebar = source("src/components/layout/Sidebar.tsx");
-    expect(sidebar).toContain('label: "Opérations"');
-    expect(sidebar).toContain('label: "Commercial & partenaires"');
-    expect(sidebar).toContain('label: "Finance"');
+    const arbre = source("src/lib/navigation.ts");
+    expect(NAV_SECTIONS.map((s) => s.id)).toContain("operations");
+    expect(NAV_SECTIONS.map((s) => s.id)).toContain("commercial");
+    expect(NAV_SECTIONS.map((s) => s.id)).toContain("finance");
     expect(sidebar).toContain('collapsible="icon"');
-    expect(sidebar).toContain("Constitution des groupes");
-    expect(sidebar).toContain("Modèles documents");
-    expect(sidebar).not.toContain("Horaires J-10");
-    expect(sidebar).not.toMatch(/href: "\/documents"/);
-    expect(sidebar).not.toMatch(/href: "\/formation\/sessions"/);
-    expect(sidebar).not.toContain("CollapsibleTrigger");
+    expect(arbre).toContain("/inscriptions/schedule-validation");
+    expect(arbre).toContain("/admin/registration-documents");
+    expect(arbre).not.toContain("Horaires J-10");
+    expect(arbre).not.toMatch(/href: "\/documents"/);
   });
 
   it("bloque les breadcrumbs non navigables", () => {

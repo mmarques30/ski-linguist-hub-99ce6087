@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTabParam } from "@/hooks/useTabParam";
 import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -111,13 +112,13 @@ function ChannelPipeline({
   channel,
   search,
   editable,
-  view,
+  commercialTab,
   onEdit,
 }: {
   channel: ExpansionChannel;
   search: string;
   editable: boolean;
-  view: PipelineView;
+  commercialTab: PipelineView;
   onEdit: (lead: Lead) => void;
 }) {
   const { seasonId, seasonStart, seasonEnd } = useSeasonFilter();
@@ -218,7 +219,7 @@ function ChannelPipeline({
 
   return (
     <>
-      {view === "kanban" ? (
+      {commercialTab === "kanban" ? (
         <div className="space-y-6">
           {/* Kanban — défile horizontalement sur téléphone plutôt que de se comprimer. */}
           <div className="-mx-1 flex snap-x gap-4 overflow-x-auto px-1 pb-2 scrollbar-thin md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 xl:grid-cols-4">
@@ -360,7 +361,7 @@ export default function CommercialDashboard() {
   const [formOpen, setFormOpen] = useState(false);
   const [editLead, setEditLead] = useState<Lead | null>(null);
   const [activeChannel, setActiveChannel] = useState<ExpansionChannel>("cpf");
-  const [view, setView] = useState<PipelineView>("kanban");
+  const [commercialTab, setCommercialTab] = useTabParam(["kanban", "analytics"] as const);
 
   const { canEdit } = useUserPermissions();
   const editable = canEdit("commercial");
@@ -400,8 +401,8 @@ export default function CommercialDashboard() {
 
         <ChannelKPIs
           channel={activeChannel}
-          onOpenPipeline={() => setView("kanban")}
-          onOpenAnalytics={() => setView("analytics")}
+          onOpenPipeline={() => setCommercialTab("kanban")}
+          onOpenAnalytics={() => setCommercialTab("analytics")}
         />
 
         <FilterBar
@@ -413,8 +414,8 @@ export default function CommercialDashboard() {
           }}
           actions={
             <SegmentedControl<PipelineView>
-              value={view}
-              onChange={setView}
+              value={commercialTab}
+              onChange={setCommercialTab}
               size="sm"
               ariaLabel="Vue du pipeline"
               options={[
@@ -434,7 +435,7 @@ export default function CommercialDashboard() {
           channel={activeChannel}
           search={search}
           editable={editable}
-          view={view}
+          commercialTab={commercialTab}
           onEdit={openEdit}
         />
       </PageShell>

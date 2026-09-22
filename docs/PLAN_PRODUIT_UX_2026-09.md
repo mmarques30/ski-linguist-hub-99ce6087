@@ -34,9 +34,9 @@ Reste produit notable (hors backlog octobre) : Documents réels (C5). BL-032 et 
 - Assister formateur : `/portails/formateur/:id/*` (vrais `/formateur/*`)
 - Preview maquette remplacé / redirigé
 
-### 3. Menus à réorganiser — **partiel (Vague C)**
+### 3. Menus à réorganiser — **traité (sous-menus, 22/09)**
 
-Sidebar 2 niveaux + Pilotage + Trésorerie + Portails + `canView`. Documents/Sessions hors menu principal. Reste éventuel : badge « gelé » Moniteurs, glossaire KPI Finance.
+Sidebar **3 niveaux** : section fixe · entrée repliable · sous-menus pointant vers de vraies URL (sous-route ou `?tab=` / `?status=`). Arbre unique dans `src/lib/navigation.ts`, ouverture mémorisée, filtrage par permission feuille par feuille. Les pages jusque-là invisibles (Analyses, Rentabilité, Charges fixes, Import de phrases, Planning des sessions) reviennent au menu. Détail et suite : `docs/NAVEGACAO_SUBMENUS_2026-09.md`.
 
 ---
 
@@ -61,6 +61,7 @@ Sidebar 2 niveaux + Pilotage + Trésorerie + Portails + `canView`. Documents/Ses
 1. Sidebar proposée (Portails, Trésorerie)
 2. Fusion Finance analytique → Pilotage
 3. `canView` dans `ProtectedRoute`
+4. Sous-menus repliables et onglets adressables (22/09) — voir `docs/NAVEGACAO_SUBMENUS_2026-09.md`
 
 ### Vague D — Robustesse UX (P3) — **fait** (PR #65)
 
