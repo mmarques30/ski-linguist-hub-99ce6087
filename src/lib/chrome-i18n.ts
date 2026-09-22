@@ -6,11 +6,7 @@ import type { Translations } from "@/contexts/LanguageContext";
 
 export const CHROME_SECTIONS: Record<string, Translations> = {
   operations: { fr: "Opérations", "pt-BR": "Operações", en: "Operations" },
-  commercial: {
-    fr: "Commercial & partenaires",
-    "pt-BR": "Comercial & parceiros",
-    en: "Sales & partners",
-  },
+  commercial: { fr: "Commercial", "pt-BR": "Comercial", en: "Sales" },
   finance: { fr: "Finance", "pt-BR": "Finanças", en: "Finance" },
   qualite: { fr: "Qualité", "pt-BR": "Qualidade", en: "Quality" },
   portails: { fr: "Portails", "pt-BR": "Portais", en: "Portals" },
