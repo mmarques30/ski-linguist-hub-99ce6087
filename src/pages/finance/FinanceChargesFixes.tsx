@@ -1,37 +1,52 @@
 import { useState, useMemo } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { 
-  useCostTemplates, 
-  useFixedCosts, 
-  useUpdateCostTemplate, 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  useCostTemplates,
+  useFixedCosts,
+  useUpdateCostTemplate,
   useGenerateMonthlyCharges,
   useUpdateFixedCost,
 } from "@/hooks/useFinancialDashboard";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw } from "lucide-react";
+import {
+  RefreshCw,
+  AlertTriangle,
+  CalendarClock,
+  PieChart,
+  Receipt,
+  Repeat,
+  TrendingDown,
+  Wallet,
+} from "lucide-react";
 import { format, startOfMonth, subMonths, isBefore } from "date-fns";
 import { fr } from "date-fns/locale";
-import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { TresorerieSubnav } from "@/components/finance/PilotageSubnav";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
-
-const BRAND_GOLD = 'hsl(40, 97%, 54%)';
-const BRAND_NAVY = 'hsl(219, 52%, 16%)';
-const BRAND_GRAY = 'hsl(0, 0%, 90%)';
-const BRAND_BLACK = 'hsl(0, 0%, 9%)';
-const CHART_COLORS = [
-  BRAND_GOLD, BRAND_NAVY, 'hsl(142, 71%, 45%)', 'hsl(0, 84%, 60%)',
-  'hsl(262, 52%, 47%)', 'hsl(199, 89%, 48%)', 'hsl(25, 95%, 53%)',
-  'hsl(330, 81%, 60%)', BRAND_GRAY, BRAND_BLACK,
-];
+import {
+  BarsChart,
+  CardList,
+  CardListItem,
+  DonutChart,
+  MeterRow,
+  PageHeader,
+  PageShell,
+  SectionHeading,
+  StatTile,
+  StatTileGrid,
+  StatusPill,
+  SurfaceCard,
+  TableCell,
+  TableEmpty,
+  TableFrame,
+  TableHeadCell,
+  TableHeadRow,
+  TableRow,
+} from "@/components/ui-kit";
 
 const costTypeLabels: Record<string, string> = {
   loyer: 'Loyer',
@@ -52,7 +67,7 @@ export default function FinanceChargesFixes() {
   const editable = canEdit("finance.charges_fixes");
   const { confirm, dialog: confirmDialog } = useConfirmAction();
   const currentMonth = format(startOfMonth(new Date()), 'yyyy-MM-dd');
-  
+
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [editingTemplate, setEditingTemplate] = useState<string | null>(null);
   const [editedAmount, setEditedAmount] = useState<string>('');
@@ -66,13 +81,13 @@ export default function FinanceChargesFixes() {
 
   const unpaidStats = useMemo(() => {
     if (!allFixedCosts) return { total: 0, count: 0, byType: [], overdue: [] };
-    
+
     const today = new Date();
     const currentMonthStart = startOfMonth(today);
-    
+
     const unpaid = allFixedCosts.filter(c => !c.paye);
     const total = unpaid.reduce((sum, c) => sum + Number(c.montant), 0);
-    
+
     const byTypeMap = new Map<string, number>();
     unpaid.forEach(c => {
       const current = byTypeMap.get(c.cost_type) || 0;
@@ -82,18 +97,18 @@ export default function FinanceChargesFixes() {
       name: costTypeLabels[name] || name,
       value,
     }));
-    
+
     const overdue = unpaid.filter(c => {
       const costMonth = new Date(c.mois);
       return isBefore(costMonth, currentMonthStart);
     });
-    
+
     return { total, count: unpaid.length, byType, overdue };
   }, [allFixedCosts]);
 
   const monthlyTrend = useMemo(() => {
     if (!allFixedCosts) return [];
-    
+
     const last6Months = [];
     for (let i = 5; i >= 0; i--) {
       const date = subMonths(new Date(), i);
@@ -101,7 +116,7 @@ export default function FinanceChargesFixes() {
       const monthCosts = allFixedCosts.filter(c => c.mois === monthStr);
       const total = monthCosts.reduce((sum, c) => sum + Number(c.montant), 0);
       const paid = monthCosts.filter(c => c.paye).reduce((sum, c) => sum + Number(c.montant), 0);
-      
+
       last6Months.push({
         month: format(date, 'MMM', { locale: fr }),
         total,
@@ -162,8 +177,8 @@ export default function FinanceChargesFixes() {
 
   const persistTogglePaid = async (id: string, currentPaid: boolean) => {
     try {
-      await updateFixedCost.mutateAsync({ 
-        id, 
+      await updateFixedCost.mutateAsync({
+        id,
         paye: !currentPaid,
         date_paiement: !currentPaid ? format(new Date(), 'yyyy-MM-dd') : null,
       });
@@ -188,349 +203,415 @@ export default function FinanceChargesFixes() {
   const totalCharges = fixedCosts?.reduce((sum, c) => sum + Number(c.montant), 0) || 0;
   const totalPaid = fixedCosts?.filter(c => c.paye).reduce((sum, c) => sum + Number(c.montant), 0) || 0;
   const paymentProgress = totalCharges > 0 ? (totalPaid / totalCharges) * 100 : 0;
+  const overdueTotal = unpaidStats.overdue.reduce((s, c) => s + Number(c.montant), 0);
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Trésorerie &amp; charges</h1>
-          <p className="text-muted-foreground">
-            Gestion des charges récurrentes mensuelles
-          </p>
-        </div>
+      <PageShell>
+        <PageHeader
+          title="Trésorerie & charges"
+          description="Gestion des charges récurrentes mensuelles"
+          icon={Receipt}
+          tone="navy"
+          actions={
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-muted-foreground">Mois :</span>
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger className="w-[190px]" aria-label="Mois affiché">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {months.map((m) => (
+                    <SelectItem key={m.value} value={m.value}>
+                      <span className="capitalize">{m.label}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          }
+          tabs={<TresorerieSubnav activeTab="charges" />}
+        />
 
-        <TresorerieSubnav activeTab="charges" />
-
-        {/* Header with global month filter */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-semibold">Charges du mois</h2>
-          </div>
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="px-3 py-2 border rounded-md bg-background text-sm"
-          >
-            {months.map((m) => (
-              <option key={m.value} value={m.value}>
-                {m.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SectionHeading title="Charges du mois" />
 
         {/* KPI Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-destructive">
-            <p className="text-sm text-muted-foreground">Total impayé</p>
-            <p className="text-2xl font-bold text-destructive">{formatPrice(unpaidStats.total)}</p>
-            <p className="text-xs text-muted-foreground mt-1">{unpaidStats.count} charge(s)</p>
-          </div>
-          
-          <div className={`bg-card border border-border rounded-lg p-4 border-l-4 ${unpaidStats.overdue.length > 0 ? 'border-l-destructive' : 'border-l-[hsl(var(--fli-yellow))]'}`}>
-            <p className="text-sm text-muted-foreground">En retard</p>
-            <p className={`text-2xl font-bold ${unpaidStats.overdue.length > 0 ? 'text-destructive' : 'text-[hsl(var(--fli-yellow))]'}`}>
-              {unpaidStats.overdue.length}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {formatPrice(unpaidStats.overdue.reduce((s, c) => s + Number(c.montant), 0))}
-            </p>
-          </div>
+        <StatTileGrid cols={4}>
+          <StatTile
+            label="Total impayé"
+            value={formatPrice(unpaidStats.total)}
+            hint={`${unpaidStats.count} charge(s)`}
+            icon={Wallet}
+            tone="rose"
+          />
+          <StatTile
+            label="En retard"
+            value={unpaidStats.overdue.length}
+            hint={formatPrice(overdueTotal)}
+            icon={AlertTriangle}
+            tone={unpaidStats.overdue.length > 0 ? "rose" : "gold"}
+          />
+          <StatTile
+            label="Ce mois"
+            value={formatPrice(totalCharges)}
+            icon={CalendarClock}
+            tone="gold"
+          >
+            <MeterRow
+              label="Payé"
+              value={paymentProgress}
+              max={100}
+              display={`${Math.round(paymentProgress)}% payé`}
+            />
+          </StatTile>
+          <StatTile
+            label="Mensuel prévu"
+            value={formatPrice(totalTemplates)}
+            hint={`${templates?.filter(t => t.actif).length ?? 0} modèles actifs`}
+            icon={Repeat}
+            tone="navy"
+          />
+        </StatTileGrid>
 
-          <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-[hsl(var(--fli-yellow))]">
-            <p className="text-sm text-muted-foreground">Ce mois</p>
-            <p className="text-2xl font-bold">{formatPrice(totalCharges)}</p>
-            <div className="mt-2">
-              <Progress value={paymentProgress} className="h-2" />
-              <p className="text-xs text-muted-foreground mt-1">{Math.round(paymentProgress)}% payé</p>
-            </div>
-          </div>
+        {/* Section 1: Répartition des impayés + charges en retard */}
+        <div className="grid gap-4 md:grid-cols-2 lg:gap-5">
+          <SurfaceCard
+            title="Répartition des impayés"
+            description="Toutes périodes confondues, par type de charge"
+            icon={PieChart}
+          >
+            {unpaidStats.byType.length > 0 ? (
+              <DonutChart
+                data={unpaidStats.byType}
+                height={220}
+                legendPosition="bottom"
+                centerLabel="Impayé"
+                formatValue={formatPrice}
+                ariaLabel="Répartition des charges impayées par type"
+              />
+            ) : (
+              <div className="flex h-[250px] flex-col items-center justify-center text-muted-foreground">
+                <p>Toutes les charges sont payées</p>
+              </div>
+            )}
+          </SurfaceCard>
 
-          <div className="bg-card border border-border rounded-lg p-4 border-l-4 border-l-[hsl(var(--fli-navy))]">
-            <p className="text-sm text-muted-foreground">Mensuel prévu</p>
-            <p className="text-2xl font-bold">{formatPrice(totalTemplates)}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {templates?.filter(t => t.actif).length} modèles actifs
-            </p>
-          </div>
-        </div>
-
-        {/* Section 1: PieChart + Overdue list */}
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Répartition des impayés</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {unpaidStats.byType.length > 0 ? (
-                <div>
-                  <ResponsiveContainer width="100%" height={180}>
-                    <RechartsPie>
-                      <Pie
-                        data={unpaidStats.byType}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={50}
-                        outerRadius={80}
-                        paddingAngle={2}
-                        dataKey="value"
-                      >
-                        {unpaidStats.byType.map((_, index) => (
-                          <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
-                        formatter={(value: number) => formatPrice(value)}
-                      />
-                    </RechartsPie>
-                  </ResponsiveContainer>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-3">
-                    {unpaidStats.byType.map((item, index) => {
-                      const total = unpaidStats.byType.reduce((s, i) => s + i.value, 0);
-                      const pct = total > 0 ? ((item.value / total) * 100).toFixed(0) : '0';
-                      return (
-                        <div key={item.name} className="flex items-center gap-2 text-sm">
-                          <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }} />
-                          <span className="truncate text-muted-foreground">{item.name}</span>
-                          <span className="ml-auto font-medium whitespace-nowrap">{pct}%</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-[250px] text-muted-foreground">
-                  <p>Toutes les charges sont payées</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Charges en retard</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {unpaidStats.overdue.length > 0 ? (
-                <div className="space-y-3 max-h-[250px] overflow-auto">
-                  {unpaidStats.overdue.map((cost) => (
-                    <div key={cost.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
-                      <div>
-                        <p className="font-medium">{costTypeLabels[cost.cost_type] || cost.cost_type}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {format(new Date(cost.mois), 'MMMM yyyy', { locale: fr })}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold">{formatPrice(Number(cost.montant))}</p>
-                        {editable && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="mt-1 h-7 text-xs"
-                            onClick={() => handleTogglePaid(cost.id, false)}
-                          >
-                            Marquer payé
-                          </Button>
-                        )}
-                      </div>
+          <SurfaceCard
+            title="Charges en retard"
+            description="Charges impayées dont le mois est déjà passé"
+            icon={AlertTriangle}
+            actions={
+              unpaidStats.overdue.length > 0 ? (
+                <StatusPill tone="danger">{unpaidStats.overdue.length}</StatusPill>
+              ) : undefined
+            }
+          >
+            {unpaidStats.overdue.length > 0 ? (
+              <ul className="max-h-[250px] space-y-3 overflow-auto">
+                {unpaidStats.overdue.map((cost) => (
+                  <li
+                    key={cost.id}
+                    className="flex items-center justify-between gap-3 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))] p-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">
+                        {costTypeLabels[cost.cost_type] || cost.cost_type}
+                      </p>
+                      <p className="text-sm capitalize text-muted-foreground">
+                        {format(new Date(cost.mois), 'MMMM yyyy', { locale: fr })}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-[250px] text-muted-foreground">
-                  <p>Aucune charge en retard</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    <div className="shrink-0 text-right">
+                      <p className="font-bold tabular">{formatPrice(Number(cost.montant))}</p>
+                      {editable && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="mt-1 h-7 text-xs"
+                          onClick={() => handleTogglePaid(cost.id, false)}
+                        >
+                          Marquer payé
+                        </Button>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="flex h-[250px] flex-col items-center justify-center text-muted-foreground">
+                <p>Aucune charge en retard</p>
+              </div>
+            )}
+          </SurfaceCard>
         </div>
 
         {/* Section 2: Charges du mois */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>
-              Charges de {format(new Date(selectedMonth), 'MMMM yyyy', { locale: fr })}
-            </CardTitle>
-            {editable && (
+        <SurfaceCard
+          title={`Charges de ${format(new Date(selectedMonth), 'MMMM yyyy', { locale: fr })}`}
+          description="Charges générées à partir des modèles récurrents"
+          icon={Receipt}
+          actions={
+            editable ? (
               <Button onClick={handleGenerateCharges} disabled={generateCharges.isPending} size="sm">
-                <RefreshCw className={`h-4 w-4 mr-2 ${generateCharges.isPending ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`mr-2 h-4 w-4 ${generateCharges.isPending ? 'animate-spin' : ''}`} />
                 Générer les charges
               </Button>
-            )}
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Montant</TableHead>
-                  <TableHead className="text-center">Statut</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {fixedCosts?.map((cost) => (
-                  <TableRow key={cost.id}>
-                    <TableCell className="font-medium">
-                      {costTypeLabels[cost.cost_type] || cost.cost_type}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {cost.description}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatPrice(Number(cost.montant))}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {cost.paye ? (
-                        <Badge className="bg-[hsl(var(--fli-yellow))]/15 text-[hsl(var(--fli-yellow))] border-[hsl(var(--fli-yellow))]/30">
-                          Payé
-                        </Badge>
+            ) : undefined
+          }
+          flush
+        >
+          {!fixedCosts || fixedCosts.length === 0 ? (
+            <TableEmpty
+              title="Aucune charge pour ce mois"
+              description={'Cliquez sur "Générer les charges" pour créer les charges à partir des modèles.'}
+              icon={Receipt}
+            />
+          ) : (
+            <>
+              <TableFrame className="hidden md:block">
+                <table className="w-full">
+                  <thead>
+                    <TableHeadRow>
+                      <TableHeadCell>Type</TableHeadCell>
+                      <TableHeadCell>Description</TableHeadCell>
+                      <TableHeadCell align="right">Montant</TableHeadCell>
+                      <TableHeadCell align="center">Statut</TableHeadCell>
+                      <TableHeadCell align="right">
+                        <span className="sr-only">Actions</span>
+                      </TableHeadCell>
+                    </TableHeadRow>
+                  </thead>
+                  <tbody>
+                    {fixedCosts.map((cost) => (
+                      <TableRow key={cost.id}>
+                        <TableCell className="font-medium">
+                          {costTypeLabels[cost.cost_type] || cost.cost_type}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground" hideBelow="lg">
+                          {cost.description}
+                        </TableCell>
+                        <TableCell align="right" className="font-medium tabular">
+                          {formatPrice(Number(cost.montant))}
+                        </TableCell>
+                        <TableCell align="center">
+                          {cost.paye ? (
+                            <StatusPill tone="success" size="sm">Payé</StatusPill>
+                          ) : (
+                            <StatusPill tone="warning" size="sm">À payer</StatusPill>
+                          )}
+                        </TableCell>
+                        <TableCell align="right">
+                          {editable && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleTogglePaid(cost.id, cost.paye)}
+                            >
+                              {cost.paye ? 'Annuler' : 'Marquer payé'}
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </tbody>
+                </table>
+              </TableFrame>
+
+              <CardList className="md:hidden">
+                {fixedCosts.map((cost) => (
+                  <CardListItem
+                    key={cost.id}
+                    title={costTypeLabels[cost.cost_type] || cost.cost_type}
+                    subtitle={cost.description}
+                    meta={
+                      cost.paye ? (
+                        <StatusPill tone="success" size="sm">Payé</StatusPill>
                       ) : (
-                        <Badge variant="secondary">À payer</Badge>
-                      )}
-                    </TableCell>
-                    {editable && (
-                      <TableCell>
+                        <StatusPill tone="warning" size="sm">À payer</StatusPill>
+                      )
+                    }
+                    fields={[{ label: "Montant", value: formatPrice(Number(cost.montant)) }]}
+                    actions={
+                      editable ? (
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
                           onClick={() => handleTogglePaid(cost.id, cost.paye)}
                         >
                           {cost.paye ? 'Annuler' : 'Marquer payé'}
                         </Button>
-                      </TableCell>
-                    )}
-                  </TableRow>
+                      ) : undefined
+                    }
+                  />
                 ))}
-                {(!fixedCosts || fixedCosts.length === 0) && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                      Aucune charge pour ce mois. Cliquez sur "Générer les charges" pour créer les charges à partir des modèles.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+              </CardList>
+            </>
+          )}
+        </SurfaceCard>
 
         {/* Section 3: Evolution 6 derniers mois */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Évolution des 6 derniers mois</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {monthlyTrend.map((month, idx) => (
-                <div key={idx} className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className="capitalize font-medium">{month.month}</span>
-                    <span className="text-muted-foreground">
-                      {formatPrice(month.paid)} / {formatPrice(month.total)}
-                    </span>
-                  </div>
-                  <div className="flex h-3 rounded-full overflow-hidden bg-muted">
-                    <div 
-                      className="bg-[hsl(var(--fli-yellow))] transition-all"
-                      style={{ width: `${month.total > 0 ? (month.paid / month.total) * 100 : 0}%` }}
-                    />
-                    <div 
-                      className="bg-[hsl(var(--fli-navy))]/60 transition-all"
-                      style={{ width: `${month.total > 0 ? (month.unpaid / month.total) * 100 : 0}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="flex items-center gap-4 mt-4 text-sm">
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-[hsl(var(--fli-yellow))]" />
-                <span>Payé</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-[hsl(var(--fli-navy))]/60" />
-                <span>Impayé</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <SurfaceCard
+          title="Évolution des 6 derniers mois"
+          description="Part payée et part impayée des charges fixes, mois par mois"
+          icon={TrendingDown}
+        >
+          <BarsChart
+            data={monthlyTrend}
+            xKey="month"
+            height={260}
+            stacked
+            series={[
+              { key: "paid", label: "Payé" },
+              { key: "unpaid", label: "Impayé" },
+            ]}
+            formatValue={(value) => formatPrice(Number(value))}
+            formatAxisValue={(value) => `${Math.round(value / 1000)}k`}
+            ariaLabel="Charges fixes payées et impayées sur 6 mois"
+            emptyMessage="Aucune charge sur les 6 derniers mois"
+          />
+        </SurfaceCard>
 
         {/* Section 4: Modèles récurrents */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Modèles récurrents</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              {templates?.filter(t => t.actif).length} / {templates?.length} actifs · {formatPrice(totalTemplates)}/mois
-            </p>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Montant mensuel</TableHead>
-                  <TableHead className="text-center">Actif</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {templates?.map((template) => (
-                  <TableRow key={template.id}>
-                    <TableCell className="font-medium">
-                      {costTypeLabels[template.cost_type] || template.cost_type}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {template.description}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {editable && editingTemplate === template.id ? (
-                        <div className="flex items-center justify-end gap-2">
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={editedAmount}
-                            onChange={(e) => setEditedAmount(e.target.value)}
-                            className="w-24 text-right"
+        <SurfaceCard
+          title="Modèles récurrents"
+          description={`${templates?.filter(t => t.actif).length ?? 0} / ${templates?.length ?? 0} actifs · ${formatPrice(totalTemplates)}/mois`}
+          icon={Repeat}
+          flush
+        >
+          {!templates || templates.length === 0 ? (
+            <TableEmpty
+              title="Aucun modèle récurrent"
+              description="Les modèles alimentent la génération mensuelle des charges."
+              icon={Repeat}
+            />
+          ) : (
+            <>
+              <TableFrame className="hidden md:block">
+                <table className="w-full">
+                  <thead>
+                    <TableHeadRow>
+                      <TableHeadCell>Type</TableHeadCell>
+                      <TableHeadCell>Description</TableHeadCell>
+                      <TableHeadCell align="right">Montant mensuel</TableHeadCell>
+                      <TableHeadCell align="center">Actif</TableHeadCell>
+                    </TableHeadRow>
+                  </thead>
+                  <tbody>
+                    {templates.map((template) => (
+                      <TableRow key={template.id}>
+                        <TableCell className="font-medium">
+                          {costTypeLabels[template.cost_type] || template.cost_type}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground" hideBelow="lg">
+                          {template.description}
+                        </TableCell>
+                        <TableCell align="right" className="tabular">
+                          {editable && editingTemplate === template.id ? (
+                            <div className="flex items-center justify-end gap-2">
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={editedAmount}
+                                onChange={(e) => setEditedAmount(e.target.value)}
+                                className="w-24 text-right"
+                              />
+                              <Button size="sm" onClick={() => handleSaveTemplateAmount(template.id)}>
+                                OK
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={() => setEditingTemplate(null)}>
+                                X
+                              </Button>
+                            </div>
+                          ) : editable ? (
+                            <Button
+                              variant="ghost"
+                              className="font-medium tabular"
+                              onClick={() => {
+                                setEditingTemplate(template.id);
+                                setEditedAmount(template.montant_mensuel.toString());
+                              }}
+                            >
+                              {formatPrice(Number(template.montant_mensuel))}
+                            </Button>
+                          ) : (
+                            <span className="font-medium tabular">
+                              {formatPrice(Number(template.montant_mensuel))}
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell align="center">
+                          <Switch
+                            checked={template.actif}
+                            onCheckedChange={() => handleToggleTemplate(template.id, template.actif)}
+                            disabled={!editable}
+                            aria-label={`Modèle ${costTypeLabels[template.cost_type] || template.cost_type} actif`}
                           />
-                          <Button size="sm" onClick={() => handleSaveTemplateAmount(template.id)}>
-                            OK
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => setEditingTemplate(null)}>
-                            X
-                          </Button>
-                        </div>
-                      ) : editable ? (
-                        <Button
-                          variant="ghost"
-                          className="font-medium"
-                          onClick={() => {
-                            setEditingTemplate(template.id);
-                            setEditedAmount(template.montant_mensuel.toString());
-                          }}
-                        >
-                          {formatPrice(Number(template.montant_mensuel))}
-                        </Button>
-                      ) : (
-                        <span className="font-medium">{formatPrice(Number(template.montant_mensuel))}</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center">
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </tbody>
+                </table>
+              </TableFrame>
+
+              <CardList className="md:hidden">
+                {templates.map((template) => (
+                  <CardListItem
+                    key={template.id}
+                    title={costTypeLabels[template.cost_type] || template.cost_type}
+                    subtitle={template.description}
+                    meta={
                       <Switch
                         checked={template.actif}
                         onCheckedChange={() => handleToggleTemplate(template.id, template.actif)}
                         disabled={!editable}
+                        aria-label={`Modèle ${costTypeLabels[template.cost_type] || template.cost_type} actif`}
                       />
-                    </TableCell>
-                  </TableRow>
+                    }
+                    fields={[
+                      {
+                        label: "Montant mensuel",
+                        value: formatPrice(Number(template.montant_mensuel)),
+                      },
+                    ]}
+                    actions={
+                      editable ? (
+                        editingTemplate === template.id ? (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={editedAmount}
+                              onChange={(e) => setEditedAmount(e.target.value)}
+                              className="w-24 text-right"
+                            />
+                            <Button size="sm" onClick={() => handleSaveTemplateAmount(template.id)}>
+                              OK
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => setEditingTemplate(null)}>
+                              X
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingTemplate(template.id);
+                              setEditedAmount(template.montant_mensuel.toString());
+                            }}
+                          >
+                            Modifier le montant
+                          </Button>
+                        )
+                      ) : undefined
+                    }
+                  />
                 ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
+              </CardList>
+            </>
+          )}
+        </SurfaceCard>
+      </PageShell>
       {confirmDialog}
     </MainLayout>
   );

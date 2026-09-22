@@ -1,9 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -40,6 +38,14 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useFormateurView } from "@/contexts/FormateurViewContext";
 import { FormateurAssistBanner } from "@/components/formateur/FormateurAssistBanner";
+import {
+  PageHeader,
+  PageShell,
+  StatusPill,
+  SurfaceCard,
+  TableEmpty,
+  toneForStatus,
+} from "@/components/ui-kit";
 
 function blocField(category: (typeof BLOC_CATEGORIES)[number]) {
   return `bloc_${category}` as const;
@@ -137,10 +143,10 @@ export default function EvaluationVerify() {
   if (isLoading) {
     return (
       <MainLayout>
-        <div className="space-y-4">
+        <PageShell width="full" className="max-w-5xl">
           <Skeleton className="h-10 w-64" />
           <Skeleton className="h-40 w-full" />
-        </div>
+        </PageShell>
       </MainLayout>
     );
   }
@@ -148,13 +154,20 @@ export default function EvaluationVerify() {
   if (!evaluation || !booking) {
     return (
       <MainLayout>
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">Évaluation non trouvée</p>
-          <Button variant="outline" className="mt-4" onClick={() => navigate(`${basePath}/evaluations`)}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Retour
-          </Button>
-        </div>
+        <PageShell width="full" className="max-w-5xl">
+          <SurfaceCard flush>
+            <TableEmpty
+              icon={ShieldCheck}
+              title="Évaluation non trouvée"
+              action={
+                <Button variant="outline" onClick={() => navigate(`${basePath}/evaluations`)}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Retour
+                </Button>
+              }
+            />
+          </SurfaceCard>
+        </PageShell>
       </MainLayout>
     );
   }
@@ -163,27 +176,34 @@ export default function EvaluationVerify() {
 
   return (
     <MainLayout>
-      <div className="space-y-6 max-w-5xl">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(`${basePath}/evaluations`)}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">Vérification du compte-rendu</h1>
-            <p className="text-muted-foreground">
+      <PageShell width="full" className="max-w-5xl">
+        <PageHeader
+          back={
+            <Button variant="ghost" size="sm" onClick={() => navigate(`${basePath}/evaluations`)}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Retour
+            </Button>
+          }
+          title="Vérification du compte-rendu"
+          description={
+            <>
               {booking.candidate_name} · {booking.ski_school_name} ·{" "}
               {LANGUAGE_FLAGS[booking.language || "all"]}{" "}
               {LANGUAGE_LABELS[booking.language || "all"] || booking.language}
-            </p>
-          </div>
-          <Badge variant="outline">
-            {evaluation.status === "a_verifier"
-              ? "À vérifier"
-              : evaluation.status === "valide"
-                ? "Validée"
-                : evaluation.status}
-          </Badge>
-        </div>
+            </>
+          }
+          icon={ShieldCheck}
+          tone="purple"
+          meta={
+            <StatusPill tone={toneForStatus(evaluation.status)}>
+              {evaluation.status === "a_verifier"
+                ? "À vérifier"
+                : evaluation.status === "valide"
+                  ? "Validée"
+                  : evaluation.status}
+            </StatusPill>
+          }
+        />
 
         <Alert>
           <ShieldCheck className="h-4 w-4" />
@@ -211,43 +231,42 @@ export default function EvaluationVerify() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Contrôle de structure</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+          <SurfaceCard title="Contrôle de structure" icon={ShieldCheck}>
+            <div className="space-y-3">
               {motifs.map((motif) => (
-                <div key={motif.id} className="flex items-start gap-3 rounded-lg border p-3">
+                <div
+                  key={motif.id}
+                  className="flex items-start gap-3 rounded-[var(--radius)] border border-border p-3"
+                >
                   {motif.ok ? (
-                    <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[hsl(var(--status-good))]" />
                   ) : (
-                    <XCircle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
+                    <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
                   )}
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-medium">{motif.label}</p>
                     <p className="text-sm text-muted-foreground">{motif.detail}</p>
                   </div>
                 </div>
               ))}
-            </CardContent>
-          </Card>
+            </div>
+          </SurfaceCard>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Relecture orthographique</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <SurfaceCard title="Relecture orthographique">
+            <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
                 Une proposition à la fois. Accepter remplace uniquement ce mot. Ignorer passe à la suivante.
                 Aucune réécriture globale.
               </p>
               {nextProposal ? (
-                <div className="rounded-lg border p-4 space-y-3">
-                  <Badge variant="outline">{nextProposal.label}</Badge>
+                <div className="space-y-3 rounded-[var(--radius)] border border-border p-4">
+                  <StatusPill tone="neutral" size="sm">{nextProposal.label}</StatusPill>
                   <p className="text-sm">
-                    <span className="line-through text-destructive">{nextProposal.from}</span>
+                    <span className="text-destructive line-through">{nextProposal.from}</span>
                     {" → "}
-                    <span className="font-medium text-green-700">{nextProposal.to}</span>
+                    <span className="font-medium text-[hsl(var(--status-good))]">
+                      {nextProposal.to}
+                    </span>
                   </p>
                   {actionsEnabled && (
                     <div className="flex gap-2">
@@ -278,35 +297,29 @@ export default function EvaluationVerify() {
               ) : (
                 <p className="text-sm text-muted-foreground">Aucune proposition restante.</p>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </SurfaceCard>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Texte des quatre blocs</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <SurfaceCard title="Texte des quatre blocs">
+          <div className="space-y-4">
             {BLOC_CATEGORIES.map((cat) => {
               const text = (evaluation[blocField(cat)] as string) || "";
               return (
                 <div key={cat}>
-                  <p className="text-sm font-medium mb-1">{CATEGORY_LABELS[cat]}</p>
-                  <p className="text-sm rounded-md border bg-muted/30 p-3 whitespace-pre-wrap">
+                  <p className="mb-1 text-sm font-medium">{CATEGORY_LABELS[cat]}</p>
+                  <p className="whitespace-pre-wrap rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))] p-3 text-sm">
                     {text.trim() || <span className="text-muted-foreground">— vide —</span>}
                   </p>
                 </div>
               );
             })}
-          </CardContent>
-        </Card>
+          </div>
+        </SurfaceCard>
 
         {actionsEnabled && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Décision</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <SurfaceCard title="Décision">
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="refuse-comment">Commentaire au formateur (obligatoire en cas de refus)</Label>
                 <Textarea
@@ -339,10 +352,10 @@ export default function EvaluationVerify() {
                   La validation est bloquée tant qu&apos;un motif de structure n&apos;est pas conforme.
                 </p>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </SurfaceCard>
         )}
-      </div>
+      </PageShell>
     </MainLayout>
   );
 }

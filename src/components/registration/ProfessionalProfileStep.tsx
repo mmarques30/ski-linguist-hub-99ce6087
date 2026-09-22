@@ -2,8 +2,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Briefcase } from "lucide-react";
 import type { RegistrationData } from "@/pages/register/Index";
+import { OptionCard, StepActions, StepCard } from "./StepLayout";
 
 interface ProfessionalProfileStepProps {
   data: Partial<RegistrationData>;
@@ -18,15 +19,13 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Profil professionnel</CardTitle>
-        <CardDescription>
-          Parlez-nous de votre expérience professionnelle
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <StepCard
+        title="Profil professionnel"
+        description="Parlez-nous de votre expérience professionnelle"
+        icon={Briefcase}
+      >
+        <div className="space-y-6">
           {/* Profession */}
           <div className="space-y-3">
             <Label>Quelle est votre profession ?</Label>
@@ -35,67 +34,70 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
               onValueChange={(value) => onUpdate({ profession: value as "ski_instructor" | "other" })}
               className="space-y-3"
             >
-              <div className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-muted/50 transition-colors">
-                <RadioGroupItem value="ski_instructor" id="ski_instructor" />
-                <div>
-                  <Label htmlFor="ski_instructor" className="font-medium cursor-pointer">
-                    Moniteur de ski
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Je travaille comme moniteur de ski dans une école française
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-muted/50 transition-colors">
-                <RadioGroupItem value="other" id="other" />
-                <div>
-                  <Label htmlFor="other" className="font-medium cursor-pointer">
-                    Autre profession
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    J'ai une autre profession
-                  </p>
-                </div>
-              </div>
+              <OptionCard selected={data.profession === "ski_instructor"}>
+                <Label
+                  htmlFor="ski_instructor"
+                  className="flex cursor-pointer items-start gap-3 p-4 font-normal"
+                >
+                  <RadioGroupItem value="ski_instructor" id="ski_instructor" className="mt-0.5" />
+                  <span className="min-w-0 space-y-1">
+                    <span className="block font-medium text-foreground">Moniteur de ski</span>
+                    <span className="block text-sm text-muted-foreground">
+                      Je travaille comme moniteur de ski dans une école française
+                    </span>
+                  </span>
+                </Label>
+              </OptionCard>
+              <OptionCard selected={data.profession === "other"}>
+                <Label htmlFor="other" className="flex cursor-pointer items-start gap-3 p-4 font-normal">
+                  <RadioGroupItem value="other" id="other" className="mt-0.5" />
+                  <span className="min-w-0 space-y-1">
+                    <span className="block font-medium text-foreground">Autre profession</span>
+                    <span className="block text-sm text-muted-foreground">J'ai une autre profession</span>
+                  </span>
+                </Label>
+              </OptionCard>
             </RadioGroup>
           </div>
 
           {/* École de ski - Afficher uniquement pour les moniteurs */}
           {data.profession === "ski_instructor" && (
-            <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+            <div className="animate-in fade-in slide-in-from-top-2 space-y-2">
               <Label htmlFor="skiSchool">École de ski</Label>
               <Input
                 id="skiSchool"
                 value={data.skiSchool || ""}
                 onChange={(e) => onUpdate({ skiSchool: e.target.value })}
                 placeholder="ex : ESF Val d'Isère, ESF Courchevel..."
+                className="h-11"
                 required
               />
-              <p className="text-sm text-muted-foreground">
-                Entrez le nom de votre école de ski
-              </p>
+              <p className="text-sm text-muted-foreground">Entrez le nom de votre école de ski</p>
             </div>
           )}
 
           {data.profession === "other" && (
-            <div className="rounded-lg bg-muted/50 p-4 animate-in fade-in slide-in-from-top-2">
+            <div className="animate-in fade-in slide-in-from-top-2 rounded-[var(--radius-card)] bg-[hsl(var(--surface-sunken))] p-4">
               <p className="text-sm text-muted-foreground">
-                Nos programmes de formation sont principalement conçus pour les moniteurs de ski. 
-                Veuillez nous contacter directement à <span className="font-medium text-foreground">info@fli.fr</span> pour 
-                discuter de vos besoins spécifiques.
+                Nos programmes de formation sont principalement conçus pour les moniteurs de ski.
+                Veuillez nous contacter directement à{" "}
+                <span className="font-medium text-foreground">info@fli.fr</span> pour discuter de vos
+                besoins spécifiques.
               </p>
             </div>
           )}
+        </div>
+      </StepCard>
 
-          <Button 
-            type="submit" 
-            className="w-full"
-            disabled={!data.profession || (data.profession === "ski_instructor" && !data.skiSchool)}
-          >
-            Continuer vers le test de niveau
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+      <StepActions>
+        <Button
+          type="submit"
+          className="h-12 w-full text-base sm:w-auto"
+          disabled={!data.profession || (data.profession === "ski_instructor" && !data.skiSchool)}
+        >
+          Continuer vers le test de niveau
+        </Button>
+      </StepActions>
+    </form>
   );
 }

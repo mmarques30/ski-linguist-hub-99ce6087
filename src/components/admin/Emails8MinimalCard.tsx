@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Mail, Loader2 } from "lucide-react";
+import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import { toast } from "sonner";
 import { invokeAdminEdgeFunction } from "@/lib/admin-edge-invoke";
 import {
@@ -22,13 +22,13 @@ export const TEST_EMAIL_SLUGS = [
 
 function Preview({ title, subject, html }: { title: string; subject: string; html: string }) {
   return (
-    <div className="space-y-2 rounded-lg border p-4">
+    <div className="space-y-2 rounded-[var(--radius)] border border-border p-4">
       <p className="text-sm font-semibold">{title}</p>
       <p className="text-sm">
         <span className="text-muted-foreground">Sujet :</span> {subject}
       </p>
       <div
-        className="prose prose-sm max-w-none rounded bg-muted/40 p-3 text-sm"
+        className="prose prose-sm max-w-none rounded-[var(--radius)] bg-[hsl(var(--surface-sunken))] p-3 text-sm dark:prose-invert"
         dangerouslySetInnerHTML={{ __html: html }}
       />
     </div>
@@ -80,18 +80,21 @@ export function Emails8MinimalCard() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Mail className="h-5 w-5" />
-          Emails 8-minimal
-        </CardTitle>
-        <CardDescription>
-          Expéditeur affiché : {EMAIL_FROM_DISPLAY}. Réponse vers {EMAIL_REPLY_TO}.
-          Aucun cron. La clé Resend n&apos;est pas dans le dépôt.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <SurfaceCard
+      title="Emails 8-minimal"
+      icon={Mail}
+      description={`Expéditeur affiché : ${EMAIL_FROM_DISPLAY}. Réponse vers ${EMAIL_REPLY_TO}. Aucun cron. La clé Resend n'est pas dans le dépôt.`}
+      actions={
+        lastError ? (
+          <StatusPill tone="danger" dot>Dernier test en échec</StatusPill>
+        ) : lastOk ? (
+          <StatusPill tone="success" dot>Dernier test envoyé</StatusPill>
+        ) : (
+          <StatusPill tone="neutral">Aucun test lancé</StatusPill>
+        )
+      }
+    >
+      <div className="space-y-4">
         <Alert>
           <AlertTitle>Textes avant activation</AlertTitle>
           <AlertDescription>
@@ -132,7 +135,7 @@ export function Emails8MinimalCard() {
           messages préfixés [TEST] ({TEST_EMAIL_SLUGS.join(", ")}), corps fictif ZZTEST
           Camille. En cas d&apos;échec, le message reste affiché ci-dessus.
         </p>
-      </CardContent>
-    </Card>
+      </div>
+    </SurfaceCard>
   );
 }

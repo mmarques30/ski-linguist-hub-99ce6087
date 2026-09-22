@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -30,7 +27,26 @@ import {
   Download,
   Play,
   ShieldAlert,
+  Database,
+  BookOpen,
+  Table2,
+  ListChecks,
 } from "lucide-react";
+import {
+  PageHeader,
+  PageShell,
+  SectionHeading,
+  StatTile,
+  StatTileGrid,
+  StatusPill,
+  SurfaceCard,
+  TableCell as KitTableCell,
+  TableFrame,
+  TableHeadCell,
+  TableHeadRow,
+  TableRow as KitTableRow,
+} from "@/components/ui-kit";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -374,29 +390,30 @@ export default function Import() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <FliInvoicesImportCard />
-        <FliInscriptionsImportCard />
-        <FliFormResponsesImportCard />
-
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Import de données CSV</h1>
-            <p className="text-muted-foreground">
-              Délimiteur point-virgule · UTF-8 · dry-run obligatoire avant écriture
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            onClick={() => void refreshCounts()}
-            disabled={countsLoading}
-          >
-            {countsLoading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : null}
-            Actualiser les comptes
-          </Button>
-        </div>
+      <PageShell>
+        <PageHeader
+          title="Import de données CSV"
+          description="Délimiteur point-virgule · UTF-8 · dry-run obligatoire avant écriture"
+          icon={Database}
+          tone="navy"
+          meta={
+            <StatusPill tone="danger" icon={ShieldAlert}>
+              Zone sensible — écritures et purges
+            </StatusPill>
+          }
+          actions={
+            <Button
+              variant="outline"
+              onClick={() => void refreshCounts()}
+              disabled={countsLoading}
+            >
+              {countsLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              Actualiser les comptes
+            </Button>
+          }
+        />
 
         <Alert>
           <ShieldAlert className="h-4 w-4" />
@@ -414,79 +431,112 @@ export default function Import() {
           </AlertDescription>
         </Alert>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Volumes actuels</CardTitle>
-            <CardDescription>
-              Comptes live (lecture seule) — base de confirmation pour les purges
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
-              {(Object.keys(IMPORT_TABLE_LABELS) as ImportTableType[]).map((key) => (
-                <div
-                  key={key}
-                  className={`rounded-lg border p-3 ${
-                    key === selectedTable ? "border-primary bg-primary/5" : ""
-                  }`}
-                >
-                  <p className="text-xs text-muted-foreground">{key}</p>
-                  <p className="text-2xl font-bold tabular-nums">
-                    {countsLoading ? "…" : counts[key]}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        {/* ------------------------------------------------------------------
+            Importeurs dédiés — un tableur FLI par carte, chacun avec son
+            propre dry-run et sa propre confirmation.
+           ------------------------------------------------------------------ */}
+        <SectionHeading
+          title="Importeurs dédiés — tableurs FLI"
+          description="Trois importeurs spécialisés, chacun avec son format, son dry-run et ses options."
+        />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Table cible</CardTitle>
-            <CardDescription>
-              Ordre conseillé : instructors → ski_schools → students →
-              inscriptions → invoices → payments
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-end">
-            <div className="flex-1 space-y-2">
-              <Label>Table</Label>
-              <Select
-                value={selectedTable}
-                onValueChange={(v) => {
-                  setSelectedTable(v as ImportTableType);
-                  resetImportState();
-                }}
-              >
-                <SelectTrigger className="w-full max-w-md">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(Object.entries(IMPORT_TABLE_LABELS) as [ImportTableType, string][]).map(
-                    ([key, label]) => (
-                      <SelectItem key={key} value={key}>
-                        {label} ({counts[key]})
-                      </SelectItem>
-                    )
-                  )}
-                </SelectContent>
-              </Select>
+        <FliInvoicesImportCard />
+        <FliInscriptionsImportCard />
+        <FliFormResponsesImportCard />
+
+        {/* ------------------------------------------------------------------
+            Importeur CSV générique — table cible au choix, dry-run puis
+            écriture, purge table par table.
+           ------------------------------------------------------------------ */}
+        <SectionHeading
+          title="Importeur CSV générique"
+          description="Choisir une table, déposer un CSV, contrôler le dry-run, puis écrire."
+        />
+
+        <SurfaceCard
+          title="Volumes actuels"
+          icon={Table2}
+          description="Comptes live (lecture seule) — base de confirmation pour les purges"
+        >
+          <StatTileGrid cols={5}>
+            {(Object.keys(IMPORT_TABLE_LABELS) as ImportTableType[]).map((key) => (
+              <StatTile
+                key={key}
+                label={key}
+                value={countsLoading ? "…" : counts[key]}
+                hint={IMPORT_TABLE_LABELS[key]}
+                variant={key === selectedTable ? "soft" : "plain"}
+                tone={key === selectedTable ? "gold" : "neutral"}
+                className={cn(key === selectedTable && "ring-1 ring-primary")}
+              />
+            ))}
+          </StatTileGrid>
+        </SurfaceCard>
+
+        <SurfaceCard
+          title="Table cible"
+          icon={Database}
+          description="Ordre conseillé : instructors → ski_schools → students → inscriptions → invoices → payments"
+        >
+          <div className="space-y-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+              <div className="flex-1 space-y-2">
+                <Label>Table</Label>
+                <Select
+                  value={selectedTable}
+                  onValueChange={(v) => {
+                    setSelectedTable(v as ImportTableType);
+                    resetImportState();
+                  }}
+                >
+                  <SelectTrigger className="w-full max-w-md">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.entries(IMPORT_TABLE_LABELS) as [ImportTableType, string][]).map(
+                      ([key, label]) => (
+                        <SelectItem key={key} value={key}>
+                          {label} ({counts[key]})
+                        </SelectItem>
+                      )
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <Button
-              variant="destructive"
-              disabled={countsLoading || selectedCount === 0}
-              onClick={() => {
-                setPurgeConfirmText("");
-                setPurgeOpen(true);
-              }}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Purger {selectedTable}
-            </Button>
-          </CardContent>
-          {tableHistorique && (
-            <CardContent className="pt-0">
-              <div className="flex items-start gap-3 rounded-lg border bg-muted/30 p-3">
+
+            {/* Zone destructive — isolée, teintée `destructive`, jamais mêlée
+                aux contrôles d'import. */}
+            <div className="space-y-3 rounded-[var(--radius)] border border-destructive/40 bg-destructive/5 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  <StatusPill tone="danger" icon={Trash2}>
+                    Zone destructive
+                  </StatusPill>
+                  <span className="text-sm text-muted-foreground tabular">
+                    {selectedCount} ligne(s) dans {selectedTable}
+                  </span>
+                </div>
+                <Button
+                  variant="destructive"
+                  disabled={countsLoading || selectedCount === 0}
+                  onClick={() => {
+                    setPurgeConfirmText("");
+                    setPurgeOpen(true);
+                  }}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Purger {selectedTable}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Suppression totale de la table, irréversible. Le nom exact de la
+                table devra être saisi pour confirmer.
+              </p>
+            </div>
+
+            {tableHistorique && (
+              <div className="flex items-start gap-3 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))] p-3">
                 <Switch
                   id="barriere-historique"
                   checked={limiterHistorique}
@@ -509,14 +559,17 @@ export default function Import() {
                   </p>
                 </div>
               </div>
-            </CardContent>
-          )}
-        </Card>
+            )}
+          </div>
+        </SurfaceCard>
 
         <AlertDialog open={purgeOpen} onOpenChange={setPurgeOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Confirmer la purge</AlertDialogTitle>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <Trash2 className="h-4 w-4 text-destructive" aria-hidden />
+                Confirmer la purge
+              </AlertDialogTitle>
               <AlertDialogDescription asChild>
                 <div className="space-y-3 text-sm text-muted-foreground">
                   <p>
@@ -531,7 +584,7 @@ export default function Import() {
                     Lignes concernées :{" "}
                     <strong className="text-foreground">{selectedCount}</strong>
                   </p>
-                  <p className="text-destructive font-medium">
+                  <p className="font-medium text-destructive">
                     Action irréversible. Un export CSV de sauvegarde (max 10 000
                     lignes) sera téléchargé avant suppression.
                   </p>
@@ -570,18 +623,12 @@ export default function Import() {
           </AlertDialogContent>
         </AlertDialog>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileSpreadsheet className="h-5 w-5" />
-              Fichier CSV — {IMPORT_TABLE_LABELS[selectedTable]}
-            </CardTitle>
-            <CardDescription>
-              Format : CSV séparateur <strong>;</strong>, encodage UTF-8 (BOM
-              accepté), décimales à virgule, milliers avec espace / NBSP
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <SurfaceCard
+          title={`Fichier CSV — ${IMPORT_TABLE_LABELS[selectedTable]}`}
+          icon={FileSpreadsheet}
+          description="Format : CSV séparateur ; , encodage UTF-8 (BOM accepté), décimales à virgule, milliers avec espace / NBSP"
+        >
+          <div>
             {selectedTable === "instructors" && (
               <Alert className="mb-4">
                 <AlertTriangle className="h-4 w-4" />
@@ -597,9 +644,10 @@ export default function Import() {
                 </AlertDescription>
               </Alert>
             )}
-            <div
+            <button
+              type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="flex cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed p-8 transition-colors hover:bg-muted/50"
+              className="flex w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-[var(--radius)] border-2 border-dashed border-border p-8 transition-colors hover:bg-[hsl(var(--surface-sunken))]"
             >
               <Upload className="h-10 w-10 text-muted-foreground" />
               <div className="text-center">
@@ -612,7 +660,7 @@ export default function Import() {
                     : "CSV ; utf-8-sig"}
                 </p>
               </div>
-            </div>
+            </button>
             <input
               ref={fileInputRef}
               type="file"
@@ -633,44 +681,39 @@ export default function Import() {
                 </AlertDescription>
               </Alert>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </SurfaceCard>
 
         {preview.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Aperçu (10 premières lignes)</CardTitle>
-              <CardDescription>
-                Vérifiez les colonnes avant le dry-run
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      {headers.map((header) => (
-                        <TableHead key={header} className="whitespace-nowrap">
-                          {header}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {preview.map((row, index) => (
-                      <TableRow key={index}>
+          <SurfaceCard
+            title="Aperçu (10 premières lignes)"
+            icon={Table2}
+            description="Vérifiez les colonnes avant le dry-run"
+          >
+            <div className="space-y-4">
+              <div className="-mx-4 overflow-hidden border-y border-border sm:-mx-5">
+                <TableFrame>
+                  <table className="w-full">
+                    <thead>
+                      <TableHeadRow>
                         {headers.map((header) => (
-                          <TableCell
-                            key={header}
-                            className="max-w-[200px] truncate"
-                          >
-                            {row[header]}
-                          </TableCell>
+                          <TableHeadCell key={header}>{header}</TableHeadCell>
                         ))}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                      </TableHeadRow>
+                    </thead>
+                    <tbody>
+                      {preview.map((row, index) => (
+                        <KitTableRow key={index}>
+                          {headers.map((header) => (
+                            <KitTableCell key={header} className="max-w-[200px] truncate">
+                              {row[header]}
+                            </KitTableCell>
+                          ))}
+                        </KitTableRow>
+                      ))}
+                    </tbody>
+                  </table>
+                </TableFrame>
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
@@ -708,60 +751,48 @@ export default function Import() {
                 </Button>
 
                 {!dryRunDone && (
-                  <Badge variant="outline">Dry-run requis avant écriture</Badge>
+                  <StatusPill tone="warning" icon={AlertTriangle}>
+                    Dry-run requis avant écriture
+                  </StatusPill>
                 )}
               </div>
 
               {isImporting && (
                 <div>
                   <Progress value={progress} className="h-2" />
-                  <p className="mt-1 text-sm text-muted-foreground">
+                  <p className="mt-1 text-sm text-muted-foreground tabular">
                     {progress}% terminé
                   </p>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </SurfaceCard>
         )}
 
         {prepared && dryRunDone && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
-                Résultat du dry-run
-              </CardTitle>
-              <CardDescription>
-                Aucune écriture en base — journalisé dans audit_log
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                <div className="rounded-lg border p-4">
-                  <p className="text-2xl font-bold">{prepared.totalRows}</p>
-                  <p className="text-sm text-muted-foreground">Lignes lues</p>
-                </div>
-                <div className="rounded-lg border p-4">
-                  <p className="text-2xl font-bold text-green-600">
-                    {prepared.acceptedCount}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Acceptées</p>
-                </div>
-                <div className="rounded-lg border p-4">
-                  <p className="text-2xl font-bold text-red-600">
-                    {prepared.rejectedCount}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Rejetées</p>
-                </div>
-                <div className="rounded-lg border p-4">
-                  <p className="text-2xl font-bold">{selectedTable}</p>
-                  <p className="text-sm text-muted-foreground">Table cible</p>
-                </div>
-              </div>
+          <SurfaceCard
+            title="Résultat du dry-run"
+            icon={CheckCircle2}
+            description="Aucune écriture en base — journalisé dans audit_log"
+            actions={
+              <StatusPill tone="info">Aucune écriture</StatusPill>
+            }
+          >
+            <div className="space-y-4">
+              <StatTileGrid cols={4}>
+                <StatTile label="Lignes lues" value={prepared.totalRows} tone="neutral" />
+                <StatTile label="Acceptées" value={prepared.acceptedCount} tone="teal" />
+                <StatTile
+                  label="Rejetées"
+                  value={prepared.rejectedCount}
+                  tone={prepared.rejectedCount > 0 ? "rose" : "neutral"}
+                />
+                <StatTile label="Table cible" value={selectedTable} tone="navy" />
+              </StatTileGrid>
 
               {prepared.rejections.length > 0 && (
                 <>
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-sm font-medium">
                       20 premières erreurs (sur {prepared.rejectedCount})
                     </p>
@@ -795,16 +826,23 @@ export default function Import() {
                   Aucun rejet à télécharger
                 </Button>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </SurfaceCard>
         )}
 
         {importResult && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Résultat de l&apos;écriture</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+          <SurfaceCard
+            title="Résultat de l'écriture"
+            icon={ListChecks}
+            actions={
+              <StatusPill tone={importResult.errors.length > 0 ? "danger" : "success"} dot>
+                {importResult.errors.length > 0
+                  ? `${importResult.errors.length} erreur(s)`
+                  : "Sans erreur"}
+              </StatusPill>
+            }
+          >
+            <div className="space-y-3">
               <p>
                 <strong>{importResult.imported}</strong> ligne(s) écrite(s)
                 (insert/upsert) dans <code>{selectedTable}</code>.
@@ -821,39 +859,34 @@ export default function Import() {
                   </AlertDescription>
                 </Alert>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </SurfaceCard>
         )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Mode d&apos;emploi</CardTitle>
-          </CardHeader>
-          <CardContent className="prose prose-sm max-w-none text-sm text-muted-foreground">
-            <ol className="list-decimal space-y-2 pl-4">
-              <li>Choisir la table cible et vérifier le volume affiché.</li>
-              <li>
-                Déposer un CSV <strong>;</strong> en UTF-8 (utf-8-sig accepté).
-              </li>
-              <li>
-                Lancer le <strong>dry-run</strong> : contrôle des lignes
-                acceptées / rejetées (20 premières erreurs à l&apos;écran).
-              </li>
-              <li>
-                Télécharger le rapport CSV des rejets si besoin, corriger le
-                fichier, recommencer le dry-run.
-              </li>
-              <li>
-                Seulement ensuite : <strong>Écrire en base</strong> (journalisé).
-              </li>
-              <li>
-                Purge : uniquement table par table, en tapant le nom exact, avec
-                le nombre de lignes affiché.
-              </li>
-            </ol>
-          </CardContent>
-        </Card>
-      </div>
+        <SurfaceCard title="Mode d'emploi" icon={BookOpen}>
+          <ol className="list-decimal space-y-2 pl-4 text-sm text-muted-foreground">
+            <li>Choisir la table cible et vérifier le volume affiché.</li>
+            <li>
+              Déposer un CSV <strong>;</strong> en UTF-8 (utf-8-sig accepté).
+            </li>
+            <li>
+              Lancer le <strong>dry-run</strong> : contrôle des lignes
+              acceptées / rejetées (20 premières erreurs à l&apos;écran).
+            </li>
+            <li>
+              Télécharger le rapport CSV des rejets si besoin, corriger le
+              fichier, recommencer le dry-run.
+            </li>
+            <li>
+              Seulement ensuite : <strong>Écrire en base</strong> (journalisé).
+            </li>
+            <li>
+              Purge : uniquement table par table, en tapant le nom exact, avec
+              le nombre de lignes affiché.
+            </li>
+          </ol>
+        </SurfaceCard>
+      </PageShell>
     </MainLayout>
   );
 }

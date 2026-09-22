@@ -1,10 +1,18 @@
+import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Info } from "lucide-react";
+import {
+  Bell,
+  Info,
+  Languages,
+  Mail,
+  Send,
+  SettingsIcon,
+  SlidersHorizontal,
+  Plug,
+} from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { StripeSettingsCard } from "@/components/settings/StripeSettingsCard";
 import { InvoiceSequenceFloorCard } from "@/components/settings/InvoiceSequenceFloorCard";
@@ -12,6 +20,14 @@ import { OrganizationIdentityCard } from "@/components/settings/OrganizationIden
 import { TaughtLanguagesCard } from "@/components/settings/TaughtLanguagesCard";
 import { StudentPortalEnabledCard } from "@/components/settings/StudentPortalEnabledCard";
 import { SCHEDULE_ASSIGNMENT_DAYS_BEFORE } from "@/lib/placement-test-engine";
+import {
+  DefinitionList,
+  PageHeader,
+  PageShell,
+  SectionHeading,
+  SegmentedControl,
+  SurfaceCard,
+} from "@/components/ui-kit";
 
 /**
  * BL-036 — `/settings` n'écrivait rien : le bouton « Enregistrer les
@@ -19,6 +35,8 @@ import { SCHEDULE_ASSIGNMENT_DAYS_BEFORE } from "@/lib/placement-test-engine";
  * Chaque carte enregistre désormais sa propre section, et les réglages qui ne
  * sont encore reliés à rien le disent au lieu de simuler une sauvegarde.
  */
+
+type SettingsTab = "general" | "notifications" | "integrations" | "languages";
 
 const translations = {
   title: {
@@ -70,49 +88,55 @@ const translations = {
 
 export default function Settings() {
   const { t } = useLanguage();
+  const [tab, setTab] = useState<SettingsTab>("general");
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">{t(translations.title)}</h1>
-          <p className="text-muted-foreground">{t(translations.subtitle)}</p>
-        </div>
+      <PageShell>
+        <PageHeader
+          title={t(translations.title)}
+          description={t(translations.subtitle)}
+          icon={SettingsIcon}
+          tone="navy"
+          tabs={
+            <SegmentedControl<SettingsTab>
+              value={tab}
+              onChange={setTab}
+              ariaLabel={t(translations.title)}
+              options={[
+                { value: "general", label: t(translations.tabGeneral), icon: SlidersHorizontal },
+                { value: "notifications", label: t(translations.tabNotifications), icon: Bell },
+                { value: "integrations", label: t(translations.tabIntegrations), icon: Plug },
+                { value: "languages", label: t(translations.tabLanguages), icon: Languages },
+              ]}
+            />
+          }
+        />
 
-        <Tabs defaultValue="general" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="general">{t(translations.tabGeneral)}</TabsTrigger>
-            <TabsTrigger value="notifications">{t(translations.tabNotifications)}</TabsTrigger>
-            <TabsTrigger value="integrations">{t(translations.tabIntegrations)}</TabsTrigger>
-            <TabsTrigger value="languages">{t(translations.tabLanguages)}</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="general" className="space-y-6">
+        {tab === "general" && (
+          <div className="space-y-4 lg:space-y-5">
             <OrganizationIdentityCard />
             <StudentPortalEnabledCard />
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Valeurs par défaut</CardTitle>
-                <CardDescription>
-                  Règles appliquées aujourd&apos;hui aux sessions et aux inscriptions.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <dl className="grid gap-4 md:grid-cols-2 text-sm">
-                  <div>
-                    <dt className="text-muted-foreground">
-                      Validation des groupes matin / après-midi
-                    </dt>
-                    <dd className="font-medium">
-                      {SCHEDULE_ASSIGNMENT_DAYS_BEFORE} jours avant le début des cours
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">Capacité d&apos;une session</dt>
-                    <dd className="font-medium">Saisie session par session</dd>
-                  </div>
-                </dl>
+            <SurfaceCard
+              title="Valeurs par défaut"
+              icon={SlidersHorizontal}
+              description="Règles appliquées aujourd'hui aux sessions et aux inscriptions."
+            >
+              <div className="space-y-4">
+                <DefinitionList
+                  items={[
+                    {
+                      label: "Validation des groupes matin / après-midi",
+                      value: `${SCHEDULE_ASSIGNMENT_DAYS_BEFORE} jours avant le début des cours`,
+                    },
+                    {
+                      label: "Capacité d'une session",
+                      value: "Saisie session par session",
+                    },
+                  ]}
+                  columns={2}
+                />
                 <Alert>
                   <Info className="h-4 w-4" />
                   <AlertDescription>
@@ -121,22 +145,21 @@ export default function Settings() {
                     réglage n&apos;est enregistrable pour l&apos;instant.
                   </AlertDescription>
                 </Alert>
-              </CardContent>
-            </Card>
+              </div>
+            </SurfaceCard>
 
             <InvoiceSequenceFloorCard />
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="notifications" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Emails automatiques</CardTitle>
-                <CardDescription>
-                  Modèles, destinataires et déclencheurs des emails envoyés par
-                  l&apos;application.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+        {tab === "notifications" && (
+          <div className="space-y-4 lg:space-y-5">
+            <SurfaceCard
+              title="Emails automatiques"
+              icon={Mail}
+              description="Modèles, destinataires et déclencheurs des emails envoyés par l'application."
+            >
+              <div className="space-y-4">
                 <Alert>
                   <Info className="h-4 w-4" />
                   <AlertDescription>
@@ -149,52 +172,50 @@ export default function Settings() {
                 <Button asChild variant="outline">
                   <Link to="/admin/emails">Ouvrir la gestion des emails</Link>
                 </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            </SurfaceCard>
+          </div>
+        )}
 
-          <TabsContent value="integrations" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>{t(translations.paymentIntegration)}</CardTitle>
-                <CardDescription>{t(translations.paymentIntegrationDesc)}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <StripeSettingsCard configureLabel={t(translations.configure)} />
-              </CardContent>
-            </Card>
+        {tab === "integrations" && (
+          <div className="space-y-4 lg:space-y-5">
+            <SectionHeading
+              title={t(translations.paymentIntegration)}
+              description={t(translations.paymentIntegrationDesc)}
+            />
+            <StripeSettingsCard configureLabel={t(translations.configure)} />
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Communication</CardTitle>
-                <CardDescription>Service d&apos;email transactionnel.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 rounded-lg border">
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
-                      <span className="font-bold text-primary">R</span>
-                    </div>
-                    <div>
-                      <p className="font-medium">Resend</p>
-                      <p className="text-sm text-muted-foreground">
-                        Clé <code>RESEND_API_KEY</code> côté fonctions Edge
-                      </p>
-                    </div>
+            <SurfaceCard
+              title="Communication"
+              icon={Send}
+              description="Service d'email transactionnel."
+            >
+              <div className="flex flex-col gap-3 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))] p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-4">
+                  <span className="fli-icon-chip h-10 w-10 shrink-0 bg-[hsl(var(--tint-neutral-bg))] font-bold text-primary">
+                    R
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-medium">Resend</p>
+                    <p className="text-sm text-muted-foreground">
+                      Clé <code>RESEND_API_KEY</code> côté fonctions Edge
+                    </p>
                   </div>
-                  <Button asChild variant="outline">
-                    <Link to="/admin/emails">Voir les envois</Link>
-                  </Button>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                <Button asChild variant="outline" className="shrink-0">
+                  <Link to="/admin/emails">Voir les envois</Link>
+                </Button>
+              </div>
+            </SurfaceCard>
+          </div>
+        )}
 
-          <TabsContent value="languages" className="space-y-6">
+        {tab === "languages" && (
+          <div className="space-y-4 lg:space-y-5">
             <TaughtLanguagesCard />
-          </TabsContent>
-        </Tabs>
-      </div>
+          </div>
+        )}
+      </PageShell>
     </MainLayout>
   );
 }

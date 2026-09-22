@@ -484,7 +484,6 @@ export default function PartnerDetails() {
                       </TableHeadRow>
                     </thead>
                     <tbody>
-                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                       {inscriptions.map((i: any) => (
                         <TableRow key={i.id} onClick={() => navigate(`/inscriptions/${i.id}`)}>
                           <TableCell>
@@ -512,7 +511,6 @@ export default function PartnerDetails() {
                 </TableFrame>
 
                 <CardList className="md:hidden">
-                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   {inscriptions.map((i: any) => (
                     <CardListItem
                       key={i.id}
@@ -556,7 +554,6 @@ export default function PartnerDetails() {
                       </TableHeadRow>
                     </thead>
                     <tbody>
-                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                       {invoices.map((inv: any) => (
                         <TableRow
                           key={inv.id}
@@ -594,7 +591,6 @@ export default function PartnerDetails() {
                 </TableFrame>
 
                 <CardList className="md:hidden">
-                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   {invoices.map((inv: any) => (
                     <CardListItem
                       key={inv.id}

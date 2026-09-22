@@ -1,9 +1,9 @@
 import { useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { format, addMonths } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Separator } from "@/components/ui/separator";
+import { CalendarRange } from "lucide-react";
+import { SurfaceCard } from "@/components/ui-kit";
 
 const i18n = {
   title: { fr: 'Prévision Trimestrielle', 'pt-BR': 'Previsão Trimestral', en: 'Quarterly Forecast' },
@@ -39,35 +39,34 @@ export function QuarterlyForecast({ caByMonth }: QuarterlyForecastProps) {
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
 
   return (
-    <Card className="h-full">
-      <CardHeader>
-        <CardTitle className="text-base">{t(i18n.title)}</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          {t(i18n.subtitle)}{quarter} {now.getFullYear()}
-        </p>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+    <SurfaceCard
+      className="h-full"
+      title={t(i18n.title)}
+      description={`${t(i18n.subtitle)}${quarter} ${now.getFullYear()}`}
+      icon={CalendarRange}
+      footer={
+        forecast.length > 0 ? (
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm font-semibold">Total</span>
+            <span className="font-bold tabular text-[hsl(var(--tint-gold-fg))]">
+              {formatPrice(total)}
+            </span>
+          </div>
+        ) : undefined
+      }
+    >
+      {forecast.length > 0 ? (
+        <dl className="space-y-3">
           {forecast.map((f, i) => (
-            <div key={i} className="flex items-center justify-between">
-              <p className="text-sm capitalize">{f.label}</p>
-              <p className="text-sm font-semibold">{formatPrice(f.value)}</p>
+            <div key={i} className="flex items-center justify-between gap-3">
+              <dt className="text-sm capitalize text-muted-foreground">{f.label}</dt>
+              <dd className="text-sm font-semibold tabular">{formatPrice(f.value)}</dd>
             </div>
           ))}
-          {forecast.length > 0 && (
-            <>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold">Total</p>
-                <p className="text-sm font-bold text-[hsl(var(--fli-yellow))]">{formatPrice(total)}</p>
-              </div>
-            </>
-          )}
-          {forecast.length === 0 && (
-            <p className="text-sm text-muted-foreground">Données insuffisantes</p>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        </dl>
+      ) : (
+        <p className="text-sm text-muted-foreground">Données insuffisantes</p>
+      )}
+    </SurfaceCard>
   );
 }

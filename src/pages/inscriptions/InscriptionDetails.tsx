@@ -361,13 +361,27 @@ export default function InscriptionDetails() {
     annulee: t(translations.statusCancelled),
   };
 
+  const statusPill = (
+    <StatusPill tone={toneForStatus(inscription?.status || "")}>
+      {statusLabels[inscription?.status || ""] || inscription?.status}
+    </StatusPill>
+  );
+
   if (isLoading) {
     return (
       <MainLayout>
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          <span className="ml-2 text-muted-foreground">{t(translations.loading)}</span>
-        </div>
+        <PageShell>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span>{t(translations.loading)}</span>
+          </div>
+          <Skeleton className="h-24 w-full rounded-[var(--radius-card)]" />
+          <CardGrid cols={3}>
+            {[0, 1, 2].map((index) => (
+              <Skeleton key={index} className="h-48 w-full rounded-[var(--radius-card)]" />
+            ))}
+          </CardGrid>
+        </PageShell>
       </MainLayout>
     );
   }
@@ -375,450 +389,457 @@ export default function InscriptionDetails() {
   if (error || !inscription) {
     return (
       <MainLayout>
-        <div className="space-y-4">
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/inscriptions">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              {t(translations.back)}
-            </Link>
-          </Button>
-          <div className="flex flex-col items-center justify-center py-20">
-            <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium">{t(translations.notFound)}</h3>
-          </div>
-        </div>
+        <PageShell>
+          <PageHeader
+            title={t(translations.inscriptionDetails)}
+            icon={ClipboardList}
+            back={
+              <Button variant="ghost" size="sm" asChild className="-ml-2">
+                <Link to="/inscriptions">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  {t(translations.back)}
+                </Link>
+              </Button>
+            }
+          />
+          <SurfaceCard flush>
+            <TableEmpty title={t(translations.notFound)} icon={FileText} />
+          </SurfaceCard>
+        </PageShell>
       </MainLayout>
     );
   }
 
+  const tabOptions = [
+    { value: "general", label: t(translations.generalInfo), icon: User },
+    { value: "training", label: t(translations.training), icon: GraduationCap },
+    { value: "financial", label: t(translations.financial), icon: Wallet },
+    { value: "access", label: t(translations.clientAccess), icon: Link2 },
+    { value: "timeline", label: t(translations.timeline), icon: History },
+    { value: "documents", label: t(translations.documents), icon: FileText },
+  ];
+
   return (
     <MainLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
+      <PageShell>
+        <PageHeader
+          icon={ClipboardList}
+          tone="gold"
+          back={
             <Button variant="ghost" size="sm" asChild className="-ml-2">
               <Link to="/inscriptions">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 {t(translations.back)}
               </Link>
             </Button>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold">
-                {inscription.code || t(translations.inscriptionDetails)}
-              </h1>
-              <InscriptionStatusMenu
-                inscriptionId={inscription.id}
-                status={inscription.status || ""}
-                startDate={inscription.start_date}
-                readOnly={!editable}
-              />
-            </div>
-            <p className="text-muted-foreground">
-              {inscription.student_name} • {inscription.language}
-            </p>
-          </div>
-          {editable && (
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
-                <Edit className="mr-2 h-4 w-4" />
-                {t(translations.editInscription)}
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setEndPackOpen(true)}>
-                <Package className="mr-2 h-4 w-4" />
-                {t(translations.endPack)}
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setScheduleDialogOpen(true)}>
-                <Clock className="mr-2 h-4 w-4" />
-                Horaire
-              </Button>
-              {(!invoices || invoices.length === 0) && (
-                <Button size="sm" onClick={() => setInvoiceDialogOpen(true)}>
-                  <Receipt className="mr-2 h-4 w-4" />
-                  {t(translations.createInvoice)}
-                </Button>
+          }
+          title={inscription.code || t(translations.inscriptionDetails)}
+          description={
+            <>
+              {inscription.student_id ? (
+                <Link
+                  to={`/students/${inscription.student_id}`}
+                  className="font-medium text-foreground hover:underline"
+                >
+                  {inscription.student_name}
+                </Link>
+              ) : (
+                inscription.student_name
               )}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                onClick={() => setDeleteDialogOpen(true)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                {t(translations.deleteInscription)}
-              </Button>
-            </div>
-          )}
-        </div>
+              {" • "}
+              {inscription.language}
+            </>
+          }
+          meta={
+            <InscriptionStatusMenu
+              inscriptionId={inscription.id}
+              status={inscription.status || ""}
+              startDate={inscription.start_date}
+              readOnly={!editable}
+            />
+          }
+          actions={
+            editable && (
+              <>
+                <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  {t(translations.editInscription)}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setEndPackOpen(true)}>
+                  <Package className="mr-2 h-4 w-4" />
+                  {t(translations.endPack)}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setScheduleDialogOpen(true)}>
+                  <Clock className="mr-2 h-4 w-4" />
+                  Horaire
+                </Button>
+                {(!invoices || invoices.length === 0) && (
+                  <Button size="sm" onClick={() => setInvoiceDialogOpen(true)}>
+                    <Receipt className="mr-2 h-4 w-4" />
+                    {t(translations.createInvoice)}
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  onClick={() => setDeleteDialogOpen(true)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  {t(translations.deleteInscription)}
+                </Button>
+              </>
+            )
+          }
+          tabs={
+            <SegmentedControl<string>
+              value={activeTab}
+              onChange={setActiveTab}
+              options={tabOptions}
+              ariaLabel={t(translations.inscriptionDetails)}
+            />
+          }
+        />
 
         {checklistInput && <InscriptionOpsChecklist input={checklistInput} />}
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="general">{t(translations.generalInfo)}</TabsTrigger>
-            <TabsTrigger value="training">{t(translations.training)}</TabsTrigger>
-            <TabsTrigger value="financial">{t(translations.financial)}</TabsTrigger>
-            <TabsTrigger value="access">{t(translations.clientAccess)}</TabsTrigger>
-            <TabsTrigger value="timeline">{t(translations.timeline)}</TabsTrigger>
-            <TabsTrigger value="documents">{t(translations.documents)}</TabsTrigger>
-          </TabsList>
-
-          {/* General Info Tab */}
-          <TabsContent value="general" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* General Info Tab */}
+        {activeTab === "general" && (
+          <div className="space-y-4">
+            <CardGrid cols={3}>
               {/* Student Card */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    {t(translations.student)}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <p className="font-medium">{inscription.student_name}</p>
-                  {inscription.student_email && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Mail className="h-3.5 w-3.5" />
-                      {inscription.student_email}
-                    </div>
-                  )}
-                  {inscription.student_phone && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Phone className="h-3.5 w-3.5" />
-                      {inscription.student_phone}
-                    </div>
-                  )}
-                  {inscription.student_city && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-3.5 w-3.5" />
-                      {inscription.student_city}
-                    </div>
-                  )}
-                  {inscription.student_company && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Building2 className="h-3.5 w-3.5" />
-                      {inscription.student_company}
-                    </div>
-                  )}
-                  {inscription.student_id && (
-                    <Button variant="link" size="sm" className="px-0 h-auto" asChild>
-                      <Link to={`/students/${inscription.student_id}`}>
-                        Voir le profil →
-                      </Link>
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
+              <SurfaceCard title={t(translations.student)} icon={User} bodyClassName="space-y-2">
+                <p className="font-medium">{inscription.student_name}</p>
+                {inscription.student_email && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Mail className="h-3.5 w-3.5 shrink-0" />
+                    <span className="min-w-0 truncate">{inscription.student_email}</span>
+                  </div>
+                )}
+                {inscription.student_phone && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Phone className="h-3.5 w-3.5 shrink-0" />
+                    {inscription.student_phone}
+                  </div>
+                )}
+                {inscription.student_city && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <MapPin className="h-3.5 w-3.5 shrink-0" />
+                    {inscription.student_city}
+                  </div>
+                )}
+                {inscription.student_company && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Building2 className="h-3.5 w-3.5 shrink-0" />
+                    {inscription.student_company}
+                  </div>
+                )}
+                {inscription.student_id && (
+                  <Button variant="link" size="sm" className="px-0 h-auto" asChild>
+                    <Link to={`/students/${inscription.student_id}`}>
+                      Voir le profil →
+                    </Link>
+                  </Button>
+                )}
+              </SurfaceCard>
 
               {/* Instructor Card */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <GraduationCap className="h-4 w-4" />
-                    {t(translations.instructor)}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {inscription.instructor_name ? (
-                    <>
-                      {inscription.instructor_id ? (
-                        <Link
-                          to={`/formateurs/${inscription.instructor_id}`}
-                          className="font-medium text-primary hover:underline"
-                        >
-                          {inscription.instructor_name}
-                        </Link>
-                      ) : (
-                        <p className="font-medium">{inscription.instructor_name}</p>
-                      )}
-                      {inscription.instructor_email && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Mail className="h-3.5 w-3.5" />
-                          {inscription.instructor_email}
-                        </div>
-                      )}
-                      {inscription.instructor_phone && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Phone className="h-3.5 w-3.5" />
-                          {inscription.instructor_phone}
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">{t(translations.notSpecified)}</p>
-                  )}
-                </CardContent>
-              </Card>
+              <SurfaceCard
+                title={t(translations.instructor)}
+                icon={GraduationCap}
+                bodyClassName="space-y-2"
+              >
+                {inscription.instructor_name ? (
+                  <>
+                    {inscription.instructor_id ? (
+                      <Link
+                        to={`/formateurs/${inscription.instructor_id}`}
+                        className="font-medium text-primary hover:underline"
+                      >
+                        {inscription.instructor_name}
+                      </Link>
+                    ) : (
+                      <p className="font-medium">{inscription.instructor_name}</p>
+                    )}
+                    {inscription.instructor_email && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Mail className="h-3.5 w-3.5 shrink-0" />
+                        <span className="min-w-0 truncate">{inscription.instructor_email}</span>
+                      </div>
+                    )}
+                    {inscription.instructor_phone && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Phone className="h-3.5 w-3.5 shrink-0" />
+                        {inscription.instructor_phone}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">{t(translations.notSpecified)}</p>
+                )}
+              </SurfaceCard>
 
               {/* Ski School Card */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Building2 className="h-4 w-4" />
-                    {t(translations.skiSchool)}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {inscription.ski_school_name ? (
-                    <>
-                      {skiSchoolPartnerId ? (
-                        <Link
-                          to={`/gestion/partenaires/${skiSchoolPartnerId}`}
-                          className="font-medium text-primary hover:underline"
-                        >
-                          {inscription.ski_school_name}
-                        </Link>
-                      ) : (
-                        <p className="font-medium">{inscription.ski_school_name}</p>
-                      )}
-                      {inscription.ski_school_director && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <User className="h-3.5 w-3.5" />
-                          {inscription.ski_school_director}
-                        </div>
-                      )}
-                      {inscription.ski_school_director_phone && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Phone className="h-3.5 w-3.5" />
-                          {inscription.ski_school_director_phone}
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">{t(translations.notSpecified)}</p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+              <SurfaceCard
+                title={t(translations.skiSchool)}
+                icon={Building2}
+                bodyClassName="space-y-2"
+              >
+                {inscription.ski_school_name ? (
+                  <>
+                    {skiSchoolPartnerId ? (
+                      <Link
+                        to={`/gestion/partenaires/${skiSchoolPartnerId}`}
+                        className="font-medium text-primary hover:underline"
+                      >
+                        {inscription.ski_school_name}
+                      </Link>
+                    ) : (
+                      <p className="font-medium">{inscription.ski_school_name}</p>
+                    )}
+                    {inscription.ski_school_director && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <User className="h-3.5 w-3.5 shrink-0" />
+                        {inscription.ski_school_director}
+                      </div>
+                    )}
+                    {inscription.ski_school_director_phone && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Phone className="h-3.5 w-3.5 shrink-0" />
+                        {inscription.ski_school_director_phone}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">{t(translations.notSpecified)}</p>
+                )}
+              </SurfaceCard>
+            </CardGrid>
 
             {/* Observations & Expectations */}
             {(inscription.observations || inscription.expectations) && (
               <div className="grid gap-4 md:grid-cols-2">
                 {inscription.observations && (
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base">{t(translations.observations)}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                        {inscription.observations}
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <SurfaceCard title={t(translations.observations)}>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                      {inscription.observations}
+                    </p>
+                  </SurfaceCard>
                 )}
                 {inscription.expectations && (
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base">{t(translations.expectations)}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                        {inscription.expectations}
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <SurfaceCard title={t(translations.expectations)}>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                      {inscription.expectations}
+                    </p>
+                  </SurfaceCard>
                 )}
               </div>
             )}
 
             {/* Meta info */}
-            <Card>
-              <CardContent className="pt-4">
-                <div className="flex flex-wrap gap-6 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">{t(translations.createdAt)}:</span>{" "}
-                    <span className="font-medium">{formatDate(inscription.created_at)}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">{t(translations.status)}:</span>{" "}
-                    <Badge variant="outline" className={statusStyles[inscription.status || ""]}>
-                      {statusLabels[inscription.status || ""] || inscription.status}
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+            <SurfaceCard>
+              <DefinitionList
+                columns={2}
+                items={[
+                  {
+                    label: t(translations.createdAt),
+                    value: (
+                      <span className="font-medium tabular">
+                        {formatDate(inscription.created_at)}
+                      </span>
+                    ),
+                  },
+                  {
+                    label: t(translations.status),
+                    value: statusPill,
+                  },
+                ]}
+              />
+            </SurfaceCard>
+          </div>
+        )}
 
-          {/* Training Tab */}
-          <TabsContent value="training" className="space-y-4">
+        {/* Training Tab */}
+        {activeTab === "training" && (
+          <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">{t(translations.training)}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">{t(translations.language)}</p>
-                      <p className="font-medium">{inscription.language}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">{t(translations.modality)}</p>
-                      <p className="font-medium">{inscription.modality || t(translations.notSpecified)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">{t(translations.location)}</p>
-                      <p className="font-medium">{inscription.course_location || t(translations.notSpecified)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">{t(translations.duration)}</p>
-                      <p className="font-medium">
-                        {inscription.duration_hours 
-                          ? `${inscription.duration_hours} ${t(translations.hours)}`
-                          : t(translations.notSpecified)
-                        }
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <SurfaceCard title={t(translations.training)} icon={GraduationCap}>
+                <DefinitionList
+                  columns={2}
+                  items={[
+                    {
+                      label: t(translations.language),
+                      value: <span className="font-medium">{inscription.language}</span>,
+                    },
+                    {
+                      label: t(translations.modality),
+                      value: (
+                        <span className="font-medium">
+                          {inscription.modality || t(translations.notSpecified)}
+                        </span>
+                      ),
+                    },
+                    {
+                      label: t(translations.location),
+                      value: (
+                        <span className="font-medium">
+                          {inscription.course_location || t(translations.notSpecified)}
+                        </span>
+                      ),
+                    },
+                    {
+                      label: t(translations.duration),
+                      value: (
+                        <span className="font-medium tabular">
+                          {inscription.duration_hours
+                            ? `${inscription.duration_hours} ${t(translations.hours)}`
+                            : t(translations.notSpecified)}
+                        </span>
+                      ),
+                    },
+                  ]}
+                />
+              </SurfaceCard>
 
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
+              <SurfaceCard
+                title={t(translations.period)}
+                icon={Calendar}
+                bodyClassName="space-y-4"
+              >
+                {/* BL-029 : sur une offre « dates flexibles », start_date n'est
+                    que le début souhaité par le stagiaire. */}
+                {inscription.dates_to_confirm && (
+                  <Alert>
                     <Calendar className="h-4 w-4" />
-                    {t(translations.period)}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* BL-029 : sur une offre « dates flexibles », start_date n'est
-                      que le début souhaité par le stagiaire. */}
-                  {inscription.dates_to_confirm && (
-                    <Alert>
-                      <Calendar className="h-4 w-4" />
-                      <AlertDescription>
-                        Dates {DATES_A_PLANIFIER_LABEL.toLowerCase()} : le stagiaire a demandé à
-                        commencer le {formatDate(inscription.start_date)}. Fixez les dates
-                        définitives avant d&apos;éditer la convention ou la facture.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        {inscription.dates_to_confirm ? "Début souhaité" : "Début"}
-                      </p>
-                      <p className="font-medium">{formatDate(inscription.start_date)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Fin</p>
-                      <p className="font-medium">
-                        {inscription.dates_to_confirm
-                          ? DATES_A_PLANIFIER_LABEL
-                          : formatDate(inscription.end_date)}
-                      </p>
-                    </div>
-                    {inscription.duration_days && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Jours</p>
-                        <p className="font-medium">{inscription.duration_days} jours</p>
-                      </div>
-                    )}
-                    {inscription.hours_per_day && (
-                      <div>
-                        <p className="text-sm text-muted-foreground">Heures/jour</p>
-                        <p className="font-medium">{inscription.hours_per_day}h</p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                    <AlertDescription>
+                      Dates {DATES_A_PLANIFIER_LABEL.toLowerCase()} : le stagiaire a demandé à
+                      commencer le {formatDate(inscription.start_date)}. Fixez les dates
+                      définitives avant d&apos;éditer la convention ou la facture.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                <DefinitionList
+                  columns={2}
+                  items={[
+                    {
+                      label: inscription.dates_to_confirm ? "Début souhaité" : "Début",
+                      value: (
+                        <span className="font-medium tabular">
+                          {formatDate(inscription.start_date)}
+                        </span>
+                      ),
+                    },
+                    {
+                      label: "Fin",
+                      value: (
+                        <span className="font-medium tabular">
+                          {inscription.dates_to_confirm
+                            ? DATES_A_PLANIFIER_LABEL
+                            : formatDate(inscription.end_date)}
+                        </span>
+                      ),
+                    },
+                    ...(inscription.duration_days
+                      ? [
+                          {
+                            label: "Jours",
+                            value: (
+                              <span className="font-medium tabular">
+                                {inscription.duration_days} jours
+                              </span>
+                            ),
+                          },
+                        ]
+                      : []),
+                    ...(inscription.hours_per_day
+                      ? [
+                          {
+                            label: "Heures/jour",
+                            value: (
+                              <span className="font-medium tabular">
+                                {inscription.hours_per_day}h
+                              </span>
+                            ),
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
+              </SurfaceCard>
             </div>
 
             {/* Bilan Entrée / Sortie */}
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <GraduationCap className="h-4 w-4" />
-                    Bilan de progression
-                  </CardTitle>
-                  {editable && (
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEntryFormOpen(true)}
-                      >
-                        Formulaire entrée
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setExitFormOpen(true)}
-                      >
-                        Formulaire sortie
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                <CardDescription>
-                  Entrée = piste / observation formateur · Sortie = CECRL formateur
-                  (jamais SNMSF/DSF sur le certificat)
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm border-collapse">
-                    <thead>
-                      <tr className="bg-muted/50">
-                        <th className="border p-2 text-left" />
-                        <th className="border p-2 text-left">Entrée</th>
-                        <th className="border p-2 text-left">Sortie</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td className="border p-2 font-medium">Niveau général</td>
-                        <td className="border p-2">
-                          {progression?.niveau_general_entree ||
-                            inscription.entry_level ||
-                            "—"}
-                        </td>
-                        <td className="border p-2">
-                          {progression?.niveau_general_sortie || "—"}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="border p-2 font-medium">Niveau technique</td>
-                        <td className="border p-2">
-                          {progression?.niveau_technique_entree || "—"}
-                        </td>
-                        <td className="border p-2">
-                          {progression?.niveau_technique_sortie || "—"}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-                <div className="grid gap-2 sm:grid-cols-2 text-sm">
-                  <p>
-                    <span className="text-muted-foreground">Objectif atteint : </span>
-                    {progression?.objectif_atteint
-                      ? OBJECTIF_ATTEINT_LABELS[
-                          progression.objectif_atteint as ObjectifAtteint
-                        ] || progression.objectif_atteint
-                      : "—"}
-                  </p>
-                  <p>
-                    <span className="text-muted-foreground">Formulaires : </span>
-                    {progression && isEntryFormComplete(progression)
-                      ? "Entrée OK"
-                      : "Entrée manquant"}
-                    {" · "}
-                    {progression && isExitFormComplete(progression)
-                      ? "Sortie OK"
-                      : "Sortie manquant"}
-                  </p>
-                </div>
-                {progression?.commentaire_sortie && (
-                  <p className="text-sm whitespace-pre-wrap border-l-2 border-primary/30 pl-3">
-                    {progression.commentaire_sortie}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+            <SurfaceCard
+              title="Bilan de progression"
+              icon={GraduationCap}
+              description="Entrée = piste / observation formateur · Sortie = CECRL formateur (jamais SNMSF/DSF sur le certificat)"
+              bodyClassName="space-y-4"
+              actions={
+                editable && (
+                  <>
+                    <Button variant="outline" size="sm" onClick={() => setEntryFormOpen(true)}>
+                      Formulaire entrée
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setExitFormOpen(true)}>
+                      Formulaire sortie
+                    </Button>
+                  </>
+                )
+              }
+            >
+              <TableFrame className="rounded-[var(--radius)] border border-border">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <TableHeadRow>
+                      <TableHeadCell>Niveau</TableHeadCell>
+                      <TableHeadCell>Entrée</TableHeadCell>
+                      <TableHeadCell>Sortie</TableHeadCell>
+                    </TableHeadRow>
+                  </thead>
+                  <tbody>
+                    <TableRow>
+                      <TableCell className="font-medium">Niveau général</TableCell>
+                      <TableCell>
+                        {progression?.niveau_general_entree ||
+                          inscription.entry_level ||
+                          "—"}
+                      </TableCell>
+                      <TableCell>{progression?.niveau_general_sortie || "—"}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-medium">Niveau technique</TableCell>
+                      <TableCell>{progression?.niveau_technique_entree || "—"}</TableCell>
+                      <TableCell>{progression?.niveau_technique_sortie || "—"}</TableCell>
+                    </TableRow>
+                  </tbody>
+                </table>
+              </TableFrame>
+              <div className="grid gap-2 sm:grid-cols-2 text-sm">
+                <p>
+                  <span className="text-muted-foreground">Objectif atteint : </span>
+                  {progression?.objectif_atteint
+                    ? OBJECTIF_ATTEINT_LABELS[
+                        progression.objectif_atteint as ObjectifAtteint
+                      ] || progression.objectif_atteint
+                    : "—"}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">Formulaires : </span>
+                  {progression && isEntryFormComplete(progression)
+                    ? "Entrée OK"
+                    : "Entrée manquant"}
+                  {" · "}
+                  {progression && isExitFormComplete(progression)
+                    ? "Sortie OK"
+                    : "Sortie manquant"}
+                </p>
+              </div>
+              {progression?.commentaire_sortie && (
+                <p className="text-sm whitespace-pre-wrap border-l-2 border-primary/30 pl-3">
+                  {progression.commentaire_sortie}
+                </p>
+              )}
+            </SurfaceCard>
 
             <PlacementTestSummaryCard
               testId={(inscription as { entry_test_id?: string | null }).entry_test_id}
@@ -826,10 +847,12 @@ export default function InscriptionDetails() {
               editable={editable}
               inscriptionEntryLevel={inscription.entry_level}
             />
-          </TabsContent>
+          </div>
+        )}
 
-          {/* Financial Tab */}
-          <TabsContent value="financial" className="space-y-4">
+        {/* Financial Tab */}
+        {activeTab === "financial" && (
+          <div className="space-y-4">
             <InscriptionFundingCard
               inscriptionId={id!}
               fundingOrganization={opsFields?.funding_organization ?? null}
@@ -850,37 +873,35 @@ export default function InscriptionDetails() {
 
             {/* Invoices List */}
             {invoices && invoices.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Factures associées</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {invoices.map((invoice) => (
+              <SurfaceCard title="Factures associées" icon={Receipt} flush>
+                <ul className="divide-y divide-border">
+                  {invoices.map((invoice) => (
+                    <li key={invoice.id}>
                       <Link
-                        key={invoice.id}
                         to={`/invoices?q=${encodeURIComponent(invoice.invoice_number || invoice.id)}`}
-                        className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
+                        className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-[hsl(var(--surface-sunken))] sm:px-5"
                       >
-                        <div>
-                          <p className="font-medium text-primary hover:underline">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-primary">
                             {invoice.invoice_number}
                           </p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="truncate text-sm text-muted-foreground">
                             {formatDate(invoice.invoice_date)} • {paymentTypeLabel(invoice.payment_type)}
                           </p>
                         </div>
-                        <div className="text-right">
-                          <p className="font-medium">{formatPrice(invoice.amount_ttc || invoice.amount_ht)}</p>
-                          <Badge variant={invoice.status === "paid" ? "default" : "secondary"}>
+                        <div className="shrink-0 space-y-1 text-right">
+                          <p className="font-medium tabular">
+                            {formatPrice(invoice.amount_ttc || invoice.amount_ht)}
+                          </p>
+                          <StatusPill tone={toneForStatus(invoice.status)} size="sm">
                             {invoiceStatusLabel(invoice.status)}
-                          </Badge>
+                          </StatusPill>
                         </div>
                       </Link>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                    </li>
+                  ))}
+                </ul>
+              </SurfaceCard>
             )}
 
             <InscriptionFinancialPayments
@@ -889,39 +910,39 @@ export default function InscriptionDetails() {
               editable={editable}
               price={inscription.price}
             />
-          </TabsContent>
+          </div>
+        )}
 
-          {/* Client Access Tab */}
-          <TabsContent value="access" className="space-y-4">
-            <InscriptionClientAccessCard
-              inscriptionId={inscription.id}
-              studentId={inscription.student_id}
-              inscriptionCode={inscription.code}
-              language={inscription.language}
-              studentEmail={inscription.student_email}
-              studentName={inscription.student_name}
-              status={inscription.status}
-              paymentMethod={inscription.payment_method}
-            />
-          </TabsContent>
+        {/* Client Access Tab */}
+        {activeTab === "access" && (
+          <InscriptionClientAccessCard
+            inscriptionId={inscription.id}
+            studentId={inscription.student_id}
+            inscriptionCode={inscription.code}
+            language={inscription.language}
+            studentEmail={inscription.student_email}
+            studentName={inscription.student_name}
+            status={inscription.status}
+            paymentMethod={inscription.payment_method}
+          />
+        )}
 
-          {/* Timeline Tab */}
-          <TabsContent value="timeline" className="space-y-4">
-            <InscriptionTimelineCard inscriptionId={inscription.id} />
-          </TabsContent>
+        {/* Timeline Tab */}
+        {activeTab === "timeline" && (
+          <InscriptionTimelineCard inscriptionId={inscription.id} />
+        )}
 
-          {/* Documents Tab */}
-          <TabsContent value="documents" className="space-y-4">
-            <InscriptionDocumentsCard
-              inscriptionId={inscription.id}
-              modality={inscription.modality}
-              courseLocation={inscription.course_location}
-              observations={inscription.observations}
-              studentEmail={inscription.student_email}
-            />
-          </TabsContent>
-        </Tabs>
-      </div>
+        {/* Documents Tab */}
+        {activeTab === "documents" && (
+          <InscriptionDocumentsCard
+            inscriptionId={inscription.id}
+            modality={inscription.modality}
+            courseLocation={inscription.course_location}
+            observations={inscription.observations}
+            studentEmail={inscription.student_email}
+          />
+        )}
+      </PageShell>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

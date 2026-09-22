@@ -15,7 +15,8 @@ describe("BL-032 — retrait onglet Facturation du dashboard", () => {
     expect(dash).not.toContain("tabBilling");
     expect(dash).not.toContain("billingForecast");
     expect(dash).not.toContain("useRevenueProjections");
-    expect(dash).toContain("grid-cols-2");
+    // Le jeu d'onglets est épinglé par son type : exactement deux valeurs.
+    expect(dash).toContain('"inscriptions" | "tests"');
   });
 
   it("useRevenueProjections est retiré de useDashboardStats", () => {

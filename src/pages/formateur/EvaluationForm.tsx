@@ -1,22 +1,28 @@
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   ArrowLeft,
   Save,
   CheckCircle2,
+  ClipboardCheck,
   User,
   Building2,
   Calendar,
   Languages,
   AlertTriangle,
 } from "lucide-react";
+import {
+  PageHeader,
+  PageShell,
+  StatusPill,
+  SurfaceCard,
+  TableEmpty,
+} from "@/components/ui-kit";
 import { useToast } from "@/hooks/use-toast";
 import {
   useTestBookingForEvaluation,
@@ -267,7 +273,7 @@ export default function EvaluationForm() {
       </AlertDescription>
     </Alert>
   ) : (
-    <div className="flex flex-wrap gap-4 bg-background p-4 border rounded-lg shadow-sm">
+    <div className="fli-surface flex flex-wrap gap-4 p-4">
       <Button
         variant="outline"
         onClick={() => handleSave(false)}
@@ -291,14 +297,21 @@ export default function EvaluationForm() {
     existingEvaluation.status !== "brouillon" &&
     !isEditMode;
 
+  const backLink = (
+    <Button variant="ghost" size="sm" onClick={() => navigate(`${basePath}/evaluations`)}>
+      <ArrowLeft className="h-4 w-4 mr-2" />
+      Retour à la liste
+    </Button>
+  );
+
   if (isLoading) {
     return (
       <MainLayout>
-        <div className="space-y-6">
+        <PageShell>
           <Skeleton className="h-10 w-64" />
           <Skeleton className="h-40 w-full" />
           <Skeleton className="h-60 w-full" />
-        </div>
+        </PageShell>
       </MainLayout>
     );
   }
@@ -306,13 +319,20 @@ export default function EvaluationForm() {
   if (!booking) {
     return (
       <MainLayout>
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">Test non trouvé</p>
-          <Button variant="outline" onClick={() => navigate(`${basePath}/evaluations`)} className="mt-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Retour à la liste
-          </Button>
-        </div>
+        <PageShell>
+          <SurfaceCard flush>
+            <TableEmpty
+              icon={AlertTriangle}
+              title="Test non trouvé"
+              action={
+                <Button variant="outline" onClick={() => navigate(`${basePath}/evaluations`)}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Retour à la liste
+                </Button>
+              }
+            />
+          </SurfaceCard>
+        </PageShell>
       </MainLayout>
     );
   }
@@ -320,58 +340,62 @@ export default function EvaluationForm() {
   if (alreadySubmitted) {
     return (
       <MainLayout>
-        <div className="text-center py-12">
-          <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Évaluation déjà soumise</h2>
-          <p className="text-muted-foreground mb-4">
-            Statut :{" "}
-            {{
-              brouillon: "Brouillon",
-              a_verifier: "À vérifier",
-              valide: "Validée",
-              envoye: "Envoyée",
-            }[existingEvaluation.status] ?? existingEvaluation.status}
-            . Score général : {existingEvaluation.score_general}
-          </p>
-          <Button variant="outline" onClick={() => navigate(`${basePath}/evaluations`)}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Retour à la liste
-          </Button>
-        </div>
+        <PageShell>
+          <SurfaceCard>
+            <div className="flex flex-col items-center py-8 text-center">
+              <CheckCircle2 className="mb-4 h-12 w-12 text-[hsl(var(--status-good))]" />
+              <h2 className="mb-2 text-xl font-semibold">Évaluation déjà soumise</h2>
+              <p className="mb-4 text-muted-foreground">
+                Statut :{" "}
+                {{
+                  brouillon: "Brouillon",
+                  a_verifier: "À vérifier",
+                  valide: "Validée",
+                  envoye: "Envoyée",
+                }[existingEvaluation.status] ?? existingEvaluation.status}
+                . Score général : {existingEvaluation.score_general}
+              </p>
+              <Button variant="outline" onClick={() => navigate(`${basePath}/evaluations`)}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Retour à la liste
+              </Button>
+            </div>
+          </SurfaceCard>
+        </PageShell>
       </MainLayout>
     );
   }
 
   return (
     <MainLayout>
-      <div className="space-y-6">
+      <PageShell>
         <FormateurAssistBanner />
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(`${basePath}/evaluations`)}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">Compte-rendu d'évaluation</h1>
-            <p className="text-muted-foreground">
-              Notes sur 5 · quatre blocs · vouvoiement · brouillon ou soumission
-            </p>
-            {methodoSuggested && (
-              <div className="mt-3 space-y-2 max-w-xl">
-                <p className="italic text-sm text-muted-foreground">
-                  Note méthodologique (facultative)
-                </p>
-                <Textarea
-                  id="note-methodo"
-                  className="italic"
-                  value={noteMethodologique}
-                  onChange={(e) => setNoteMethodologique(e.target.value)}
-                  placeholder="Proposition libre — non obligatoire"
-                  rows={2}
-                />
-              </div>
-            )}
-          </div>
-        </div>
+
+        <PageHeader
+          back={backLink}
+          title="Compte-rendu d'évaluation"
+          description="Notes sur 5 · quatre blocs · vouvoiement · brouillon ou soumission"
+          icon={ClipboardCheck}
+          tone="gold"
+        />
+
+        {methodoSuggested && (
+          <SurfaceCard>
+            <div className="max-w-xl space-y-2">
+              <p className="text-sm italic text-muted-foreground">
+                Note méthodologique (facultative)
+              </p>
+              <Textarea
+                id="note-methodo"
+                className="italic"
+                value={noteMethodologique}
+                onChange={(e) => setNoteMethodologique(e.target.value)}
+                placeholder="Proposition libre — non obligatoire"
+                rows={2}
+              />
+            </div>
+          </SurfaceCard>
+        )}
 
         {existingEvaluation?.reviewer_comment && (
           <Alert>
@@ -381,39 +405,39 @@ export default function EvaluationForm() {
           </Alert>
         )}
 
-        <Card>
-          <CardContent className="py-4">
-            <div className="flex flex-wrap gap-6">
+        <SurfaceCard>
+          <dl className="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="font-medium">{booking.candidate_name}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span>{booking.ski_school_name}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Languages className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span>
+                {LANGUAGE_FLAGS[booking.language || "all"]}{" "}
+                {LANGUAGE_LABELS[booking.language || "all"] || booking.language}
+              </span>
+            </div>
+            {booking.datetime && (
               <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">{booking.candidate_name}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-                <span>{booking.ski_school_name}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Languages className="h-4 w-4 text-muted-foreground" />
-                <span>
-                  {LANGUAGE_FLAGS[booking.language || "all"]}{" "}
-                  {LANGUAGE_LABELS[booking.language || "all"] || booking.language}
+                <Calendar className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <span className="tabular">
+                  {format(new Date(booking.datetime), "PPP 'à' HH:mm", { locale: fr })}
                 </span>
               </div>
-              {booking.datetime && (
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span>{format(new Date(booking.datetime), "PPP 'à' HH:mm", { locale: fr })}</span>
-                </div>
-              )}
-              {booking.sponsor_type && (
-                <Badge variant="outline">{booking.sponsor_type}</Badge>
-              )}
-              <Badge variant="outline" className="ml-auto">
-                CECRL : {determinedLevel}
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
+            )}
+            {booking.sponsor_type && (
+              <StatusPill tone="neutral">{booking.sponsor_type}</StatusPill>
+            )}
+            <StatusPill tone="info" className="sm:ml-auto">
+              CECRL : {determinedLevel}
+            </StatusPill>
+          </dl>
+        </SurfaceCard>
 
         {hasVouvoiementIssue && (
           <Alert variant="destructive">
@@ -427,14 +451,12 @@ export default function EvaluationForm() {
           </Alert>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>1. Notes (sur 5)</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+        {/* Saisie à gauche, aperçu vivant à droite (collant en grand écran). */}
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <div className="min-w-0 space-y-5 lg:col-span-2">
+            <SurfaceCard title="1. Notes (sur 5)" icon={ClipboardCheck}>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
                   <ScoreInput
                     label="Compréhension"
                     value={scores.comprehension}
@@ -475,8 +497,8 @@ export default function EvaluationForm() {
                 {!adjustmentOk && (
                   <p className="text-sm text-destructive">{SCORE_GENERAL_INCOHERENT}</p>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </SurfaceCard>
 
             {actionButtons}
 
@@ -497,11 +519,12 @@ export default function EvaluationForm() {
             {actionButtons}
           </div>
 
-          <div className="hidden lg:block">
+          {/* Aperçu : empilé sous la saisie en mobile, collant à partir de lg. */}
+          <div className="min-w-0">
             <AppreciationPreview sections={sectionDataForPreview} />
           </div>
         </div>
-      </div>
+      </PageShell>
     </MainLayout>
   );
 }

@@ -4,8 +4,6 @@ import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -13,22 +11,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Mail } from "lucide-react";
 import {
-  Table,
-  TableBody,
+  CardList,
+  CardListItem,
+  FilterBar,
+  StatusPill,
+  SurfaceCard,
   TableCell,
-  TableHead,
-  TableHeader,
+  TableEmpty,
+  TableFrame,
+  TableHeadCell,
+  TableHeadRow,
   TableRow,
-} from "@/components/ui/table";
-import { EmptyState } from "@/components/common/EmptyState";
-import { Mail, Loader2 } from "lucide-react";
+  TableSkeleton,
+  type PillTone,
+} from "@/components/ui-kit";
 
-const STATUS_STYLES: Record<string, string> = {
-  sent: "bg-emerald-100 text-emerald-800",
-  failed: "bg-red-100 text-red-800",
-  skipped: "bg-amber-100 text-amber-800",
-  pending: "bg-slate-100 text-slate-800",
+/** Teinte d'un statut d'envoi — le libellé reste le code brut de `email_log`. */
+const STATUS_TONES: Record<string, PillTone> = {
+  sent: "success",
+  failed: "danger",
+  skipped: "warning",
+  pending: "neutral",
 };
 
 /** Journal global `email_log` (PLANO Onda D4). */
@@ -68,94 +73,154 @@ export function EmailSendJournal() {
 
   const failedCount = rows.filter((r) => r.status === "failed").length;
 
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <Input
-          placeholder="Destinataire, template…"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          className="max-w-xs"
-        />
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Statut" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous les statuts</SelectItem>
-            <SelectItem value="sent">Envoyés</SelectItem>
-            <SelectItem value="failed">Échecs</SelectItem>
-            <SelectItem value="skipped">Ignorés</SelectItem>
-          </SelectContent>
-        </Select>
-        {failedCount > 0 && (
-          <Badge variant="destructive">{failedCount} échec(s) dans les 200 derniers</Badge>
-        )}
-      </div>
+  const sentAt = (value: string | null) =>
+    value ? format(new Date(value), "dd/MM/yyyy HH:mm", { locale: fr }) : "—";
 
+  return (
+    <SurfaceCard
+      title="Journal des envois"
+      icon={Mail}
+      description="200 derniers e-mails transactionnels enregistrés dans email_log."
+      actions={
+        failedCount > 0 ? (
+          <StatusPill tone="danger" dot>
+            {failedCount} échec(s) dans les 200 derniers
+          </StatusPill>
+        ) : undefined
+      }
+      toolbar={
+        <FilterBar
+          search={{
+            value: q,
+            onChange: setQ,
+            placeholder: "Destinataire, template…",
+            ariaLabel: "Rechercher un envoi",
+          }}
+          filters={
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="w-[160px]" aria-label="Statut">
+                <SelectValue placeholder="Statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les statuts</SelectItem>
+                <SelectItem value="sent">Envoyés</SelectItem>
+                <SelectItem value="failed">Échecs</SelectItem>
+                <SelectItem value="skipped">Ignorés</SelectItem>
+              </SelectContent>
+            </Select>
+          }
+        />
+      }
+      flush
+    >
       {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
+        <TableSkeleton rows={6} cols={6} />
       ) : filtered.length === 0 ? (
-        <EmptyState
+        <TableEmpty
           icon={Mail}
           title="Aucun envoi"
           description="Les e-mails transactionnels (inscription, documents, invitations…) apparaîtront ici."
-          className="py-12"
         />
       ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Template</TableHead>
-                <TableHead>Destinataire</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Inscription</TableHead>
-                <TableHead>Erreur</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell className="whitespace-nowrap text-sm">
-                    {row.sent_at
-                      ? format(new Date(row.sent_at), "dd/MM/yyyy HH:mm", { locale: fr })
-                      : "—"}
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">{row.template_slug}</TableCell>
-                  <TableCell>
-                    <div className="text-sm">{row.recipient_name || "—"}</div>
-                    <div className="text-xs text-muted-foreground">{row.recipient_email}</div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={STATUS_STYLES[row.status] || STATUS_STYLES.pending} variant="secondary">
-                      {row.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {row.inscription_id ? (
-                      <Link
-                        className="text-sm text-primary underline-offset-2 hover:underline"
-                        to={`/inscriptions/${row.inscription_id}`}
+        <>
+          <TableFrame>
+            <table className="hidden w-full md:table">
+              <thead>
+                <TableHeadRow>
+                  <TableHeadCell>Date</TableHeadCell>
+                  <TableHeadCell>Template</TableHeadCell>
+                  <TableHeadCell>Destinataire</TableHeadCell>
+                  <TableHeadCell>Statut</TableHeadCell>
+                  <TableHeadCell className="hidden lg:table-cell">Inscription</TableHeadCell>
+                  <TableHeadCell className="hidden lg:table-cell">Erreur</TableHeadCell>
+                </TableHeadRow>
+              </thead>
+              <tbody>
+                {filtered.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell className="whitespace-nowrap tabular">
+                      {sentAt(row.sent_at)}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs">{row.template_slug}</TableCell>
+                    <TableCell>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm">{row.recipient_name || "—"}</p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {row.recipient_email}
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <StatusPill
+                        tone={STATUS_TONES[row.status] ?? STATUS_TONES.pending}
+                        size="sm"
                       >
-                        Voir
-                      </Link>
+                        {row.status}
+                      </StatusPill>
+                    </TableCell>
+                    <TableCell hideBelow="lg">
+                      {row.inscription_id ? (
+                        <Link
+                          className="text-sm text-primary underline-offset-2 hover:underline"
+                          to={`/inscriptions/${row.inscription_id}`}
+                        >
+                          Voir
+                        </Link>
+                      ) : (
+                        "—"
+                      )}
+                    </TableCell>
+                    <TableCell hideBelow="lg" className="max-w-[200px] truncate text-xs text-destructive">
+                      {row.error_message || ""}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </tbody>
+            </table>
+          </TableFrame>
+
+          {/* Doublure mobile du tableau — mêmes colonnes, même lien inscription. */}
+          <CardList className="md:hidden">
+            {filtered.map((row) => (
+              <CardListItem
+                key={row.id}
+                title={row.recipient_name || row.recipient_email || "—"}
+                subtitle={row.recipient_email}
+                meta={
+                  <StatusPill
+                    tone={STATUS_TONES[row.status] ?? STATUS_TONES.pending}
+                    size="sm"
+                  >
+                    {row.status}
+                  </StatusPill>
+                }
+                fields={[
+                  { label: "Date", value: sentAt(row.sent_at) },
+                  { label: "Template", value: row.template_slug },
+                  {
+                    label: "Erreur",
+                    value: row.error_message ? (
+                      <span className="text-destructive">{row.error_message}</span>
                     ) : (
                       "—"
-                    )}
-                  </TableCell>
-                  <TableCell className="max-w-[200px] truncate text-xs text-destructive">
-                    {row.error_message || ""}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+                    ),
+                  },
+                ]}
+                actions={
+                  row.inscription_id ? (
+                    <Link
+                      className="text-sm text-primary underline-offset-2 hover:underline"
+                      to={`/inscriptions/${row.inscription_id}`}
+                    >
+                      Voir l'inscription
+                    </Link>
+                  ) : undefined
+                }
+              />
+            ))}
+          </CardList>
+        </>
       )}
-    </div>
+    </SurfaceCard>
   );
 }

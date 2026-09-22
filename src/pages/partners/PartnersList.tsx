@@ -332,7 +332,7 @@ export default function PartnersList() {
                   total={partnerTotal}
                   onPageChange={(next) => setPage(Math.min(totalPages, Math.max(1, next)))}
                   className="border-t-0"
-                  totalLabel={(total) => `${total.toLocaleString("fr-FR")} partenaires`}
+                  totalLabel={(total) => `${total.toLocaleString("fr-FR")} partenaires au total`}
                 />
               </SurfaceCard>
             )}

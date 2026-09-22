@@ -7,7 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { generateScoreOptions, scoreToLevel } from "@/lib/evaluation-utils";
-import { Badge } from "@/components/ui/badge";
+import { StatusPill } from "@/components/ui-kit";
 
 interface ScoreInputProps {
   label: string;
@@ -19,7 +19,7 @@ interface ScoreInputProps {
 export function ScoreInput({ label, value, onChange, scoringSystem }: ScoreInputProps) {
   const options = generateScoreOptions(scoringSystem);
   const level = scoreToLevel(value, scoringSystem);
-  
+
   return (
     <div className="space-y-2">
       <Label className="text-sm font-medium">{label}</Label>
@@ -28,7 +28,7 @@ export function ScoreInput({ label, value, onChange, scoringSystem }: ScoreInput
           value={value.toString()}
           onValueChange={(v) => onChange(parseFloat(v))}
         >
-          <SelectTrigger className="w-24">
+          <SelectTrigger className="w-24 tabular" aria-label={label}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -39,9 +39,9 @@ export function ScoreInput({ label, value, onChange, scoringSystem }: ScoreInput
             ))}
           </SelectContent>
         </Select>
-        <Badge variant="outline" className="text-xs">
+        <StatusPill tone="neutral" size="sm">
           {level}
-        </Badge>
+        </StatusPill>
       </div>
     </div>
   );

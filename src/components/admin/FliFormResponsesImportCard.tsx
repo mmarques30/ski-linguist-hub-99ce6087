@@ -1,8 +1,7 @@
 import { useRef, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Upload, FileSpreadsheet, Loader2, CheckCircle2 } from "lucide-react";
+import { Upload, FileSpreadsheet, Loader2, CheckCircle2, ClipboardList } from "lucide-react";
+import { StatTile, StatTileGrid, StatusPill, SurfaceCard } from "@/components/ui-kit";
 import { parseFliFormResponsesCsv, FliFormResponsesImportPreview } from "@/lib/fli-form-responses-csv-import";
 import { useFliFormResponsesImport } from "@/hooks/useFliFormResponsesImport";
 import { toast } from "sonner";
@@ -43,29 +42,33 @@ export function FliFormResponsesImportCard() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Formulaire FLI — Réponses + test d'entrée (ancien)</CardTitle>
-        <CardDescription>
+    <SurfaceCard
+      title="Formulaire FLI — Réponses + test d'entrée (ancien)"
+      icon={ClipboardList}
+      description={
+        <>
           Export Google Forms (séparateur <code>,</code>). Déduplique les soumissions répétées,
           croise avec les stagiaires/inscriptions existants et importe les <code>placement_tests</code>.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div
-          className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-muted/30 transition-colors"
+        </>
+      }
+      actions={fileName ? <StatusPill tone="info">{fileName}</StatusPill> : undefined}
+    >
+      <div className="space-y-4">
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".csv,text/csv"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleFile(f);
+          }}
+        />
+        <button
+          type="button"
+          className="w-full cursor-pointer rounded-[var(--radius)] border-2 border-dashed border-border p-6 text-center transition-colors hover:bg-[hsl(var(--surface-sunken))]"
           onClick={() => fileRef.current?.click()}
         >
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".csv,text/csv"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) handleFile(f);
-            }}
-          />
           {fileName ? (
             <div className="flex items-center justify-center gap-2">
               <FileSpreadsheet className="h-5 w-5 text-primary" />
@@ -77,37 +80,27 @@ export function FliFormResponsesImportCard() {
               <p className="text-sm text-muted-foreground">Cliquez pour sélectionner le CSV du formulaire</p>
             </div>
           )}
-        </div>
+        </button>
 
         {preview && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="rounded-lg border p-3">
-                <p className="text-2xl font-bold">{preview.totalRows}</p>
-                <p className="text-xs text-muted-foreground">Lignes CSV</p>
-              </div>
-              <div className="rounded-lg border p-3">
-                <p className="text-2xl font-bold text-primary">{preview.deduplicatedRows}</p>
-                <p className="text-xs text-muted-foreground">Après déduplication</p>
-              </div>
-              <div className="rounded-lg border p-3">
-                <p className="text-2xl font-bold">{preview.withTestAnswers}</p>
-                <p className="text-xs text-muted-foreground">Avec réponses test</p>
-              </div>
-              <div className="rounded-lg border p-3">
-                <p className="text-2xl font-bold">{preview.withEmail}</p>
-                <p className="text-xs text-muted-foreground">Avec email</p>
-              </div>
-            </div>
+            <StatTileGrid cols={4}>
+              <StatTile label="Lignes CSV" value={preview.totalRows} tone="neutral" />
+              <StatTile label="Après déduplication" value={preview.deduplicatedRows} tone="gold" />
+              <StatTile label="Avec réponses test" value={preview.withTestAnswers} tone="blue" />
+              <StatTile label="Avec email" value={preview.withEmail} tone="teal" />
+            </StatTileGrid>
 
             <div className="flex flex-wrap gap-2">
               {Object.entries(preview.byLanguage).map(([lang, count]) => (
-                <Badge key={lang} variant="secondary">
+                <StatusPill key={lang} tone="neutral" size="sm">
                   {lang}: {count}
-                </Badge>
+                </StatusPill>
               ))}
               {preview.skippedDuplicates > 0 && (
-                <Badge variant="outline">{preview.skippedDuplicates} doublons ignorés</Badge>
+                <StatusPill tone="warning" size="sm">
+                  {preview.skippedDuplicates} doublons ignorés
+                </StatusPill>
               )}
             </div>
 
@@ -126,7 +119,7 @@ export function FliFormResponsesImportCard() {
             </Button>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </SurfaceCard>
   );
 }

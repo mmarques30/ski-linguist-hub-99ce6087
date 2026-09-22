@@ -1,5 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
@@ -133,12 +132,19 @@ export function EvaluationPDFPreview({ evaluation, booking }: EvaluationPDFPrevi
         </Button>
       </div>
 
-      <div className="bg-white border rounded-lg p-8 print:border-none print:p-0" id="evaluation-pdf">
+      <div
+        className="fli-surface p-5 sm:p-8 print:border-none print:p-0 print:shadow-none"
+        id="evaluation-pdf"
+      >
         {model?.showSyndicateHeader && (
           <img src={ESF_LOGO} alt="École du ski français" className="h-16 mb-3" />
         )}
         {model?.showFliHeaderFooter && (
-          <img src={FLI_HEADER} alt="France Langues International" className="h-16 mb-3 bg-black p-2" />
+          <img
+            src={FLI_HEADER}
+            alt="France Langues International"
+            className="mb-3 h-16 rounded-[var(--radius)] bg-[hsl(var(--fli-navy))] p-2"
+          />
         )}
         {model?.showDsfLetterhead && (
           <img src={DSF_LETTERHEAD} alt="DSF Formation" className="h-24 object-cover object-top mb-3" />
@@ -157,9 +163,9 @@ export function EvaluationPDFPreview({ evaluation, booking }: EvaluationPDFPrevi
               </p>
             )}
             {booking.sponsor_type && (
-              <Badge variant="outline" className="mt-2">
+              <StatusPill tone="neutral" className="mt-2">
                 {booking.sponsor_type}
-              </Badge>
+              </StatusPill>
             )}
           </div>
         </div>
@@ -168,7 +174,7 @@ export function EvaluationPDFPreview({ evaluation, booking }: EvaluationPDFPrevi
           <p className="text-sm text-destructive mb-4">{modelError}</p>
         )}
 
-        <div className="grid grid-cols-2 gap-4 text-sm mb-6">
+        <div className="mb-6 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
           <p><span className="text-muted-foreground">Nom – Prénom :</span> {model?.candidateDisplayName ?? booking.candidate_name}</p>
           {model?.showCompanyField ? (
             <p><span className="text-muted-foreground">Entreprise :</span> {model.companyName}</p>
@@ -206,39 +212,34 @@ export function EvaluationPDFPreview({ evaluation, booking }: EvaluationPDFPrevi
           )}
         </div>
 
-        <Card className="mb-6">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Niveau de 0 à 5 — N - CECRL</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {(model?.skillRows ?? []).map((row) => (
-                <div key={row.label} className="rounded-lg bg-muted p-3">
-                  <div className="text-xs text-muted-foreground">{row.label}</div>
-                  <div className="text-lg font-bold">{row.value}</div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <SurfaceCard title="Niveau de 0 à 5 — N - CECRL" className="mb-6">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+            {(model?.skillRows ?? []).map((row) => (
+              <div
+                key={row.label}
+                className="rounded-[var(--radius)] bg-[hsl(var(--surface-sunken))] p-3"
+              >
+                <div className="text-xs text-muted-foreground">{row.label}</div>
+                <div className="text-lg font-bold tabular">{row.value}</div>
+              </div>
+            ))}
+          </div>
+        </SurfaceCard>
 
         {model?.showPrice && model.priceLabel && (
           <p className="font-semibold mb-4">Tarif {model.priceLabel}</p>
         )}
 
-        <Card className="mb-6">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Quatre blocs</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <SurfaceCard title="Quatre blocs" className="mb-6">
+          <div className="space-y-4">
             {(model?.blocs ?? []).map((bloc) => (
               <div key={bloc.label}>
-                <h4 className="font-semibold text-sm text-muted-foreground mb-1">{bloc.label}</h4>
+                <h4 className="mb-1 text-sm font-semibold text-muted-foreground">{bloc.label}</h4>
                 <p className="text-sm">{bloc.text || "—"}</p>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </SurfaceCard>
 
         {model?.showFliHeaderFooter && (
           <div className="flex justify-between items-end mb-6">
@@ -250,11 +251,8 @@ export function EvaluationPDFPreview({ evaluation, booking }: EvaluationPDFPrevi
         )}
 
         {model?.showCourseTable && (
-          <Card className="mb-6">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Niveau ↔ type de cours</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
+          <SurfaceCard title="Niveau ↔ type de cours" className="mb-6">
+            <div className="space-y-2 text-sm">
               <p className="text-muted-foreground">{ESF_DIRECTOR_NOTE}</p>
               {ESF_COURSE_TABLE.map((row) => (
                 <div key={row.course} className="flex justify-between gap-4">
@@ -263,8 +261,8 @@ export function EvaluationPDFPreview({ evaluation, booking }: EvaluationPDFPrevi
                 </div>
               ))}
               <p className="text-muted-foreground">{ESF_RETEST_NOTE}</p>
-            </CardContent>
-          </Card>
+            </div>
+          </SurfaceCard>
         )}
 
         {model?.showSyndicateHeader && (

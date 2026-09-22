@@ -1,6 +1,6 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, FileText, FolderOpen, Settings2 } from "lucide-react";
+import { ArrowRight, FileText, Info, Settings2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
@@ -73,7 +73,7 @@ export default function Documents() {
           icon={FileText}
           tone="blue"
           meta={
-            <StatusPill tone="warning" icon={FolderOpen}>
+            <StatusPill tone="warning" icon={Info}>
               {t(translations.notConnected)}
             </StatusPill>
           }

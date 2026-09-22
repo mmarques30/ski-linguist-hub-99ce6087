@@ -1,7 +1,7 @@
-import { FinanceKPICard } from "./FinanceKPICard";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { BarChart3, Users, UserCheck, CalendarRange, Ticket, Target } from "lucide-react";
 import { differenceInMonths } from "date-fns";
+import { StatTile, StatTileGrid } from "@/components/ui-kit";
 
 const i18n = {
   monthlyRevenue: { fr: 'CA Mensuel', 'pt-BR': 'Receita Mensal', en: 'Monthly Revenue' },
@@ -42,61 +42,70 @@ export function AnalysesKPIGrid({ caByType, caByClient, kpis, startDate, endDate
   const encaisse = kpis?.encaisse || 0;
   const tauxConversion = caTotal > 0 ? (encaisse / caTotal) * 100 : 0;
 
+  const formatPrice = (value: number) =>
+    new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-3">
-        <FinanceKPICard
-          title="CA par Activité"
-          value={caTotal}
-          variant="gold"
-          formatAsPrice
+      <StatTileGrid cols={3}>
+        <StatTile
+          label="CA par Activité"
+          value={formatPrice(caTotal)}
+          hint="Formations"
           icon={BarChart3}
-          evolution={evolCA ?? undefined}
-          subtitle="Formations"
+          tone="gold"
+          to="/invoices"
+          delta={evolCA != null ? { value: evolCA, label: "vs N-1" } : undefined}
         />
-        <FinanceKPICard
-          title="CA par Client"
-          value={ticketMoyen}
-          variant="navy"
-          formatAsPrice
+        <StatTile
+          label="CA par Client"
+          value={formatPrice(ticketMoyen)}
+          hint="ticket moyen"
           icon={Users}
-          subtitle="ticket moyen"
+          tone="navy"
         />
-        <FinanceKPICard
-          title="CA par Formateur"
-          value={caParFormateur}
-          variant="gold"
-          formatAsPrice
+        <StatTile
+          label="CA par Formateur"
+          value={formatPrice(caParFormateur)}
+          hint="moyenne mensuelle"
           icon={UserCheck}
-          subtitle="moyenne mensuelle"
+          tone="teal"
         />
-      </div>
-      <div className="grid gap-4 md:grid-cols-3">
-        <FinanceKPICard
-          title={t(i18n.monthlyRevenue)}
-          value={caMensuelMoyen}
-          variant="navy"
-          formatAsPrice
+      </StatTileGrid>
+      <StatTileGrid cols={3}>
+        <StatTile
+          label={t(i18n.monthlyRevenue)}
+          value={formatPrice(caMensuelMoyen)}
+          hint={`moy. sur ${nbMois} mois`}
           icon={CalendarRange}
-          evolution={kpis?.caFactureEvol ?? undefined}
-          subtitle={`moy. sur ${nbMois} mois`}
+          tone="navy"
+          delta={
+            kpis?.caFactureEvol != null
+              ? { value: kpis.caFactureEvol, label: "vs N-1" }
+              : undefined
+          }
         />
-        <FinanceKPICard
-          title="Ticket Moyen"
-          value={ticketMoyenFacture}
-          variant="gold"
-          formatAsPrice
+        <StatTile
+          label="Ticket Moyen"
+          value={formatPrice(ticketMoyenFacture)}
+          hint="par facture"
           icon={Ticket}
-          subtitle="par facture"
+          tone="gold"
+          to="/invoices"
         />
-        <FinanceKPICard
-          title="Taux de Conversion"
+        <StatTile
+          label="Taux de Conversion"
           value={`${tauxConversion.toFixed(1)}%`}
-          variant="navy"
+          hint="encaissé / facturé"
           icon={Target}
-          subtitle="encaissé / facturé"
+          tone="purple"
         />
-      </div>
+      </StatTileGrid>
     </div>
   );
 }

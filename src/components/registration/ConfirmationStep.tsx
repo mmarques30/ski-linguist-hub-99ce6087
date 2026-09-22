@@ -1,6 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -8,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertTriangle,
   CheckCircle,
+  ClipboardCheck,
   Copy,
   ExternalLink,
   Landmark,
@@ -17,6 +16,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { IconChip, StatusPill, SurfaceCard } from "@/components/ui-kit";
 import type { RegistrationData } from "@/pages/register/Index";
 import {
   createRegistrationCheckout,
@@ -68,6 +68,7 @@ import {
   REGISTRATION_FUNDING_MAP,
 } from "@/lib/registration-utils";
 import { OPCO_REGISTER_COPY } from "@/lib/opco-funding";
+import { StepActions, StepCard, SummaryPanel, SummaryRow } from "./StepLayout";
 
 interface ConfirmationStepProps {
   data: RegistrationData;
@@ -227,14 +228,15 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
         : null;
 
     return (
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-center space-y-4">
-            <div className="mx-auto w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
-              <CheckCircle className="h-10 w-10 text-emerald-600" />
-            </div>
-            <h2 className="text-2xl font-bold">Inscription enregistrée</h2>
-            <p className="text-muted-foreground max-w-md mx-auto">
+      <SurfaceCard accent="primary" bodyClassName="p-4 sm:p-6">
+        <div className="space-y-5">
+          {/* Confirmation — lisible d'un coup d'œil sur un téléphone */}
+          <div className="flex flex-col items-center gap-3 text-center">
+            <IconChip icon={CheckCircle} tone="teal" size="lg" />
+            <h2 className="text-xl font-semibold tracking-tight text-balance sm:text-2xl">
+              Inscription enregistrée
+            </h2>
+            <p className="max-w-md text-sm text-muted-foreground">
               Merci de vous être inscrit chez France Langues International.
               {result.documentsSent
                 ? " Les documents d'inscription (convention, programme et critères FIF-PL) vous seront envoyés par email dans les 30 minutes."
@@ -242,393 +244,371 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                   ? " Un email de confirmation vous a été envoyé."
                   : " Notre équipe vous contactera prochainement."}
             </p>
-            <div className="pt-2 space-y-3">
-              <Badge variant="outline" className="text-lg px-4 py-2">
-                Code : {result.inscriptionCode}
-              </Badge>
-              {suiviUrl && (
-                <div className="rounded-lg border bg-muted/40 px-4 py-3 text-left max-w-md mx-auto space-y-2">
-                  <p className="text-sm font-medium">Votre lien de suivi</p>
-                  <p className="text-xs text-muted-foreground break-all">{suiviUrl}</p>
-                  <div className="flex flex-wrap gap-2">
+            <StatusPill tone="warning" className="px-4 py-1.5 text-base">
+              Code : {result.inscriptionCode}
+            </StatusPill>
+          </div>
+
+          {suiviUrl && (
+            <div className="space-y-2 rounded-[var(--radius-card)] bg-[hsl(var(--surface-sunken))] p-4">
+              <p className="text-sm font-medium">Votre lien de suivi</p>
+              <p className="break-all text-xs text-muted-foreground">{suiviUrl}</p>
+              <div className="flex flex-col gap-2 xs:flex-row">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-10 w-full xs:w-auto"
+                  onClick={() => copyToClipboard(suiviUrl)}
+                >
+                  <Copy className="mr-1.5 h-3.5 w-3.5" />
+                  Copier
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  className="h-10 w-full xs:w-auto"
+                  asChild
+                >
+                  <a href={suiviUrl} target="_blank" rel="noreferrer">
+                    <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+                    Ouvrir
+                  </a>
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {result.checkoutFailure && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription className="space-y-1 text-left">
+                <p className="font-medium">{result.checkoutFailure.title}</p>
+                {result.checkoutFailure.detail && <p>{result.checkoutFailure.detail}</p>}
+                <p>{result.checkoutFailure.instruction}</p>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {result.paymentFlow === "virement" && result.coursePrice && result.paymentOption && (
+            <Alert>
+              <Landmark className="h-4 w-4" />
+              <AlertDescription className="space-y-3 text-left">
+                <p className="font-medium">
+                  {result.paymentOption === REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL
+                    ? "Virement du montant total"
+                    : "Virement des frais de dossier"}
+                </p>
+                <p>
+                  Merci d&apos;effectuer un virement de{" "}
+                  <strong>
+                    {formatPriceEUR(
+                      getRegistrationPaymentSummary(
+                        result.coursePrice,
+                        result.paymentOption as RegistrationPaymentOption
+                      ).amountDueNow
+                    )}
+                  </strong>{" "}
+                  en indiquant la référence <strong>{result.inscriptionCode}</strong>.
+                </p>
+                <div className="space-y-1 text-sm">
+                  <p>Bénéficiaire : {FLI_BANK_DETAILS.beneficiary}</p>
+                  <p className="flex flex-wrap items-center gap-2 break-all">
+                    IBAN : {FLI_BANK_DETAILS.iban}
                     <Button
                       type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => copyToClipboard(suiviUrl)}
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      aria-label="Copier l'IBAN"
+                      onClick={() => copyToClipboard(FLI_BANK_DETAILS.iban.replace(/\s/g, ""))}
                     >
-                      <Copy className="h-3.5 w-3.5 mr-1.5" />
-                      Copier
+                      <Copy className="h-3.5 w-3.5" />
                     </Button>
-                    <Button type="button" size="sm" variant="secondary" asChild>
-                      <a href={suiviUrl} target="_blank" rel="noreferrer">
-                        <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                        Ouvrir
-                      </a>
-                    </Button>
-                  </div>
+                  </p>
+                  <p>BIC : {FLI_BANK_DETAILS.bic}</p>
                 </div>
-              )}
-            </div>
+              </AlertDescription>
+            </Alert>
+          )}
 
-            {result.checkoutFailure && (
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription className="text-left space-y-1">
-                  <p className="font-medium">{result.checkoutFailure.title}</p>
-                  {result.checkoutFailure.detail && <p>{result.checkoutFailure.detail}</p>}
-                  <p>{result.checkoutFailure.instruction}</p>
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {result.paymentFlow === "virement" && result.coursePrice && result.paymentOption && (
+          {result.coursePrice &&
+            result.paymentOption &&
+            hasChequeBalance(result.paymentOption as RegistrationPaymentOption) &&
+            getRegistrationPaymentSummary(
+              result.coursePrice,
+              result.paymentOption as RegistrationPaymentOption
+            ).balanceAfterDossier > 0 && (
               <Alert>
-                <Landmark className="h-4 w-4" />
-                <AlertDescription className="text-left space-y-3">
+                <AlertDescription className="space-y-2 text-left">
                   <p className="font-medium">
-                    {result.paymentOption === REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL
-                      ? "Virement du montant total"
-                      : "Virement des frais de dossier"}
+                    Chèque de{" "}
+                    {formatPriceEUR(
+                      getRegistrationPaymentSummary(
+                        result.coursePrice,
+                        result.paymentOption as RegistrationPaymentOption
+                      ).balanceAfterDossier
+                    )}{" "}
+                    à envoyer avec votre inscription
                   </p>
-                  <p>
-                    Merci d&apos;effectuer un virement de{" "}
-                    <strong>
-                      {formatPriceEUR(
-                        getRegistrationPaymentSummary(
-                          result.coursePrice,
-                          result.paymentOption as RegistrationPaymentOption
-                        ).amountDueNow
-                      )}
-                    </strong>{" "}
-                    en indiquant la référence <strong>{result.inscriptionCode}</strong>.
-                  </p>
-                  <div className="text-sm space-y-1">
-                    <p>Bénéficiaire : {FLI_BANK_DETAILS.beneficiary}</p>
-                    <p className="flex items-center gap-2">
-                      IBAN : {FLI_BANK_DETAILS.iban}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => copyToClipboard(FLI_BANK_DETAILS.iban.replace(/\s/g, ""))}
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
-                    </p>
-                    <p>BIC : {FLI_BANK_DETAILS.bic}</p>
-                  </div>
+                  <p className="text-sm text-muted-foreground">{CHEQUE_BALANCE_INSTRUCTION}</p>
                 </AlertDescription>
               </Alert>
             )}
 
-            {result.coursePrice &&
-              result.paymentOption &&
-              hasChequeBalance(result.paymentOption as RegistrationPaymentOption) &&
-              getRegistrationPaymentSummary(
-                result.coursePrice,
-                result.paymentOption as RegistrationPaymentOption
-              ).balanceAfterDossier > 0 && (
-                <Alert>
-                  <AlertDescription className="text-left space-y-2">
-                    <p className="font-medium">
-                      Chèque de{" "}
-                      {formatPriceEUR(
-                        getRegistrationPaymentSummary(
-                          result.coursePrice,
-                          result.paymentOption as RegistrationPaymentOption
-                        ).balanceAfterDossier
-                      )}{" "}
-                      à envoyer avec votre inscription
-                    </p>
-                    <p className="text-muted-foreground text-sm">{CHEQUE_BALANCE_INSTRUCTION}</p>
-                  </AlertDescription>
-                </Alert>
-              )}
+          {isOpco && (
+            <Alert>
+              <Phone className="h-4 w-4" />
+              <AlertDescription>{OPCO_REGISTER_COPY.confirmationAlert}</AlertDescription>
+            </Alert>
+          )}
 
-            {isOpco && (
-              <Alert>
-                <Phone className="h-4 w-4" />
-                <AlertDescription>
-                  {OPCO_REGISTER_COPY.confirmationAlert}
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {isStationGroup && (
-              <Alert>
-                <Mountain className="h-4 w-4" />
-                <AlertDescription>
-                  {STATION_GROUP_NOTICE_AFTER_TEST} — {STATION_GROUP_SIGNATURE}
-                </AlertDescription>
-              </Alert>
-            )}
-            {result.needsAdminCall && (
-              <Alert>
-                <Phone className="h-4 w-4" />
-                <AlertDescription>
-                  Notre équipe vous contactera par téléphone suite à votre résultat au test.
-                </AlertDescription>
-              </Alert>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+          {isStationGroup && (
+            <Alert>
+              <Mountain className="h-4 w-4" />
+              <AlertDescription>
+                {STATION_GROUP_NOTICE_AFTER_TEST} — {STATION_GROUP_SIGNATURE}
+              </AlertDescription>
+            </Alert>
+          )}
+          {result.needsAdminCall && (
+            <Alert>
+              <Phone className="h-4 w-4" />
+              <AlertDescription>
+                Notre équipe vous contactera par téléphone suite à votre résultat au test.
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+      </SurfaceCard>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Confirmez votre inscription</CardTitle>
-        <CardDescription>
-          Veuillez vérifier vos informations avant de soumettre
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            Informations personnelles
+    <div className="space-y-4">
+      <StepCard
+        title="Confirmez votre inscription"
+        description="Veuillez vérifier vos informations avant de soumettre"
+        icon={ClipboardCheck}
+      >
+        <div className="space-y-6">
+          <div className="space-y-3">
+            <p className="text-sm font-medium">Informations personnelles</p>
+            <SummaryPanel>
+              <SummaryRow
+                label="Nom"
+                value={`${data.civility === "madame" ? "Mme" : "M."} ${data.firstName} ${data.lastName}`}
+              />
+              <SummaryRow label="Email" value={<span className="break-all">{data.email}</span>} />
+              <SummaryRow label="Téléphone" value={data.phone} />
+            </SummaryPanel>
           </div>
-          <div className="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Nom</span>
-              <span className="font-medium">{data.civility === "madame" ? "Mme" : "M."} {data.firstName} {data.lastName}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Email</span>
-              <span className="font-medium">{data.email}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Téléphone</span>
-              <span className="font-medium">{data.phone}</span>
-            </div>
-          </div>
-        </div>
 
-        <Separator />
+          <Separator />
 
-        <div className="space-y-3">
-          <div className="text-sm font-medium">Formation sélectionnée</div>
-          <div className="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Lieu</span>
-              <span className="font-medium">{data.locationLabel || data.location}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Langue</span>
-              <span className="font-medium">{languageLabels[data.language] || data.language}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Durée</span>
-              <span className="font-medium text-right max-w-[60%]">
-                {isCustomFormat
-                  ? "Autres formats — devis sur demande"
-                  : `${data.duration} heures`}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Modalité</span>
-              <span className="font-medium">{modalityLabels[data.modality] || data.modality}</span>
-            </div>
-            {(data.dateLabel || data.dates) && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Dates</span>
-                <span className="font-medium text-right max-w-[60%]">
-                  {data.dateLabel || data.dates}
-                </span>
-              </div>
-            )}
-            {/* BL-029 : la date souhaitée doit apparaître dans le récapitulatif,
-                c'est elle qui sera écrite sur l'inscription. */}
-            {data.requestedStartDate && !data.endDate && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Début souhaité</span>
-                <span className="font-medium text-right max-w-[60%]">
-                  {formatDateFr(data.requestedStartDate)} — {DATES_A_PLANIFIER_LABEL.toLowerCase()}{" "}
-                  avec l&apos;équipe FLI
-                </span>
-              </div>
-            )}
-            {coursePrice > 0 && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Tarif</span>
-                <span className="font-semibold">{formatPriceEUR(coursePrice)}</span>
-              </div>
-            )}
-            {isCustomFormat && data.customFormatDetails && (
-              <div className="pt-2 border-t space-y-1">
-                <span className="text-muted-foreground block">Projet décrit</span>
-                <p className="font-medium whitespace-pre-wrap">{data.customFormatDetails}</p>
-              </div>
-            )}
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Financement</span>
-              <span className="font-medium">
-                {REGISTRATION_FUNDING_MAP[data.fundingType] || data.fundingType}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Votre piste</span>
-              <Badge>
-                {data.testSummary
-                  ? studentFacingPisteLabel({
-                      passedSlopes: data.testSummary.passedSlopes,
-                      highestSlopeReached: data.testSummary.highestSlopeReached,
-                      endedAtVocab: data.testSummary.endedAtVocab,
-                    })
-                  : studentFacingPisteFromCecrl(data.currentLevel)}
-              </Badge>
-            </div>
-            {data.correctAnswers !== undefined && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Score test</span>
-                <span className="font-medium">
-                  {data.correctAnswers}
-                  /
-                  {data.totalAnswered ??
-                    data.testSummary?.slopeResults.reduce((sum, sr) => sum + sr.total, 0) ??
-                    "—"}{" "}
-                  bonnes réponses
-                </span>
-              </div>
-            )}
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Certification</span>
-              <span className="font-medium">{certificationLabels[data.certification] || data.certification}</span>
-            </div>
-          </div>
-        </div>
-
-        {isOpco && (
-          <Alert>
-            <Phone className="h-4 w-4" />
-            <AlertDescription>
-              {OPCO_REGISTER_COPY.confirmationAlert}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {paymentSummary && (
-          <>
-            <Separator />
-            <div className="space-y-3">
-              <div className="text-sm font-medium">Paiement</div>
-              <div className="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
-                <div className="flex justify-between gap-4">
-                  <span className="text-muted-foreground">Mode choisi</span>
-                  <span className="font-medium text-right max-w-[65%]">
-                    {PAYMENT_OPTION_LABELS[paymentOption]}
-                  </span>
+          <div className="space-y-3">
+            <p className="text-sm font-medium">Formation sélectionnée</p>
+            <SummaryPanel>
+              <SummaryRow label="Lieu" value={data.locationLabel || data.location} />
+              <SummaryRow label="Langue" value={languageLabels[data.language] || data.language} />
+              <SummaryRow
+                label="Durée"
+                value={
+                  isCustomFormat ? "Autres formats — devis sur demande" : `${data.duration} heures`
+                }
+              />
+              <SummaryRow label="Modalité" value={modalityLabels[data.modality] || data.modality} />
+              {(data.dateLabel || data.dates) && (
+                <SummaryRow label="Dates" value={data.dateLabel || data.dates} />
+              )}
+              {/* BL-029 : la date souhaitée doit apparaître dans le récapitulatif,
+                  c'est elle qui sera écrite sur l'inscription. */}
+              {data.requestedStartDate && !data.endDate && (
+                <SummaryRow
+                  label="Début souhaité"
+                  value={
+                    <>
+                      {formatDateFr(data.requestedStartDate)} —{" "}
+                      {DATES_A_PLANIFIER_LABEL.toLowerCase()} avec l&apos;équipe FLI
+                    </>
+                  }
+                />
+              )}
+              {coursePrice > 0 && (
+                <SummaryRow label="Tarif" value={formatPriceEUR(coursePrice)} />
+              )}
+              {isCustomFormat && data.customFormatDetails && (
+                <div className="space-y-1 border-t border-border pt-2">
+                  <span className="block text-sm text-muted-foreground">Projet décrit</span>
+                  <p className="whitespace-pre-wrap text-sm font-medium">
+                    {data.customFormatDetails}
+                  </p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Frais de dossier</span>
-                  <span className="font-medium">{formatPriceEUR(paymentSummary.dossierFee)}</span>
-                </div>
-                {paymentSummary.balanceAfterDossier > 0 && hasChequeBalance(paymentOption) && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">{CHEQUE_BALANCE_SUMMARY_LABEL}</span>
-                    <span className="font-medium">
-                      {formatPriceEUR(paymentSummary.balanceAfterDossier)}
+              )}
+              <SummaryRow
+                label="Financement"
+                value={REGISTRATION_FUNDING_MAP[data.fundingType] || data.fundingType}
+              />
+              <SummaryRow
+                label="Votre piste"
+                value={
+                  <StatusPill tone="info">
+                    {data.testSummary
+                      ? studentFacingPisteLabel({
+                          passedSlopes: data.testSummary.passedSlopes,
+                          highestSlopeReached: data.testSummary.highestSlopeReached,
+                          endedAtVocab: data.testSummary.endedAtVocab,
+                        })
+                      : studentFacingPisteFromCecrl(data.currentLevel)}
+                  </StatusPill>
+                }
+              />
+              {data.correctAnswers !== undefined && (
+                <SummaryRow
+                  label="Score test"
+                  value={
+                    <>
+                      {data.correctAnswers}/
+                      {data.totalAnswered ??
+                        data.testSummary?.slopeResults.reduce((sum, sr) => sum + sr.total, 0) ??
+                        "—"}{" "}
+                      bonnes réponses
+                    </>
+                  }
+                />
+              )}
+              <SummaryRow
+                label="Certification"
+                value={certificationLabels[data.certification] || data.certification}
+              />
+            </SummaryPanel>
+          </div>
+
+          {isOpco && (
+            <Alert>
+              <Phone className="h-4 w-4" />
+              <AlertDescription>{OPCO_REGISTER_COPY.confirmationAlert}</AlertDescription>
+            </Alert>
+          )}
+
+          {paymentSummary && (
+            <>
+              <Separator />
+              <div className="space-y-3">
+                <p className="text-sm font-medium">Paiement</p>
+                <SummaryPanel>
+                  <SummaryRow label="Mode choisi" value={PAYMENT_OPTION_LABELS[paymentOption]} />
+                  <SummaryRow
+                    label="Frais de dossier"
+                    value={formatPriceEUR(paymentSummary.dossierFee)}
+                  />
+                  {paymentSummary.balanceAfterDossier > 0 && hasChequeBalance(paymentOption) && (
+                    <SummaryRow
+                      label={CHEQUE_BALANCE_SUMMARY_LABEL}
+                      value={formatPriceEUR(paymentSummary.balanceAfterDossier)}
+                    />
+                  )}
+                  <SummaryRow
+                    label="À régler maintenant"
+                    value={formatPriceEUR(paymentSummary.amountDueNow)}
+                    emphasis
+                  />
+                </SummaryPanel>
+              </div>
+            </>
+          )}
+
+          <Separator />
+
+          {/* BL-023 : le texte à accepter se lit avant la case, dans un nouvel onglet. */}
+          <div className="space-y-3 rounded-[var(--radius-card)] border border-border bg-[hsl(var(--surface-sunken))] p-4">
+            <p className="text-sm font-medium">À lire avant d&apos;accepter</p>
+            <ul className="space-y-2 text-sm">
+              {REGISTRATION_LEGAL_DOCUMENT_LIST.map((document) => (
+                <li key={document.key}>
+                  {isLegalDocumentReadable(document) ? (
+                    <a
+                      href={document.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex min-h-8 items-center gap-1 font-medium text-foreground underline"
+                    >
+                      {legalDocumentTitle(document)}
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      {legalDocumentTitle(document)} — {LEGAL_DOCUMENT_ON_REQUEST_NOTICE}
                     </span>
-                  </div>
-                )}
-                <div className="flex justify-between border-t pt-2 font-semibold">
-                  <span>À régler maintenant</span>
-                  <span>{formatPriceEUR(paymentSummary.amountDueNow)}</span>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-
-        <Separator />
-
-        {/* BL-023 : le texte à accepter se lit avant la case, dans un nouvel onglet. */}
-        <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
-          <p className="text-sm font-medium">À lire avant d&apos;accepter</p>
-          <ul className="space-y-2 text-sm">
-            {REGISTRATION_LEGAL_DOCUMENT_LIST.map((document) => (
-              <li key={document.key}>
-                {isLegalDocumentReadable(document) ? (
-                  <a
-                    href={document.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 underline font-medium text-foreground"
-                  >
-                    {legalDocumentTitle(document)}
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                ) : (
-                  <span className="text-muted-foreground">
-                    {legalDocumentTitle(document)} — {LEGAL_DOCUMENT_ON_REQUEST_NOTICE}
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="flex items-start space-x-3 rounded-lg border p-4">
-          <Checkbox
-            id="terms"
-            checked={accepted}
-            onCheckedChange={(checked) => setAccepted(checked === true)}
-          />
-          <div className="space-y-1">
-            <Label htmlFor="terms" className="cursor-pointer">
-              J&apos;accepte les conditions générales de formation
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              En soumettant cette inscription, je confirme que les informations fournies sont exactes
-              et j&apos;accepte les{" "}
-              <a
-                href={REGISTRATION_LEGAL_DOCUMENTS.conditionsGenerales.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline font-medium text-foreground"
-              >
-                {REGISTRATION_LEGAL_DOCUMENTS.conditionsGenerales.label}
-              </a>{" "}
-              de France Langues International.
-            </p>
+                  )}
+                </li>
+              ))}
+            </ul>
           </div>
+
+          <div className="flex items-start gap-3 rounded-[var(--radius-card)] border border-border p-4">
+            <Checkbox
+              id="terms"
+              checked={accepted}
+              onCheckedChange={(checked) => setAccepted(checked === true)}
+              className="mt-0.5 h-5 w-5"
+            />
+            <div className="min-w-0 space-y-1">
+              <Label htmlFor="terms" className="cursor-pointer">
+                J&apos;accepte les conditions générales de formation
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                En soumettant cette inscription, je confirme que les informations fournies sont
+                exactes et j&apos;accepte les{" "}
+                <a
+                  href={REGISTRATION_LEGAL_DOCUMENTS.conditionsGenerales.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-foreground underline"
+                >
+                  {REGISTRATION_LEGAL_DOCUMENTS.conditionsGenerales.label}
+                </a>{" "}
+                de France Langues International.
+              </p>
+            </div>
+          </div>
+
+          {!testCompleted && (
+            <Alert variant="destructive">
+              <AlertDescription>
+                Le test de niveau adaptatif est obligatoire. Revenez à l'étape « Test de niveau » pour
+                le compléter avant de soumettre.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {paymentMissing && (
+            <Alert variant="destructive">
+              <AlertDescription>
+                Aucun mode de règlement n'est choisi. Revenez à l'étape « Paiement » pour en
+                sélectionner un avant de soumettre.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {failure && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription className="space-y-1">
+                <p className="font-medium">{failure.title}</p>
+                {failure.detail && <p>{failure.detail}</p>}
+                <p>{failure.instruction}</p>
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
+      </StepCard>
 
-        {!testCompleted && (
-          <Alert variant="destructive">
-            <AlertDescription>
-              Le test de niveau adaptatif est obligatoire. Revenez à l'étape « Test de niveau » pour
-              le compléter avant de soumettre.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {paymentMissing && (
-          <Alert variant="destructive">
-            <AlertDescription>
-              Aucun mode de règlement n'est choisi. Revenez à l'étape « Paiement » pour en
-              sélectionner un avant de soumettre.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {failure && (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription className="space-y-1">
-              <p className="font-medium">{failure.title}</p>
-              {failure.detail && <p>{failure.detail}</p>}
-              <p>{failure.instruction}</p>
-            </AlertDescription>
-          </Alert>
-        )}
-
+      <StepActions>
         <Button
           onClick={handleSubmit}
-          className="w-full"
+          className="h-12 w-full text-base sm:w-auto"
           disabled={!accepted || isSubmitting || !testCompleted || paymentMissing}
         >
           {isSubmitting ? (
@@ -644,7 +624,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             "Soumettre l'inscription"
           )}
         </Button>
-      </CardContent>
-    </Card>
+      </StepActions>
+    </div>
   );
 }

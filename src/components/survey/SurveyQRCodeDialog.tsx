@@ -172,15 +172,15 @@ export function SurveyQRCodeDialog({ open, onOpenChange }: SurveyQRCodeDialogPro
             <div className="space-y-4">
               {/* QR Code Display - Printable */}
               <div
-                className="bg-white p-6 rounded-lg border text-center print:border-none"
+                className="rounded-[var(--radius-card)] border border-border bg-card p-6 text-center print:border-none"
                 id="qr-code-print"
               >
                 <img
                   src={fliLogo}
                   alt="FLI"
-                  className="h-10 mx-auto mb-4 print:h-12"
+                  className="mx-auto mb-4 h-10 print:h-12"
                 />
-                <h3 className="font-semibold text-lg mb-1">
+                <h3 className="mb-1 text-lg font-semibold text-foreground">
                   Questionnaire de satisfaction
                 </h3>
                 {selectedInscriptionData && (
@@ -189,7 +189,9 @@ export function SurveyQRCodeDialog({ open, onOpenChange }: SurveyQRCodeDialogPro
                     {selectedInscriptionData.language}
                   </p>
                 )}
-                <div className="flex justify-center mb-4">
+                {/* Fond blanc conservé autour des modules : un QR doit rester
+                    lisible par un scanner, y compris en thème sombre. */}
+                <div className="mb-4 flex justify-center">
                   <QRCodeSVG
                     value={generatedUrl}
                     size={200}
@@ -211,9 +213,10 @@ export function SurveyQRCodeDialog({ open, onOpenChange }: SurveyQRCodeDialogPro
                     variant="outline"
                     size="icon"
                     onClick={handleCopyUrl}
+                    aria-label="Copier le lien"
                   >
                     {copied ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      <CheckCircle2 className="h-4 w-4 text-[hsl(var(--status-good))]" />
                     ) : (
                       <Copy className="h-4 w-4" />
                     )}
@@ -222,6 +225,7 @@ export function SurveyQRCodeDialog({ open, onOpenChange }: SurveyQRCodeDialogPro
                     variant="outline"
                     size="icon"
                     onClick={() => window.open(generatedUrl, "_blank")}
+                    aria-label="Ouvrir le questionnaire dans un nouvel onglet"
                   >
                     <ExternalLink className="h-4 w-4" />
                   </Button>

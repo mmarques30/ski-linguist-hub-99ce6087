@@ -1,13 +1,9 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import {
-  Plus, Search, Calendar, MapPin, Users, Mail, Send,
-  Building2, Globe, Lock, Upload, Snowflake, ChevronLeft, ChevronRight,
+  Plus, Calendar, MapPin, Users, Mail, Send,
+  Building2, Globe, Lock, Upload, Snowflake, School,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { format } from "date-fns";
@@ -20,7 +16,28 @@ import { CourseIntakeFormDialog } from "@/components/moniteurs/CourseIntakeFormD
 import { SkiMonitorFormDialog } from "@/components/moniteurs/SkiMonitorFormDialog";
 import { SkiMonitorImportDialog } from "@/components/moniteurs/SkiMonitorImportDialog";
 import { SkiSchoolMatchingCard } from "@/components/moniteurs/SkiSchoolMatchingCard";
-import { StatCard } from "@/components/dashboard/StatCard";
+import {
+  CardGrid,
+  CardList,
+  CardListItem,
+  FilterBar,
+  PageHeader,
+  PageShell,
+  SegmentedControl,
+  StatTile,
+  StatTileGrid,
+  StatusPill,
+  SurfaceCard,
+  TableCell,
+  TableEmpty,
+  TableFrame,
+  TableHeadCell,
+  TableHeadRow,
+  TablePagination,
+  TableRow,
+  TableSkeleton,
+  type PillTone,
+} from "@/components/ui-kit";
 import { toast } from "sonner";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -31,6 +48,17 @@ import {
   MESSAGE_GEL_REACTIVATION,
   PROSPECTION_MONITEURS_GELEE,
 } from "@/lib/prospection-gel";
+
+/** Teinte de chaque statut de date — le libellé reste celui d'`INTAKE_STATUSES`. */
+const INTAKE_STATUS_TONES: Record<string, PillTone> = {
+  brouillon: "neutral",
+  confirme: "info",
+  ouvert: "success",
+  complet: "warning",
+  annule: "danger",
+};
+
+type MoniteursTab = "dates" | "ecoles" | "base";
 
 function IntakeCard({
   intake,
@@ -46,73 +74,74 @@ function IntakeCard({
   const statusMeta = INTAKE_STATUSES.find((s) => s.key === intake.status);
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="pt-4 pb-3 space-y-3">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <p className="font-semibold">{intake.language} — {intake.location}</p>
-            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
-              <Calendar className="h-3.5 w-3.5" />
-              {format(new Date(intake.start_date), "dd MMM yyyy", { locale: fr })}
-              {" → "}
-              {format(new Date(intake.end_date), "dd MMM yyyy", { locale: fr })}
-            </p>
-          </div>
-          <Badge variant="secondary" className="shrink-0">
-            <span className={`inline-block w-2 h-2 rounded-full mr-1.5 ${statusMeta?.color}`} />
-            {statusMeta?.label}
-          </Badge>
-        </div>
+    <SurfaceCard
+      interactive
+      title={`${intake.language} — ${intake.location}`}
+      description={
+        <span className="flex items-center gap-1">
+          <Calendar className="h-3.5 w-3.5 shrink-0" />
+          <span className="tabular">
+            {format(new Date(intake.start_date), "dd MMM yyyy", { locale: fr })}
+            {" → "}
+            {format(new Date(intake.end_date), "dd MMM yyyy", { locale: fr })}
+          </span>
+        </span>
+      }
+      actions={
+        <StatusPill tone={INTAKE_STATUS_TONES[intake.status] ?? "neutral"} dot size="sm">
+          {statusMeta?.label}
+        </StatusPill>
+      }
+      bodyClassName="space-y-3"
+    >
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Building2 className="h-3.5 w-3.5 shrink-0" />
+        <span className="truncate">{intake.partner?.name || "—"}</span>
+      </div>
 
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Building2 className="h-3.5 w-3.5" />
-          <span>{intake.partner?.name || "—"}</span>
-        </div>
+      <div className="flex flex-wrap gap-2">
+        {intake.open_to_other_schools ? (
+          <StatusPill tone="info" size="sm" icon={Globe}>
+            Toutes écoles
+          </StatusPill>
+        ) : (
+          <StatusPill tone="neutral" size="sm" icon={Lock}>
+            École hôte uniquement
+          </StatusPill>
+        )}
+        {(intake.enrollment_count ?? 0) > 0 && (
+          <StatusPill tone="purple" size="sm">
+            {intake.enrollment_count} inscrit(s)
+          </StatusPill>
+        )}
+        {intake.outreach_sent_at && (
+          <StatusPill tone="success" size="sm" icon={Mail}>
+            Envoyé {format(new Date(intake.outreach_sent_at), "dd/MM/yy", { locale: fr })}
+          </StatusPill>
+        )}
+      </div>
 
-        <div className="flex flex-wrap gap-2">
-          {intake.open_to_other_schools ? (
-            <Badge variant="outline" className="text-xs gap-1">
-              <Globe className="h-3 w-3" /> Toutes écoles
-            </Badge>
+      <div className="flex flex-wrap items-center gap-2 pt-1">
+        <Button variant="outline" size="sm" onClick={onEdit}>Modifier</Button>
+        {["confirme", "ouvert"].includes(intake.status) &&
+          (PROSPECTION_MONITEURS_GELEE ? (
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <Snowflake className="h-3.5 w-3.5" />
+              Envoi gelé
+            </span>
           ) : (
-            <Badge variant="outline" className="text-xs gap-1">
-              <Lock className="h-3 w-3" /> École hôte uniquement
-            </Badge>
-          )}
-          {(intake.enrollment_count ?? 0) > 0 && (
-            <Badge variant="secondary" className="text-xs">
-              {intake.enrollment_count} inscrit(s)
-            </Badge>
-          )}
-          {intake.outreach_sent_at && (
-            <Badge className="text-xs bg-green-100 text-green-800 hover:bg-green-100">
-              <Mail className="h-3 w-3 mr-1" />
-              Envoyé {format(new Date(intake.outreach_sent_at), "dd/MM/yy", { locale: fr })}
-            </Badge>
-          )}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          <Button variant="outline" size="sm" onClick={onEdit}>Modifier</Button>
-          {["confirme", "ouvert"].includes(intake.status) &&
-            (PROSPECTION_MONITEURS_GELEE ? (
-              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                <Snowflake className="h-3.5 w-3.5" />
-                Envoi gelé
-              </span>
-            ) : (
-              <Button size="sm" onClick={onSend} disabled={sending}>
-                <Send className="h-3.5 w-3.5 mr-1" />
-                {intake.outreach_sent_at ? "Renvoyer" : "Informer les moniteurs"}
-              </Button>
-            ))}
-        </div>
-      </CardContent>
-    </Card>
+            <Button size="sm" onClick={onSend} disabled={sending}>
+              <Send className="mr-1 h-3.5 w-3.5" />
+              {intake.outreach_sent_at ? "Renvoyer" : "Informer les moniteurs"}
+            </Button>
+          ))}
+      </div>
+    </SurfaceCard>
   );
 }
 
 export default function MoniteursSki() {
+  const [tab, setTab] = useState<MoniteursTab>("dates");
   const [searchMonitors, setSearchMonitors] = useState("");
   const [monitorPage, setMonitorPage] = useState(1);
   const monitorPageSize = 50;
@@ -132,8 +161,10 @@ export default function MoniteursSki() {
   const monitors = monitorsResult?.rows ?? [];
   const monitorTotal = monitorsResult?.total ?? 0;
   const monitorTotalPages = Math.max(1, Math.ceil(monitorTotal / monitorPageSize));
-  const { data: stats } = useSkiMonitorStats();
+  const { data: stats, isLoading: statsLoading } = useSkiMonitorStats();
   const sendOutreach = useSendIntakeOutreach();
+
+  const scheduledIntakes = intakes.filter((i) => !["annule", "brouillon"].includes(i.status));
 
   const handleSend = async (dryRun = false) => {
     if (!sendTarget) return;
@@ -146,15 +177,67 @@ export default function MoniteursSki() {
     }
   };
 
+  const openMonitor = (monitor: SkiMonitor) => {
+    setEditMonitor(monitor);
+    setMonitorFormOpen(true);
+  };
+
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Moniteurs de ski</h1>
-          <p className="text-sm text-muted-foreground">
-            Base de contacts et dates de formation fermées avec les écoles de ski
-          </p>
-        </div>
+      <PageShell>
+        <PageHeader
+          title="Moniteurs de ski"
+          description="Base de contacts et dates de formation fermées avec les écoles de ski"
+          icon={Snowflake}
+          tone="blue"
+          meta={
+            PROSPECTION_MONITEURS_GELEE ? (
+              <StatusPill tone="info" icon={Snowflake}>
+                Prospection gelée
+              </StatusPill>
+            ) : undefined
+          }
+          actions={
+            <>
+              {tab === "dates" && (
+                <Button onClick={() => { setEditIntake(null); setIntakeFormOpen(true); }}>
+                  <Plus className="mr-2 h-4 w-4" /> Nouvelle date
+                </Button>
+              )}
+              {tab === "base" && (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => setImportOpen(true)}
+                    disabled={PROSPECTION_MONITEURS_GELEE}
+                    title={PROSPECTION_MONITEURS_GELEE ? MESSAGE_GEL_PROSPECTION : undefined}
+                  >
+                    <Upload className="mr-2 h-4 w-4" /> Importer CSV
+                  </Button>
+                  <Button
+                    onClick={() => { setEditMonitor(null); setMonitorFormOpen(true); }}
+                    disabled={PROSPECTION_MONITEURS_GELEE}
+                    title={PROSPECTION_MONITEURS_GELEE ? MESSAGE_GEL_PROSPECTION : undefined}
+                  >
+                    <Plus className="mr-2 h-4 w-4" /> Ajouter un moniteur
+                  </Button>
+                </>
+              )}
+            </>
+          }
+          tabs={
+            <SegmentedControl<MoniteursTab>
+              value={tab}
+              onChange={setTab}
+              ariaLabel="Sections moniteurs de ski"
+              options={[
+                { value: "dates", label: "Dates de formation", icon: Calendar },
+                { value: "ecoles", label: "Écoles de ski", icon: School },
+                { value: "base", label: "Base moniteurs", icon: Users },
+              ]}
+            />
+          }
+        />
 
         {PROSPECTION_MONITEURS_GELEE && (
           <Alert>
@@ -167,162 +250,180 @@ export default function MoniteursSki() {
           </Alert>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard title="Moniteurs actifs" value={stats?.active || 0} subtitle={`${stats?.total || 0} au total`} icon={Users} />
-          <StatCard title="Stations couvertes" value={stats?.stations || 0} subtitle="dans la base" icon={MapPin} />
-          <StatCard title="Dates programmées" value={intakes.filter((i) => !["annule", "brouillon"].includes(i.status)).length} subtitle="confirmées ou ouvertes" icon={Calendar} />
-        </div>
+        {/* KPI — les tuiles ouvrent la section qui détaille le chiffre. */}
+        <StatTileGrid cols={3}>
+          <StatTile
+            label="Moniteurs actifs"
+            value={stats?.active ?? 0}
+            hint={`${stats?.total ?? 0} au total`}
+            icon={Users}
+            tone="blue"
+            loading={statsLoading}
+            onClick={() => setTab("base")}
+          />
+          <StatTile
+            label="Stations couvertes"
+            value={stats?.stations ?? 0}
+            hint="dans la base"
+            icon={MapPin}
+            tone="teal"
+            loading={statsLoading}
+          />
+          <StatTile
+            label="Dates programmées"
+            value={scheduledIntakes.length}
+            hint="confirmées ou ouvertes"
+            icon={Calendar}
+            tone="gold"
+            loading={intakesLoading}
+            onClick={() => setTab("dates")}
+          />
+        </StatTileGrid>
 
-        <Tabs defaultValue="dates">
-          <TabsList>
-            <TabsTrigger value="dates">Dates de formation</TabsTrigger>
-            <TabsTrigger value="ecoles">Écoles de ski</TabsTrigger>
-            <TabsTrigger value="base">Base moniteurs</TabsTrigger>
-          </TabsList>
+        {tab === "ecoles" && <SkiSchoolMatchingCard />}
 
-          <TabsContent value="ecoles" className="mt-4">
-            <SkiSchoolMatchingCard />
-          </TabsContent>
-
-          <TabsContent value="dates" className="mt-4 space-y-4">
-            <div className="flex justify-end">
-              <Button onClick={() => { setEditIntake(null); setIntakeFormOpen(true); }}>
-                <Plus className="h-4 w-4 mr-2" /> Nouvelle date
-              </Button>
-            </div>
-
-            {intakesLoading ? (
-              <p className="text-muted-foreground text-sm">Chargement...</p>
-            ) : intakes.length === 0 ? (
-              <Card>
-                <CardContent className="py-12 text-center text-muted-foreground">
-                  <Calendar className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                  <p>Aucune date de formation. Créez une date fermée avec une école de ski partenaire.</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {intakes.map((intake) => (
-                  <IntakeCard
-                    key={intake.id}
-                    intake={intake}
-                    onEdit={() => { setEditIntake(intake); setIntakeFormOpen(true); }}
-                    onSend={() => setSendTarget(intake)}
-                    sending={sendOutreach.isPending}
-                  />
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="base" className="mt-4 space-y-4">
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-              <div className="relative flex-1 min-w-[200px] max-w-sm">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Rechercher nom, email, station..."
-                  className="pl-8"
-                  value={searchMonitors}
-                  onChange={(e) => {
-                    setSearchMonitors(e.target.value);
-                    setMonitorPage(1);
-                  }}
+        {tab === "dates" && (
+          intakesLoading ? (
+            <CardGrid cols={3}>
+              {[0, 1, 2].map((index) => (
+                <div key={index} className="h-56 animate-shimmer rounded-[var(--radius-card)]" />
+              ))}
+            </CardGrid>
+          ) : intakes.length === 0 ? (
+            <SurfaceCard>
+              <TableEmpty
+                title="Aucune date de formation"
+                description="Créez une date fermée avec une école de ski partenaire."
+                icon={Calendar}
+                action={
+                  <Button onClick={() => { setEditIntake(null); setIntakeFormOpen(true); }}>
+                    <Plus className="mr-2 h-4 w-4" /> Nouvelle date
+                  </Button>
+                }
+              />
+            </SurfaceCard>
+          ) : (
+            <CardGrid cols={3}>
+              {intakes.map((intake) => (
+                <IntakeCard
+                  key={intake.id}
+                  intake={intake}
+                  onEdit={() => { setEditIntake(intake); setIntakeFormOpen(true); }}
+                  onSend={() => setSendTarget(intake)}
+                  sending={sendOutreach.isPending}
                 />
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => setImportOpen(true)}
-                disabled={PROSPECTION_MONITEURS_GELEE}
-                title={PROSPECTION_MONITEURS_GELEE ? MESSAGE_GEL_PROSPECTION : undefined}
-              >
-                <Upload className="h-4 w-4 mr-2" /> Importer CSV
-              </Button>
-              <Button
-                onClick={() => { setEditMonitor(null); setMonitorFormOpen(true); }}
-                disabled={PROSPECTION_MONITEURS_GELEE}
-                title={PROSPECTION_MONITEURS_GELEE ? MESSAGE_GEL_PROSPECTION : undefined}
-              >
-                <Plus className="h-4 w-4 mr-2" /> Ajouter un moniteur
-              </Button>
-            </div>
+              ))}
+            </CardGrid>
+          )
+        )}
 
-            {monitorsLoading ? (
-              <p className="text-muted-foreground text-sm">Chargement...</p>
-            ) : monitors.length === 0 ? (
-              <Card>
-                <CardContent className="py-12 text-center text-muted-foreground">
-                  <Users className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                  <p>Base vide. Importez vos contacts moniteurs pour l'outreach.</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <>
-              <div className="rounded-lg border overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted/50">
-                    <tr>
-                      <th className="text-left p-3 font-medium">Nom</th>
-                      <th className="text-left p-3 font-medium">Email</th>
-                      <th className="text-left p-3 font-medium hidden md:table-cell">École</th>
-                      <th className="text-left p-3 font-medium hidden md:table-cell">Station</th>
-                      <th className="text-left p-3 font-medium">Statut</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+        {tab === "base" && (
+          <>
+            <FilterBar
+              search={{
+                value: searchMonitors,
+                onChange: (value) => {
+                  setSearchMonitors(value);
+                  setMonitorPage(1);
+                },
+                placeholder: "Rechercher nom, email, station...",
+                ariaLabel: "Rechercher un moniteur",
+              }}
+              activeFilters={
+                searchMonitors
+                  ? [{
+                      key: "search",
+                      label: `Recherche : ${searchMonitors}`,
+                      onRemove: () => { setSearchMonitors(""); setMonitorPage(1); },
+                    }]
+                  : undefined
+              }
+            />
+
+            <SurfaceCard flush>
+              {monitorsLoading ? (
+                <TableSkeleton rows={8} cols={5} />
+              ) : monitors.length === 0 ? (
+                <TableEmpty
+                  title="Base vide"
+                  description="Importez vos contacts moniteurs pour l'outreach."
+                  icon={Users}
+                />
+              ) : (
+                <>
+                  {/* Table à plat : une ligne = un moniteur, sans conteneur intermédiaire,
+                      pour rester virtualisable si le volume l'impose. */}
+                  <TableFrame>
+                    <table className="hidden w-full md:table">
+                      <thead>
+                        <TableHeadRow>
+                          <TableHeadCell>Nom</TableHeadCell>
+                          <TableHeadCell>Email</TableHeadCell>
+                          <TableHeadCell>École</TableHeadCell>
+                          <TableHeadCell>Station</TableHeadCell>
+                          <TableHeadCell>Statut</TableHeadCell>
+                        </TableHeadRow>
+                      </thead>
+                      <tbody>
+                        {monitors.map((m) => (
+                          <TableRow
+                            key={m.id}
+                            onClick={PROSPECTION_MONITEURS_GELEE ? undefined : () => openMonitor(m)}
+                          >
+                            <TableCell className="font-medium">
+                              {m.first_name} {m.last_name}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{m.email}</TableCell>
+                            <TableCell hideBelow="md">{m.partner?.name || "—"}</TableCell>
+                            <TableCell hideBelow="md">{m.home_station || "—"}</TableCell>
+                            <TableCell>
+                              <StatusPill tone={m.status === "active" ? "success" : "neutral"} size="sm">
+                                {m.status === "active" ? "Actif" : "Désinscrit"}
+                              </StatusPill>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </tbody>
+                    </table>
+                  </TableFrame>
+
+                  <CardList className="md:hidden">
                     {monitors.map((m) => (
-                      <tr
+                      <CardListItem
                         key={m.id}
-                        className={`border-t hover:bg-muted/30 ${PROSPECTION_MONITEURS_GELEE ? "" : "cursor-pointer"}`}
-                        onClick={
-                          PROSPECTION_MONITEURS_GELEE
-                            ? undefined
-                            : () => { setEditMonitor(m); setMonitorFormOpen(true); }
-                        }
-                      >
-                        <td className="p-3 font-medium">{m.first_name} {m.last_name}</td>
-                        <td className="p-3 text-muted-foreground">{m.email}</td>
-                        <td className="p-3 hidden md:table-cell">{m.partner?.name || "—"}</td>
-                        <td className="p-3 hidden md:table-cell">{m.home_station || "—"}</td>
-                        <td className="p-3">
-                          <Badge variant={m.status === "active" ? "default" : "secondary"}>
+                        onClick={PROSPECTION_MONITEURS_GELEE ? undefined : () => openMonitor(m)}
+                        title={`${m.first_name} ${m.last_name}`}
+                        subtitle={m.email}
+                        meta={
+                          <StatusPill tone={m.status === "active" ? "success" : "neutral"} size="sm">
                             {m.status === "active" ? "Actif" : "Désinscrit"}
-                          </Badge>
-                        </td>
-                      </tr>
+                          </StatusPill>
+                        }
+                        fields={[
+                          { label: "École", value: m.partner?.name || "—" },
+                          { label: "Station", value: m.home_station || "—" },
+                        ]}
+                      />
                     ))}
-                  </tbody>
-                </table>
-              </div>
-              {monitorTotalPages > 1 && (
-                <div className="flex items-center justify-between pt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={monitorPage <= 1}
-                    onClick={() => setMonitorPage((p) => Math.max(1, p - 1))}
-                  >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Précédent
-                  </Button>
-                  <span className="text-sm text-muted-foreground">
-                    Page {monitorPage} / {monitorTotalPages} ({monitorTotal} au total)
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={monitorPage >= monitorTotalPages}
-                    onClick={() => setMonitorPage((p) => Math.min(monitorTotalPages, p + 1))}
-                  >
-                    Suivant
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                </div>
+                  </CardList>
+
+                  {monitorTotalPages > 1 && (
+                    <TablePagination
+                      page={monitorPage}
+                      pageSize={monitorPageSize}
+                      total={monitorTotal}
+                      onPageChange={(next) =>
+                        setMonitorPage(Math.min(monitorTotalPages, Math.max(1, next)))
+                      }
+                      totalLabel={(total) => `${total.toLocaleString("fr-FR")} moniteurs au total`}
+                    />
+                  )}
+                </>
               )}
-              </>
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
+            </SurfaceCard>
+          </>
+        )}
+      </PageShell>
 
       <CourseIntakeFormDialog
         open={intakeFormOpen}

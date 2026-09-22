@@ -2,20 +2,18 @@ import { useState, useMemo } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, Loader2, Phone, Mountain } from "lucide-react";
 import type { RegistrationData } from "@/pages/register/Index";
 import { usePlacementQuestions } from "@/hooks/usePlacementQuestions";
+import { MeterRow, StatusPill, SurfaceCard } from "@/components/ui-kit";
+import type { PillTone } from "@/components/ui-kit";
 import {
   buildAdaptiveTestResult,
   evaluateSlope,
   getNextSlopeAfterSlope,
   getQuestionsForSlope,
   QUESTIONS_PER_SLOPE,
-  SLOPE_COLORS,
   SLOPE_LABELS,
   studentFacingPisteLabel,
   type AdaptiveTestResult,
@@ -29,6 +27,20 @@ import {
   STATION_GROUP_NOTICE_BEFORE_TEST,
   STATION_GROUP_SIGNATURE,
 } from "@/lib/registration-group-notice";
+import { StepActions, StepCard, SummaryPanel } from "./StepLayout";
+
+/**
+ * Teinte de pastille par piste. Les couleurs en dur de `SLOPE_COLORS`
+ * (bg-emerald-500…) ne passent pas en thème sombre : on garde le libellé du
+ * moteur métier et on habille avec les jetons du design system.
+ */
+const SLOPE_TONES: Record<SlopeLevel, PillTone> = {
+  verte: "success",
+  bleue: "info",
+  rouge: "danger",
+  noire: "neutral",
+  vocab_ski: "warning",
+};
 
 interface PlacementTestStepProps {
   data: Partial<RegistrationData>;
@@ -176,72 +188,84 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
 
   if (testCompleted && result) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CheckCircle className="h-6 w-6 text-emerald-600" />
-            Test terminé
-          </CardTitle>
-          <CardDescription>Votre niveau a été évalué selon le parcours adaptatif FLI</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="text-center p-4 rounded-lg bg-muted/50">
-              <p className="text-sm text-muted-foreground mb-2">Votre piste</p>
-              <Badge className="text-xl px-4 py-1">
-                {studentFacingPisteLabel({
-                  passedSlopes: result.passedSlopes,
-                  highestSlopeReached: result.highestSlopeReached,
-                  endedAtVocab: result.endedAtVocab,
-                })}
-              </Badge>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <StepCard
+          title={
+            <span className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 shrink-0 text-[hsl(var(--status-good))]" aria-hidden />
+              Test terminé
+            </span>
+          }
+          description="Votre niveau a été évalué selon le parcours adaptatif FLI"
+        >
+          <div className="space-y-6">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <SummaryPanel className="space-y-2 text-center">
+                <p className="text-sm text-muted-foreground">Votre piste</p>
+                <div className="flex justify-center">
+                  <StatusPill
+                    tone={
+                      SLOPE_TONES[result.highestSlopeReached as SlopeLevel] ?? "neutral"
+                    }
+                    className="px-4 py-1.5 text-base"
+                  >
+                    {studentFacingPisteLabel({
+                      passedSlopes: result.passedSlopes,
+                      highestSlopeReached: result.highestSlopeReached,
+                      endedAtVocab: result.endedAtVocab,
+                    })}
+                  </StatusPill>
+                </div>
+              </SummaryPanel>
+              <SummaryPanel className="space-y-2 text-center">
+                <p className="text-sm text-muted-foreground">Score global</p>
+                <p className="text-metric tabular text-foreground">
+                  {result.correctAnswers}/{result.totalAnswered}
+                </p>
+              </SummaryPanel>
             </div>
-            <div className="text-center p-4 rounded-lg bg-muted/50">
-              <p className="text-sm text-muted-foreground mb-2">Score global</p>
-              <p className="text-2xl font-bold">
-                {result.correctAnswers}/{result.totalAnswered}
-              </p>
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Parcours des pistes</p>
+              <div className="flex flex-wrap gap-2">
+                {result.slopeResults.map((sr) => (
+                  <StatusPill
+                    key={sr.slope}
+                    tone={sr.passed ? SLOPE_TONES[sr.slope] : "neutral"}
+                    dot
+                  >
+                    {SLOPE_LABELS[sr.slope]} · {sr.correct}/{sr.total}
+                  </StatusPill>
+                ))}
+              </div>
             </div>
+
+            {result.needsAdminCall && (
+              <Alert variant="destructive">
+                <Phone className="h-4 w-4" />
+                <AlertDescription>
+                  Notre équipe vous contactera par téléphone pour affiner votre niveau.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {isStationGroup && (
+              <Alert>
+                <Mountain className="h-4 w-4" />
+                <AlertDescription>
+                  {STATION_GROUP_NOTICE_AFTER_TEST} — {STATION_GROUP_SIGNATURE}
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
+        </StepCard>
 
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Parcours des pistes</p>
-            <div className="flex flex-wrap gap-2">
-              {result.slopeResults.map((sr) => (
-                <Badge
-                  key={sr.slope}
-                  variant={sr.passed ? "default" : "secondary"}
-                  className={sr.passed ? SLOPE_COLORS[sr.slope] : ""}
-                >
-                  {SLOPE_LABELS[sr.slope]} · {sr.correct}/{sr.total}
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          {result.needsAdminCall && (
-            <Alert variant="destructive">
-              <Phone className="h-4 w-4" />
-              <AlertDescription>
-                Notre équipe vous contactera par téléphone pour affiner votre niveau.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {isStationGroup && (
-            <Alert>
-              <Mountain className="h-4 w-4" />
-              <AlertDescription>
-                {STATION_GROUP_NOTICE_AFTER_TEST} — {STATION_GROUP_SIGNATURE}
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <Button onClick={handleSubmit} className="w-full">
+        <StepActions>
+          <Button type="submit" onClick={handleSubmit} className="h-12 w-full text-base sm:w-auto">
             Continuer vers les attentes
           </Button>
-        </CardContent>
-      </Card>
+        </StepActions>
+      </form>
     );
   }
 
@@ -249,94 +273,95 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
     const progressInSlope = ((questionIndex) / slopeQuestions.length) * 100;
 
     return (
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Test de niveau adaptatif</CardTitle>
-            <Badge className={SLOPE_COLORS[currentSlope]}>
-              {SLOPE_LABELS[currentSlope]}
-            </Badge>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline">
-              Question {questionIndex + 1} / {slopeQuestions.length}
-            </Badge>
-            <Progress value={progressInSlope} className="flex-1" />
-          </div>
-          <CardDescription>
-            {currentSlope === "vocab_ski"
-              ? "Vocabulaire technique du ski"
-              : `Répondez à ${QUESTIONS_PER_SLOPE} questions — il faut ${QUESTIONS_PER_SLOPE - 2} bonnes réponses ou plus pour passer à la piste suivante`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="p-4 rounded-lg bg-muted/50">
-            <p className="text-lg font-medium">{currentQuestion.question_text}</p>
+      <SurfaceCard
+        title="Test de niveau adaptatif"
+        description={
+          currentSlope === "vocab_ski"
+            ? "Vocabulaire technique du ski"
+            : `Répondez à ${QUESTIONS_PER_SLOPE} questions — il faut ${QUESTIONS_PER_SLOPE - 2} bonnes réponses ou plus pour passer à la piste suivante`
+        }
+        actions={
+          <StatusPill tone={SLOPE_TONES[currentSlope]} dot>
+            {SLOPE_LABELS[currentSlope]}
+          </StatusPill>
+        }
+        toolbar={
+          <MeterRow
+            label={`Question ${questionIndex + 1} / ${slopeQuestions.length}`}
+            value={progressInSlope}
+            display={`${Math.round(progressInSlope)} %`}
+          />
+        }
+      >
+        <div className="space-y-5">
+          <div className="rounded-[var(--radius-card)] bg-[hsl(var(--surface-sunken))] p-4 sm:p-5">
+            <p className="text-lg font-medium leading-snug text-balance text-foreground">
+              {currentQuestion.question_text}
+            </p>
           </div>
 
           <RadioGroup onValueChange={selectAnswer} className="space-y-3">
             {currentQuestion.options.map((option, index) => (
               <div
                 key={index}
-                className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-muted/50 transition-colors cursor-pointer"
+                className="rounded-[var(--radius-card)] border border-border bg-card transition-colors hover:bg-[hsl(var(--surface-sunken))]"
               >
-                <RadioGroupItem value={option} id={`option-${index}`} />
-                <Label htmlFor={`option-${index}`} className="font-normal cursor-pointer flex-1">
-                  {option}
+                <Label
+                  htmlFor={`option-${index}`}
+                  className="flex min-h-14 cursor-pointer items-center gap-3 p-4 text-base font-normal leading-snug"
+                >
+                  <RadioGroupItem value={option} id={`option-${index}`} className="shrink-0" />
+                  <span className="min-w-0">{option}</span>
                 </Label>
               </div>
             ))}
           </RadioGroup>
-        </CardContent>
-      </Card>
+        </div>
+      </SurfaceCard>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Test de niveau obligatoire</CardTitle>
-        <CardDescription>
-          Test adaptatif par pistes (verte → bleue → rouge → noire) — requis pour toutes les
-          inscriptions, même si vous connaissez déjà votre niveau
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          <Alert>
-            <Mountain className="h-4 w-4" />
-            <AlertDescription>
-              Ce test permet à FLI de placer chaque stagiaire dans le groupe adapté. Il est
-              obligatoire et ne peut pas être remplacé par une auto-évaluation.
+    <StepCard
+      title="Test de niveau obligatoire"
+      description="Test adaptatif par pistes (verte → bleue → rouge → noire) — requis pour toutes les inscriptions, même si vous connaissez déjà votre niveau"
+      icon={Mountain}
+    >
+      <div className="space-y-5">
+        <Alert>
+          <Mountain className="h-4 w-4" />
+          <AlertDescription>
+            Ce test permet à FLI de placer chaque stagiaire dans le groupe adapté. Il est
+            obligatoire et ne peut pas être remplacé par une auto-évaluation.
+          </AlertDescription>
+        </Alert>
+
+        {isStationGroup && (
+          <Alert className="border-primary/20 bg-[hsl(var(--surface-sunken))]">
+            <AlertDescription className="text-sm">
+              {STATION_GROUP_NOTICE_BEFORE_TEST} — {STATION_GROUP_SIGNATURE}
             </AlertDescription>
           </Alert>
+        )}
 
-          {isStationGroup && (
-            <Alert className="bg-muted/50 border-primary/20">
-              <AlertDescription className="text-sm">
-                {STATION_GROUP_NOTICE_BEFORE_TEST} — {STATION_GROUP_SIGNATURE}
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {isLoading ? (
-            <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : allQuestions.length === 0 ? (
-            <Alert variant="destructive">
-              <AlertDescription>
-                Le test n'est pas disponible pour cette langue pour le moment. Merci de contacter
-                FLI à info@fli.fr.
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <Button type="button" onClick={startTest} className="w-full">
-              Commencer le test (piste verte)
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        {isLoading ? (
+          <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Chargement des questions…
+          </div>
+        ) : allQuestions.length === 0 ? (
+          <Alert variant="destructive">
+            <AlertDescription>
+              Le test n'est pas disponible pour cette langue pour le moment. Merci de contacter
+              FLI à info@fli.fr.
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <Button type="button" onClick={startTest} className="h-12 w-full text-base">
+            Commencer le test (piste verte)
+          </Button>
+        )}
+      </div>
+    </StepCard>
   );
 }

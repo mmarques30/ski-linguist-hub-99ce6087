@@ -11,13 +11,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle, ClipboardList } from "lucide-react";
+import { IconChip, SurfaceCard } from "@/components/ui-kit";
 import { supabase } from "@/integrations/supabase/client";
 import {
   PROFESSION_LABELS,
@@ -91,33 +88,43 @@ export default function BookTest() {
     setDone(true);
   };
 
+  const schools = schoolsQuery.data ?? [];
+
   return (
-    <div className="min-h-screen bg-muted/40 py-10 px-4">
-      <div className="mx-auto max-w-xl space-y-6">
+    <div className="min-h-screen bg-[hsl(var(--surface-page))] px-4 py-8 sm:py-10">
+      <div className="mx-auto max-w-xl animate-fade-up space-y-5">
         <div className="flex justify-center">
-          <img src={fliLogo} alt="France Langues International" className="h-14" />
+          <img src={fliLogo} alt="France Langues International" className="h-12 sm:h-14" />
         </div>
-        <Card>
-          <CardHeader>
-            <CardTitle>Réservation de test</CardTitle>
-            <CardDescription>
-              Identité du candidat. Si vous êtes moniteur de ski, discipline et cycle
-              de formation sont obligatoires — ils figurent ensuite sur le compte-rendu.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {done ? (
-              <p className="text-sm">
+
+        {done ? (
+          <SurfaceCard accent="chart-3" bodyClassName="p-5 sm:p-6">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <IconChip icon={CheckCircle} tone="teal" size="lg" />
+              <h1 className="text-xl font-semibold tracking-tight text-balance sm:text-2xl">
+                Demande enregistrée
+              </h1>
+              <p className="text-sm text-muted-foreground">
                 Demande enregistrée. FLI vous confirmera le créneau.
               </p>
-            ) : (
-              <form onSubmit={(e) => void handleSubmit(e)} className="space-y-5">
+            </div>
+          </SurfaceCard>
+        ) : (
+          <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+            <SurfaceCard
+              title="Réservation de test"
+              description="Identité du candidat. Si vous êtes moniteur de ski, discipline et cycle de formation sont obligatoires — ils figurent ensuite sur le compte-rendu."
+              icon={ClipboardList}
+            >
+              <div className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="name">Nom et prénom</Label>
                   <Input
                     id="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    autoComplete="name"
+                    className="h-11"
                     required
                   />
                 </div>
@@ -126,8 +133,11 @@ export default function BookTest() {
                   <Input
                     id="email"
                     type="email"
+                    inputMode="email"
+                    autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    className="h-11"
                     required
                   />
                 </div>
@@ -135,15 +145,19 @@ export default function BookTest() {
                   <Label htmlFor="phone">Téléphone</Label>
                   <Input
                     id="phone"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
+                    className="h-11"
                     required
                   />
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <Label>Profession</Label>
                   <Select value={profession} onValueChange={setProfession}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-11">
                       <SelectValue placeholder="Choisir" />
                     </SelectTrigger>
                     <SelectContent>
@@ -158,30 +172,46 @@ export default function BookTest() {
                   </Select>
                 </div>
                 {profession === "autre" && (
-                  <div className="space-y-2">
+                  <div className="animate-in fade-in slide-in-from-top-2 space-y-2">
                     <Label htmlFor="profession-autre">Précisez</Label>
                     <Input
                       id="profession-autre"
                       value={professionAutre}
                       onChange={(e) => setProfessionAutre(e.target.value)}
+                      className="h-11"
                       required
                     />
                   </div>
                 )}
                 <div className="space-y-2">
                   <Label>École de ski</Label>
-                  <Select value={skiSchoolId} onValueChange={setSkiSchoolId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choisir une école" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(schoolsQuery.data ?? []).map((school) => (
-                        <SelectItem key={school.id} value={school.id}>
-                          {school.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {schoolsQuery.isLoading ? (
+                    <Skeleton className="h-11 w-full rounded-[var(--radius)]" />
+                  ) : (
+                    <Select value={skiSchoolId} onValueChange={setSkiSchoolId}>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Choisir une école" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {schools.map((school) => (
+                          <SelectItem key={school.id} value={school.id}>
+                            {school.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {schoolsQuery.isError && (
+                    <p className="text-sm text-destructive">
+                      La liste des écoles n&apos;a pas pu être chargée. Merci de réessayer ou de
+                      contacter FLI.
+                    </p>
+                  )}
+                  {!schoolsQuery.isLoading && !schoolsQuery.isError && schools.length === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Aucune école de ski disponible pour le moment.
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="carte">N° carte syndicale (si ESF)</Label>
@@ -189,21 +219,28 @@ export default function BookTest() {
                     id="carte"
                     value={carteSyndicale}
                     onChange={(e) => setCarteSyndicale(e.target.value)}
+                    className="h-11"
                   />
                 </div>
                 {isMoniteur && (
-                  <div className="space-y-4 rounded-lg border p-4">
+                  <div className="animate-in fade-in slide-in-from-top-2 space-y-4 rounded-[var(--radius-card)] border border-border bg-[hsl(var(--surface-sunken))] p-4">
                     <div className="space-y-3">
                       <Label>Discipline</Label>
                       <RadioGroup
                         value={skiDiscipline}
                         onValueChange={setSkiDiscipline}
-                        className="flex gap-4"
+                        className="grid gap-2 xs:grid-cols-2"
                       >
                         {SKI_DISCIPLINES.map((value) => (
-                          <div key={value} className="flex items-center gap-2">
-                            <RadioGroupItem value={value} id={`disc-${value}`} />
-                            <Label htmlFor={`disc-${value}`} className="cursor-pointer">
+                          <div
+                            key={value}
+                            className="rounded-[var(--radius)] border border-border bg-card"
+                          >
+                            <Label
+                              htmlFor={`disc-${value}`}
+                              className="flex min-h-12 cursor-pointer items-center gap-3 px-3 py-2.5 font-normal"
+                            >
+                              <RadioGroupItem value={value} id={`disc-${value}`} />
                               {SKI_DISCIPLINE_LABELS[value]}
                             </Label>
                           </div>
@@ -216,19 +253,31 @@ export default function BookTest() {
                         id="cycle"
                         value={trainingCycle}
                         onChange={(e) => setTrainingCycle(e.target.value)}
+                        className="h-11"
                         required
                       />
                     </div>
                   </div>
                 )}
-                {error && <p className="text-sm text-destructive">{error}</p>}
-                <Button type="submit" className="w-full" disabled={!canSubmit || submitting}>
-                  {submitting ? "Envoi…" : "Envoyer"}
-                </Button>
-              </form>
-            )}
-          </CardContent>
-        </Card>
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            </SurfaceCard>
+
+            <div className="sticky bottom-0 z-20 -mx-4 border-t border-border bg-[hsl(var(--surface-raised))]/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+              <Button
+                type="submit"
+                className="h-12 w-full text-base"
+                disabled={!canSubmit || submitting}
+              >
+                {submitting ? "Envoi…" : "Envoyer"}
+              </Button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

@@ -15,7 +15,8 @@ describe("DashboardGestao — retrait checklist Préparation fictive", () => {
     expect(dash).not.toContain("Simulated validation progress");
     expect(dash).not.toContain("enoughStudents");
     expect(dash).not.toContain("materialsReady");
-    expect(dash).toContain("grid-cols-2");
+    // Même garde que BL-032 : deux onglets, ni Préparation ni Facturation.
+    expect(dash).toContain('"inscriptions" | "tests"');
   });
 });
 
@@ -73,7 +74,9 @@ describe("A6 — StudentDetails codes statut", () => {
     expect(page).toContain('"terminee"');
     expect(page).toContain('"facturee"');
     expect(page).toContain("getStatusLabel");
-    expect(page).toContain("getStatusStyle");
+    // La couleur du badge vient désormais de toneForStatus (kit), plus d'un
+    // tableau de classes local ; le libellé reste getStatusLabel.
+    expect(page).toContain("toneForStatus");
     expect(page).not.toContain('status === "Terminé"');
     expect(page).not.toContain('status === "Facturé"');
   });
