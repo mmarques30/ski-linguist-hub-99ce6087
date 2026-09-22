@@ -44,6 +44,7 @@ export function TrendChart<T extends Record<string, unknown>>({
   ariaLabel,
   showLegend,
   yWidth = 48,
+  yDomain,
 }: {
   data: T[];
   series: TrendSeries[];
@@ -58,6 +59,12 @@ export function TrendChart<T extends Record<string, unknown>>({
   /** Par défaut : légende dès 2 séries (jamais pour une seule). */
   showLegend?: boolean;
   yWidth?: number;
+  /**
+   * Bornes de l'axe Y. À renseigner dès que l'échelle a un sens absolu
+   * (une note sur 5, un pourcentage) : sans elle, recharts cadre sur les
+   * données et exagère la variation.
+   */
+  yDomain?: [number | "auto", number | "auto"];
 }) {
   const gradientId = useId().replace(/:/g, "");
   const [hiddenKeys, setHiddenKeys] = useState<string[]>([]);
@@ -100,6 +107,8 @@ export function TrendChart<T extends Record<string, unknown>>({
           <YAxis
             {...axisProps}
             width={yWidth}
+            domain={yDomain}
+            allowDataOverflow={false}
             tickFormatter={formatAxisValue ? (value: number) => formatAxisValue(value) : undefined}
           />
           <Tooltip

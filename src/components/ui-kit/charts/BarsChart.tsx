@@ -47,6 +47,8 @@ export function BarsChart<T extends Record<string, unknown>>({
   onBarClick?: (entry: T, index: number) => void;
   showLegend?: boolean;
   yWidth?: number;
+  /** Bornes de l'axe des valeurs, quand l'échelle a un sens absolu. */
+  yDomain?: [number | "auto", number | "auto"];
 }) {
   const [hiddenKeys, setHiddenKeys] = useState<string[]>([]);
 
@@ -81,6 +83,7 @@ export function BarsChart<T extends Record<string, unknown>>({
               <XAxis
                 type="number"
                 {...axisProps}
+                domain={yDomain}
                 tickFormatter={formatAxisValue ? (value: number) => formatAxisValue(value) : undefined}
               />
               <YAxis type="category" dataKey={xKey} {...axisProps} width={120} />
@@ -91,6 +94,7 @@ export function BarsChart<T extends Record<string, unknown>>({
               <YAxis
                 {...axisProps}
                 width={yWidth}
+                domain={yDomain}
                 tickFormatter={formatAxisValue ? (value: number) => formatAxisValue(value) : undefined}
               />
             </>

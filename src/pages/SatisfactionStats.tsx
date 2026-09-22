@@ -931,6 +931,7 @@ export default function SatisfactionStats() {
                       variant="line"
                       height={180}
                       formatValue={(value) => `${Number(value).toFixed(2)}/5`}
+                      yDomain={[0, 5]}
                       ariaLabel="Note moyenne de satisfaction par mois, sur 5"
                       emptyMessage="Aucune réponse sur la période"
                     />
