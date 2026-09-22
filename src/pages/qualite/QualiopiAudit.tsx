@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,9 +37,11 @@ import {
 } from "@/hooks/useQualiopiAudit";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import {
+  BarsChart,
   MeterRow,
   PageHeader,
   PageShell,
+  RadialRings,
   StatTile,
   StatTileGrid,
   StatusPill,
@@ -66,7 +68,7 @@ const statusConfig: Record<string, { label: string; icon: typeof CheckCircle2; t
 
 export default function QualiopiAudit() {
   const { isAdmin } = useUserPermissions();
-  const { data: indicators = [] } = useQualiopiIndicators();
+  const { data: indicators = [], isLoading: loadingIndicators } = useQualiopiIndicators();
   const { data: auto } = useAutoIndicators();
   const upsert = useUpsertIndicator();
   const [showForm, setShowForm] = useState(false);
@@ -132,6 +134,62 @@ export default function QualiopiAudit() {
     },
   ];
 
+  /**
+   * Vue d'ensemble de la conformité — comptages bruts sur les indicateurs
+   * chargés (`useQualiopiIndicators` lit la table entière, sans pagination :
+   * les parts portent donc sur tous les indicateurs saisis).
+   * Aucune cible n'est inventée ici : seules les cibles déjà saisies par
+   * indicateur et celles des KPI automatiques ci-dessus existent.
+   */
+  const conformity = useMemo(() => {
+    const total = indicators.length;
+    const count = (status: string) => indicators.filter((ind) => ind.status === status).length;
+    const conforme = count("conforme");
+    const nonConforme = count("non_conforme");
+    const enCours = total - conforme - nonConforme;
+    const share = (value: number) => (total > 0 ? Math.round((value / total) * 100) : 0);
+
+    const perCriterion = [1, 2, 3, 4, 5, 6, 7]
+      .map((criterion) => {
+        const items = grouped[criterion] || [];
+        return {
+          criterion,
+          label: `Critère ${criterion}`,
+          conforme: items.filter((i) => i.status === "conforme").length,
+          non_conforme: items.filter((i) => i.status === "non_conforme").length,
+          en_cours: items.filter(
+            (i) => i.status !== "conforme" && i.status !== "non_conforme"
+          ).length,
+          total: items.length,
+        };
+      })
+      .filter((row) => row.total > 0);
+
+    return {
+      total,
+      conforme,
+      nonConforme,
+      enCours,
+      rings: [
+        { key: "conforme", label: `Conformes — ${conforme}/${total}`, value: share(conforme) },
+        {
+          key: "non_conforme",
+          label: `Non conformes — ${nonConforme}/${total}`,
+          value: share(nonConforme),
+        },
+        { key: "en_cours", label: `En cours — ${enCours}/${total}`, value: share(enCours) },
+      ],
+      perCriterion,
+      criteriaWithout: 7 - perCriterion.length,
+    };
+  }, [indicators, grouped]);
+
+  const focusCriterion = (criterion: number) => {
+    document
+      .getElementById(`critere-${criterion}`)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const handlePrint = () => window.print();
 
   return (
@@ -183,13 +241,75 @@ export default function QualiopiAudit() {
           })}
         </StatTileGrid>
 
+        {/* Conformité — parts globales et détail par critère, sur les
+            indicateurs saisis. Une barre ouvre le critère correspondant. */}
+        <div className="grid gap-4 lg:gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+          <SurfaceCard
+            title="Conformité des indicateurs"
+            description={`${conformity.total} indicateur${conformity.total > 1 ? "s" : ""} saisi${
+              conformity.total > 1 ? "s" : ""
+            } — parts sur l'ensemble`}
+            icon={Shield}
+          >
+            {loadingIndicators ? (
+              <div className="h-[180px] animate-shimmer rounded-[var(--radius)]" />
+            ) : conformity.total === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                Aucun indicateur saisi : rien à mesurer pour l&apos;instant.
+              </p>
+            ) : (
+              <RadialRings items={conformity.rings} size={170} />
+            )}
+          </SurfaceCard>
+
+          <SurfaceCard
+            title="Conformes / non conformes par critère"
+            description={
+              conformity.criteriaWithout > 0
+                ? `${conformity.criteriaWithout} critère${
+                    conformity.criteriaWithout > 1 ? "s" : ""
+                  } sans indicateur défini — absent${
+                    conformity.criteriaWithout > 1 ? "s" : ""
+                  } du graphique`
+                : "Les 7 critères portent au moins un indicateur"
+            }
+            icon={BarChart3}
+          >
+            {loadingIndicators ? (
+              <div className="h-[240px] animate-shimmer rounded-[var(--radius)]" />
+            ) : conformity.perCriterion.length < 1 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                Aucun indicateur saisi : le détail par critère apparaîtra ici.
+              </p>
+            ) : (
+              <BarsChart
+                data={conformity.perCriterion}
+                xKey="label"
+                stacked
+                layout="horizontal"
+                height={Math.max(180, conformity.perCriterion.length * 44)}
+                series={[
+                  { key: "conforme", label: "Conforme" },
+                  { key: "non_conforme", label: "Non conforme" },
+                  { key: "en_cours", label: "En cours" },
+                ]}
+                yDomain={[0, "auto"]}
+                ariaLabel="Indicateurs conformes, non conformes et en cours, par critère"
+                onBarClick={(entry) => focusCriterion(entry.criterion)}
+                emptyMessage="Aucun indicateur saisi"
+              />
+            )}
+          </SurfaceCard>
+        </div>
+
         {/* Criteria */}
         {[1, 2, 3, 4, 5, 6, 7].map((criterion) => {
           const items = grouped[criterion] || [];
           const conformeCount = items.filter((i) => i.status === "conforme").length;
           return (
+            // Ancre de défilement : une barre du graphique ci-dessus ouvre ce critère.
+            <div key={criterion} id={`critere-${criterion}`} className="scroll-mt-24">
             <SurfaceCard
-              key={criterion}
               title={`Critère ${criterion} — ${CRITERIA_LABELS[criterion]}`}
               actions={
                 items.length > 0 && (
@@ -259,6 +379,7 @@ export default function QualiopiAudit() {
                 </div>
               )}
             </SurfaceCard>
+            </div>
           );
         })}
 

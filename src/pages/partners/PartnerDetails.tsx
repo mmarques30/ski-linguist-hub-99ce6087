@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   ArrowLeft, Edit, Plus, Trash2, Mail, Phone, MapPin, Building2, Star, FileText, Snowflake,
-  Users, Euro, ScrollText, Wallet,
+  Users, Euro, ScrollText, Wallet, PieChart, TrendingUp,
 } from "lucide-react";
 import {
   usePartnerDetails,
@@ -21,9 +21,12 @@ import { PartnerFormDialog } from "@/components/partners/PartnerFormDialog";
 import { ContractFormDialog } from "@/components/partners/ContractFormDialog";
 import { ContactFormDialog } from "@/components/partners/ContactFormDialog";
 import {
+  BarsChart,
   CardList,
   CardListItem,
   DefinitionList,
+  DonutChart,
+  MeterRow,
   PageHeader,
   PageShell,
   SegmentedControl,
@@ -51,6 +54,7 @@ import {
 import { PartnerDedupPanel } from "@/components/partners/PartnerDedupPanel";
 import { usePartnerDedupIndex } from "@/hooks/usePartnerDedup";
 import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import { toast } from "sonner";
 
 const TYPE_LABELS: Record<string, string> = {
@@ -119,6 +123,58 @@ export default function PartnerDetails() {
 
   const totalInvoiced = invoices.reduce((s, i) => s + (i.amount_ttc || i.amount_ht || 0), 0);
   const totalPaid = invoices.filter((i) => i.status === "paid").reduce((s, i) => s + (i.amount_ttc || i.amount_ht || 0), 0);
+
+  /**
+   * Répartitions construites sur les lignes déjà chargées par les onglets :
+   * `usePartnerInscriptions` et `usePartnerInvoices` ramènent toutes les
+   * lignes du partenaire (aucune pagination), les totaux couvrent donc la
+   * fiche entière. Aucune projection, aucune cible inventée.
+   */
+  const invoiceAmount = (invoice: { amount_ttc?: number | null; amount_ht?: number | null }) =>
+    invoice.amount_ttc || invoice.amount_ht || 0;
+
+  const monthlyInvoiced = Object.values(
+    invoices.reduce<Record<string, { key: string; label: string; amount: number; count: number }>>(
+      (acc, invoice: any) => {
+        if (!invoice.invoice_date) return acc;
+        const date = new Date(invoice.invoice_date);
+        if (Number.isNaN(date.getTime())) return acc;
+        const key = format(date, "yyyy-MM");
+        const bucket = (acc[key] ||= {
+          key,
+          label: format(date, "MMM yy", { locale: fr }),
+          amount: 0,
+          count: 0,
+        });
+        bucket.amount += invoiceAmount(invoice);
+        bucket.count += 1;
+        return acc;
+      },
+      {}
+    )
+  ).sort((a, b) => a.key.localeCompare(b.key));
+
+  const undatedInvoices = invoices.filter((i: any) => !i.invoice_date).length;
+
+  const invoiceStatusSlices = Object.entries(
+    invoices.reduce<Record<string, number>>((acc, invoice: any) => {
+      const key = invoice.status || "sans statut";
+      acc[key] = (acc[key] || 0) + invoiceAmount(invoice);
+      return acc;
+    }, {})
+  )
+    .map(([status, amount]) => ({ name: status, value: Math.round(amount) }))
+    .sort((a, b) => b.value - a.value);
+
+  const inscriptionStatusSlices = Object.entries(
+    inscriptions.reduce<Record<string, number>>((acc, inscription: any) => {
+      const key = inscription.status || "sans statut";
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {})
+  )
+    .map(([status, count]) => ({ name: status, value: count }))
+    .sort((a, b) => b.value - a.value);
   const reviewReasons = partnerReviewReasons(partner.name);
   const needsReview = partnerNeedsReview(partner.name);
   const dedupMatches = matchesFor(partner.id);
@@ -255,10 +311,22 @@ export default function PartnerDetails() {
           <StatTile
             label="CA facturé"
             value={formatEuros(totalInvoiced)}
+            hint={`${invoices.length} facture${invoices.length > 1 ? "s" : ""} rattachée${
+              invoices.length > 1 ? "s" : ""
+            }`}
             icon={Euro}
             tone="teal"
             onClick={() => setTab("facturation")}
-          />
+          >
+            {totalInvoiced > 0 && (
+              <MeterRow
+                label="Encaissé"
+                value={totalPaid}
+                max={totalInvoiced}
+                display={formatEuros(totalPaid)}
+              />
+            )}
+          </StatTile>
           <StatTile
             label="Solde dû"
             value={formatEuros(totalInvoiced - totalPaid)}
@@ -468,7 +536,25 @@ export default function PartnerDetails() {
 
         {/* Inscriptions */}
         {tab === "inscriptions" && (
-          <SurfaceCard title="Stagiaires référés" flush>
+          <>
+            <SurfaceCard
+              title="Inscriptions par statut"
+              description={`${inscriptions.length} inscription${
+                inscriptions.length > 1 ? "s" : ""
+              } référée${inscriptions.length > 1 ? "s" : ""} par ce partenaire`}
+              icon={PieChart}
+            >
+              <DonutChart
+                data={inscriptionStatusSlices}
+                height={190}
+                legendPosition="side"
+                centerLabel="inscriptions"
+                ariaLabel="Inscriptions du partenaire par statut"
+                emptyMessage="Aucune inscription liée"
+              />
+            </SurfaceCard>
+
+            <SurfaceCard title="Stagiaires référés" flush className="mt-4 lg:mt-5">
             {inscriptions.length === 0 ? (
               <TableEmpty title="Aucune inscription liée" description="Aucun stagiaire n'a encore été référé par ce partenaire." icon={Users} />
             ) : (
@@ -533,12 +619,74 @@ export default function PartnerDetails() {
                 </CardList>
               </>
             )}
-          </SurfaceCard>
+            </SurfaceCard>
+          </>
         )}
 
         {/* Facturation */}
         {tab === "facturation" && (
-          <SurfaceCard title="Factures liées" flush>
+          <>
+            <div className="grid gap-4 lg:gap-5 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+              <SurfaceCard
+                title="CA facturé par mois"
+                description={
+                  undatedInvoices > 0
+                    ? `Montants TTC des factures datées — ${undatedInvoices} facture${
+                        undatedInvoices > 1 ? "s" : ""
+                      } sans date, hors graphique`
+                    : "Montants TTC des factures rattachées à ce partenaire"
+                }
+                icon={TrendingUp}
+              >
+                {monthlyInvoiced.length >= 2 ? (
+                  <BarsChart
+                    data={monthlyInvoiced}
+                    xKey="label"
+                    series={[{ key: "amount", label: "Montant facturé" }]}
+                    height={220}
+                    yDomain={[0, "auto"]}
+                    formatAxisValue={(value) =>
+                      value >= 1000 ? `${Math.round(value / 1000)}k` : String(value)
+                    }
+                    formatValue={(value) => formatEuros(Number(value))}
+                    ariaLabel="Montant facturé par mois"
+                    emptyMessage="Aucune facture datée"
+                  />
+                ) : monthlyInvoiced.length === 1 ? (
+                  <p className="py-6 text-center text-sm text-muted-foreground">
+                    Un seul mois facturé ({monthlyInvoiced[0].label}) :{" "}
+                    <span className="font-semibold tabular text-foreground">
+                      {formatEuros(monthlyInvoiced[0].amount)}
+                    </span>{" "}
+                    sur {monthlyInvoiced[0].count} facture
+                    {monthlyInvoiced[0].count > 1 ? "s" : ""}. Une courbe demande au moins
+                    deux mois.
+                  </p>
+                ) : (
+                  <p className="py-6 text-center text-sm text-muted-foreground">
+                    Aucune facture datée pour ce partenaire.
+                  </p>
+                )}
+              </SurfaceCard>
+
+              <SurfaceCard
+                title="Montants par statut de facture"
+                description="Somme des montants TTC, par statut"
+                icon={PieChart}
+              >
+                <DonutChart
+                  data={invoiceStatusSlices}
+                  height={190}
+                  legendPosition="side"
+                  centerLabel="€ facturés"
+                  formatValue={(value) => formatEuros(value)}
+                  ariaLabel="Montants facturés par statut"
+                  emptyMessage="Aucune facture"
+                />
+              </SurfaceCard>
+            </div>
+
+            <SurfaceCard title="Factures liées" flush className="mt-4 lg:mt-5">
             {invoices.length === 0 ? (
               <TableEmpty title="Aucune facture" description="Aucune facture n'est rattachée à ce partenaire." icon={FileText} />
             ) : (
@@ -610,7 +758,8 @@ export default function PartnerDetails() {
                 </CardList>
               </>
             )}
-          </SurfaceCard>
+            </SurfaceCard>
+          </>
         )}
       </PageShell>
 

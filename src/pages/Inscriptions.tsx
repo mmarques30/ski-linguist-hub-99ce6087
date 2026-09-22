@@ -38,8 +38,15 @@ import {
   Clock,
   PlayCircle,
   CheckCircle2,
+  Database,
+  ChartPie,
+  Languages,
 } from "lucide-react";
-import { useInscriptions, useDeleteInscription } from "@/hooks/useInscriptions";
+import {
+  useInscriptions,
+  useDeleteInscription,
+  useInscriptionStats,
+} from "@/hooks/useInscriptions";
 import { DATES_A_PLANIFIER_LABEL } from "@/lib/registration-dates";
 import { DueStatusAdvanceCard } from "@/components/inscriptions/DueStatusAdvanceCard";
 import { InscriptionStatusMenu } from "@/components/inscriptions/InscriptionStatusMenu";
@@ -57,10 +64,12 @@ import { useUserPermissions } from "@/hooks/useUserPermissions";
 import {
   CardList,
   CardListItem,
+  DonutChart,
   FilterBar,
   IdentityCell,
   PageHeader,
   PageShell,
+  RankedBarList,
   StatTile,
   StatTileGrid,
   StatusPill,
@@ -255,6 +264,37 @@ const translations = {
     "pt-BR": "Editar",
     en: "Edit",
   },
+  // Bandeau de synthèse — libellés ajoutés par la densification visuelle.
+  tileTotalBase: {
+    fr: "Total en base",
+    "pt-BR": "Total na base",
+    en: "Total on file",
+  },
+  wholePortfolio: {
+    fr: "toute la base, filtres exclus",
+    "pt-BR": "toda a base, sem filtros",
+    en: "whole database, filters excluded",
+  },
+  byStatus: {
+    fr: "Répartition par statut",
+    "pt-BR": "Distribuição por status",
+    en: "Breakdown by status",
+  },
+  byLanguage: {
+    fr: "Langues les plus demandées",
+    "pt-BR": "Idiomas mais procurados",
+    en: "Most requested languages",
+  },
+  portfolioScope: {
+    fr: "Comptage réel sur l'ensemble des inscriptions — indépendant des filtres et de la saison ci-dessous.",
+    "pt-BR": "Contagem real sobre todas as inscrições — independente dos filtros e da temporada abaixo.",
+    en: "Real count over every enrolment — independent of the filters and season below.",
+  },
+  noData: {
+    fr: "Aucune donnée disponible",
+    "pt-BR": "Nenhum dado disponível",
+    en: "No data available",
+  },
 };
 
 export default function Inscriptions() {
@@ -336,6 +376,39 @@ export default function Inscriptions() {
       terminee: byStatus("terminee"),
     };
   }, [inscriptions]);
+
+  /**
+   * Répartitions du portefeuille complet. `useInscriptionStats` compte la
+   * table entière : ces chiffres sont globaux, contrairement aux tuiles de
+   * statut ci-dessus qui portent sur les résultats affichés.
+   */
+  const { data: portfolio, isLoading: portfolioLoading } = useInscriptionStats();
+
+  const statusSlices = useMemo(
+    () =>
+      Object.entries(portfolio?.byStatus ?? {})
+        .map(([status, count]) => ({
+          name: getStatusLabel(status, language),
+          value: count as number,
+          href: `/inscriptions?status=${status}`,
+        }))
+        .sort((a, b) => b.value - a.value),
+    [portfolio, language]
+  );
+
+  const languageBars = useMemo(
+    () =>
+      Object.entries(portfolio?.byLanguage ?? {})
+        .map(([name, count]) => ({
+          key: name,
+          label: name,
+          value: count as number,
+          href: `/inscriptions?language=${encodeURIComponent(name)}`,
+        }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 6),
+    [portfolio]
+  );
 
   const activeFilters: Array<{ key: string; label: string; onRemove: () => void }> = [];
   if (statusFilter !== "all") {
@@ -638,8 +711,25 @@ export default function Inscriptions() {
 
         {editable && <DueStatusAdvanceCard />}
 
-        {/* Compteurs des résultats chargés — chaque tuile applique son filtre. */}
-        <StatTileGrid cols={4}>
+        {/*
+          Compteurs des résultats chargés — chaque tuile applique son filtre.
+          Seule la première tuile est globale : elle vient du comptage de la
+          table entière, les quatre suivantes portent sur les lignes affichées.
+        */}
+        <StatTileGrid cols={5}>
+          <StatTile
+            label={t(translations.tileTotalBase)}
+            value={portfolio?.total ?? 0}
+            hint={t(translations.wholePortfolio)}
+            icon={Database}
+            tone="navy"
+            loading={portfolioLoading}
+            onClick={() => {
+              setStatusFilter("all");
+              setLanguageFilter("all");
+              setSearch("");
+            }}
+          />
           <StatTile
             label={t(translations.displayed)}
             value={counts.total}
@@ -681,6 +771,52 @@ export default function Inscriptions() {
             onClick={() => setStatusFilter("terminee")}
           />
         </StatTileGrid>
+
+        {/*
+          Répartitions du portefeuille complet : un segment ou une ligne ouvre
+          la liste filtrée correspondante (?status= / ?language=).
+        */}
+        <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">
+          <SurfaceCard
+            title={t(translations.byStatus)}
+            description={t(translations.portfolioScope)}
+            icon={ChartPie}
+          >
+            {portfolioLoading ? (
+              <div className="h-[190px] animate-shimmer rounded-[var(--radius)]" />
+            ) : (
+              <DonutChart
+                data={statusSlices}
+                height={150}
+                thickness={18}
+                legendPosition="bottom"
+                centerLabel={t(translations.inscriptions)}
+                ariaLabel={t(translations.byStatus)}
+                emptyMessage={t(translations.noData)}
+              />
+            )}
+          </SurfaceCard>
+
+          <SurfaceCard
+            title={t(translations.byLanguage)}
+            description={t(translations.portfolioScope)}
+            icon={Languages}
+          >
+            {portfolioLoading ? (
+              <div className="space-y-4">
+                {[0, 1, 2, 3, 4].map((index) => (
+                  <div key={index} className="h-8 animate-shimmer rounded-[var(--radius)]" />
+                ))}
+              </div>
+            ) : (
+              <RankedBarList
+                items={languageBars}
+                colorBySeries
+                emptyMessage={t(translations.noData)}
+              />
+            )}
+          </SurfaceCard>
+        </div>
 
         <SurfaceCard
           flush

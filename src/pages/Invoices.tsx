@@ -15,7 +15,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Filter, Download, Plus, Eye, FileText, Send, CheckCircle, Pencil, CalendarIcon } from "lucide-react";
+import {
+  Filter,
+  Download,
+  Plus,
+  Eye,
+  FileText,
+  Send,
+  CheckCircle,
+  Pencil,
+  CalendarIcon,
+  Euro,
+  ChartPie,
+  Layers,
+  AlertTriangle,
+} from "lucide-react";
 import { useInvoices, useUpdateInvoice, InvoiceWithInscription } from "@/hooks/useInvoices";
 import { ensureInvoicePayment } from "@/hooks/usePayments";
 import { canonicalPaymentMethod } from "@/lib/payment-methods";
@@ -32,9 +46,13 @@ import { useConfirmAction } from "@/hooks/useConfirmAction";
 import {
   CardList,
   CardListItem,
+  DonutChart,
   FilterBar,
   PageHeader,
   PageShell,
+  RankedBarList,
+  StatTile,
+  StatTileGrid,
   StatusPill,
   SurfaceCard,
   TableCell,
@@ -305,6 +323,62 @@ const translations = {
     "pt-BR": "Temporada passada",
     en: "Previous fiscal year",
   },
+  // Bandeau de synthèse — libellés ajoutés par la densification visuelle.
+  tileInvoices: {
+    fr: "Factures listées",
+    "pt-BR": "Faturas listadas",
+    en: "Listed invoices",
+  },
+  tileTotalTTC: {
+    fr: "Total TTC listé",
+    "pt-BR": "Total com impostos listado",
+    en: "Listed total incl. VAT",
+  },
+  tileCashedIn: {
+    fr: "Encaissé",
+    "pt-BR": "Recebido",
+    en: "Cashed in",
+  },
+  tileOutstanding: {
+    fr: "Reste à encaisser",
+    "pt-BR": "A receber",
+    en: "Outstanding",
+  },
+  tileToCheck: {
+    fr: "À vérifier",
+    "pt-BR": "A verificar",
+    en: "To check",
+  },
+  sentAwaitingPayment: {
+    fr: "factures envoyées, non payées",
+    "pt-BR": "faturas enviadas, não pagas",
+    en: "invoices sent, not paid",
+  },
+  ofListedTotal: {
+    fr: "du total TTC listé",
+    "pt-BR": "do total listado",
+    en: "of the listed total",
+  },
+  byStatusTitle: {
+    fr: "Répartition par statut",
+    "pt-BR": "Distribuição por status",
+    en: "Breakdown by status",
+  },
+  byTypeTitle: {
+    fr: "Montant TTC par type",
+    "pt-BR": "Valor por tipo",
+    en: "Amount incl. VAT by type",
+  },
+  scopeListed: {
+    fr: "Sur les factures listées ci-dessous — les filtres actifs s'appliquent.",
+    "pt-BR": "Sobre as faturas listadas abaixo — os filtros ativos se aplicam.",
+    en: "Over the invoices listed below — the active filters apply.",
+  },
+  noData: {
+    fr: "Aucune donnée disponible",
+    "pt-BR": "Nenhum dado disponível",
+    en: "No data available",
+  },
 };
 
 /** Teintes des types de client — les statuts passent par `toneForStatus`. */
@@ -338,6 +412,9 @@ export default function Invoices() {
     if (q) setSearch(q);
     const status = searchParams.get("status");
     if (status) setStatusFilter(status);
+    // Les répartitions du bandeau pointent ici avec ?type=…
+    const type = searchParams.get("type");
+    if (type) setTypeFilter(type);
   }, [searchParams]);
 
   // Bornes d'exercice fiscal FLI (libellé AA-AA)
@@ -465,6 +542,78 @@ export default function Invoices() {
     dsf: t(translations.clientDSF),
     autre: t(translations.clientAutre),
   };
+
+  /**
+   * Synthèse des factures listées. `useInvoices` ne pagine pas : ces totaux
+   * couvrent l'intégralité du résultat des filtres actifs — ni une page
+   * partielle, ni la base entière.
+   */
+  const summary = useMemo(() => {
+    const rows = invoices ?? [];
+    const statusTotals = new Map<string, { count: number; ttc: number }>();
+    const typeTotals = new Map<string, { count: number; ttc: number }>();
+    let totalHt = 0;
+    let totalTtc = 0;
+
+    for (const invoice of rows) {
+      const ttc = invoice.amount_ttc ?? invoice.amount_ht ?? 0;
+      totalHt += invoice.amount_ht ?? 0;
+      totalTtc += ttc;
+
+      const status = statusTotals.get(invoice.status) ?? { count: 0, ttc: 0 };
+      statusTotals.set(invoice.status, { count: status.count + 1, ttc: status.ttc + ttc });
+
+      const type = typeTotals.get(invoice.invoice_type) ?? { count: 0, ttc: 0 };
+      typeTotals.set(invoice.invoice_type, { count: type.count + 1, ttc: type.ttc + ttc });
+    }
+
+    const forStatus = (code: string) => statusTotals.get(code) ?? { count: 0, ttc: 0 };
+
+    return {
+      count: rows.length,
+      totalHt,
+      totalTtc,
+      paid: forStatus("paid"),
+      sent: forStatus("sent"),
+      draft: forStatus("draft"),
+      toCheck: forStatus("a_verifier"),
+      statusTotals,
+      typeTotals,
+    };
+  }, [invoices]);
+
+  /** Part d'un sous-ensemble réel du total listé — jamais une cible inventée. */
+  const shareOfListed = (amount: number) =>
+    summary.totalTtc > 0 ? `${Math.round((amount / summary.totalTtc) * 100)}% ` : "";
+
+  const statusSlices = useMemo(
+    () =>
+      [...summary.statusTotals.entries()]
+        .map(([status, value]) => ({
+          name: statusLabels[status] || status,
+          value: value.count,
+          href: `/invoices?status=${status}`,
+        }))
+        .sort((a, b) => b.value - a.value),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [summary, language]
+  );
+
+  const typeBars = useMemo(
+    () =>
+      [...summary.typeTotals.entries()]
+        .map(([type, value]) => ({
+          key: type,
+          label: typeLabels[type] || type,
+          value: Math.round(value.ttc),
+          display: formatPrice(value.ttc),
+          hint: `${value.count} ${t(translations.invoices)}`,
+          href: `/invoices?type=${type}`,
+        }))
+        .sort((a, b) => b.value - a.value),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [summary, language]
+  );
 
   const getClientName = (invoice: InvoiceWithInscription) => {
     if (invoice.inscription?.student_name) {
@@ -733,6 +882,104 @@ export default function Invoices() {
             </>
           }
         />
+
+        {/*
+          Bandeau de synthèse : tout vient des factures déjà chargées, qui
+          couvrent l'intégralité des filtres actifs (la requête ne pagine pas).
+          Chaque tuile ouvre la liste filtrée sur le statut correspondant.
+        */}
+        <StatTileGrid cols={5}>
+          <StatTile
+            label={t(translations.tileInvoices)}
+            value={summary.count}
+            hint={`${formatPrice(summary.totalHt)} ${t(translations.amountHT)}`}
+            icon={FileText}
+            tone="gold"
+            loading={isLoading}
+            onClick={resetFilters}
+          />
+          <StatTile
+            label={t(translations.tileTotalTTC)}
+            value={formatPrice(summary.totalTtc)}
+            hint={`${summary.count} ${t(translations.invoices)}`}
+            icon={Euro}
+            tone="navy"
+            loading={isLoading}
+            onClick={resetFilters}
+          />
+          <StatTile
+            label={t(translations.tileCashedIn)}
+            value={formatPrice(summary.paid.ttc)}
+            hint={`${summary.paid.count} ${t(translations.invoices)} · ${shareOfListed(
+              summary.paid.ttc
+            )}${t(translations.ofListedTotal)}`}
+            icon={CheckCircle}
+            tone="teal"
+            loading={isLoading}
+            onClick={() => setStatusFilter("paid")}
+          />
+          <StatTile
+            label={t(translations.tileOutstanding)}
+            value={formatPrice(summary.sent.ttc)}
+            hint={`${summary.sent.count} ${t(translations.sentAwaitingPayment)}`}
+            icon={Send}
+            tone="orange"
+            loading={isLoading}
+            onClick={() => setStatusFilter("sent")}
+          />
+          <StatTile
+            label={t(translations.tileToCheck)}
+            value={summary.toCheck.count}
+            hint={formatPrice(summary.toCheck.ttc)}
+            icon={AlertTriangle}
+            tone="rose"
+            loading={isLoading}
+            onClick={() => setStatusFilter("a_verifier")}
+          />
+        </StatTileGrid>
+
+        <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">
+          <SurfaceCard
+            title={t(translations.byStatusTitle)}
+            description={t(translations.scopeListed)}
+            icon={ChartPie}
+          >
+            {isLoading ? (
+              <div className="h-[190px] animate-shimmer rounded-[var(--radius)]" />
+            ) : (
+              <DonutChart
+                data={statusSlices}
+                height={150}
+                thickness={18}
+                legendPosition="bottom"
+                centerLabel={t(translations.invoices)}
+                ariaLabel={t(translations.byStatusTitle)}
+                emptyMessage={t(translations.noData)}
+              />
+            )}
+          </SurfaceCard>
+
+          <SurfaceCard
+            title={t(translations.byTypeTitle)}
+            description={t(translations.scopeListed)}
+            icon={Layers}
+          >
+            {isLoading ? (
+              <div className="space-y-4">
+                {[0, 1, 2].map((index) => (
+                  <div key={index} className="h-8 animate-shimmer rounded-[var(--radius)]" />
+                ))}
+              </div>
+            ) : (
+              <RankedBarList
+                items={typeBars}
+                colorBySeries
+                className="tabular"
+                emptyMessage={t(translations.noData)}
+              />
+            )}
+          </SurfaceCard>
+        </div>
 
         <SurfaceCard
           title={`${invoices?.length || 0} ${t(translations.resultsCount)}`}
