@@ -261,7 +261,7 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
         </StepCard>
 
         <StepActions>
-          <Button type="submit" onClick={handleSubmit} className="h-12 w-full text-base sm:w-auto">
+          <Button type="submit" className="h-12 w-full text-base sm:w-auto">
             Continuer vers les attentes
           </Button>
         </StepActions>

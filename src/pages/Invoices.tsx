@@ -2,8 +2,6 @@ import { useState, useMemo, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -12,21 +10,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Search, Filter, Download, Plus, Eye, FileText, Loader2, Send, CheckCircle, Pencil, CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Filter, Download, Plus, Eye, FileText, Send, CheckCircle, Pencil, CalendarIcon } from "lucide-react";
 import { useInvoices, useUpdateInvoice, InvoiceWithInscription } from "@/hooks/useInvoices";
 import { ensureInvoicePayment } from "@/hooks/usePayments";
 import { canonicalPaymentMethod } from "@/lib/payment-methods";
@@ -40,7 +29,24 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useSeasonFilter } from "@/contexts/SeasonContext";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
-import { ListSkeleton } from "@/components/common/ListSkeleton";
+import {
+  CardList,
+  CardListItem,
+  FilterBar,
+  PageHeader,
+  PageShell,
+  StatusPill,
+  SurfaceCard,
+  TableCell,
+  TableEmpty,
+  TableFrame,
+  TableHeadCell,
+  TableHeadRow,
+  TableRow,
+  TableSkeleton,
+  toneForStatus,
+  type PillTone,
+} from "@/components/ui-kit";
 import {
   getCurrentFiscalYear,
   getDebutSaison,
@@ -301,11 +307,12 @@ const translations = {
   },
 };
 
-const statusStyles: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-800",
-  sent: "bg-blue-100 text-blue-800",
-  paid: "bg-emerald-100 text-emerald-800",
-  cancelled: "bg-red-100 text-red-800",
+/** Teintes des types de client — les statuts passent par `toneForStatus`. */
+const clientTypeTones: Record<string, PillTone> = {
+  stagiaire: "purple",
+  ecole_ski: "info",
+  dsf: "warning",
+  autre: "neutral",
 };
 
 export default function Invoices() {
@@ -459,13 +466,6 @@ export default function Invoices() {
     autre: t(translations.clientAutre),
   };
 
-  const clientTypeStyles: Record<string, string> = {
-    stagiaire: "bg-purple-100 text-purple-800",
-    ecole_ski: "bg-sky-100 text-sky-800",
-    dsf: "bg-amber-100 text-amber-800",
-    autre: "bg-gray-100 text-gray-800",
-  };
-
   const getClientName = (invoice: InvoiceWithInscription) => {
     if (invoice.inscription?.student_name) {
       return invoice.inscription.student_name;
@@ -594,307 +594,353 @@ export default function Invoices() {
     };
   };
 
+
+  const activeFilters = [
+    ...(statusFilter !== "all"
+      ? [{ key: "status", label: statusLabels[statusFilter] ?? statusFilter, onRemove: () => setStatusFilter("all") }]
+      : []),
+    ...(typeFilter !== "all"
+      ? [{ key: "type", label: typeLabels[typeFilter] ?? typeFilter, onRemove: () => setTypeFilter("all") }]
+      : []),
+    ...(clientTypeFilter !== "all"
+      ? [
+          {
+            key: "clientType",
+            label: clientTypeLabels[clientTypeFilter] ?? clientTypeFilter,
+            onRemove: () => setClientTypeFilter("all"),
+          },
+        ]
+      : []),
+    ...(periodFilter !== "all"
+      ? [{ key: "period", label: periodLabels[periodFilter] ?? periodFilter, onRemove: () => setPeriodFilter("all") }]
+      : []),
+    ...(search ? [{ key: "search", label: `"${search}"`, onRemove: () => setSearch("") }] : []),
+  ];
+
+  const resetFilters = () => {
+    setStatusFilter("all");
+    setTypeFilter("all");
+    setClientTypeFilter("all");
+    setPeriodFilter("all");
+    setSearch("");
+  };
+
+  const openPreview = (invoice: InvoiceWithInscription) => {
+    setSelectedInvoice(invoice);
+    setPreviewOpen(true);
+  };
+
+  const rowActions = (invoice: InvoiceWithInscription) => (
+    <div className="flex items-center justify-end gap-1">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        aria-label={t(translations.previewTitle)}
+        onClick={() => openPreview(invoice)}
+      >
+        <Eye className="h-4 w-4" />
+      </Button>
+      {editable && (
+        <>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            aria-label={t(translations.actions)}
+            onClick={() => {
+              setSelectedInvoice(invoice);
+              setEditOpen(true);
+            }}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          {invoice.status === "draft" && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-[hsl(var(--tint-blue-fg))]"
+              aria-label={t(translations.statusSent)}
+              onClick={() => handleMarkAsSent(invoice)}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          )}
+          {invoice.status === "sent" && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-[hsl(var(--status-good))]"
+              aria-label={t(translations.statusPaid)}
+              onClick={() => handleMarkAsPaid(invoice)}
+            >
+              <CheckCircle className="h-4 w-4" />
+            </Button>
+          )}
+        </>
+      )}
+    </div>
+  );
+
+  const clientCell = (invoice: InvoiceWithInscription) => (
+    <div className="flex flex-col items-start gap-1">
+      {invoice.inscription?.student_id ? (
+        <Link
+          to={`/students/${invoice.inscription.student_id}`}
+          className="max-w-[150px] truncate text-sm font-medium text-[hsl(var(--tint-blue-fg))] hover:underline"
+        >
+          {getClientName(invoice)}
+        </Link>
+      ) : (
+        <span className="max-w-[150px] truncate text-sm font-medium">
+          {getClientName(invoice)}
+        </span>
+      )}
+      {invoice.inscription_id && invoice.inscription?.code && (
+        <Link
+          to={`/inscriptions/${invoice.inscription_id}`}
+          className="font-mono text-xs text-muted-foreground hover:text-[hsl(var(--tint-blue-fg))] hover:underline"
+        >
+          {invoice.inscription.code}
+        </Link>
+      )}
+      <StatusPill tone={clientTypeTones[invoice.client_type] ?? "neutral"} size="sm">
+        {clientTypeLabels[invoice.client_type] || invoice.client_type}
+      </StatusPill>
+    </div>
+  );
+
   return (
     <MainLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">{t(translations.title)}</h1>
-            <p className="text-muted-foreground">
-              {t(translations.subtitle)}
+      <PageShell>
+        <PageHeader
+          title={t(translations.title)}
+          description={t(translations.subtitle)}
+          icon={FileText}
+          tone="gold"
+          actions={
+            <>
+              <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={!invoices?.length}>
+                <Download className="mr-2 h-4 w-4" />
+                {t(translations.export)}
+              </Button>
+              {editable && (
+                <Button size="sm" onClick={() => setCreateOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t(translations.newInvoice)}
+                </Button>
+              )}
+            </>
+          }
+        />
+
+        <SurfaceCard
+          title={`${invoices?.length || 0} ${t(translations.resultsCount)}`}
+          description={t(translations.subtitle)}
+          toolbar={
+            <FilterBar
+              search={{
+                value: search,
+                onChange: setSearch,
+                placeholder: t(translations.searchPlaceholder),
+                ariaLabel: t(translations.searchPlaceholder),
+              }}
+              activeFilters={activeFilters}
+              onClearAll={activeFilters.length > 0 ? resetFilters : undefined}
+              filters={
+                <>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder={t(translations.status)} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t(translations.allStatuses)}</SelectItem>
+                      <SelectItem value="draft">{t(translations.statusDraft)}</SelectItem>
+                      <SelectItem value="sent">{t(translations.statusSent)}</SelectItem>
+                      <SelectItem value="paid">{t(translations.statusPaid)}</SelectItem>
+                      <SelectItem value="cancelled">{t(translations.statusCancelled)}</SelectItem>
+                      <SelectItem value="a_verifier">À vérifier</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={typeFilter} onValueChange={setTypeFilter}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder={t(translations.type)} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t(translations.allTypes)}</SelectItem>
+                      <SelectItem value="formation">{t(translations.typeFormation)}</SelectItem>
+                      <SelectItem value="test">{t(translations.typeTest)}</SelectItem>
+                      <SelectItem value="soustraitance">{t(translations.typeSubcontracting)}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={clientTypeFilter} onValueChange={setClientTypeFilter}>
+                    <SelectTrigger className="w-[160px]">
+                      <SelectValue placeholder={t(translations.client)} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t(translations.allClients)}</SelectItem>
+                      <SelectItem value="stagiaire">{t(translations.clientStagiaire)}</SelectItem>
+                      <SelectItem value="ecole_ski">{t(translations.clientEcoleSki)}</SelectItem>
+                      <SelectItem value="dsf">{t(translations.clientDSF)}</SelectItem>
+                      <SelectItem value="autre">{t(translations.clientAutre)}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={periodFilter} onValueChange={setPeriodFilter}>
+                    <SelectTrigger className="w-[160px]">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      <SelectValue placeholder={t(translations.allPeriods)} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t(translations.allPeriods)}</SelectItem>
+                      <SelectItem value="this_month">{t(translations.periodThisMonth)}</SelectItem>
+                      <SelectItem value="last_month">{t(translations.periodLastMonth)}</SelectItem>
+                      <SelectItem value="this_quarter">{t(translations.periodThisQuarter)}</SelectItem>
+                      <SelectItem value="last_quarter">{t(translations.periodLastQuarter)}</SelectItem>
+                      <SelectItem value="this_year">{t(translations.periodThisYear)}</SelectItem>
+                      <SelectItem value="last_year">{t(translations.periodLastYear)}</SelectItem>
+                      <SelectItem value="this_season">{t(translations.periodThisSeason)}</SelectItem>
+                      <SelectItem value="last_season">{t(translations.periodLastSeason)}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </>
+              }
+              actions={
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label={t(translations.activeFilters)}
+                  onClick={resetFilters}
+                >
+                  <Filter className="h-4 w-4" />
+                </Button>
+              }
+            />
+          }
+          footer={
+            <p className="text-sm text-muted-foreground tabular">
+              {invoices?.length || 0} {t(translations.invoices)}
             </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={!invoices?.length}>
-              <Download className="mr-2 h-4 w-4" />
-              {t(translations.export)}
-            </Button>
-            {editable && (
-              <Button size="sm" onClick={() => setCreateOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                {t(translations.newInvoice)}
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-4 rounded-lg border bg-card p-4">
-          <div className="flex-1 min-w-[200px]">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder={t(translations.searchPlaceholder)}
-                className="pl-10"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-          </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder={t(translations.status)} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t(translations.allStatuses)}</SelectItem>
-              <SelectItem value="draft">{t(translations.statusDraft)}</SelectItem>
-              <SelectItem value="sent">{t(translations.statusSent)}</SelectItem>
-              <SelectItem value="paid">{t(translations.statusPaid)}</SelectItem>
-              <SelectItem value="cancelled">{t(translations.statusCancelled)}</SelectItem>
-              <SelectItem value="a_verifier">À vérifier</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder={t(translations.type)} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t(translations.allTypes)}</SelectItem>
-              <SelectItem value="formation">{t(translations.typeFormation)}</SelectItem>
-              <SelectItem value="test">{t(translations.typeTest)}</SelectItem>
-              <SelectItem value="soustraitance">{t(translations.typeSubcontracting)}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={clientTypeFilter} onValueChange={setClientTypeFilter}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder={t(translations.client)} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t(translations.allClients)}</SelectItem>
-              <SelectItem value="stagiaire">{t(translations.clientStagiaire)}</SelectItem>
-              <SelectItem value="ecole_ski">{t(translations.clientEcoleSki)}</SelectItem>
-              <SelectItem value="dsf">{t(translations.clientDSF)}</SelectItem>
-              <SelectItem value="autre">{t(translations.clientAutre)}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={periodFilter} onValueChange={setPeriodFilter}>
-            <SelectTrigger className="w-[160px]">
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              <SelectValue placeholder={t(translations.allPeriods)} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t(translations.allPeriods)}</SelectItem>
-              <SelectItem value="this_month">{t(translations.periodThisMonth)}</SelectItem>
-              <SelectItem value="last_month">{t(translations.periodLastMonth)}</SelectItem>
-              <SelectItem value="this_quarter">{t(translations.periodThisQuarter)}</SelectItem>
-              <SelectItem value="last_quarter">{t(translations.periodLastQuarter)}</SelectItem>
-              <SelectItem value="this_year">{t(translations.periodThisYear)}</SelectItem>
-              <SelectItem value="last_year">{t(translations.periodLastYear)}</SelectItem>
-              <SelectItem value="this_season">{t(translations.periodThisSeason)}</SelectItem>
-              <SelectItem value="last_season">{t(translations.periodLastSeason)}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="icon" onClick={() => {
-            setStatusFilter("all");
-            setTypeFilter("all");
-            setClientTypeFilter("all");
-            setPeriodFilter("all");
-            setSearch("");
-          }}>
-            <Filter className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* Results counter */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">{invoices?.length || 0}</span>
-          <span>{t(translations.resultsCount)}</span>
-          {(statusFilter !== "all" || typeFilter !== "all" || clientTypeFilter !== "all" || periodFilter !== "all" || search) && (
-            <div className="flex items-center gap-2 ml-2 flex-wrap">
-              <span>•</span>
-              <span>{t(translations.activeFilters)}:</span>
-              {statusFilter !== "all" && (
-                <Badge variant="secondary" className="text-xs">
-                  {statusLabels[statusFilter]}
-                </Badge>
-              )}
-              {typeFilter !== "all" && (
-                <Badge variant="secondary" className="text-xs">
-                  {typeLabels[typeFilter]}
-                </Badge>
-              )}
-              {clientTypeFilter !== "all" && (
-                <Badge variant="secondary" className="text-xs">
-                  {clientTypeLabels[clientTypeFilter]}
-                </Badge>
-              )}
-              {periodFilter !== "all" && (
-                <Badge variant="secondary" className="text-xs">
-                  {periodLabels[periodFilter]}
-                </Badge>
-              )}
-              {search && (
-                <Badge variant="secondary" className="text-xs">
-                  "{search}"
-                </Badge>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Table */}
-        <div className="rounded-lg border bg-card">
+          }
+          flush
+        >
           {isLoading ? (
-            <ListSkeleton rows={6} />
+            <TableSkeleton rows={6} cols={6} />
           ) : error ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <FileText className="h-12 w-12 text-destructive/50 mb-4" />
-              <h3 className="text-lg font-medium">{t(translations.loadingError)}</h3>
-              <p className="text-muted-foreground mt-1 max-w-sm">
-                {error.message}
-              </p>
-            </div>
+            <TableEmpty
+              title={t(translations.loadingError)}
+              description={error.message}
+              icon={FileText}
+            />
           ) : !invoices || invoices.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-medium">{t(translations.noInvoicesTitle)}</h3>
-              <p className="text-muted-foreground mt-1 max-w-sm">
-                {t(translations.noInvoicesDesc)}
-              </p>
-              <Button className="mt-4" onClick={() => setCreateOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                {t(translations.createInvoice)}
-              </Button>
-            </div>
+            <TableEmpty
+              title={t(translations.noInvoicesTitle)}
+              description={t(translations.noInvoicesDesc)}
+              icon={FileText}
+              action={
+                <Button onClick={() => setCreateOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t(translations.createInvoice)}
+                </Button>
+              }
+            />
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t(translations.number)}</TableHead>
-                  <TableHead>{t(translations.date)}</TableHead>
-                  <TableHead>{t(translations.type)}</TableHead>
-                  <TableHead>{t(translations.client)}</TableHead>
-                  <TableHead>{t(translations.amountHT)}</TableHead>
-                  <TableHead>{t(translations.tva)}</TableHead>
-                  <TableHead>{t(translations.amountTTC)}</TableHead>
-                  <TableHead>{t(translations.dueDate)}</TableHead>
-                  <TableHead>{t(translations.status)}</TableHead>
-                  <TableHead className="text-right">{t(translations.actions)}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoices.map((invoice) => (
-                  <TableRow key={invoice.id}>
-                    <TableCell className="font-mono text-sm font-medium">
-                      {invoice.invoice_number || "-"}
-                    </TableCell>
-                    <TableCell>{formatDate(invoice.invoice_date)}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {typeLabels[invoice.invoice_type] || invoice.invoice_type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1">
-                        {invoice.inscription?.student_id ? (
-                          <Link
-                            to={`/students/${invoice.inscription.student_id}`}
-                            className="text-sm font-medium truncate max-w-[150px] text-primary hover:underline"
-                          >
-                            {getClientName(invoice)}
-                          </Link>
-                        ) : (
-                          <span className="text-sm font-medium truncate max-w-[150px]">
-                            {getClientName(invoice)}
-                          </span>
-                        )}
-                        {invoice.inscription_id && invoice.inscription?.code && (
-                          <Link
-                            to={`/inscriptions/${invoice.inscription_id}`}
-                            className="text-xs text-muted-foreground hover:text-primary hover:underline font-mono"
-                          >
-                            {invoice.inscription.code}
-                          </Link>
-                        )}
-                        <Badge
-                          className={cn(
-                            clientTypeStyles[invoice.client_type] || "bg-gray-100 text-gray-800",
-                            "text-xs w-fit"
-                          )}
-                        >
-                          {clientTypeLabels[invoice.client_type] || invoice.client_type}
-                        </Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell>{formatPrice(invoice.amount_ht)}</TableCell>
-                    <TableCell>{invoice.tva_rate}%</TableCell>
-                    <TableCell className="font-medium">{formatPrice(invoice.amount_ttc)}</TableCell>
-                    <TableCell>{formatDate(invoice.due_date)}</TableCell>
-                    <TableCell>
-                      <Badge
-                        className={cn(
-                          statusStyles[invoice.status] || "bg-gray-100 text-gray-800",
-                          "hover:opacity-80"
-                        )}
-                      >
-                        {statusLabels[invoice.status] || invoice.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => {
-                            setSelectedInvoice(invoice);
-                            setPreviewOpen(true);
-                          }}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        {editable && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => {
-                                setSelectedInvoice(invoice);
-                                setEditOpen(true);
-                              }}
+            <>
+              <TableFrame className="hidden md:block">
+                <table className="w-full">
+                  <thead>
+                    <TableHeadRow>
+                      <TableHeadCell>{t(translations.number)}</TableHeadCell>
+                      <TableHeadCell>{t(translations.date)}</TableHeadCell>
+                      <TableHeadCell>{t(translations.type)}</TableHeadCell>
+                      <TableHeadCell>{t(translations.client)}</TableHeadCell>
+                      <TableHeadCell align="right">{t(translations.amountHT)}</TableHeadCell>
+                      <TableHeadCell align="right">{t(translations.tva)}</TableHeadCell>
+                      <TableHeadCell align="right">{t(translations.amountTTC)}</TableHeadCell>
+                      <TableHeadCell>{t(translations.dueDate)}</TableHeadCell>
+                      <TableHeadCell>{t(translations.status)}</TableHeadCell>
+                      <TableHeadCell align="right">{t(translations.actions)}</TableHeadCell>
+                    </TableHeadRow>
+                  </thead>
+                  <tbody>
+                    {invoices.map((invoice) => (
+                      <TableRow key={invoice.id}>
+                        <TableCell className="font-mono text-sm font-medium">
+                          {invoice.invoice_number ? (
+                            <button
+                              type="button"
+                              onClick={() => openPreview(invoice)}
+                              className="text-[hsl(var(--tint-blue-fg))] hover:underline"
                             >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            {invoice.status === "draft" && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-blue-600"
-                                onClick={() => handleMarkAsSent(invoice)}
-                              >
-                                <Send className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {invoice.status === "sent" && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-emerald-600"
-                                onClick={() => handleMarkAsPaid(invoice)}
-                              >
-                                <CheckCircle className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </div>
+                              {invoice.invoice_number}
+                            </button>
+                          ) : (
+                            "-"
+                          )}
+                        </TableCell>
+                        <TableCell className="tabular" hideBelow="lg">
+                          {formatDate(invoice.invoice_date)}
+                        </TableCell>
+                        <TableCell hideBelow="xl">
+                          <StatusPill tone="neutral" size="sm">
+                            {typeLabels[invoice.invoice_type] || invoice.invoice_type}
+                          </StatusPill>
+                        </TableCell>
+                        <TableCell>{clientCell(invoice)}</TableCell>
+                        <TableCell align="right" className="tabular" hideBelow="lg">
+                          {formatPrice(invoice.amount_ht)}
+                        </TableCell>
+                        <TableCell align="right" className="tabular" hideBelow="xl">
+                          {invoice.tva_rate}%
+                        </TableCell>
+                        <TableCell align="right" className="font-medium tabular">
+                          {formatPrice(invoice.amount_ttc)}
+                        </TableCell>
+                        <TableCell className="tabular" hideBelow="lg">
+                          {formatDate(invoice.due_date)}
+                        </TableCell>
+                        <TableCell>
+                          <StatusPill tone={toneForStatus(invoice.status)} size="sm">
+                            {statusLabels[invoice.status] || invoice.status}
+                          </StatusPill>
+                        </TableCell>
+                        <TableCell align="right">{rowActions(invoice)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </tbody>
+                </table>
+              </TableFrame>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            {invoices?.length || 0} {t(translations.invoices)}
-          </p>
-        </div>
-      </div>
+              <CardList className="md:hidden">
+                {invoices.map((invoice) => (
+                  <CardListItem
+                    key={invoice.id}
+                    title={invoice.invoice_number || "-"}
+                    subtitle={getClientName(invoice)}
+                    meta={
+                      <StatusPill tone={toneForStatus(invoice.status)} size="sm">
+                        {statusLabels[invoice.status] || invoice.status}
+                      </StatusPill>
+                    }
+                    fields={[
+                      { label: t(translations.date), value: formatDate(invoice.invoice_date) },
+                      {
+                        label: t(translations.type),
+                        value: typeLabels[invoice.invoice_type] || invoice.invoice_type,
+                      },
+                      { label: t(translations.amountHT), value: formatPrice(invoice.amount_ht) },
+                      { label: t(translations.tva), value: `${invoice.tva_rate}%` },
+                      { label: t(translations.amountTTC), value: formatPrice(invoice.amount_ttc) },
+                      { label: t(translations.dueDate), value: formatDate(invoice.due_date) },
+                      { label: t(translations.client), value: clientCell(invoice) },
+                    ]}
+                    actions={rowActions(invoice)}
+                  />
+                ))}
+              </CardList>
+            </>
+          )}
+        </SurfaceCard>
+      </PageShell>
 
       {/* Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>

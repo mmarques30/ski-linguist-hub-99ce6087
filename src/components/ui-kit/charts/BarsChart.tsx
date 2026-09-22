@@ -31,6 +31,7 @@ export function BarsChart<T extends Record<string, unknown>>({
   onBarClick,
   showLegend,
   yWidth = 48,
+  yDomain,
 }: {
   data: T[];
   series: BarSeries[];

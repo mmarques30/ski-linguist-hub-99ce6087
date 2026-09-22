@@ -4,7 +4,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BookOpen } from "lucide-react";
+import { SurfaceCard } from "@/components/ui-kit";
 
 const ENTRIES: { id: string; title: string; body: string }[] = [
   {
@@ -42,20 +43,19 @@ const ENTRIES: { id: string; title: string; body: string }[] = [
 /** Glossaire unique des KPI Pilotage (PLANO §9.8 / Onda D1). */
 export function FinanceKpiGlossary() {
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">Glossaire des indicateurs</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Accordion type="multiple" className="w-full">
-          {ENTRIES.map((e) => (
-            <AccordionItem key={e.id} value={e.id}>
-              <AccordionTrigger className="text-sm">{e.title}</AccordionTrigger>
-              <AccordionContent className="text-sm text-muted-foreground">{e.body}</AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
-      </CardContent>
-    </Card>
+    <SurfaceCard
+      title="Glossaire des indicateurs"
+      description="Définition et source de chaque KPI du pilotage"
+      icon={BookOpen}
+    >
+      <Accordion type="multiple" className="w-full">
+        {ENTRIES.map((e) => (
+          <AccordionItem key={e.id} value={e.id}>
+            <AccordionTrigger className="text-sm">{e.title}</AccordionTrigger>
+            <AccordionContent className="text-sm text-muted-foreground">{e.body}</AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    </SurfaceCard>
   );
 }

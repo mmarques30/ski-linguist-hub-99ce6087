@@ -38,7 +38,7 @@ export function SeasonSelector({ value, onChange }: Props) {
           {seasons?.map((s) => (
             <SelectItem key={s.id} value={s.id}>
               <span className="flex items-center gap-1.5">
-                {s.is_current && <Star className="h-3 w-3 text-[hsl(var(--fli-yellow))] fill-current" />}
+                {s.is_current && <Star className="h-3 w-3 fill-current text-[hsl(var(--tint-gold-fg))]" />}
                 {s.name}
               </span>
             </SelectItem>

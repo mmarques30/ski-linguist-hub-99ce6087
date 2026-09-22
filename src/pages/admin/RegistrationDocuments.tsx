@@ -2,9 +2,16 @@ import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  CardGrid,
+  PageHeader,
+  PageShell,
+  StatusPill,
+  SurfaceCard,
+  TableEmpty,
+} from "@/components/ui-kit";
 import {
   useClearRegistrationTemplateOverride,
   useDownloadRegistrationTemplate,
@@ -29,9 +36,14 @@ export default function AdminRegistrationDocuments() {
   if (loading) {
     return (
       <MainLayout>
-        <div className="flex justify-center py-16">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
+        <PageShell>
+          <div className="space-y-4" aria-busy="true">
+            <span className="sr-only">Chargement…</span>
+            <Skeleton className="h-10 w-72" />
+            <Skeleton className="h-24 w-full rounded-[var(--radius-card)]" />
+            <Skeleton className="h-24 w-full rounded-[var(--radius-card)]" />
+          </div>
+        </PageShell>
       </MainLayout>
     );
   }
@@ -39,13 +51,15 @@ export default function AdminRegistrationDocuments() {
   if (!isAdmin) {
     return (
       <MainLayout>
-        <Alert variant="destructive">
-          <AlertTitle>Accès réservé</AlertTitle>
-          <AlertDescription>
-            Seul un compte administrateur peut gérer les modèles de documents
-            d&apos;inscription.
-          </AlertDescription>
-        </Alert>
+        <PageShell>
+          <Alert variant="destructive">
+            <AlertTitle>Accès réservé</AlertTitle>
+            <AlertDescription>
+              Seul un compte administrateur peut gérer les modèles de documents
+              d&apos;inscription.
+            </AlertDescription>
+          </Alert>
+        </PageShell>
       </MainLayout>
     );
   }
@@ -91,19 +105,23 @@ export default function AdminRegistrationDocuments() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Modèles documents d&apos;inscription</h1>
-          <p className="text-muted-foreground mt-1">
-            Fichiers du dossier d&apos;inscription (critères FIF-PL, tutoriel, modèles
-            convention / programme).
-            Les textes d&apos;email se gèrent à part sur{" "}
-            <Link to="/admin/emails" className="underline underline-offset-2">
-              /admin/emails
-            </Link>
-            .
-          </p>
-        </div>
+      <PageShell>
+        <PageHeader
+          title="Modèles documents d'inscription"
+          icon={FileText}
+          tone="teal"
+          description={
+            <>
+              Fichiers du dossier d&apos;inscription (critères FIF-PL, tutoriel, modèles
+              convention / programme).
+              Les textes d&apos;email se gèrent à part sur{" "}
+              <Link to="/admin/emails" className="underline underline-offset-2">
+                /admin/emails
+              </Link>
+              .
+            </>
+          }
+        />
 
         <Alert>
           <AlertTitle>Comment ça fonctionne</AlertTitle>
@@ -124,44 +142,50 @@ export default function AdminRegistrationDocuments() {
         </Alert>
 
         {isLoading && (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
+          <CardGrid cols={2}>
+            {[0, 1].map((index) => (
+              <Skeleton key={index} className="h-40 w-full rounded-[var(--radius-card)]" />
+            ))}
+          </CardGrid>
         )}
 
         {error && (
-          <p className="text-destructive text-sm">
+          <p className="text-sm text-destructive">
             Impossible de lire le stockage :{" "}
             {error instanceof Error ? error.message : "erreur"}
           </p>
         )}
 
-        <div className="grid gap-4">
+        {!isLoading && !error && (templates ?? []).length === 0 && (
+          <SurfaceCard flush>
+            <TableEmpty
+              title="Aucun modèle de document"
+              description="Aucun fichier n'est déclaré pour le dossier d'inscription."
+              icon={FileText}
+            />
+          </SurfaceCard>
+        )}
+
+        <CardGrid cols={2}>
           {(templates ?? []).map((doc) => {
             const busy = busyFile === doc.internalFile;
             return (
-              <Card key={doc.internalFile}>
-                <CardHeader className="pb-3">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        {doc.label}
-                      </CardTitle>
-                      <CardDescription className="font-mono text-xs">
-                        {doc.filename}
-                      </CardDescription>
-                    </div>
-                    {doc.hasOverride ? (
-                      <Badge>Version déposée</Badge>
-                    ) : (
-                      <Badge variant="outline">Version livrée</Badge>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="flex flex-wrap items-center gap-2">
+              <SurfaceCard
+                key={doc.internalFile}
+                title={doc.label}
+                icon={FileText}
+                description={<span className="font-mono text-xs">{doc.filename}</span>}
+                actions={
+                  doc.hasOverride ? (
+                    <StatusPill tone="info" dot>Version déposée</StatusPill>
+                  ) : (
+                    <StatusPill tone="neutral">Version livrée</StatusPill>
+                  )
+                }
+              >
+                <div className="flex flex-wrap items-center gap-2">
                   {doc.hasOverride && doc.updatedAt && (
-                    <p className="text-xs text-muted-foreground w-full mb-1">
+                    <p className="mb-1 w-full text-xs text-muted-foreground">
                       Déposée le{" "}
                       {format(new Date(doc.updatedAt), "d MMMM yyyy à HH:mm", {
                         locale: fr,
@@ -222,12 +246,12 @@ export default function AdminRegistrationDocuments() {
                       Revenir à la version livrée
                     </Button>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </SurfaceCard>
             );
           })}
-        </div>
-      </div>
+        </CardGrid>
+      </PageShell>
     </MainLayout>
   );
 }
