@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { useTabParam } from "@/hooks/useTabParam";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -224,6 +225,7 @@ function VariantEditor({
 }
 
 export default function AdminEmails() {
+  const [emailsTab, setEmailsTab] = useTabParam(["modeles", "journal"] as const);
   const { data: models, isLoading, error } = useEmailModels();
   const { data: dispatchLog } = useEdgeDispatchLog();
   const saveDraft = useSaveEmailDraft();
@@ -322,7 +324,7 @@ export default function AdminEmails() {
           </p>
         </div>
 
-        <Tabs defaultValue="modeles">
+        <Tabs value={emailsTab} onValueChange={setEmailsTab}>
           <TabsList>
             <TabsTrigger value="modeles">Modèles</TabsTrigger>
             <TabsTrigger value="journal">Journal des envois</TabsTrigger>

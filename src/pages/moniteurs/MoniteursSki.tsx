@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { useTabParam } from "@/hooks/useTabParam";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -113,6 +114,7 @@ function IntakeCard({
 }
 
 export default function MoniteursSki() {
+  const [moniteursTab, setMoniteursTab] = useTabParam(["dates", "ecoles", "base"] as const);
   const [searchMonitors, setSearchMonitors] = useState("");
   const [monitorPage, setMonitorPage] = useState(1);
   const monitorPageSize = 50;
@@ -173,7 +175,7 @@ export default function MoniteursSki() {
           <StatCard title="Dates programmées" value={intakes.filter((i) => !["annule", "brouillon"].includes(i.status)).length} subtitle="confirmées ou ouvertes" icon={Calendar} />
         </div>
 
-        <Tabs defaultValue="dates">
+        <Tabs value={moniteursTab} onValueChange={setMoniteursTab}>
           <TabsList>
             <TabsTrigger value="dates">Dates de formation</TabsTrigger>
             <TabsTrigger value="ecoles">Écoles de ski</TabsTrigger>

@@ -7,6 +7,7 @@ import {
   PATH_TO_ROUTE_KEY,
 } from "@/lib/route-permissions";
 import { resolvePilotageTab } from "@/components/finance/PilotageSubnav";
+import { NAV_SECTIONS } from "@/lib/navigation";
 
 function source(relatif: string): string {
   return readFileSync(join(process.cwd(), relatif), "utf8");
@@ -33,15 +34,20 @@ describe("Vague C — permissions", () => {
 });
 
 describe("Vague C — sidebar & pilotage", () => {
-  it("expose Trésorerie et Portails, masque Analyses/Rentabilité du menu", () => {
-    const sidebar = source("src/components/layout/Sidebar.tsx");
-    expect(sidebar).toContain('name: "Pilotage"');
-    expect(sidebar).toContain('name: "Trésorerie"');
-    expect(sidebar).toContain('href: "/portails/stagiaire"');
-    expect(sidebar).toContain('href: "/portails/formateur"');
-    expect(sidebar).not.toContain('name: "Analyses"');
-    expect(sidebar).not.toContain('name: "Rentabilité"');
-    expect(sidebar).not.toContain('name: "Charges fixes"');
+  it("expose Trésorerie et Portails, garde Analyses/Rentabilité en sous-menus", () => {
+    const items = NAV_SECTIONS.flatMap((s) => s.items);
+    const premierNiveau = items.map((i) => i.href);
+    expect(items.map((i) => i.id)).toContain("tresorerie");
+    expect(premierNiveau).toContain("/portails/stagiaire");
+    expect(premierNiveau).toContain("/portails/formateur");
+    expect(premierNiveau).not.toContain("/finance/analyses");
+    expect(premierNiveau).not.toContain("/finance/rentabilite");
+
+    const tresorerie = items.find((i) => i.id === "tresorerie");
+    expect(tresorerie?.children?.map((c) => c.href)).toEqual([
+      "/finance/tresorerie",
+      "/finance/tresorerie?tab=charges",
+    ]);
   });
 
   it("PilotageSubnav active la bonne onglet", () => {

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { useTabParam } from "@/hooks/useTabParam";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -674,7 +675,7 @@ function ComparisonCard({
 }
 
 export default function SatisfactionStats() {
-  const [activeTab, setActiveTab] = useState<"overview" | "comparison">("overview");
+  const [activeTab, setActiveTab] = useTabParam(["overview", "comparison"] as const);
   const [filters, setFilters] = useState<SatisfactionFilters>({
     period: "all",
     language: "all",
@@ -748,7 +749,7 @@ export default function SatisfactionStats() {
           </Button>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "overview" | "comparison")}>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <TabsList>
               <TabsTrigger value="overview" className="gap-2">

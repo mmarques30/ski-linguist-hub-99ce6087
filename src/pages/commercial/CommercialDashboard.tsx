@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTabParam } from "@/hooks/useTabParam";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -98,6 +99,7 @@ function ChannelPipeline({
   editable: boolean;
   onEdit: (lead: Lead) => void;
 }) {
+  const [commercialTab, setCommercialTab] = useTabParam(["kanban", "analytics"] as const);
   const { seasonId, seasonStart, seasonEnd } = useSeasonFilter();
   const { data: leads = [] } = useLeads({
     search,
@@ -183,7 +185,7 @@ function ChannelPipeline({
 
   return (
     <>
-    <Tabs defaultValue="kanban">
+    <Tabs value={commercialTab} onValueChange={setCommercialTab}>
       <TabsList>
         <TabsTrigger value="kanban">Pipeline</TabsTrigger>
         <TabsTrigger value="analytics">Analyses</TabsTrigger>

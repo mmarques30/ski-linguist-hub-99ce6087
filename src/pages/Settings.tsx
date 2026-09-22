@@ -1,4 +1,5 @@
 import { MainLayout } from "@/components/layout/MainLayout";
+import { useTabParam } from "@/hooks/useTabParam";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,6 +70,9 @@ const translations = {
 };
 
 export default function Settings() {
+  const [settingsTab, setSettingsTab] = useTabParam(
+    ["general", "notifications", "integrations", "languages"] as const,
+  );
   const { t } = useLanguage();
 
   return (
@@ -79,7 +83,7 @@ export default function Settings() {
           <p className="text-muted-foreground">{t(translations.subtitle)}</p>
         </div>
 
-        <Tabs defaultValue="general" className="space-y-6">
+        <Tabs value={settingsTab} onValueChange={setSettingsTab} className="space-y-6">
           <TabsList>
             <TabsTrigger value="general">{t(translations.tabGeneral)}</TabsTrigger>
             <TabsTrigger value="notifications">{t(translations.tabNotifications)}</TabsTrigger>
