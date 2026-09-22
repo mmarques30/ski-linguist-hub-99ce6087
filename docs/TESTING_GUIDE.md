@@ -70,7 +70,10 @@ En fin de campagne de test : `/admin/testing` → **Simuler (dry-run)** → si l
 5. **Étape 3 — Profil professionnel.** Choisir un profil **autre** que moniteur de ski (évite le pack documents moniteur). Continuer.
 6. **Étape 4 — Test de niveau.** Le test est obligatoire. Répondre jusqu’à la fin. À l’écran : un résultat en **piste** (pas un niveau CECRL). Continuer.
 7. **Étape 5 — Attentes.** Remplir librement, certification au choix (ex. Sans certification). Continuer.
-8. **Étape 6 — Paiement.** Choisir **150 € par virement bancaire + solde par chèque à l’inscription** (pas Stripe : pas de carte). Relire IBAN FLI à l’écran. Continuer.
+8. **Étape 6 — Paiement.** Choisir un mode (aucun n’est coché par défaut) :
+   - Recette sans carte : **150 € par virement + solde chèque** — relire l’IBAN FLI.
+   - Point 6 Stripe (mode test) : **150 € en ligne (Stripe) + solde chèque** ou **intégral Stripe**, carte `4242 4242 4242 4242`, montant **en euros**.
+9. Continuer.
 9. **Étape 7 — Confirmation.** Cocher l’acceptation, cliquer pour envoyer.
 
 **À l’écran :** cercle vert, titre **Inscription enregistrée**, badge **Code : FLI-…**. Conserver ce code.
@@ -219,4 +222,4 @@ Ne pas exporter de CSV nominatif dans le dépôt.
 - Prospection moniteurs (gelée).
 - Relances facture automatiques : crons en dry_run tant que
   `email_crons_live` est false ; pas d’activation live sans preuve ZZTEST.
-- Paiement Stripe de `/register` (volontairement évité ici).
+- Paiement Stripe de `/register` : optionnel en mode test (carte `4242…`) une fois Settings → Intégrations **Opérationnel**.

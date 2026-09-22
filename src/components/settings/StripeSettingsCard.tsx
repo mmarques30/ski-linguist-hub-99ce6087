@@ -140,48 +140,64 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
           </div>
         )}
 
-        <Alert>
-          <AlertTitle>Étapes de configuration (GitHub + Supabase)</AlertTitle>
-          <AlertDescription className="space-y-3 text-sm">
-            <ol className="list-decimal pl-5 space-y-2">
-              <li>
-                Ouvrez{" "}
-                <a href={keysUrl} target="_blank" rel="noreferrer" className="underline font-medium">
-                  Stripe → API Keys
-                </a>{" "}
-                et copiez la <strong>Secret key</strong>.
-              </li>
-              <li>
-                Dans{" "}
-                <a href={SUPABASE_PROJECT_URL} target="_blank" rel="noreferrer" className="underline font-medium">
-                  Supabase → Edge Functions → Secrets
-                </a>
-                , ajoutez <code>STRIPE_SECRET_KEY</code>.
-              </li>
-              <li>
-                Créez un webhook dans{" "}
-                <a href={webhooksUrl} target="_blank" rel="noreferrer" className="underline font-medium">
-                  Stripe → Webhooks
-                </a>{" "}
-                avec l&apos;URL ci-dessous et <code>checkout.session.completed</code>.
-              </li>
-              <li>
-                Ajoutez <code>STRIPE_WEBHOOK_SECRET</code> (<code>whsec_...</code>) dans Supabase Secrets.
-              </li>
-              <li>
-                Cliquez sur <strong>Configurer le webhook automatiquement</strong> ci-dessus, ou exécutez{" "}
-                <code>scripts/setup-stripe-webhook.sh</code> avec <code>STRIPE_SECRET_KEY</code>.
-              </li>
-              <li>
-                Déployez depuis le repo :{" "}
-                <code>supabase functions deploy stripe-webhook provision-stripe-webhook verify-registration-checkout</code>
-              </li>
-              <li>
-                Testez avec la carte <code>4242 4242 4242 4242</code>.
-              </li>
-            </ol>
-          </AlertDescription>
-        </Alert>
+        {isFullyConfigured ? (
+          <Alert>
+            <AlertTitle>Prêt pour les tests</AlertTitle>
+            <AlertDescription className="space-y-2 text-sm">
+              <p>
+                Mode <strong>test</strong> : sur <code>/register</code>, choisir un paiement Stripe
+                (150 € ou intégral), puis carte <code>4242 4242 4242 4242</code>.
+              </p>
+              <p className="text-muted-foreground">
+                Le montant s&apos;affiche en euros. Après paiement, une ligne apparaît dans{" "}
+                <code>payments</code> (méthode Stripe) et le webhook met à jour l&apos;inscription.
+              </p>
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <Alert>
+            <AlertTitle>Étapes de configuration (GitHub + Supabase)</AlertTitle>
+            <AlertDescription className="space-y-3 text-sm">
+              <ol className="list-decimal pl-5 space-y-2">
+                <li>
+                  Ouvrez{" "}
+                  <a href={keysUrl} target="_blank" rel="noreferrer" className="underline font-medium">
+                    Stripe → API Keys
+                  </a>{" "}
+                  et copiez la <strong>Secret key</strong>.
+                </li>
+                <li>
+                  Dans{" "}
+                  <a href={SUPABASE_PROJECT_URL} target="_blank" rel="noreferrer" className="underline font-medium">
+                    Supabase → Edge Functions → Secrets
+                  </a>
+                  , ajoutez <code>STRIPE_SECRET_KEY</code>.
+                </li>
+                <li>
+                  Créez un webhook dans{" "}
+                  <a href={webhooksUrl} target="_blank" rel="noreferrer" className="underline font-medium">
+                    Stripe → Webhooks
+                  </a>{" "}
+                  avec l&apos;URL ci-dessous et <code>checkout.session.completed</code>.
+                </li>
+                <li>
+                  Ajoutez <code>STRIPE_WEBHOOK_SECRET</code> (<code>whsec_...</code>) dans Supabase Secrets.
+                </li>
+                <li>
+                  Cliquez sur <strong>Configurer le webhook automatiquement</strong> ci-dessus, ou exécutez{" "}
+                  <code>scripts/setup-stripe-webhook.sh</code> avec <code>STRIPE_SECRET_KEY</code>.
+                </li>
+                <li>
+                  Déployez depuis le repo :{" "}
+                  <code>supabase functions deploy stripe-webhook provision-stripe-webhook verify-registration-checkout</code>
+                </li>
+                <li>
+                  Testez avec la carte <code>4242 4242 4242 4242</code>.
+                </li>
+              </ol>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {data?.webhookUrl && (
           <div className="space-y-2">
