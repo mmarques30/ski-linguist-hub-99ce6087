@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { notifyAdmins } from "@/lib/notify-admins";
+import { INVOICE_ORIGIN_APP } from "@/lib/invoice-origin";
 
 export interface Payment {
   id: string;
@@ -115,19 +116,21 @@ export function usePaymentKPIs(startDate?: string, endDate?: string) {
 
       const totalPending = pending?.reduce((s, p) => s + Number(p.amount || 0), 0) || 0;
 
-      // Factures en retard (sent mais pas payées, due_date passée)
+      // Factures en retard — uniquement émises par l'app (BL-007 : hors import)
       const { data: overdueInvoices } = await supabase
         .from("invoices")
         .select("amount_ttc")
         .eq("status", "sent")
+        .eq("origin", INVOICE_ORIGIN_APP)
         .lt("due_date", today.toISOString().split("T")[0]);
 
       const totalOverdue = overdueInvoices?.reduce((s, i) => s + Number(i.amount_ttc || 0), 0) || 0;
 
-      // Taux de recouvrement
+      // Taux de recouvrement — période courante, factures app seulement
       const { data: allInvoices } = await supabase
         .from("invoices")
         .select("amount_ttc, status")
+        .eq("origin", INVOICE_ORIGIN_APP)
         .gte("invoice_date", start)
         .lte("invoice_date", end);
 
