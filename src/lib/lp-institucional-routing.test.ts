@@ -39,7 +39,7 @@ describe("LP institutionnelle — conformité spec", () => {
     expect(src).toContain("Acesso FLI");
     expect(src).toContain('to="/auth"');
     expect(src).toContain("Réserver mon stage");
-    expect(src).toContain("1cIivE5ggCk");
+    expect(src).toContain("YOUTUBE_VIDEO_ID");
   });
 
   it("place la FAQ après le footer dans le flux", () => {
