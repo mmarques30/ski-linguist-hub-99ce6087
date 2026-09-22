@@ -272,6 +272,43 @@ describe("matchFliInvoicesToInscriptions", () => {
   });
 });
 
+describe("client_type DSF Formation", () => {
+  it("classe DSF Formation en client_type dsf", () => {
+    const preview = parseFliInvoicesCsv(
+      csv([
+        line({
+          "n° seq": "14290",
+          "Année compt": "25-26",
+          "Fact FLI": "25-26.14290",
+          "Nom et Prénom": "DSF Formation",
+          Désignation: "tests d'anglais et espagnol pour l'EPSA",
+          "Moyen de paiement": "virement",
+          "Total HT": "100",
+          TVA: "20",
+          "Total TTC": "120",
+        }),
+        line({
+          "n° seq": "14081",
+          "Année compt": "25-26",
+          "Fact FLI": "25-26.14081",
+          "Nom et Prénom": "DSF Formation",
+          Désignation: "Encadrement d'une formation en Anglais",
+          "Moyen de paiement": "virement",
+          "Total HT": "1000",
+          TVA: "200",
+          "Total TTC": "1200",
+        }),
+      ])
+    );
+    expect(preview.rows[0].clientType).toBe("dsf");
+    expect(preview.rows[0].invoiceType).toBe("test");
+    expect(preview.rows[1].clientType).toBe("dsf");
+    expect(preview.rows[1].invoiceType).toBe("soustraitance");
+    const insert = toInvoiceInsert(preview.rows[0], null, null);
+    expect(insert.client_type).toBe("dsf");
+  });
+});
+
 describe("resolveEsfPartner", () => {
   const partners = [
     {
