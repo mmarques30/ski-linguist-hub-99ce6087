@@ -79,6 +79,73 @@ export const CHROME_NAV: Record<string, Translations> = {
   "/settings": { fr: "Paramètres", "pt-BR": "Configurações", en: "Settings" },
 };
 
+/**
+ * Libellés des entrées repliables et des sous-menus (arborescence 3 niveaux).
+ * Une clé par regroupement produit ; les feuilles qui pointent vers une page
+ * entière réutilisent CHROME_NAV.
+ */
+export const CHROME_NAV_GROUPS: Record<string, Translations> = {
+  // Opérations
+  inscriptionsAll: {
+    fr: "Toutes les inscriptions",
+    "pt-BR": "Todas as inscrições",
+    en: "All registrations",
+  },
+  inscriptionsPending: { fr: "À traiter", "pt-BR": "A tratar", en: "To process" },
+  inscriptionsDone: { fr: "Terminées", "pt-BR": "Concluídas", en: "Completed" },
+  planning: { fr: "Planning & sessions", "pt-BR": "Agenda & sessões", en: "Schedule & sessions" },
+  evaluations: {
+    fr: "Tests & évaluations",
+    "pt-BR": "Testes & avaliações",
+    en: "Tests & evaluations",
+  },
+
+  // Commercial
+  commercialPipeline: { fr: "Pipeline", "pt-BR": "Pipeline", en: "Pipeline" },
+  commercialAnalytics: { fr: "Analyses", "pt-BR": "Análises", en: "Analytics" },
+  moniteursDates: {
+    fr: "Dates de formation",
+    "pt-BR": "Datas de formação",
+    en: "Training dates",
+  },
+  moniteursEcoles: { fr: "Écoles de ski", "pt-BR": "Escolas de ski", en: "Ski schools" },
+  moniteursBase: { fr: "Base moniteurs", "pt-BR": "Base de monitores", en: "Instructor base" },
+
+  // Finance
+  facturation: { fr: "Facturation", "pt-BR": "Faturamento", en: "Billing" },
+  invoicesToCheck: { fr: "À vérifier", "pt-BR": "A verificar", en: "To review" },
+  financeOverview: { fr: "Vue d'ensemble", "pt-BR": "Visão geral", en: "Overview" },
+  financeAnalyses: { fr: "Analyses", "pt-BR": "Análises", en: "Analytics" },
+  financeRentabilite: { fr: "Rentabilité", "pt-BR": "Rentabilidade", en: "Profitability" },
+  tresoreriePrevisionnel: { fr: "Prévisionnel", "pt-BR": "Previsão", en: "Forecast" },
+  tresorerieCharges: { fr: "Charges fixes", "pt-BR": "Custos fixos", en: "Fixed costs" },
+
+  // Qualité
+  satisfactionStats: { fr: "Statistiques", "pt-BR": "Estatísticas", en: "Statistics" },
+  satisfactionComparison: { fr: "Comparaison", "pt-BR": "Comparação", en: "Comparison" },
+  qualiopi: { fr: "Qualiopi", "pt-BR": "Qualiopi", en: "Qualiopi" },
+
+  // Administration
+  communications: { fr: "Communications", "pt-BR": "Comunicações", en: "Communications" },
+  emailModels: { fr: "Modèles d'emails", "pt-BR": "Modelos de e-mail", en: "Email templates" },
+  emailJournal: {
+    fr: "Journal des envois",
+    "pt-BR": "Diário de envios",
+    en: "Send log",
+  },
+  donnees: { fr: "Données & recette", "pt-BR": "Dados & testes", en: "Data & QA" },
+  importPhrases: { fr: "Import de phrases", "pt-BR": "Importação de frases", en: "Phrase import" },
+  configuration: { fr: "Configuration", "pt-BR": "Configuração", en: "Configuration" },
+  settingsOrganisation: { fr: "Organisation", "pt-BR": "Organização", en: "Organization" },
+  settingsLanguages: {
+    fr: "Langues & modalités",
+    "pt-BR": "Idiomas & modalidades",
+    en: "Languages & modes",
+  },
+  settingsNotifications: { fr: "Notifications", "pt-BR": "Notificações", en: "Notifications" },
+  settingsIntegrations: { fr: "Intégrations", "pt-BR": "Integrações", en: "Integrations" },
+};
+
 export const CHROME_UI: Record<string, Translations> = {
   logout: { fr: "Déconnexion", "pt-BR": "Sair", en: "Sign out" },
   frozen: { fr: "gelé", "pt-BR": "congelado", en: "frozen" },
