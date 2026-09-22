@@ -232,36 +232,31 @@ export function AppSidebar() {
     const active = activeSectionId === section.id;
 
     return (
-      <SidebarGroup key={section.id}>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            <Collapsible
-              asChild
-              open={isOpen}
-              onOpenChange={(next) => setOpenSection(next ? section.id : null)}
+      <Collapsible
+        key={section.id}
+        asChild
+        open={isOpen}
+        onOpenChange={(next) => setOpenSection(next ? section.id : null)}
+      >
+        <SidebarMenuItem>
+          <CollapsibleTrigger asChild>
+            <SidebarMenuButton
+              isActive={active && !isOpen}
+              aria-label={label}
+              className={LEVEL_1}
             >
-              <SidebarMenuItem>
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuButton
-                    isActive={active && !isOpen}
-                    aria-label={label}
-                    className={LEVEL_1}
-                  >
-                    <section.icon className="h-4 w-4" />
-                    <span className="flex-1 truncate text-left">{label}</span>
-                    <Chevron open={isOpen} />
-                  </SidebarMenuButton>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarMenuSub className="mt-1 mr-0 pr-0">
-                    {section.items.map(renderItem)}
-                  </SidebarMenuSub>
-                </CollapsibleContent>
-              </SidebarMenuItem>
-            </Collapsible>
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
+              <section.icon className="h-4 w-4" />
+              <span className="flex-1 truncate text-left">{label}</span>
+              <Chevron open={isOpen} />
+            </SidebarMenuButton>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <SidebarMenuSub className="mt-1 mr-0 pr-0">
+              {section.items.map(renderItem)}
+            </SidebarMenuSub>
+          </CollapsibleContent>
+        </SidebarMenuItem>
+      </Collapsible>
     );
   };
 
@@ -269,31 +264,24 @@ export function AppSidebar() {
    * Mode icône — les sections n'ont plus de place : on retombe sur un trilho
    * plat des pages, chacune avec son infobulle.
    */
-  const renderIconRail = () => (
-    <SidebarGroup>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          {sections.flatMap((section) =>
-            section.items.map((item) => (
-              <SidebarMenuItem key={`${section.id}-${item.id}`}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isItemActive(item, pathname, search)}
-                  tooltip={t(item.label)}
-                  className={LEVEL_1}
-                >
-                  <NavLink to={item.href}>
-                    <item.icon className="h-4 w-4" />
-                    <span className="flex-1 truncate">{t(item.label)}</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            )),
-          )}
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
-  );
+  const renderIconRail = () =>
+    sections.flatMap((section) =>
+      section.items.map((item) => (
+        <SidebarMenuItem key={`${section.id}-${item.id}`}>
+          <SidebarMenuButton
+            asChild
+            isActive={isItemActive(item, pathname, search)}
+            tooltip={t(item.label)}
+            className={LEVEL_1}
+          >
+            <NavLink to={item.href}>
+              <item.icon className="h-4 w-4" />
+              <span className="flex-1 truncate">{t(item.label)}</span>
+            </NavLink>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      )),
+    );
 
   // Pas de liseré entre la sidebar et le contenu : `border-r-0` seul ne suffit
   // pas, le composant pose la bordure via `group-data-[side=left]:border-r`
@@ -303,7 +291,16 @@ export function AppSidebar() {
       {/* h-14 : la bordure basse prolonge exactement celle du TopHeader. */}
       <SidebarHeader className="h-14 shrink-0 justify-center border-b border-sidebar-border px-2 py-0">
         <div className="flex items-center gap-2 px-1">
-          <img src={fliLogo} alt="FLI" className="h-7 w-7 shrink-0 object-contain" />
+          {/*
+            La marque fait 2.33:1 : l'enfermer dans un carré (`w-7`) la
+            réduisait à 28×12. On contraint la dimension utile de chaque mode —
+            la hauteur au déployé, la largeur du trilho en mode icône.
+          */}
+          <img
+            src={fliLogo}
+            alt="FLI"
+            className={cn("shrink-0", isCollapsed ? "mx-auto h-auto w-8" : "h-8 w-auto")}
+          />
           {!isCollapsed && (
             <span className="truncate text-xs font-medium text-sidebar-foreground/80">
               Formation
@@ -312,11 +309,15 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
+      {/*
+        Une seule liste : un groupe par section espaçait les boutons de 24 px
+        (padding du groupe × 2 + gap du conteneur). Ici, le gap du menu suffit.
+      */}
       <SidebarContent className="scrollbar-thin">
-        {!isFormateur && (
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-1.5">
+              {!isFormateur && (
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild
@@ -330,12 +331,11 @@ export function AppSidebar() {
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {isCollapsed ? renderIconRail() : sections.map(renderSection)}
+              )}
+              {isCollapsed ? renderIconRail() : sections.map(renderSection)}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border">
