@@ -27,6 +27,7 @@ import fliLogo from "@/assets/fli-marca-yellow.png";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { ThemeToggle } from "./ThemeToggle";
 import {
   Sidebar,
   SidebarContent,
@@ -223,15 +224,20 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
-      <SidebarHeader className="border-b border-sidebar-border py-2 px-2">
-        {!isCollapsed && (
-          <div className="flex items-center gap-2 px-1">
-            <img src={fliLogo} alt="FLI" className="h-7 w-auto" />
-            <span className="text-xs font-medium text-sidebar-foreground/80 truncate">
-              Formation
-            </span>
-          </div>
-        )}
+      <SidebarHeader className="border-b border-sidebar-border px-2 py-3">
+        <div className="flex items-center gap-2.5 px-1">
+          <img src={fliLogo} alt="FLI" className="h-7 w-7 shrink-0 object-contain" />
+          {!isCollapsed && (
+            <div className="min-w-0 leading-tight">
+              <p className="truncate text-sm font-semibold text-sidebar-foreground">
+                FLI Formation
+              </p>
+              <p className="truncate text-[0.65rem] text-sidebar-foreground/60">
+                France Langues International
+              </p>
+            </div>
+          )}
+        </div>
       </SidebarHeader>
 
       <SidebarContent className="scrollbar-thin">
@@ -265,7 +271,7 @@ export function AppSidebar() {
 
         {filteredSections.map((section) => (
           <SidebarGroup key={section.sectionKey}>
-            <SidebarGroupLabel className="text-[0.65rem] tracking-wider uppercase text-sidebar-foreground/50">
+            <SidebarGroupLabel className="px-2 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/45">
               {sectionLabel(section.sectionKey)}
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -288,7 +294,7 @@ export function AppSidebar() {
                               <item.icon className="h-4 w-4" />
                               <span className="flex-1">{name}</span>
                               {badge && !isCollapsed && (
-                                <span className="ml-auto text-[10px] uppercase tracking-wide text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                                <span className="ml-auto rounded-pill bg-[hsl(var(--tint-gold-bg))] px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-[hsl(var(--tint-gold-fg))]">
                                   {badge}
                                 </span>
                               )}
@@ -327,11 +333,9 @@ export function AppSidebar() {
             </Tooltip>
           </SidebarMenuItem>
         </SidebarMenu>
-        {!isCollapsed && (
-          <p className="text-xs text-sidebar-foreground/50 px-2 py-2">
-            France Langues International
-          </p>
-        )}
+        <div className={isCollapsed ? "flex justify-center py-1" : "px-1 pb-1 pt-2"}>
+          <ThemeToggle collapsed={isCollapsed} className={isCollapsed ? undefined : "w-full"} />
+        </div>
       </SidebarFooter>
     </Sidebar>
   );

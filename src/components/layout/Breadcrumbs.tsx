@@ -46,28 +46,31 @@ export function Breadcrumbs() {
   return (
     <nav
       aria-label="Fil d'Ariane"
-      className="flex items-center gap-1 px-4 lg:px-6 py-2 text-sm text-muted-foreground border-b bg-background/50"
+      data-print-hidden
+      className="flex items-center gap-1 overflow-x-auto border-b border-border bg-[hsl(var(--surface-page))] px-3 py-2 text-sm text-muted-foreground scrollbar-thin sm:px-4 lg:px-6"
     >
       <Link
         to="/"
-        className="flex items-center gap-1 hover:text-foreground transition-colors"
+        className="flex shrink-0 items-center gap-1 rounded-md px-1 transition-colors hover:text-foreground"
       >
         <Home className="h-3.5 w-3.5" />
         <span>{homeLabel}</span>
       </Link>
       {crumbs.map((c) => (
         <Fragment key={c.path}>
-          <ChevronRight className="h-3.5 w-3.5 opacity-50" />
+          <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-50" aria-hidden />
           {c.isLast || !c.navigable ? (
             <span
               className={
-                c.isLast ? "font-medium text-foreground" : "text-muted-foreground"
+                c.isLast
+                  ? "shrink-0 whitespace-nowrap px-1 font-medium text-foreground"
+                  : "shrink-0 whitespace-nowrap px-1 text-muted-foreground"
               }
             >
               {c.label}
             </span>
           ) : (
-            <Link to={c.path} className="hover:text-foreground transition-colors">
+            <Link to={c.path} className="shrink-0 whitespace-nowrap rounded-md px-1 transition-colors hover:text-foreground">
               {c.label}
             </Link>
           )}

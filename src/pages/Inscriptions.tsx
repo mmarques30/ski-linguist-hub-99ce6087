@@ -211,10 +211,13 @@ const translations = {
 export default function Inscriptions() {
   const [searchParams] = useSearchParams();
   const statusFromUrl = searchParams.get("status");
+  const languageFromUrl = searchParams.get("language");
   const [statusFilter, setStatusFilter] = useState(
     () => statusFromUrl || "all"
   );
-  const [languageFilter, setLanguageFilter] = useState("all");
+  const [languageFilter, setLanguageFilter] = useState(
+    () => languageFromUrl || "all"
+  );
   const [search, setSearch] = useState("");
   const [endPackInscription, setEndPackInscription] = useState<any>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -230,6 +233,11 @@ export default function Inscriptions() {
   useEffect(() => {
     if (statusFromUrl) setStatusFilter(statusFromUrl);
   }, [statusFromUrl]);
+
+  // Les répartitions du tableau de bord pointent ici avec ?language=…
+  useEffect(() => {
+    if (languageFromUrl) setLanguageFilter(languageFromUrl);
+  }, [languageFromUrl]);
 
   const { data: inscriptions, isLoading, error, refetch } = useInscriptions({
     status: statusFilter,
