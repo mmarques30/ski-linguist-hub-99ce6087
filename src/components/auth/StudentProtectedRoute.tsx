@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ADMIN_HOME_PATH } from "@/lib/admin-home";
 
 interface Props {
   children: React.ReactNode;
@@ -36,7 +37,7 @@ export function StudentProtectedRoute({ children }: Props) {
   useEffect(() => {
     if (!roleLoading && role && role !== "student") {
       // Not a student — redirect to admin dashboard
-      navigate("/", { replace: true });
+      navigate(ADMIN_HOME_PATH, { replace: true });
     }
   }, [role, roleLoading, navigate]);
 

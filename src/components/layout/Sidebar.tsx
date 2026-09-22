@@ -46,6 +46,7 @@ import {
   type NavItem,
   type NavSection,
 } from "@/lib/navigation";
+import { ADMIN_HOME_PATH } from "@/lib/admin-home";
 
 /**
  * Niveau 1 — la section. C'est elle, le menu parent : un vrai bouton, surface
@@ -321,11 +322,11 @@ export function AppSidebar() {
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild
-                    isActive={matchScore("/", pathname, search) >= 0}
+                    isActive={matchScore(ADMIN_HOME_PATH, pathname, search) >= 0}
                     tooltip={dashboardLabel}
                     className={LEVEL_1}
                   >
-                    <NavLink to="/">
+                    <NavLink to={ADMIN_HOME_PATH}>
                       <LayoutDashboard className="h-4 w-4" />
                       <span>{dashboardLabel}</span>
                     </NavLink>
