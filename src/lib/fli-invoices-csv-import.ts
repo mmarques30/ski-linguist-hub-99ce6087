@@ -11,6 +11,7 @@ import {
   parseFrenchNumber,
   type CsvRow,
 } from "@/lib/csv-import-parser";
+import { applyDsfFormationClientType } from "@/lib/invoice-client-type";
 
 /** Trou de séquence connu : ne pas le combler. */
 export const HISTORICAL_SEQUENCE_GAP = 13288;
@@ -569,7 +570,13 @@ export function parseFliInvoicesCsv(text: string): FliInvoicesPreview {
       invoiceStatus: payment.status,
       askPaula: payment.askPaula,
       askPaulaReason: payment.askPaulaReason,
-      clientType: payment.clientType,
+      clientType: applyDsfFormationClientType(
+        payment.clientType,
+        cell(raw, "Nom et Prénom"),
+        [designation, cell(raw, "Commentaire Formateur")]
+          .filter(Boolean)
+          .join(" — ") || null
+      ),
       relatedInvoiceRef: parseRelatedInvoiceRef(designation),
       depositAmount: optionalNumber(cell(raw, "Montant de l'acompte")),
       depositDate: isoDate(cell(raw, "Date de l'acompte")),
@@ -940,7 +947,12 @@ export function toPaymentInserts(
   inscriptionId: string | null,
   esfPartner?: EsfPartnerInput | null
 ): FliPaymentInsert[] {
-  const payerType = row.clientType === "ecole_ski" ? "ecole" : "stagiaire";
+  const payerType =
+    row.clientType === "ecole_ski"
+      ? "ecole"
+      : row.clientType === "dsf"
+        ? "dsf"
+        : "stagiaire";
   const payerName = esfPartner?.name ?? row.clientName;
   const out: FliPaymentInsert[] = [];
   if (row.depositAmount && row.depositAmount > 0 && row.depositMethod && row.depositDate) {
