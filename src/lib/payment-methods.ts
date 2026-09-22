@@ -1,3 +1,5 @@
+import { INVOICE_STATUSES, invoiceStatusLabel as labelFromStatus } from "@/lib/invoice-status";
+
 /** Liste unique des moyens de paiement (facture et paiement). */
 export const PAYMENT_METHODS = [
   { value: "cb", label: "Carte" },
@@ -22,13 +24,9 @@ export const CHEQUE_STATUSES = [
 
 export type ChequeStatusValue = (typeof CHEQUE_STATUSES)[number]["value"];
 
-export const INVOICE_STATUS_LABELS: Record<string, string> = {
-  draft: "Brouillon",
-  sent: "Envoyée",
-  paid: "Payée",
-  cancelled: "Annulée",
-  a_verifier: "À vérifier",
-};
+export const INVOICE_STATUS_LABELS: Record<string, string> = Object.fromEntries(
+  INVOICE_STATUSES.map((s) => [s.value, s.label])
+);
 
 /** Types de facture / paiement, valeurs techniques et héritées incluses. */
 export const PAYMENT_TYPE_LABELS: Record<string, string> = {
@@ -70,8 +68,7 @@ export function paymentMethodLabel(raw: string | null | undefined): string {
 }
 
 export function invoiceStatusLabel(status: string | null | undefined): string {
-  if (!status) return "—";
-  return INVOICE_STATUS_LABELS[status] ?? status;
+  return labelFromStatus(status);
 }
 
 export function paymentTypeLabel(type: string | null | undefined): string {

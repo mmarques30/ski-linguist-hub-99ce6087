@@ -119,6 +119,16 @@ const translations = {
     "pt-BR": "Enviada",
     en: "Sent",
   },
+  statusPending: {
+    fr: "En attente",
+    "pt-BR": "Em espera",
+    en: "Pending",
+  },
+  statusToChase: {
+    fr: "À relancer",
+    "pt-BR": "A cobrar",
+    en: "Follow up",
+  },
   statusPaid: {
     fr: "Payée",
     "pt-BR": "Paga",
@@ -128,6 +138,11 @@ const translations = {
     fr: "Annulée",
     "pt-BR": "Cancelada",
     en: "Cancelled",
+  },
+  statusToCheck: {
+    fr: "À vérifier",
+    "pt-BR": "A verificar",
+    en: "To review",
   },
   allTypes: {
     fr: "Tous les types",
@@ -538,9 +553,11 @@ export default function Invoices() {
   const statusLabels: Record<string, string> = {
     draft: t(translations.statusDraft),
     sent: t(translations.statusSent),
+    en_attente: t(translations.statusPending),
+    a_relancer: t(translations.statusToChase),
     paid: t(translations.statusPaid),
     cancelled: t(translations.statusCancelled),
-    a_verifier: "À vérifier",
+    a_verifier: t(translations.statusToCheck),
   };
 
   const typeLabels: Record<string, string> = {
@@ -581,6 +598,14 @@ export default function Invoices() {
     }
 
     const forStatus = (code: string) => statusTotals.get(code) ?? { count: 0, ttc: 0 };
+    const mergeStatuses = (...codes: string[]) =>
+      codes.reduce(
+        (acc, code) => {
+          const part = forStatus(code);
+          return { count: acc.count + part.count, ttc: acc.ttc + part.ttc };
+        },
+        { count: 0, ttc: 0 }
+      );
 
     return {
       count: rows.length,
@@ -588,6 +613,9 @@ export default function Invoices() {
       totalTtc,
       paid: forStatus("paid"),
       sent: forStatus("sent"),
+      pending: forStatus("en_attente"),
+      toChase: forStatus("a_relancer"),
+      outstanding: mergeStatuses("sent", "en_attente", "a_relancer"),
       draft: forStatus("draft"),
       toCheck: forStatus("a_verifier"),
       statusTotals,
@@ -828,7 +856,9 @@ export default function Invoices() {
               <Send className="h-4 w-4" />
             </Button>
           )}
-          {invoice.status === "sent" && (
+          {(invoice.status === "sent" ||
+            invoice.status === "en_attente" ||
+            invoice.status === "a_relancer") && (
             <Button
               variant="ghost"
               size="icon"
@@ -933,12 +963,12 @@ export default function Invoices() {
           />
           <StatTile
             label={t(translations.tileOutstanding)}
-            value={formatPrice(summary.sent.ttc)}
-            hint={`${summary.sent.count} ${t(translations.sentAwaitingPayment)}`}
+            value={formatPrice(summary.outstanding.ttc)}
+            hint={`${summary.outstanding.count} ${t(translations.sentAwaitingPayment)}`}
             icon={Send}
             tone="orange"
             loading={isLoading}
-            onClick={() => setStatusFilter("sent")}
+            onClick={() => setStatusFilter("en_attente")}
           />
           <StatTile
             label={t(translations.tileToCheck)}
@@ -1016,9 +1046,11 @@ export default function Invoices() {
                       <SelectItem value="all">{t(translations.allStatuses)}</SelectItem>
                       <SelectItem value="draft">{t(translations.statusDraft)}</SelectItem>
                       <SelectItem value="sent">{t(translations.statusSent)}</SelectItem>
+                      <SelectItem value="en_attente">{t(translations.statusPending)}</SelectItem>
+                      <SelectItem value="a_relancer">{t(translations.statusToChase)}</SelectItem>
                       <SelectItem value="paid">{t(translations.statusPaid)}</SelectItem>
                       <SelectItem value="cancelled">{t(translations.statusCancelled)}</SelectItem>
-                      <SelectItem value="a_verifier">À vérifier</SelectItem>
+                      <SelectItem value="a_verifier">{t(translations.statusToCheck)}</SelectItem>
                     </SelectContent>
                   </Select>
                   <Select value={typeFilter} onValueChange={setTypeFilter}>

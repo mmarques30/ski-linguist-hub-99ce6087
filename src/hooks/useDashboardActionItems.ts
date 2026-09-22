@@ -86,7 +86,7 @@ export function useDashboardActionItems() {
       id: "overdue",
       label: "Factures échues non payées",
       count: extras.data?.overdueInvoices ?? 0,
-      href: "/invoices?status=sent",
+      href: "/invoices?status=en_attente",
       severity: "critical",
     },
   ];

@@ -380,7 +380,7 @@ export function usePendingInvoices() {
             )
           )
         `)
-        .in('status', ['draft', 'sent'])
+        .in('status', ['draft', 'sent', 'en_attente', 'a_relancer'])
         .eq('origin', INVOICE_ORIGIN_APP)
         .order('invoice_date', { ascending: true });
       
@@ -661,7 +661,7 @@ export function useTresoreriePrevisionnelle(moisCount: number = 6) {
         .from('invoices')
         .select('amount_ttc, amount_ht, due_date')
         .eq('origin', INVOICE_ORIGIN_APP)
-        .in('status', ['draft', 'sent']);
+        .in('status', ['draft', 'sent', 'en_attente', 'a_relancer']);
       
       // Get fixed costs
       const { data: fixedCosts } = await supabase

@@ -110,6 +110,8 @@ export const CHROME_NAV_GROUPS: Record<string, Translations> = {
   // Finance
   facturation: { fr: "Facturation", "pt-BR": "Faturamento", en: "Billing" },
   invoicesToCheck: { fr: "À vérifier", "pt-BR": "A verificar", en: "To review" },
+  invoicesPending: { fr: "En attente", "pt-BR": "Em espera", en: "Pending" },
+  invoicesToChase: { fr: "À relancer", "pt-BR": "A cobrar", en: "Follow up" },
   financeOverview: { fr: "Vue d'ensemble", "pt-BR": "Visão geral", en: "Overview" },
   financeAnalyses: { fr: "Analyses", "pt-BR": "Análises", en: "Analytics" },
   financeRentabilite: { fr: "Rentabilité", "pt-BR": "Rentabilidade", en: "Profitability" },

@@ -14,7 +14,7 @@ export interface Invoice {
   amount_ht: number;
   tva_rate: number | null;
   amount_ttc: number | null;
-  status: "draft" | "sent" | "paid" | "cancelled" | "a_verifier";
+  status: "draft" | "sent" | "en_attente" | "a_relancer" | "paid" | "cancelled" | "a_verifier";
   payment_date: string | null;
   payment_method: string | null;
   notes: string | null;
@@ -279,13 +279,17 @@ export function useInvoiceStats() {
         total: data.length,
         totalRevenue: data.reduce((sum, inv) => sum + (inv.amount_ttc || 0), 0),
         paid: data.filter((inv) => inv.status === "paid").length,
-        pending: data.filter((inv) => inv.status === "sent").length,
+        pending: data.filter((inv) =>
+          ["sent", "en_attente", "a_relancer"].includes(inv.status)
+        ).length,
         draft: data.filter((inv) => inv.status === "draft").length,
         paidAmount: data
           .filter((inv) => inv.status === "paid")
           .reduce((sum, inv) => sum + (inv.amount_ttc || 0), 0),
         pendingAmount: data
-          .filter((inv) => inv.status === "sent")
+          .filter((inv) =>
+            ["sent", "en_attente", "a_relancer"].includes(inv.status)
+          )
           .reduce((sum, inv) => sum + (inv.amount_ttc || 0), 0),
       };
 

@@ -119,11 +119,17 @@ describe("état actif — chemins et paramètres d'URL", () => {
     );
   });
 
-  it("garde la facturation active sur les paiements", () => {
+  it("garde la facturation active sur les paiements et les files de statut", () => {
     const facturation = item("facturation");
     expect(isItemActive(facturation, "/finance/payments", "")).toBe(true);
     expect(activeChildHref(facturation, "/invoices", "?status=a_verifier")).toBe(
       "/invoices?status=a_verifier",
+    );
+    expect(activeChildHref(facturation, "/invoices", "?status=en_attente")).toBe(
+      "/invoices?status=en_attente",
+    );
+    expect(activeChildHref(facturation, "/invoices", "?status=a_relancer")).toBe(
+      "/invoices?status=a_relancer",
     );
   });
 

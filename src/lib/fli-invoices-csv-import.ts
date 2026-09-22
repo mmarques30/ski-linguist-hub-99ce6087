@@ -17,7 +17,14 @@ import { applyDsfFormationClientType } from "@/lib/invoice-client-type";
 export const HISTORICAL_SEQUENCE_GAP = 13288;
 
 export type InvoiceType = "formation" | "test" | "soustraitance";
-export type InvoiceStatus = "draft" | "sent" | "paid" | "cancelled" | "a_verifier";
+export type InvoiceStatus =
+  | "draft"
+  | "sent"
+  | "en_attente"
+  | "a_relancer"
+  | "paid"
+  | "cancelled"
+  | "a_verifier";
 export type ClientType = "stagiaire" | "ecole_ski" | "dsf" | "autre";
 export type DbPaymentMethod =
   | "cheque"

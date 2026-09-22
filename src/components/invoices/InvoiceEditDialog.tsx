@@ -29,6 +29,7 @@ import {
   canonicalPaymentMethod,
   HISTORICAL_PAYMENT_METHOD,
 } from "@/lib/payment-methods";
+import { INVOICE_STATUSES, type InvoiceStatusValue } from "@/lib/invoice-status";
 import { resolveInvoiceClientName } from "@/lib/invoice-client-name";
 import { toast } from "sonner";
 import { Loader2, Plus, Trash2 } from "lucide-react";
@@ -75,7 +76,7 @@ export function InvoiceEditDialog({ invoice, open, onOpenChange }: InvoiceEditDi
     client_type: "stagiaire" as "stagiaire" | "ecole_ski" | "dsf" | "autre",
     amount_ht: 0,
     tva_rate: 0,
-    status: "draft" as "draft" | "sent" | "paid" | "cancelled" | "a_verifier",
+    status: "draft" as InvoiceStatusValue,
     notes: "",
   });
 
@@ -388,7 +389,7 @@ export function InvoiceEditDialog({ invoice, open, onOpenChange }: InvoiceEditDi
               <Label htmlFor="status">Statut</Label>
               <Select
                 value={formData.status}
-                onValueChange={(value: "draft" | "sent" | "paid" | "cancelled" | "a_verifier") =>
+                onValueChange={(value: InvoiceStatusValue) =>
                   setFormData({ ...formData, status: value })
                 }
               >
@@ -396,11 +397,11 @@ export function InvoiceEditDialog({ invoice, open, onOpenChange }: InvoiceEditDi
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="draft">Brouillon</SelectItem>
-                  <SelectItem value="sent">Envoyée</SelectItem>
-                  <SelectItem value="paid">Payée</SelectItem>
-                  <SelectItem value="cancelled">Annulée</SelectItem>
-                  <SelectItem value="a_verifier">À vérifier</SelectItem>
+                  {INVOICE_STATUSES.map((status) => (
+                    <SelectItem key={status.value} value={status.value}>
+                      {status.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
