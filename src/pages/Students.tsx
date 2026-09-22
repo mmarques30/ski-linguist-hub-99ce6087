@@ -1,9 +1,22 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Search, Eye, Mail, Phone, Grid, List, Users, Building2, Plus, Pencil } from "lucide-react";
-import { useStudents } from "@/hooks/useStudents";
+import {
+  Search,
+  Eye,
+  Mail,
+  Phone,
+  Grid,
+  List,
+  Users,
+  Building2,
+  Plus,
+  Pencil,
+  MapPin,
+  KeyRound,
+} from "lucide-react";
+import { useStudents, useStudentStats } from "@/hooks/useStudents";
 import { format } from "date-fns";
 import { fr, enUS, ptBR } from "date-fns/locale";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -22,7 +35,10 @@ import {
   IdentityCell,
   PageHeader,
   PageShell,
+  RankedBarList,
   SegmentedControl,
+  StatTile,
+  StatTileGrid,
   StatusPill,
   SurfaceCard,
   TableCell,
@@ -165,24 +181,128 @@ const translations = {
     fr: "Ajouter un stagiaire",
     "pt-BR": "Adicionar um estagiário",
     en: "Add a student"
-  }
+  },
+  // Bandeau de synthèse — libellés ajoutés par la densification visuelle.
+  tileTotal: {
+    fr: "Stagiaires en base",
+    "pt-BR": "Estagiários na base",
+    en: "Students on file",
+  },
+  tilePortal: {
+    fr: "Avec compte portail",
+    "pt-BR": "Com conta no portal",
+    en: "With a portal account",
+  },
+  tileCompany: {
+    fr: "Avec entreprise ou ESF",
+    "pt-BR": "Com empresa ou ESF",
+    en: "With a company or ski school",
+  },
+  tileCities: {
+    fr: "Villes distinctes",
+    "pt-BR": "Cidades distintas",
+    en: "Distinct cities",
+  },
+  topCities: {
+    fr: "Villes les plus représentées",
+    "pt-BR": "Cidades mais representadas",
+    en: "Most represented cities",
+  },
+  topCompanies: {
+    fr: "Entreprises et écoles de ski",
+    "pt-BR": "Empresas e escolas de esqui",
+    en: "Companies and ski schools",
+  },
+  scopeDisplayed: {
+    fr: "Calculé sur les stagiaires affichés, pas sur toute la base.",
+    "pt-BR": "Calculado sobre os estagiários exibidos, não sobre toda a base.",
+    en: "Computed over the students shown, not the whole database.",
+  },
+  noBreakdown: {
+    fr: "Aucune donnée renseignée",
+    "pt-BR": "Nenhum dado informado",
+    en: "No data available",
+  },
 };
 
 export default function Students() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => searchParams.get("q") || "");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const { language, t } = useLanguage();
   const { canEdit } = useUserPermissions();
   const editable = canEdit("students");
 
+  // Les répartitions du bandeau pointent ici avec ?q=… (entreprise cliquée).
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q) setSearch(q);
+  }, [searchParams]);
+
   const hasSearch = search.trim().length > 0;
 
   const { data: students, isLoading, error } = useStudents({
     search: hasSearch ? search : undefined,
   });
+
+  /**
+   * Compteur global de la base — `useStudentStats` fait un `count: exact`
+   * en tête, il ne dépend donc pas de la page de 100 lignes chargée ici.
+   */
+  const { data: studentStats, isLoading: statsLoading } = useStudentStats();
+
+  /**
+   * Répartitions dérivées des seules lignes déjà chargées (100 au maximum) :
+   * aucune requête supplémentaire, et chaque tuile dit explicitement qu'elle
+   * porte sur les stagiaires affichés.
+   */
+  const summary = useMemo(() => {
+    const rows = students ?? [];
+    const cityCounts = new Map<string, number>();
+    const companyCounts = new Map<string, number>();
+    let withPortal = 0;
+    let withCompany = 0;
+
+    for (const student of rows) {
+      if (student.auth_user_id) withPortal += 1;
+      const company = (student.company ?? "").trim();
+      if (company) {
+        withCompany += 1;
+        companyCounts.set(company, (companyCounts.get(company) ?? 0) + 1);
+      }
+      const city = (student.city ?? "").trim();
+      if (city) cityCounts.set(city, (cityCounts.get(city) ?? 0) + 1);
+    }
+
+    const rank = (counts: Map<string, number>) =>
+      [...counts.entries()]
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "fr"))
+        .slice(0, 6);
+
+    return {
+      displayed: rows.length,
+      withPortal,
+      withCompany,
+      distinctCities: cityCounts.size,
+      topCities: rank(cityCounts),
+      topCompanies: rank(companyCounts),
+    };
+  }, [students]);
+
+  /** « sur les N affichés » — jamais un total qui aurait l'air global. */
+  const ofDisplayed = (count: number) =>
+    t({
+      fr: `sur les ${count} affichés`,
+      "pt-BR": `entre os ${count} exibidos`,
+      en: `of the ${count} shown`,
+    });
+
+  /** Part d'un sous-ensemble réel des lignes affichées. */
+  const shareOfDisplayed = (count: number) =>
+    summary.displayed > 0 ? ` · ${Math.round((count / summary.displayed) * 100)}%` : "";
 
   const handleCreateStudent = () => {
     setSelectedStudent(null);
@@ -503,6 +623,104 @@ export default function Students() {
             ) : undefined
           }
         />
+
+        {/*
+          Bandeau de synthèse. Seul le total vient d'un comptage global
+          (`useStudentStats`) ; les trois autres tuiles et les deux
+          classements portent sur les lignes affichées et le disent.
+        */}
+        <StatTileGrid cols={4}>
+          <StatTile
+            label={t(translations.tileTotal)}
+            value={studentStats?.total ?? 0}
+            hint={`${summary.displayed} ${t({
+              fr: "affichés ici",
+              "pt-BR": "exibidos aqui",
+              en: "shown here",
+            })}`}
+            icon={Users}
+            tone="gold"
+            loading={statsLoading}
+            onClick={hasSearch ? () => setSearch("") : undefined}
+          />
+          <StatTile
+            label={t(translations.tilePortal)}
+            value={summary.withPortal}
+            hint={`${ofDisplayed(summary.displayed)}${shareOfDisplayed(summary.withPortal)}`}
+            icon={KeyRound}
+            tone="blue"
+            loading={isLoading}
+          />
+          <StatTile
+            label={t(translations.tileCompany)}
+            value={summary.withCompany}
+            hint={`${ofDisplayed(summary.displayed)}${shareOfDisplayed(summary.withCompany)}`}
+            icon={Building2}
+            tone="teal"
+            loading={isLoading}
+          />
+          <StatTile
+            label={t(translations.tileCities)}
+            value={summary.distinctCities}
+            hint={ofDisplayed(summary.displayed)}
+            icon={MapPin}
+            tone="purple"
+            loading={isLoading}
+          />
+        </StatTileGrid>
+
+        <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">
+          <SurfaceCard
+            title={t(translations.topCities)}
+            description={t(translations.scopeDisplayed)}
+            icon={MapPin}
+          >
+            {isLoading ? (
+              <div className="space-y-4">
+                {[0, 1, 2, 3, 4].map((index) => (
+                  <div key={index} className="h-8 animate-shimmer rounded-[var(--radius)]" />
+                ))}
+              </div>
+            ) : (
+              <RankedBarList
+                colorBySeries
+                emptyMessage={t(translations.noBreakdown)}
+                items={summary.topCities.map(([city, count]) => ({
+                  key: city,
+                  label: city,
+                  value: count,
+                }))}
+              />
+            )}
+          </SurfaceCard>
+
+          <SurfaceCard
+            title={t(translations.topCompanies)}
+            description={t(translations.scopeDisplayed)}
+            icon={Building2}
+          >
+            {isLoading ? (
+              <div className="space-y-4">
+                {[0, 1, 2, 3, 4].map((index) => (
+                  <div key={index} className="h-8 animate-shimmer rounded-[var(--radius)]" />
+                ))}
+              </div>
+            ) : (
+              <RankedBarList
+                colorBySeries
+                emptyMessage={t(translations.noBreakdown)}
+                items={summary.topCompanies.map(([company, count]) => ({
+                  key: company,
+                  label: company,
+                  value: count,
+                  // La recherche porte déjà sur l'entreprise : la ligne ouvre
+                  // la liste filtrée sur ce nom.
+                  href: `/students?q=${encodeURIComponent(company)}`,
+                }))}
+              />
+            )}
+          </SurfaceCard>
+        </div>
 
         {editable && <PortalInvitesBulkCard />}
 

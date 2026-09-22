@@ -9,11 +9,14 @@ import {
   Languages,
   PieChart,
   ArrowRight,
+  Activity,
+  Filter,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useInscriptions, useInscriptionStats } from "@/hooks/useInscriptions";
 import { useUpcomingTests } from "@/hooks/useUpcomingTests";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { useDashboardFunnel } from "@/hooks/useDashboardFunnel";
 import { DashboardActionRail } from "@/components/dashboard/DashboardActionRail";
 import { getStatusLabel } from "@/lib/inscription-status";
 import {
@@ -27,7 +30,9 @@ import {
   SurfaceCard,
   DonutChart,
   RankedBarList,
-  ActivityFeed,
+  TrendChart,
+  Sparkline,
+  FunnelBars,
   IconChip,
   TableSkeleton,
   TableEmpty,
@@ -167,6 +172,51 @@ const translations = {
     "pt-BR": "Abrir a lista",
     en: "Open list",
   },
+  activity: {
+    fr: "Activité sur douze mois",
+    "pt-BR": "Atividade em doze meses",
+    en: "Twelve-month activity",
+  },
+  activityDesc: {
+    fr: "Dossiers créés et chiffre d'affaires associé, par mois",
+    "pt-BR": "Inscrições criadas e receita associada, por mês",
+    en: "Enrolments created and associated revenue, by month",
+  },
+  seriesCount: {
+    fr: "Inscriptions",
+    "pt-BR": "Inscrições",
+    en: "Enrolments",
+  },
+  seriesRevenue: {
+    fr: "Montant (€)",
+    "pt-BR": "Valor (€)",
+    en: "Amount (€)",
+  },
+  funnel: {
+    fr: "Entonnoir",
+    "pt-BR": "Funil",
+    en: "Funnel",
+  },
+  funnelDesc: {
+    fr: "Du lead au dossier facturé — conversion d'une étape à la suivante",
+    "pt-BR": "Do lead à inscrição faturada — conversão de etapa em etapa",
+    en: "From lead to billed file — stage-to-stage conversion",
+  },
+  byModality: {
+    fr: "Répartition par modalité",
+    "pt-BR": "Distribuição por modalidade",
+    en: "Breakdown by delivery mode",
+  },
+  vsPrevious: {
+    fr: "vs 30 j précédents",
+    "pt-BR": "vs 30 dias anteriores",
+    en: "vs previous 30 days",
+  },
+  vsPrevMonth: {
+    fr: "vs mois précédent",
+    "pt-BR": "vs mês anterior",
+    en: "vs previous month",
+  },
 };
 
 /**
@@ -185,6 +235,7 @@ export function DashboardGestao() {
   const { data: upcomingTests, isLoading: loadingTests } = useUpcomingTests();
   const { data: stats, isLoading: loadingStats } = useDashboardStats();
   const { data: portfolio, isLoading: loadingPortfolio } = useInscriptionStats();
+  const { data: funnel = [], isLoading: loadingFunnel } = useDashboardFunnel();
 
   const dateLocale = language === "pt-BR" ? ptBR : language === "en" ? enUS : fr;
   const localeTag = language === "pt-BR" ? "pt-BR" : language === "en" ? "en-US" : "fr-FR";
@@ -225,6 +276,30 @@ export function DashboardGestao() {
       .slice(0, 6);
   }, [portfolio]);
 
+  /** Série mensuelle réelle : dossiers créés et montant associé. */
+  const monthlySeries = useMemo(
+    () =>
+      (portfolio?.byMonth ?? []).map((month) => ({
+        label: month.label,
+        count: month.count,
+        revenue: Math.round(month.revenue),
+      })),
+    [portfolio]
+  );
+
+  /** Répartition par modalité — présentiel, visio, non précisée. */
+  const modalitySlices = useMemo(() => {
+    if (!portfolio?.byModality) return [];
+    return Object.entries(portfolio.byModality)
+      .map(([name, count]) => ({ name, value: count as number }))
+      .sort((a, b) => b.value - a.value);
+  }, [portfolio]);
+
+  const sparkPoints = useMemo(
+    () => (stats?.newInscriptions.spark ?? []).map((point) => point.value),
+    [stats]
+  );
+
   return (
     <PageShell>
       <PageHeader
@@ -249,7 +324,25 @@ export function DashboardGestao() {
           tone="gold"
           to="/inscriptions"
           loading={loadingStats}
-        />
+          delta={
+            stats?.newInscriptions.evolution === null ||
+            stats?.newInscriptions.evolution === undefined
+              ? undefined
+              : {
+                  value: stats.newInscriptions.evolution,
+                  label: t(translations.vsPrevious),
+                }
+          }
+        >
+          {sparkPoints.length > 1 && (
+            <Sparkline
+              points={sparkPoints}
+              height={32}
+              color="hsl(var(--chart-4))"
+              ariaLabel={t(translations.newInscriptions)}
+            />
+          )}
+        </StatTile>
         <StatTile
           label={t(translations.scheduledTests)}
           value={stats?.upcomingTests.total ?? 0}
@@ -267,6 +360,15 @@ export function DashboardGestao() {
           tone="teal"
           to="/invoices"
           loading={loadingStats}
+          delta={
+            stats?.monthlyRevenue.evolution === null ||
+            stats?.monthlyRevenue.evolution === undefined
+              ? undefined
+              : {
+                  value: stats.monthlyRevenue.evolution,
+                  label: t(translations.vsPrevMonth),
+                }
+          }
         />
         <StatTile
           label={t(translations.activeClasses)}
@@ -284,6 +386,69 @@ export function DashboardGestao() {
       </StatTileGrid>
 
       <DashboardActionRail />
+
+      {/* Deux mesures d'ordres de grandeur différents : deux graphiques à axe
+          unique côte à côte, jamais deux axes sur un même dessin. */}
+      <div className="grid gap-4 lg:gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <SurfaceCard
+          title={t(translations.activity)}
+          description={t(translations.activityDesc)}
+          icon={Activity}
+        >
+          {loadingPortfolio ? (
+            <div className="h-[260px] animate-shimmer rounded-[var(--radius)]" />
+          ) : (
+            <div className="space-y-5">
+              <TrendChart
+                data={monthlySeries}
+                series={[{ key: "count", label: t(translations.seriesCount) }]}
+                xKey="label"
+                variant="area"
+                height={150}
+                yDomain={[0, "auto"]}
+                ariaLabel={t(translations.activity)}
+                emptyMessage={t(translations.noData)}
+              />
+              <TrendChart
+                data={monthlySeries}
+                series={[
+                  {
+                    key: "revenue",
+                    label: t(translations.seriesRevenue),
+                    color: "hsl(var(--chart-3))",
+                  },
+                ]}
+                xKey="label"
+                variant="area"
+                height={130}
+                yDomain={[0, "auto"]}
+                formatAxisValue={(value) =>
+                  value >= 1000 ? `${Math.round(value / 1000)}k` : String(value)
+                }
+                formatValue={(value) => formatCurrency(Number(value))}
+                ariaLabel={t(translations.seriesRevenue)}
+                emptyMessage={t(translations.noData)}
+              />
+            </div>
+          )}
+        </SurfaceCard>
+
+        <SurfaceCard
+          title={t(translations.funnel)}
+          description={t(translations.funnelDesc)}
+          icon={Filter}
+        >
+          {loadingFunnel ? (
+            <div className="space-y-4">
+              {[0, 1, 2, 3, 4].map((index) => (
+                <div key={index} className="h-9 animate-shimmer rounded-[var(--radius)]" />
+              ))}
+            </div>
+          ) : (
+            <FunnelBars stages={funnel} emptyMessage={t(translations.noData)} />
+          )}
+        </SurfaceCard>
+      </div>
 
       <SplitLayout
         main={
@@ -440,6 +605,22 @@ export function DashboardGestao() {
                 </div>
               ) : (
                 <RankedBarList items={languageBars} colorBySeries emptyMessage={t(translations.noData)} />
+              )}
+            </SurfaceCard>
+
+            <SurfaceCard title={t(translations.byModality)} icon={BookOpen}>
+              {loadingPortfolio ? (
+                <div className="h-[180px] animate-shimmer rounded-[var(--radius)]" />
+              ) : (
+                <DonutChart
+                  data={modalitySlices}
+                  height={170}
+                  thickness={18}
+                  legendPosition="bottom"
+                  centerLabel={t(translations.totalInscriptions)}
+                  ariaLabel={t(translations.byModality)}
+                  emptyMessage={t(translations.noData)}
+                />
               )}
             </SurfaceCard>
           </>

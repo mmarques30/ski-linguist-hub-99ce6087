@@ -18,6 +18,10 @@ import {
   Eye,
   FileText,
   ExternalLink,
+  Languages as LanguagesIcon,
+  Briefcase,
+  PieChart,
+  Wallet,
 } from "lucide-react";
 import {
   Select,
@@ -51,9 +55,14 @@ import {
   CardGrid,
   CardList,
   CardListItem,
+  DonutChart,
+  MeterRow,
   PageHeader,
   PageShell,
+  RankedBarList,
   SegmentedControl,
+  StatTile,
+  StatTileGrid,
   StatusPill,
   SurfaceCard,
   TableEmpty,
@@ -158,8 +167,9 @@ export default function InstructorDetails() {
   const { confirm, dialog: confirmDialog } = useConfirmAction();
 
   const { data: instructor, isLoading } = useInstructorDetails(id);
-  const { data: inscriptions = [] } = useInstructorInscriptions(id);
-  const { data: payments = [] } = useInstructorPayments(id);
+  const { data: inscriptions = [], isLoading: loadingInscriptions } =
+    useInstructorInscriptions(id);
+  const { data: payments = [], isLoading: loadingPayments } = useInstructorPayments(id);
   const { data: contracts = [] } = useInstructorContracts(id);
   const updateInstructor = useUpdateInstructor();
   const [adminStatut, setAdminStatut] = useState("");
@@ -227,6 +237,35 @@ export default function InstructorDetails() {
   const pastInscriptions = inscriptions.filter((i) => isPastInscription(i, today));
   const activationGaps =
     instructor.status === "candidat" ? candidatActivationGaps(instructor) : [];
+
+  /**
+   * Indicateurs de la fiche — comptés sur les lignes déjà chargées.
+   * `useInstructorInscriptions` et `useInstructorPayments` ramènent toutes les
+   * lignes de cette personne (aucune pagination) : les chiffres couvrent donc
+   * sa fiche entière. La vue `inscriptions_complete` n'expose pas ici la durée
+   * des formations — on ne totalise donc aucune heure plutôt que d'en estimer.
+   */
+  const missionsByLanguage = Object.entries(
+    inscriptions.reduce<Record<string, number>>((acc, inscription) => {
+      const key = inscription.language
+        ? displayLanguageLabel(inscription.language)
+        : "Langue non renseignée";
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {})
+  )
+    .map(([label, count]) => ({ key: label, label, value: count }))
+    .sort((a, b) => b.value - a.value);
+
+  const declaredLanguages = (instructor.languages || []).length;
+  const paidTotal = payments
+    .filter((p: any) => p.statut === "paye")
+    .reduce((sum: number, p: any) => sum + Number(p.montant || 0), 0);
+  const paymentsTotal = payments.reduce(
+    (sum: number, p: any) => sum + Number(p.montant || 0),
+    0
+  );
+  const formatEuros = (value: number) => `${Math.round(value).toLocaleString("fr-FR")} €`;
 
   const activateCandidat = () => {
     if (!id) return;
@@ -398,6 +437,73 @@ export default function InstructorDetails() {
           </Alert>
         )}
 
+        {/* Bandeau d'indicateurs — chaque tuile ouvre l'onglet qui détaille le chiffre. */}
+        <StatTileGrid cols={5}>
+          <StatTile
+            label="Missions affectées"
+            value={inscriptions.length}
+            hint={`${upcomingInscriptions.length} à venir · ${pastInscriptions.length} passées`}
+            icon={Briefcase}
+            tone="gold"
+            onClick={() => setActiveTab("planning")}
+            loading={loadingInscriptions}
+          />
+          <StatTile
+            label="Formations à venir"
+            value={upcomingInscriptions.length}
+            hint="Sur l'ensemble des missions affectées"
+            icon={Calendar}
+            tone="blue"
+            onClick={() => setActiveTab("planning")}
+            loading={loadingInscriptions}
+          >
+            {inscriptions.length > 0 && (
+              <MeterRow
+                label="Part des missions"
+                value={upcomingInscriptions.length}
+                max={inscriptions.length}
+                display={`${upcomingInscriptions.length}/${inscriptions.length}`}
+              />
+            )}
+          </StatTile>
+          <StatTile
+            label="Formations passées"
+            value={pastInscriptions.length}
+            hint="Missions déjà terminées"
+            icon={Clock}
+            tone="teal"
+            onClick={() => setActiveTab("historique")}
+            loading={loadingInscriptions}
+          />
+          <StatTile
+            label="Langues enseignées"
+            value={missionsByLanguage.length}
+            hint={`${declaredLanguages} déclarée${declaredLanguages > 1 ? "s" : ""} au profil`}
+            icon={LanguagesIcon}
+            tone="purple"
+            onClick={() => setActiveTab("profil")}
+            loading={loadingInscriptions}
+          />
+          <StatTile
+            label="Paiements versés"
+            value={formatEuros(paidTotal)}
+            hint={`${formatEuros(paymentsTotal)} enregistrés au total`}
+            icon={Wallet}
+            tone="orange"
+            onClick={() => setActiveTab("paiements")}
+            loading={loadingPayments}
+          >
+            {paymentsTotal > 0 && (
+              <MeterRow
+                label="Part déjà payée"
+                value={paidTotal}
+                max={paymentsTotal}
+                display={formatEuros(paidTotal)}
+              />
+            )}
+          </StatTile>
+        </StatTileGrid>
+
         {activeTab === "profil" && (
           <section role="tabpanel" data-value="profil" className="min-w-0">
             <CardGrid cols={2}>
@@ -460,6 +566,50 @@ export default function InstructorDetails() {
                       </div>
                     )}
                 </div>
+              </SurfaceCard>
+
+              <SurfaceCard
+                title="Missions par langue"
+                description={`${inscriptions.length} mission${
+                  inscriptions.length > 1 ? "s" : ""
+                } affectée${inscriptions.length > 1 ? "s" : ""} à cette personne`}
+                icon={PieChart}
+              >
+                {loadingInscriptions ? (
+                  <div className="h-[180px] animate-shimmer rounded-[var(--radius)]" />
+                ) : (
+                  <DonutChart
+                    data={missionsByLanguage.map((row) => ({
+                      name: row.label,
+                      value: row.value,
+                    }))}
+                    height={180}
+                    legendPosition="side"
+                    centerLabel="missions"
+                    ariaLabel="Missions affectées par langue"
+                    emptyMessage="Aucune mission affectée"
+                  />
+                )}
+              </SurfaceCard>
+
+              <SurfaceCard
+                title="Volume par langue"
+                description="Nombre de missions, toutes périodes confondues"
+                icon={LanguagesIcon}
+              >
+                {loadingInscriptions ? (
+                  <div className="space-y-4">
+                    {[0, 1, 2].map((index) => (
+                      <div key={index} className="h-8 animate-shimmer rounded-[var(--radius)]" />
+                    ))}
+                  </div>
+                ) : (
+                  <RankedBarList
+                    items={missionsByLanguage}
+                    colorBySeries
+                    emptyMessage="Aucune mission affectée"
+                  />
+                )}
               </SurfaceCard>
             </CardGrid>
           </section>

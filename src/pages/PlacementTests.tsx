@@ -1,18 +1,32 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Link2, ExternalLink, Copy, Check, FileQuestion, GraduationCap } from "lucide-react";
-import { useState } from "react";
+import {
+  Link2,
+  ExternalLink,
+  Copy,
+  Check,
+  FileQuestion,
+  GraduationCap,
+  Languages,
+  Mountain,
+  PieChart,
+  Target,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { REGISTRATION_LANGUAGES } from "@/lib/registration-languages";
 import { NIVEAU_NON_RENSEIGNE, usePlacementTestStats } from "@/hooks/usePlacementTestStats";
 import { Link } from "react-router-dom";
 import {
   CardGrid,
+  DonutChart,
   MeterRow,
   PageHeader,
   PageShell,
   RankedBarList,
+  StatTile,
+  StatTileGrid,
   StatusPill,
   SurfaceCard,
   TableEmpty,
@@ -91,6 +105,71 @@ const translations = {
     "pt-BR": "Distribuição por pista",
     en: "Distribution by slope",
   },
+  summaryTests: {
+    fr: "Tests complétés — toutes langues",
+    "pt-BR": "Testes concluídos — todos os idiomas",
+    en: "Completed tests — all languages",
+  },
+  summaryTestsHint: {
+    fr: "avec un score enregistré",
+    "pt-BR": "com pontuação registrada",
+    en: "with a recorded score",
+  },
+  summaryAverage: {
+    fr: "Score moyen pondéré",
+    "pt-BR": "Pontuação média ponderada",
+    en: "Weighted average score",
+  },
+  summaryAverageHint: {
+    fr: "moyennes des langues, pondérées par le nombre de tests",
+    "pt-BR": "médias por idioma, ponderadas pelo número de testes",
+    en: "per-language averages, weighted by test count",
+  },
+  summaryLanguages: {
+    fr: "Langues avec des tests",
+    "pt-BR": "Idiomas com testes",
+    en: "Languages with tests",
+  },
+  summaryLanguagesHint: {
+    fr: "liens publics proposés",
+    "pt-BR": "links públicos disponíveis",
+    en: "public links offered",
+  },
+  summaryTopPiste: {
+    fr: "Piste la plus fréquente",
+    "pt-BR": "Pista mais frequente",
+    en: "Most frequent slope",
+  },
+  summaryLevels: {
+    fr: "Pistes déterminées — toutes langues",
+    "pt-BR": "Pistas determinadas — todos os idiomas",
+    en: "Determined slopes — all languages",
+  },
+  summaryLevelsDesc: {
+    fr: "Tous les tests complétés enregistrés, toutes langues confondues",
+    "pt-BR": "Todos os testes concluídos, todos os idiomas",
+    en: "Every completed test, all languages together",
+  },
+  summaryByLanguage: {
+    fr: "Tests par langue",
+    "pt-BR": "Testes por idioma",
+    en: "Tests by language",
+  },
+  summaryClassified: {
+    fr: "tests classés",
+    "pt-BR": "testes classificados",
+    en: "classified tests",
+  },
+  averageScoreShort: {
+    fr: "Score moyen",
+    "pt-BR": "Pontuação média",
+    en: "Average score",
+  },
+  noData: {
+    fr: "Aucune donnée disponible",
+    "pt-BR": "Nenhum dado disponível",
+    en: "No data available",
+  },
 };
 
 /**
@@ -125,6 +204,56 @@ export default function PlacementTests() {
   const { t } = useLanguage();
   const { data: testStats = [], isLoading } = usePlacementTestStats();
 
+  /**
+   * Synthèse inter-langues — recomposée à partir des mêmes lignes que les
+   * cartes par langue (`usePlacementTestStats` compte tous les tests
+   * `completed`, sans pagination) : aucun chiffre n'est estimé.
+   *
+   * Deux totaux distincts, parce qu'ils ne comptent pas la même chose :
+   * `scoredTests` ne retient que les tests porteurs d'un score, tandis que la
+   * répartition par piste classe tous les tests complétés.
+   */
+  const summary = useMemo(() => {
+    const scoredTests = testStats.reduce((sum, row) => sum + row.completedTests, 0);
+    const weighted = testStats.reduce(
+      (sum, row) => sum + row.averageScore * row.completedTests,
+      0
+    );
+    const averageScore = scoredTests > 0 ? Math.round(weighted / scoredTests) : 0;
+
+    const byLevel = new Map<string, number>();
+    for (const row of testStats) {
+      for (const level of row.levelDistribution) {
+        byLevel.set(level.level, (byLevel.get(level.level) ?? 0) + level.count);
+      }
+    }
+    const classifiedTests = Array.from(byLevel.values()).reduce((a, b) => a + b, 0);
+
+    // Ordre figé des pistes : la teinte suit la piste, pas son rang.
+    const known = PISTE_SERIES_ORDER.filter((level) => byLevel.has(level));
+    const extra = Array.from(byLevel.keys()).filter(
+      (level) => !PISTE_SERIES_ORDER.includes(level)
+    );
+    const levelSlices = [...known, ...extra].map((level) => ({
+      name: level,
+      value: byLevel.get(level) ?? 0,
+      color: pisteColor(level),
+    }));
+
+    const topLevel = [...levelSlices].sort((a, b) => b.value - a.value)[0] ?? null;
+
+    const languageBars = testStats
+      .map((row) => ({
+        key: row.languageLabel,
+        label: row.languageLabel,
+        value: row.completedTests,
+        hint: `${t(translations.averageScoreShort)} ${row.averageScore}%`,
+      }))
+      .sort((a, b) => b.value - a.value);
+
+    return { scoredTests, averageScore, classifiedTests, levelSlices, topLevel, languageBars };
+  }, [testStats, t]);
+
   const copyTestLink = (languageKey: string) => {
     const link = `${window.location.origin}/register?test=${languageKey}`;
     navigator.clipboard.writeText(link);
@@ -149,6 +278,94 @@ export default function PlacementTests() {
             </Button>
           }
         />
+
+        {/* Synthèse inter-langues — même source que les cartes par langue. */}
+        <StatTileGrid cols={4}>
+          <StatTile
+            label={t(translations.summaryTests)}
+            value={summary.scoredTests}
+            hint={t(translations.summaryTestsHint)}
+            icon={GraduationCap}
+            tone="blue"
+            loading={isLoading}
+          />
+          <StatTile
+            label={t(translations.summaryAverage)}
+            value={`${summary.averageScore}%`}
+            hint={t(translations.summaryAverageHint)}
+            icon={Target}
+            tone="gold"
+            loading={isLoading}
+          >
+            {summary.scoredTests > 0 && (
+              <MeterRow
+                label={t(translations.averageScoreShort)}
+                value={summary.averageScore}
+                max={100}
+                display={`${summary.averageScore}%`}
+              />
+            )}
+          </StatTile>
+          <StatTile
+            label={t(translations.summaryLanguages)}
+            value={testStats.length}
+            hint={`${REGISTRATION_LANGUAGES.length} ${t(translations.summaryLanguagesHint)}`}
+            icon={Languages}
+            tone="teal"
+            loading={isLoading}
+          />
+          <StatTile
+            label={t(translations.summaryTopPiste)}
+            value={summary.topLevel ? summary.topLevel.name : "—"}
+            hint={
+              summary.topLevel && summary.classifiedTests > 0
+                ? `${summary.topLevel.value} / ${summary.classifiedTests} ${t(
+                    translations.summaryClassified
+                  )}`
+                : t(translations.noData)
+            }
+            icon={Mountain}
+            tone="purple"
+            loading={isLoading}
+          />
+        </StatTileGrid>
+
+        <div className="grid gap-4 lg:gap-5 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+          <SurfaceCard
+            title={t(translations.summaryLevels)}
+            description={t(translations.summaryLevelsDesc)}
+            icon={PieChart}
+          >
+            {isLoading ? (
+              <div className="h-[200px] animate-shimmer rounded-[var(--radius)]" />
+            ) : (
+              <DonutChart
+                data={summary.levelSlices}
+                height={200}
+                legendPosition="side"
+                centerLabel={t(translations.summaryClassified)}
+                ariaLabel={t(translations.summaryLevels)}
+                emptyMessage={t(translations.noData)}
+              />
+            )}
+          </SurfaceCard>
+
+          <SurfaceCard title={t(translations.summaryByLanguage)} icon={Languages}>
+            {isLoading ? (
+              <div className="space-y-4">
+                {[0, 1, 2].map((index) => (
+                  <div key={index} className="h-8 animate-shimmer rounded-[var(--radius)]" />
+                ))}
+              </div>
+            ) : (
+              <RankedBarList
+                items={summary.languageBars}
+                colorBySeries
+                emptyMessage={t(translations.noData)}
+              />
+            )}
+          </SurfaceCard>
+        </div>
 
         <SurfaceCard
           title={t(translations.publicLinksTitle)}
