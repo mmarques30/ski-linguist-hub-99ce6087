@@ -103,6 +103,9 @@ export async function createStripeCheckoutSession(params: {
     success_url: params.successUrl,
     cancel_url: params.cancelUrl,
     customer_email: params.customerEmail,
+    locale: "fr",
+    // Empêche Stripe de proposer une conversion USD selon le navigateur.
+    "adaptive_pricing[enabled]": "false",
     "line_items[0][price_data][currency]": "eur",
     "line_items[0][price_data][unit_amount]": String(Math.round(params.amountEur * 100)),
     "line_items[0][price_data][product_data][name]": params.productName,

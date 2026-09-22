@@ -6,14 +6,17 @@ Flux de travail : **GitHub** (code + migrations) + **Supabase** (secrets + dépl
 
 Ne pas se fier à un statut figé dans ce fichier : la configuration évolue selon l'environnement.
 
-1. Ouvrir **Settings → Intégration de paiement** (`StripeSettingsCard`).
+1. Ouvrir **Settings → Intégrations** (`StripeSettingsCard`).
 2. La carte appelle l'edge function **`check-stripe-config`** et affiche deux lignes **`StatusRow`** :
    - `STRIPE_SECRET_KEY` — clé présente et valide
    - `STRIPE_WEBHOOK_SECRET` — signing secret présent (Supabase Secrets ou `app_settings`)
-3. Badge **Opérationnel** = les deux secrets OK + clé valide.
+3. Badge **Opérationnel** = les deux secrets OK + clé valide (**constaté live 22/09/2026**, mode **test**).
 4. Si le webhook manque, utiliser **Configurer le webhook automatiquement** (edge `provision-stripe-webhook`) ou suivre les étapes manuelles ci-dessous.
 
 Sans webhook, le checkout Stripe peut s'afficher, mais l'inscription n'est pas mise à jour automatiquement en base.
+
+Le Checkout est forcé en **EUR** (`locale=fr`, adaptive pricing désactivé) pour éviter une conversion USD selon le navigateur.
+
 
 ---
 
