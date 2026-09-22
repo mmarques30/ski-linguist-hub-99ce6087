@@ -50,6 +50,8 @@ export { DonutChart, RadialRings } from "./charts/DonutChart";
 export type { DonutSlice } from "./charts/DonutChart";
 export { RankedBarList, ProgressRing, GaugeMeter, MeterRow } from "./charts/Meters";
 export type { RankedBarItem } from "./charts/Meters";
+export { Sparkline, FunnelBars } from "./charts/Sparkline";
+export type { FunnelStageItem } from "./charts/Sparkline";
 
 export {
   SERIES_COLORS,

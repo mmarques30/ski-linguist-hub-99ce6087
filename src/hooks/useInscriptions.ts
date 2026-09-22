@@ -85,28 +85,65 @@ export function useInscriptionStats() {
     queryFn: async () => {
       const { data: inscriptions, error } = await supabase
         .from("inscriptions")
-        .select("status, price, language");
+        .select("status, price, language, modality, created_at");
 
       if (error) throw error;
 
-      const total = inscriptions?.length || 0;
-      const totalRevenue = inscriptions?.reduce((sum, i) => sum + (Number(i.price) || 0), 0) || 0;
-      
-      const byStatus = inscriptions?.reduce((acc, i) => {
+      const rows = inscriptions ?? [];
+      const total = rows.length;
+      const totalRevenue = rows.reduce((sum, i) => sum + (Number(i.price) || 0), 0);
+
+      const byStatus = rows.reduce((acc, i) => {
         acc[i.status] = (acc[i.status] || 0) + 1;
         return acc;
-      }, {} as Record<string, number>) || {};
+      }, {} as Record<string, number>);
 
-      const byLanguage = inscriptions?.reduce((acc, i) => {
+      const byLanguage = rows.reduce((acc, i) => {
         acc[i.language] = (acc[i.language] || 0) + 1;
         return acc;
-      }, {} as Record<string, number>) || {};
+      }, {} as Record<string, number>);
+
+      const byModality = rows.reduce((acc, i) => {
+        const key = (i as { modality?: string | null }).modality || "Non précisée";
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      // Série des 12 derniers mois, à partir des dates déjà chargées : pas de
+      // requête supplémentaire, et le graphique porte des chiffres réels.
+      const now = new Date();
+      const months: Array<{ key: string; label: string; count: number; revenue: number }> = [];
+      const index = new Map<string, number>();
+      for (let offset = 11; offset >= 0; offset -= 1) {
+        const date = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+        index.set(key, months.length);
+        months.push({
+          key,
+          label: date.toLocaleDateString("fr-FR", { month: "short" }),
+          count: 0,
+          revenue: 0,
+        });
+      }
+      for (const row of rows) {
+        const raw = (row as { created_at?: string | null }).created_at;
+        if (!raw) continue;
+        const date = new Date(raw);
+        if (Number.isNaN(date.getTime())) continue;
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+        const slot = index.get(key);
+        if (slot === undefined) continue;
+        months[slot].count += 1;
+        months[slot].revenue += Number(row.price) || 0;
+      }
 
       return {
         total,
         totalRevenue,
         byStatus,
         byLanguage,
+        byModality,
+        byMonth: months,
         active: byStatus['en_cours'] || 0,
         completed: byStatus['terminee'] || 0,
         billed: byStatus['facturee'] || 0,
