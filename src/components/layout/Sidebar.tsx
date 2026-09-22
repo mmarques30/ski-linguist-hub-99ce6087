@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { ChevronRight, LayoutDashboard, LogOut, PanelLeft } from "lucide-react";
 import fliLogo from "@/assets/fli-marca-yellow.png";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import {
   Collapsible,
@@ -46,22 +47,34 @@ import {
   type NavSection,
 } from "@/lib/navigation";
 
-const OPEN_GROUPS_KEY = "fli.sidebar.openGroups";
+/**
+ * Niveau 1 — se lit comme un bouton : surface et contour au repos, survol
+ * franc, repère jaune sur l'entrée courante.
+ */
+const LEVEL_1 = cn(
+  "relative h-9 border border-sidebar-border/40 bg-sidebar-accent/40 text-sidebar-foreground/90",
+  "transition-colors hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-foreground",
+  "data-[state=open]:bg-sidebar-accent/70",
+  "data-[active=true]:border-sidebar-primary/40 data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-foreground",
+  "before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full before:bg-sidebar-primary",
+  "before:opacity-0 data-[active=true]:before:opacity-100",
+  "group-data-[collapsible=icon]:before:hidden",
+);
 
-function readOpenGroups(): string[] {
-  try {
-    const raw = window.localStorage.getItem(OPEN_GROUPS_KEY);
-    const parsed = raw ? JSON.parse(raw) : null;
-    return Array.isArray(parsed) ? parsed.filter((v) => typeof v === "string") : [];
-  } catch {
-    return [];
-  }
-}
+/** Niveau 2 — cliquable mais plus discret : pas de surface au repos. */
+const LEVEL_2 = cn(
+  "h-7 text-sidebar-foreground/65 transition-colors",
+  "hover:bg-sidebar-accent/70 hover:text-sidebar-foreground",
+  "data-[active=true]:bg-sidebar-accent/80 data-[active=true]:font-medium data-[active=true]:text-sidebar-foreground",
+);
 
 /**
  * Navigation produit — 3 niveaux : section (titre fixe) · entrée repliable ·
  * sous-menus. L'arbre vit dans `@/lib/navigation` ; ce composant ne fait que
- * le rendre, filtrer par permission et retenir les groupes ouverts.
+ * le rendre, filtrer par permission et gérer l'ouverture.
+ *
+ * Les sous-menus sont repliés par défaut : un seul groupe reste ouvert à la
+ * fois, celui que l'on ouvre, ou celui de la page courante.
  */
 export function AppSidebar() {
   const navigate = useNavigate();
@@ -76,17 +89,6 @@ export function AppSidebar() {
   const { pathname, search } = location;
   const dashboardLabel = t(CHROME_BREADCRUMB.dashboard);
   const logoutLabel = t(CHROME_UI.logout);
-
-  const [openGroups, setOpenGroups] = useState<string[]>(readOpenGroups);
-
-  const persistOpenGroups = useCallback((next: string[]) => {
-    setOpenGroups(next);
-    try {
-      window.localStorage.setItem(OPEN_GROUPS_KEY, JSON.stringify(next));
-    } catch {
-      /* stockage indisponible : l'état reste en mémoire */
-    }
-  }, []);
 
   const sections: NavSection[] = useMemo(() => {
     if (isFormateur) return FORMATEUR_SECTIONS;
@@ -111,7 +113,7 @@ export function AppSidebar() {
       .filter((section) => section.items.length > 0);
   }, [canView, isAdmin, isFormateur]);
 
-  /** Le groupe contenant la page courante s'ouvre tout seul. */
+  /** Groupe qui contient la page courante, s'il y en a un. */
   const activeGroupId = useMemo(() => {
     for (const section of sections) {
       for (const item of section.items) {
@@ -123,11 +125,11 @@ export function AppSidebar() {
     return null;
   }, [pathname, search, sections]);
 
+  const [openId, setOpenId] = useState<string | null>(activeGroupId);
+
+  // Changer de page réaligne l'ouverture sur le groupe de la page.
   useEffect(() => {
-    if (!activeGroupId) return;
-    setOpenGroups((current) =>
-      current.includes(activeGroupId) ? current : [...current, activeGroupId],
-    );
+    setOpenId(activeGroupId);
   }, [activeGroupId]);
 
   const handleLogout = async () => {
@@ -147,46 +149,24 @@ export function AppSidebar() {
     const label = t(item.label);
     const badge = item.badgeKey === "frozen" ? t(CHROME_UI.frozen) : undefined;
     const active = isItemActive(item, pathname, search);
+    const hasChildren = Boolean(item.children?.length);
 
-    if (!item.children?.length) {
+    // Feuille, ou parent en mode icône : un simple lien.
+    if (!hasChildren || isCollapsed) {
       return (
         <SidebarMenuItem key={item.id}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <SidebarMenuButton asChild isActive={active} tooltip={label}>
-                <NavLink to={item.href}>
-                  <item.icon className="h-4 w-4" />
-                  <span className="flex-1 truncate">{label}</span>
-                  {badge && !isCollapsed && <FrozenBadge label={badge} />}
-                </NavLink>
-              </SidebarMenuButton>
-            </TooltipTrigger>
-            {isCollapsed && <TooltipContent side="right">{label}</TooltipContent>}
-          </Tooltip>
+          <SidebarMenuButton asChild isActive={active} tooltip={label} className={LEVEL_1}>
+            <NavLink to={item.href}>
+              <item.icon className="h-4 w-4" />
+              <span className="flex-1 truncate">{label}</span>
+              {badge && !isCollapsed && <FrozenBadge label={badge} />}
+            </NavLink>
+          </SidebarMenuButton>
         </SidebarMenuItem>
       );
     }
 
-    // Replié en mode icône : le parent redevient un simple lien vers sa page.
-    if (isCollapsed) {
-      return (
-        <SidebarMenuItem key={item.id}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <SidebarMenuButton asChild isActive={active} tooltip={label}>
-                <NavLink to={item.href}>
-                  <item.icon className="h-4 w-4" />
-                  <span className="flex-1 truncate">{label}</span>
-                </NavLink>
-              </SidebarMenuButton>
-            </TooltipTrigger>
-            <TooltipContent side="right">{label}</TooltipContent>
-          </Tooltip>
-        </SidebarMenuItem>
-      );
-    }
-
-    const isOpen = openGroups.includes(item.id);
+    const isOpen = openId === item.id;
     const currentChild = activeChildHref(item, pathname, search);
 
     return (
@@ -194,38 +174,36 @@ export function AppSidebar() {
         key={item.id}
         asChild
         open={isOpen}
-        onOpenChange={(next) =>
-          persistOpenGroups(
-            next
-              ? [...openGroups.filter((id) => id !== item.id), item.id]
-              : openGroups.filter((id) => id !== item.id),
-          )
-        }
+        onOpenChange={(next) => setOpenId(next ? item.id : null)}
       >
         <SidebarMenuItem>
           <CollapsibleTrigger asChild>
             <SidebarMenuButton
-              isActive={active && !isOpen}
+              isActive={active}
               aria-label={label}
-              className="gap-2"
+              className={LEVEL_1}
             >
               <item.icon className="h-4 w-4" />
               <span className="flex-1 truncate text-left">{label}</span>
               {badge && <FrozenBadge label={badge} />}
               <ChevronRight
-                className={`h-3.5 w-3.5 shrink-0 text-sidebar-foreground/50 transition-transform ${
-                  isOpen ? "rotate-90" : ""
-                }`}
+                aria-hidden
+                className={cn(
+                  "h-4 w-4 shrink-0 text-sidebar-foreground/45 transition-transform duration-200",
+                  isOpen && "rotate-90 text-sidebar-foreground/80",
+                )}
               />
             </SidebarMenuButton>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <SidebarMenuSub>
+            {/* mr/pr à 0 : rend la largeur aux libellés longs, le guide reste à gauche. */}
+            <SidebarMenuSub className="mt-1 mr-0 pr-0">
               {item.children.map((child) => (
                 <SidebarMenuSubItem key={child.href}>
                   <SidebarMenuSubButton
                     asChild
                     isActive={currentChild === child.href}
+                    className={LEVEL_2}
                   >
                     <NavLink to={child.href}>
                       <span className="truncate">{t(child.label)}</span>
@@ -240,9 +218,13 @@ export function AppSidebar() {
     );
   };
 
+  // Pas de liseré entre la sidebar et le contenu : `border-r-0` seul ne suffit
+  // pas, le composant pose la bordure via `group-data-[side=left]:border-r`
+  // (plus spécifique). Même variante = même poids, et la règle tombe.
   return (
-    <Sidebar collapsible="icon" className="border-r-0">
-      <SidebarHeader className="border-b border-sidebar-border py-2 px-2">
+    <Sidebar collapsible="icon" className="group-data-[side=left]:border-r-0">
+      {/* h-14 : la bordure basse prolonge exactement celle du TopHeader. */}
+      <SidebarHeader className="h-14 shrink-0 justify-center border-b border-sidebar-border px-2 py-0">
         {!isCollapsed && (
           <div className="flex items-center gap-2 px-1">
             <img src={fliLogo} alt="FLI" className="h-7 w-auto" />
@@ -259,23 +241,17 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={matchScore("/", pathname, search) >= 0}
-                        tooltip={dashboardLabel}
-                      >
-                        <NavLink to="/">
-                          <LayoutDashboard className="h-4 w-4" />
-                          <span>{dashboardLabel}</span>
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </TooltipTrigger>
-                    {isCollapsed && (
-                      <TooltipContent side="right">{dashboardLabel}</TooltipContent>
-                    )}
-                  </Tooltip>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={matchScore("/", pathname, search) >= 0}
+                    tooltip={dashboardLabel}
+                    className={LEVEL_1}
+                  >
+                    <NavLink to="/">
+                      <LayoutDashboard className="h-4 w-4" />
+                      <span>{dashboardLabel}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
@@ -302,7 +278,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <Tooltip>
               <TooltipTrigger asChild>
-                <SidebarMenuButton onClick={handleLogout}>
+                <SidebarMenuButton onClick={handleLogout} className={LEVEL_1}>
                   <LogOut className="h-4 w-4" />
                   <span>{logoutLabel}</span>
                 </SidebarMenuButton>
@@ -325,7 +301,7 @@ export function AppSidebar() {
 
 function FrozenBadge({ label }: { label: string }) {
   return (
-    <span className="ml-auto text-[10px] uppercase tracking-wide text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+    <span className="text-[10px] uppercase tracking-wide text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
       {label}
     </span>
   );
