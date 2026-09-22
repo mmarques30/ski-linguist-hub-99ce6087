@@ -26,3 +26,27 @@ describe("LP institutionnelle — routage public / app", () => {
     expect(app).toContain('path="/app" element={<ProtectedRoute><Dashboard /></ProtectedRoute>}');
   });
 });
+
+describe("LP institutionnelle — conformité spec", () => {
+  const landing = () =>
+    readFileSync(join(process.cwd(), "src/pages/landing/InstitutionalLanding.tsx"), "utf8");
+
+  it("couvre les ancres et le CTA Acesso FLI du sitemap", () => {
+    const src = landing();
+    for (const id of ["inicio", "metodo", "parceiros", "formacoes", "faq"]) {
+      expect(src).toContain(`id="${id}"`);
+    }
+    expect(src).toContain("Acesso FLI");
+    expect(src).toContain('to="/auth"');
+    expect(src).toContain("Réserver mon stage");
+    expect(src).toContain("1cIivE5ggCk");
+  });
+
+  it("place la FAQ après le footer dans le flux", () => {
+    const src = landing();
+    const footerIdx = src.indexOf("<footer");
+    const faqIdx = src.indexOf('id="faq"');
+    expect(footerIdx).toBeGreaterThan(0);
+    expect(faqIdx).toBeGreaterThan(footerIdx);
+  });
+});

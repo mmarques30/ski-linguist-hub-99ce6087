@@ -5,18 +5,37 @@ import {
   RECOMMENDED,
 } from "@/components/landing/landing-assets";
 
-const PICKS = [
-  { role: "Nav / header", file: "fli-marca-yellow.png", why: "Déjà en prod dans l’app, lisible sur navy" },
-  { role: "Logo hero", file: "logo_fli_2026_3.png", why: "FLI + nom complets, fort signal de marque" },
-  { role: "Hero personnage", file: "fli_personagem_01.png", why: "Moniteur ski = cœur métier montagne" },
-  { role: "CTA plateforme", file: "fli_personagem_02p.png", why: "Laptop FLI = ouverture digitale" },
-  { role: "Formations", file: "fli_personagem_04.png", why: "Second personnage montagne, contraste" },
-  { role: "Picto / favicon ambiance", file: "logo_fli_2026_18.png", why: "Globe + montagnes orange" },
+const SPEC_PICKS = [
+  {
+    role: "Nav / Acesso FLI",
+    file: "fli-marca-yellow.png",
+    why: "Logo header sticky (spec §4) — déjà en prod app",
+  },
+  {
+    role: "Hero photo (placeholder)",
+    file: "fli_personagem_01.png + fli-auth-bg.png",
+    why: "Spec §7 : photo pro moniteur à fournir — illustration temporaire",
+  },
+  {
+    role: "Badges flottants",
+    file: "texte",
+    why: "Groupes de 6 max · Financement FIFPL · Certifié Qualiopi",
+  },
+  {
+    role: "Vidéo #metodo",
+    file: "YouTube 1cIivE5ggCk",
+    why: "Embed stages-langues (spec §3 dobra 2)",
+  },
+  {
+    role: "Parceiros carousel",
+    file: "placeholders texte",
+    why: "Logos HD ESF / stations / Qualiopi / FIFPL / Linguaskill / Bright à fournir",
+  },
 ];
 
 /**
- * Mockup de validation logos & illustrations avant / pendant la LP.
- * Route publique : /mockup/lp-assets
+ * Mockup validation assets — aligné sur docs/FLI-LP-institucional-spec.md §5–7.
+ * Route : /mockup/lp-assets
  */
 export default function AssetValidationMockupPage() {
   return (
@@ -25,10 +44,10 @@ export default function AssetValidationMockupPage() {
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#FCAF17]">
-              Mockup validation
+              Spec LP · validation assets
             </p>
             <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
-              Logos & illustrations LP FLI
+              Logos & illustrations — FLI-LP-institucional
             </h1>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -42,7 +61,7 @@ export default function AssetValidationMockupPage() {
               to="/auth"
               className="rounded-full border border-white/25 px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/10"
             >
-              Plateforme
+              Acesso FLI
             </Link>
           </div>
         </div>
@@ -50,22 +69,16 @@ export default function AssetValidationMockupPage() {
 
       <main className="mx-auto max-w-6xl space-y-14 px-4 py-10">
         <section className="rounded-2xl border border-[#FCAF17]/35 bg-[#FCAF17]/10 p-6">
-          <h2 className="text-lg font-bold text-[#FCAF17]">Choix recommandés (implémentés)</h2>
+          <h2 className="text-lg font-bold text-[#FCAF17]">
+            Aligné sur docs/FLI-LP-institucional-spec.md
+          </h2>
           <p className="mt-2 max-w-3xl text-sm text-white/75">
-            Spec <code className="text-[#FCAF17]">FLI-LP-institucional-spec.md</code> absente du
-            dépôt — brief reconstruit depuis{" "}
-            <a
-              className="underline decoration-[#FCAF17]/60 underline-offset-2"
-              href="https://www.stages-langues.fr/"
-              target="_blank"
-              rel="noreferrer"
-            >
-              stages-langues.fr
-            </a>
-            , assets du repo et CTA plateforme. Dis-moi quels fichiers garder / remplacer.
+            Sitemap : Hero → Méthode/vidéo → Parceiros → Formações → Footer → FAQ. CTA header
+            « Acesso FLI » → <code className="text-[#FCAF17]">/auth</code>. Pendances spec §5–7 :
+            photo hero réelle, logos partenaires HD, chiffres moniteurs formés.
           </p>
           <ul className="mt-5 grid gap-3 sm:grid-cols-2">
-            {PICKS.map((p) => (
+            {SPEC_PICKS.map((p) => (
               <li
                 key={p.role}
                 className="rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm"
@@ -83,19 +96,11 @@ export default function AssetValidationMockupPage() {
             </figure>
             <figure className="text-center">
               <img
-                src={RECOMMENDED.heroLogo}
-                alt=""
-                className="mx-auto h-14 object-contain"
-              />
-              <figcaption className="mt-2 text-xs text-white/50">Hero logo</figcaption>
-            </figure>
-            <figure className="text-center">
-              <img
                 src={RECOMMENDED.heroCharacter}
                 alt=""
                 className="mx-auto h-28 object-contain"
               />
-              <figcaption className="mt-2 text-xs text-white/50">Hero</figcaption>
+              <figcaption className="mt-2 text-xs text-white/50">Hero placeholder</figcaption>
             </figure>
             <figure className="text-center">
               <img
@@ -103,7 +108,7 @@ export default function AssetValidationMockupPage() {
                 alt=""
                 className="mx-auto h-28 object-contain"
               />
-              <figcaption className="mt-2 text-xs text-white/50">Plateforme</figcaption>
+              <figcaption className="mt-2 text-xs text-white/50">Dispo (non utilisé hero)</figcaption>
             </figure>
           </div>
         </section>
