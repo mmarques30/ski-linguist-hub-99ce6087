@@ -15,6 +15,7 @@ import {
   GraduationCap,
   Languages,
   Pencil,
+  PieChart,
 } from "lucide-react";
 import { useState } from "react";
 import type { ReactNode } from "react";
@@ -31,9 +32,11 @@ import {
   CardList,
   CardListItem,
   DefinitionList,
+  DonutChart,
   MeterRow,
   PageHeader,
   PageShell,
+  RankedBarList,
   SegmentedControl,
   StatTile,
   StatTileGrid,
@@ -172,6 +175,46 @@ export default function StudentDetails() {
         ? certifiedInscriptions
         : student.inscriptions;
 
+  /**
+   * Répartitions calculées sur les inscriptions déjà chargées par
+   * `useStudentDetails` : la requête ramène **toutes** les inscriptions du
+   * stagiaire (pas de pagination), les chiffres couvrent donc son dossier
+   * entier. Rien n'est extrapolé : ni cible, ni projection.
+   */
+  const statusSlices = Object.entries(
+    student.inscriptions.reduce<Record<string, number>>((acc, inscription) => {
+      const key = inscription.status || "—";
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {})
+  )
+    .map(([status, count]) => ({
+      name: status === "—" ? "Statut non renseigné" : getStatusLabel(status, "fr"),
+      value: count,
+    }))
+    .sort((a, b) => b.value - a.value);
+
+  const hoursByLanguage = Object.entries(
+    student.inscriptions.reduce<Record<string, { hours: number; count: number }>>(
+      (acc, inscription) => {
+        const key = inscription.language || "Langue non renseignée";
+        const bucket = (acc[key] ||= { hours: 0, count: 0 });
+        bucket.hours += Number(inscription.duration_hours) || 0;
+        bucket.count += 1;
+        return acc;
+      },
+      {}
+    )
+  )
+    .map(([language, bucket]) => ({
+      key: language,
+      label: language,
+      value: bucket.hours,
+      display: `${bucket.hours}h`,
+      hint: `${bucket.count} inscription${bucket.count > 1 ? "s" : ""}`,
+    }))
+    .sort((a, b) => b.value - a.value);
+
   const contactItems: Array<{ label: ReactNode; value: ReactNode }> = [
     {
       label: (
@@ -306,13 +349,23 @@ export default function StudentDetails() {
             icon={BookOpen}
             tone="gold"
             onClick={() => setHistoryTab("all")}
-          />
+          >
+            {student.stats.totalInscriptions > 0 && (
+              <MeterRow
+                label="Terminées"
+                value={student.stats.completedCourses}
+                max={student.stats.totalInscriptions}
+                display={`${student.stats.completedCourses}/${student.stats.totalInscriptions}`}
+              />
+            )}
+          </StatTile>
           <StatTile
             label="Heures de formation"
             value={`${student.stats.totalHours}h`}
             hint="Total cumulé"
             icon={Clock}
             tone="blue"
+            onClick={() => setHistoryTab("all")}
           />
           <StatTile
             label="Certifications"
@@ -325,7 +378,16 @@ export default function StudentDetails() {
             icon={Award}
             tone="teal"
             onClick={() => setHistoryTab("certifications")}
-          />
+          >
+            {student.stats.totalInscriptions > 0 && (
+              <MeterRow
+                label="Sur les inscriptions"
+                value={student.stats.certifications}
+                max={student.stats.totalInscriptions}
+                display={`${student.stats.certifications}/${student.stats.totalInscriptions}`}
+              />
+            )}
+          </StatTile>
           <StatTile
             label="Langues"
             value={student.stats.languages.length}
@@ -334,8 +396,51 @@ export default function StudentDetails() {
             }`}
             icon={Languages}
             tone="purple"
+            onClick={() => setHistoryTab("all")}
           />
         </StatTileGrid>
+
+        {/* Deux lectures du même dossier : où en sont les inscriptions, et où
+            sont passées les heures. Tout vient des inscriptions déjà chargées. */}
+        <div className="grid gap-4 lg:gap-5 xl:grid-cols-2">
+          <SurfaceCard
+            title="Inscriptions par statut"
+            description={`${student.inscriptions.length} inscription${
+              student.inscriptions.length > 1 ? "s" : ""
+            } — dossier complet du stagiaire`}
+            icon={PieChart}
+            actions={
+              <button
+                type="button"
+                onClick={() => setHistoryTab("all")}
+                className="text-sm font-medium text-[hsl(var(--tint-blue-fg))] hover:underline"
+              >
+                Voir l&apos;historique
+              </button>
+            }
+          >
+            <DonutChart
+              data={statusSlices}
+              height={190}
+              legendPosition="side"
+              centerLabel="inscriptions"
+              ariaLabel="Inscriptions du stagiaire par statut"
+              emptyMessage="Aucune inscription enregistrée"
+            />
+          </SurfaceCard>
+
+          <SurfaceCard
+            title="Heures par langue"
+            description={`${student.stats.totalHours}h au total — somme des durées saisies`}
+            icon={Languages}
+          >
+            <RankedBarList
+              items={hoursByLanguage}
+              colorBySeries
+              emptyMessage="Aucune durée enregistrée"
+            />
+          </SurfaceCard>
+        </div>
 
         <div className="grid gap-4 lg:grid-cols-3 lg:gap-5">
           {/* Colonne gauche — identité du stagiaire */}

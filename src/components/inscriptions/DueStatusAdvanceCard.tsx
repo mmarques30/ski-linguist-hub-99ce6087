@@ -17,7 +17,10 @@ export function DueStatusAdvanceCard() {
   if (isLoading || !data || data.nombre === 0) return null;
 
   const pluriel = data.nombre > 1;
-  const codes = data.inscriptions
+  // Le compteur et la liste viennent du même RPC, mais une réponse partielle
+  // ne doit pas faire tomber toute la page derrière l'ErrorBoundary.
+  const concernees = data.inscriptions ?? [];
+  const codes = concernees
     .map((i) => i.code)
     .filter(Boolean)
     .slice(0, 6)
@@ -34,7 +37,7 @@ export function DueStatusAdvanceCard() {
         <p>
           {pluriel ? "Elles ont" : "Elle a"} commencé et ne {pluriel ? "sont" : "est"} pas
           terminée{pluriel ? "s" : ""}.
-          {codes && <> {codes}{data.inscriptions.length > 6 ? "…" : ""}</>}
+          {codes && <> {codes}{concernees.length > 6 ? "…" : ""}</>}
         </p>
         <Button
           size="sm"

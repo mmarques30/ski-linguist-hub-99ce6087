@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -10,14 +10,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Plus, UserCog } from "lucide-react";
+import { Plus, UserCog, CircleCheck, CalendarClock, CircleSlash, Languages } from "lucide-react";
 import { useInstructors, useUpdateInstructor, type Instructor } from "@/hooks/useInstructors";
 import { InstructorCard } from "@/components/formateurs/InstructorCard";
 import { InstructorFormDialog } from "@/components/formateurs/InstructorFormDialog";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { EmptyState } from "@/components/common/EmptyState";
 import { CardGridSkeleton } from "@/components/common/ListSkeleton";
-import { PORTUGUESE_LABEL_LOWER } from "@/lib/taught-languages";
+import { displayLanguageLabel, PORTUGUESE_LABEL_LOWER } from "@/lib/taught-languages";
 import {
   activationConfirmDescription,
   candidatActivationGaps,
@@ -27,6 +27,9 @@ import {
   FilterBar,
   PageHeader,
   PageShell,
+  RankedBarList,
+  StatTile,
+  StatTileGrid,
   SurfaceCard,
 } from "@/components/ui-kit";
 
@@ -84,6 +87,40 @@ export default function InstructorsList() {
     all: "Tous",
   };
 
+  /**
+   * Synthèse de la liste affichée. `useInstructors` ne pagine pas : ces
+   * chiffres couvrent tout le résultat des filtres actifs — donc le statut
+   * sélectionné (« Actif·ves » par défaut), pas l'ensemble des formateurs.
+   */
+  const summary = useMemo(() => {
+    const byAvailability = (code: string) =>
+      instructors.filter((inst) => inst.availability_status === code).length;
+
+    const languageCounts = new Map<string, number>();
+    for (const inst of instructors) {
+      const seen = new Set<string>();
+      for (const raw of inst.languages ?? []) {
+        const label = displayLanguageLabel(raw).trim();
+        if (!label) continue;
+        const pretty = label.charAt(0).toUpperCase() + label.slice(1);
+        if (seen.has(pretty)) continue;
+        seen.add(pretty);
+        languageCounts.set(pretty, (languageCounts.get(pretty) ?? 0) + 1);
+      }
+    }
+
+    return {
+      displayed: instructors.length,
+      disponible: byAvailability("disponible"),
+      occupe: byAvailability("occupe"),
+      indisponible: byAvailability("indisponible"),
+      languages: [...languageCounts.entries()]
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "fr"))
+        .slice(0, 6),
+      distinctLanguages: languageCounts.size,
+    };
+  }, [instructors]);
+
   /** Rappel des filtres actifs, retirables un à un. */
   const activeFilters = [
     search.trim()
@@ -121,6 +158,81 @@ export default function InstructorsList() {
             ) : undefined
           }
         />
+
+        {/*
+          Bandeau de synthèse. Tout est calculé sur la liste affichée : le
+          libellé de chaque tuile rappelle le statut filtré, aucun chiffre ne
+          prétend couvrir l'ensemble des formateur·rices.
+        */}
+        <StatTileGrid cols={5}>
+          <StatTile
+            label="Formateur·rices affiché·es"
+            value={summary.displayed}
+            hint={`Statut : ${statusChipLabel[statusFilter] ?? statusFilter}`}
+            icon={UserCog}
+            tone="teal"
+            loading={isLoading}
+          />
+          <StatTile
+            label="Disponibles"
+            value={summary.disponible}
+            hint={`sur les ${summary.displayed} affiché·es`}
+            icon={CircleCheck}
+            tone="gold"
+            loading={isLoading}
+            onClick={() => setAvailFilter("disponible")}
+          />
+          <StatTile
+            label="Occupé·es"
+            value={summary.occupe}
+            hint={`sur les ${summary.displayed} affiché·es`}
+            icon={CalendarClock}
+            tone="orange"
+            loading={isLoading}
+            onClick={() => setAvailFilter("occupe")}
+          />
+          <StatTile
+            label="Indisponibles"
+            value={summary.indisponible}
+            hint={`sur les ${summary.displayed} affiché·es`}
+            icon={CircleSlash}
+            tone="rose"
+            loading={isLoading}
+            onClick={() => setAvailFilter("indisponible")}
+          />
+          <StatTile
+            label="Langues couvertes"
+            value={summary.distinctLanguages}
+            hint={`sur les ${summary.displayed} affiché·es`}
+            icon={Languages}
+            tone="purple"
+            loading={isLoading}
+          />
+        </StatTileGrid>
+
+        <SurfaceCard
+          title="Langues enseignées"
+          description="Nombre de formateur·rices par langue, sur la liste affichée."
+          icon={Languages}
+        >
+          {isLoading ? (
+            <div className="space-y-4">
+              {[0, 1, 2, 3].map((index) => (
+                <div key={index} className="h-8 animate-shimmer rounded-[var(--radius)]" />
+              ))}
+            </div>
+          ) : (
+            <RankedBarList
+              colorBySeries
+              emptyMessage="Aucune langue renseignée"
+              items={summary.languages.map(([label, count]) => ({
+                key: label,
+                label,
+                value: count,
+              }))}
+            />
+          )}
+        </SurfaceCard>
 
         <SurfaceCard>
           <FilterBar

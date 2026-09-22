@@ -1,18 +1,31 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Building2, MapPin, Mail, Phone, Users, Upload, Snowflake } from "lucide-react";
+import {
+  Plus,
+  Building2,
+  MapPin,
+  Mail,
+  Phone,
+  Users,
+  Upload,
+  Snowflake,
+  ChartPie,
+  Copy,
+} from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { usePartners, usePartnerStats } from "@/hooks/usePartners";
 import { PartnerFormDialog } from "@/components/partners/PartnerFormDialog";
 import { EsfDirectorsImportDialog } from "@/components/partners/EsfDirectorsImportDialog";
 import {
   CardGrid,
+  DonutChart,
   FilterBar,
   PageHeader,
   PageShell,
+  RankedBarList,
   StatTile,
   StatTileGrid,
   StatusPill,
@@ -62,7 +75,12 @@ export default function PartnersList() {
     pageSize: qualityFilter === "doublons" ? 1000 : pageSize,
   });
   const partnersRaw = partnersResult?.rows ?? [];
-  const { duplicateIds, map: dedupMap, isLoading: dedupLoading } = usePartnerDedupIndex();
+  const {
+    duplicateIds,
+    map: dedupMap,
+    all: dedupInventory,
+    isLoading: dedupLoading,
+  } = usePartnerDedupIndex();
 
   const partners =
     qualityFilter === "doublons"
@@ -73,6 +91,43 @@ export default function PartnersList() {
   const totalPages = Math.max(1, Math.ceil(partnerTotal / pageSize));
   const { data: stats, isLoading: statsLoading } = usePartnerStats();
   const listLoading = isLoading || (qualityFilter === "doublons" && dedupLoading);
+
+  /**
+   * Répartitions calculées sur l'inventaire complet des partenaires, déjà
+   * chargé par `usePartnerDedupIndex` pour la détection de doublons : pas de
+   * requête supplémentaire, et les chiffres ne dépendent pas de la page de 50
+   * lignes affichée en dessous. Les fiches fusionnées sont exclues.
+   */
+  const inventory = useMemo(
+    () => dedupInventory.filter((partner) => !dedupMap[partner.id]),
+    [dedupInventory, dedupMap]
+  );
+
+  const breakdown = useMemo(() => {
+    const typeCounts = new Map<string, number>();
+    const stationCounts = new Map<string, number>();
+    let needsReview = 0;
+
+    for (const partner of inventory) {
+      const type = partner.type || "autre";
+      typeCounts.set(type, (typeCounts.get(type) ?? 0) + 1);
+      const station = (partner.station ?? "").trim();
+      if (station) stationCounts.set(station, (stationCounts.get(station) ?? 0) + 1);
+      if (partnerNeedsReview(partner.name)) needsReview += 1;
+    }
+
+    return {
+      total: inventory.length,
+      needsReview,
+      types: [...typeCounts.entries()]
+        .map(([type, count]) => ({ name: TYPE_LABELS[type] ?? type, value: count }))
+        .sort((a, b) => b.value - a.value),
+      stations: [...stationCounts.entries()]
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "fr"))
+        .slice(0, 6)
+        .map(([station, count]) => ({ key: station, label: station, value: count })),
+    };
+  }, [inventory]);
 
   const activeFilters = [
     typeFilter
@@ -160,7 +215,7 @@ export default function PartnersList() {
         )}
 
         {/* KPI — « Total » et « Actifs » ouvrent la liste filtrée correspondante. */}
-        <StatTileGrid cols={3}>
+        <StatTileGrid cols={5}>
           <StatTile
             label="Total partenaires"
             value={stats?.totalPartners ?? 0}
@@ -187,7 +242,71 @@ export default function PartnersList() {
             loading={statsLoading}
             onClick={() => { setStatusFilter("actif"); setPage(1); }}
           />
+          <StatTile
+            label="Fiches à vérifier"
+            value={breakdown.needsReview}
+            hint={`sur ${breakdown.total} fiches actives`}
+            icon={Building2}
+            tone="orange"
+            loading={dedupLoading}
+            onClick={() => { setQualityFilter("a_verifier"); setPage(1); }}
+          />
+          <StatTile
+            label="Doublons détectés"
+            value={duplicateIds.size}
+            hint={`sur ${breakdown.total} fiches actives`}
+            icon={Copy}
+            tone="purple"
+            loading={dedupLoading}
+            onClick={() => { setQualityFilter("doublons"); setPage(1); }}
+          />
         </StatTileGrid>
+
+        {/*
+          Répartitions sur l'inventaire complet (hors fiches fusionnées), déjà
+          en mémoire pour la détection de doublons — pas sur la page affichée.
+        */}
+        <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">
+          <SurfaceCard
+            title="Répartition par type"
+            description="Ensemble des fiches partenaires, hors fiches fusionnées."
+            icon={ChartPie}
+          >
+            {dedupLoading ? (
+              <div className="h-[190px] animate-shimmer rounded-[var(--radius)]" />
+            ) : (
+              <DonutChart
+                data={breakdown.types}
+                height={150}
+                thickness={18}
+                legendPosition="bottom"
+                centerLabel="partenaires"
+                ariaLabel="Répartition des partenaires par type"
+                emptyMessage="Aucune donnée disponible"
+              />
+            )}
+          </SurfaceCard>
+
+          <SurfaceCard
+            title="Stations les plus représentées"
+            description="Ensemble des fiches partenaires, hors fiches fusionnées."
+            icon={MapPin}
+          >
+            {dedupLoading ? (
+              <div className="space-y-4">
+                {[0, 1, 2, 3, 4].map((index) => (
+                  <div key={index} className="h-8 animate-shimmer rounded-[var(--radius)]" />
+                ))}
+              </div>
+            ) : (
+              <RankedBarList
+                items={breakdown.stations}
+                colorBySeries
+                emptyMessage="Aucune station renseignée"
+              />
+            )}
+          </SurfaceCard>
+        </div>
 
         <FilterBar
           search={{

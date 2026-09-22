@@ -8,9 +8,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   CardGrid,
   DefinitionList,
+  MeterRow,
   PageHeader,
   PageShell,
+  RankedBarList,
   SegmentedControl,
+  StatTile,
+  StatTileGrid,
   StatusPill,
   SurfaceCard,
   TableCell,
@@ -19,6 +23,7 @@ import {
   TableHeadCell,
   TableHeadRow,
   TableRow,
+  seriesColor,
   toneForStatus,
 } from "@/components/ui-kit";
 import { InscriptionOpsChecklist } from "@/components/inscriptions/InscriptionOpsChecklist";
@@ -27,6 +32,7 @@ import { InscriptionFundingCard } from "@/components/inscriptions/InscriptionFun
 import { useInscriptionClientAccess } from "@/hooks/useInscriptionClientAccess";
 import { useInscriptionDocuments } from "@/hooks/useInscriptionDocuments";
 import {
+  CECRL_LEVELS,
   isEntryFormComplete,
   isExitFormComplete,
   listMissingFormationDocuments,
@@ -68,6 +74,8 @@ import {
   Link2,
   History,
   Wallet,
+  Mountain,
+  TrendingUp,
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
@@ -86,7 +94,11 @@ import { InscriptionClientAccessCard } from "@/components/inscriptions/Inscripti
 import { InscriptionTimelineCard } from "@/components/inscriptions/InscriptionTimelineCard";
 import { FormateurEntryFormDialog } from "@/components/inscriptions/FormateurEntryFormDialog";
 import { FormateurExitFormDialog } from "@/components/inscriptions/FormateurExitFormDialog";
-import { pisteLabelFromPlacementAnswers } from "@/lib/placement-test-engine";
+import {
+  pisteLabelFromPlacementAnswers,
+  SLOPE_LABELS,
+  type SlopeLevel,
+} from "@/lib/placement-test-engine";
 import { invoiceStatusLabel, paymentTypeLabel } from "@/lib/payment-methods";
 import { DATES_A_PLANIFIER_LABEL } from "@/lib/registration-dates";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -145,6 +157,21 @@ const VALID_TABS = new Set([
   "timeline",
   "documents",
 ]);
+
+/**
+ * Échelle CECRL A1→C2 pour les jauges de progression. Une valeur hors échelle
+ * (texte libre, libellé piste) reste affichée en clair mais ne remplit pas la
+ * barre : on n'invente pas de position.
+ */
+function cecrlRank(level: string | null | undefined): number {
+  if (!level) return 0;
+  const key = String(level).trim().toUpperCase().replace(/\+$/, "");
+  const index = (CECRL_LEVELS as readonly string[]).indexOf(key);
+  return index === -1 ? 0 : index + 1;
+}
+
+/** Couleur attachée à la piste elle-même, jamais à son rang d'affichage. */
+const SLOPE_SERIES_ORDER: string[] = ["verte", "bleue", "rouge", "noire", "vocab_ski"];
 
 export default function InscriptionDetails() {
   const { id } = useParams<{ id: string }>();
@@ -231,7 +258,12 @@ export default function InscriptionDetails() {
     enabled: !!studentIdForPortal,
   });
 
-  const { data: placementSuggestion } = useQuery({
+  /**
+   * Même requête qu'avant (mêmes colonnes) : on en lit simplement aussi le
+   * détail par piste déjà contenu dans `answers.summary`, au lieu de ne garder
+   * que le libellé de piste.
+   */
+  const { data: placementEntry } = useQuery({
     queryKey: ["inscription-placement-piste", id, inscription?.entry_test_id],
     queryFn: async () => {
       const testId = (inscription as { entry_test_id?: string | null } | null)?.entry_test_id;
@@ -242,10 +274,28 @@ export default function InscriptionDetails() {
         .eq("id", testId)
         .maybeSingle();
       if (error) throw error;
-      return pisteLabelFromPlacementAnswers(data?.answers) || null;
+      const summary = (
+        data?.answers as {
+          summary?: {
+            slopeResults?: Array<{
+              slope: string;
+              correct: number;
+              total: number;
+              passed: boolean;
+            }>;
+          };
+        } | null
+      )?.summary;
+      return {
+        piste: pisteLabelFromPlacementAnswers(data?.answers) || null,
+        determinedLevel: data?.determined_level ?? null,
+        slopes: summary?.slopeResults ?? [],
+      };
     },
     enabled: !!id && !!(inscription as { entry_test_id?: string | null } | null)?.entry_test_id,
   });
+
+  const placementSuggestion = placementEntry?.piste ?? null;
 
   const { data: invoices } = useQuery({
     queryKey: ["inscription-invoices", id],
@@ -317,6 +367,20 @@ export default function InscriptionDetails() {
     invoices?.length,
     studentPortal?.auth_user_id,
   ]);
+
+  /**
+   * Encaissé = paiements de CETTE inscription marqués « reçu » ou « validé »
+   * (`useInscriptionClientAccess` les charge tous, sans pagination). Un
+   * règlement hors plateforme qui n'a pas été saisi n'y figure pas : la jauge
+   * annonce donc « paiements enregistrés », pas « argent reçu ».
+   */
+  const paymentsReceivedTotal = useMemo(
+    () =>
+      (clientAccess?.payments || [])
+        .filter((p) => p.status === "recu" || p.status === "valide")
+        .reduce((sum, p) => sum + Number(p.amount || 0), 0),
+    [clientAccess]
+  );
 
   const skiSchoolId = (inscription as { ski_school_id?: string | null } | null)?.ski_school_id;
   const { data: skiSchoolPartnerId } = useQuery({
@@ -410,6 +474,25 @@ export default function InscriptionDetails() {
     );
   }
 
+  /**
+   * Niveaux affichés : bilan formateur d'abord, à défaut les niveaux portés
+   * par la fiche inscription. Aucune valeur n'est déduite d'une autre.
+   */
+  const entryGeneralLevel = progression?.niveau_general_entree || inscription.entry_level || null;
+  const exitGeneralLevel = progression?.niveau_general_sortie || inscription.exit_level || null;
+  const entryTechnicalLevel = progression?.niveau_technique_entree || null;
+  const exitTechnicalLevel = progression?.niveau_technique_sortie || null;
+  const hasAnyLevel = Boolean(
+    entryGeneralLevel || exitGeneralLevel || entryTechnicalLevel || exitTechnicalLevel
+  );
+  const price = inscription.price === null || inscription.price === undefined
+    ? null
+    : Number(inscription.price);
+  const remainingToCollect =
+    price === null ? null : Math.max(0, price - paymentsReceivedTotal);
+  const placementSlopes = placementEntry?.slopes ?? [];
+  const placementSlopeMax = Math.max(1, ...placementSlopes.map((slope) => slope.total || 0));
+
   const tabOptions = [
     { value: "general", label: t(translations.generalInfo), icon: User },
     { value: "training", label: t(translations.training), icon: GraduationCap },
@@ -502,6 +585,72 @@ export default function InscriptionDetails() {
         />
 
         {checklistInput && <InscriptionOpsChecklist input={checklistInput} />}
+
+        {/* Bandeau d'indicateurs — chaque tuile ouvre l'onglet qui porte le détail. */}
+        <StatTileGrid cols={4}>
+          <StatTile
+            label="Progression CECRL"
+            value={`${entryGeneralLevel || "—"} → ${exitGeneralLevel || "—"}`}
+            hint="Niveau général : entrée → sortie"
+            icon={TrendingUp}
+            tone="purple"
+            onClick={() => setActiveTab("training")}
+          />
+          <StatTile
+            label={t(translations.duration)}
+            value={
+              inscription.duration_hours
+                ? `${inscription.duration_hours} ${t(translations.hours)}`
+                : t(translations.notSpecified)
+            }
+            hint={
+              [
+                inscription.duration_days ? `${inscription.duration_days} jours` : null,
+                inscription.hours_per_day ? `${inscription.hours_per_day} h/jour` : null,
+              ]
+                .filter(Boolean)
+                .join(" · ") || inscription.language
+            }
+            icon={Clock}
+            tone="blue"
+            onClick={() => setActiveTab("training")}
+          />
+          <StatTile
+            label={t(translations.price)}
+            value={formatPrice(price)}
+            hint={
+              invoices && invoices.length > 0
+                ? `${invoices.length} facture${invoices.length > 1 ? "s" : ""} associée${
+                    invoices.length > 1 ? "s" : ""
+                  }`
+                : "Aucune facture associée"
+            }
+            icon={Euro}
+            tone="teal"
+            onClick={() => setActiveTab("financial")}
+          >
+            {price !== null && price > 0 && (
+              <MeterRow
+                label="Encaissé (paiements enregistrés)"
+                value={paymentsReceivedTotal}
+                max={price}
+                display={formatPrice(paymentsReceivedTotal)}
+              />
+            )}
+          </StatTile>
+          <StatTile
+            label="Reste à encaisser"
+            value={remainingToCollect === null ? "—" : formatPrice(remainingToCollect)}
+            hint={
+              price === null
+                ? "Prix total non renseigné"
+                : `sur ${formatPrice(price)} — paiements enregistrés uniquement`
+            }
+            icon={Wallet}
+            tone={remainingToCollect && remainingToCollect > 0 ? "rose" : "neutral"}
+            onClick={() => setActiveTab("financial")}
+          />
+        </StatTileGrid>
 
         {/* General Info Tab */}
         {activeTab === "general" && (
@@ -814,6 +963,56 @@ export default function InscriptionDetails() {
                   </tbody>
                 </table>
               </TableFrame>
+
+              {/* Même bilan, lu comme une progression sur l'échelle A1 → C2. */}
+              {hasAnyLevel ? (
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium">Niveau général</p>
+                    <MeterRow
+                      label="Entrée"
+                      value={cecrlRank(entryGeneralLevel)}
+                      max={CECRL_LEVELS.length}
+                      display={entryGeneralLevel || "—"}
+                      color={seriesColor(0)}
+                    />
+                    <MeterRow
+                      label="Sortie"
+                      value={cecrlRank(exitGeneralLevel)}
+                      max={CECRL_LEVELS.length}
+                      display={exitGeneralLevel || "—"}
+                      color={seriesColor(1)}
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium">Niveau technique</p>
+                    <MeterRow
+                      label="Entrée"
+                      value={cecrlRank(entryTechnicalLevel)}
+                      max={CECRL_LEVELS.length}
+                      display={entryTechnicalLevel || "—"}
+                      color={seriesColor(0)}
+                    />
+                    <MeterRow
+                      label="Sortie"
+                      value={cecrlRank(exitTechnicalLevel)}
+                      max={CECRL_LEVELS.length}
+                      display={exitTechnicalLevel || "—"}
+                      color={seriesColor(1)}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground sm:col-span-2">
+                    Échelle A1 → C2 ({CECRL_LEVELS.join(" · ")}). Une valeur hors échelle reste
+                    affichée telle quelle, sans remplir la barre.
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Aucun niveau saisi : la progression s&apos;affichera dès qu&apos;un niveau
+                  d&apos;entrée ou de sortie sera renseigné.
+                </p>
+              )}
+
               <div className="grid gap-2 sm:grid-cols-2 text-sm">
                 <p>
                   <span className="text-muted-foreground">Objectif atteint : </span>
@@ -847,6 +1046,29 @@ export default function InscriptionDetails() {
               editable={editable}
               inscriptionEntryLevel={inscription.entry_level}
             />
+
+            {placementSlopes.length > 0 && (
+              <SurfaceCard
+                title="Résultats par piste — test d'entrée"
+                description="Bonnes réponses par bloc de 5 questions ; 3 bonnes réponses valident la piste"
+                icon={Mountain}
+              >
+                <RankedBarList
+                  max={placementSlopeMax}
+                  items={placementSlopes.map((slope) => ({
+                    key: slope.slope,
+                    label: SLOPE_LABELS[slope.slope as SlopeLevel] || slope.slope,
+                    value: slope.correct,
+                    display: `${slope.correct}/${slope.total}`,
+                    hint: slope.passed ? "Piste validée" : "Piste non validée",
+                    color: seriesColor(
+                      Math.max(0, SLOPE_SERIES_ORDER.indexOf(slope.slope))
+                    ),
+                  }))}
+                  emptyMessage="Aucun détail par piste sur ce test"
+                />
+              </SurfaceCard>
+            )}
           </div>
         )}
 
