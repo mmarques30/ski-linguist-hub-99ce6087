@@ -1,49 +1,37 @@
 import { useState } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { useTabParam } from "@/hooks/useTabParam";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { 
-  useSatisfactionStats, 
+import {
+  useSatisfactionStats,
   useSeasonComparison,
-  SatisfactionFilters, 
-  PeriodFilter, 
+  SatisfactionFilters,
+  PeriodFilter,
   LanguageFilter,
   SeasonFilter,
   SeasonComparisonFilters,
   CustomDateRange,
   SEASON_LABELS
 } from "@/hooks/useSatisfactionStats";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  RadarChart,
-  PolarGrid,
+import {
   PolarAngleAxis,
+  PolarGrid,
   PolarRadiusAxis,
   Radar,
-  Legend
+  RadarChart,
+  Tooltip,
 } from "recharts";
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Minus, 
-  CheckCircle2, 
-  Users, 
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  CheckCircle2,
+  Users,
   Star,
   MessageSquare,
   Award,
@@ -54,87 +42,66 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   CalendarRange,
-  FileDown
+  FileDown,
+  BarChart3,
+  LineChart as LineChartIcon
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { jsPDF } from "jspdf";
 import { toast } from "sonner";
+import {
+  BarsChart,
+  CHART_CHROME,
+  ChartFrame,
+  ChartLegend,
+  MeterRow,
+  PageHeader,
+  PageShell,
+  SectionHeading,
+  SegmentedControl,
+  StatTile,
+  StatTileGrid,
+  StatusPill,
+  STATE_COLORS,
+  SurfaceCard,
+  TableEmpty,
+  TrendChart,
+  axisProps,
+  makeTooltipRenderer,
+  seriesColor,
+} from "@/components/ui-kit";
+import type { PillTone, TileTone } from "@/components/ui-kit";
 
-function StatCard({ 
-  title, 
-  value, 
-  subtitle, 
-  icon: Icon, 
-  trend,
-  className = ""
-}: { 
-  title: string; 
-  value: string | number; 
-  subtitle?: string;
-  icon: React.ElementType;
-  trend?: "up" | "down" | "stable";
-  className?: string;
-}) {
-  return (
-    <Card className={className}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-2">
-          <div className="text-2xl font-bold">{value}</div>
-          {trend && (
-            <div className={`flex items-center ${
-              trend === "up" ? "text-green-500" : 
-              trend === "down" ? "text-red-500" : 
-              "text-muted-foreground"
-            }`}>
-              {trend === "up" && <TrendingUp className="h-4 w-4" />}
-              {trend === "down" && <TrendingDown className="h-4 w-4" />}
-              {trend === "stable" && <Minus className="h-4 w-4" />}
-            </div>
-          )}
-        </div>
-        {subtitle && (
-          <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function QualiopiIndicator({ label, value, target, unit = "%" }: { 
-  label: string; 
-  value: number; 
+/**
+ * Indicateur Qualiopi : une valeur face à sa cible.
+ * La cible reste celle du référentiel (50 % / 80 % / 3,5 sur 5) — on ne fait
+ * qu'habiller la barre avec `MeterRow`.
+ */
+function QualiopiIndicator({ label, value, target, unit = "%" }: {
+  label: string;
+  value: number;
   target: number;
   unit?: string;
 }) {
   const isAboveTarget = value >= target;
-  const percentage = Math.min((value / target) * 100, 100);
-  
+
   return (
-    <div className="space-y-2">
-      <div className="flex justify-between items-center">
-        <span className="text-sm font-medium">{label}</span>
-        <div className="flex items-center gap-2">
-          <span className={`text-sm font-bold ${isAboveTarget ? "text-green-600" : "text-amber-600"}`}>
-            {value.toFixed(1)}{unit}
-          </span>
-          <Badge variant={isAboveTarget ? "default" : "secondary"} className="text-xs">
-            Objectif: {target}{unit}
-          </Badge>
-        </div>
-      </div>
-      <div className="h-2 bg-muted rounded-full overflow-hidden">
-        <div 
-          className={`h-full transition-all ${isAboveTarget ? "bg-green-500" : "bg-amber-500"}`}
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
-    </div>
+    <MeterRow
+      label={
+        <span className="flex flex-wrap items-center gap-2">
+          <span className="font-medium text-foreground">{label}</span>
+          <StatusPill tone={isAboveTarget ? "success" : "warning"} size="sm">
+            Objectif : {target}{unit}
+          </StatusPill>
+        </span>
+      }
+      value={value}
+      max={target}
+      display={`${value.toFixed(1)}${unit}`}
+      color={isAboveTarget ? STATE_COLORS.good : STATE_COLORS.warning}
+    />
   );
 }
 
@@ -176,42 +143,42 @@ function generateQualioPDF(stats: SatisfactionStatsData, periodLabel: string, la
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   let yPos = 20;
-  
+
   // Header
   doc.setFontSize(20);
   doc.setFont("helvetica", "bold");
   doc.text("Rapport de Satisfaction - Indicateurs Qualiopi", pageWidth / 2, yPos, { align: "center" });
-  
+
   yPos += 10;
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.text("FLI - Formation Linguistique pour Instructeurs", pageWidth / 2, yPos, { align: "center" });
-  
+
   yPos += 8;
   doc.setFontSize(9);
   doc.setTextColor(100);
   doc.text(`Généré le ${format(new Date(), "dd MMMM yyyy à HH:mm", { locale: fr })}`, pageWidth / 2, yPos, { align: "center" });
   doc.text(`Période: ${periodLabel} | Langue: ${languageLabel}`, pageWidth / 2, yPos + 5, { align: "center" });
   doc.setTextColor(0);
-  
+
   yPos += 20;
-  
+
   // Section: Indicateurs Qualiopi principaux
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
   doc.text("1. Indicateurs Qualiopi Principaux", 20, yPos);
   yPos += 10;
-  
+
   // Draw indicators table
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  
+
   const indicators = [
     { label: "Taux de réponse aux questionnaires", value: `${stats.responseRate.toFixed(1)}%`, target: "50%", status: stats.responseRate >= 50 ? "✓ Conforme" : "⚠ À améliorer" },
     { label: "Taux de satisfaction globale (note ≥ 3.5/5)", value: `${stats.qualiopiIndicators.satisfactionRate.toFixed(1)}%`, target: "80%", status: stats.qualiopiIndicators.satisfactionRate >= 80 ? "✓ Conforme" : "⚠ À améliorer" },
     { label: "Note moyenne de satisfaction", value: `${stats.averageScores.overall.toFixed(2)}/5`, target: "3.5/5", status: stats.averageScores.overall >= 3.5 ? "✓ Conforme" : "⚠ À améliorer" },
   ];
-  
+
   // Table header
   doc.setFillColor(240, 240, 240);
   doc.rect(20, yPos, pageWidth - 40, 8, "F");
@@ -221,7 +188,7 @@ function generateQualioPDF(stats: SatisfactionStatsData, periodLabel: string, la
   doc.text("Objectif", 140, yPos + 5);
   doc.text("Statut", 165, yPos + 5);
   yPos += 10;
-  
+
   doc.setFont("helvetica", "normal");
   indicators.forEach((ind) => {
     doc.text(ind.label, 25, yPos + 4);
@@ -233,15 +200,15 @@ function generateQualioPDF(stats: SatisfactionStatsData, periodLabel: string, la
     doc.line(20, yPos + 7, pageWidth - 20, yPos + 7);
     yPos += 10;
   });
-  
+
   yPos += 10;
-  
+
   // Section: Volume de données
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
   doc.text("2. Volume de Données", 20, yPos);
   yPos += 10;
-  
+
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.text(`• Nombre total de questionnaires envoyés: ${stats.totalSurveys}`, 25, yPos);
@@ -250,13 +217,13 @@ function generateQualioPDF(stats: SatisfactionStatsData, periodLabel: string, la
   yPos += 6;
   doc.text(`• Taux de réponse effectif: ${stats.responseRate.toFixed(1)}%`, 25, yPos);
   yPos += 15;
-  
+
   // Section: Notes détaillées par critère
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
   doc.text("3. Notes Détaillées par Critère de Satisfaction", 20, yPos);
   yPos += 10;
-  
+
   doc.setFillColor(240, 240, 240);
   doc.rect(20, yPos, pageWidth - 40, 8, "F");
   doc.setFont("helvetica", "bold");
@@ -264,7 +231,7 @@ function generateQualioPDF(stats: SatisfactionStatsData, periodLabel: string, la
   doc.text("Note /5", 120, yPos + 5);
   doc.text("Appréciation", 150, yPos + 5);
   yPos += 10;
-  
+
   doc.setFont("helvetica", "normal");
   stats.categoryBreakdown.forEach((cat) => {
     const appreciation = cat.score >= 4.5 ? "Excellent" : cat.score >= 4 ? "Très bien" : cat.score >= 3.5 ? "Bien" : cat.score >= 3 ? "Satisfaisant" : "À améliorer";
@@ -276,34 +243,34 @@ function generateQualioPDF(stats: SatisfactionStatsData, periodLabel: string, la
     doc.line(20, yPos + 7, pageWidth - 20, yPos + 7);
     yPos += 10;
   });
-  
+
   yPos += 15;
-  
+
   // Section: Graphique Radar
   if (yPos > 140) {
     doc.addPage();
     yPos = 20;
   }
-  
+
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
   doc.text("3.1 Visualisation Radar des Critères", 20, yPos);
   yPos += 10;
-  
+
   // Draw radar chart
   const radarCenterX = pageWidth / 2;
   const radarCenterY = yPos + 55;
   const radarRadius = 45;
   const numAxes = stats.categoryBreakdown.length;
   const angleStep = (2 * Math.PI) / numAxes;
-  
+
   // Draw grid circles (representing scores 1-5)
   doc.setDrawColor(200);
   doc.setLineWidth(0.3);
   for (let level = 1; level <= 5; level++) {
     const levelRadius = (level / 5) * radarRadius;
     doc.setLineDashPattern([1, 1], 0);
-    
+
     // Draw polygon for this level
     for (let i = 0; i < numAxes; i++) {
       const angle1 = i * angleStep - Math.PI / 2;
@@ -315,7 +282,7 @@ function generateQualioPDF(stats: SatisfactionStatsData, periodLabel: string, la
       doc.line(x1, y1, x2, y2);
     }
   }
-  
+
   // Draw axes
   doc.setLineDashPattern([], 0);
   doc.setDrawColor(150);
@@ -325,11 +292,11 @@ function generateQualioPDF(stats: SatisfactionStatsData, periodLabel: string, la
     const y = radarCenterY + radarRadius * Math.sin(angle);
     doc.line(radarCenterX, radarCenterY, x, y);
   }
-  
+
   // Draw data polygon outline
   doc.setDrawColor(59, 130, 246); // Blue
   doc.setLineWidth(1.5);
-  
+
   const dataPoints: { x: number; y: number }[] = [];
   for (let i = 0; i < numAxes; i++) {
     const angle = i * angleStep - Math.PI / 2;
@@ -339,19 +306,19 @@ function generateQualioPDF(stats: SatisfactionStatsData, periodLabel: string, la
     const y = radarCenterY + dataRadius * Math.sin(angle);
     dataPoints.push({ x, y });
   }
-  
+
   // Draw outline
   for (let i = 0; i < dataPoints.length; i++) {
     const next = (i + 1) % dataPoints.length;
     doc.line(dataPoints[i].x, dataPoints[i].y, dataPoints[next].x, dataPoints[next].y);
   }
-  
+
   // Draw data points
   doc.setFillColor(59, 130, 246);
   dataPoints.forEach(point => {
     doc.circle(point.x, point.y, 1.5, "F");
   });
-  
+
   // Draw labels with scores
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
@@ -362,49 +329,49 @@ function generateQualioPDF(stats: SatisfactionStatsData, periodLabel: string, la
     const labelRadius = radarRadius + 12;
     let x = radarCenterX + labelRadius * Math.cos(angle);
     let y = radarCenterY + labelRadius * Math.sin(angle);
-    
+
     const label = stats.categoryBreakdown[i].label;
     const shortLabel = label.length > 12 ? label.substring(0, 10) + "..." : label;
     const score = stats.categoryBreakdown[i].score.toFixed(1);
-    
+
     // Adjust text alignment based on position
     let align: "left" | "center" | "right" = "center";
     if (Math.cos(angle) < -0.3) align = "right";
     else if (Math.cos(angle) > 0.3) align = "left";
-    
+
     // Adjust vertical position
     if (Math.sin(angle) < -0.5) y -= 2;
     else if (Math.sin(angle) > 0.5) y += 4;
-    
+
     doc.text(`${shortLabel} (${score})`, x, y, { align });
   }
-  
+
   // Scale legend
   doc.setFontSize(6);
   doc.setTextColor(100);
   doc.text("Échelle: 0 (centre) à 5 (bord)", radarCenterX, radarCenterY + radarRadius + 18, { align: "center" });
   doc.setTextColor(0);
-  
+
   yPos = radarCenterY + radarRadius + 28;
-  
+
   // Section: Points forts (verbatims)
   if (yPos > 220) {
     doc.addPage();
     yPos = 20;
   }
-  
+
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
   doc.text("4. Points Forts (Verbatims Stagiaires)", 20, yPos);
   yPos += 8;
-  
+
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  
+
   const strongPoints = stats.recentFeedback
     .filter(f => f.strongPoints && f.strongPoints.trim())
     .slice(0, 8);
-  
+
   if (strongPoints.length > 0) {
     strongPoints.forEach((feedback) => {
       if (yPos > 250) {
@@ -422,27 +389,27 @@ function generateQualioPDF(stats: SatisfactionStatsData, periodLabel: string, la
     doc.setTextColor(0);
     yPos += 8;
   }
-  
+
   yPos += 8;
-  
+
   // Section: Axes d'amélioration (verbatims)
   if (yPos > 230) {
     doc.addPage();
     yPos = 20;
   }
-  
+
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
   doc.text("5. Axes d'Amélioration (Verbatims Stagiaires)", 20, yPos);
   yPos += 8;
-  
+
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  
+
   const weakPoints = stats.recentFeedback
     .filter(f => f.weakPoints && f.weakPoints.trim())
     .slice(0, 8);
-  
+
   if (weakPoints.length > 0) {
     weakPoints.forEach((feedback) => {
       if (yPos > 250) {
@@ -460,25 +427,25 @@ function generateQualioPDF(stats: SatisfactionStatsData, periodLabel: string, la
     doc.setTextColor(0);
     yPos += 8;
   }
-  
+
   yPos += 10;
-  
+
   // Section: Synthèse
   if (yPos > 220) {
     doc.addPage();
     yPos = 20;
   }
-  
+
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
   doc.text("6. Synthèse et Conformité Qualiopi", 20, yPos);
   yPos += 10;
-  
+
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  
+
   const allCompliant = stats.responseRate >= 50 && stats.qualiopiIndicators.satisfactionRate >= 80 && stats.averageScores.overall >= 3.5;
-  
+
   if (allCompliant) {
     doc.setFillColor(220, 252, 231);
     doc.rect(20, yPos - 3, pageWidth - 40, 20, "F");
@@ -493,9 +460,9 @@ function generateQualioPDF(stats: SatisfactionStatsData, periodLabel: string, la
     doc.text("Certains indicateurs nécessitent une attention particulière.", pageWidth / 2, yPos + 12, { align: "center" });
   }
   doc.setTextColor(0);
-  
+
   yPos += 30;
-  
+
   // Footer on last page
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
@@ -509,7 +476,7 @@ function generateQualioPDF(stats: SatisfactionStatsData, periodLabel: string, la
     }
   }
   doc.setTextColor(0);
-  
+
   // Save PDF
   const fileName = `rapport-satisfaction-qualiopi-${format(new Date(), "yyyy-MM-dd")}.pdf`;
   doc.save(fileName);
@@ -551,11 +518,11 @@ const seasonOptions: { value: SeasonFilter; label: string }[] = [
   { value: "spring2024", label: "Printemps 2024" },
 ];
 
-function DateRangePicker({ 
+function DateRangePicker({
   label,
   dateRange,
-  onDateRangeChange 
-}: { 
+  onDateRangeChange
+}: {
   label: string;
   dateRange: CustomDateRange;
   onDateRangeChange: (range: CustomDateRange) => void;
@@ -617,62 +584,48 @@ function DateRangePicker({
   );
 }
 
+/**
+ * Écart entre deux périodes. L'unité varie (points, %, /5) : on garde donc un
+ * rendu dédié plutôt que `DeltaBadge`, qui suppose un pourcentage.
+ */
 function DeltaIndicator({ value, unit = "", positiveIsGood = true }: { value: number; unit?: string; positiveIsGood?: boolean }) {
   const isPositive = value > 0;
   const isGood = positiveIsGood ? isPositive : !isPositive;
-  
+
   if (Math.abs(value) < 0.01) {
     return (
-      <span className="text-muted-foreground text-sm flex items-center gap-1">
+      <span className="flex items-center gap-1 text-sm text-muted-foreground">
         <Minus className="h-3 w-3" />
         stable
       </span>
     );
   }
-  
+
   return (
-    <span className={`text-sm flex items-center gap-1 ${isGood ? "text-green-600" : "text-red-600"}`}>
+    <span
+      className="flex items-center gap-1 text-sm font-medium tabular"
+      style={{ color: isGood ? STATE_COLORS.good : STATE_COLORS.critical }}
+    >
       {isPositive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
       {isPositive ? "+" : ""}{value.toFixed(1)}{unit}
     </span>
   );
 }
 
-function ComparisonCard({ 
-  title, 
-  currentValue, 
-  comparisonValue, 
-  delta, 
-  unit = "",
-  icon: Icon,
-  positiveIsGood = true 
-}: { 
-  title: string;
-  currentValue: number;
-  comparisonValue: number;
-  delta: number;
-  unit?: string;
-  icon: React.ElementType;
-  positiveIsGood?: boolean;
-}) {
+/** Pastille de tendance — la couleur n'est jamais seule, le libellé la double. */
+function TrendPill({ trend, label }: { trend: "up" | "down" | "stable"; label: string }) {
+  const tone: PillTone = trend === "up" ? "success" : trend === "down" ? "danger" : "neutral";
+  const Icon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-bold">{currentValue.toFixed(1)}{unit}</span>
-          <DeltaIndicator value={delta} unit={unit} positiveIsGood={positiveIsGood} />
-        </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          vs {comparisonValue.toFixed(1)}{unit} période précédente
-        </p>
-      </CardContent>
-    </Card>
+    <StatusPill tone={tone} size="sm" icon={Icon}>
+      {label}
+    </StatusPill>
   );
 }
+
+const scoreTooltip = makeTooltipRenderer({
+  formatValue: (value) => `${Number(value).toFixed(2)}/5`,
+});
 
 export default function SatisfactionStats() {
   const [activeTab, setActiveTab] = useTabParam(["overview", "comparison"] as const);
@@ -687,25 +640,43 @@ export default function SatisfactionStats() {
     customCurrentRange: { start: null, end: null },
     customComparisonRange: { start: null, end: null },
   });
-  
+
   const { data: stats, isLoading } = useSatisfactionStats(filters);
   const { data: comparison, isLoading: isLoadingComparison } = useSeasonComparison(comparisonFilters);
+
+  const tabs = (
+    <SegmentedControl<"overview" | "comparison">
+      value={activeTab}
+      onChange={setActiveTab}
+      ariaLabel="Vue des statistiques de satisfaction"
+      options={[
+        { value: "overview", label: "Vue d'ensemble", icon: Target },
+        { value: "comparison", label: "Comparaison", icon: GitCompare },
+      ]}
+    />
+  );
 
   if (isLoading) {
     return (
       <MainLayout>
-        <div className="space-y-6">
-          <Skeleton className="h-8 w-64" />
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <PageShell>
+          <PageHeader
+            title="Statistiques de Satisfaction"
+            description="Indicateurs Qualiopi et analyse des retours stagiaires"
+            icon={Star}
+            tone="gold"
+            tabs={tabs}
+          />
+          <StatTileGrid cols={4}>
             {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-32" />
+              <Skeleton key={i} className="h-32 rounded-[var(--radius-card)]" />
             ))}
-          </div>
+          </StatTileGrid>
           <div className="grid gap-4 md:grid-cols-2">
-            <Skeleton className="h-80" />
-            <Skeleton className="h-80" />
+            <Skeleton className="h-80 rounded-[var(--radius-card)]" />
+            <Skeleton className="h-80 rounded-[var(--radius-card)]" />
           </div>
-        </div>
+        </PageShell>
       </MainLayout>
     );
   }
@@ -719,6 +690,14 @@ export default function SatisfactionStats() {
     monthLabels[d.month] = format(date, "MMM yy", { locale: fr });
   });
 
+  /** Mêmes chiffres, libellés de mois déjà résolus pour les deux graphiques. */
+  const monthlyChartData = stats.monthlyData.map((d) => ({
+    month: d.month,
+    label: monthLabels[d.month] || d.month,
+    average: d.average,
+    completed: d.completed,
+  }));
+
   // Prepare comparison chart data
   const comparisonChartData = comparison ? comparison.current.categoryScores.map((cat, idx) => ({
     category: cat.label,
@@ -726,92 +705,389 @@ export default function SatisfactionStats() {
     comparison: comparison.comparison.categoryScores[idx]?.score || 0,
   })) : [];
 
+  const periodLabel = periodOptions.find(p => p.value === filters.period)?.label || "Toutes les périodes";
+  const languageLabel = languageOptions.find(l => l.value === filters.language)?.label || "Toutes les langues";
+
+  const exportButton = (
+    <Button
+      onClick={() => generateQualioPDF(stats, periodLabel, languageLabel)}
+      className="gap-2"
+    >
+      <FileDown className="h-4 w-4" />
+      Exporter PDF Qualiopi
+    </Button>
+  );
+
+  const overviewFilters = (
+    <>
+      <Select
+        value={filters.period}
+        onValueChange={(value: PeriodFilter) => setFilters(prev => ({ ...prev, period: value }))}
+      >
+        <SelectTrigger className="w-[180px]" aria-label="Période">
+          <Calendar className="mr-2 h-4 w-4" />
+          <SelectValue placeholder="Période" />
+        </SelectTrigger>
+        <SelectContent>
+          {periodOptions.map(option => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={filters.language}
+        onValueChange={(value: LanguageFilter) => setFilters(prev => ({ ...prev, language: value }))}
+      >
+        <SelectTrigger className="w-[180px]" aria-label="Langue">
+          <Languages className="mr-2 h-4 w-4" />
+          <SelectValue placeholder="Langue" />
+        </SelectTrigger>
+        <SelectContent>
+          {languageOptions.map(option => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </>
+  );
+
+  const comparisonKPIs: Array<{
+    title: string;
+    currentValue: number;
+    comparisonValue: number;
+    delta: number;
+    unit: string;
+    icon: React.ComponentType<{ className?: string }>;
+    tone: TileTone;
+  }> = comparison
+    ? [
+        {
+          title: "Questionnaires complétés",
+          currentValue: comparison.current.completedSurveys,
+          comparisonValue: comparison.comparison.completedSurveys,
+          delta: comparison.deltas.completedSurveys,
+          unit: "",
+          icon: Users,
+          tone: "gold",
+        },
+        {
+          title: "Taux de réponse",
+          currentValue: comparison.current.responseRate,
+          comparisonValue: comparison.comparison.responseRate,
+          delta: comparison.deltas.responseRate,
+          unit: "%",
+          icon: Target,
+          tone: "blue",
+        },
+        {
+          title: "Note moyenne",
+          currentValue: comparison.current.averageScore,
+          comparisonValue: comparison.comparison.averageScore,
+          delta: comparison.deltas.averageScore,
+          unit: "/5",
+          icon: Star,
+          tone: "teal",
+        },
+        {
+          title: "Taux de satisfaction",
+          currentValue: comparison.current.satisfactionRate,
+          comparisonValue: comparison.comparison.satisfactionRate,
+          delta: comparison.deltas.satisfactionRate,
+          unit: "%",
+          icon: Award,
+          tone: "purple",
+        },
+      ]
+    : [];
+
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Statistiques de Satisfaction</h1>
-            <p className="text-muted-foreground">
-              Indicateurs Qualiopi et analyse des retours stagiaires
-            </p>
-          </div>
-          <Button
-            onClick={() => {
-              const periodLabel = periodOptions.find(p => p.value === filters.period)?.label || "Toutes les périodes";
-              const languageLabel = languageOptions.find(l => l.value === filters.language)?.label || "Toutes les langues";
-              generateQualioPDF(stats, periodLabel, languageLabel);
-            }}
-            className="gap-2"
-          >
-            <FileDown className="h-4 w-4" />
-            Exporter PDF Qualiopi
-          </Button>
-        </div>
+      <PageShell>
+        <PageHeader
+          title="Statistiques de Satisfaction"
+          description="Indicateurs Qualiopi et analyse des retours stagiaires"
+          icon={Star}
+          tone="gold"
+          meta={
+            activeTab === "overview" ? (
+              <>
+                <StatusPill tone="info" icon={Calendar}>{periodLabel}</StatusPill>
+                <StatusPill tone="neutral" icon={Languages}>{languageLabel}</StatusPill>
+              </>
+            ) : (
+              <StatusPill tone="neutral" icon={Languages}>
+                {languageOptions.find(l => l.value === comparisonFilters.language)?.label ?? "Toutes les langues"}
+              </StatusPill>
+            )
+          }
+          actions={
+            <>
+              {activeTab === "overview" && overviewFilters}
+              {exportButton}
+            </>
+          }
+          tabs={tabs}
+        />
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <TabsList>
-              <TabsTrigger value="overview" className="gap-2">
-                <Target className="h-4 w-4" />
-                Vue d'ensemble
-              </TabsTrigger>
-              <TabsTrigger value="comparison" className="gap-2">
-                <GitCompare className="h-4 w-4" />
-                Comparaison
-              </TabsTrigger>
-            </TabsList>
-            
-            {/* Filters for overview tab */}
-            {activeTab === "overview" && (
-              <div className="flex flex-wrap gap-3">
-                <Select 
-                  value={filters.period} 
-                  onValueChange={(value: PeriodFilter) => setFilters(prev => ({ ...prev, period: value }))}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Période" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {periodOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                
-                <Select 
-                  value={filters.language} 
-                  onValueChange={(value: LanguageFilter) => setFilters(prev => ({ ...prev, language: value }))}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <Languages className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Langue" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {languageOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        {activeTab === "overview" ? (
+          <>
+            {/* KPI Cards */}
+            <StatTileGrid cols={4}>
+              <StatTile
+                label="Questionnaires envoyés"
+                value={stats.totalSurveys}
+                hint={`${stats.completedSurveys} complétés`}
+                icon={Users}
+                tone="gold"
+              />
+              <StatTile
+                label="Taux de réponse"
+                value={`${stats.responseRate.toFixed(1)}%`}
+                hint="Objectif Qualiopi: 50%"
+                icon={Target}
+                tone="blue"
+              >
+                <TrendPill
+                  trend={stats.responseRate >= 50 ? "up" : "down"}
+                  label={stats.responseRate >= 50 ? "Objectif atteint" : "Sous l'objectif"}
+                />
+              </StatTile>
+              <StatTile
+                label="Note moyenne"
+                value={`${stats.averageScores.overall.toFixed(2)}/5`}
+                hint="Sur tous les critères"
+                icon={Star}
+                tone="teal"
+              >
+                <TrendPill
+                  trend={stats.qualiopiIndicators.trend}
+                  label={
+                    stats.qualiopiIndicators.trend === "up"
+                      ? "En hausse"
+                      : stats.qualiopiIndicators.trend === "down"
+                        ? "En baisse"
+                        : "Stable"
+                  }
+                />
+              </StatTile>
+              <StatTile
+                label="Taux de satisfaction"
+                value={`${stats.qualiopiIndicators.satisfactionRate.toFixed(1)}%`}
+                hint="Note ≥ 3.5/5"
+                icon={Award}
+                tone="purple"
+              >
+                <TrendPill
+                  trend={stats.qualiopiIndicators.satisfactionRate >= 80 ? "up" : "stable"}
+                  label={stats.qualiopiIndicators.satisfactionRate >= 80 ? "Objectif atteint" : "Stable"}
+                />
+              </StatTile>
+            </StatTileGrid>
+
+            {/* Qualiopi Indicators */}
+            <SurfaceCard
+              title="Indicateurs Qualiopi"
+              description="Suivi des objectifs qualité selon le référentiel national"
+              icon={CheckCircle2}
+            >
+              <div className="space-y-5">
+                <QualiopiIndicator
+                  label="Taux de réponse aux questionnaires"
+                  value={stats.responseRate}
+                  target={50}
+                />
+                <QualiopiIndicator
+                  label="Taux de satisfaction globale"
+                  value={stats.qualiopiIndicators.satisfactionRate}
+                  target={80}
+                />
+                <QualiopiIndicator
+                  label="Note moyenne de satisfaction"
+                  value={stats.averageScores.overall}
+                  target={3.5}
+                  unit="/5"
+                />
               </div>
-            )}
-            
-            {/* Filters for comparison tab */}
-            {activeTab === "comparison" && (
+            </SurfaceCard>
+
+            {/* Charts */}
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Évolution mensuelle — deux échelles, donc deux graphiques empilés. */}
+              <SurfaceCard
+                title="Évolution mensuelle"
+                description="Note moyenne et nombre de réponses par mois — deux échelles, deux graphiques"
+              >
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <SectionHeading title="Note moyenne (sur 5)" />
+                    <TrendChart
+                      data={monthlyChartData}
+                      series={[{ key: "average", label: "Note moyenne" }]}
+                      xKey="label"
+                      variant="line"
+                      height={180}
+                      formatValue={(value) => `${Number(value).toFixed(2)}/5`}
+                      yDomain={[0, 5]}
+                      ariaLabel="Note moyenne de satisfaction par mois, sur 5"
+                      emptyMessage="Aucune réponse sur la période"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <SectionHeading title="Réponses reçues" />
+                    <BarsChart
+                      data={monthlyChartData}
+                      series={[{ key: "completed", label: "Réponses", color: seriesColor(1) }]}
+                      xKey="label"
+                      height={180}
+                      formatValue={(value) => `${value}`}
+                      ariaLabel="Nombre de questionnaires complétés par mois"
+                      emptyMessage="Aucune réponse sur la période"
+                    />
+                  </div>
+                </div>
+              </SurfaceCard>
+
+              {/* Radar — pas d'équivalent kit : recharts brut, habillé aux jetons. */}
+              <SurfaceCard
+                title="Notes par critère"
+                description="Analyse des 7 dimensions de satisfaction"
+                icon={LineChartIcon}
+              >
+                <ChartFrame height={300} ariaLabel="Notes moyennes par critère de satisfaction, de 0 à 5">
+                  <RadarChart data={stats.categoryBreakdown}>
+                    <PolarGrid stroke={CHART_CHROME.grid} />
+                    <PolarAngleAxis
+                      dataKey="label"
+                      tick={{ fill: CHART_CHROME.axis, fontSize: 12 }}
+                      tickLine={false}
+                    />
+                    <PolarRadiusAxis
+                      angle={30}
+                      domain={[0, 5]}
+                      tick={{ fill: CHART_CHROME.axis, fontSize: 11 }}
+                      stroke={axisProps.stroke}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <Radar
+                      name="Score"
+                      dataKey="score"
+                      stroke={seriesColor(0)}
+                      strokeWidth={2}
+                      fill={seriesColor(0)}
+                      fillOpacity={0.28}
+                    />
+                    <Tooltip content={scoreTooltip} />
+                  </RadarChart>
+                </ChartFrame>
+              </SurfaceCard>
+            </div>
+
+            {/* Bar Chart - Category Breakdown */}
+            <SurfaceCard
+              title="Détail par critère"
+              description="Comparaison des notes moyennes par dimension"
+              icon={BarChart3}
+            >
+              <BarsChart
+                data={stats.categoryBreakdown}
+                series={[{ key: "score", label: "Score" }]}
+                xKey="label"
+                layout="horizontal"
+                height={300}
+                formatValue={(value) => `${Number(value).toFixed(2)}/5`}
+                ariaLabel="Note moyenne par critère de satisfaction"
+                emptyMessage="Aucune donnée sur la période"
+              />
+            </SurfaceCard>
+
+            {/* Recent Feedback */}
+            <SurfaceCard
+              title="Retours récents"
+              description="Points forts et axes d'amélioration mentionnés"
+              icon={MessageSquare}
+            >
+              {stats.recentFeedback.length === 0 ? (
+                <TableEmpty
+                  icon={MessageSquare}
+                  title="Aucun questionnaire complété pour le moment"
+                  description="Les verbatims des stagiaires apparaîtront ici dès la première réponse."
+                />
+              ) : (
+                <ScrollArea className="h-[400px]">
+                  <div className="space-y-3 pr-3">
+                    {stats.recentFeedback.map((feedback) => (
+                      <div
+                        key={feedback.id}
+                        className="space-y-2 rounded-[var(--radius)] border border-border p-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <span className="text-sm text-muted-foreground tabular">
+                            {format(new Date(feedback.completedAt), "d MMMM yyyy", { locale: fr })}
+                          </span>
+                          <StatusPill
+                            tone={
+                              feedback.averageScore >= 4
+                                ? "success"
+                                : feedback.averageScore >= 3
+                                  ? "warning"
+                                  : "danger"
+                            }
+                            size="sm"
+                          >
+                            {feedback.averageScore.toFixed(1)}/5
+                          </StatusPill>
+                        </div>
+                        {feedback.strongPoints && (
+                          <div>
+                            <span className="text-xs font-medium text-[hsl(var(--status-good))]">
+                              Points forts:
+                            </span>
+                            <p className="text-sm">{feedback.strongPoints}</p>
+                          </div>
+                        )}
+                        {feedback.weakPoints && (
+                          <div>
+                            <span className="text-xs font-medium text-[hsl(var(--status-warning))]">
+                              Axes d'amélioration:
+                            </span>
+                            <p className="text-sm">{feedback.weakPoints}</p>
+                          </div>
+                        )}
+                        {!feedback.strongPoints && !feedback.weakPoints && (
+                          <p className="text-sm italic text-muted-foreground">
+                            Pas de commentaire textuel
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+            </SurfaceCard>
+          </>
+        ) : (
+          <>
+            {/* Périodes comparées + filtres de la comparaison */}
+            <SurfaceCard
+              title="Périodes comparées"
+              description="Choisissez les deux périodes et la langue à comparer"
+              icon={GitCompare}
+            >
               <div className="flex flex-wrap items-end gap-3">
                 <div className="flex flex-col gap-1">
                   <span className="text-xs font-medium text-muted-foreground">Période actuelle</span>
-                  <Select 
-                    value={comparisonFilters.currentSeason} 
+                  <Select
+                    value={comparisonFilters.currentSeason}
                     onValueChange={(value: SeasonFilter) => setComparisonFilters(prev => ({ ...prev, currentSeason: value }))}
                   >
-                    <SelectTrigger className="w-[200px]">
-                      <Calendar className="h-4 w-4 mr-2" />
+                    <SelectTrigger className="w-[200px]" aria-label="Période actuelle">
+                      <Calendar className="mr-2 h-4 w-4" />
                       <SelectValue placeholder="Période actuelle" />
                     </SelectTrigger>
                     <SelectContent>
@@ -823,7 +1099,7 @@ export default function SatisfactionStats() {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 {comparisonFilters.currentSeason === "custom" && (
                   <DateRangePicker
                     label="Dates période actuelle"
@@ -831,17 +1107,17 @@ export default function SatisfactionStats() {
                     onDateRangeChange={(range) => setComparisonFilters(prev => ({ ...prev, customCurrentRange: range }))}
                   />
                 )}
-                
-                <span className="flex items-center text-muted-foreground pb-2">vs</span>
-                
+
+                <span className="flex items-center pb-2 text-muted-foreground">vs</span>
+
                 <div className="flex flex-col gap-1">
                   <span className="text-xs font-medium text-muted-foreground">Période comparée</span>
-                  <Select 
-                    value={comparisonFilters.comparisonSeason} 
+                  <Select
+                    value={comparisonFilters.comparisonSeason}
                     onValueChange={(value: SeasonFilter) => setComparisonFilters(prev => ({ ...prev, comparisonSeason: value }))}
                   >
-                    <SelectTrigger className="w-[200px]">
-                      <Calendar className="h-4 w-4 mr-2" />
+                    <SelectTrigger className="w-[200px]" aria-label="Période comparée">
+                      <Calendar className="mr-2 h-4 w-4" />
                       <SelectValue placeholder="Période comparée" />
                     </SelectTrigger>
                     <SelectContent>
@@ -853,7 +1129,7 @@ export default function SatisfactionStats() {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 {comparisonFilters.comparisonSeason === "custom" && (
                   <DateRangePicker
                     label="Dates période comparée"
@@ -861,15 +1137,15 @@ export default function SatisfactionStats() {
                     onDateRangeChange={(range) => setComparisonFilters(prev => ({ ...prev, customComparisonRange: range }))}
                   />
                 )}
-                
+
                 <div className="flex flex-col gap-1">
                   <span className="text-xs font-medium text-muted-foreground">Langue</span>
-                  <Select 
-                    value={comparisonFilters.language} 
+                  <Select
+                    value={comparisonFilters.language}
                     onValueChange={(value: LanguageFilter) => setComparisonFilters(prev => ({ ...prev, language: value }))}
                   >
-                    <SelectTrigger className="w-[180px]">
-                      <Languages className="h-4 w-4 mr-2" />
+                    <SelectTrigger className="w-[180px]" aria-label="Langue comparée">
+                      <Languages className="mr-2 h-4 w-4" />
                       <SelectValue placeholder="Langue" />
                     </SelectTrigger>
                     <SelectContent>
@@ -882,390 +1158,158 @@ export default function SatisfactionStats() {
                   </Select>
                 </div>
               </div>
-            )}
-          </div>
 
-          <TabsContent value="overview" className="space-y-6 mt-6">
-
-        {/* KPI Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            title="Questionnaires envoyés"
-            value={stats.totalSurveys}
-            subtitle={`${stats.completedSurveys} complétés`}
-            icon={Users}
-          />
-          <StatCard
-            title="Taux de réponse"
-            value={`${stats.responseRate.toFixed(1)}%`}
-            subtitle="Objectif Qualiopi: 50%"
-            icon={Target}
-            trend={stats.responseRate >= 50 ? "up" : "down"}
-          />
-          <StatCard
-            title="Note moyenne"
-            value={`${stats.averageScores.overall.toFixed(2)}/5`}
-            subtitle="Sur tous les critères"
-            icon={Star}
-            trend={stats.qualiopiIndicators.trend}
-          />
-          <StatCard
-            title="Taux de satisfaction"
-            value={`${stats.qualiopiIndicators.satisfactionRate.toFixed(1)}%`}
-            subtitle="Note ≥ 3.5/5"
-            icon={Award}
-            trend={stats.qualiopiIndicators.satisfactionRate >= 80 ? "up" : "stable"}
-          />
-        </div>
-
-        {/* Qualiopi Indicators */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-primary" />
-              Indicateurs Qualiopi
-            </CardTitle>
-            <CardDescription>
-              Suivi des objectifs qualité selon le référentiel national
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <QualiopiIndicator
-              label="Taux de réponse aux questionnaires"
-              value={stats.responseRate}
-              target={50}
-            />
-            <QualiopiIndicator
-              label="Taux de satisfaction globale"
-              value={stats.qualiopiIndicators.satisfactionRate}
-              target={80}
-            />
-            <QualiopiIndicator
-              label="Note moyenne de satisfaction"
-              value={stats.averageScores.overall}
-              target={3.5}
-              unit="/5"
-            />
-          </CardContent>
-        </Card>
-
-        {/* Charts */}
-        <div className="grid gap-4 md:grid-cols-2">
-          {/* Monthly Evolution */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Évolution mensuelle</CardTitle>
-              <CardDescription>Note moyenne et nombre de réponses par mois</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={stats.monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis 
-                    dataKey="month" 
-                    tickFormatter={(value) => monthLabels[value] || value}
-                    className="text-xs"
-                  />
-                  <YAxis yAxisId="left" domain={[0, 5]} className="text-xs" />
-                  <YAxis yAxisId="right" orientation="right" className="text-xs" />
-                  <Tooltip 
-                    labelFormatter={(value) => monthLabels[value as string] || value}
-                    contentStyle={{ backgroundColor: "hsl(var(--background))", border: "1px solid hsl(var(--border))" }}
-                  />
-                  <Legend />
-                  <Line 
-                    yAxisId="left"
-                    type="monotone" 
-                    dataKey="average" 
-                    stroke="hsl(var(--primary))" 
-                    strokeWidth={2}
-                    name="Note moyenne"
-                    dot={{ fill: "hsl(var(--primary))" }}
-                  />
-                  <Bar 
-                    yAxisId="right"
-                    dataKey="completed" 
-                    fill="hsl(var(--muted-foreground))" 
-                    opacity={0.3}
-                    name="Réponses"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Radar Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Notes par critère</CardTitle>
-              <CardDescription>Analyse des 7 dimensions de satisfaction</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <RadarChart data={stats.categoryBreakdown}>
-                  <PolarGrid className="stroke-muted" />
-                  <PolarAngleAxis dataKey="label" className="text-xs" />
-                  <PolarRadiusAxis angle={30} domain={[0, 5]} className="text-xs" />
-                  <Radar
-                    name="Score"
-                    dataKey="score"
-                    stroke="hsl(var(--primary))"
-                    fill="hsl(var(--primary))"
-                    fillOpacity={0.3}
-                  />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: "hsl(var(--background))", border: "1px solid hsl(var(--border))" }}
-                    formatter={(value: number) => [`${value.toFixed(2)}/5`, "Score"]}
-                  />
-                </RadarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Bar Chart - Category Breakdown */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Détail par critère</CardTitle>
-            <CardDescription>Comparaison des notes moyennes par dimension</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={stats.categoryBreakdown} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis type="number" domain={[0, 5]} className="text-xs" />
-                <YAxis type="category" dataKey="label" width={100} className="text-xs" />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: "hsl(var(--background))", border: "1px solid hsl(var(--border))" }}
-                  formatter={(value: number) => [`${value.toFixed(2)}/5`, "Score"]}
-                />
-                <Bar 
-                  dataKey="score" 
-                  fill="hsl(var(--primary))"
-                  radius={[0, 4, 4, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Recent Feedback */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              Retours récents
-            </CardTitle>
-            <CardDescription>Points forts et axes d'amélioration mentionnés</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[400px]">
-              <div className="space-y-4">
-                {stats.recentFeedback.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">
-                    Aucun questionnaire complété pour le moment
-                  </p>
-                ) : (
-                  stats.recentFeedback.map((feedback) => (
-                    <div key={feedback.id} className="border rounded-lg p-4 space-y-2">
-                      <div className="flex justify-between items-start">
-                        <span className="text-sm text-muted-foreground">
-                          {format(new Date(feedback.completedAt), "d MMMM yyyy", { locale: fr })}
-                        </span>
-                        <Badge variant={feedback.averageScore >= 4 ? "default" : feedback.averageScore >= 3 ? "secondary" : "destructive"}>
-                          {feedback.averageScore.toFixed(1)}/5
-                        </Badge>
-                      </div>
-                      {feedback.strongPoints && (
-                        <div>
-                          <span className="text-xs font-medium text-green-600">Points forts:</span>
-                          <p className="text-sm">{feedback.strongPoints}</p>
-                        </div>
-                      )}
-                      {feedback.weakPoints && (
-                        <div>
-                          <span className="text-xs font-medium text-amber-600">Axes d'amélioration:</span>
-                          <p className="text-sm">{feedback.weakPoints}</p>
-                        </div>
-                      )}
-                      {!feedback.strongPoints && !feedback.weakPoints && (
-                        <p className="text-sm text-muted-foreground italic">
-                          Pas de commentaire textuel
-                        </p>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-          </TabsContent>
-
-          {/* Comparison Tab */}
-          <TabsContent value="comparison" className="space-y-6 mt-6">
-            {isLoadingComparison ? (
-              <div className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                  {[...Array(4)].map((_, i) => (
-                    <Skeleton key={i} className="h-32" />
-                  ))}
-                </div>
-                <Skeleton className="h-80" />
-              </div>
-            ) : comparison ? (
-              <>
-                {/* Comparison Header */}
-                <div className="flex items-center justify-center gap-4 p-4 bg-muted/50 rounded-lg">
+              {comparison && (
+                <div className="mt-5 flex flex-col items-center justify-center gap-4 rounded-[var(--radius)] bg-[hsl(var(--surface-sunken))] p-4 sm:flex-row">
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground">Période actuelle</p>
                     <p className="text-lg font-semibold">{comparison.current.label}</p>
                   </div>
-                  <GitCompare className="h-6 w-6 text-muted-foreground" />
+                  <GitCompare className="h-6 w-6 shrink-0 text-muted-foreground" />
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground">Période comparée</p>
                     <p className="text-lg font-semibold">{comparison.comparison.label}</p>
                   </div>
                 </div>
+              )}
+            </SurfaceCard>
 
+            {isLoadingComparison ? (
+              <div className="space-y-4">
+                <StatTileGrid cols={4}>
+                  {[...Array(4)].map((_, i) => (
+                    <Skeleton key={i} className="h-32 rounded-[var(--radius-card)]" />
+                  ))}
+                </StatTileGrid>
+                <Skeleton className="h-80 rounded-[var(--radius-card)]" />
+              </div>
+            ) : comparison ? (
+              <>
                 {/* Comparison KPI Cards */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                  <ComparisonCard
-                    title="Questionnaires complétés"
-                    currentValue={comparison.current.completedSurveys}
-                    comparisonValue={comparison.comparison.completedSurveys}
-                    delta={comparison.deltas.completedSurveys}
-                    icon={Users}
-                  />
-                  <ComparisonCard
-                    title="Taux de réponse"
-                    currentValue={comparison.current.responseRate}
-                    comparisonValue={comparison.comparison.responseRate}
-                    delta={comparison.deltas.responseRate}
-                    unit="%"
-                    icon={Target}
-                  />
-                  <ComparisonCard
-                    title="Note moyenne"
-                    currentValue={comparison.current.averageScore}
-                    comparisonValue={comparison.comparison.averageScore}
-                    delta={comparison.deltas.averageScore}
-                    unit="/5"
-                    icon={Star}
-                  />
-                  <ComparisonCard
-                    title="Taux de satisfaction"
-                    currentValue={comparison.current.satisfactionRate}
-                    comparisonValue={comparison.comparison.satisfactionRate}
-                    delta={comparison.deltas.satisfactionRate}
-                    unit="%"
-                    icon={Award}
-                  />
-                </div>
+                <StatTileGrid cols={4}>
+                  {comparisonKPIs.map((kpi) => (
+                    <StatTile
+                      key={kpi.title}
+                      label={kpi.title}
+                      value={`${kpi.currentValue.toFixed(1)}${kpi.unit}`}
+                      hint={`vs ${kpi.comparisonValue.toFixed(1)}${kpi.unit} période précédente`}
+                      icon={kpi.icon}
+                      tone={kpi.tone}
+                    >
+                      <DeltaIndicator value={kpi.delta} unit={kpi.unit} />
+                    </StatTile>
+                  ))}
+                </StatTileGrid>
 
                 {/* Comparison Chart */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Comparaison par critère</CardTitle>
-                    <CardDescription>
-                      {comparison.current.label} vs {comparison.comparison.label}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={350}>
-                      <BarChart data={comparisonChartData} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                        <XAxis type="number" domain={[0, 5]} className="text-xs" />
-                        <YAxis type="category" dataKey="category" width={100} className="text-xs" />
-                        <Tooltip 
-                          contentStyle={{ backgroundColor: "hsl(var(--background))", border: "1px solid hsl(var(--border))" }}
-                          formatter={(value: number) => [`${value.toFixed(2)}/5`]}
-                        />
-                        <Legend />
-                        <Bar 
-                          dataKey="current" 
-                          fill="hsl(var(--primary))"
-                          name={comparison.current.label}
-                          radius={[0, 4, 4, 0]}
-                        />
-                        <Bar 
-                          dataKey="comparison" 
-                          fill="hsl(var(--muted-foreground))"
-                          name={comparison.comparison.label}
-                          radius={[0, 4, 4, 0]}
-                          opacity={0.6}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
+                <SurfaceCard
+                  title="Comparaison par critère"
+                  description={`${comparison.current.label} vs ${comparison.comparison.label}`}
+                  icon={BarChart3}
+                >
+                  <BarsChart
+                    data={comparisonChartData}
+                    series={[
+                      { key: "current", label: comparison.current.label },
+                      { key: "comparison", label: comparison.comparison.label },
+                    ]}
+                    xKey="category"
+                    layout="horizontal"
+                    height={350}
+                    formatValue={(value) => `${Number(value).toFixed(2)}/5`}
+                    ariaLabel={`Notes par critère : ${comparison.current.label} contre ${comparison.comparison.label}`}
+                    emptyMessage="Aucune donnée sur les périodes choisies"
+                  />
+                </SurfaceCard>
 
                 {/* Radar Comparison */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Vue radar comparative</CardTitle>
-                    <CardDescription>Superposition des profils de satisfaction</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={350}>
+                <SurfaceCard
+                  title="Vue radar comparative"
+                  description="Superposition des profils de satisfaction"
+                  icon={LineChartIcon}
+                >
+                  <div className="space-y-3">
+                    <ChartFrame
+                      height={350}
+                      ariaLabel={`Profils de satisfaction comparés : ${comparison.current.label} et ${comparison.comparison.label}`}
+                    >
                       <RadarChart data={comparisonChartData}>
-                        <PolarGrid className="stroke-muted" />
-                        <PolarAngleAxis dataKey="category" className="text-xs" />
-                        <PolarRadiusAxis angle={30} domain={[0, 5]} className="text-xs" />
+                        <PolarGrid stroke={CHART_CHROME.grid} />
+                        <PolarAngleAxis
+                          dataKey="category"
+                          tick={{ fill: CHART_CHROME.axis, fontSize: 12 }}
+                          tickLine={false}
+                        />
+                        <PolarRadiusAxis
+                          angle={30}
+                          domain={[0, 5]}
+                          tick={{ fill: CHART_CHROME.axis, fontSize: 11 }}
+                          stroke={axisProps.stroke}
+                          tickLine={false}
+                          axisLine={false}
+                        />
                         <Radar
                           name={comparison.current.label}
                           dataKey="current"
-                          stroke="hsl(var(--primary))"
-                          fill="hsl(var(--primary))"
-                          fillOpacity={0.3}
+                          stroke={seriesColor(0)}
+                          strokeWidth={2}
+                          fill={seriesColor(0)}
+                          fillOpacity={0.28}
                         />
                         <Radar
                           name={comparison.comparison.label}
                           dataKey="comparison"
-                          stroke="hsl(var(--muted-foreground))"
-                          fill="hsl(var(--muted-foreground))"
+                          stroke={seriesColor(1)}
+                          strokeWidth={2}
+                          fill={seriesColor(1)}
                           fillOpacity={0.2}
                         />
-                        <Legend />
-                        <Tooltip 
-                          contentStyle={{ backgroundColor: "hsl(var(--background))", border: "1px solid hsl(var(--border))" }}
-                          formatter={(value: number) => [`${value.toFixed(2)}/5`]}
-                        />
+                        <Tooltip content={scoreTooltip} />
                       </RadarChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
+                    </ChartFrame>
+                    <ChartLegend
+                      items={[
+                        { key: "current", label: comparison.current.label, color: seriesColor(0) },
+                        { key: "comparison", label: comparison.comparison.label, color: seriesColor(1) },
+                      ]}
+                    />
+                  </div>
+                </SurfaceCard>
 
                 {/* Delta Summary */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Résumé des évolutions</CardTitle>
-                    <CardDescription>Variation entre les deux périodes</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                      {comparison.current.categoryScores.map((cat, idx) => {
-                        const comparisonScore = comparison.comparison.categoryScores[idx]?.score || 0;
-                        const delta = cat.score - comparisonScore;
-                        return (
-                          <div key={cat.category} className="flex items-center justify-between p-3 border rounded-lg">
-                            <span className="font-medium">{cat.label}</span>
-                            <DeltaIndicator value={delta} unit="/5" />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
+                <SurfaceCard
+                  title="Résumé des évolutions"
+                  description="Variation entre les deux périodes"
+                >
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    {comparison.current.categoryScores.map((cat, idx) => {
+                      const comparisonScore = comparison.comparison.categoryScores[idx]?.score || 0;
+                      const delta = cat.score - comparisonScore;
+                      return (
+                        <div
+                          key={cat.category}
+                          className="flex items-center justify-between gap-3 rounded-[var(--radius)] border border-border p-3"
+                        >
+                          <span className="min-w-0 truncate font-medium">{cat.label}</span>
+                          <DeltaIndicator value={delta} unit="/5" />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </SurfaceCard>
               </>
             ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                Sélectionnez deux périodes à comparer
-              </div>
+              <SurfaceCard>
+                <TableEmpty
+                  icon={GitCompare}
+                  title="Sélectionnez deux périodes à comparer"
+                  description="Choisissez une période actuelle et une période de référence ci-dessus."
+                />
+              </SurfaceCard>
             )}
-          </TabsContent>
-        </Tabs>
-      </div>
+          </>
+        )}
+      </PageShell>
     </MainLayout>
   );
 }

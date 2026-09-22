@@ -4,17 +4,25 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Sun, Sunset, ExternalLink, Clock, AlertTriangle } from "lucide-react";
+import { Loader2, Sun, Sunset, ExternalLink, Clock, AlertTriangle, Users } from "lucide-react";
 import { toast } from "sonner";
 import { usePendingSchedules } from "@/hooks/usePendingSchedules";
 import { useBulkApproveSchedule } from "@/hooks/useApproveSchedule";
 import { SCHEDULE_ASSIGNMENT_DAYS_BEFORE } from "@/lib/placement-test-engine";
 import { getStatusLabel } from "@/lib/inscription-status";
 import { DATES_A_PLANIFIER_LABEL } from "@/lib/registration-dates";
+import {
+  PageHeader,
+  PageShell,
+  StatTile,
+  StatTileGrid,
+  StatusPill,
+  SurfaceCard,
+  TableEmpty,
+} from "@/components/ui-kit";
 
 export default function ScheduleValidation() {
   const { data, isLoading, isError } = usePendingSchedules();
@@ -54,19 +62,40 @@ export default function ScheduleValidation() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Clock className="h-6 w-6" />
-            Constitution des groupes
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Stages collectifs en station : attribution du groupe matin ou après-midi
-            pour les débuts dans les {SCHEDULE_ASSIGNMENT_DAYS_BEFORE} prochains jours,
-            et les retards non traités. Les formations individuelles ou en ligne
-            n&apos;apparaissent pas ici.
-          </p>
-        </div>
+      <PageShell>
+        <PageHeader
+          title="Constitution des groupes"
+          icon={Clock}
+          tone="blue"
+          description={
+            <>
+              Stages collectifs en station : attribution du groupe matin ou après-midi
+              pour les débuts dans les {SCHEDULE_ASSIGNMENT_DAYS_BEFORE} prochains jours,
+              et les retards non traités. Les formations individuelles ou en ligne
+              n&apos;apparaissent pas ici.
+            </>
+          }
+        />
+
+        {/* Compteurs déjà présents dans la page, remontés en tuiles. */}
+        <StatTileGrid cols={2}>
+          <StatTile
+            label="Inscriptions en attente de groupe"
+            value={data?.total ?? 0}
+            hint={`Fenêtre J-${SCHEDULE_ASSIGNMENT_DAYS_BEFORE} et retards`}
+            icon={Users}
+            tone="blue"
+            loading={isLoading}
+          />
+          <StatTile
+            label="Formations commencées sans horaire"
+            value={data?.lateTotal ?? 0}
+            hint="À traiter en priorité"
+            icon={AlertTriangle}
+            tone="rose"
+            loading={isLoading}
+          />
+        </StatTileGrid>
 
         {data && data.lateTotal > 0 && (
           <Alert variant="destructive">
@@ -92,27 +121,27 @@ export default function ScheduleValidation() {
         </Alert>
 
         {isLoading && (
-          <div className="flex justify-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
+          <SurfaceCard>
+            <div className="space-y-3">
+              {[0, 1, 2].map((index) => (
+                <Skeleton key={index} className="h-16 w-full rounded-[var(--radius)]" />
+              ))}
+            </div>
+          </SurfaceCard>
         )}
 
         {isError && (
           <p className="text-destructive">Impossible de charger les horaires en attente.</p>
         )}
 
-            {!isLoading && data?.total === 0 && (
-          <Card>
-            <CardContent className="py-10 text-center text-muted-foreground space-y-2">
-              <p>
-                Aucun stage collectif en station en attente de groupe, ni dans la
-                fenêtre J-{SCHEDULE_ASSIGNMENT_DAYS_BEFORE}, ni en retard.
-              </p>
-              <p className="text-sm">
-                Les formations individuelles ou en ligne sont exclues de cet écran.
-              </p>
-            </CardContent>
-          </Card>
+        {!isLoading && data?.total === 0 && (
+          <SurfaceCard flush>
+            <TableEmpty
+              icon={Clock}
+              title={`Aucun stage collectif en station en attente de groupe, ni dans la fenêtre J-${SCHEDULE_ASSIGNMENT_DAYS_BEFORE}, ni en retard.`}
+              description="Les formations individuelles ou en ligne sont exclues de cet écran."
+            />
+          </SurfaceCard>
         )}
 
         {data?.groups.map((group) => {
@@ -120,98 +149,104 @@ export default function ScheduleValidation() {
           const allInGroupSelected = groupIds.every((id) => selectedIds.has(id));
 
           return (
-            <Card
+            <SurfaceCard
               key={`${group.startDate}-${group.language}`}
-              className={group.deadline.late ? "border-destructive/50" : undefined}
+              title={group.language}
+              description={`Début le ${format(new Date(group.startDate), "EEEE d MMMM yyyy", {
+                locale: fr,
+              })}`}
+              accent={group.deadline.late ? "chart-2" : "none"}
+              actions={
+                <>
+                  <StatusPill tone={group.deadline.late ? "danger" : "neutral"}>
+                    {group.deadline.label}
+                  </StatusPill>
+                  <StatusPill tone="info">
+                    {group.inscriptions.length} en attente
+                  </StatusPill>
+                </>
+              }
+              bodyClassName="space-y-4"
             >
-              <CardHeader>
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <CardTitle className="text-lg">{group.language}</CardTitle>
-                    <CardDescription>
-                      Début le{" "}
-                      {format(new Date(group.startDate), "EEEE d MMMM yyyy", { locale: fr })}
-                    </CardDescription>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant={group.deadline.late ? "destructive" : "secondary"}>
-                      {group.deadline.label}
-                    </Badge>
-                    <Badge variant="outline">
-                      {group.inscriptions.length} en attente
-                    </Badge>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    checked={allInGroupSelected}
-                    onCheckedChange={(checked) =>
-                      toggleInGroup(groupIds, checked === true)
-                    }
-                    id={`group-${group.startDate}-${group.language}`}
-                  />
-                  <label
-                    htmlFor={`group-${group.startDate}-${group.language}`}
-                    className="text-sm cursor-pointer"
-                  >
-                    Sélectionner tout le groupe
-                  </label>
-                </div>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={allInGroupSelected}
+                  onCheckedChange={(checked) =>
+                    toggleInGroup(groupIds, checked === true)
+                  }
+                  id={`group-${group.startDate}-${group.language}`}
+                />
+                <label
+                  htmlFor={`group-${group.startDate}-${group.language}`}
+                  className="text-sm cursor-pointer"
+                >
+                  Sélectionner tout le groupe
+                </label>
+              </div>
 
-                <div className="rounded-lg border divide-y">
-                  {group.inscriptions.map((inscription) => (
-                    <div
-                      key={inscription.id}
-                      className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm"
-                    >
-                      <Checkbox
-                        checked={selectedIds.has(inscription.id)}
-                        onCheckedChange={() => {
-                          setSelectedIds((prev) => {
-                            const next = new Set(prev);
-                            if (next.has(inscription.id)) next.delete(inscription.id);
-                            else next.add(inscription.id);
-                            return next;
-                          });
-                        }}
-                      />
-                      <div className="flex-1 min-w-[200px]">
-                        <p className="font-medium">{inscription.student_name}</p>
-                        <p className="text-muted-foreground text-xs">
-                          {inscription.code || "—"} · Niveau {inscription.entry_level || "—"} ·{" "}
-                          {getStatusLabel(inscription.status, "fr")}
-                        </p>
-                        {inscription.schedule && (
-                          <p className="text-muted-foreground text-xs">
-                            Horaire prévu : {inscription.schedule}
-                          </p>
-                        )}
-                        {/* BL-029 : cette date n'est qu'un souhait, la caler en
-                            matin / après-midi avant de la confirmer est prématuré. */}
-                        {inscription.dates_to_confirm && (
-                          <Badge variant="outline" className="mt-1 text-xs font-normal">
-                            Dates {DATES_A_PLANIFIER_LABEL.toLowerCase()}
-                          </Badge>
-                        )}
-                      </div>
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link to={`/inscriptions/${inscription.id}`}>
-                          <ExternalLink className="h-4 w-4" />
+              <ul className="divide-y divide-border rounded-[var(--radius)] border border-border">
+                {group.inscriptions.map((inscription) => (
+                  <li
+                    key={inscription.id}
+                    className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm"
+                  >
+                    <Checkbox
+                      checked={selectedIds.has(inscription.id)}
+                      onCheckedChange={() => {
+                        setSelectedIds((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(inscription.id)) next.delete(inscription.id);
+                          else next.add(inscription.id);
+                          return next;
+                        });
+                      }}
+                    />
+                    <div className="flex-1 min-w-[200px]">
+                      {inscription.student_id ? (
+                        <Link
+                          to={`/students/${inscription.student_id}`}
+                          className="font-medium hover:underline"
+                        >
+                          {inscription.student_name}
                         </Link>
-                      </Button>
+                      ) : (
+                        <p className="font-medium">{inscription.student_name}</p>
+                      )}
+                      <p className="text-muted-foreground text-xs">
+                        {inscription.code || "—"} · Niveau {inscription.entry_level || "—"} ·{" "}
+                        {getStatusLabel(inscription.status, "fr")}
+                      </p>
+                      {inscription.schedule && (
+                        <p className="text-muted-foreground text-xs">
+                          Horaire prévu : {inscription.schedule}
+                        </p>
+                      )}
+                      {/* BL-029 : cette date n'est qu'un souhait, la caler en
+                          matin / après-midi avant de la confirmer est prématuré. */}
+                      {inscription.dates_to_confirm && (
+                        <StatusPill tone="warning" size="sm" className="mt-1 font-normal">
+                          Dates {DATES_A_PLANIFIER_LABEL.toLowerCase()}
+                        </StatusPill>
+                      )}
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link
+                        to={`/inscriptions/${inscription.id}`}
+                        aria-label={`Ouvrir la fiche de ${inscription.student_name}`}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </SurfaceCard>
           );
         })}
 
         {data && data.total > 0 && (
-          <div className="sticky bottom-4 flex flex-wrap gap-2 rounded-lg border bg-background/95 p-4 shadow-lg backdrop-blur">
-            <Badge variant="secondary">{selectedIds.size} sélectionnée(s)</Badge>
+          <div className="sticky bottom-4 flex flex-wrap items-center gap-2 rounded-[var(--radius-card)] border border-border bg-background/95 p-4 shadow-lg backdrop-blur">
+            <StatusPill tone="neutral">{selectedIds.size} sélectionnée(s)</StatusPill>
             <Button
               type="button"
               variant="outline"
@@ -239,7 +274,7 @@ export default function ScheduleValidation() {
             </Button>
           </div>
         )}
-      </div>
+      </PageShell>
     </MainLayout>
   );
 }

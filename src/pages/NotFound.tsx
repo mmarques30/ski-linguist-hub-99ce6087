@@ -1,8 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Compass } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { EmptyState } from "@/components/common/EmptyState";
 
 const translations = {
   title: {
@@ -31,20 +32,26 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted p-4">
-      <div className="max-w-md space-y-4 text-center">
-        <h1 className="text-4xl font-bold">404</h1>
-        <p className="text-xl font-medium">{t(translations.title)}</p>
-        <p className="text-muted-foreground">{t(translations.description)}</p>
-        <code className="block break-all rounded bg-background px-3 py-2 text-xs text-muted-foreground">
-          {location.pathname}
-        </code>
-        <Button asChild>
-          <Link to="/">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {t(translations.back)}
-          </Link>
-        </Button>
+    <div className="flex min-h-screen items-center justify-center bg-[hsl(var(--surface-page))] p-4">
+      <div className="w-full max-w-md space-y-4">
+        <p className="text-center text-metric tabular text-muted-foreground">404</p>
+
+        <EmptyState
+          icon={Compass}
+          title={t(translations.title)}
+          description={t(translations.description)}
+          className="bg-card"
+        >
+          <code className="mt-4 block w-full break-all rounded-[var(--radius)] bg-[hsl(var(--surface-sunken))] px-3 py-2 text-xs text-muted-foreground">
+            {location.pathname}
+          </code>
+          <Button asChild className="mt-5 h-11 w-full sm:w-auto">
+            <Link to="/">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {t(translations.back)}
+            </Link>
+          </Button>
+        </EmptyState>
       </div>
     </div>
   );

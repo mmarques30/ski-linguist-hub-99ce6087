@@ -1,14 +1,12 @@
 import { useMemo, useState } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { useTabParam } from "@/hooks/useTabParam";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Collapsible,
   CollapsibleContent,
@@ -29,12 +27,28 @@ import {
   CheckCircle2,
   ChevronDown,
   Clock,
+  Eye,
+  FileText,
+  History,
   Loader2,
   Mail,
   PlayCircle,
+  Radio,
   Save,
+  Send,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  PageHeader,
+  PageShell,
+  SegmentedControl,
+  StatTile,
+  StatTileGrid,
+  StatusPill,
+  SurfaceCard,
+  TableEmpty,
+  type PillTone,
+} from "@/components/ui-kit";
 import {
   canPublish,
   checkVariables,
@@ -62,30 +76,30 @@ const AUDIENCE_LABELS: Record<string, string> = {
 };
 
 type DraftEdits = Record<string, Partial<EmailModelVariant>>;
+type EmailsTab = "modeles" | "journal";
+/** Onglets d'un texte : le français est la seule langue d'envoi aujourd'hui. */
+type VariantTab = "fr" | "apercu";
 
 function StatusBadge({ model }: { model: EmailModel }) {
   const status = modelStatus(model);
   if (status === "actif") {
     return (
-      <Badge className="gap-1">
-        <CheckCircle2 className="h-3 w-3" />
+      <StatusPill tone="success" icon={CheckCircle2} size="sm">
         Actif
-      </Badge>
+      </StatusPill>
     );
   }
   if (status === "partiel") {
     return (
-      <Badge variant="secondary" className="gap-1">
-        <AlertTriangle className="h-3 w-3" />
+      <StatusPill tone="warning" icon={AlertTriangle} size="sm">
         Partiellement actif
-      </Badge>
+      </StatusPill>
     );
   }
   return (
-    <Badge variant="outline" className="gap-1">
-      <Clock className="h-3 w-3" />
+    <StatusPill tone="neutral" icon={Clock} size="sm">
       Brouillon
-    </Badge>
+    </StatusPill>
   );
 }
 
@@ -109,24 +123,26 @@ function VariantEditor({
   const merged: EmailModelVariant = { ...variant, ...edits };
   const dirty = Object.keys(edits).length > 0;
   const variables = checkVariables(merged);
+  const [variantTab, setVariantTab] = useState<VariantTab>("fr");
 
   return (
-    <div className="space-y-3 rounded-lg border p-4">
+    <div className="space-y-3 rounded-[var(--radius)] border border-border bg-card p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
+        <div className="min-w-0">
           <p className="text-sm font-semibold">{variant.variant_label || variant.slug}</p>
           <p className="font-mono text-xs text-muted-foreground">{variant.slug}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {variant.is_active ? (
-            <Badge className="gap-1">
-              <CheckCircle2 className="h-3 w-3" />
+            <StatusPill tone="success" icon={CheckCircle2} size="sm">
               Texte actif
-            </Badge>
+            </StatusPill>
           ) : (
-            <Badge variant="outline">Jamais envoyé</Badge>
+            <StatusPill tone="neutral" size="sm">Jamais envoyé</StatusPill>
           )}
-          {!variant.in_sync && <Badge variant="secondary">À relire</Badge>}
+          {!variant.in_sync && (
+            <StatusPill tone="warning" size="sm">À relire</StatusPill>
+          )}
         </div>
       </div>
 
@@ -134,48 +150,62 @@ function VariantEditor({
         <p className="text-xs text-muted-foreground">{variant.notes}</p>
       )}
 
-      <Tabs defaultValue="fr">
-        <TabsList>
-          <TabsTrigger value="fr">Texte</TabsTrigger>
-          <TabsTrigger value="apercu">Aperçu</TabsTrigger>
-        </TabsList>
+      <SegmentedControl<VariantTab>
+        value={variantTab}
+        onChange={setVariantTab}
+        size="sm"
+        ariaLabel={`Texte et aperçu — ${variant.slug}`}
+        options={[
+          { value: "fr", label: "Texte", icon: FileText },
+          { value: "apercu", label: "Aperçu", icon: Eye },
+        ]}
+      />
 
-        <TabsContent value="fr" className="space-y-2 pt-3">
+      {variantTab === "fr" && (
+        <div className="space-y-2 pt-1">
           <Input
             value={merged.subject_fr}
             placeholder="Sujet"
+            aria-label={`Sujet — ${variant.slug}`}
             onChange={(e) => onChange({ subject_fr: e.target.value })}
           />
           <Textarea
             value={merged.body_fr}
             placeholder="Corps HTML"
             rows={12}
+            aria-label={`Corps HTML — ${variant.slug}`}
             className="font-mono text-xs"
             onChange={(e) => onChange({ body_fr: e.target.value })}
           />
           <p className="text-xs text-muted-foreground">
             Les emails transactionnels partent uniquement en français.
           </p>
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="apercu" className="space-y-2 pt-3">
+      {variantTab === "apercu" && (
+        <div className="space-y-2 pt-1">
           <p className="text-sm">
             <span className="text-muted-foreground">Sujet : </span>
             {renderPreview(merged.subject_fr)}
           </p>
           <div
-            className="prose prose-sm max-w-none rounded bg-muted/40 p-3 text-sm"
+            className="prose prose-sm max-w-none rounded-[var(--radius)] bg-[hsl(var(--surface-sunken))] p-3 text-sm dark:prose-invert"
             dangerouslySetInnerHTML={{ __html: renderPreview(merged.body_fr) }}
           />
           <p className="text-xs text-muted-foreground">
             Aperçu avec un jeu ZZTEST : aucune donnée réelle, aucune adresse délivrable.
           </p>
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
 
+      {/* Pastilles de variables déclarées. */}
       <div className="flex flex-wrap gap-2 text-xs">
         {merged.variables.map((name) => (
-          <code key={name} className="rounded bg-muted px-1.5 py-0.5">
+          <code
+            key={name}
+            className="rounded-pill bg-[hsl(var(--surface-sunken))] px-2 py-0.5 ring-1 ring-inset ring-border"
+          >
             {`{{${name}}}`}
           </code>
         ))}
@@ -210,7 +240,13 @@ function VariantEditor({
           Valider et activer
         </Button>
         {variant.is_active && (
-          <Button size="sm" variant="ghost" onClick={onUnpublish} disabled={busy}>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onUnpublish}
+            disabled={busy}
+            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+          >
             Désactiver
           </Button>
         )}
@@ -225,7 +261,6 @@ function VariantEditor({
 }
 
 export default function AdminEmails() {
-  const [emailsTab, setEmailsTab] = useTabParam(["modeles", "journal"] as const);
   const { data: models, isLoading, error } = useEmailModels();
   const { data: dispatchLog } = useEdgeDispatchLog();
   const saveDraft = useSaveEmailDraft();
@@ -237,6 +272,7 @@ export default function AdminEmails() {
   const [edits, setEdits] = useState<DraftEdits>({});
   const [openModel, setOpenModel] = useState<string | null>(null);
   const [pendingPublish, setPendingPublish] = useState<EmailModelVariant | null>(null);
+  const [emailsTab, setEmailsTab] = useTabParam(["modeles", "journal"] as const);
 
   const activeCount = useMemo(
     () => (models ?? []).filter((m) => modelStatus(m) === "actif").length,
@@ -306,200 +342,225 @@ export default function AdminEmails() {
     }
   };
 
+  const cronTone = (model: EmailModel): PillTone => {
+    if (!model.cron?.exists) return "neutral";
+    return model.cron.active ? "success" : "warning";
+  };
+
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold">
-            <Mail className="h-6 w-6" />
-            Communications
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Modèles transactionnels et journal des envois (`email_log`). Les fichiers
-            joints d&apos;inscription se gèrent sur{" "}
-            <a href="/admin/registration-documents" className="underline underline-offset-2">
-              Modèles documents
-            </a>
-            .
-          </p>
-        </div>
+      <PageShell>
+        <PageHeader
+          title="Communications"
+          icon={Mail}
+          tone="blue"
+          description={
+            <>
+              Modèles transactionnels et journal des envois (`email_log`). Les fichiers
+              joints d&apos;inscription se gèrent sur{" "}
+              <a href="/admin/registration-documents" className="underline underline-offset-2">
+                Modèles documents
+              </a>
+              .
+            </>
+          }
+          tabs={
+            <SegmentedControl<EmailsTab>
+              value={emailsTab}
+              onChange={setEmailsTab}
+              ariaLabel="Modèles ou journal des envois"
+              options={[
+                { value: "modeles", label: "Modèles", icon: FileText, count: models?.length },
+                { value: "journal", label: "Journal des envois", icon: History },
+              ]}
+            />
+          }
+        />
 
-        <Tabs value={emailsTab} onValueChange={setEmailsTab}>
-          <TabsList>
-            <TabsTrigger value="modeles">Modèles</TabsTrigger>
-            <TabsTrigger value="journal">Journal des envois</TabsTrigger>
-          </TabsList>
+        {emailsTab === "journal" && <EmailSendJournal />}
 
-          <TabsContent value="journal" className="mt-4 space-y-4">
-            <EmailSendJournal />
-          </TabsContent>
+        {emailsTab === "modeles" && (
+          <div className="space-y-4 lg:space-y-5">
+            <StatTileGrid cols={3}>
+              <StatTile label="modèles" value={models?.length ?? 0} icon={Mail} tone="blue" loading={isLoading} />
+              <StatTile label="actifs" value={activeCount} icon={CheckCircle2} tone="teal" loading={isLoading} />
+              <StatTile
+                label="en attente de relecture"
+                value={reviewCount}
+                icon={AlertTriangle}
+                tone={reviewCount > 0 ? "gold" : "neutral"}
+                loading={isLoading}
+              />
+            </StatTileGrid>
 
-          <TabsContent value="modeles" className="mt-4 space-y-6">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-2xl font-bold">{models?.length ?? 0}</p>
-              <p className="text-xs text-muted-foreground">modèles</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-2xl font-bold">{activeCount}</p>
-              <p className="text-xs text-muted-foreground">actifs</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-2xl font-bold">{reviewCount}</p>
-              <p className="text-xs text-muted-foreground">en attente de relecture</p>
-            </CardContent>
-          </Card>
-        </div>
+            {error && (
+              <Alert variant="destructive">
+                <AlertTitle>Lecture impossible</AlertTitle>
+                <AlertDescription>
+                  {error instanceof Error ? error.message : "Réservé à un compte administrateur."}
+                </AlertDescription>
+              </Alert>
+            )}
 
-        {error && (
-          <Alert variant="destructive">
-            <AlertTitle>Lecture impossible</AlertTitle>
-            <AlertDescription>
-              {error instanceof Error ? error.message : "Réservé à un compte administrateur."}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {isLoading && (
-          <p className="text-sm text-muted-foreground">Chargement des modèles…</p>
-        )}
-
-        {(models ?? []).map((model) => (
-          <Card key={model.model_key}>
-            <Collapsible
-              open={openModel === model.model_key}
-              onOpenChange={(open) => setOpenModel(open ? model.model_key : null)}
-            >
-              <CardHeader>
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <CardTitle className="text-base">
-                      {model.position}. {model.title_fr}
-                    </CardTitle>
-                    <CardDescription>{model.trigger_fr}</CardDescription>
-                    <div className="flex flex-wrap items-center gap-2 pt-1">
-                      <Badge variant="outline">
-                        {AUDIENCE_LABELS[model.audience] ?? model.audience}
-                      </Badge>
-                      {model.edge_function && (
-                        <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                          {model.edge_function}
-                        </code>
-                      )}
-                      <StatusBadge model={model} />
-                    </div>
-                  </div>
-                  <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      {model.variants.length} texte{model.variants.length > 1 ? "s" : ""}
-                      <ChevronDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </CollapsibleTrigger>
-                </div>
-
-                {model.cron_jobname && (
-                  <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border bg-muted/30 p-3">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">
-                        Cron {model.cron_jobname}
-                        {model.cron?.schedule ? ` — ${model.cron.schedule}` : ""}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {model.cron?.exists
-                          ? model.cron.active
-                            ? "Programmé et actif."
-                            : "Programmé, arrêté : rien ne part automatiquement."
-                          : "Aucun cron programmé."}
-                      </p>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => void handleRunNow(model.cron_jobname!)}
-                      disabled={runNow.isPending}
-                    >
-                      <PlayCircle className="mr-2 h-4 w-4" />
-                      Essai sans envoi
-                    </Button>
-                    <Switch
-                      checked={model.cron?.active ?? false}
-                      disabled={!model.cron?.exists || setCronActive.isPending}
-                      onCheckedChange={(checked) =>
-                        void handleCron(model.cron_jobname!, checked)
-                      }
-                      aria-label={`Activer le cron ${model.cron_jobname}`}
-                    />
-                  </div>
-                )}
-              </CardHeader>
-
-              <CollapsibleContent>
-                <CardContent className="space-y-4">
-                  {model.variants.length === 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      Aucun brouillon pour ce modèle.
-                    </p>
-                  )}
-                  {model.variants.map((variant) => (
-                    <VariantEditor
-                      key={variant.slug}
-                      variant={variant}
-                      edits={edits[variant.slug] ?? {}}
-                      busy={saveDraft.isPending || publishDraft.isPending || unpublish.isPending}
-                      onChange={(patch) =>
-                        setEdits((prev) => ({
-                          ...prev,
-                          [variant.slug]: { ...prev[variant.slug], ...patch },
-                        }))
-                      }
-                      onSave={() => void handleSave(variant)}
-                      onPublish={() => setPendingPublish(variant)}
-                      onUnpublish={() => void handleUnpublish(variant)}
-                    />
-                  ))}
-                </CardContent>
-              </CollapsibleContent>
-            </Collapsible>
-          </Card>
-        ))}
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Appels sortants pg_net</CardTitle>
-            <CardDescription>
-              Chaque déclenchement de cron passe par dispatch_edge_function et laisse une
-              ligne ici.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {(dispatchLog ?? []).length === 0 ? (
-              <p className="text-sm text-muted-foreground">Aucun appel enregistré.</p>
-            ) : (
-              <div className="space-y-2">
-                {(dispatchLog ?? []).map((row) => (
-                  <div
-                    key={row.id}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded border px-3 py-2 text-xs"
-                  >
-                    <span className="font-mono">{row.function_name}{row.note}</span>
-                    <span className="text-muted-foreground">
-                      requête #{row.request_id ?? "—"} · {row.auth_mode} ·{" "}
-                      {new Date(row.created_at).toLocaleString("fr-FR")}
-                    </span>
-                  </div>
+            {isLoading && (
+              <div className="space-y-3" aria-busy="true">
+                <span className="sr-only">Chargement des modèles…</span>
+                {[0, 1, 2].map((index) => (
+                  <Skeleton key={index} className="h-28 w-full rounded-[var(--radius-card)]" />
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+
+            {!isLoading && !error && (models ?? []).length === 0 && (
+              <SurfaceCard flush>
+                <TableEmpty
+                  title="Aucun modèle d'email"
+                  description="Aucun modèle transactionnel n'est encore déclaré."
+                  icon={Mail}
+                />
+              </SurfaceCard>
+            )}
+
+            {/* Une carte dépliable par modèle : en-tête + cron + textes. */}
+            {(models ?? []).map((model) => (
+              <Collapsible
+                key={model.model_key}
+                open={openModel === model.model_key}
+                onOpenChange={(open) => setOpenModel(open ? model.model_key : null)}
+                className="fli-surface overflow-hidden"
+              >
+                <div className="space-y-3 p-4 sm:p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0 space-y-1">
+                      <h3 className="text-base font-semibold leading-tight">
+                        {model.position}. {model.title_fr}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">{model.trigger_fr}</p>
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <StatusPill tone="neutral" size="sm">
+                          {AUDIENCE_LABELS[model.audience] ?? model.audience}
+                        </StatusPill>
+                        {model.edge_function && (
+                          <code className="rounded-pill bg-[hsl(var(--surface-sunken))] px-2 py-0.5 text-xs ring-1 ring-inset ring-border">
+                            {model.edge_function}
+                          </code>
+                        )}
+                        <StatusBadge model={model} />
+                      </div>
+                    </div>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm" className="shrink-0">
+                        {model.variants.length} texte{model.variants.length > 1 ? "s" : ""}
+                        <ChevronDown className="ml-2 h-4 w-4" />
+                      </Button>
+                    </CollapsibleTrigger>
+                  </div>
+
+                  {model.cron_jobname && (
+                    <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))] p-3">
+                      <div className="min-w-[200px] flex-1">
+                        <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                          <StatusPill tone={cronTone(model)} icon={Radio} size="sm">
+                            {model.cron?.exists
+                              ? model.cron.active
+                                ? "Cron actif"
+                                : "Cron arrêté"
+                              : "Sans cron"}
+                          </StatusPill>
+                          <span>
+                            Cron {model.cron_jobname}
+                            {model.cron?.schedule ? ` — ${model.cron.schedule}` : ""}
+                          </span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {model.cron?.exists
+                            ? model.cron.active
+                              ? "Programmé et actif."
+                              : "Programmé, arrêté : rien ne part automatiquement."
+                            : "Aucun cron programmé."}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => void handleRunNow(model.cron_jobname!)}
+                        disabled={runNow.isPending}
+                      >
+                        <PlayCircle className="mr-2 h-4 w-4" />
+                        Essai sans envoi
+                      </Button>
+                      <Switch
+                        checked={model.cron?.active ?? false}
+                        disabled={!model.cron?.exists || setCronActive.isPending}
+                        onCheckedChange={(checked) =>
+                          void handleCron(model.cron_jobname!, checked)
+                        }
+                        aria-label={`Activer le cron ${model.cron_jobname}`}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <CollapsibleContent>
+                  <div className="space-y-4 border-t border-border p-4 sm:p-5">
+                    {model.variants.length === 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        Aucun brouillon pour ce modèle.
+                      </p>
+                    )}
+                    {model.variants.map((variant) => (
+                      <VariantEditor
+                        key={variant.slug}
+                        variant={variant}
+                        edits={edits[variant.slug] ?? {}}
+                        busy={saveDraft.isPending || publishDraft.isPending || unpublish.isPending}
+                        onChange={(patch) =>
+                          setEdits((prev) => ({
+                            ...prev,
+                            [variant.slug]: { ...prev[variant.slug], ...patch },
+                          }))
+                        }
+                        onSave={() => void handleSave(variant)}
+                        onPublish={() => setPendingPublish(variant)}
+                        onUnpublish={() => void handleUnpublish(variant)}
+                      />
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            ))}
+
+            <SurfaceCard
+              title="Appels sortants pg_net"
+              icon={Send}
+              description="Chaque déclenchement de cron passe par dispatch_edge_function et laisse une ligne ici."
+            >
+              {(dispatchLog ?? []).length === 0 ? (
+                <TableEmpty
+                  title="Aucun appel enregistré."
+                  description="Aucun cron n'a encore déclenché d'appel sortant."
+                  icon={Send}
+                />
+              ) : (
+                <div className="space-y-2">
+                  {(dispatchLog ?? []).map((row) => (
+                    <div
+                      key={row.id}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius)] border border-border px-3 py-2 text-xs"
+                    >
+                      <span className="font-mono">{row.function_name}{row.note}</span>
+                      <span className="text-muted-foreground tabular">
+                        requête #{row.request_id ?? "—"} · {row.auth_mode} ·{" "}
+                        {new Date(row.created_at).toLocaleString("fr-FR")}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </SurfaceCard>
+          </div>
+        )}
+      </PageShell>
 
       <AlertDialog
         open={pendingPublish !== null}

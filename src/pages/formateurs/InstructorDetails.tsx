@@ -4,9 +4,6 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   ArrowLeft,
@@ -40,7 +37,7 @@ import { InstructorFormDialog, TAX_STATUSES } from "@/components/formateurs/Inst
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { displayLanguageLabel } from "@/lib/taught-languages";
 import { formateurAssistPath } from "@/lib/client-links";
-import { getStatusLabel, getStatusStyle } from "@/lib/inscription-status";
+import { getStatusLabel } from "@/lib/inscription-status";
 import {
   activationConfirmDescription,
   candidatActivationGaps,
@@ -50,17 +47,27 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  CardGrid,
+  CardList,
+  CardListItem,
+  PageHeader,
+  PageShell,
+  SegmentedControl,
+  StatusPill,
+  SurfaceCard,
+  TableEmpty,
+  toneForStatus,
+} from "@/components/ui-kit";
+import type { PillTone } from "@/components/ui-kit";
 
-const paymentStatusColors: Record<string, string> = {
-  a_payer: "bg-amber-100 text-amber-800",
-  paye: "bg-emerald-100 text-emerald-800",
+const instructorStatusTones: Record<string, PillTone> = {
+  actif: "success",
+  inactif: "neutral",
+  candidat: "info",
 };
 
-const instructorStatusStyles: Record<string, string> = {
-  actif: "bg-emerald-100 text-emerald-800",
-  inactif: "bg-slate-100 text-slate-700",
-  candidat: "bg-sky-100 text-sky-800",
-};
+type InstructorTab = "profil" | "planning" | "historique" | "paiements" | "administratif";
 
 const instructorStatusLabels: Record<string, string> = {
   actif: "Actif·ve",
@@ -104,12 +111,50 @@ function isPastInscription(inscription: InstructorInscription, today: string): b
   return !!inscription.end_date && inscription.end_date < today;
 }
 
+/** Une ligne de mission — même grammaire pour le planning et l'historique. */
+function InscriptionRow({ inscription }: { inscription: InstructorInscription }) {
+  return (
+    <CardListItem
+      title={
+        <span className="flex flex-wrap items-center gap-2">
+          <Link to={`/inscriptions/${inscription.id}`} className="text-primary hover:underline">
+            {inscription.code || "—"}
+          </Link>
+          {inscription.language && (
+            <StatusPill tone="neutral" size="sm">
+              {displayLanguageLabel(inscription.language)}
+            </StatusPill>
+          )}
+        </span>
+      }
+      subtitle={
+        <>
+          {inscription.student_name || "—"}
+          {inscription.course_location && ` • ${inscription.course_location}`}
+        </>
+      }
+      meta={
+        <StatusPill tone={toneForStatus(inscription.status || "")}>
+          {getStatusLabel(inscription.status || "", "fr")}
+        </StatusPill>
+      }
+      fields={[
+        {
+          label: "Dates",
+          value: formatInscriptionDates(inscription.start_date, inscription.end_date),
+        },
+      ]}
+    />
+  );
+}
+
 export default function InstructorDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { canEdit } = useUserPermissions();
   const editable = canEdit("formateurs");
   const [showEdit, setShowEdit] = useState(false);
+  const [activeTab, setActiveTab] = useState<InstructorTab>("profil");
   const { confirm, dialog: confirmDialog } = useConfirmAction();
 
   const { data: instructor, isLoading } = useInstructorDetails(id);
@@ -166,7 +211,11 @@ export default function InstructorDetails() {
   if (isLoading || !instructor) {
     return (
       <MainLayout>
-        <div className="text-center py-12 text-muted-foreground">Chargement...</div>
+        <PageShell>
+          <SurfaceCard flush>
+            <div className="py-12 text-center text-muted-foreground">Chargement...</div>
+          </SurfaceCard>
+        </PageShell>
       </MainLayout>
     );
   }
@@ -212,50 +261,34 @@ export default function InstructorDetails() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <Button variant="ghost" onClick={() => navigate("/formateurs")}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Retour
-        </Button>
-
-        {/* Header */}
-        <div className="flex items-start gap-6">
-          <Avatar className="h-20 w-20">
-            <AvatarImage src={instructor.photo_url || undefined} />
-            <AvatarFallback className="text-xl">{initials.toUpperCase()}</AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl font-bold">
+      <PageShell>
+        <PageHeader
+          back={
+            <Button variant="ghost" size="sm" onClick={() => navigate("/formateurs")}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Retour
+            </Button>
+          }
+          title={
+            <span className="flex min-w-0 items-center gap-3">
+              <Avatar className="h-12 w-12 shrink-0 sm:h-16 sm:w-16">
+                <AvatarImage src={instructor.photo_url || undefined} />
+                <AvatarFallback className="text-lg">{initials.toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <span className="min-w-0">
                 {instructor.first_name} {instructor.last_name}
-              </h1>
-              {instructor.status && (
-                <Badge className={instructorStatusStyles[instructor.status] || ""}>
-                  {instructorStatusLabels[instructor.status] || instructor.status}
-                </Badge>
-              )}
-              {instructor.status === "actif" && (
-                <Badge
-                  className={
-                    instructor.availability_status === "disponible"
-                      ? "bg-emerald-100 text-emerald-800"
-                      : instructor.availability_status === "occupe"
-                      ? "bg-amber-100 text-amber-800"
-                      : "bg-red-100 text-red-800"
-                  }
-                >
-                  {instructor.availability_status || "disponible"}
-                </Badge>
-              )}
-            </div>
-            <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+              </span>
+            </span>
+          }
+          description={
+            <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
               {instructor.email && (
                 <span className="flex items-center gap-1">
                   <Mail className="h-3 w-3" /> {instructor.email}
                 </span>
               )}
               {instructor.phone && (
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1 tabular">
                   <Phone className="h-3 w-3" /> {instructor.phone}
                 </span>
               )}
@@ -264,46 +297,84 @@ export default function InstructorDetails() {
                   <MapPin className="h-3 w-3" /> {instructor.city}
                 </span>
               )}
-            </div>
-            <div className="flex flex-wrap gap-1 mt-2">
+            </span>
+          }
+          meta={
+            <>
+              {instructor.status && (
+                <StatusPill tone={instructorStatusTones[instructor.status] ?? "neutral"}>
+                  {instructorStatusLabels[instructor.status] || instructor.status}
+                </StatusPill>
+              )}
+              {instructor.status === "actif" && (
+                <StatusPill
+                  tone={
+                    instructor.availability_status === "disponible"
+                      ? "success"
+                      : instructor.availability_status === "occupe"
+                        ? "warning"
+                        : "danger"
+                  }
+                >
+                  {instructor.availability_status || "disponible"}
+                </StatusPill>
+              )}
               {(instructor.languages || []).map((l) => (
-                <Badge key={l} variant="outline">{displayLanguageLabel(l)}</Badge>
+                <StatusPill key={l} tone="neutral" size="sm">
+                  {displayLanguageLabel(l)}
+                </StatusPill>
               ))}
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {id && (
-              <Button variant="secondary" asChild>
-                <Link to={formateurAssistPath(id, "evaluations")}>
-                  <Eye className="mr-2 h-4 w-4" />
-                  Voir comme le formateur
-                </Link>
-              </Button>
-            )}
-            {editable && instructor.status === "candidat" && (
-              <Button onClick={activateCandidat} disabled={updateInstructor.isPending}>
-                Passer en actif·ve
-              </Button>
-            )}
-            {editable && instructor.status === "actif" && (
-              <Button
-                variant="outline"
-                onClick={deactivateInstructor}
-                disabled={updateInstructor.isPending}
-              >
-                Passer en inactif·ve
-              </Button>
-            )}
-            {editable && (
-              <Button variant="outline" onClick={() => setShowEdit(true)}>
-                Modifier
-              </Button>
-            )}
-          </div>
-        </div>
+            </>
+          }
+          actions={
+            <>
+              {id && (
+                <Button variant="secondary" asChild>
+                  <Link to={formateurAssistPath(id, "evaluations")}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    Voir comme le formateur
+                  </Link>
+                </Button>
+              )}
+              {editable && instructor.status === "candidat" && (
+                <Button onClick={activateCandidat} disabled={updateInstructor.isPending}>
+                  Passer en actif·ve
+                </Button>
+              )}
+              {editable && instructor.status === "actif" && (
+                <Button
+                  variant="outline"
+                  onClick={deactivateInstructor}
+                  disabled={updateInstructor.isPending}
+                >
+                  Passer en inactif·ve
+                </Button>
+              )}
+              {editable && (
+                <Button variant="outline" onClick={() => setShowEdit(true)}>
+                  Modifier
+                </Button>
+              )}
+            </>
+          }
+          tabs={
+            <SegmentedControl<InstructorTab>
+              value={activeTab}
+              onChange={setActiveTab}
+              ariaLabel="Fiche formateur·rice"
+              options={[
+                { value: "profil", label: "Profil", icon: User },
+                { value: "planning", label: "Planning", icon: Calendar, count: upcomingInscriptions.length || undefined },
+                { value: "historique", label: "Historique", icon: Clock, count: pastInscriptions.length || undefined },
+                { value: "paiements", label: "Paiements", icon: CreditCard, count: payments.length || undefined },
+                { value: "administratif", label: "Administratif", icon: FileText },
+              ]}
+            />
+          }
+        />
 
         {instructor.status === "candidat" && (
-          <Alert className="border-sky-200 bg-sky-50 text-sky-950">
+          <Alert className="border-[hsl(var(--tint-blue-ring))] bg-[hsl(var(--tint-blue-bg))] text-[hsl(var(--tint-blue-fg))]">
             <AlertTitle>Candidat·e — pas encore affectable aux inscriptions</AlertTitle>
             <AlertDescription>
               {activationGaps.length === 0 ? (
@@ -316,7 +387,7 @@ export default function InstructorDetails() {
                   <p className="mb-2">
                     Points encore à compléter (n&apos;empêchent pas l&apos;activation) :
                   </p>
-                  <ul className="list-disc pl-5 space-y-0.5">
+                  <ul className="list-disc space-y-0.5 pl-5">
                     {activationGaps.map((gap) => (
                       <li key={gap}>{gap}</li>
                     ))}
@@ -327,216 +398,152 @@ export default function InstructorDetails() {
           </Alert>
         )}
 
-        {/* Tabs */}
-        <Tabs defaultValue="profil">
-          <TabsList>
-            <TabsTrigger value="profil">
-              <User className="mr-1 h-4 w-4" /> Profil
-            </TabsTrigger>
-            <TabsTrigger value="planning">
-              <Calendar className="mr-1 h-4 w-4" /> Planning
-            </TabsTrigger>
-            <TabsTrigger value="historique">
-              <Clock className="mr-1 h-4 w-4" /> Historique
-            </TabsTrigger>
-            <TabsTrigger value="paiements">
-              <CreditCard className="mr-1 h-4 w-4" /> Paiements
-            </TabsTrigger>
-            <TabsTrigger value="administratif">
-              <FileText className="mr-1 h-4 w-4" /> Administratif
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="profil">
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card>
-                <CardHeader><CardTitle className="text-base">Informations</CardTitle></CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Statut</span>
-                    <span className="font-medium">
+        {activeTab === "profil" && (
+          <section role="tabpanel" data-value="profil" className="min-w-0">
+            <CardGrid cols={2}>
+              <SurfaceCard title="Informations" icon={User}>
+                <dl className="space-y-3 text-sm">
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">Statut</dt>
+                    <dd className="font-medium">
                       {instructorStatusLabels[instructor.status || ""] || instructor.status || "—"}
-                    </span>
+                    </dd>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Disponibilité</span>
-                    <span className="font-medium">{instructor.availability_status || "—"}</span>
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">Disponibilité</dt>
+                    <dd className="font-medium">{instructor.availability_status || "—"}</dd>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Tarif horaire</span>
-                    <span className="font-medium">{instructor.hourly_rate ?? "—"} €/h</span>
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">Tarif horaire</dt>
+                    <dd className="font-medium tabular">{instructor.hourly_rate ?? "—"} €/h</dd>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Statut fiscal</span>
-                    <span className="font-medium">
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">Statut fiscal</dt>
+                    <dd className="font-medium">
                       {TAX_STATUSES.find((s) => s.value === instructor.tax_status)?.label ||
                         instructor.tax_status ||
                         "—"}
-                    </span>
+                    </dd>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">SIRET</span>
-                    <span className="font-medium">{instructor.siret || "—"}</span>
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">SIRET</dt>
+                    <dd className="font-medium tabular">{instructor.siret || "—"}</dd>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Note moyenne</span>
-                    <span className="flex items-center gap-1 font-medium">
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">Note moyenne</dt>
+                    <dd className="flex items-center gap-1 font-medium tabular">
                       {instructor.rating_average != null ? (
                         <>
-                          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                          <Star className="h-3 w-3 fill-[hsl(var(--tint-gold-fg))] text-[hsl(var(--tint-gold-fg))]" />
                           {Number(instructor.rating_average).toFixed(1)}
                         </>
                       ) : (
                         "—"
                       )}
-                    </span>
+                    </dd>
                   </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader><CardTitle className="text-base">Bio & Certifications</CardTitle></CardHeader>
-                <CardContent className="space-y-3 text-sm">
+                </dl>
+              </SurfaceCard>
+
+              <SurfaceCard title="Bio & Certifications" icon={FileText}>
+                <div className="space-y-3 text-sm">
                   <p>{instructor.bio || "Aucune bio renseignée."}</p>
                   {Array.isArray(instructor.certifications) &&
                     instructor.certifications.length > 0 && (
                       <div>
                         <span className="text-muted-foreground">Certifications :</span>
-                        <ul className="list-disc ml-4 mt-1">
+                        <ul className="ml-4 mt-1 list-disc">
                           {instructor.certifications.map((c: any, i: number) => (
                             <li key={i}>{typeof c === "string" ? c : c.name || JSON.stringify(c)}</li>
                           ))}
                         </ul>
                       </div>
                     )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
+                </div>
+              </SurfaceCard>
+            </CardGrid>
+          </section>
+        )}
 
-          <TabsContent value="planning">
-            {upcomingInscriptions.length === 0 ? (
-              <p className="text-muted-foreground text-sm py-8 text-center">
-                Aucune formation à venir
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {upcomingInscriptions.map((inscription) => (
-                  <Card key={inscription.id}>
-                    <CardContent className="p-4 flex items-center justify-between gap-4">
-                      <div className="min-w-0">
-                        <p className="font-medium">
-                          <Link
-                            to={`/inscriptions/${inscription.id}`}
-                            className="text-primary hover:underline"
-                          >
-                            {inscription.code || "—"}
-                          </Link>
-                          {inscription.language && (
-                            <Badge variant="outline" className="ml-2">
-                              {displayLanguageLabel(inscription.language)}
-                            </Badge>
-                          )}
-                        </p>
-                        <p className="text-sm text-muted-foreground truncate">
-                          {inscription.student_name || "—"}
-                          {inscription.course_location && ` • ${inscription.course_location}`}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatInscriptionDates(inscription.start_date, inscription.end_date)}
-                        </p>
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className={getStatusStyle(inscription.status || "")}
-                      >
-                        {getStatusLabel(inscription.status || "", "fr")}
-                      </Badge>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
+        {activeTab === "planning" && (
+          <section role="tabpanel" data-value="planning" className="min-w-0">
+            <SurfaceCard flush title="Formations à venir" icon={Calendar}>
+              {upcomingInscriptions.length === 0 ? (
+                <TableEmpty
+                  icon={Calendar}
+                  title="Aucune formation à venir"
+                  description="Les inscriptions affectées à cette personne apparaîtront ici."
+                />
+              ) : (
+                <CardList>
+                  {upcomingInscriptions.map((inscription) => (
+                    <InscriptionRow key={inscription.id} inscription={inscription} />
+                  ))}
+                </CardList>
+              )}
+            </SurfaceCard>
+          </section>
+        )}
 
-          <TabsContent value="historique">
-            {pastInscriptions.length === 0 ? (
-              <p className="text-muted-foreground text-sm py-8 text-center">
-                Aucune formation passée
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {pastInscriptions.map((inscription) => (
-                  <Card key={inscription.id}>
-                    <CardContent className="p-4 flex items-center justify-between gap-4">
-                      <div className="min-w-0">
-                        <p className="font-medium">
-                          <Link
-                            to={`/inscriptions/${inscription.id}`}
-                            className="text-primary hover:underline"
-                          >
-                            {inscription.code || "—"}
-                          </Link>
-                          {inscription.language && (
-                            <Badge variant="outline" className="ml-2">
-                              {displayLanguageLabel(inscription.language)}
-                            </Badge>
-                          )}
-                        </p>
-                        <p className="text-sm text-muted-foreground truncate">
-                          {inscription.student_name || "—"}
-                          {inscription.course_location && ` • ${inscription.course_location}`}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatInscriptionDates(inscription.start_date, inscription.end_date)}
-                        </p>
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className={getStatusStyle(inscription.status || "")}
-                      >
-                        {getStatusLabel(inscription.status || "", "fr")}
-                      </Badge>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
+        {activeTab === "historique" && (
+          <section role="tabpanel" data-value="historique" className="min-w-0">
+            <SurfaceCard flush title="Formations passées" icon={Clock}>
+              {pastInscriptions.length === 0 ? (
+                <TableEmpty
+                  icon={Clock}
+                  title="Aucune formation passée"
+                  description="L'historique des missions terminées apparaîtra ici."
+                />
+              ) : (
+                <CardList>
+                  {pastInscriptions.map((inscription) => (
+                    <InscriptionRow key={inscription.id} inscription={inscription} />
+                  ))}
+                </CardList>
+              )}
+            </SurfaceCard>
+          </section>
+        )}
 
-          <TabsContent value="paiements">
-            {payments.length === 0 ? (
-              <p className="text-muted-foreground text-sm py-8 text-center">
-                Aucun paiement enregistré.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {payments.map((p: any) => (
-                  <Card key={p.id}>
-                    <CardContent className="p-4 flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{Number(p.montant).toFixed(2)} €</p>
-                        <p className="text-sm text-muted-foreground">
+        {activeTab === "paiements" && (
+          <section role="tabpanel" data-value="paiements" className="min-w-0">
+            <SurfaceCard flush title="Paiements" icon={CreditCard}>
+              {payments.length === 0 ? (
+                <TableEmpty
+                  icon={CreditCard}
+                  title="Aucun paiement enregistré."
+                  description="Les périodes de paie créées pour cette personne apparaîtront ici."
+                />
+              ) : (
+                <CardList>
+                  {payments.map((p: any) => (
+                    <CardListItem
+                      key={p.id}
+                      title={<span className="tabular">{Number(p.montant).toFixed(2)} €</span>}
+                      subtitle={
+                        <span className="tabular">
                           {format(new Date(p.periode_debut), "d MMM", { locale: fr })} -{" "}
                           {format(new Date(p.periode_fin), "d MMM yyyy", { locale: fr })}
-                        </p>
-                      </div>
-                      <Badge className={paymentStatusColors[p.statut] || ""}>
-                        {p.statut === "paye" ? "Payé" : "À payer"}
-                      </Badge>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
+                        </span>
+                      }
+                      meta={
+                        <StatusPill tone={p.statut === "paye" ? "success" : "warning"}>
+                          {p.statut === "paye" ? "Payé" : "À payer"}
+                        </StatusPill>
+                      }
+                    />
+                  ))}
+                </CardList>
+              )}
+            </SurfaceCard>
+          </section>
+        )}
 
-          <TabsContent value="administratif">
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Statut administratif</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 text-sm">
+        {activeTab === "administratif" && (
+          <section role="tabpanel" data-value="administratif" className="min-w-0">
+            <CardGrid cols={2}>
+              <SurfaceCard title="Statut administratif" icon={FileText}>
+                <div className="space-y-4 text-sm">
                   {editable ? (
                     <Select
                       value={adminStatut || "unset"}
@@ -551,7 +558,7 @@ export default function InstructorDetails() {
                       }}
                       disabled={updateInstructor.isPending}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger aria-label="Statut administratif">
                         <SelectValue placeholder="Sélectionner un statut" />
                       </SelectTrigger>
                       <SelectContent>
@@ -566,14 +573,11 @@ export default function InstructorDetails() {
                   ) : (
                     <p className="font-medium">{adminStatutLabel(instructor.statut_administratif)}</p>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </SurfaceCard>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Attestation de vigilance</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 text-sm">
+              <SurfaceCard title="Attestation de vigilance" icon={FileText}>
+                <div className="space-y-4 text-sm">
                   {editable ? (
                     <>
                       <div className="space-y-2">
@@ -588,7 +592,7 @@ export default function InstructorDetails() {
                           disabled={updateInstructor.isPending}
                         />
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
                           <Label htmlFor="vigilance-received">Reçue le</Label>
                           <Input
@@ -617,7 +621,7 @@ export default function InstructorDetails() {
                     <div className="space-y-2">
                       <div className="flex justify-between gap-4">
                         <span className="text-muted-foreground">Reçue le</span>
-                        <span className="font-medium">
+                        <span className="font-medium tabular">
                           {instructor.vigilance_attestation_received_at
                             ? format(
                                 new Date(instructor.vigilance_attestation_received_at),
@@ -629,7 +633,7 @@ export default function InstructorDetails() {
                       </div>
                       <div className="flex justify-between gap-4">
                         <span className="text-muted-foreground">Expire le</span>
-                        <span className="font-medium">
+                        <span className="font-medium tabular">
                           {instructor.vigilance_attestation_expires_at
                             ? format(
                                 new Date(instructor.vigilance_attestation_expires_at),
@@ -654,66 +658,61 @@ export default function InstructorDetails() {
                       )}
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </SurfaceCard>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Contrats</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {contracts.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Aucun contrat enregistré.</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {contracts.map((contract) => (
-                        <div
-                          key={contract.id}
-                          className="rounded-lg border p-3 flex items-start justify-between gap-3"
-                        >
-                          <div className="space-y-1">
-                            <p className="font-medium text-sm">
-                              {contract.contract_number ||
-                                `Contrat du ${format(new Date(contract.created_at), "d MMM yyyy", { locale: fr })}`}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {contract.student_or_company || "Mission non renseignée"}
-                              {contract.start_date && contract.end_date && (
-                                <>
-                                  {" "}
-                                  · {format(new Date(contract.start_date), "d MMM yyyy", { locale: fr })}
-                                  {" — "}
-                                  {format(new Date(contract.end_date), "d MMM yyyy", { locale: fr })}
-                                </>
-                              )}
-                            </p>
-                            {contract.pdf_url && (
-                              <a
-                                href={contract.pdf_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-xs text-primary underline"
-                              >
-                                <ExternalLink className="h-3 w-3" />
-                                Voir le PDF
-                              </a>
+              <SurfaceCard title="Contrats" icon={FileText}>
+                {contracts.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Aucun contrat enregistré.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {contracts.map((contract) => (
+                      <div
+                        key={contract.id}
+                        className="flex items-start justify-between gap-3 rounded-[var(--radius)] border border-border p-3"
+                      >
+                        <div className="min-w-0 space-y-1">
+                          <p className="text-sm font-medium">
+                            {contract.contract_number ||
+                              `Contrat du ${format(new Date(contract.created_at), "d MMM yyyy", { locale: fr })}`}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {contract.student_or_company || "Mission non renseignée"}
+                            {contract.start_date && contract.end_date && (
+                              <>
+                                {" "}
+                                · {format(new Date(contract.start_date), "d MMM yyyy", { locale: fr })}
+                                {" — "}
+                                {format(new Date(contract.end_date), "d MMM yyyy", { locale: fr })}
+                              </>
                             )}
-                          </div>
-                          <Badge variant={contract.signed_at ? "default" : "secondary"}>
-                            {contract.signed_at
-                              ? `Signé le ${format(new Date(contract.signed_at), "d MMM yyyy", { locale: fr })}`
-                              : "Non signé"}
-                          </Badge>
+                          </p>
+                          {contract.pdf_url && (
+                            <a
+                              href={contract.pdf_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-primary underline"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                              Voir le PDF
+                            </a>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+                        <StatusPill tone={contract.signed_at ? "success" : "neutral"} size="sm">
+                          {contract.signed_at
+                            ? `Signé le ${format(new Date(contract.signed_at), "d MMM yyyy", { locale: fr })}`
+                            : "Non signé"}
+                        </StatusPill>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </SurfaceCard>
+            </CardGrid>
+          </section>
+        )}
+      </PageShell>
 
       <InstructorFormDialog
         open={showEdit}

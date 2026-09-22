@@ -1,11 +1,10 @@
 import { useRef, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Upload, FileSpreadsheet, Loader2, CheckCircle2 } from "lucide-react";
+import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import { parseFliInscriptionsCsv, FliInscriptionsImportPreview } from "@/lib/fli-inscriptions-csv-import";
 import { useFliInscriptionsImport } from "@/hooks/useFliInscriptionsImport";
 import { toast } from "sonner";
@@ -54,29 +53,33 @@ export function FliInscriptionsImportCard() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Tableur FLI — Inscriptions historiques</CardTitle>
-        <CardDescription>
+    <SurfaceCard
+      title="Tableur FLI — Inscriptions historiques"
+      icon={FileSpreadsheet}
+      description={
+        <>
           Export tableur (séparateur <code>;</code>) : inscriptions, stagiaires, écoles de ski.
           Complète aussi la base moniteurs avec les contacts trouvés.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div
-          className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-muted/30 transition-colors"
+        </>
+      }
+      actions={fileName ? <StatusPill tone="info">{fileName}</StatusPill> : undefined}
+    >
+      <div className="space-y-4">
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".csv,text/csv"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleFile(f);
+          }}
+        />
+        <button
+          type="button"
+          className="w-full cursor-pointer rounded-[var(--radius)] border-2 border-dashed border-border p-6 text-center transition-colors hover:bg-[hsl(var(--surface-sunken))]"
           onClick={() => fileRef.current?.click()}
         >
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".csv,text/csv"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) handleFile(f);
-            }}
-          />
           {fileName ? (
             <div className="flex items-center justify-center gap-2 text-sm">
               <FileSpreadsheet className="h-5 w-5 text-primary" />
@@ -90,21 +93,33 @@ export function FliInscriptionsImportCard() {
               </p>
             </>
           )}
-        </div>
+        </button>
 
         {preview && (
-          <div className="space-y-3 rounded-lg border p-4 bg-muted/20">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-              <div>Lignes lues : <strong>{preview.totalRows}</strong></div>
-              <div>Inscriptions importables : <strong>{preview.importableInscriptions}</strong></div>
-              <div>Stagiaires uniques : <strong>{preview.uniqueStudents}</strong></div>
-              <div>Contacts moniteurs : <strong>{preview.uniqueMonitorContacts}</strong></div>
-            </div>
+          <div className="space-y-3 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))] p-4">
+            <dl className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
+              <div className="min-w-0">
+                <dt className="text-2xs uppercase tracking-wide text-muted-foreground">Lignes lues</dt>
+                <dd className="font-semibold tabular">{preview.totalRows}</dd>
+              </div>
+              <div className="min-w-0">
+                <dt className="text-2xs uppercase tracking-wide text-muted-foreground">Inscriptions importables</dt>
+                <dd className="font-semibold tabular">{preview.importableInscriptions}</dd>
+              </div>
+              <div className="min-w-0">
+                <dt className="text-2xs uppercase tracking-wide text-muted-foreground">Stagiaires uniques</dt>
+                <dd className="font-semibold tabular">{preview.uniqueStudents}</dd>
+              </div>
+              <div className="min-w-0">
+                <dt className="text-2xs uppercase tracking-wide text-muted-foreground">Contacts moniteurs</dt>
+                <dd className="font-semibold tabular">{preview.uniqueMonitorContacts}</dd>
+              </div>
+            </dl>
             <div className="flex flex-wrap gap-2">
               {Object.entries(preview.byStatus).map(([status, count]) => (
-                <Badge key={status} variant="outline">{status}: {count}</Badge>
+                <StatusPill key={status} tone="neutral" size="sm">{status}: {count}</StatusPill>
               ))}
-              <Badge variant="secondary">{preview.withSkiSchool} avec école de ski</Badge>
+              <StatusPill tone="info" size="sm">{preview.withSkiSchool} avec école de ski</StatusPill>
             </div>
 
             <div className="space-y-2 pt-2">
@@ -145,7 +160,7 @@ export function FliInscriptionsImportCard() {
           )}
           Lancer l&apos;import
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </SurfaceCard>
   );
 }

@@ -1,7 +1,6 @@
 import { CheckCircle2, Circle, ListChecks } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import {
   buildInscriptionOpsChecklist,
   checklistCompletion,
@@ -19,43 +18,40 @@ export function InscriptionOpsChecklist({ input }: Props) {
   const { done, total } = checklistCompletion(items);
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <ListChecks className="h-4 w-4" />
-            Checklist opérationnelle
-          </CardTitle>
-          <Badge variant={done === total ? "default" : "secondary"}>
-            {done}/{total}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((item) => (
-            <li key={item.key}>
-              <Link
-                to={item.href || "#"}
-                className={cn(
-                  "flex items-start gap-2 rounded-lg border px-3 py-2.5 text-sm transition-colors hover:bg-muted/60",
-                  item.done ? "border-emerald-200 bg-emerald-50/50" : "border-border"
-                )}
-              >
-                {item.done ? (
-                  <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-emerald-600" />
-                ) : (
-                  <Circle className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
-                )}
-                <span className="min-w-0">
-                  <span className="font-medium block">{item.label}</span>
-                  <span className="text-xs text-muted-foreground">{item.detail}</span>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
+    <SurfaceCard
+      title="Checklist opérationnelle"
+      icon={ListChecks}
+      actions={
+        <StatusPill tone={done === total ? "success" : "neutral"}>
+          {done}/{total}
+        </StatusPill>
+      }
+    >
+      <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map((item) => (
+          <li key={item.key}>
+            <Link
+              to={item.href || "#"}
+              className={cn(
+                "flex items-start gap-2 rounded-[var(--radius)] border px-3 py-2.5 text-sm transition-colors hover:bg-[hsl(var(--surface-sunken))]",
+                item.done
+                  ? "border-[hsl(var(--tint-teal-ring))] bg-[hsl(var(--tint-teal-bg))]"
+                  : "border-border"
+              )}
+            >
+              {item.done ? (
+                <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-[hsl(var(--tint-teal-fg))]" />
+              ) : (
+                <Circle className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
+              )}
+              <span className="min-w-0">
+                <span className="font-medium block">{item.label}</span>
+                <span className="text-xs text-muted-foreground">{item.detail}</span>
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </SurfaceCard>
   );
 }

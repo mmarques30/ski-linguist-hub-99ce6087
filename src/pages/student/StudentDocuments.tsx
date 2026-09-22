@@ -1,6 +1,4 @@
 import { StudentLayout } from "@/components/layout/StudentLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { FileText, Award } from "lucide-react";
 import { CertificatePdfButton } from "@/components/certificates/CertificatePdfButton";
 import {
@@ -9,6 +7,14 @@ import {
   useStudentCertificates,
 } from "@/hooks/useStudentPortal";
 import { format } from "date-fns";
+import {
+  PageHeader,
+  PageShell,
+  StatusPill,
+  SurfaceCard,
+  TableEmpty,
+  TableSkeleton,
+} from "@/components/ui-kit";
 
 const docTypeLabels: Record<string, string> = {
   convention: "Convention de formation",
@@ -31,110 +37,89 @@ export default function StudentDocuments() {
 
   return (
     <StudentLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Mes documents</h1>
-          <p className="text-muted-foreground text-sm">
-            Retrouvez tous vos documents de formation
-          </p>
-        </div>
+      <PageShell>
+        <PageHeader
+          title="Mes documents"
+          description="Retrouvez tous vos documents de formation"
+          icon={FileText}
+          tone="purple"
+        />
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          </div>
+          <SurfaceCard flush>
+            <TableSkeleton rows={4} cols={3} />
+          </SurfaceCard>
         ) : (
           <div className="space-y-4">
             {/* Certificates */}
             {certificates && certificates.length > 0 && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Award className="h-4 w-4 text-primary" />
-                    Certificats
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
+              <SurfaceCard icon={Award} title="Certificats">
+                <ul className="space-y-2">
                   {certificates.map((c) => (
-                    <div
+                    <li
                       key={c.id}
-                      className="flex items-center justify-between p-3 rounded-lg border"
+                      className="flex flex-col gap-2 rounded-[var(--radius)] border border-border p-3 sm:flex-row sm:items-center sm:justify-between"
                     >
-                      <div>
-                        <p className="font-medium">
-                          Certificat de fin de formation
-                        </p>
-                        <p className="text-xs text-muted-foreground">
+                      <div className="min-w-0">
+                        <p className="font-medium">Certificat de fin de formation</p>
+                        <p className="text-xs text-muted-foreground tabular">
                           Délivré le {format(new Date(c.issue_date), "dd/MM/yyyy")}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Bilan de progression Entrée / Sortie
                         </p>
                       </div>
-                      {c.pdf_url && (
-                        <CertificatePdfButton pathOrUrl={c.pdf_url} />
-                      )}
-                    </div>
+                      {c.pdf_url && <CertificatePdfButton pathOrUrl={c.pdf_url} />}
+                    </li>
                   ))}
-                </CardContent>
-              </Card>
+                </ul>
+              </SurfaceCard>
             )}
 
             {/* Documents */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-primary" />
-                  Documents de formation
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {otherDocuments.length > 0 ? (
-                  <div className="space-y-2">
-                    {otherDocuments.map((d) => (
-                      <div
-                        key={d.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-muted/30"
-                      >
-                        <div>
-                          <p className="font-medium text-sm">
-                            {docTypeLabels[d.document_type] || d.document_type}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Envoyé le{" "}
-                            {format(new Date(d.sent_at), "dd/MM/yyyy")} à{" "}
-                            {d.sent_to}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {d.opened_at && (
-                            <Badge variant="outline" className="text-[10px]">
-                              Consulté
-                            </Badge>
-                          )}
-                          {d.pdf_url && (
-                            <CertificatePdfButton
-                              pathOrUrl={d.pdf_url}
-                              label="PDF"
-                            />
-                          )}
-                        </div>
+            <SurfaceCard
+              icon={FileText}
+              title="Documents de formation"
+              flush={otherDocuments.length === 0}
+            >
+              {otherDocuments.length > 0 ? (
+                <ul className="space-y-2">
+                  {otherDocuments.map((d) => (
+                    <li
+                      key={d.id}
+                      className="flex flex-col gap-2 rounded-[var(--radius)] bg-[hsl(var(--surface-sunken))] p-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium">
+                          {docTypeLabels[d.document_type] || d.document_type}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Envoyé le {format(new Date(d.sent_at), "dd/MM/yyyy")} à {d.sent_to}
+                        </p>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="py-8 text-center">
-                    <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                    <p className="text-sm text-muted-foreground">
-                      Aucun document disponible pour le moment.
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      <div className="flex shrink-0 items-center gap-2">
+                        {d.opened_at && (
+                          <StatusPill tone="success" size="sm">
+                            Consulté
+                          </StatusPill>
+                        )}
+                        {d.pdf_url && (
+                          <CertificatePdfButton pathOrUrl={d.pdf_url} label="PDF" />
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <TableEmpty
+                  icon={FileText}
+                  title="Aucun document disponible pour le moment."
+                />
+              )}
+            </SurfaceCard>
           </div>
         )}
-      </div>
+      </PageShell>
     </StudentLayout>
   );
 }

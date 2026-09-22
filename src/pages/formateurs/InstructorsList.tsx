@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -11,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, UserCog } from "lucide-react";
+import { Plus, UserCog } from "lucide-react";
 import { useInstructors, useUpdateInstructor, type Instructor } from "@/hooks/useInstructors";
 import { InstructorCard } from "@/components/formateurs/InstructorCard";
 import { InstructorFormDialog } from "@/components/formateurs/InstructorFormDialog";
@@ -24,6 +23,12 @@ import {
   candidatActivationGaps,
 } from "@/lib/instructor-candidat";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
+import {
+  FilterBar,
+  PageHeader,
+  PageShell,
+  SurfaceCard,
+} from "@/components/ui-kit";
 
 export default function InstructorsList() {
   const navigate = useNavigate();
@@ -72,78 +77,109 @@ export default function InstructorsList() {
       ? "Les nouveaux formateurs créés apparaissent ici en candidat·e jusqu'à activation."
       : "Ajoutez votre premier formateur pour commencer à organiser le planning et les paiements.";
 
+  const statusChipLabel: Record<string, string> = {
+    actif: "Actif·ves",
+    inactif: "Inactif·ves",
+    candidat: "Candidat·es",
+    all: "Tous",
+  };
+
+  /** Rappel des filtres actifs, retirables un à un. */
+  const activeFilters = [
+    search.trim()
+      ? { key: "search", label: `« ${search.trim()} »`, onRemove: () => setSearch("") }
+      : null,
+    langFilter !== "all"
+      ? { key: "lang", label: langFilter, onRemove: () => setLangFilter("all") }
+      : null,
+    statusFilter !== "actif"
+      ? {
+          key: "status",
+          label: statusChipLabel[statusFilter] ?? statusFilter,
+          onRemove: () => setStatusFilter("actif"),
+        }
+      : null,
+    availFilter !== "all"
+      ? { key: "avail", label: availFilter, onRemove: () => setAvailFilter("all") }
+      : null,
+  ].filter((chip): chip is { key: string; label: string; onRemove: () => void } => chip !== null);
+
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Formateur·rices</h1>
-            <p className="text-muted-foreground">
-              Gérez les formateurs, leur planning et leurs paiements
-            </p>
-          </div>
-          {editable && (
-            <Button onClick={() => { setEditing(null); setShowForm(true); }}>
-              <Plus className="mr-2 h-4 w-4" />
-              Ajouter un·e formateur·rice
-            </Button>
-          )}
-        </div>
+      <PageShell>
+        <PageHeader
+          title="Formateur·rices"
+          description="Gérez les formateurs, leur planning et leurs paiements"
+          icon={UserCog}
+          tone="teal"
+          actions={
+            editable ? (
+              <Button onClick={() => { setEditing(null); setShowForm(true); }}>
+                <Plus className="mr-2 h-4 w-4" />
+                Ajouter un·e formateur·rice
+              </Button>
+            ) : undefined
+          }
+        />
 
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher..."
-              className="pl-9"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="instructor-lang-filter">Langue</Label>
-            <Select value={langFilter} onValueChange={setLangFilter}>
-              <SelectTrigger id="instructor-lang-filter" className="w-[190px]">
-                <SelectValue placeholder="Langue" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Toutes</SelectItem>
-                <SelectItem value="anglais">Anglais</SelectItem>
-                <SelectItem value={PORTUGUESE_LABEL_LOWER}>Portugais brésilien</SelectItem>
-                <SelectItem value="russe">Russe</SelectItem>
-                <SelectItem value="néerlandais">Néerlandais</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="instructor-status-filter">Statut</Label>
-            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
-              <SelectTrigger id="instructor-status-filter" className="w-[160px]">
-                <SelectValue placeholder="Statut" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="actif">Actif·ves</SelectItem>
-                <SelectItem value="inactif">Inactif·ves</SelectItem>
-                <SelectItem value="candidat">Candidat·es</SelectItem>
-                <SelectItem value="all">Tous</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="instructor-avail-filter">Disponibilité</Label>
-            <Select value={availFilter} onValueChange={setAvailFilter}>
-              <SelectTrigger id="instructor-avail-filter" className="w-[160px]">
-                <SelectValue placeholder="Disponibilité" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous</SelectItem>
-                <SelectItem value="disponible">Disponible</SelectItem>
-                <SelectItem value="occupe">Occupé</SelectItem>
-                <SelectItem value="indisponible">Indisponible</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <SurfaceCard>
+          <FilterBar
+            search={{
+              value: search,
+              onChange: setSearch,
+              placeholder: "Rechercher...",
+              ariaLabel: "Rechercher un·e formateur·rice",
+            }}
+            filters={
+              <>
+                <div className="min-w-0 space-y-1">
+                  <Label htmlFor="instructor-lang-filter">Langue</Label>
+                  <Select value={langFilter} onValueChange={setLangFilter}>
+                    <SelectTrigger id="instructor-lang-filter" className="w-full sm:w-[190px]">
+                      <SelectValue placeholder="Langue" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Toutes</SelectItem>
+                      <SelectItem value="anglais">Anglais</SelectItem>
+                      <SelectItem value={PORTUGUESE_LABEL_LOWER}>Portugais brésilien</SelectItem>
+                      <SelectItem value="russe">Russe</SelectItem>
+                      <SelectItem value="néerlandais">Néerlandais</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="min-w-0 space-y-1">
+                  <Label htmlFor="instructor-status-filter">Statut</Label>
+                  <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+                    <SelectTrigger id="instructor-status-filter" className="w-full sm:w-[160px]">
+                      <SelectValue placeholder="Statut" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="actif">Actif·ves</SelectItem>
+                      <SelectItem value="inactif">Inactif·ves</SelectItem>
+                      <SelectItem value="candidat">Candidat·es</SelectItem>
+                      <SelectItem value="all">Tous</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="min-w-0 space-y-1">
+                  <Label htmlFor="instructor-avail-filter">Disponibilité</Label>
+                  <Select value={availFilter} onValueChange={setAvailFilter}>
+                    <SelectTrigger id="instructor-avail-filter" className="w-full sm:w-[160px]">
+                      <SelectValue placeholder="Disponibilité" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous</SelectItem>
+                      <SelectItem value="disponible">Disponible</SelectItem>
+                      <SelectItem value="occupe">Occupé</SelectItem>
+                      <SelectItem value="indisponible">Indisponible</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            }
+            activeFilters={activeFilters}
+          />
+        </SurfaceCard>
 
         {isLoading ? (
           <CardGridSkeleton count={6} />
@@ -162,7 +198,7 @@ export default function InstructorsList() {
             } : undefined}
           />
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {instructors.map((inst) => (
               <InstructorCard
                 key={inst.id}
@@ -185,7 +221,7 @@ export default function InstructorsList() {
             ))}
           </div>
         )}
-      </div>
+      </PageShell>
 
       <InstructorFormDialog
         open={showForm}

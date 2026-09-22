@@ -1,7 +1,5 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -10,9 +8,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Calendar, MapPin, Users, Clock, Plus, ChevronLeft, ChevronRight, GraduationCap } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import {
+  CardGrid,
+  FilterBar,
+  MeterRow,
+  PageHeader,
+  PageShell,
+  StatusPill,
+  SurfaceCard,
+  TableEmpty,
+  STATE_COLORS,
+} from "@/components/ui-kit";
+import type { PillTone } from "@/components/ui-kit";
 
 const translations = {
   title: {
@@ -138,10 +147,11 @@ interface ClassSession {
 
 const classes: ClassSession[] = [];
 
-const statusStyles = {
-  upcoming: "bg-blue-100 text-blue-800",
-  active: "bg-emerald-100 text-emerald-800",
-  completed: "bg-gray-100 text-gray-800",
+/** Teintes d'état — `toneForStatus` ne connaît pas ces trois codes d'écran. */
+const statusTones: Record<ClassSession["status"], PillTone> = {
+  upcoming: "info",
+  active: "success",
+  completed: "neutral",
 };
 
 const timeLabels = {
@@ -162,148 +172,150 @@ export default function Classes() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">{t(translations.title)}</h1>
-            <p className="text-muted-foreground">
-              {t(translations.subtitle)}
-            </p>
-          </div>
-          {editable && (
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              {t(translations.newSession)}
-            </Button>
-          )}
-        </div>
+      <PageShell>
+        <PageHeader
+          title={t(translations.title)}
+          description={t(translations.subtitle)}
+          icon={GraduationCap}
+          tone="blue"
+          actions={
+            editable ? (
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                {t(translations.newSession)}
+              </Button>
+            ) : undefined
+          }
+        />
 
         {/* Calendar Navigation */}
-        <div className="flex items-center justify-between rounded-lg border bg-card p-4">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon">
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <h2 className="text-lg font-semibold">Janvier 2026</h2>
-            <Button variant="outline" size="icon">
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="flex items-center gap-3">
-            <Select defaultValue="all">
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Langue" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t(translations.allLanguages)}</SelectItem>
-                <SelectItem value="english">{t(translations.english)}</SelectItem>
-                <SelectItem value="portuguese">{t(translations.portuguese)}</SelectItem>
-                <SelectItem value="russian">{t(translations.russian)}</SelectItem>
-                <SelectItem value="dutch">{t(translations.dutch)}</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select defaultValue="all">
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Lieu" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t(translations.allLocations)}</SelectItem>
-                <SelectItem value="valdisere">Val d'Isère</SelectItem>
-                <SelectItem value="courchevel">Courchevel</SelectItem>
-                <SelectItem value="meribel">Méribel</SelectItem>
-                <SelectItem value="lesarcs">Les Arcs</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <SurfaceCard
+          title="Janvier 2026"
+          actions={
+            <div className="flex items-center gap-1">
+              <Button variant="outline" size="icon" className="h-8 w-8" aria-label="Mois précédent">
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="icon" className="h-8 w-8" aria-label="Mois suivant">
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          }
+        >
+          <FilterBar
+            filters={
+              <>
+                <Select defaultValue="all">
+                  <SelectTrigger className="w-full sm:w-[170px]" aria-label={t(translations.allLanguages)}>
+                    <SelectValue placeholder="Langue" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t(translations.allLanguages)}</SelectItem>
+                    <SelectItem value="english">{t(translations.english)}</SelectItem>
+                    <SelectItem value="portuguese">{t(translations.portuguese)}</SelectItem>
+                    <SelectItem value="russian">{t(translations.russian)}</SelectItem>
+                    <SelectItem value="dutch">{t(translations.dutch)}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select defaultValue="all">
+                  <SelectTrigger className="w-full sm:w-[170px]" aria-label={t(translations.allLocations)}>
+                    <SelectValue placeholder="Lieu" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t(translations.allLocations)}</SelectItem>
+                    <SelectItem value="valdisere">Val d&apos;Isère</SelectItem>
+                    <SelectItem value="courchevel">Courchevel</SelectItem>
+                    <SelectItem value="meribel">Méribel</SelectItem>
+                    <SelectItem value="lesarcs">Les Arcs</SelectItem>
+                  </SelectContent>
+                </Select>
+              </>
+            }
+          />
+        </SurfaceCard>
 
         {/* Classes Grid or Empty State */}
         {classes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border bg-card">
-            <GraduationCap className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium">{t(translations.noSessionsTitle)}</h3>
-            <p className="text-muted-foreground mt-1 max-w-sm">
-              {t(translations.noSessionsDesc)}
-            </p>
-          </div>
+          <SurfaceCard flush>
+            <TableEmpty
+              icon={GraduationCap}
+              title={t(translations.noSessionsTitle)}
+              description={t(translations.noSessionsDesc)}
+            />
+          </SurfaceCard>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            {classes.map((session) => (
-              <Card key={session.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg">{session.language}</CardTitle>
-                      <p className="text-sm text-muted-foreground">
-                        {t(translations.level)} {session.level}
-                      </p>
-                    </div>
-                    <Badge className={cn(statusStyles[session.status])}>
+          <CardGrid cols={2}>
+            {classes.map((session) => {
+              const full = session.enrolled >= session.capacity;
+              return (
+                <SurfaceCard
+                  key={session.id}
+                  interactive
+                  title={session.language}
+                  description={`${t(translations.level)} ${session.level}`}
+                  actions={
+                    <StatusPill tone={statusTones[session.status]}>
                       {statusLabels[session.status]}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      <span>{session.startDate} - {session.endDate}</span>
+                    </StatusPill>
+                  }
+                  footer={
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" className="flex-1">
+                        {t(translations.viewStudents)}
+                      </Button>
+                      <Button variant="outline" size="sm" className="flex-1">
+                        {t(translations.editSession)}
+                      </Button>
                     </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Clock className="h-4 w-4" />
-                      <span>{timeLabels[session.time]}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
-                      <span>{session.location}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Users className="h-4 w-4" />
-                      <span>{session.enrolled}/{session.capacity} {t(translations.enrolled)}</span>
-                    </div>
-                  </div>
+                  }
+                >
+                  <div className="space-y-4">
+                    <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Calendar className="h-4 w-4 shrink-0" />
+                        <span className="min-w-0 truncate tabular">{session.startDate} - {session.endDate}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Clock className="h-4 w-4 shrink-0" />
+                        <span className="tabular">{timeLabels[session.time]}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <MapPin className="h-4 w-4 shrink-0" />
+                        <span className="min-w-0 truncate">{session.location}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Users className="h-4 w-4 shrink-0" />
+                        <span className="tabular">{session.enrolled}/{session.capacity} {t(translations.enrolled)}</span>
+                      </div>
+                    </dl>
 
-                  {/* Capacity Bar */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">{t(translations.capacity)}</span>
-                      <span className={cn(
-                        "font-medium",
-                        session.enrolled >= session.capacity ? "text-red-600" : "text-emerald-600"
-                      )}>
-                        {session.enrolled >= session.capacity 
-                          ? t(translations.full) 
-                          : `${session.capacity - session.enrolled} ${t(translations.availableSpots)}`}
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={cn(
-                          "h-full rounded-full transition-all",
-                          session.enrolled >= session.capacity 
-                            ? "bg-red-500" 
-                            : "bg-primary"
-                        )}
-                        style={{ width: `${(session.enrolled / session.capacity) * 100}%` }}
-                      />
-                    </div>
+                    {/* Capacity Bar */}
+                    <MeterRow
+                      label={t(translations.capacity)}
+                      value={session.enrolled}
+                      max={session.capacity}
+                      color={full ? STATE_COLORS.critical : "hsl(var(--chart-1))"}
+                      display={
+                        <span
+                          className={
+                            full
+                              ? "text-[hsl(var(--status-critical))]"
+                              : "text-[hsl(var(--status-good))]"
+                          }
+                        >
+                          {full
+                            ? t(translations.full)
+                            : `${session.capacity - session.enrolled} ${t(translations.availableSpots)}`}
+                        </span>
+                      }
+                    />
                   </div>
-
-                  <div className="flex items-center gap-2 pt-2 border-t">
-                    <Button variant="outline" size="sm" className="flex-1">
-                      {t(translations.viewStudents)}
-                    </Button>
-                    <Button variant="outline" size="sm" className="flex-1">
-                      {t(translations.editSession)}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                </SurfaceCard>
+              );
+            })}
+          </CardGrid>
         )}
-      </div>
+      </PageShell>
     </MainLayout>
   );
 }

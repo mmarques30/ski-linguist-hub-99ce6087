@@ -1,9 +1,15 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { FileText } from "lucide-react";
+import { ArrowRight, FileText, Info, Settings2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { EmptyState } from "@/components/common/EmptyState";
+import {
+  PageHeader,
+  PageShell,
+  StatusPill,
+  SurfaceCard,
+  TableEmpty,
+} from "@/components/ui-kit";
 
 const translations = {
   title: {
@@ -36,34 +42,79 @@ const translations = {
     "pt-BR": "Modelos de inscrição",
     en: "Enrollment templates",
   },
+  notConnected: {
+    fr: "Bibliothèque non connectée",
+    "pt-BR": "Biblioteca não conectada",
+    en: "Library not connected",
+  },
+  whereToLook: {
+    fr: "Où trouver les documents",
+    "pt-BR": "Onde encontrar os documentos",
+    en: "Where to find documents",
+  },
 };
 
+/**
+ * Page Documents — écran d'aiguillage.
+ *
+ * Aucune bibliothèque centrale n'est branchée ici : la page n'affiche donc
+ * aucune liste simulée. Elle dit explicitement où vivent réellement les
+ * documents (fiche d'inscription) et mène aux deux écrans qui les portent.
+ */
 export default function Documents() {
   const { t } = useLanguage();
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">{t(translations.title)}</h1>
-          <p className="text-muted-foreground">{t(translations.subtitle)}</p>
-        </div>
-
-        <EmptyState
+      <PageShell>
+        <PageHeader
+          title={t(translations.title)}
+          description={t(translations.subtitle)}
           icon={FileText}
-          title={t(translations.noDocumentsTitle)}
-          description={t(translations.noDocumentsDesc)}
-        >
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <Button asChild variant="default">
-              <Link to="/inscriptions">{t(translations.linkInscriptions)}</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link to="/admin/registration-documents">{t(translations.linkTemplates)}</Link>
-            </Button>
-          </div>
-        </EmptyState>
-      </div>
+          tone="blue"
+          meta={
+            <StatusPill tone="warning" icon={Info}>
+              {t(translations.notConnected)}
+            </StatusPill>
+          }
+          actions={
+            <>
+              <Button asChild>
+                <Link to="/inscriptions">
+                  {t(translations.linkInscriptions)}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/admin/registration-documents">
+                  <Settings2 className="mr-2 h-4 w-4" />
+                  {t(translations.linkTemplates)}
+                </Link>
+              </Button>
+            </>
+          }
+        />
+
+        <SurfaceCard title={t(translations.whereToLook)} flush>
+          <TableEmpty
+            icon={FileText}
+            title={t(translations.noDocumentsTitle)}
+            description={t(translations.noDocumentsDesc)}
+            action={
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <Button asChild>
+                  <Link to="/inscriptions">{t(translations.linkInscriptions)}</Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link to="/admin/registration-documents">
+                    {t(translations.linkTemplates)}
+                  </Link>
+                </Button>
+              </div>
+            }
+          />
+        </SurfaceCard>
+      </PageShell>
     </MainLayout>
   );
 }

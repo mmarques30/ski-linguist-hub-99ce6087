@@ -1,6 +1,4 @@
 import { StudentLayout } from "@/components/layout/StudentLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { ClipboardList, CheckCircle, Clock } from "lucide-react";
 import { useStudentProfile, useStudentTests } from "@/hooks/useStudentPortal";
 import { format } from "date-fns";
@@ -8,6 +6,14 @@ import {
   pisteLabelFromPlacementAnswers,
   studentFacingPisteFromCecrl,
 } from "@/lib/placement-test-engine";
+import {
+  PageHeader,
+  PageShell,
+  StatusPill,
+  SurfaceCard,
+  TableEmpty,
+  TableSkeleton,
+} from "@/components/ui-kit";
 
 /**
  * Résultats du test de niveau — le passage du test se fait à l'inscription
@@ -26,103 +32,89 @@ export default function StudentTest() {
 
   return (
     <StudentLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Test de niveau</h1>
-          <p className="text-muted-foreground text-sm">
-            Consultez ici le résultat de votre test. Le passage se fait lors de
-            l&apos;inscription en ligne.
-          </p>
-        </div>
+      <PageShell>
+        <PageHeader
+          title="Test de niveau"
+          description="Consultez ici le résultat de votre test. Le passage se fait lors de l'inscription en ligne."
+          icon={ClipboardList}
+          tone="blue"
+        />
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          </div>
+          <SurfaceCard flush>
+            <TableSkeleton rows={3} cols={3} />
+          </SurfaceCard>
         ) : (
           <div className="space-y-4">
             {pendingTests.length > 0 && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-amber-500" />
-                    Test en cours
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
+              <SurfaceCard icon={Clock} title="Test en cours">
+                <ul className="space-y-3">
                   {pendingTests.map((t) => (
-                    <div
+                    <li
                       key={t.id}
-                      className="flex items-center justify-between p-3 rounded-lg border"
+                      className="flex flex-col gap-2 rounded-[var(--radius)] border border-border p-3 sm:flex-row sm:items-start sm:justify-between"
                     >
-                      <div>
+                      <div className="min-w-0">
                         <p className="font-medium">{t.language}</p>
                         <p className="text-xs text-muted-foreground">
                           Commencé le {format(new Date(t.created_at), "dd/MM/yyyy")}
                         </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Reprenez le test via le lien d&apos;inscription reçu
-                          par e-mail, ou contactez FLI.
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Reprenez le test via le lien d&apos;inscription reçu par e-mail, ou
+                          contactez FLI.
                         </p>
                       </div>
-                      <Badge variant="outline">En cours</Badge>
-                    </div>
+                      <StatusPill tone="warning" size="sm" className="shrink-0 self-start">
+                        En cours
+                      </StatusPill>
+                    </li>
                   ))}
-                </CardContent>
-              </Card>
+                </ul>
+              </SurfaceCard>
             )}
 
             {completedTests.length > 0 && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-emerald-500" />
-                    Tests complétés
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
+              <SurfaceCard icon={CheckCircle} title="Tests complétés">
+                <ul className="space-y-3">
                   {completedTests.map((t) => (
-                    <div
+                    <li
                       key={t.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                      className="flex items-start justify-between gap-3 rounded-[var(--radius)] bg-[hsl(var(--surface-sunken))] p-3"
                     >
-                      <div>
+                      <div className="min-w-0">
                         <p className="font-medium">{t.language}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {t.completed_at &&
-                            format(new Date(t.completed_at), "dd/MM/yyyy")}
+                        <p className="text-xs text-muted-foreground tabular">
+                          {t.completed_at && format(new Date(t.completed_at), "dd/MM/yyyy")}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <Badge className="mb-1">{pisteFor(t)}</Badge>
+                      <div className="shrink-0 text-right">
+                        <StatusPill tone="success" size="sm" className="mb-1">
+                          {pisteFor(t)}
+                        </StatusPill>
                         {t.score_percentage != null && (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground tabular">
                             Score : {t.score_percentage}%
                           </p>
                         )}
                       </div>
-                    </div>
+                    </li>
                   ))}
-                </CardContent>
-              </Card>
+                </ul>
+              </SurfaceCard>
             )}
 
             {tests?.length === 0 && (
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="font-semibold mb-2">Aucun résultat pour l&apos;instant</h3>
-                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                    Le test de niveau se passe lors de l&apos;inscription
-                    publique. Une fois complété, votre piste apparaîtra ici.
-                    Contactez FLI si vous devez le (re)passer.
-                  </p>
-                </CardContent>
-              </Card>
+              <SurfaceCard flush>
+                <TableEmpty
+                  icon={ClipboardList}
+                  title="Aucun résultat pour l'instant"
+                  description="Le test de niveau se passe lors de l'inscription publique. Une fois complété, votre piste apparaîtra ici. Contactez FLI si vous devez le (re)passer."
+                />
+              </SurfaceCard>
             )}
           </div>
         )}
-      </div>
+      </PageShell>
     </StudentLayout>
   );
 }

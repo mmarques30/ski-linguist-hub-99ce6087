@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatusPill, SurfaceCard, toneForStatus } from "@/components/ui-kit";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Euro, Pencil, Plus, Trash2 } from "lucide-react";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
 import {
   FUNDING_ORGANIZATION_OPTIONS,
@@ -331,15 +330,17 @@ export function InscriptionFundingCard({
     !!opco;
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between gap-2">
-        <CardTitle className="text-base">Financement &amp; propositions</CardTitle>
+    <SurfaceCard
+      title={"Financement & propositions"}
+      icon={Euro}
+      bodyClassName="space-y-6"
+      actions={
         <Button size="sm" variant="outline" onClick={openCreate}>
           <Plus className="h-3.5 w-3.5 mr-1" /> Proposition
         </Button>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-3 rounded-lg border border-border p-3">
+      }
+    >
+        <div className="space-y-3 rounded-[var(--radius)] border border-border p-3">
           <p className="text-sm font-medium">Montants inscription</p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-1">
@@ -475,19 +476,23 @@ export function InscriptionFundingCard({
               {proposals.map((p) => (
                 <li
                   key={p.id}
-                  className="rounded-lg border border-border p-3 text-sm space-y-2"
+                  className="rounded-[var(--radius)] border border-border p-3 text-sm space-y-2"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="space-y-1">
                       <div className="flex flex-wrap gap-1">
-                        <Badge variant="outline">{proposalStatusLabel(p.status)}</Badge>
-                        <Badge variant="secondary">{proposalPayerLabel(p.payer_type)}</Badge>
-                        <Badge variant="outline">
+                        <StatusPill tone={toneForStatus(p.status)} size="sm">
+                          {proposalStatusLabel(p.status)}
+                        </StatusPill>
+                        <StatusPill tone="neutral" size="sm">
+                          {proposalPayerLabel(p.payer_type)}
+                        </StatusPill>
+                        <StatusPill tone="info" size="sm">
                           {proposalFormulaLabel(p.payment_formula)}
-                        </Badge>
+                        </StatusPill>
                       </div>
                       <p className="font-medium">{p.funding_organization}</p>
-                      <p className="text-muted-foreground text-xs">
+                      <p className="text-muted-foreground text-xs tabular">
                         Demandé {p.amount_requested ?? "—"} € · Accordé{" "}
                         {p.amount_granted ?? "—"} € · À régler {p.payment_amount ?? "—"} €
                       </p>
@@ -538,7 +543,6 @@ export function InscriptionFundingCard({
             </ul>
           )}
         </div>
-      </CardContent>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -567,7 +571,7 @@ export function InscriptionFundingCard({
       </Dialog>
 
       {confirmDialog}
-    </Card>
+    </SurfaceCard>
   );
 }
 
@@ -747,7 +751,7 @@ function OpcoDetailsEditor({
   }, [initial]);
 
   return (
-    <div className="rounded-lg border border-border p-3 space-y-3 bg-muted/30">
+    <div className="rounded-[var(--radius)] border border-border p-3 space-y-3 bg-[hsl(var(--surface-sunken))]">
       <p className="text-sm font-medium">Infos OPCO (collecte inscription)</p>
       <div className="grid gap-2 sm:grid-cols-2">
         <div className="space-y-1">

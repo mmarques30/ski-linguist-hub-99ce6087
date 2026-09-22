@@ -3,7 +3,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { StatusPill } from "@/components/ui-kit";
 import { Upload, FileSpreadsheet, Loader2, CheckCircle2 } from "lucide-react";
 import { parseEsfDirectorsCsv, EsfDirectorsImportPreview } from "@/lib/esf-directors-csv-import";
 import { useEsfDirectorsImport } from "@/hooks/useEsfDirectorsImport";
@@ -69,7 +69,7 @@ export function EsfDirectorsImportDialog({ open, onOpenChange }: Props) {
 
         <div className="space-y-4">
           <div
-            className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-muted/30 transition-colors"
+            className="cursor-pointer rounded-[var(--radius)] border-2 border-dashed border-border p-8 text-center transition-colors hover:bg-[hsl(var(--surface-sunken))]"
             onClick={() => fileRef.current?.click()}
           >
             <input
@@ -87,9 +87,9 @@ export function EsfDirectorsImportDialog({ open, onOpenChange }: Props) {
                 <FileSpreadsheet className="h-8 w-8 mx-auto text-primary" />
                 <p className="font-medium">{fileName}</p>
                 <div className="flex flex-wrap justify-center gap-2">
-                  <Badge variant="secondary">{preview.validRows} ESF</Badge>
-                  <Badge variant="outline">{preview.withDirectorEmail} emails dir.</Badge>
-                  <Badge variant="outline">{preview.withDirectorPhone} tél. dir.</Badge>
+                  <StatusPill tone="info" size="sm">{preview.validRows} ESF</StatusPill>
+                  <StatusPill tone="neutral" size="sm">{preview.withDirectorEmail} emails dir.</StatusPill>
+                  <StatusPill tone="neutral" size="sm">{preview.withDirectorPhone} tél. dir.</StatusPill>
                 </div>
               </div>
             ) : (

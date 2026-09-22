@@ -33,8 +33,8 @@ export function AssistStudentRoute({ children }: Props) {
 
   if (loading || permsLoading || (user && !roleResolved)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <div className="h-10 w-10 animate-spin rounded-pill border-4 border-primary border-t-transparent" />
       </div>
     );
   }

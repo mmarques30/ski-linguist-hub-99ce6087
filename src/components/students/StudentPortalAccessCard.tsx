@@ -1,9 +1,7 @@
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Eye, UserCheck, UserX, Mail, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -15,6 +13,7 @@ import {
   useStudentPortalEnabled,
   useStudentPortalInviteLog,
 } from "@/hooks/useStudentPortalSettings";
+import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 
 interface StudentPortalAccessCardProps {
   studentId: string;
@@ -74,30 +73,33 @@ export function StudentPortalAccessCard({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          {hasPortalAccount ? (
-            <UserCheck className="h-4 w-4 text-emerald-600" />
-          ) : (
-            <UserX className="h-4 w-4 text-muted-foreground" />
-          )}
-          Espace stagiaire
-        </CardTitle>
-        <CardDescription>
-          Accès au portail /student/* pour {studentName}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex flex-wrap gap-2">
-          <Badge variant={hasPortalAccount ? "default" : "outline"}>
+    <SurfaceCard
+      icon={hasPortalAccount ? UserCheck : UserX}
+      title="Espace stagiaire"
+      description={`Accès au portail /student/* pour ${studentName}`}
+      actions={
+        <Button asChild variant="default" size="sm">
+          <Link to={assistPath}>
+            <Eye className="mr-2 h-4 w-4" />
+            Voir comme le stagiaire
+          </Link>
+        </Button>
+      }
+    >
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusPill tone={hasPortalAccount ? "success" : "neutral"} dot>
             {hasPortalAccount ? "Compte lié" : "Compte non créé"}
-          </Badge>
-          {email && <Badge variant="secondary">{email}</Badge>}
+          </StatusPill>
+          {email && (
+            <StatusPill tone="neutral" icon={Mail}>
+              {email}
+            </StatusPill>
+          )}
           {!settingLoading && (
-            <Badge variant={portalEnabled ? "default" : "outline"}>
+            <StatusPill tone={portalEnabled ? "info" : "neutral"}>
               {portalEnabled ? "Invitations ouvertes" : "Invitations fermées"}
-            </Badge>
+            </StatusPill>
           )}
         </div>
 
@@ -169,16 +171,7 @@ export function StudentPortalAccessCard({
           badge="Admin"
           badgeVariant="outline"
         />
-
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="default" size="sm">
-            <Link to={assistPath}>
-              <Eye className="mr-2 h-4 w-4" />
-              Voir comme le stagiaire
-            </Link>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </SurfaceCard>
   );
 }

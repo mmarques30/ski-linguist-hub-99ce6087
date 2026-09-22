@@ -27,10 +27,10 @@ export function SeasonSelector({ value, onChange }: Props) {
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex min-w-0 flex-wrap items-center gap-2">
       <span className="text-sm font-medium text-muted-foreground">{t(translations.label)} :</span>
       <Select value={value || "all"} onValueChange={handleChange}>
-        <SelectTrigger className="w-[220px]">
+        <SelectTrigger className="w-full sm:w-[220px]">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -38,7 +38,7 @@ export function SeasonSelector({ value, onChange }: Props) {
           {seasons?.map((s) => (
             <SelectItem key={s.id} value={s.id}>
               <span className="flex items-center gap-1.5">
-                {s.is_current && <Star className="h-3 w-3 text-[hsl(var(--fli-yellow))] fill-current" />}
+                {s.is_current && <Star className="h-3 w-3 fill-current text-[hsl(var(--tint-gold-fg))]" />}
                 {s.name}
               </span>
             </SelectItem>

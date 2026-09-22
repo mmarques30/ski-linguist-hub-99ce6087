@@ -1,11 +1,17 @@
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Mail, CreditCard, FileText, Clock, History, Circle } from "lucide-react";
+import { Mail, CreditCard, FileText, Clock, History, Circle } from "lucide-react";
+import {
+  ActivityFeed,
+  StatusPill,
+  SurfaceCard,
+  toneForStatus,
+  type FeedItem,
+} from "@/components/ui-kit";
+import type { TileTone } from "@/components/ui-kit";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   useInscriptionTimeline,
-  type InscriptionTimelineEvent,
   type InscriptionTimelineEventType,
 } from "@/hooks/useInscriptionTimeline";
 
@@ -18,6 +24,16 @@ const TYPE_ICONS: Record<InscriptionTimelineEventType, typeof History> = {
   status: Circle,
 };
 
+/** Teinte de la puce du fil — une famille d'événement, une couleur stable. */
+const TYPE_TONES: Record<InscriptionTimelineEventType, TileTone> = {
+  created: "navy",
+  email: "blue",
+  payment: "teal",
+  document: "purple",
+  schedule: "gold",
+  status: "neutral",
+};
+
 interface InscriptionTimelineCardProps {
   inscriptionId: string;
 }
@@ -27,68 +43,51 @@ export function InscriptionTimelineCard({ inscriptionId }: InscriptionTimelineCa
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-10">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
+      <SurfaceCard
+        title="Historique & événements"
+        description="Chronologie des actions liées à cette inscription"
+        icon={History}
+      >
+        <div className="space-y-4">
+          {[0, 1, 2, 3].map((index) => (
+            <div key={index} className="flex gap-3">
+              <Skeleton className="h-8 w-8 shrink-0 rounded-pill" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-3 w-32" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </SurfaceCard>
     );
   }
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Historique & événements</CardTitle>
-        <CardDescription>
-          Chronologie des actions liées à cette inscription
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {events.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Aucun événement enregistré pour le moment.</p>
-        ) : (
-          <div className="space-y-4">
-            {events.map((event, index) => (
-              <TimelineRow key={event.id} event={event} isLast={index === events.length - 1} />
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function TimelineRow({
-  event,
-  isLast,
-}: {
-  event: InscriptionTimelineEvent;
-  isLast: boolean;
-}) {
-  const Icon = TYPE_ICONS[event.type];
+  const items: FeedItem[] = events.map((event) => ({
+    id: event.id,
+    title: event.title,
+    description: event.description || undefined,
+    timestamp: format(new Date(event.at), "dd MMM yyyy à HH:mm", { locale: fr }),
+    icon: TYPE_ICONS[event.type],
+    tone: TYPE_TONES[event.type],
+    trailing: event.status ? (
+      <StatusPill tone={toneForStatus(event.status)} size="sm">
+        {event.status}
+      </StatusPill>
+    ) : undefined,
+  }));
 
   return (
-    <div className="flex gap-3">
-      <div className="flex flex-col items-center">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full border bg-muted">
-          <Icon className="h-4 w-4 text-muted-foreground" />
-        </div>
-        {!isLast && <div className="w-px flex-1 bg-border mt-1 min-h-[16px]" />}
-      </div>
-      <div className="flex-1 pb-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="font-medium text-sm">{event.title}</p>
-          <span className="text-xs text-muted-foreground">
-            {format(new Date(event.at), "dd MMM yyyy à HH:mm", { locale: fr })}
-          </span>
-        </div>
-        {event.description && (
-          <p className="text-sm text-muted-foreground mt-0.5">{event.description}</p>
-        )}
-        {event.status && (
-          <Badge variant="outline" className="mt-1 text-xs">{event.status}</Badge>
-        )}
-      </div>
-    </div>
+    <SurfaceCard
+      title="Historique & événements"
+      description="Chronologie des actions liées à cette inscription"
+      icon={History}
+    >
+      <ActivityFeed
+        items={items}
+        connected
+        emptyMessage="Aucun événement enregistré pour le moment."
+      />
+    </SurfaceCard>
   );
 }

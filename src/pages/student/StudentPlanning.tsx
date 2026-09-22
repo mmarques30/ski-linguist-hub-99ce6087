@@ -1,10 +1,16 @@
 import { StudentLayout } from "@/components/layout/StudentLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, MapPin, User } from "lucide-react";
 import { useStudentProfile, useStudentSessions } from "@/hooks/useStudentPortal";
 import { format, isAfter, isBefore } from "date-fns";
 import { fr } from "date-fns/locale";
+import {
+  PageHeader,
+  PageShell,
+  StatusPill,
+  SurfaceCard,
+  TableEmpty,
+  TableSkeleton,
+} from "@/components/ui-kit";
 
 export default function StudentPlanning() {
   const { data: student } = useStudentProfile();
@@ -19,12 +25,12 @@ export default function StudentPlanning() {
   );
 
   const SessionCard = ({ session }: { session: any }) => (
-    <div className="flex items-start justify-between p-3 rounded-lg border">
-      <div className="space-y-1">
-        <p className="font-medium text-sm">{session.title}</p>
-        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+    <li className="flex flex-col gap-2 rounded-[var(--radius)] border border-border p-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0 space-y-1">
+        <p className="text-sm font-medium">{session.title}</p>
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
+            <Clock className="h-3 w-3 shrink-0" />
             {format(new Date(session.start_datetime), "EEEE d MMMM — HH:mm", {
               locale: fr,
             })}{" "}
@@ -32,78 +38,69 @@ export default function StudentPlanning() {
           </span>
           {session.location && (
             <span className="flex items-center gap-1">
-              <MapPin className="h-3 w-3" />
+              <MapPin className="h-3 w-3 shrink-0" />
               {session.location}
               {session.room ? ` — ${session.room}` : ""}
             </span>
           )}
           {session.instructors && (
             <span className="flex items-center gap-1">
-              <User className="h-3 w-3" />
+              <User className="h-3 w-3 shrink-0" />
               {session.instructors.first_name} {session.instructors.last_name}
             </span>
           )}
         </div>
       </div>
-      <Badge variant="outline" className="shrink-0">
+      <StatusPill tone="neutral" size="sm" className="shrink-0 self-start">
         {session.language}
-      </Badge>
-    </div>
+      </StatusPill>
+    </li>
   );
 
   return (
     <StudentLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Mon planning</h1>
-          <p className="text-muted-foreground text-sm">
-            Consultez vos sessions de formation à venir
-          </p>
-        </div>
+      <PageShell>
+        <PageHeader
+          title="Mon planning"
+          description="Consultez vos sessions de formation à venir"
+          icon={Calendar}
+          tone="blue"
+        />
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          </div>
+          <SurfaceCard flush>
+            <TableSkeleton rows={4} cols={3} />
+          </SurfaceCard>
         ) : (
           <div className="space-y-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-primary" />
-                  Sessions à venir ({upcoming.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {upcoming.length > 0 ? (
-                  upcoming.map((s: any) => (
+            <SurfaceCard
+              icon={Calendar}
+              title={`Sessions à venir (${upcoming.length})`}
+              flush={upcoming.length === 0}
+            >
+              {upcoming.length > 0 ? (
+                <ul className="space-y-2">
+                  {upcoming.map((s: any) => (
                     <SessionCard key={s.id} session={s} />
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground py-4 text-center">
-                    Aucune session programmée.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+                  ))}
+                </ul>
+              ) : (
+                <TableEmpty icon={Calendar} title="Aucune session programmée." />
+              )}
+            </SurfaceCard>
 
             {past.length > 0 && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base text-muted-foreground">
-                    Sessions passées ({past.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
+              <SurfaceCard title={`Sessions passées (${past.length})`}>
+                <ul className="space-y-2">
                   {past.map((s: any) => (
                     <SessionCard key={s.id} session={s} />
                   ))}
-                </CardContent>
-              </Card>
+                </ul>
+              </SurfaceCard>
             )}
           </div>
         )}
-      </div>
+      </PageShell>
     </StudentLayout>
   );
 }

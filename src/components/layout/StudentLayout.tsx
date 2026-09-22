@@ -29,6 +29,11 @@ const studentNavPages = [
   { name: "Évaluation", page: "evaluation", icon: GraduationCap },
 ] as const;
 
+/**
+ * Coque du portail stagiaire : en-tête dédié, navigation à 5 entrées et barre
+ * basse en mobile. Mêmes jetons que le back-office (surfaces, rayons, teintes)
+ * pour que ce soit le même produit, sans les affordances staff.
+ */
 export function StudentLayout({ children }: StudentLayoutProps) {
   const { signOut } = useAuth();
   const navigate = useNavigate();
@@ -50,20 +55,20 @@ export function StudentLayout({ children }: StudentLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[hsl(var(--surface-page))]">
       {isAssistMode && (
-        <div className="bg-amber-100 border-b border-amber-300 text-amber-950">
-          <div className="container mx-auto px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-sm">
-            <div className="flex items-center gap-2 font-medium">
+        <div className="border-b border-[hsl(var(--tint-gold-ring))] bg-[hsl(var(--tint-gold-bg))] text-[hsl(var(--tint-gold-fg))]">
+          <div className="container mx-auto flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-sm">
+            <div className="flex min-w-0 items-center gap-2 font-medium">
               <Eye className="h-4 w-4 shrink-0" />
-              <span>
+              <span className="min-w-0">
                 Mode Assister — vous voyez l&apos;espace de{" "}
                 {studentName || "ce stagiaire"}
               </span>
             </div>
-            <Button variant="outline" size="sm" className="h-8 bg-white" asChild>
+            <Button variant="outline" size="sm" className="h-8 bg-card" asChild>
               <Link to={studentId ? `/students/${studentId}` : "/students"}>
-                <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
+                <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
                 Quitter
               </Link>
             </Button>
@@ -71,23 +76,23 @@ export function StudentLayout({ children }: StudentLayoutProps) {
         </div>
       )}
 
-      <header className="border-b bg-card sticky top-0 z-40">
-        <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-40 border-b border-border bg-card shadow-xs">
+        <div className="container mx-auto flex h-14 items-center justify-between gap-3 px-4">
+          <div className="flex min-w-0 items-center gap-3">
             <img src={fliLogo} alt="FLI" className="h-8 w-auto" />
-            <span className="text-sm font-semibold text-muted-foreground">
+            <span className="truncate text-sm font-semibold text-muted-foreground">
               {isAssistMode ? "Prévisualisation stagiaire" : "Espace stagiaire"}
             </span>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleSignOut}>
+          <Button variant="ghost" size="sm" onClick={handleSignOut} className="shrink-0">
             {isAssistMode ? (
               <>
-                <ArrowLeft className="h-4 w-4 mr-2" />
+                <ArrowLeft className="mr-2 h-4 w-4" />
                 Retour fiche
               </>
             ) : (
               <>
-                <LogOut className="h-4 w-4 mr-2" />
+                <LogOut className="mr-2 h-4 w-4" />
                 Déconnexion
               </>
             )}
@@ -95,18 +100,18 @@ export function StudentLayout({ children }: StudentLayoutProps) {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-4 flex gap-6">
-        <nav className="hidden md:flex flex-col w-52 shrink-0 space-y-1">
+      <div className="container mx-auto flex gap-6 px-4 py-4">
+        <nav className="hidden w-52 shrink-0 flex-col space-y-1 md:flex">
           {studentNav.map((item) => (
             <NavLink
               key={item.href}
               to={item.href}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors",
+                  "flex items-center gap-2.5 rounded-[var(--radius)] px-3 py-2 text-sm transition-colors",
                   isActive
-                    ? "bg-primary text-primary-foreground font-medium"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "bg-primary font-medium text-primary-foreground shadow-xs"
+                    : "text-muted-foreground hover:bg-[hsl(var(--surface-sunken))] hover:text-foreground"
                 )
               }
             >
@@ -116,15 +121,15 @@ export function StudentLayout({ children }: StudentLayoutProps) {
           ))}
         </nav>
 
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t flex justify-around py-2">
+        <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-around border-t border-border bg-card py-2 shadow-lg md:hidden">
           {studentNav.map((item) => (
             <NavLink
               key={item.href}
               to={item.href}
               className={({ isActive }) =>
                 cn(
-                  "flex flex-col items-center gap-0.5 px-2 py-1 text-[10px]",
-                  isActive ? "text-primary font-medium" : "text-muted-foreground"
+                  "flex flex-col items-center gap-0.5 rounded-[var(--radius)] px-2 py-1 text-2xs transition-colors",
+                  isActive ? "font-medium text-primary" : "text-muted-foreground"
                 )
               }
             >
@@ -134,9 +139,7 @@ export function StudentLayout({ children }: StudentLayoutProps) {
           ))}
         </div>
 
-        <main className="flex-1 min-w-0 pb-20 md:pb-0">
-          {children}
-        </main>
+        <main className="min-w-0 flex-1 pb-20 md:pb-0">{children}</main>
       </div>
     </div>
   );

@@ -2,8 +2,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Target } from "lucide-react";
 import type { RegistrationData } from "@/pages/register/Index";
+import { OptionCard, StepActions, StepCard } from "./StepLayout";
 
 interface ExpectationsStepProps {
   data: Partial<RegistrationData>;
@@ -36,15 +37,13 @@ export function ExpectationsStep({ data, onUpdate, onNext }: ExpectationsStepPro
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Attentes et certification</CardTitle>
-        <CardDescription>
-          Parlez-nous de vos objectifs pour cette formation
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <StepCard
+        title="Attentes et certification"
+        description="Parlez-nous de vos objectifs pour cette formation"
+        icon={Target}
+      >
+        <div className="space-y-6">
           {/* Attentes */}
           <div className="space-y-2">
             <Label htmlFor="expectations">Quelles sont vos attentes pour cette formation ?</Label>
@@ -69,33 +68,26 @@ export function ExpectationsStep({ data, onUpdate, onNext }: ExpectationsStepPro
               className="space-y-3"
             >
               {certifications.map((cert) => (
-                <div
-                  key={cert.value}
-                  className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-muted/50 transition-colors"
-                >
-                  <RadioGroupItem value={cert.value} id={cert.value} />
-                  <div className="flex-1">
-                    <Label htmlFor={cert.value} className="font-medium cursor-pointer">
-                      {cert.label}
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      {cert.description}
-                    </p>
-                  </div>
-                </div>
+                <OptionCard key={cert.value} selected={data.certification === cert.value}>
+                  <Label htmlFor={cert.value} className="flex cursor-pointer items-start gap-3 p-4 font-normal">
+                    <RadioGroupItem value={cert.value} id={cert.value} className="mt-0.5" />
+                    <span className="min-w-0 space-y-1">
+                      <span className="block font-medium text-foreground">{cert.label}</span>
+                      <span className="block text-sm text-muted-foreground">{cert.description}</span>
+                    </span>
+                  </Label>
+                </OptionCard>
               ))}
             </RadioGroup>
           </div>
+        </div>
+      </StepCard>
 
-          <Button 
-            type="submit" 
-            className="w-full"
-            disabled={!data.certification}
-          >
-            Continuer vers la confirmation
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+      <StepActions>
+        <Button type="submit" className="h-12 w-full text-base sm:w-auto" disabled={!data.certification}>
+          Continuer vers la confirmation
+        </Button>
+      </StepActions>
+    </form>
   );
 }

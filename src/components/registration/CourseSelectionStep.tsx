@@ -9,12 +9,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, MapPin, Calendar, Euro, MessageSquare } from "lucide-react";
+import { MapPin, Calendar, Euro, MessageSquare } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import type { RegistrationData } from "@/pages/register/Index";
 import { useRegistrationOfferings } from "@/hooks/useRegistrationOfferings";
 import {
@@ -36,6 +36,7 @@ import {
   requestedStartDateProblem,
   todayIso,
 } from "@/lib/registration-dates";
+import { OptionCard, StepActions, StepCard } from "./StepLayout";
 
 interface CourseSelectionStepProps {
   data: Partial<RegistrationData>;
@@ -201,62 +202,67 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="py-12 flex justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
+      <SurfaceCard title="Lieu et formation" icon={MapPin}>
+        <div className="space-y-4" aria-busy="true" aria-live="polite">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-11 w-full rounded-[var(--radius)]" />
+          <Skeleton className="h-4 w-40" />
+          <div className="grid gap-2 sm:grid-cols-3">
+            <Skeleton className="h-14 rounded-[var(--radius-card)]" />
+            <Skeleton className="h-14 rounded-[var(--radius-card)]" />
+            <Skeleton className="h-14 rounded-[var(--radius-card)]" />
+          </div>
+          <Skeleton className="h-11 w-full rounded-[var(--radius)]" />
+        </div>
+      </SurfaceCard>
     );
   }
 
   if (isError || offerings.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-8">
-          <Alert variant="destructive">
-            <AlertDescription>
-              Le catalogue de formations n'est pas disponible pour le moment. Merci de contacter FLI
-              directement.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+      <StepCard
+        title="Catalogue indisponible"
+        description="Le catalogue des formations n'a pas pu être chargé."
+        icon={MapPin}
+      >
+        <Alert variant="destructive">
+          <AlertDescription>
+            Le catalogue de formations n'est pas disponible pour le moment. Merci de contacter FLI
+            directement.
+          </AlertDescription>
+        </Alert>
+      </StepCard>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MapPin className="h-5 w-5" />
-          Lieu et formation
-        </CardTitle>
-        <CardDescription>
-          Commencez par choisir le lieu du cours — les langues, dates et tarifs s'adaptent à votre
-          sélection. Les sessions en station seront publiées dès que le calendrier est confirmé.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <Alert className="bg-muted/50">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <StepCard
+        title="Lieu et formation"
+        description="Commencez par choisir le lieu du cours — les langues, dates et tarifs s'adaptent à votre sélection. Les sessions en station seront publiées dès que le calendrier est confirmé."
+        icon={MapPin}
+      >
+        <div className="space-y-6">
+          <Alert className="bg-[hsl(var(--surface-sunken))]">
             <AlertDescription className="text-sm">
               <strong>Présentiel en station :</strong> aucune session n'est programmée pour le moment.
               Choisissez <strong>En ligne</strong> ou l'option <strong>Autres formats — sur devis</strong> pour
               une formation en station ou un projet personnalisé.
             </AlertDescription>
           </Alert>
+
           {/* 1. Lieu — toujours en premier */}
           <div className="space-y-2">
             <Label>Lieu du cours *</Label>
             <Select value={data.location || ""} onValueChange={handleLocationChange}>
-              <SelectTrigger>
+              <SelectTrigger className="h-11">
                 <SelectValue placeholder="Où souhaitez-vous suivre la formation ?" />
               </SelectTrigger>
               <SelectContent>
                 {locations.map((loc) => (
                   <SelectItem key={loc.key} value={loc.key}>
                     {loc.label}
-                    <span className="text-muted-foreground ml-2 text-xs">
+                    <span className="ml-2 text-xs text-muted-foreground">
                       ({loc.count} option{loc.count > 1 ? "s" : ""})
                     </span>
                   </SelectItem>
@@ -269,7 +275,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
             <>
               {/* 2. Modalité */}
               {modalities.length > 1 && (
-                <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                <div className="animate-in fade-in slide-in-from-top-2 space-y-3">
                   <Label>Modalité</Label>
                   <RadioGroup
                     value={data.modality || ""}
@@ -285,18 +291,18 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                         customFormatDetails: undefined,
                       })
                     }
-                    className="grid gap-2 md:grid-cols-3"
+                    className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
                   >
                     {modalities.map((m) => (
-                      <div
-                        key={m.key}
-                        className="flex items-center space-x-2 rounded-lg border p-3 hover:bg-muted/50"
-                      >
-                        <RadioGroupItem value={m.key} id={`mod-${m.key}`} />
-                        <Label htmlFor={`mod-${m.key}`} className="font-normal cursor-pointer">
-                          {m.label}
+                      <OptionCard key={m.key} selected={data.modality === m.key}>
+                        <Label
+                          htmlFor={`mod-${m.key}`}
+                          className="flex min-h-12 cursor-pointer items-center gap-2.5 px-3 py-3 font-normal"
+                        >
+                          <RadioGroupItem value={m.key} id={`mod-${m.key}`} />
+                          <span className="min-w-0">{m.label}</span>
                         </Label>
-                      </div>
+                      </OptionCard>
                     ))}
                   </RadioGroup>
                 </div>
@@ -304,14 +310,14 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
 
               {/* Auto-select modality if only one */}
               {modalities.length === 1 && data.modality === modalities[0].key && (
-                <p className="text-sm text-muted-foreground animate-in fade-in">
-                  Modalité : <span className="font-medium">{modalities[0].label}</span>
+                <p className="animate-in fade-in text-sm text-muted-foreground">
+                  Modalité : <span className="font-medium text-foreground">{modalities[0].label}</span>
                 </p>
               )}
 
               {/* 3. Langue */}
               {(data.modality || modalities.length === 1) && (
-                <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                <div className="animate-in fade-in slide-in-from-top-2 space-y-2">
                   <Label>Langue à apprendre *</Label>
                   <Select
                     value={data.language || ""}
@@ -327,7 +333,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                       })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-11">
                       <SelectValue placeholder="Sélectionnez une langue" />
                     </SelectTrigger>
                     <SelectContent>
@@ -347,7 +353,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
 
               {/* 4. Dates / session */}
               {data.language && dateOptions.length > 0 && (
-                <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                <div className="animate-in fade-in slide-in-from-top-2 space-y-2">
                   <Label className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
                     Période / dates *
@@ -365,7 +371,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                       })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-11">
                       <SelectValue placeholder="Choisissez une session" />
                     </SelectTrigger>
                     <SelectContent>
@@ -381,12 +387,12 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
 
               {/* 5. Durée + prix */}
               {data.language && (dateOptions.length === 0 || data.dateKey) && (
-                <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                <div className="animate-in fade-in slide-in-from-top-2 space-y-3">
                   <Label>Durée de la formation *</Label>
                   <RadioGroup
                     value={data.duration || ""}
                     onValueChange={handleDurationChange}
-                    className="grid gap-2 md:grid-cols-2 lg:grid-cols-3"
+                    className="grid gap-2 xs:grid-cols-2 lg:grid-cols-3"
                   >
                     {durations.map((d) => {
                       const offering = matchOffering(offerings, {
@@ -396,11 +402,9 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                         dateKey: data.dateKey || dateOptions[0]?.key,
                         durationHours: d.hours,
                       });
+                      const selected = data.duration === String(d.hours);
                       return (
-                        <div
-                          key={d.hours}
-                          className="flex flex-col rounded-lg border p-3 hover:bg-muted/50 transition-colors"
-                        >
+                        <OptionCard key={d.hours} selected={selected}>
                           <RadioGroupItem
                             value={String(d.hours)}
                             id={`dur-${d.hours}`}
@@ -408,25 +412,25 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                           />
                           <Label
                             htmlFor={`dur-${d.hours}`}
-                            className={`cursor-pointer text-center w-full p-2 rounded ${
-                              data.duration === String(d.hours)
-                                ? "bg-primary text-primary-foreground"
-                                : ""
-                            }`}
+                            className="flex min-h-16 w-full cursor-pointer flex-col items-center justify-center gap-0.5 p-3 text-center"
                           >
-                            <span className="block font-semibold">{d.label}</span>
+                            <span className="block font-semibold text-foreground">{d.label}</span>
                             {offering && (
-                              <span className="block text-sm opacity-90 mt-1">
+                              <span className="block text-sm tabular text-muted-foreground">
                                 {formatPriceEUR(offering.base_price)}
                               </span>
                             )}
                           </Label>
-                        </div>
+                        </OptionCard>
                       );
                     })}
 
                     {/* Autres formats — sur devis */}
-                    <div className="flex flex-col rounded-lg border border-dashed p-3 hover:bg-muted/50 transition-colors md:col-span-2 lg:col-span-3">
+                    <OptionCard
+                      selected={isCustomFormat}
+                      dashed
+                      className="xs:col-span-2 lg:col-span-3"
+                    >
                       <RadioGroupItem
                         value={CUSTOM_FORMAT_DURATION}
                         id="dur-custom"
@@ -434,20 +438,20 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                       />
                       <Label
                         htmlFor="dur-custom"
-                        className={`cursor-pointer w-full p-2 rounded ${
-                          isCustomFormat ? "bg-primary text-primary-foreground" : ""
-                        }`}
+                        className="flex w-full cursor-pointer flex-col gap-0.5 p-4"
                       >
-                        <span className="block font-semibold">Autres formats — sur devis</span>
-                        <span className="block text-sm opacity-90 mt-1">
+                        <span className="block font-semibold text-foreground">
+                          Autres formats — sur devis
+                        </span>
+                        <span className="block text-sm font-normal text-muted-foreground">
                           Durée, modalité ou calendrier spécifique — nous vous envoyons une proposition
                         </span>
                       </Label>
-                    </div>
+                    </OptionCard>
                   </RadioGroup>
 
                   {isCustomFormat && (
-                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                    <div className="animate-in fade-in slide-in-from-top-2 space-y-2">
                       <Label htmlFor="custom-format-details" className="flex items-center gap-2">
                         <MessageSquare className="h-4 w-4" />
                         Décrivez votre projet *
@@ -470,7 +474,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
 
               {/* 6. Date de début souhaitée — offres sans session datée */}
               {needsRequestedStartDate && (
-                <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                <div className="animate-in fade-in slide-in-from-top-2 space-y-2">
                   <Label htmlFor="requested-start-date" className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
                     Date de début souhaitée *
@@ -481,6 +485,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                     min={today}
                     value={data.requestedStartDate || ""}
                     onChange={(e) => onUpdate({ requestedStartDate: e.target.value })}
+                    className="h-11"
                   />
                   <p className="text-xs text-muted-foreground">
                     Cette formule n&apos;a pas de session au calendrier : indiquez quand vous
@@ -492,7 +497,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                     </p>
                   )}
                   {requestedStartDateHint && (
-                    <p className="text-xs text-amber-700 dark:text-amber-500">
+                    <p className="text-xs text-[hsl(var(--status-warning))]">
                       {requestedStartDateHint}
                     </p>
                   )}
@@ -501,54 +506,66 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
 
               {/* Financement */}
               {(selectedOffering || isCustomFormat) && (
-                <div className="space-y-3 animate-in fade-in slide-in-from-top-2 border-t pt-6">
+                <div className="animate-in fade-in slide-in-from-top-2 space-y-3 border-t border-border pt-6">
                   <Label>Mode de financement *</Label>
                   <RadioGroup
                     value={data.fundingType || ""}
                     onValueChange={(value) => onUpdate({ fundingType: value })}
                     className="space-y-2"
                   >
-                    <div className="flex items-center space-x-3 rounded-lg border p-3 hover:bg-muted/50">
-                      <RadioGroupItem value="fifpl" id="fifpl" />
-                      <Label htmlFor="fifpl" className="font-normal cursor-pointer flex-1">
+                    <OptionCard selected={data.fundingType === "fifpl"}>
+                      <Label
+                        htmlFor="fifpl"
+                        className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
+                      >
+                        <RadioGroupItem value="fifpl" id="fifpl" />
                         FIFPL
                       </Label>
-                    </div>
-                    <div className="flex flex-col rounded-lg border p-3 hover:bg-muted/50 space-y-1">
-                      <div className="flex items-center space-x-3">
-                        <RadioGroupItem value="opco" id="opco" />
-                        <Label htmlFor="opco" className="font-normal cursor-pointer flex-1">
+                    </OptionCard>
+                    <OptionCard selected={data.fundingType === "opco"}>
+                      <Label
+                        htmlFor="opco"
+                        className="flex cursor-pointer flex-col gap-1 px-4 py-3 font-normal"
+                      >
+                        <span className="flex min-h-6 items-center gap-3">
+                          <RadioGroupItem value="opco" id="opco" />
                           OPCO
-                        </Label>
-                      </div>
-                      <p className="text-xs text-muted-foreground pl-7">
-                        Financement par votre OPCO — votre dossier sera étudié par FLI. Aucun frais
-                        ne sera facturé pour le moment.
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-3 rounded-lg border p-3 hover:bg-muted/50">
-                      <RadioGroupItem value="company" id="company" />
-                      <Label htmlFor="company" className="font-normal cursor-pointer flex-1">
+                        </span>
+                        <span className="block pl-7 text-xs text-muted-foreground">
+                          Financement par votre OPCO — votre dossier sera étudié par FLI. Aucun frais
+                          ne sera facturé pour le moment.
+                        </span>
+                      </Label>
+                    </OptionCard>
+                    <OptionCard selected={data.fundingType === "company"}>
+                      <Label
+                        htmlFor="company"
+                        className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
+                      >
+                        <RadioGroupItem value="company" id="company" />
                         Entreprise (école de ski)
                       </Label>
-                    </div>
-                    <div className="flex items-center space-x-3 rounded-lg border p-3 hover:bg-muted/50">
-                      <RadioGroupItem value="self" id="self" />
-                      <Label htmlFor="self" className="font-normal cursor-pointer flex-1">
+                    </OptionCard>
+                    <OptionCard selected={data.fundingType === "self"}>
+                      <Label
+                        htmlFor="self"
+                        className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
+                      >
+                        <RadioGroupItem value="self" id="self" />
                         Autofinancement
                       </Label>
-                    </div>
+                    </OptionCard>
                   </RadioGroup>
                 </div>
               )}
 
               {/* Récap prix */}
               {isCustomFormat && (
-                <Alert className="bg-muted/50 border-amber-500/30">
+                <Alert className="border-[hsl(var(--tint-gold-ring))] bg-[hsl(var(--tint-gold-bg))]">
                   <MessageSquare className="h-4 w-4" />
                   <AlertDescription>
                     <span className="font-medium">Demande de devis</span>
-                    <span className="text-muted-foreground text-sm block mt-1">
+                    <span className="mt-1 block text-sm text-muted-foreground">
                       Pas de tarif affiché — vous recevrez une proposition de FLI après étude de votre
                       projet.
                     </span>
@@ -556,14 +573,14 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                 </Alert>
               )}
               {selectedOffering && !isCustomFormat && (
-                <Alert className="bg-muted/50 border-primary/20">
+                <Alert className="border-primary/20 bg-[hsl(var(--surface-sunken))]">
                   <Euro className="h-4 w-4" />
                   <AlertDescription className="flex flex-wrap items-center gap-2">
                     <span>Tarif sélectionné :</span>
-                    <Badge variant="secondary" className="text-base px-3 py-1">
+                    <StatusPill tone="warning" className="px-3 py-1 text-base">
                       {formatPriceEUR(selectedOffering.base_price)}
-                    </Badge>
-                    <span className="text-muted-foreground text-sm">
+                    </StatusPill>
+                    <span className="text-sm text-muted-foreground">
                       — {selectedOffering.location_label} · {selectedOffering.language_label} ·{" "}
                       {selectedOffering.duration_hours}h
                       {selectedOffering.date_label ? ` · ${selectedOffering.date_label}` : ""}
@@ -573,12 +590,14 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
               )}
             </>
           )}
+        </div>
+      </StepCard>
 
-          <Button type="submit" className="w-full" disabled={!canContinue}>
-            Continuer
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+      <StepActions>
+        <Button type="submit" className="h-12 w-full text-base sm:w-auto" disabled={!canContinue}>
+          Continuer
+        </Button>
+      </StepActions>
+    </form>
   );
 }

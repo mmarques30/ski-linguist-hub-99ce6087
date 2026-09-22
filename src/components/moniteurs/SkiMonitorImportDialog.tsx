@@ -4,7 +4,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
+import { StatusPill } from "@/components/ui-kit";
 import { Upload, FileSpreadsheet, Loader2, CheckCircle2 } from "lucide-react";
 import { parseSkiMonitorCsv, SkiMonitorImportPreview } from "@/lib/ski-monitor-csv-import";
 import { useImportSkiMonitors } from "@/hooks/useSkiMonitors";
@@ -73,7 +73,7 @@ export function SkiMonitorImportDialog({ open, onOpenChange }: Props) {
 
         <div className="space-y-4">
           <div
-            className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-muted/30 transition-colors"
+            className="cursor-pointer rounded-[var(--radius)] border-2 border-dashed border-border p-8 text-center transition-colors hover:bg-[hsl(var(--surface-sunken))]"
             onClick={() => fileRef.current?.click()}
           >
             <input
@@ -102,7 +102,7 @@ export function SkiMonitorImportDialog({ open, onOpenChange }: Props) {
           </div>
 
           {preview && (
-            <div className="space-y-3 rounded-lg border p-4 bg-muted/20">
+            <div className="fli-sunken space-y-3 border border-border p-4">
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>Lignes lues : <strong>{preview.totalRows}</strong></div>
                 <div>Emails uniques : <strong>{preview.uniqueEmails}</strong></div>
@@ -110,9 +110,9 @@ export function SkiMonitorImportDialog({ open, onOpenChange }: Props) {
                 <div>Emails invalides : <strong>{preview.invalidEmails}</strong></div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Badge className="bg-green-600">{preview.active} actifs</Badge>
-                <Badge variant="secondary">{preview.unsubscribed} désinscrits</Badge>
-                <Badge variant="outline">{preview.withStation} avec station</Badge>
+                <StatusPill tone="success" size="sm">{preview.active} actifs</StatusPill>
+                <StatusPill tone="neutral" size="sm">{preview.unsubscribed} désinscrits</StatusPill>
+                <StatusPill tone="info" size="sm">{preview.withStation} avec station</StatusPill>
               </div>
               {importMonitors.isPending && (
                 <div className="space-y-1">

@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { StatusPill, toneForStatus } from "@/components/ui-kit";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Sun, Sunset, Loader2, Clock } from "lucide-react";
 import { toast } from "sonner";
@@ -92,12 +92,12 @@ export function ScheduleApprovalDialog({
 
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2 text-sm">
-            <Badge variant="outline">{inscription.language}</Badge>
-            <Badge variant="outline">Niveau: {inscription.entry_level || "—"}</Badge>
+            <StatusPill tone="info">{inscription.language}</StatusPill>
+            <StatusPill tone="neutral">Niveau: {inscription.entry_level || "—"}</StatusPill>
             {inscription.start_date && (
-              <Badge variant="outline">
+              <StatusPill tone="neutral">
                 Début: {format(new Date(inscription.start_date), "dd MMM yyyy", { locale: fr })}
-              </Badge>
+              </StatusPill>
             )}
           </div>
 
@@ -117,11 +117,11 @@ export function ScheduleApprovalDialog({
           )}
 
           {isApproved && (
-            <div className="rounded-lg bg-muted/50 p-4 text-center">
+            <div className="rounded-[var(--radius)] bg-[hsl(var(--surface-sunken))] p-4 text-center">
               <p className="text-sm text-muted-foreground mb-1">Groupe validé</p>
-              <Badge className="text-base px-4 py-1">
+              <StatusPill tone={toneForStatus("approved")} className="px-4 py-1 text-sm">
                 {STATUS_LABELS[scheduleStatus]}
-              </Badge>
+              </StatusPill>
             </div>
           )}
         </div>

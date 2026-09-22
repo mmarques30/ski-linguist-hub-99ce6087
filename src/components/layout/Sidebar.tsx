@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { ThemeToggle } from "./ThemeToggle";
 import {
   Collapsible,
   CollapsibleContent,
@@ -301,14 +302,14 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="group-data-[side=left]:border-r-0">
       {/* h-14 : la bordure basse prolonge exactement celle du TopHeader. */}
       <SidebarHeader className="h-14 shrink-0 justify-center border-b border-sidebar-border px-2 py-0">
-        {!isCollapsed && (
-          <div className="flex items-center gap-2 px-1">
-            <img src={fliLogo} alt="FLI" className="h-7 w-auto" />
-            <span className="text-xs font-medium text-sidebar-foreground/80 truncate">
+        <div className="flex items-center gap-2 px-1">
+          <img src={fliLogo} alt="FLI" className="h-7 w-7 shrink-0 object-contain" />
+          {!isCollapsed && (
+            <span className="truncate text-xs font-medium text-sidebar-foreground/80">
               Formation
             </span>
-          </div>
-        )}
+          )}
+        </div>
       </SidebarHeader>
 
       <SidebarContent className="scrollbar-thin">
@@ -356,11 +357,9 @@ export function AppSidebar() {
             </Tooltip>
           </SidebarMenuItem>
         </SidebarMenu>
-        {!isCollapsed && (
-          <p className="text-xs text-sidebar-foreground/50 px-2 py-2">
-            France Langues International
-          </p>
-        )}
+        <div className={isCollapsed ? "flex justify-center py-1" : "px-1 pb-1 pt-2"}>
+          <ThemeToggle collapsed={isCollapsed} className={isCollapsed ? undefined : "w-full"} />
+        </div>
       </SidebarFooter>
     </Sidebar>
   );
@@ -380,7 +379,7 @@ function Chevron({ open }: { open: boolean }) {
 
 function FrozenBadge({ label }: { label: string }) {
   return (
-    <span className="text-[10px] uppercase tracking-wide text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+    <span className="rounded-pill bg-[hsl(var(--tint-gold-bg))] px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-[hsl(var(--tint-gold-fg))]">
       {label}
     </span>
   );

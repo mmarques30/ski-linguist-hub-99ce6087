@@ -1,16 +1,14 @@
 import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { 
-  CheckCircle2, 
-  XCircle, 
-  Circle, 
-  ChevronDown, 
+import {
+  CheckCircle2,
+  XCircle,
+  Circle,
+  ChevronDown,
   RotateCcw,
   Download,
   ClipboardList,
@@ -18,6 +16,16 @@ import {
   ChevronUp
 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import {
+  PageHeader,
+  PageShell,
+  SectionHeading,
+  StatTile,
+  StatTileGrid,
+  StatusPill,
+  SurfaceCard,
+} from "@/components/ui-kit";
 import { Emails8MinimalCard } from "@/components/admin/Emails8MinimalCard";
 import { CleanupZztestCard } from "@/components/admin/CleanupZztestCard";
 import { ZztestRolesLoginsCard } from "@/components/admin/ZztestRolesLoginsCard";
@@ -270,8 +278,8 @@ export default function TestingChecklist() {
 
   const getStatusIcon = (status: TestItem["status"]) => {
     switch (status) {
-      case "success": return <CheckCircle2 className="h-5 w-5 text-green-500" />;
-      case "failure": return <XCircle className="h-5 w-5 text-red-500" />;
+      case "success": return <CheckCircle2 className="h-5 w-5 text-[hsl(var(--status-good))]" />;
+      case "failure": return <XCircle className="h-5 w-5 text-destructive" />;
       default: return <Circle className="h-5 w-5 text-muted-foreground" />;
     }
   };
@@ -285,29 +293,19 @@ export default function TestingChecklist() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <ClipboardList className="h-8 w-8" />
-              Tests QA
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Scénario du lundi 14/09 : voir docs/TESTING_GUIDE.md. Convention : nom ZZTEST
-              et email @example.invalid.
-            </p>
-          </div>
-        </div>
-
-        <Emails8MinimalCard />
-
-        <ZztestRolesLoginsCard />
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-lg">Checklist de recette</CardTitle>
-            <div className="flex gap-2">
+      <PageShell>
+        <PageHeader
+          title="Tests QA"
+          icon={ClipboardList}
+          tone="purple"
+          description="Scénario du lundi 14/09 : voir docs/TESTING_GUIDE.md. Convention : nom ZZTEST et email @example.invalid."
+          meta={
+            <StatusPill tone={progress >= 100 ? "success" : "info"}>
+              {progress.toFixed(0)}% d&apos;avancement
+            </StatusPill>
+          }
+          actions={
+            <>
               <Button variant="outline" onClick={exportResults}>
                 <Download className="h-4 w-4 mr-2" />
                 Exporter
@@ -316,157 +314,174 @@ export default function TestingChecklist() {
                 <RotateCcw className="h-4 w-4 mr-2" />
                 Réinitialiser la checklist
               </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex gap-6">
-                <div className="text-center">
-                  <div className="text-2xl font-bold">{total}</div>
-                  <div className="text-sm text-muted-foreground">Total</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-500">{success}</div>
-                  <div className="text-sm text-muted-foreground">Réussi</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-red-500">{failure}</div>
-                  <div className="text-sm text-muted-foreground">Échec</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-muted-foreground">{pending}</div>
-                  <div className="text-sm text-muted-foreground">En attente</div>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold">{progress.toFixed(0)}%</div>
-                <div className="text-sm text-muted-foreground">Avancement</div>
-              </div>
-            </div>
-            <Progress value={progress} className="h-3" />
-          </CardContent>
-        </Card>
+            </>
+          }
+        />
 
-        {/* Test Sections */}
-        <div className="space-y-4">
-          {testData.map(section => {
-            const stats = getSectionStats(section);
-            const isOpen = openSections.includes(section.id);
-            
-            return (
-              <Collapsible key={section.id} open={isOpen} onOpenChange={() => toggleSection(section.id)}>
-                <Card>
-                  <CollapsibleTrigger className="w-full">
-                    <CardHeader className="py-4">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          {section.title}
-                          <Badge variant="outline" className="ml-2">
-                            {stats.done}/{stats.total}
-                          </Badge>
-                          {stats.done === stats.total && stats.successCount === stats.total && (
-                            <Badge className="bg-green-500">Terminé</Badge>
-                          )}
-                        </CardTitle>
-                        <ChevronDown className={`h-5 w-5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
-                      </div>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-                  
-                  <CollapsibleContent>
-                    <CardContent className="pt-0">
-                      <div className="space-y-3">
-                        {section.items.map(item => {
-                          const isNotesExpanded = expandedNotes.includes(item.id);
-                          const hasNotes = item.notes && item.notes.trim().length > 0;
-                          
-                          return (
-                            <div 
-                              key={item.id}
-                              className="p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
-                            >
-                              <div className="flex items-start justify-between">
-                                <div className="flex items-start gap-3 flex-1">
-                                  {getStatusIcon(item.status)}
-                                  <div className="flex-1">
-                                    <div className="font-medium">{item.name}</div>
-                                    <div className="text-sm text-muted-foreground">{item.description}</div>
-                                  </div>
-                                </div>
-                                <div className="flex gap-1 shrink-0">
-                                  <Button
-                                    size="sm"
-                                    variant={hasNotes ? "secondary" : "ghost"}
-                                    className={hasNotes ? "text-blue-600" : ""}
-                                    onClick={() => toggleNotes(item.id)}
-                                    title="Ajouter une note"
-                                  >
-                                    <MessageSquare className="h-4 w-4" />
-                                    {isNotesExpanded ? <ChevronUp className="h-3 w-3 ml-1" /> : <ChevronDown className="h-3 w-3 ml-1" />}
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant={item.status === "success" ? "default" : "outline"}
-                                    className={item.status === "success" ? "bg-green-500 hover:bg-green-600" : ""}
-                                    onClick={() => updateItemStatus(section.id, item.id, "success")}
-                                  >
-                                    <CheckCircle2 className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant={item.status === "failure" ? "default" : "outline"}
-                                    className={item.status === "failure" ? "bg-red-500 hover:bg-red-600" : ""}
-                                    onClick={() => updateItemStatus(section.id, item.id, "failure")}
-                                  >
-                                    <XCircle className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => updateItemStatus(section.id, item.id, "pending")}
-                                  >
-                                    <RotateCcw className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                              
-                              {/* Notes Section */}
-                              {isNotesExpanded && (
-                                <div className="mt-3 pt-3 border-t">
-                                  <Textarea
-                                    placeholder="Notes, anomalies, captures à joindre…"
-                                    value={item.notes || ""}
-                                    onChange={(e) => updateItemNotes(section.id, item.id, e.target.value)}
-                                    className="min-h-[80px] text-sm"
-                                  />
-                                </div>
-                              )}
-                              
-                              {/* Show notes preview when collapsed */}
-                              {!isNotesExpanded && hasNotes && (
-                                <div 
-                                  className="mt-2 pt-2 border-t text-sm text-blue-600 cursor-pointer hover:underline"
-                                  onClick={() => toggleNotes(item.id)}
-                                >
-                                  📝 {item.notes!.substring(0, 100)}{item.notes!.length > 100 ? "..." : ""}
-                                </div>
-                              )}
+        <Emails8MinimalCard />
+
+        <ZztestRolesLoginsCard />
+
+        <SurfaceCard
+          title="Checklist de recette"
+          icon={ClipboardList}
+          description="État de la recette, conservé dans ce navigateur (localStorage). Export et réinitialisation en haut de page."
+        >
+          <div className="space-y-4">
+            <StatTileGrid cols={5}>
+              <StatTile label="Total" value={total} tone="neutral" />
+              <StatTile label="Réussi" value={success} icon={CheckCircle2} tone="teal" />
+              <StatTile label="Échec" value={failure} icon={XCircle} tone={failure > 0 ? "rose" : "neutral"} />
+              <StatTile label="En attente" value={pending} icon={Circle} tone="gold" />
+              <StatTile label="Avancement" value={`${progress.toFixed(0)}%`} tone="blue" />
+            </StatTileGrid>
+            <Progress
+              value={progress}
+              className="h-3"
+              aria-label={`Avancement de la recette : ${progress.toFixed(0)}%`}
+            />
+          </div>
+        </SurfaceCard>
+
+        {/* Sections de la checklist — une carte dépliable par thème. */}
+        {testData.map(section => {
+          const stats = getSectionStats(section);
+          const isOpen = openSections.includes(section.id);
+          const sectionDone = stats.done === stats.total && stats.successCount === stats.total;
+
+          return (
+            <Collapsible
+              key={section.id}
+              open={isOpen}
+              onOpenChange={() => toggleSection(section.id)}
+              className="fli-surface overflow-hidden"
+            >
+              <CollapsibleTrigger className="w-full px-4 py-3.5 text-left sm:px-5">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="flex min-w-0 flex-wrap items-center gap-2 text-base font-semibold">
+                    <span className="truncate">{section.title}</span>
+                    <StatusPill tone="neutral" size="sm">
+                      {stats.done}/{stats.total}
+                    </StatusPill>
+                    {sectionDone && (
+                      <StatusPill tone="success" size="sm" dot>
+                        Terminé
+                      </StatusPill>
+                    )}
+                  </h2>
+                  <ChevronDown
+                    className={cn("h-5 w-5 shrink-0 transition-transform", isOpen && "rotate-180")}
+                  />
+                </div>
+              </CollapsibleTrigger>
+
+              <CollapsibleContent>
+                <div className="space-y-3 border-t border-border p-4 sm:p-5">
+                  {section.items.map(item => {
+                    const isNotesExpanded = expandedNotes.includes(item.id);
+                    const hasNotes = item.notes && item.notes.trim().length > 0;
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))] p-3 transition-colors hover:bg-[hsl(var(--surface-sunken))]/70"
+                      >
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="flex min-w-0 flex-1 items-start gap-3">
+                            {getStatusIcon(item.status)}
+                            <div className="min-w-0 flex-1">
+                              <div className="font-medium">{item.name}</div>
+                              <div className="text-sm text-muted-foreground">{item.description}</div>
                             </div>
-                          );
-                        })}
-                      </div>
-                    </CardContent>
-                  </CollapsibleContent>
-                </Card>
-              </Collapsible>
-            );
-          })}
-        </div>
+                          </div>
+                          <div className="flex shrink-0 flex-wrap gap-1">
+                            <Button
+                              size="sm"
+                              variant={hasNotes ? "secondary" : "ghost"}
+                              className={cn(hasNotes && "text-[hsl(var(--tint-blue-fg))]")}
+                              onClick={() => toggleNotes(item.id)}
+                              title="Ajouter une note"
+                              aria-label={`Note — ${item.name}`}
+                              aria-expanded={isNotesExpanded}
+                            >
+                              <MessageSquare className="h-4 w-4" />
+                              {isNotesExpanded ? <ChevronUp className="h-3 w-3 ml-1" /> : <ChevronDown className="h-3 w-3 ml-1" />}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              aria-pressed={item.status === "success"}
+                              aria-label={`Marquer réussi — ${item.name}`}
+                              className={cn(
+                                item.status === "success" &&
+                                  "border-[hsl(var(--tint-teal-ring))] bg-[hsl(var(--tint-teal-bg))] text-[hsl(var(--tint-teal-fg))] hover:bg-[hsl(var(--tint-teal-bg))]"
+                              )}
+                              onClick={() => updateItemStatus(section.id, item.id, "success")}
+                            >
+                              <CheckCircle2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              aria-pressed={item.status === "failure"}
+                              aria-label={`Marquer en échec — ${item.name}`}
+                              className={cn(
+                                item.status === "failure" &&
+                                  "border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/10"
+                              )}
+                              onClick={() => updateItemStatus(section.id, item.id, "failure")}
+                            >
+                              <XCircle className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              aria-label={`Remettre en attente — ${item.name}`}
+                              onClick={() => updateItemStatus(section.id, item.id, "pending")}
+                            >
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
 
-        <div className="border-t pt-8">
-          <CleanupZztestCard />
-        </div>
-      </div>
+                        {/* Notes Section */}
+                        {isNotesExpanded && (
+                          <div className="mt-3 border-t border-border pt-3">
+                            <Textarea
+                              placeholder="Notes, anomalies, captures à joindre…"
+                              value={item.notes || ""}
+                              aria-label={`Notes — ${item.name}`}
+                              onChange={(e) => updateItemNotes(section.id, item.id, e.target.value)}
+                              className="min-h-[80px] text-sm"
+                            />
+                          </div>
+                        )}
+
+                        {/* Show notes preview when collapsed */}
+                        {!isNotesExpanded && hasNotes && (
+                          <button
+                            type="button"
+                            className="mt-2 block w-full border-t border-border pt-2 text-left text-sm text-[hsl(var(--tint-blue-fg))] hover:underline"
+                            onClick={() => toggleNotes(item.id)}
+                          >
+                            📝 {item.notes!.substring(0, 100)}{item.notes!.length > 100 ? "..." : ""}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          );
+        })}
+
+        <SectionHeading
+          title="Après la recette"
+          description="Nettoyage des jeux de test ZZTEST — action destructive, à lancer en simulation d'abord."
+        />
+        <CleanupZztestCard />
+      </PageShell>
     </MainLayout>
   );
 }

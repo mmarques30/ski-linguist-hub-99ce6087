@@ -1,20 +1,35 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { PeriodSelector } from "@/components/finance/PeriodSelector";
 import { RentabiliteDashboard } from "@/components/finance/RentabiliteDashboard";
 import { AddCostDialog } from "@/components/finance/AddCostDialog";
 import { PilotageSubnav } from "@/components/finance/PilotageSubnav";
 import { useFormationProfitability } from "@/hooks/useFinancialDashboard";
-import { Plus, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, ChevronDown, ChevronRight, LayoutDashboard, Percent, Table2 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import {
+  CardList,
+  CardListItem,
+  DefinitionList,
+  PageHeader,
+  PageShell,
+  SegmentedControl,
+  StatusPill,
+  SurfaceCard,
+  TableCell,
+  TableEmpty,
+  TableFrame,
+  TableHeadCell,
+  TableHeadRow,
+  TableRow,
+  TableSkeleton,
+  type PillTone,
+} from "@/components/ui-kit";
+
+type RentabiliteView = "dashboard" | "tableaux";
 
 export default function FinanceRentabilite() {
   const today = new Date();
@@ -23,8 +38,9 @@ export default function FinanceRentabilite() {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [addCostOpen, setAddCostOpen] = useState(false);
   const [selectedInscription, setSelectedInscription] = useState<string | undefined>();
+  const [view, setView] = useState<RentabiliteView>("dashboard");
 
-  const { data: formations } = useFormationProfitability(startDate, endDate);
+  const { data: formations, isLoading } = useFormationProfitability(startDate, endDate);
   const { canEdit } = useUserPermissions();
   const editable = canEdit("finance.rentabilite");
 
@@ -49,147 +65,217 @@ export default function FinanceRentabilite() {
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
 
   const getMargeColor = (percent: number) => {
-    if (percent >= 50) return 'text-[hsl(var(--fli-yellow))]';
+    if (percent >= 50) return 'text-[hsl(var(--status-good))]';
     if (percent >= 30) return 'text-foreground';
-    return 'text-destructive';
+    return 'text-[hsl(var(--status-critical))]';
+  };
+
+  const margeBadge = (percent: number): { tone: PillTone; label: string } => {
+    if (percent >= 50) return { tone: "success", label: "Excellent" };
+    if (percent >= 30) return { tone: "neutral", label: "Correct" };
+    return { tone: "danger", label: "Faible" };
   };
 
   const getMargeBadge = (percent: number) => {
-    if (percent >= 50) return <Badge className="bg-[hsl(var(--fli-yellow))]/15 text-[hsl(var(--fli-yellow))] border-[hsl(var(--fli-yellow))]/30">Excellent</Badge>;
-    if (percent >= 30) return <Badge variant="secondary">Correct</Badge>;
-    return <Badge variant="destructive">Faible</Badge>;
+    const badge = margeBadge(percent);
+    return (
+      <StatusPill tone={badge.tone} size="sm">
+        {badge.label}
+      </StatusPill>
+    );
   };
+
+  const costBreakdown = (formation: NonNullable<typeof formations>[number]) => [
+    { label: "Formateur", value: formatPrice(formation.cout_formateur) },
+    { label: "Hébergement", value: formatPrice(formation.cout_hebergement) },
+    { label: "Déplacement", value: formatPrice(formation.cout_deplacement) },
+    { label: "Salle", value: formatPrice(formation.cout_salle) },
+    { label: "Autres", value: formatPrice(formation.cout_autres) },
+  ];
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Pilotage financier</h1>
-            <p className="text-muted-foreground">Analyse de la marge par formation</p>
-          </div>
-          {editable && (
-            <Button onClick={() => { setSelectedInscription(undefined); setAddCostOpen(true); }}>
-              <Plus className="h-4 w-4 mr-2" />
-              Ajouter un coût
-            </Button>
-          )}
-        </div>
+      <PageShell>
+        <PageHeader
+          title="Pilotage financier"
+          description="Analyse de la marge par formation"
+          icon={Percent}
+          tone="purple"
+          actions={
+            <>
+              <PeriodSelector startDate={startDate} endDate={endDate} onPeriodChange={handlePeriodChange} />
+              {editable && (
+                <Button onClick={() => { setSelectedInscription(undefined); setAddCostOpen(true); }}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Ajouter un coût
+                </Button>
+              )}
+            </>
+          }
+          tabs={<PilotageSubnav />}
+        />
 
-        <PilotageSubnav />
+        <SegmentedControl<RentabiliteView>
+          value={view}
+          onChange={setView}
+          ariaLabel="Vue rentabilité"
+          options={[
+            { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+            { value: "tableaux", label: "Tableaux", icon: Table2 },
+          ]}
+        />
 
-        <PeriodSelector startDate={startDate} endDate={endDate} onPeriodChange={handlePeriodChange} />
-
-        <Tabs defaultValue="dashboard" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="tableaux">Tableaux</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="dashboard">
-            <RentabiliteDashboard formations={formations} />
-          </TabsContent>
-
-          <TabsContent value="tableaux">
-            <Card>
-              <CardHeader>
-                <CardTitle>Détail par formation</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-10"></TableHead>
-                      <TableHead>Formation</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead className="text-right">CA HT</TableHead>
-                      <TableHead className="text-right">Coûts</TableHead>
-                      <TableHead className="text-right">Marge</TableHead>
-                      <TableHead className="text-right">%</TableHead>
-                      <TableHead></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {formations?.map((formation) => (
-                      <Collapsible key={formation.id} asChild open={expandedRows.has(formation.id!)}>
-                        <>
-                          <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => toggleRow(formation.id!)}>
-                            <TableCell>
-                              <CollapsibleTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                  {expandedRows.has(formation.id!) ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                                </Button>
-                              </CollapsibleTrigger>
-                            </TableCell>
-                            <TableCell>
-                              <div>
-                                <p className="font-medium">{formation.code || 'Sans code'}</p>
-                                <p className="text-sm text-muted-foreground">{formation.student_name}</p>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-sm">
-                              {formation.start_date && format(new Date(formation.start_date), 'dd/MM/yyyy')}
-                            </TableCell>
-                            <TableCell className="text-right font-medium">{formatPrice(formation.ca_ht)}</TableCell>
-                            <TableCell className="text-right">{formatPrice(formation.couts_totaux)}</TableCell>
-                            <TableCell className={cn("text-right font-medium", getMargeColor(formation.marge_pourcent))}>
-                              {formatPrice(formation.marge_brute)}
-                            </TableCell>
-                            <TableCell className="text-right">{getMargeBadge(formation.marge_pourcent)}</TableCell>
-                            {editable && (
+        {view === "dashboard" ? (
+          <RentabiliteDashboard formations={formations} />
+        ) : (
+          <SurfaceCard
+            title="Détail par formation"
+            description="Marge par dossier sur la période sélectionnée"
+            icon={Table2}
+            flush
+          >
+            {isLoading ? (
+              <TableSkeleton rows={6} cols={6} />
+            ) : !formations || formations.length === 0 ? (
+              <TableEmpty
+                title="Aucune formation avec données financières pour cette période"
+                description="Ajustez la période ou ajoutez des coûts sur les dossiers concernés."
+                icon={Table2}
+              />
+            ) : (
+              <>
+                <TableFrame className="hidden md:block">
+                  <table className="w-full">
+                    <thead>
+                      <TableHeadRow>
+                        <TableHeadCell className="w-10">
+                          <span className="sr-only">Détail</span>
+                        </TableHeadCell>
+                        <TableHeadCell>Formation</TableHeadCell>
+                        <TableHeadCell>Date</TableHeadCell>
+                        <TableHeadCell align="right">CA HT</TableHeadCell>
+                        <TableHeadCell align="right">Coûts</TableHeadCell>
+                        <TableHeadCell align="right">Marge</TableHeadCell>
+                        <TableHeadCell align="right">%</TableHeadCell>
+                        <TableHeadCell align="right">
+                          <span className="sr-only">Actions</span>
+                        </TableHeadCell>
+                      </TableHeadRow>
+                    </thead>
+                    <tbody>
+                      {formations.map((formation) => {
+                        const expanded = expandedRows.has(formation.id!);
+                        return (
+                          <Fragment key={formation.id}>
+                            <TableRow onClick={() => toggleRow(formation.id!)}>
                               <TableCell>
-                                <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleAddCost(formation.id!); }}>
-                                  <Plus className="h-4 w-4" />
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0"
+                                  aria-expanded={expanded}
+                                  aria-label={expanded ? "Masquer le détail des coûts" : "Afficher le détail des coûts"}
+                                  onClick={(e) => { e.stopPropagation(); toggleRow(formation.id!); }}
+                                >
+                                  {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                                 </Button>
                               </TableCell>
-                            )}
-                          </TableRow>
-                          <CollapsibleContent asChild>
-                            <TableRow className="bg-muted/30">
-                              <TableCell></TableCell>
-                              <TableCell colSpan={7}>
-                                <div className="py-2 grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
-                                  <div>
-                                    <p className="text-muted-foreground">Formateur</p>
-                                    <p className="font-medium">{formatPrice(formation.cout_formateur)}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-muted-foreground">Hébergement</p>
-                                    <p className="font-medium">{formatPrice(formation.cout_hebergement)}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-muted-foreground">Déplacement</p>
-                                    <p className="font-medium">{formatPrice(formation.cout_deplacement)}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-muted-foreground">Salle</p>
-                                    <p className="font-medium">{formatPrice(formation.cout_salle)}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-muted-foreground">Autres</p>
-                                    <p className="font-medium">{formatPrice(formation.cout_autres)}</p>
-                                  </div>
+                              <TableCell>
+                                <div className="min-w-0">
+                                  <p className="truncate font-medium">{formation.code || 'Sans code'}</p>
+                                  <p className="truncate text-sm text-muted-foreground">{formation.student_name}</p>
                                 </div>
                               </TableCell>
+                              <TableCell className="text-sm tabular" hideBelow="lg">
+                                {formation.start_date && format(new Date(formation.start_date), 'dd/MM/yyyy')}
+                              </TableCell>
+                              <TableCell align="right" className="font-medium tabular">
+                                {formatPrice(formation.ca_ht)}
+                              </TableCell>
+                              <TableCell align="right" className="tabular" hideBelow="lg">
+                                {formatPrice(formation.couts_totaux)}
+                              </TableCell>
+                              <TableCell
+                                align="right"
+                                className={cn("font-medium tabular", getMargeColor(formation.marge_pourcent))}
+                              >
+                                {formatPrice(formation.marge_brute)}
+                              </TableCell>
+                              <TableCell align="right">{getMargeBadge(formation.marge_pourcent)}</TableCell>
+                              <TableCell align="right">
+                                {editable && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    aria-label="Ajouter un coût à cette formation"
+                                    onClick={(e) => { e.stopPropagation(); handleAddCost(formation.id!); }}
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </TableCell>
                             </TableRow>
-                          </CollapsibleContent>
-                        </>
-                      </Collapsible>
-                    ))}
-                    {(!formations || formations.length === 0) && (
-                      <TableRow>
-                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                          Aucune formation avec données financières pour cette période
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+                            {expanded && (
+                              <tr className="border-b border-border/70 bg-[hsl(var(--surface-sunken))]">
+                                <td />
+                                <td colSpan={7} className="px-4 py-3">
+                                  <DefinitionList items={costBreakdown(formation)} columns={3} />
+                                </td>
+                              </tr>
+                            )}
+                          </Fragment>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </TableFrame>
+
+                <CardList className="md:hidden">
+                  {formations.map((formation) => (
+                    <CardListItem
+                      key={formation.id}
+                      title={formation.code || 'Sans code'}
+                      subtitle={formation.student_name}
+                      meta={getMargeBadge(formation.marge_pourcent)}
+                      fields={[
+                        {
+                          label: "Date",
+                          value: formation.start_date
+                            ? format(new Date(formation.start_date), 'dd/MM/yyyy')
+                            : "—",
+                        },
+                        { label: "CA HT", value: formatPrice(formation.ca_ht) },
+                        { label: "Coûts", value: formatPrice(formation.couts_totaux) },
+                        {
+                          label: "Marge",
+                          value: (
+                            <span className={getMargeColor(formation.marge_pourcent)}>
+                              {formatPrice(formation.marge_brute)}
+                            </span>
+                          ),
+                        },
+                        ...costBreakdown(formation),
+                      ]}
+                      actions={
+                        editable ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleAddCost(formation.id!)}
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Ajouter un coût
+                          </Button>
+                        ) : undefined
+                      }
+                    />
+                  ))}
+                </CardList>
+              </>
+            )}
+          </SurfaceCard>
+        )}
+      </PageShell>
 
       <AddCostDialog open={addCostOpen} onOpenChange={setAddCostOpen} inscriptionId={selectedInscription} />
     </MainLayout>

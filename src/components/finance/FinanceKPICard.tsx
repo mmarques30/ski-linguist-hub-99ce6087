@@ -1,3 +1,9 @@
+/**
+ * Tuile KPI historique du module finance.
+ *
+ * Remplacée par `StatTile` du kit sur tous les écrans ; conservée (sur jetons)
+ * le temps qu'aucun écran ne l'importe plus.
+ */
 import { cn } from "@/lib/utils";
 import { TrendingUp, TrendingDown, Minus, LucideIcon } from "lucide-react";
 
@@ -22,14 +28,14 @@ export function FinanceKPICard({
 }: FinanceKPICardProps) {
   const borderStyles = {
     default: 'border-l-border',
-    gold: 'border-l-[hsl(var(--fli-yellow))]',
-    navy: 'border-l-[hsl(var(--fli-navy))]',
+    gold: 'border-l-[hsl(var(--tint-gold-fg))]',
+    navy: 'border-l-[hsl(var(--tint-navy-fg))]',
   };
 
   const iconBgStyles = {
     default: 'bg-muted text-muted-foreground',
-    gold: 'bg-[hsl(var(--fli-yellow))]/10 text-[hsl(var(--fli-yellow))]',
-    navy: 'bg-[hsl(var(--fli-navy))]/10 text-[hsl(var(--fli-navy))]',
+    gold: 'bg-[hsl(var(--tint-gold-bg))] text-[hsl(var(--tint-gold-fg))]',
+    navy: 'bg-[hsl(var(--tint-navy-bg))] text-[hsl(var(--tint-navy-fg))]',
   };
 
   const formatValue = (val: string | number) => {
@@ -58,8 +64,8 @@ export function FinanceKPICard({
       <span className={cn(
         "inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full",
         isNeutral && "bg-muted text-muted-foreground",
-        isPositive && "bg-emerald-500/10 text-emerald-600",
-        !isPositive && !isNeutral && "bg-destructive/10 text-destructive",
+        isPositive && "bg-[hsl(var(--status-good))]/12 text-[hsl(var(--status-good))]",
+        !isPositive && !isNeutral && "bg-[hsl(var(--status-critical))]/12 text-[hsl(var(--status-critical))]",
       )}>
         {getEvolutionIcon()}
         {isPositive ? '+' : ''}{Math.abs(evolution).toFixed(1)}%
@@ -69,7 +75,7 @@ export function FinanceKPICard({
 
   return (
     <div className={cn(
-      "bg-card border border-border rounded-lg p-5 border-l-4",
+      "fli-surface rounded-[var(--radius-card)] border-l-4 p-5",
       borderStyles[variant]
     )}>
       <div className="flex items-start justify-between">

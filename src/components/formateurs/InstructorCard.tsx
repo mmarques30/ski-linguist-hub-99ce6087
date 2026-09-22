@@ -1,22 +1,22 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CheckCircle2, Pencil, Star } from "lucide-react";
 import type { Instructor } from "@/hooks/useInstructors";
 import { displayLanguageLabel } from "@/lib/taught-languages";
 import { candidatActivationGaps } from "@/lib/instructor-candidat";
+import { StatusPill, SurfaceCard } from "@/components/ui-kit";
+import type { PillTone } from "@/components/ui-kit";
 
-const availabilityStyles: Record<string, string> = {
-  disponible: "bg-emerald-100 text-emerald-800",
-  occupe: "bg-amber-100 text-amber-800",
-  indisponible: "bg-red-100 text-red-800",
+const availabilityTones: Record<string, PillTone> = {
+  disponible: "success",
+  occupe: "warning",
+  indisponible: "danger",
 };
 
-const statusStyles: Record<string, string> = {
-  actif: "bg-emerald-100 text-emerald-800",
-  inactif: "bg-slate-100 text-slate-700",
-  candidat: "bg-sky-100 text-sky-800",
+const statusTones: Record<string, PillTone> = {
+  actif: "success",
+  inactif: "neutral",
+  candidat: "info",
 };
 
 const statusLabels: Record<string, string> = {
@@ -25,17 +25,18 @@ const statusLabels: Record<string, string> = {
   candidat: "Candidat·e",
 };
 
-const languageColors: Record<string, string> = {
-  anglais: "bg-blue-100 text-blue-800",
-  "portugais brésilien": "bg-green-100 text-green-800",
-  portugais: "bg-green-100 text-green-800",
-  russe: "bg-red-100 text-red-800",
-  néerlandais: "bg-orange-100 text-orange-800",
-  fle: "bg-violet-100 text-violet-800",
-  espagnol: "bg-amber-100 text-amber-800",
-  italien: "bg-rose-100 text-rose-800",
-  allemand: "bg-yellow-100 text-yellow-800",
-  chinois: "bg-cyan-100 text-cyan-800",
+/** Teinte par langue enseignée — jetons uniquement, pas de couleur en dur. */
+const languageTones: Record<string, PillTone> = {
+  anglais: "info",
+  "portugais brésilien": "success",
+  portugais: "success",
+  russe: "danger",
+  néerlandais: "accent",
+  fle: "purple",
+  espagnol: "warning",
+  italien: "danger",
+  allemand: "warning",
+  chinois: "neutral",
 };
 
 interface Props {
@@ -52,35 +53,45 @@ export function InstructorCard({ instructor, onClick, onEdit, onActivate }: Prop
   const gaps = isCandidat ? candidatActivationGaps(instructor) : [];
 
   return (
-    <Card
-      className="cursor-pointer hover:shadow-md transition-shadow"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      aria-label={`Ouvrir la fiche de ${instructor.first_name} ${instructor.last_name}`}
+      className="cursor-pointer rounded-[var(--radius-card)]"
     >
-      <CardContent className="p-4 flex items-start gap-4">
-        <Avatar className="h-12 w-12">
+      <SurfaceCard interactive bodyClassName="flex items-start gap-4">
+        <Avatar className="h-12 w-12 shrink-0">
           <AvatarImage src={instructor.photo_url || undefined} />
           <AvatarFallback>{initials.toUpperCase()}</AvatarFallback>
         </Avatar>
-        <div className="flex-1 min-w-0 space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="font-semibold truncate">
+
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="truncate font-semibold">
               {instructor.first_name} {instructor.last_name}
             </h3>
-            <div className="flex shrink-0 items-center gap-1">
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
               {instructor.status && (
-                <Badge className={statusStyles[instructor.status] || statusStyles.inactif}>
+                <StatusPill tone={statusTones[instructor.status] ?? "neutral"} size="sm">
                   {statusLabels[instructor.status] || instructor.status}
-                </Badge>
+                </StatusPill>
               )}
               {instructor.status === "actif" && (
-                <Badge
-                  className={
-                    availabilityStyles[instructor.availability_status || "disponible"] ||
-                    availabilityStyles.disponible
+                <StatusPill
+                  tone={
+                    availabilityTones[instructor.availability_status || "disponible"] ?? "success"
                   }
+                  size="sm"
                 >
                   {instructor.availability_status || "disponible"}
-                </Badge>
+                </StatusPill>
               )}
               {onEdit && (
                 <Button
@@ -89,6 +100,7 @@ export function InstructorCard({ instructor, onClick, onEdit, onActivate }: Prop
                   variant="ghost"
                   className="h-8 w-8"
                   title="Modifier"
+                  aria-label="Modifier"
                   onClick={(e) => {
                     e.stopPropagation();
                     onEdit();
@@ -99,36 +111,35 @@ export function InstructorCard({ instructor, onClick, onEdit, onActivate }: Prop
               )}
             </div>
           </div>
+
           <div className="flex flex-wrap gap-1">
             {(instructor.languages || []).map((l) => (
-              <Badge
-                key={l}
-                variant="outline"
-                className={languageColors[l.toLowerCase()] || ""}
-              >
+              <StatusPill key={l} tone={languageTones[l.toLowerCase()] ?? "neutral"} size="sm">
                 {displayLanguageLabel(l)}
-              </Badge>
+              </StatusPill>
             ))}
           </div>
+
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             {instructor.hourly_rate && (
-              <span>{instructor.hourly_rate} €/h</span>
+              <span className="tabular">{instructor.hourly_rate} €/h</span>
             )}
             {(instructor.rating_average ?? 0) > 0 && (
-              <span className="flex items-center gap-1">
-                <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+              <span className="flex items-center gap-1 tabular">
+                <Star className="h-3 w-3 fill-[hsl(var(--tint-gold-fg))] text-[hsl(var(--tint-gold-fg))]" />
                 {Number(instructor.rating_average).toFixed(1)}
               </span>
             )}
           </div>
+
           {isCandidat && (
             <div className="flex flex-wrap items-center gap-2 pt-1">
               {gaps.length > 0 ? (
-                <span className="text-xs text-sky-800">
+                <span className="text-xs text-[hsl(var(--tint-blue-fg))]">
                   {gaps.length} point{gaps.length > 1 ? "s" : ""} à compléter
                 </span>
               ) : (
-                <span className="text-xs text-emerald-700">Dossier prêt</span>
+                <span className="text-xs text-[hsl(var(--status-good))]">Dossier prêt</span>
               )}
               {onActivate && (
                 <Button
@@ -148,7 +159,7 @@ export function InstructorCard({ instructor, onClick, onEdit, onActivate }: Prop
             </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </SurfaceCard>
+    </div>
   );
 }

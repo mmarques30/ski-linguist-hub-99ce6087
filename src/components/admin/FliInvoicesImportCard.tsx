@@ -1,17 +1,16 @@
 import { useRef, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Upload, FileSpreadsheet, Loader2, CheckCircle2, Receipt } from "lucide-react";
 import {
-  Table,
-  TableBody,
+  StatusPill,
+  SurfaceCard,
   TableCell,
-  TableHead,
-  TableHeader,
+  TableFrame,
+  TableHeadCell,
+  TableHeadRow,
   TableRow,
-} from "@/components/ui/table";
-import { Upload, FileSpreadsheet, Loader2, CheckCircle2 } from "lucide-react";
+} from "@/components/ui-kit";
 import {
   parseFliInvoicesCsv,
   FLI_INVOICES_WRITE_CONFIRMATION,
@@ -130,42 +129,46 @@ export function FliInvoicesImportCard() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Tableur FLI — Facturation historique</CardTitle>
-        <CardDescription>
+    <SurfaceCard
+      title="Tableur FLI — Facturation historique"
+      icon={Receipt}
+      description={
+        <>
           CSV Paula (<code>;</code>, UTF-8 BOM, dates ISO, virgule décimale). Les numéros
           Fact FLI sont conservés. Dry-run obligatoire avant écriture : totaux HT/TTC par
           exercice à comparer à l&apos;expert-comptable.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div
-          className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-muted/30 transition-colors"
+        </>
+      }
+      actions={fileName ? <StatusPill tone="info">{fileName}</StatusPill> : undefined}
+    >
+      <div className="space-y-4">
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".csv,text/csv"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) void handleFile(f);
+          }}
+        />
+        <button
+          type="button"
+          className="w-full cursor-pointer rounded-[var(--radius)] border-2 border-dashed border-border p-6 text-center transition-colors hover:bg-[hsl(var(--surface-sunken))]"
           onClick={() => fileRef.current?.click()}
         >
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".csv,text/csv"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) void handleFile(f);
-            }}
-          />
           {fileName ? (
-            <p className="flex items-center justify-center gap-2 text-sm">
+            <span className="flex items-center justify-center gap-2 text-sm">
               <FileSpreadsheet className="h-4 w-4" />
               {fileName}
-            </p>
+            </span>
           ) : (
-            <p className="text-sm text-muted-foreground">
+            <span className="block text-sm text-muted-foreground">
               <Upload className="inline h-4 w-4 mr-1" />
               Déposer un fichier CSV de facturation
-            </p>
+            </span>
           )}
-        </div>
+        </button>
 
         {parseError && (
           <Alert variant="destructive">
@@ -177,17 +180,17 @@ export function FliInvoicesImportCard() {
         {preview && (
           <>
             <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">{preview.totalRows} lignes</Badge>
-              <Badge variant="outline">
+              <StatusPill tone="neutral" size="sm">{preview.totalRows} lignes</StatusPill>
+              <StatusPill tone="neutral" size="sm">
                 {preview.sequence.min} → {preview.sequence.max}
-              </Badge>
+              </StatusPill>
               {preview.sequence.knownGapPreserved && (
-                <Badge>Trou 13288 conservé</Badge>
+                <StatusPill tone="warning" size="sm">Trou 13288 conservé</StatusPill>
               )}
-              <Badge variant="outline">
+              <StatusPill tone="info" size="sm">
                 {preview.byType.formation} formation · {preview.byType.test} test ·{" "}
                 {preview.byType.soustraitance} sous-traitance
-              </Badge>
+              </StatusPill>
             </div>
 
             {preview.sequence.missing.length > 0 && (
@@ -198,84 +201,92 @@ export function FliInvoicesImportCard() {
 
             <div>
               <h3 className="text-sm font-medium mb-2">Totaux par exercice (dry-run, aucune écriture)</h3>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Exercice</TableHead>
-                    <TableHead className="text-right">N</TableHead>
-                    <TableHead className="text-right">HT</TableHead>
-                    <TableHead className="text-right">TVA</TableHead>
-                    <TableHead className="text-right">TTC</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {preview.totalsByYear.map((y) => (
-                    <TableRow key={y.year}>
-                      <TableCell>{y.year}</TableCell>
-                      <TableCell className="text-right">{y.n}</TableCell>
-                      <TableCell className="text-right">{euro(y.ht)}</TableCell>
-                      <TableCell className="text-right">{euro(y.tva)}</TableCell>
-                      <TableCell className="text-right">{euro(y.ttc)}</TableCell>
-                    </TableRow>
-                  ))}
-                  <TableRow>
-                    <TableCell className="font-medium">Total</TableCell>
-                    <TableCell className="text-right font-medium">
-                      {preview.grandTotal.n}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {euro(preview.grandTotal.ht)}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {euro(preview.grandTotal.tva)}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {euro(preview.grandTotal.ttc)}
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+              <div className="overflow-hidden rounded-[var(--radius)] border border-border">
+                <TableFrame>
+                  <table className="w-full">
+                    <thead>
+                      <TableHeadRow>
+                        <TableHeadCell>Exercice</TableHeadCell>
+                        <TableHeadCell align="right">N</TableHeadCell>
+                        <TableHeadCell align="right">HT</TableHeadCell>
+                        <TableHeadCell align="right">TVA</TableHeadCell>
+                        <TableHeadCell align="right">TTC</TableHeadCell>
+                      </TableHeadRow>
+                    </thead>
+                    <tbody>
+                      {preview.totalsByYear.map((y) => (
+                        <TableRow key={y.year}>
+                          <TableCell>{y.year}</TableCell>
+                          <TableCell align="right" className="tabular">{y.n}</TableCell>
+                          <TableCell align="right" className="tabular">{euro(y.ht)}</TableCell>
+                          <TableCell align="right" className="tabular">{euro(y.tva)}</TableCell>
+                          <TableCell align="right" className="tabular">{euro(y.ttc)}</TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow className="bg-[hsl(var(--surface-sunken))]">
+                        <TableCell className="font-medium">Total</TableCell>
+                        <TableCell align="right" className="font-medium tabular">
+                          {preview.grandTotal.n}
+                        </TableCell>
+                        <TableCell align="right" className="font-medium tabular">
+                          {euro(preview.grandTotal.ht)}
+                        </TableCell>
+                        <TableCell align="right" className="font-medium tabular">
+                          {euro(preview.grandTotal.tva)}
+                        </TableCell>
+                        <TableCell align="right" className="font-medium tabular">
+                          {euro(preview.grandTotal.ttc)}
+                        </TableCell>
+                      </TableRow>
+                    </tbody>
+                  </table>
+                </TableFrame>
+              </div>
             </div>
 
             <div>
               <h3 className="text-sm font-medium mb-2">Chiffre d&apos;affaires (hors annulées, avoirs déduits)</h3>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Exercice</TableHead>
-                    <TableHead className="text-right">N</TableHead>
-                    <TableHead className="text-right">HT</TableHead>
-                    <TableHead className="text-right">TVA</TableHead>
-                    <TableHead className="text-right">TTC</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {preview.caByYear.map((y) => (
-                    <TableRow key={`ca-${y.year}`}>
-                      <TableCell>{y.year}</TableCell>
-                      <TableCell className="text-right">{y.n}</TableCell>
-                      <TableCell className="text-right">{euro(y.ht)}</TableCell>
-                      <TableCell className="text-right">{euro(y.tva)}</TableCell>
-                      <TableCell className="text-right">{euro(y.ttc)}</TableCell>
-                    </TableRow>
-                  ))}
-                  <TableRow>
-                    <TableCell className="font-medium">CA</TableCell>
-                    <TableCell className="text-right font-medium">
-                      {preview.caGrandTotal.n}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {euro(preview.caGrandTotal.ht)}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {euro(preview.caGrandTotal.tva)}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {euro(preview.caGrandTotal.ttc)}
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+              <div className="overflow-hidden rounded-[var(--radius)] border border-border">
+                <TableFrame>
+                  <table className="w-full">
+                    <thead>
+                      <TableHeadRow>
+                        <TableHeadCell>Exercice</TableHeadCell>
+                        <TableHeadCell align="right">N</TableHeadCell>
+                        <TableHeadCell align="right">HT</TableHeadCell>
+                        <TableHeadCell align="right">TVA</TableHeadCell>
+                        <TableHeadCell align="right">TTC</TableHeadCell>
+                      </TableHeadRow>
+                    </thead>
+                    <tbody>
+                      {preview.caByYear.map((y) => (
+                        <TableRow key={`ca-${y.year}`}>
+                          <TableCell>{y.year}</TableCell>
+                          <TableCell align="right" className="tabular">{y.n}</TableCell>
+                          <TableCell align="right" className="tabular">{euro(y.ht)}</TableCell>
+                          <TableCell align="right" className="tabular">{euro(y.tva)}</TableCell>
+                          <TableCell align="right" className="tabular">{euro(y.ttc)}</TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow className="bg-[hsl(var(--surface-sunken))]">
+                        <TableCell className="font-medium">CA</TableCell>
+                        <TableCell align="right" className="font-medium tabular">
+                          {preview.caGrandTotal.n}
+                        </TableCell>
+                        <TableCell align="right" className="font-medium tabular">
+                          {euro(preview.caGrandTotal.ht)}
+                        </TableCell>
+                        <TableCell align="right" className="font-medium tabular">
+                          {euro(preview.caGrandTotal.tva)}
+                        </TableCell>
+                        <TableCell align="right" className="font-medium tabular">
+                          {euro(preview.caGrandTotal.ttc)}
+                        </TableCell>
+                      </TableRow>
+                    </tbody>
+                  </table>
+                </TableFrame>
+              </div>
               <p className="text-xs text-muted-foreground mt-1">
                 {preview.cancelled.length} annulée(s) exclues · {preview.credits.length} avoir(s)
                 en négatif.
@@ -347,28 +358,32 @@ export function FliInvoicesImportCard() {
                   <strong>{match.unmatched.length}</strong> · ambiguës :{" "}
                   <strong>{match.ambiguous.length}</strong>
                 </p>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Exercice</TableHead>
-                      <TableHead className="text-right">Rattachées</TableHead>
-                      <TableHead className="text-right">Non rattachées</TableHead>
-                      <TableHead className="text-right">Ambiguës</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {Object.entries(match.byYear)
-                      .sort(([a], [b]) => a.localeCompare(b))
-                      .map(([year, counts]) => (
-                        <TableRow key={year}>
-                          <TableCell>{year}</TableCell>
-                          <TableCell className="text-right">{counts.matched}</TableCell>
-                          <TableCell className="text-right">{counts.unmatched}</TableCell>
-                          <TableCell className="text-right">{counts.ambiguous}</TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
+                <div className="overflow-hidden rounded-[var(--radius)] border border-border">
+                  <TableFrame>
+                    <table className="w-full">
+                      <thead>
+                        <TableHeadRow>
+                          <TableHeadCell>Exercice</TableHeadCell>
+                          <TableHeadCell align="right">Rattachées</TableHeadCell>
+                          <TableHeadCell align="right">Non rattachées</TableHeadCell>
+                          <TableHeadCell align="right">Ambiguës</TableHeadCell>
+                        </TableHeadRow>
+                      </thead>
+                      <tbody>
+                        {Object.entries(match.byYear)
+                          .sort(([a], [b]) => a.localeCompare(b))
+                          .map(([year, counts]) => (
+                            <TableRow key={year}>
+                              <TableCell>{year}</TableCell>
+                              <TableCell align="right" className="tabular">{counts.matched}</TableCell>
+                              <TableCell align="right" className="tabular">{counts.unmatched}</TableCell>
+                              <TableCell align="right" className="tabular">{counts.ambiguous}</TableCell>
+                            </TableRow>
+                          ))}
+                      </tbody>
+                    </table>
+                  </TableFrame>
+                </div>
                 <div className="flex flex-wrap gap-2">
                   <Button variant="outline" size="sm" onClick={downloadUnmatched}>
                     Télécharger les non-rattachées
@@ -396,13 +411,15 @@ export function FliInvoicesImportCard() {
                   </div>
                 )}
                 <Alert>
-                  <AlertTitle>Écriture bloquée</AlertTitle>
+                  <AlertTitle className="flex flex-wrap items-center gap-2">
+                    <StatusPill tone="danger" size="sm">Écriture bloquée</StatusPill>
+                  </AlertTitle>
                   <AlertDescription>
                     Taper exactement « {FLI_INVOICES_WRITE_CONFIRMATION} » pour déverrouiller.
                     Sans ce feu vert, rien n&apos;est écrit.
                   </AlertDescription>
                 </Alert>
-                <div className="flex flex-wrap items-end gap-3">
+                <div className="flex flex-wrap items-end gap-3 rounded-[var(--radius)] border border-destructive/40 bg-destructive/5 p-3">
                   <div className="space-y-1">
                     <Label htmlFor="ok-import">Confirmation</Label>
                     <Input
@@ -433,7 +450,7 @@ export function FliInvoicesImportCard() {
             )}
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </SurfaceCard>
   );
 }

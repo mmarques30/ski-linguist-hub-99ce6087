@@ -8,6 +8,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Send } from "lucide-react";
+import { StatusPill } from "@/components/ui-kit";
 
 interface MassEmailConfirmDialogProps {
   open: boolean;
@@ -30,7 +32,13 @@ export function MassEmailConfirmDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirmer l&apos;envoi de masse</AlertDialogTitle>
+          <AlertDialogTitle className="flex flex-wrap items-center gap-2">
+            <Send className="h-4 w-4 text-destructive" aria-hidden />
+            Confirmer l&apos;envoi de masse
+            <StatusPill tone="danger" size="sm">
+              Envoi réel
+            </StatusPill>
+          </AlertDialogTitle>
           <AlertDialogDescription>
             Vous allez envoyer <strong>{count}</strong> {actionLabel}. Cette
             action n&apos;est pas un test : chaque adresse recevra un e-mail réel

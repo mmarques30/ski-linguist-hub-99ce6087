@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -10,14 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,7 +25,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Plus, Eye, Edit, Trash2, ClipboardList, Upload, Loader2, Package, MoreHorizontal } from "lucide-react";
+import {
+  Plus,
+  Eye,
+  Edit,
+  Trash2,
+  ClipboardList,
+  Upload,
+  Loader2,
+  Package,
+  MoreHorizontal,
+  Clock,
+  PlayCircle,
+  CheckCircle2,
+} from "lucide-react";
 import { useInscriptions, useDeleteInscription } from "@/hooks/useInscriptions";
 import { DATES_A_PLANIFIER_LABEL } from "@/lib/registration-dates";
 import { DueStatusAdvanceCard } from "@/components/inscriptions/DueStatusAdvanceCard";
@@ -45,11 +49,30 @@ import { fr, ptBR, enUS } from "date-fns/locale";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSeasonFilter } from "@/contexts/SeasonContext";
 import { LANGUAGE_LABELS } from "@/lib/language-catalog";
+import { getStatusLabel } from "@/lib/inscription-status";
 import { EndPackDialog } from "@/components/endpack/EndPackDialog";
 import { InscriptionFormDialog } from "@/components/inscriptions/InscriptionFormDialog";
 import { toast } from "sonner";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
-import { ListSkeleton } from "@/components/common/ListSkeleton";
+import {
+  CardList,
+  CardListItem,
+  FilterBar,
+  IdentityCell,
+  PageHeader,
+  PageShell,
+  StatTile,
+  StatTileGrid,
+  StatusPill,
+  SurfaceCard,
+  TableCell,
+  TableEmpty,
+  TableFrame,
+  TableHeadCell,
+  TableHeadRow,
+  TableRow,
+  TableSkeleton,
+} from "@/components/ui-kit";
 const translations = {
   title: {
     fr: "Inscriptions",
@@ -206,15 +229,44 @@ const translations = {
     "pt-BR": "Status atualizado",
     en: "Status updated",
   },
+  // Libellés ajoutés par la refonte visuelle (tuiles, filtres, vue mobile).
+  displayed: {
+    fr: "Inscriptions affichées",
+    "pt-BR": "Inscrições exibidas",
+    en: "Enrollments shown",
+  },
+  inResults: {
+    fr: "dans les résultats affichés",
+    "pt-BR": "nos resultados exibidos",
+    en: "in the current results",
+  },
+  searchChip: {
+    fr: "Recherche",
+    "pt-BR": "Busca",
+    en: "Search",
+  },
+  view: {
+    fr: "Voir",
+    "pt-BR": "Ver",
+    en: "View",
+  },
+  edit: {
+    fr: "Modifier",
+    "pt-BR": "Editar",
+    en: "Edit",
+  },
 };
 
 export default function Inscriptions() {
   const [searchParams] = useSearchParams();
   const statusFromUrl = searchParams.get("status");
+  const languageFromUrl = searchParams.get("language");
   const [statusFilter, setStatusFilter] = useState(
     () => statusFromUrl || "all"
   );
-  const [languageFilter, setLanguageFilter] = useState("all");
+  const [languageFilter, setLanguageFilter] = useState(
+    () => languageFromUrl || "all"
+  );
   const [search, setSearch] = useState("");
   const [endPackInscription, setEndPackInscription] = useState<any>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -222,7 +274,7 @@ export default function Inscriptions() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [inscriptionToDelete, setInscriptionToDelete] = useState<{ id: string; name: string } | null>(null);
   const { language, t } = useLanguage();
-  const { seasonId, seasonStart, seasonEnd } = useSeasonFilter();
+  const { seasonId, seasonStart, seasonEnd, season } = useSeasonFilter();
   const { canEdit } = useUserPermissions();
   const editable = canEdit("inscriptions");
   const deleteInscription = useDeleteInscription();
@@ -230,6 +282,11 @@ export default function Inscriptions() {
   useEffect(() => {
     if (statusFromUrl) setStatusFilter(statusFromUrl);
   }, [statusFromUrl]);
+
+  // Les répartitions du tableau de bord pointent ici avec ?language=…
+  useEffect(() => {
+    if (languageFromUrl) setLanguageFilter(languageFromUrl);
+  }, [languageFromUrl]);
 
   const { data: inscriptions, isLoading, error, refetch } = useInscriptions({
     status: statusFilter,
@@ -265,6 +322,44 @@ export default function Inscriptions() {
     }).format(price);
   };
 
+  /**
+   * Compteurs des résultats déjà chargés — aucune requête supplémentaire.
+   * Chaque tuile applique le filtre de statut correspondant à la liste.
+   */
+  const counts = useMemo(() => {
+    const rows = inscriptions ?? [];
+    const byStatus = (code: string) => rows.filter((i) => i.status === code).length;
+    return {
+      total: rows.length,
+      en_attente: byStatus("en_attente"),
+      en_cours: byStatus("en_cours"),
+      terminee: byStatus("terminee"),
+    };
+  }, [inscriptions]);
+
+  const activeFilters: Array<{ key: string; label: string; onRemove: () => void }> = [];
+  if (statusFilter !== "all") {
+    activeFilters.push({
+      key: "status",
+      label: `${t(translations.status)} : ${getStatusLabel(statusFilter, language)}`,
+      onRemove: () => setStatusFilter("all"),
+    });
+  }
+  if (languageFilter !== "all") {
+    activeFilters.push({
+      key: "language",
+      label: `${t(translations.language)} : ${languageFilter}`,
+      onRemove: () => setLanguageFilter("all"),
+    });
+  }
+  if (search) {
+    activeFilters.push({
+      key: "search",
+      label: `${t(translations.searchChip)} : ${search}`,
+      onRemove: () => setSearch(""),
+    });
+  }
+
   const handleDeleteClick = (inscription: { id: string; student_name: string | null; code: string | null }) => {
     setInscriptionToDelete({
       id: inscription.id,
@@ -286,243 +381,375 @@ export default function Inscriptions() {
     }
   };
 
+  const endPackPayload = (inscription: any) => ({
+    id: inscription.id,
+    student_id: inscription.student_id,
+    student_name: inscription.student_name,
+    language: inscription.language,
+    start_date: inscription.start_date,
+    end_date: inscription.end_date,
+    duration_hours: inscription.duration_hours,
+    price: inscription.price,
+    deposit_amount:
+      (inscription as { deposit_amount?: number | null }).deposit_amount ?? null,
+    balance_after_deposit:
+      (inscription as { balance_after_deposit?: number | null })
+        .balance_after_deposit ?? null,
+    code: inscription.code,
+    course_location: inscription.course_location,
+    modality: inscription.modality,
+    formateur: inscription.instructor_name,
+    status: inscription.status,
+  });
+
+  /** Période — même contenu que la colonne du tableau, réutilisé en mobile. */
+  const renderPeriod = (inscription: any) =>
+    inscription.dates_to_confirm ? (
+      <span className="text-sm text-muted-foreground">
+        {DATES_A_PLANIFIER_LABEL}
+        <span className="block text-xs">
+          souhaité le {formatDate(inscription.start_date)}
+        </span>
+      </span>
+    ) : (
+      <span className="text-sm tabular">
+        {formatDate(inscription.start_date)} - {formatDate(inscription.end_date)}
+      </span>
+    );
+
+  /** Actions de ligne — identiques en tableau et en carte mobile. */
+  const rowActions = (inscription: any) => (
+    <div className="flex items-center justify-end gap-1">
+      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+        <Link to={`/inscriptions/${inscription.id}`} aria-label={t(translations.view)}>
+          <Eye className="h-4 w-4" />
+        </Link>
+      </Button>
+      {editable && (
+        <>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            aria-label={t(translations.edit)}
+            onClick={() => setEditingInscription(inscription)}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                aria-label={t(translations.actions)}
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => setEndPackInscription(endPackPayload(inscription))}
+              >
+                <Package className="mr-2 h-4 w-4" />
+                Pack Fin de Formation
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={() => handleDeleteClick(inscription)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Supprimer
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </>
+      )}
+    </div>
+  );
+
+  const listBody = isLoading ? (
+    <TableSkeleton rows={6} cols={6} />
+  ) : error ? (
+    <TableEmpty
+      title={t(translations.loadingError)}
+      description={error.message}
+      icon={ClipboardList}
+    />
+  ) : !inscriptions || inscriptions.length === 0 ? (
+    <TableEmpty
+      title={t(translations.noInscriptionsTitle)}
+      description={t(translations.noInscriptionsDesc)}
+      icon={ClipboardList}
+      action={
+        <Button asChild>
+          <Link to="/admin/import">
+            <Upload className="mr-2 h-4 w-4" />
+            {t(translations.importCSV)}
+          </Link>
+        </Button>
+      }
+    />
+  ) : (
+    <>
+      <TableFrame className="hidden md:block">
+        <table className="w-full border-collapse">
+          <thead>
+            <TableHeadRow>
+              <TableHeadCell>{t(translations.code)}</TableHeadCell>
+              <TableHeadCell>{t(translations.student)}</TableHeadCell>
+              <TableHeadCell className="hidden lg:table-cell">
+                {t(translations.skiSchool)}
+              </TableHeadCell>
+              <TableHeadCell className="hidden md:table-cell">
+                {t(translations.language)}
+              </TableHeadCell>
+              <TableHeadCell className="hidden xl:table-cell">
+                {t(translations.level)}
+              </TableHeadCell>
+              <TableHeadCell className="hidden lg:table-cell">
+                {t(translations.period)}
+              </TableHeadCell>
+              <TableHeadCell align="right" className="hidden md:table-cell">
+                {t(translations.amount)}
+              </TableHeadCell>
+              <TableHeadCell>{t(translations.status)}</TableHeadCell>
+              <TableHeadCell align="right">{t(translations.actions)}</TableHeadCell>
+            </TableHeadRow>
+          </thead>
+          <tbody>
+            {inscriptions.map((inscription) => (
+              <TableRow key={inscription.id}>
+                <TableCell className="font-mono">
+                  {inscription.code || "-"}
+                </TableCell>
+                <TableCell>
+                  <IdentityCell
+                    name={inscription.student_name || "N/A"}
+                    secondary={inscription.student_email}
+                    to={
+                      inscription.student_id
+                        ? `/students/${inscription.student_id}`
+                        : undefined
+                    }
+                  />
+                </TableCell>
+                <TableCell hideBelow="lg">{inscription.ski_school_name || "-"}</TableCell>
+                <TableCell hideBelow="md">{inscription.language}</TableCell>
+                <TableCell hideBelow="xl">
+                  <Badge variant="outline">{inscription.entry_level || "-"}</Badge>
+                </TableCell>
+                <TableCell hideBelow="lg">{renderPeriod(inscription)}</TableCell>
+                <TableCell align="right" hideBelow="md" className="tabular">
+                  {formatPrice(inscription.price)}
+                </TableCell>
+                <TableCell>
+                  <InscriptionStatusMenu
+                    inscriptionId={inscription.id}
+                    status={inscription.status || ""}
+                    startDate={inscription.start_date}
+                    readOnly={!editable}
+                  />
+                </TableCell>
+                <TableCell align="right">{rowActions(inscription)}</TableCell>
+              </TableRow>
+            ))}
+          </tbody>
+        </table>
+      </TableFrame>
+
+      {/* Doublure mobile du tableau — aucune colonne perdue sous 768px. */}
+      <CardList className="md:hidden">
+        {inscriptions.map((inscription) => (
+          <CardListItem
+            key={inscription.id}
+            title={
+              inscription.student_id ? (
+                <Link
+                  to={`/students/${inscription.student_id}`}
+                  className="hover:underline"
+                >
+                  {inscription.student_name || "N/A"}
+                </Link>
+              ) : (
+                inscription.student_name || "N/A"
+              )
+            }
+            subtitle={inscription.student_email}
+            meta={
+              <InscriptionStatusMenu
+                inscriptionId={inscription.id}
+                status={inscription.status || ""}
+                startDate={inscription.start_date}
+                readOnly={!editable}
+              />
+            }
+            fields={[
+              { label: t(translations.code), value: inscription.code || "-" },
+              { label: t(translations.language), value: inscription.language },
+              {
+                label: t(translations.skiSchool),
+                value: inscription.ski_school_name || "-",
+              },
+              {
+                label: t(translations.level),
+                value: inscription.entry_level || "-",
+              },
+              { label: t(translations.period), value: renderPeriod(inscription) },
+              { label: t(translations.amount), value: formatPrice(inscription.price) },
+            ]}
+            actions={rowActions(inscription)}
+          />
+        ))}
+      </CardList>
+    </>
+  );
+
   return (
     <MainLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">{t(translations.title)}</h1>
-            <p className="text-muted-foreground">
-              {t(translations.subtitle)}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            {editable && (
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/admin/import">
-                  <Upload className="mr-2 h-4 w-4" />
-                  {t(translations.importCSV)}
-                </Link>
-              </Button>
-            )}
-            {editable && (
-              <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                {t(translations.newInscription)}
-              </Button>
-            )}
-          </div>
-        </div>
+      <PageShell>
+        <PageHeader
+          title={t(translations.title)}
+          description={t(translations.subtitle)}
+          icon={ClipboardList}
+          tone="gold"
+          meta={
+            season ? <StatusPill tone="info">{season.name}</StatusPill> : undefined
+          }
+          actions={
+            <>
+              {editable && (
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/admin/import">
+                    <Upload className="mr-2 h-4 w-4" />
+                    {t(translations.importCSV)}
+                  </Link>
+                </Button>
+              )}
+              {editable && (
+                <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t(translations.newInscription)}
+                </Button>
+              )}
+            </>
+          }
+        />
 
         {editable && <DueStatusAdvanceCard />}
 
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-4 rounded-lg border bg-card p-4">
-          <div className="flex-1 min-w-[200px]">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder={t(translations.searchPlaceholder)}
-                className="pl-10"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-          </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder={t(translations.status)} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t(translations.allStatuses)}</SelectItem>
-              <SelectItem value="brouillon">{language === "pt-BR" ? "Rascunho" : language === "en" ? "Draft" : "Brouillon"}</SelectItem>
-              <SelectItem value="en_attente">{language === "pt-BR" ? "Pendente" : language === "en" ? "Pending" : "En attente"}</SelectItem>
-              <SelectItem value="confirmee">{language === "pt-BR" ? "Confirmada" : language === "en" ? "Confirmed" : "Confirmée"}</SelectItem>
-              <SelectItem value="en_cours">{t(translations.statusInProgress)}</SelectItem>
-              <SelectItem value="terminee">{t(translations.statusCompleted)}</SelectItem>
-              <SelectItem value="facturee">{t(translations.statusBilled)}</SelectItem>
-              <SelectItem value="annulee">{t(translations.statusCancelled)}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={languageFilter} onValueChange={setLanguageFilter}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder={t(translations.language)} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t(translations.allLanguages)}</SelectItem>
-              {LANGUAGE_LABELS.map((label) => (
-                <SelectItem key={label} value={label}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Compteurs des résultats chargés — chaque tuile applique son filtre. */}
+        <StatTileGrid cols={4}>
+          <StatTile
+            label={t(translations.displayed)}
+            value={counts.total}
+            hint={`${t(translations.showing)} ${counts.total} ${
+              counts.total === 1
+                ? t(translations.inscriptionSingular)
+                : t(translations.inscriptions)
+            }`}
+            icon={ClipboardList}
+            tone="gold"
+            loading={isLoading}
+            onClick={() => setStatusFilter("all")}
+          />
+          <StatTile
+            label={getStatusLabel("en_attente", language)}
+            value={counts.en_attente}
+            hint={t(translations.inResults)}
+            icon={Clock}
+            tone="orange"
+            loading={isLoading}
+            onClick={() => setStatusFilter("en_attente")}
+          />
+          <StatTile
+            label={getStatusLabel("en_cours", language)}
+            value={counts.en_cours}
+            hint={t(translations.inResults)}
+            icon={PlayCircle}
+            tone="teal"
+            loading={isLoading}
+            onClick={() => setStatusFilter("en_cours")}
+          />
+          <StatTile
+            label={getStatusLabel("terminee", language)}
+            value={counts.terminee}
+            hint={t(translations.inResults)}
+            icon={CheckCircle2}
+            tone="purple"
+            loading={isLoading}
+            onClick={() => setStatusFilter("terminee")}
+          />
+        </StatTileGrid>
 
-        {/* Table */}
-        <div className="rounded-lg border bg-card">
-          {isLoading ? (
-            <ListSkeleton rows={6} />
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <ClipboardList className="h-12 w-12 text-destructive/50 mb-4" />
-              <h3 className="text-lg font-medium">{t(translations.loadingError)}</h3>
-              <p className="text-muted-foreground mt-1 max-w-sm">
-                {error.message}
+        <SurfaceCard
+          flush
+          toolbar={
+            <FilterBar
+              search={{
+                value: search,
+                onChange: setSearch,
+                placeholder: t(translations.searchPlaceholder),
+              }}
+              filters={
+                <>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[160px]">
+                      <SelectValue placeholder={t(translations.status)} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t(translations.allStatuses)}</SelectItem>
+                      <SelectItem value="brouillon">{language === "pt-BR" ? "Rascunho" : language === "en" ? "Draft" : "Brouillon"}</SelectItem>
+                      <SelectItem value="en_attente">{language === "pt-BR" ? "Pendente" : language === "en" ? "Pending" : "En attente"}</SelectItem>
+                      <SelectItem value="confirmee">{language === "pt-BR" ? "Confirmada" : language === "en" ? "Confirmed" : "Confirmée"}</SelectItem>
+                      <SelectItem value="en_cours">{t(translations.statusInProgress)}</SelectItem>
+                      <SelectItem value="terminee">{t(translations.statusCompleted)}</SelectItem>
+                      <SelectItem value="facturee">{t(translations.statusBilled)}</SelectItem>
+                      <SelectItem value="annulee">{t(translations.statusCancelled)}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={languageFilter} onValueChange={setLanguageFilter}>
+                    <SelectTrigger className="w-[160px]">
+                      <SelectValue placeholder={t(translations.language)} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t(translations.allLanguages)}</SelectItem>
+                      {LANGUAGE_LABELS.map((label) => (
+                        <SelectItem key={label} value={label}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </>
+              }
+              activeFilters={activeFilters}
+              onClearAll={
+                activeFilters.length > 0
+                  ? () => {
+                      setStatusFilter("all");
+                      setLanguageFilter("all");
+                      setSearch("");
+                    }
+                  : undefined
+              }
+            />
+          }
+          footer={
+            inscriptions && inscriptions.length > 0 ? (
+              <p className="text-sm text-muted-foreground tabular">
+                {t(translations.showing)}{" "}
+                {inscriptions.length}{" "}
+                {inscriptions.length === 1
+                  ? t(translations.inscriptionSingular)
+                  : t(translations.inscriptions)}
               </p>
-            </div>
-          ) : !inscriptions || inscriptions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <ClipboardList className="h-12 w-12 text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-medium">{t(translations.noInscriptionsTitle)}</h3>
-              <p className="text-muted-foreground mt-1 max-w-sm">
-                {t(translations.noInscriptionsDesc)}
-              </p>
-              <Button asChild className="mt-4">
-                <Link to="/admin/import">
-                  <Upload className="mr-2 h-4 w-4" />
-                  {t(translations.importCSV)}
-                </Link>
-              </Button>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t(translations.code)}</TableHead>
-                  <TableHead>{t(translations.student)}</TableHead>
-                  <TableHead>{t(translations.skiSchool)}</TableHead>
-                  <TableHead>{t(translations.language)}</TableHead>
-                  <TableHead>{t(translations.level)}</TableHead>
-                  <TableHead>{t(translations.period)}</TableHead>
-                  <TableHead>{t(translations.amount)}</TableHead>
-                  <TableHead>{t(translations.status)}</TableHead>
-                  <TableHead className="text-right">{t(translations.actions)}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {inscriptions.map((inscription) => (
-                  <TableRow key={inscription.id}>
-                    <TableCell className="font-mono text-sm">
-                      {inscription.code || "-"}
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{inscription.student_name || "N/A"}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {inscription.student_email}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell>{inscription.ski_school_name || "-"}</TableCell>
-                    <TableCell>{inscription.language}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{inscription.entry_level || "-"}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {inscription.dates_to_confirm ? (
-                        <span className="text-sm text-muted-foreground">
-                          {DATES_A_PLANIFIER_LABEL}
-                          <span className="block text-xs">
-                            souhaité le {formatDate(inscription.start_date)}
-                          </span>
-                        </span>
-                      ) : (
-                        <span className="text-sm">
-                          {formatDate(inscription.start_date)} - {formatDate(inscription.end_date)}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>{formatPrice(inscription.price)}</TableCell>
-                    <TableCell>
-                      <InscriptionStatusMenu
-                        inscriptionId={inscription.id}
-                        status={inscription.status || ""}
-                        startDate={inscription.start_date}
-                        readOnly={!editable}
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                          <Link to={`/inscriptions/${inscription.id}`}>
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        {editable && (
-                          <>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8"
-                              onClick={() => setEditingInscription(inscription)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => setEndPackInscription({
-                                    id: inscription.id,
-                                    student_id: inscription.student_id,
-                                    student_name: inscription.student_name,
-                                    language: inscription.language,
-                                    start_date: inscription.start_date,
-                                    end_date: inscription.end_date,
-                                    duration_hours: inscription.duration_hours,
-                                    price: inscription.price,
-                                    deposit_amount:
-                                      (inscription as { deposit_amount?: number | null })
-                                        .deposit_amount ?? null,
-                                    balance_after_deposit:
-                                      (inscription as { balance_after_deposit?: number | null })
-                                        .balance_after_deposit ?? null,
-                                    code: inscription.code,
-                                    course_location: inscription.course_location,
-                                    modality: inscription.modality,
-                                    formateur: inscription.instructor_name,
-                                    status: inscription.status,
-                                  })}
-                                >
-                                  <Package className="mr-2 h-4 w-4" />
-                                  Pack Fin de Formation
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  className="text-destructive"
-                                  onClick={() => handleDeleteClick(inscription)}
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Supprimer
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </div>
-
-        {inscriptions && inscriptions.length > 0 && (
-          <p className="text-sm text-muted-foreground">
-            {t(translations.showing)}{" "}
-            {inscriptions.length}{" "}
-            {inscriptions.length === 1
-              ? t(translations.inscriptionSingular)
-              : t(translations.inscriptions)}
-          </p>
-        )}
-      </div>
+            ) : undefined
+          }
+        >
+          {listBody}
+        </SurfaceCard>
+      </PageShell>
 
       {/* End Pack Dialog */}
       {endPackInscription && (

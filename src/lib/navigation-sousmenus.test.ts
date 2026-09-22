@@ -151,8 +151,10 @@ describe("pages alignées sur les sous-menus (`?tab=`)", () => {
     for (const [fichier, marqueur] of attendus) {
       const code = source(fichier);
       expect(code, `${fichier} doit utiliser useTabParam`).toContain("useTabParam");
+      // Le contrôle d'onglets est passé de <Tabs> à SegmentedControl (kit) ;
+      // l'invariant reste le même : la valeur affichée vient de l'URL.
       expect(code, `${fichier} doit contrôler ses onglets`).toContain(
-        `<Tabs value={${marqueur}}`,
+        `value={${marqueur}}`,
       );
     }
   });

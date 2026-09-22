@@ -1,9 +1,6 @@
 import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +36,17 @@ import {
   type QualiopiIndicator,
 } from "@/hooks/useQualiopiAudit";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import {
+  MeterRow,
+  PageHeader,
+  PageShell,
+  StatTile,
+  StatTileGrid,
+  StatusPill,
+  SurfaceCard,
+  STATE_COLORS,
+} from "@/components/ui-kit";
+import type { PillTone, TileTone } from "@/components/ui-kit";
 
 const CRITERIA_LABELS: Record<number, string> = {
   1: "Conditions d'information du public",
@@ -50,10 +58,10 @@ const CRITERIA_LABELS: Record<number, string> = {
   7: "Recueil et prise en compte des appréciations",
 };
 
-const statusConfig: Record<string, { label: string; icon: typeof CheckCircle2; className: string }> = {
-  conforme: { label: "Conforme", icon: CheckCircle2, className: "bg-emerald-100 text-emerald-800" },
-  non_conforme: { label: "Non conforme", icon: AlertTriangle, className: "bg-red-100 text-red-800" },
-  en_cours: { label: "En cours", icon: Clock, className: "bg-amber-100 text-amber-800" },
+const statusConfig: Record<string, { label: string; icon: typeof CheckCircle2; tone: PillTone }> = {
+  conforme: { label: "Conforme", icon: CheckCircle2, tone: "success" },
+  non_conforme: { label: "Non conforme", icon: AlertTriangle, tone: "danger" },
+  en_cours: { label: "En cours", icon: Clock, tone: "warning" },
 };
 
 export default function QualiopiAudit() {
@@ -70,14 +78,24 @@ export default function QualiopiAudit() {
     return acc;
   }, {});
 
-  // Auto-calculated KPIs
-  const autoKPIs = [
+  // Auto-calculated KPIs — cibles inchangées (80 / 70 / 100 / 90, sans cible pour le compteur).
+  const autoKPIs: Array<{
+    label: string;
+    value: number;
+    target: number | null;
+    unit: string;
+    icon: React.ComponentType<{ className?: string }>;
+    tone: TileTone;
+    to?: string;
+  }> = [
     {
       label: "Taux de satisfaction",
       value: auto?.satisfactionRate ?? 0,
       target: 80,
       unit: "%",
       icon: BarChart3,
+      tone: "gold",
+      to: "/satisfaction-stats",
     },
     {
       label: "Taux de réussite certifications",
@@ -85,6 +103,7 @@ export default function QualiopiAudit() {
       target: 70,
       unit: "%",
       icon: Award,
+      tone: "blue",
     },
     {
       label: "PROC-026 progression Entrée/Sortie",
@@ -92,6 +111,7 @@ export default function QualiopiAudit() {
       target: 100,
       unit: "%",
       icon: TrendingUp,
+      tone: "teal",
     },
     {
       label: "Taux de complétion évaluations",
@@ -99,6 +119,7 @@ export default function QualiopiAudit() {
       target: 90,
       unit: "%",
       icon: Users,
+      tone: "purple",
     },
     {
       label: "Actions d'amélioration continue",
@@ -106,6 +127,8 @@ export default function QualiopiAudit() {
       target: null,
       unit: "",
       icon: TrendingUp,
+      tone: "orange",
+      to: "/amelioration",
     },
   ];
 
@@ -113,132 +136,140 @@ export default function QualiopiAudit() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Shield className="h-6 w-6" /> Audit Qualiopi
-            </h1>
-            <p className="text-muted-foreground">
-              Suivi des 7 critères et indicateurs de conformité
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handlePrint}>
-              <FileDown className="mr-2 h-4 w-4" /> Générer rapport
-            </Button>
-            {isAdmin && (
-              <Button onClick={() => { setEditingIndicator(null); setShowForm(true); }}>
-                <Plus className="mr-2 h-4 w-4" /> Ajouter indicateur
+      <PageShell>
+        <PageHeader
+          title="Audit Qualiopi"
+          description="Suivi des 7 critères et indicateurs de conformité"
+          icon={Shield}
+          tone="navy"
+          actions={
+            <>
+              <Button variant="outline" onClick={handlePrint}>
+                <FileDown className="mr-2 h-4 w-4" /> Générer rapport
               </Button>
-            )}
-          </div>
-        </div>
+              {isAdmin && (
+                <Button onClick={() => { setEditingIndicator(null); setShowForm(true); }}>
+                  <Plus className="mr-2 h-4 w-4" /> Ajouter indicateur
+                </Button>
+              )}
+            </>
+          }
+        />
 
-        {/* Auto KPIs */}
-        <div className="grid gap-4 md:grid-cols-4">
-          {autoKPIs.map((kpi) => (
-            <Card key={kpi.label}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-muted-foreground">{kpi.label}</span>
-                  <kpi.icon className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <p className="text-2xl font-bold">
-                  {kpi.value}{kpi.unit}
-                </p>
+        {/* KPI automatiques — valeur face à sa cible. */}
+        <StatTileGrid cols={5}>
+          {autoKPIs.map((kpi) => {
+            const reached = kpi.target !== null && kpi.value >= kpi.target;
+            return (
+              <StatTile
+                key={kpi.label}
+                label={kpi.label}
+                value={`${kpi.value}${kpi.unit}`}
+                icon={kpi.icon}
+                tone={kpi.tone}
+                to={kpi.to}
+              >
                 {kpi.target !== null && (
-                  <div className="mt-2">
-                    <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                      <span>Cible : {kpi.target}{kpi.unit}</span>
-                      <span className={kpi.value >= kpi.target ? "text-emerald-600" : "text-amber-600"}>
-                        {kpi.value >= kpi.target ? "✓ Atteint" : "En cours"}
-                      </span>
-                    </div>
-                    <Progress value={Math.min((kpi.value / kpi.target) * 100, 100)} className="h-1.5" />
-                  </div>
+                  <MeterRow
+                    label={`Cible : ${kpi.target}${kpi.unit}`}
+                    value={kpi.value}
+                    max={kpi.target}
+                    display={reached ? "✓ Atteint" : "En cours"}
+                    color={reached ? STATE_COLORS.good : STATE_COLORS.warning}
+                  />
                 )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              </StatTile>
+            );
+          })}
+        </StatTileGrid>
 
         {/* Criteria */}
         {[1, 2, 3, 4, 5, 6, 7].map((criterion) => {
           const items = grouped[criterion] || [];
           const conformeCount = items.filter((i) => i.status === "conforme").length;
           return (
-            <Card key={criterion}>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">
-                    Critère {criterion} — {CRITERIA_LABELS[criterion]}
-                  </CardTitle>
-                  {items.length > 0 && (
-                    <Badge variant="outline">
-                      {conformeCount}/{items.length} conforme{conformeCount > 1 ? "s" : ""}
-                    </Badge>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                {items.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Aucun indicateur défini.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {items.map((ind) => {
-                      const sc = statusConfig[ind.status] || statusConfig.en_cours;
-                      const Icon = sc.icon;
+            <SurfaceCard
+              key={criterion}
+              title={`Critère ${criterion} — ${CRITERIA_LABELS[criterion]}`}
+              actions={
+                items.length > 0 && (
+                  <StatusPill tone={conformeCount === items.length ? "success" : "warning"}>
+                    {conformeCount}/{items.length} conforme{conformeCount > 1 ? "s" : ""}
+                  </StatusPill>
+                )
+              }
+            >
+              {items.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Aucun indicateur défini.</p>
+              ) : (
+                <div className="space-y-3">
+                  {items.map((ind) => {
+                    const sc = statusConfig[ind.status] || statusConfig.en_cours;
+                    const Icon = sc.icon;
+                    const row = (
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-foreground">
+                            {ind.indicator_number} — {ind.label}
+                          </p>
+                          {ind.evidence_description && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Preuve : {ind.evidence_description}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex shrink-0 flex-wrap items-center gap-3">
+                          {ind.current_value != null && ind.target_value != null && (
+                            <span className="text-sm font-semibold tabular text-foreground">
+                              {ind.current_value}/{ind.target_value}{ind.unit}
+                            </span>
+                          )}
+                          <StatusPill tone={sc.tone} icon={Icon}>
+                            {sc.label}
+                          </StatusPill>
+                        </div>
+                      </div>
+                    );
+
+                    if (!isAdmin) {
                       return (
                         <div
                           key={ind.id}
-                          className="flex items-center justify-between p-3 rounded-lg border cursor-pointer hover:bg-muted/50"
-                          onClick={() => {
-                            if (isAdmin) {
-                              setEditingIndicator(ind);
-                              setShowForm(true);
-                            }
-                          }}
+                          className="rounded-[var(--radius)] border border-border p-3"
                         >
-                          <div className="flex-1">
-                            <p className="text-sm font-medium">
-                              {ind.indicator_number} — {ind.label}
-                            </p>
-                            {ind.evidence_description && (
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Preuve : {ind.evidence_description}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-3">
-                            {ind.current_value != null && ind.target_value != null && (
-                              <span className="text-sm font-medium">
-                                {ind.current_value}/{ind.target_value}{ind.unit}
-                              </span>
-                            )}
-                            <Badge className={sc.className}>
-                              <Icon className="mr-1 h-3 w-3" />
-                              {sc.label}
-                            </Badge>
-                          </div>
+                          {row}
                         </div>
                       );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                    }
+
+                    return (
+                      <button
+                        key={ind.id}
+                        type="button"
+                        onClick={() => {
+                          setEditingIndicator(ind);
+                          setShowForm(true);
+                        }}
+                        className="block w-full rounded-[var(--radius)] border border-border p-3 text-left transition-colors hover:bg-[hsl(var(--surface-sunken))]"
+                      >
+                        {row}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </SurfaceCard>
           );
         })}
-      </div>
 
-      <IndicatorFormDialog
-        open={showForm}
-        onOpenChange={setShowForm}
-        indicator={editingIndicator}
-        onSave={upsert.mutateAsync}
-        isPending={upsert.isPending}
-      />
+        <IndicatorFormDialog
+          open={showForm}
+          onOpenChange={setShowForm}
+          indicator={editingIndicator}
+          onSave={upsert.mutateAsync}
+          isPending={upsert.isPending}
+        />
+      </PageShell>
     </MainLayout>
   );
 }
@@ -253,6 +284,7 @@ function IndicatorFormDialog({
   open: boolean;
   onOpenChange: (o: boolean) => void;
   indicator: QualiopiIndicator | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSave: (v: any) => Promise<void>;
   isPending: boolean;
 }) {
@@ -309,7 +341,7 @@ function IndicatorFormDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div className="space-y-1.5">
               <Label>Critère</Label>
               <Select
                 value={form.criterion_number}
@@ -323,7 +355,7 @@ function IndicatorFormDialog({
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label>N° indicateur</Label>
               <Input
                 value={form.indicator_number}
@@ -332,7 +364,7 @@ function IndicatorFormDialog({
               />
             </div>
           </div>
-          <div>
+          <div className="space-y-1.5">
             <Label>Libellé *</Label>
             <Input
               value={form.label}
@@ -340,7 +372,7 @@ function IndicatorFormDialog({
             />
           </div>
           <div className="grid grid-cols-3 gap-4">
-            <div>
+            <div className="space-y-1.5">
               <Label>Valeur actuelle</Label>
               <Input
                 type="number"
@@ -348,7 +380,7 @@ function IndicatorFormDialog({
                 onChange={(e) => setForm((f) => ({ ...f, current_value: e.target.value }))}
               />
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label>Cible</Label>
               <Input
                 type="number"
@@ -356,7 +388,7 @@ function IndicatorFormDialog({
                 onChange={(e) => setForm((f) => ({ ...f, target_value: e.target.value }))}
               />
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label>Unité</Label>
               <Input
                 value={form.unit}
@@ -365,7 +397,7 @@ function IndicatorFormDialog({
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div className="space-y-1.5">
               <Label>Type de preuve</Label>
               <Select
                 value={form.evidence_type}
@@ -378,7 +410,7 @@ function IndicatorFormDialog({
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label>Statut</Label>
               <Select
                 value={form.status}
@@ -393,7 +425,7 @@ function IndicatorFormDialog({
               </Select>
             </div>
           </div>
-          <div>
+          <div className="space-y-1.5">
             <Label>Description de la preuve</Label>
             <Textarea
               value={form.evidence_description}

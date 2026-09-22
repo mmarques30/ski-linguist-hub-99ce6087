@@ -4,9 +4,9 @@ import { fr } from "date-fns/locale";
 import { Plus, Bell, CreditCard, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatusPill, SurfaceCard, toneForStatus } from "@/components/ui-kit";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -129,11 +129,11 @@ export function InscriptionFinancialPayments({
         <div>
           <p className="text-sm text-muted-foreground">
             Encaissé (paiements) :{" "}
-            <span className="font-semibold text-foreground">
+            <span className="font-semibold text-foreground tabular">
               {receivedTotal.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}
             </span>
             {price != null && (
-              <span className="text-muted-foreground">
+              <span className="text-muted-foreground tabular">
                 {" "}
                 / prix {Number(price).toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}
               </span>
@@ -263,75 +263,77 @@ export function InscriptionFinancialPayments({
         )}
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <CreditCard className="h-4 w-4" />
-            Paiements
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          ) : !payments.length ? (
-            <p className="text-sm text-muted-foreground">
-              Aucun paiement enregistré pour cette inscription.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {payments.map((payment) => (
-                <div key={payment.id} className="rounded-lg border px-4 py-3 text-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-medium">{payment.amount} €</span>
-                    <Badge variant="secondary">{paymentStatusLabel(payment.status)}</Badge>
-                  </div>
-                  <p className="text-muted-foreground mt-1">
-                    {paymentMethodLabel(payment.payment_method)} ·{" "}
-                    {paymentTypeLabel(payment.payment_type)}
-                    {payment.payment_date
-                      ? ` · ${format(new Date(payment.payment_date), "dd/MM/yyyy")}`
-                      : ""}
-                  </p>
+      <SurfaceCard title="Paiements" icon={CreditCard}>
+        {isLoading ? (
+          <div className="space-y-2">
+            {[0, 1].map((index) => (
+              <Skeleton key={index} className="h-16 w-full rounded-[var(--radius)]" />
+            ))}
+          </div>
+        ) : !payments.length ? (
+          <p className="text-sm text-muted-foreground">
+            Aucun paiement enregistré pour cette inscription.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {payments.map((payment) => (
+              <li
+                key={payment.id}
+                className="rounded-[var(--radius)] border border-border px-4 py-3 text-sm"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-medium tabular">{payment.amount} €</span>
+                  <StatusPill tone={toneForStatus(payment.status)} size="sm">
+                    {paymentStatusLabel(payment.status)}
+                  </StatusPill>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                <p className="text-muted-foreground mt-1">
+                  {paymentMethodLabel(payment.payment_method)} ·{" "}
+                  {paymentTypeLabel(payment.payment_type)}
+                  {payment.payment_date
+                    ? ` · ${format(new Date(payment.payment_date), "dd/MM/yyyy")}`
+                    : ""}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </SurfaceCard>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Bell className="h-4 w-4" />
-            Relances
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {remindersLoading ? (
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          ) : !reminders.length ? (
-            <p className="text-sm text-muted-foreground">
-              Aucune relance enregistrée. Les e-mails automatiques partent via les crons
-              une fois validés.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {reminders.map((r) => (
-                <div key={r.id} className="rounded-lg border px-4 py-3 text-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-medium">{r.reminder_type}</span>
-                    <Badge variant="outline">{r.sent_via}</Badge>
-                  </div>
-                  <p className="text-muted-foreground mt-1">
-                    {format(new Date(r.sent_at), "dd MMM yyyy à HH:mm", { locale: fr })}
-                    {r.notes ? ` · ${r.notes}` : ""}
-                  </p>
+      <SurfaceCard title="Relances" icon={Bell}>
+        {remindersLoading ? (
+          <div className="space-y-2">
+            {[0, 1].map((index) => (
+              <Skeleton key={index} className="h-16 w-full rounded-[var(--radius)]" />
+            ))}
+          </div>
+        ) : !reminders.length ? (
+          <p className="text-sm text-muted-foreground">
+            Aucune relance enregistrée. Les e-mails automatiques partent via les crons
+            une fois validés.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {reminders.map((r) => (
+              <li
+                key={r.id}
+                className="rounded-[var(--radius)] border border-border px-4 py-3 text-sm"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-medium">{r.reminder_type}</span>
+                  <StatusPill tone="neutral" size="sm">
+                    {r.sent_via}
+                  </StatusPill>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                <p className="text-muted-foreground mt-1">
+                  {format(new Date(r.sent_at), "dd MMM yyyy à HH:mm", { locale: fr })}
+                  {r.notes ? ` · ${r.notes}` : ""}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </SurfaceCard>
     </div>
   );
 }

@@ -1,7 +1,5 @@
 import { StudentLayout } from "@/components/layout/StudentLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { BookOpen, Calendar, Award, MapPin, User, Clock } from "lucide-react";
+import { BookOpen, Calendar, Award, MapPin, User, Clock, GraduationCap } from "lucide-react";
 import {
   useStudentProfile,
   useStudentInscriptions,
@@ -16,8 +14,17 @@ import {
   studentFacingPisteFromCecrl,
 } from "@/lib/placement-test-engine";
 
-import { getStatusLabel, getStatusStyle } from "@/lib/inscription-status";
+import { getStatusLabel } from "@/lib/inscription-status";
 import { inscriptionDateRangeLabel } from "@/lib/registration-dates";
+import {
+  CardGrid,
+  DefinitionList,
+  PageHeader,
+  PageShell,
+  StatusPill,
+  SurfaceCard,
+  toneForStatus,
+} from "@/components/ui-kit";
 
 export default function StudentDashboard() {
   const { data: student } = useStudentProfile();
@@ -43,204 +50,196 @@ export default function StudentDashboard() {
 
   return (
     <StudentLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">
-            Bonjour{student?.first_name ? `, ${student.first_name}` : ""} 👋
-          </h1>
-          <p className="text-muted-foreground">
-            Bienvenue dans votre espace de formation
-          </p>
-        </div>
+      <PageShell>
+        <PageHeader
+          title={`Bonjour${student?.first_name ? `, ${student.first_name}` : ""} 👋`}
+          description="Bienvenue dans votre espace de formation"
+          icon={GraduationCap}
+          tone="gold"
+        />
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <CardGrid cols={2}>
           {/* Ma formation */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-primary" />
-                Ma formation
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {activeInscription ? (
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Langue</span>
-                    <Badge variant="outline">{activeInscription.language}</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Dates</span>
-                    <span className="text-right">
-                      {inscriptionDateRangeLabel(activeInscription)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Piste / groupe</span>
-                    <Badge>{niveauAffiche}</Badge>
-                  </div>
-                  {activeInscription.instructor_name && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Formateur</span>
-                      <span className="flex items-center gap-1">
-                        <User className="h-3 w-3" />
-                        {activeInscription.instructor_name}
-                      </span>
-                    </div>
-                  )}
-                  {activeInscription.course_location && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Lieu</span>
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {activeInscription.course_location}
-                      </span>
-                    </div>
-                  )}
-                  <Badge className={getStatusStyle(activeInscription.status)}>
-                    {getStatusLabel(activeInscription.status, "fr")}
-                  </Badge>
-                </div>
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  Aucune formation active pour le moment.
-                </p>
-              )}
-            </CardContent>
-          </Card>
+          <SurfaceCard icon={BookOpen} title="Ma formation">
+            {activeInscription ? (
+              <div className="space-y-4">
+                <DefinitionList
+                  columns={2}
+                  items={[
+                    {
+                      label: "Langue",
+                      value: (
+                        <StatusPill tone="neutral" size="sm">
+                          {activeInscription.language}
+                        </StatusPill>
+                      ),
+                    },
+                    {
+                      label: "Dates",
+                      value: (
+                        <span className="tabular">
+                          {inscriptionDateRangeLabel(activeInscription)}
+                        </span>
+                      ),
+                    },
+                    {
+                      label: "Piste / groupe",
+                      value: (
+                        <StatusPill tone="info" size="sm">
+                          {niveauAffiche}
+                        </StatusPill>
+                      ),
+                    },
+                    ...(activeInscription.instructor_name
+                      ? [
+                          {
+                            label: "Formateur",
+                            value: (
+                              <span className="inline-flex items-center gap-1.5">
+                                <User className="h-3.5 w-3.5 text-muted-foreground" />
+                                {activeInscription.instructor_name}
+                              </span>
+                            ),
+                          },
+                        ]
+                      : []),
+                    ...(activeInscription.course_location
+                      ? [
+                          {
+                            label: "Lieu",
+                            value: (
+                              <span className="inline-flex items-center gap-1.5">
+                                <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                                {activeInscription.course_location}
+                              </span>
+                            ),
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
+                <StatusPill tone={toneForStatus(activeInscription.status)}>
+                  {getStatusLabel(activeInscription.status, "fr")}
+                </StatusPill>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Aucune formation active pour le moment.
+              </p>
+            )}
+          </SurfaceCard>
 
           {/* Mon planning */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-primary" />
-                Prochaines sessions
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {upcomingSessions.length > 0 ? (
-                <div className="space-y-2.5">
-                  {upcomingSessions.map((s: any) => (
-                    <div
-                      key={s.id}
-                      className="flex items-center justify-between p-2.5 rounded-lg bg-muted/50 text-sm"
-                    >
-                      <div>
-                        <p className="font-medium">{s.title}</p>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {format(new Date(s.start_datetime), "EEEE d MMMM — HH:mm", {
-                            locale: fr,
-                          })}
-                        </p>
-                      </div>
-                      {s.location && (
-                        <Badge variant="outline" className="text-[10px]">
-                          {s.location}
-                        </Badge>
-                      )}
+          <SurfaceCard icon={Calendar} title="Prochaines sessions">
+            {upcomingSessions.length > 0 ? (
+              <ul className="space-y-2.5">
+                {upcomingSessions.map((s: any) => (
+                  <li
+                    key={s.id}
+                    className="flex items-center justify-between gap-3 rounded-[var(--radius)] bg-[hsl(var(--surface-sunken))] p-2.5 text-sm"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{s.title}</p>
+                      <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3 shrink-0" />
+                        {format(new Date(s.start_datetime), "EEEE d MMMM — HH:mm", {
+                          locale: fr,
+                        })}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  Aucune session prévue.
-                </p>
-              )}
-            </CardContent>
-          </Card>
+                    {s.location && (
+                      <StatusPill tone="neutral" size="sm" className="shrink-0">
+                        {s.location}
+                      </StatusPill>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">Aucune session prévue.</p>
+            )}
+          </SurfaceCard>
 
           {/* Mes résultats */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Award className="h-4 w-4 text-primary" />
-                Mes résultats
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3 text-sm">
-                {latestTest ? (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Test de niveau</span>
-                      <Badge variant={latestTest.status === "completed" ? "default" : "outline"}>
-                        {latestTest.status === "completed" ? "Complété" : "En cours"}
-                      </Badge>
-                    </div>
-                    {niveauAffiche && niveauAffiche !== "À déterminer" && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Votre piste</span>
-                        <Badge>{niveauAffiche}</Badge>
-                      </div>
-                    )}
-                    {latestTest.score_percentage != null && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Score</span>
-                        <span className="font-medium">{latestTest.score_percentage}%</span>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <p className="text-muted-foreground">Aucun test passé.</p>
-                )}
-
-                {certificates && certificates.length > 0 && (
-                  <div className="border-t pt-2 mt-2">
-                    <p className="font-medium mb-1">Certificats</p>
-                    {certificates.map((c) => (
-                      <div key={c.id} className="flex items-center justify-between">
-                        <span className="text-muted-foreground">
-                          Certificat de fin de formation
-                        </span>
-                        <span className="text-xs">
-                          {format(new Date(c.issue_date), "dd/MM/yyyy")}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Historique inscriptions */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Historique des formations</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {inscriptions && inscriptions.length > 0 ? (
-                <div className="space-y-2">
-                  {inscriptions.map((i) => (
-                    <div
-                      key={i.id}
-                      className="flex items-center justify-between p-2 rounded bg-muted/30 text-sm"
+          <SurfaceCard icon={Award} title="Mes résultats">
+            <div className="space-y-3 text-sm">
+              {latestTest ? (
+                <>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted-foreground">Test de niveau</span>
+                    <StatusPill
+                      tone={latestTest.status === "completed" ? "success" : "neutral"}
+                      size="sm"
                     >
-                      <div>
-                        <span className="font-medium">{i.language}</span>
-                        {i.code && (
-                          <span className="text-muted-foreground ml-2 text-xs">
-                            {i.code}
-                          </span>
-                        )}
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className={getStatusStyle(i.status)}
-                      >
-                        {getStatusLabel(i.status, "fr")}
-                      </Badge>
+                      {latestTest.status === "completed" ? "Complété" : "En cours"}
+                    </StatusPill>
+                  </div>
+                  {niveauAffiche && niveauAffiche !== "À déterminer" && (
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground">Votre piste</span>
+                      <StatusPill tone="info" size="sm">
+                        {niveauAffiche}
+                      </StatusPill>
+                    </div>
+                  )}
+                  {latestTest.score_percentage != null && (
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground">Score</span>
+                      <span className="font-medium tabular">
+                        {latestTest.score_percentage}%
+                      </span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-muted-foreground">Aucun test passé.</p>
+              )}
+
+              {certificates && certificates.length > 0 && (
+                <div className="mt-2 border-t border-border pt-2">
+                  <p className="mb-1 font-medium">Certificats</p>
+                  {certificates.map((c) => (
+                    <div key={c.id} className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground">
+                        Certificat de fin de formation
+                      </span>
+                      <span className="text-xs tabular">
+                        {format(new Date(c.issue_date), "dd/MM/yyyy")}
+                      </span>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">Aucune formation.</p>
               )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            </div>
+          </SurfaceCard>
+
+          {/* Historique inscriptions */}
+          <SurfaceCard title="Historique des formations">
+            {inscriptions && inscriptions.length > 0 ? (
+              <ul className="space-y-2">
+                {inscriptions.map((i) => (
+                  <li
+                    key={i.id}
+                    className="flex items-center justify-between gap-3 rounded-[var(--radius)] bg-[hsl(var(--surface-sunken))] p-2 text-sm"
+                  >
+                    <div className="min-w-0">
+                      <span className="font-medium">{i.language}</span>
+                      {i.code && (
+                        <span className="ml-2 text-xs text-muted-foreground">{i.code}</span>
+                      )}
+                    </div>
+                    <StatusPill tone={toneForStatus(i.status)} size="sm">
+                      {getStatusLabel(i.status, "fr")}
+                    </StatusPill>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">Aucune formation.</p>
+            )}
+          </SurfaceCard>
+        </CardGrid>
+      </PageShell>
     </StudentLayout>
   );
 }

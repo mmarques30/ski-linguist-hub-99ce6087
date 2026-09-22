@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -21,6 +22,7 @@ import {
 } from "./UserPermissionsEditor";
 import { ALL_ROUTE_KEYS } from "@/lib/route-permissions";
 import { useInstructors } from "@/hooks/useInstructors";
+import { UserPlus } from "lucide-react";
 
 type StaffRole = "admin" | "user" | "formateur";
 
@@ -82,9 +84,15 @@ export function UserFormDialog({ open, onOpenChange, onSubmit, loading }: Props)
         onOpenChange(v);
       }}
     >
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] max-w-xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Ajouter un utilisateur</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <UserPlus className="h-4 w-4 text-muted-foreground" aria-hidden />
+            Ajouter un utilisateur
+          </DialogTitle>
+          <DialogDescription>
+            Le compte est créé avec le rôle choisi et un mot de passe temporaire.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -167,6 +175,9 @@ export function UserFormDialog({ open, onOpenChange, onSubmit, loading }: Props)
           {role === "user" && (
             <div className="space-y-2">
               <Label>Permissions</Label>
+              <p className="text-xs text-muted-foreground">
+                Aucune page n&apos;est accessible tant qu&apos;elle n&apos;est pas cochée.
+              </p>
               <UserPermissionsEditor
                 permissions={permissions}
                 onChange={setPermissions}
@@ -174,7 +185,7 @@ export function UserFormDialog({ open, onOpenChange, onSubmit, loading }: Props)
             </div>
           )}
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="outline"

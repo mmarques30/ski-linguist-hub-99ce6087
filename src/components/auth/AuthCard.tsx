@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -11,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import fliLogo from "@/assets/fli-marca-black.png";
+import fliLogoDark from "@/assets/fli-marca-yellow.png";
 
 const authSchema = z.object({
   email: z
@@ -29,7 +29,7 @@ export function AuthCard() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
-  
+
   const { signIn } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -45,7 +45,7 @@ export function AuthCard() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate inputs
     const validation = authSchema.safeParse({ email, password });
     if (!validation.success) {
@@ -87,26 +87,32 @@ export function AuthCard() {
 
   return (
     <motion.div
-      className="w-full max-w-md mx-auto"
+      className="mx-auto w-full max-w-md"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="w-full shadow-2xl border border-white/20 bg-white/80 backdrop-blur-xl dark:bg-gray-900/70">
-        <CardHeader className="space-y-4 text-center pb-2">
+      <div className="fli-surface fli-glass overflow-hidden rounded-[var(--radius-panel)] border-border/60 p-6 shadow-xl sm:p-7">
+        <div className="space-y-4 text-center">
           <motion.div
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.3 }}
             className="flex justify-center"
           >
-            <img 
-              src={fliLogo} 
-              alt="FLI - France Langues International" 
-              className="h-16 w-auto"
+            <img
+              src={fliLogo}
+              alt="FLI - France Langues International"
+              className="h-14 w-auto dark:hidden sm:h-16"
+            />
+            <img
+              src={fliLogoDark}
+              alt=""
+              aria-hidden
+              className="hidden h-14 w-auto dark:block sm:h-16"
             />
           </motion.div>
-          
+
           <AnimatePresence mode="wait">
             {loginSuccess ? (
               <motion.div
@@ -114,13 +120,14 @@ export function AuthCard() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
+                className="space-y-1"
               >
-                <CardTitle className="text-2xl text-foreground">
+                <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
                   Bienvenue
-                </CardTitle>
-                <CardDescription className="text-muted-foreground">
+                </h1>
+                <p className="text-sm text-muted-foreground">
                   Redirection vers le tableau de bord…
-                </CardDescription>
+                </p>
               </motion.div>
             ) : (
               <motion.div
@@ -128,74 +135,73 @@ export function AuthCard() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0, y: -10 }}
+                className="space-y-1"
               >
-                <CardTitle className="text-2xl text-foreground">
+                <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
                   Administration FLI
-                </CardTitle>
-                <CardDescription className="text-muted-foreground">
+                </h1>
+                <p className="text-sm text-muted-foreground">
                   Connectez-vous pour accéder au back-office
-                </CardDescription>
+                </p>
               </motion.div>
             )}
           </AnimatePresence>
-        </CardHeader>
+        </div>
 
-        <CardContent className="pt-4">
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-            <div className="space-y-2">
-              <Label htmlFor="email-login" className="text-foreground">Email</Label>
-              <motion.div whileHover={{ scale: 1.01 }} whileFocus={{ scale: 1.01 }}>
-                <Input
-                  id="email-login"
-                  type="email"
-                  placeholder="prenom@fli.fr"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="transition-all duration-200 focus:ring-2 focus:ring-primary"
-                  required
-                />
-              </motion.div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password-login" className="text-foreground">Mot de passe</Label>
-              <motion.div whileHover={{ scale: 1.01 }} whileFocus={{ scale: 1.01 }}>
-                <Input
-                  id="password-login"
-                  type="password"
-                  placeholder="********"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="transition-all duration-200 focus:ring-2 focus:ring-primary"
-                  required
-                />
-              </motion.div>
-            </div>
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4" noValidate>
+          <div className="space-y-2">
+            <Label htmlFor="email-login" className="text-foreground">
+              Email
+            </Label>
+            <Input
+              id="email-login"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              placeholder="prenom@fli.fr"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-11 transition-all duration-200"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password-login" className="text-foreground">
+              Mot de passe
+            </Label>
+            <Input
+              id="password-login"
+              type="password"
+              autoComplete="current-password"
+              placeholder="********"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="h-11 transition-all duration-200"
+              required
+            />
+          </div>
 
-              <motion.div
-                whileHover={{ scale: 1.02, boxShadow: "0 10px 30px rgba(20, 33, 61, 0.25)" }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Button
-                  type="submit"
-                  className="w-full bg-fli-navy hover:bg-fli-navy/90 text-white font-medium h-11"
-                  disabled={isLoading || loginSuccess}
-                >
-                  {isLoading ? (
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
-                    />
-                  ) : loginSuccess ? (
-                    "Connecté"
-                  ) : (
-                    "Se connecter"
-                  )}
-                </Button>
-              </motion.div>
-            </form>
-        </CardContent>
-      </Card>
+          <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+            <Button
+              type="submit"
+              className="h-12 w-full text-base font-medium"
+              disabled={isLoading || loginSuccess}
+            >
+              {isLoading ? (
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="h-5 w-5 rounded-pill border-2 border-current border-t-transparent"
+                />
+              ) : loginSuccess ? (
+                "Connecté"
+              ) : (
+                "Se connecter"
+              )}
+            </Button>
+          </motion.div>
+        </form>
+      </div>
     </motion.div>
   );
 }

@@ -131,7 +131,7 @@ export function SeasonFormDialog({ open, onOpenChange, season }: Props) {
                 <FormMessage />
               </FormItem>
             )} />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <FormField control={form.control} name="start_date" render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t(translations.startDate)}</FormLabel>
@@ -161,7 +161,7 @@ export function SeasonFormDialog({ open, onOpenChange, season }: Props) {
                 <FormMessage />
               </FormItem>
             )} />
-            <DialogFooter>
+            <DialogFooter className="flex-col-reverse gap-2 sm:flex-row">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 {t(translations.cancel)}
               </Button>

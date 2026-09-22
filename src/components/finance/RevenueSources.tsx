@@ -1,6 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { BookOpen, GraduationCap, Handshake } from "lucide-react";
+import { BookOpen, GraduationCap, Handshake, PieChart } from "lucide-react";
+import { IconChip, RankedBarList, SurfaceCard } from "@/components/ui-kit";
+import type { TileTone } from "@/components/ui-kit";
 
 const i18n = {
   title: { fr: 'Sources de revenus', 'pt-BR': 'Fontes de Receita', en: 'Revenue Sources' },
@@ -11,10 +12,16 @@ interface RevenueSourcesProps {
   caByType: Array<{ name: string; value: number; type: string }> | undefined;
 }
 
-const typeIcons: Record<string, React.ElementType> = {
+const typeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   formation: BookOpen,
   test: GraduationCap,
   soustraitance: Handshake,
+};
+
+const typeTones: Record<string, TileTone> = {
+  formation: "gold",
+  test: "blue",
+  soustraitance: "teal",
 };
 
 export function RevenueSources({ caByType }: RevenueSourcesProps) {
@@ -24,37 +31,31 @@ export function RevenueSources({ caByType }: RevenueSourcesProps) {
 
   const total = caByType?.reduce((s, i) => s + i.value, 0) || 0;
 
+  const items = (caByType ?? []).map((item) => {
+    const Icon = typeIcons[item.type] || BookOpen;
+    const pct = total > 0 ? ((item.value / total) * 100).toFixed(0) : '0';
+    return {
+      key: item.type,
+      label: (
+        <span className="flex min-w-0 items-center gap-2">
+          <IconChip icon={Icon} tone={typeTones[item.type] ?? "neutral"} size="sm" />
+          <span className="truncate font-medium">{item.name}</span>
+        </span>
+      ),
+      value: item.value,
+      display: formatPrice(item.value),
+      hint: `${pct}% du total`,
+    };
+  });
+
   return (
-    <Card className="h-full">
-      <CardHeader>
-        <CardTitle className="text-base">{t(i18n.title)}</CardTitle>
-        <p className="text-sm text-muted-foreground">{t(i18n.subtitle)}</p>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {caByType?.map((item) => {
-            const Icon = typeIcons[item.type] || BookOpen;
-            const pct = total > 0 ? ((item.value / total) * 100).toFixed(0) : '0';
-            return (
-              <div key={item.type} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-[hsl(var(--fli-yellow))]/10">
-                    <Icon className="h-4 w-4 text-[hsl(var(--fli-yellow))]" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">{item.name}</p>
-                    <p className="text-xs text-muted-foreground">{pct}% du total</p>
-                  </div>
-                </div>
-                <p className="text-sm font-semibold">{formatPrice(item.value)}</p>
-              </div>
-            );
-          })}
-          {(!caByType || caByType.length === 0) && (
-            <p className="text-sm text-muted-foreground">Aucune donnée</p>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+    <SurfaceCard
+      className="h-full"
+      title={t(i18n.title)}
+      description={t(i18n.subtitle)}
+      icon={PieChart}
+    >
+      <RankedBarList items={items} colorBySeries emptyMessage="Aucune donnée" />
+    </SurfaceCard>
   );
 }

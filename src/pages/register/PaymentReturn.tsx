@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
+import { IconChip, StatusPill, SurfaceCard } from "@/components/ui-kit";
+import type { TileTone } from "@/components/ui-kit";
 import { verifyRegistrationCheckout } from "@/services/registrationService";
 import {
   CHEQUE_BALANCE_INSTRUCTION,
@@ -17,6 +18,61 @@ type PaymentSuccessState =
   | { status: "paid"; inscriptionCode?: string | null; amountPaid?: number }
   | { status: "unpaid"; inscriptionCode?: string | null }
   | { status: "error"; message: string };
+
+/**
+ * Coque commune des retours Stripe : une seule carte centrée, lisible sur un
+ * téléphone, avec l'issue (réussite / échec) affichée sans ambiguïté.
+ */
+function ReturnShell({
+  icon: Icon,
+  tone,
+  title,
+  description,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  tone: TileTone;
+  title: string;
+  description?: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[hsl(var(--surface-page))] p-4 sm:p-6">
+      <SurfaceCard
+        className="w-full max-w-lg animate-fade-up"
+        accent={tone === "teal" ? "chart-3" : "primary"}
+        bodyClassName="p-5 sm:p-6"
+      >
+        <div className="space-y-5">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <IconChip icon={Icon} tone={tone} size="lg" />
+            <h1 className="text-xl font-semibold tracking-tight text-balance sm:text-2xl">
+              {title}
+            </h1>
+            {description && (
+              <div className="max-w-md text-sm text-muted-foreground">{description}</div>
+            )}
+          </div>
+          {children}
+        </div>
+      </SurfaceCard>
+    </div>
+  );
+}
+
+/** Rappel du code d'inscription, mis en évidence pour être lu au téléphone. */
+function InscriptionCode({ code }: { code: string }) {
+  return (
+    <div className="flex flex-col items-center gap-2 rounded-[var(--radius-card)] bg-[hsl(var(--surface-sunken))] p-4 text-center">
+      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        Code d&apos;inscription
+      </span>
+      <StatusPill tone="warning" className="px-4 py-1.5 text-base">
+        {code}
+      </StatusPill>
+    </div>
+  );
+}
 
 export function PaymentSuccessPage() {
   const [searchParams] = useSearchParams();
@@ -73,113 +129,82 @@ export function PaymentSuccessPage() {
 
   if (state.status === "loading") {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="max-w-lg w-full">
-          <CardContent className="pt-6 text-center space-y-4">
-            <Loader2 className="mx-auto h-10 w-10 animate-spin text-muted-foreground" />
+      <div className="flex min-h-screen items-center justify-center bg-[hsl(var(--surface-page))] p-4">
+        <SurfaceCard className="w-full max-w-lg" bodyClassName="p-6">
+          <div className="flex flex-col items-center gap-4 text-center" aria-live="polite">
+            <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
             <p className="text-muted-foreground">Vérification du paiement en cours...</p>
-          </CardContent>
-        </Card>
+          </div>
+        </SurfaceCard>
       </div>
     );
   }
 
   if (state.status === "unpaid") {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="max-w-lg w-full">
-          <CardContent className="pt-6 text-center space-y-4">
-            <div className="mx-auto w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center">
-              <XCircle className="h-10 w-10 text-amber-600" />
-            </div>
-            <h1 className="text-2xl font-bold">Paiement non finalisé</h1>
-            <p className="text-muted-foreground">
-              Stripe n&apos;a pas confirmé le règlement. Votre inscription peut être enregistrée,
-              mais les frais de dossier restent en attente.
-            </p>
-            {state.inscriptionCode && (
-              <Alert>
-                <AlertDescription>
-                  Code d&apos;inscription : <strong>{state.inscriptionCode}</strong>
-                </AlertDescription>
-              </Alert>
-            )}
-            <Button asChild className="w-full">
-              <a href="/register">Retour au formulaire</a>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <ReturnShell
+        icon={XCircle}
+        tone="gold"
+        title="Paiement non finalisé"
+        description="Stripe n'a pas confirmé le règlement. Votre inscription peut être enregistrée, mais les frais de dossier restent en attente."
+      >
+        {state.inscriptionCode && <InscriptionCode code={state.inscriptionCode} />}
+        <Button asChild className="h-12 w-full text-base">
+          <a href="/register">Retour au formulaire</a>
+        </Button>
+      </ReturnShell>
     );
   }
 
   if (state.status === "error") {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="max-w-lg w-full">
-          <CardContent className="pt-6 text-center space-y-4">
-            <div className="mx-auto w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center">
-              <XCircle className="h-10 w-10 text-amber-600" />
-            </div>
-            <h1 className="text-2xl font-bold">Vérification impossible</h1>
-            <p className="text-muted-foreground">{state.message}</p>
-            {code && (
-              <Alert>
-                <AlertDescription>
-                  Code d&apos;inscription : <strong>{code}</strong>
-                </AlertDescription>
-              </Alert>
-            )}
-            <Button asChild className="w-full">
-              <a href="/register">Retour au formulaire</a>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <ReturnShell
+        icon={XCircle}
+        tone="gold"
+        title="Vérification impossible"
+        description={state.message}
+      >
+        {code && <InscriptionCode code={code} />}
+        <Button asChild className="h-12 w-full text-base">
+          <a href="/register">Retour au formulaire</a>
+        </Button>
+      </ReturnShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="max-w-lg w-full">
-        <CardContent className="pt-6 text-center space-y-4">
-          <div className="mx-auto w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
-            <CheckCircle className="h-10 w-10 text-emerald-600" />
-          </div>
-          <h1 className="text-2xl font-bold">Paiement confirmé</h1>
-          <p className="text-muted-foreground">
-            {state.amountPaid
-              ? `${formatPriceEUR(state.amountPaid)} ont bien été enregistrés.`
-              : "Vos frais de dossier ont bien été enregistrés."}{" "}
-            Vous recevrez un email de confirmation.
-          </p>
-          {state.inscriptionCode && (
-            <Alert>
-              <AlertDescription>
-                Code d&apos;inscription : <strong>{state.inscriptionCode}</strong>
-              </AlertDescription>
-            </Alert>
-          )}
-          <Alert>
-            <AlertDescription className="text-sm text-muted-foreground">
-              Stripe est actuellement en <strong>mode test</strong> : le paiement apparaît dans le
-              dashboard Stripe test, pas sur votre relevé bancaire réel.
-            </AlertDescription>
-          </Alert>
-          {showChequeReminder && (
-            <Alert>
-              <AlertDescription className="text-left space-y-2">
-                <p className="font-medium">N&apos;oubliez pas d&apos;envoyer votre chèque pour le solde</p>
-                <p className="text-muted-foreground text-sm">{CHEQUE_BALANCE_INSTRUCTION}</p>
-              </AlertDescription>
-            </Alert>
-          )}
-          <Button asChild className="w-full">
-            <a href="/register">Retour au formulaire</a>
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
+    <ReturnShell
+      icon={CheckCircle}
+      tone="teal"
+      title="Paiement confirmé"
+      description={
+        <>
+          {state.amountPaid
+            ? `${formatPriceEUR(state.amountPaid)} ont bien été enregistrés.`
+            : "Vos frais de dossier ont bien été enregistrés."}{" "}
+          Vous recevrez un email de confirmation.
+        </>
+      }
+    >
+      {state.inscriptionCode && <InscriptionCode code={state.inscriptionCode} />}
+      <Alert>
+        <AlertDescription className="text-sm text-muted-foreground">
+          Stripe est actuellement en <strong>mode test</strong> : le paiement apparaît dans le
+          dashboard Stripe test, pas sur votre relevé bancaire réel.
+        </AlertDescription>
+      </Alert>
+      {showChequeReminder && (
+        <Alert>
+          <AlertDescription className="space-y-2 text-left">
+            <p className="font-medium">N&apos;oubliez pas d&apos;envoyer votre chèque pour le solde</p>
+            <p className="text-sm text-muted-foreground">{CHEQUE_BALANCE_INSTRUCTION}</p>
+          </AlertDescription>
+        </Alert>
+      )}
+      <Button asChild className="h-12 w-full text-base">
+        <a href="/register">Retour au formulaire</a>
+      </Button>
+    </ReturnShell>
   );
 }
 
@@ -188,29 +213,16 @@ export function PaymentCancelPage() {
   const code = searchParams.get("code");
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="max-w-lg w-full">
-        <CardContent className="pt-6 text-center space-y-4">
-          <div className="mx-auto w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center">
-            <XCircle className="h-10 w-10 text-amber-600" />
-          </div>
-          <h1 className="text-2xl font-bold">Paiement annulé</h1>
-          <p className="text-muted-foreground">
-            Votre inscription a été enregistrée, mais le paiement en ligne n&apos;a pas été finalisé.
-            Notre équipe vous contactera pour régulariser la situation.
-          </p>
-          {code && (
-            <Alert>
-              <AlertDescription>
-                Code d&apos;inscription : <strong>{code}</strong>
-              </AlertDescription>
-            </Alert>
-          )}
-          <Button asChild className="w-full">
-            <a href="/register">Retour au formulaire</a>
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
+    <ReturnShell
+      icon={XCircle}
+      tone="gold"
+      title="Paiement annulé"
+      description="Votre inscription a été enregistrée, mais le paiement en ligne n'a pas été finalisé. Notre équipe vous contactera pour régulariser la situation."
+    >
+      {code && <InscriptionCode code={code} />}
+      <Button asChild className="h-12 w-full text-base">
+        <a href="/register">Retour au formulaire</a>
+      </Button>
+    </ReturnShell>
   );
 }

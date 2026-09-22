@@ -1,18 +1,7 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Search, Eye, Mail, Phone, Grid, List, Users, Building2, Plus, Pencil } from "lucide-react";
 import { useStudents } from "@/hooks/useStudents";
 import { format } from "date-fns";
@@ -20,13 +9,30 @@ import { fr, enUS, ptBR } from "date-fns/locale";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { StudentFormDialog } from "@/components/students/StudentFormDialog";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
-import { ListSkeleton } from "@/components/common/ListSkeleton";
-import { EmptyState } from "@/components/common/EmptyState";
 import { PortalInvitesBulkCard } from "@/components/students/PortalInvitesBulkCard";
 import {
   studentEmailForSend,
   studentEmailLabel,
 } from "@/lib/email-guards";
+import {
+  CardGrid,
+  CardList,
+  CardListItem,
+  FilterBar,
+  IdentityCell,
+  PageHeader,
+  PageShell,
+  SegmentedControl,
+  StatusPill,
+  SurfaceCard,
+  TableCell,
+  TableEmpty,
+  TableFrame,
+  TableHeadCell,
+  TableHeadRow,
+  TableRow,
+  TableSkeleton,
+} from "@/components/ui-kit";
 
 // Translations for the Students page
 const translations = {
@@ -144,6 +150,21 @@ const translations = {
     fr: "Modifier",
     "pt-BR": "Editar",
     en: "Edit"
+  },
+  listView: {
+    fr: "Vue liste",
+    "pt-BR": "Visão em lista",
+    en: "List view"
+  },
+  gridView: {
+    fr: "Vue grille",
+    "pt-BR": "Visão em grade",
+    en: "Grid view"
+  },
+  addStudent: {
+    fr: "Ajouter un stagiaire",
+    "pt-BR": "Adicionar um estagiário",
+    en: "Add a student"
   }
 };
 
@@ -193,281 +214,356 @@ export default function Students() {
     return `${firstName?.charAt(0) || ""}${lastName?.charAt(0) || ""}`.toUpperCase();
   };
 
+  /** Actions d'une ligne : profil, édition, e-mail, téléphone. */
+  const rowActions = (student: any, align: "start" | "end") => (
+    <div
+      className={`flex items-center gap-1 ${align === "end" ? "justify-end" : "justify-start"}`}
+    >
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        onClick={() => navigate(`/students/${student.id}`)}
+        aria-label={t(translations.viewProfile)}
+        title={t(translations.viewProfile)}
+      >
+        <Eye className="h-4 w-4" />
+      </Button>
+      {editable && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => handleEditStudent(student)}
+          aria-label={t(translations.edit)}
+          title={t(translations.edit)}
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+      )}
+      {studentEmailForSend(student.email) && (
+        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+          <a href={`mailto:${student.email}`} aria-label="Envoyer un e-mail">
+            <Mail className="h-4 w-4" />
+          </a>
+        </Button>
+      )}
+      {student.phone && (
+        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+          <a href={`tel:${student.phone}`} aria-label="Appeler">
+            <Phone className="h-4 w-4" />
+          </a>
+        </Button>
+      )}
+    </div>
+  );
+
+  const companyPill = (company: string | null) =>
+    company ? (
+      <StatusPill tone="neutral" size="sm" icon={Building2}>
+        {company}
+      </StatusPill>
+    ) : (
+      "-"
+    );
+
+  const emailCell = (student: any) =>
+    studentEmailForSend(student.email) ? (
+      <span className="truncate">{student.email}</span>
+    ) : (
+      <span className="truncate italic text-muted-foreground">
+        {studentEmailLabel(student.email)}
+      </span>
+    );
+
+  /** Corps de la carte : squelette, erreur, état vide ou données. */
+  const renderBody = () => {
+    if (isLoading) {
+      return <TableSkeleton rows={6} cols={6} />;
+    }
+
+    if (error) {
+      return (
+        <TableEmpty
+          icon={Users}
+          title={t(translations.loadingError)}
+          description={error.message}
+        />
+      );
+    }
+
+    if (!students || students.length === 0) {
+      return hasSearch ? (
+        <TableEmpty
+          icon={Search}
+          title={t(translations.noSearchResults)}
+          description={t(translations.noSearchResultsDescription)}
+          action={
+            <Button variant="outline" onClick={() => setSearch("")}>
+              {t(translations.clearSearch)}
+            </Button>
+          }
+        />
+      ) : (
+        <TableEmpty
+          icon={Users}
+          title={t(translations.noStudents)}
+          description={t(translations.noStudentsDescription)}
+          action={
+            editable ? (
+              <Button onClick={handleCreateStudent}>
+                <Plus className="mr-2 h-4 w-4" />
+                {t(translations.addStudent)}
+              </Button>
+            ) : undefined
+          }
+        />
+      );
+    }
+
+    if (viewMode === "list") {
+      return (
+        <>
+          <TableFrame className="hidden md:block">
+            <table className="w-full">
+              <thead>
+                <TableHeadRow>
+                  <TableHeadCell>{t(translations.student)}</TableHeadCell>
+                  <TableHeadCell className="hidden lg:table-cell">
+                    {t(translations.email)}
+                  </TableHeadCell>
+                  <TableHeadCell className="hidden lg:table-cell">
+                    {t(translations.phone)}
+                  </TableHeadCell>
+                  <TableHeadCell className="hidden xl:table-cell">
+                    {t(translations.city)}
+                  </TableHeadCell>
+                  <TableHeadCell>{t(translations.company)}</TableHeadCell>
+                  <TableHeadCell className="hidden xl:table-cell">
+                    {t(translations.registration)}
+                  </TableHeadCell>
+                  <TableHeadCell align="right">{t(translations.actions)}</TableHeadCell>
+                </TableHeadRow>
+              </thead>
+              <tbody>
+                {students.map((student) => (
+                  <TableRow key={student.id}>
+                    <TableCell>
+                      <IdentityCell
+                        name={`${student.first_name} ${student.last_name}`}
+                        secondary={student.city || undefined}
+                        to={`/students/${student.id}`}
+                      />
+                    </TableCell>
+                    <TableCell hideBelow="lg" className="max-w-[240px] truncate">
+                      {emailCell(student)}
+                    </TableCell>
+                    <TableCell hideBelow="lg">{student.phone || "-"}</TableCell>
+                    <TableCell hideBelow="xl">{student.city || "-"}</TableCell>
+                    <TableCell>{companyPill(student.company)}</TableCell>
+                    <TableCell hideBelow="xl" className="tabular">
+                      {formatDate(student.created_at)}
+                    </TableCell>
+                    <TableCell align="right">{rowActions(student, "end")}</TableCell>
+                  </TableRow>
+                ))}
+              </tbody>
+            </table>
+          </TableFrame>
+
+          {/* Téléphone : une carte par stagiaire plutôt qu'un tableau à 7 colonnes. */}
+          <CardList className="md:hidden">
+            {students.map((student) => (
+              <CardListItem
+                key={student.id}
+                title={
+                  <Link to={`/students/${student.id}`} className="hover:underline">
+                    {student.first_name} {student.last_name}
+                  </Link>
+                }
+                subtitle={emailCell(student)}
+                meta={student.company ? companyPill(student.company) : undefined}
+                fields={[
+                  { label: t(translations.phone), value: student.phone || "-" },
+                  { label: t(translations.city), value: student.city || "-" },
+                  {
+                    label: t(translations.registration),
+                    value: formatDate(student.created_at),
+                  },
+                ]}
+                actions={rowActions(student, "start")}
+              />
+            ))}
+          </CardList>
+        </>
+      );
+    }
+
+    return (
+      <CardGrid cols={3}>
+        {students.map((student) => (
+          <SurfaceCard key={student.id} interactive className="h-full">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-pill bg-primary/12 text-lg font-semibold text-[hsl(var(--tint-gold-fg))]">
+                  {getInitials(student.first_name, student.last_name)}
+                </span>
+                <div className="min-w-0">
+                  <Link
+                    to={`/students/${student.id}`}
+                    className="block truncate font-semibold hover:underline"
+                  >
+                    {student.first_name} {student.last_name}
+                  </Link>
+                  <p className="truncate text-sm text-muted-foreground">
+                    {student.city || t(translations.cityNotProvided)}
+                  </p>
+                </div>
+              </div>
+
+              {student.company && companyPill(student.company)}
+
+              <dl className="grid grid-cols-2 gap-4 text-sm">
+                <div className="min-w-0">
+                  <dt className="text-muted-foreground">{t(translations.email)}</dt>
+                  <dd
+                    className={`truncate font-medium ${
+                      studentEmailForSend(student.email) ? "" : "italic text-muted-foreground"
+                    }`}
+                  >
+                    {studentEmailLabel(student.email)}
+                  </dd>
+                </div>
+                <div className="min-w-0">
+                  <dt className="text-muted-foreground">{t(translations.phone)}</dt>
+                  <dd className="truncate font-medium">{student.phone || "-"}</dd>
+                </div>
+              </dl>
+
+              <div className="flex items-center gap-2 border-t border-border pt-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => navigate(`/students/${student.id}`)}
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  {t(translations.viewProfile)}
+                </Button>
+                {editable && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleEditStudent(student)}
+                    aria-label={t(translations.edit)}
+                    title={t(translations.edit)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                )}
+                {studentEmailForSend(student.email) && (
+                  <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                    <a href={`mailto:${student.email}`} aria-label="Envoyer un e-mail">
+                      <Mail className="h-4 w-4" />
+                    </a>
+                  </Button>
+                )}
+                {student.phone && (
+                  <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                    <a href={`tel:${student.phone}`} aria-label="Appeler">
+                      <Phone className="h-4 w-4" />
+                    </a>
+                  </Button>
+                )}
+              </div>
+            </div>
+          </SurfaceCard>
+        ))}
+      </CardGrid>
+    );
+  };
+
+  const total = students?.length ?? 0;
+
   return (
     <MainLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">{t(translations.title)}</h1>
-            <p className="text-muted-foreground">
-              {t(translations.subtitle)}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            {editable && (
+      <PageShell>
+        <PageHeader
+          title={t(translations.title)}
+          description={t(translations.subtitle)}
+          icon={Users}
+          tone="gold"
+          actions={
+            editable ? (
               <Button size="sm" onClick={handleCreateStudent}>
                 <Plus className="mr-2 h-4 w-4" />
                 {t(translations.newStudent)}
               </Button>
-            )}
-          </div>
-        </div>
+            ) : undefined
+          }
+        />
 
         {editable && <PortalInvitesBulkCard />}
 
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-4 rounded-lg border bg-card p-4">
-          <div className="flex-1 min-w-[200px]">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder={t(translations.searchPlaceholder)}
-                className="pl-10"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="flex items-center gap-1 border rounded-lg p-1">
-            <Button
-              variant={viewMode === "grid" ? "secondary" : "ghost"}
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setViewMode("grid")}
-            >
-              <Grid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "secondary" : "ghost"}
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setViewMode("list")}
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Content */}
-        {isLoading ? (
-          <ListSkeleton rows={6} />
-        ) : error ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border bg-card">
-            <Users className="h-12 w-12 text-destructive/50 mb-4" />
-            <h3 className="text-lg font-medium">{t(translations.loadingError)}</h3>
-            <p className="text-muted-foreground mt-1 max-w-sm">{error.message}</p>
-          </div>
-        ) : !students || students.length === 0 ? (
-          hasSearch ? (
-            <EmptyState
-              icon={Search}
-              title={t(translations.noSearchResults)}
-              description={t(translations.noSearchResultsDescription)}
-              action={{
-                label: t(translations.clearSearch),
-                onClick: () => setSearch(""),
+        <SurfaceCard
+          flush={viewMode === "list"}
+          toolbar={
+            <FilterBar
+              search={{
+                value: search,
+                onChange: setSearch,
+                placeholder: t(translations.searchPlaceholder),
+                ariaLabel: t(translations.searchPlaceholder),
               }}
+              actions={
+                <SegmentedControl<"grid" | "list">
+                  value={viewMode}
+                  onChange={setViewMode}
+                  size="sm"
+                  ariaLabel={t(translations.title)}
+                  options={[
+                    {
+                      value: "list",
+                      icon: List,
+                      label: <span className="sr-only">{t(translations.listView)}</span>,
+                    },
+                    {
+                      value: "grid",
+                      icon: Grid,
+                      label: <span className="sr-only">{t(translations.gridView)}</span>,
+                    },
+                  ]}
+                />
+              }
+              activeFilters={
+                hasSearch
+                  ? [
+                      {
+                        key: "search",
+                        label: search,
+                        onRemove: () => setSearch(""),
+                      },
+                    ]
+                  : undefined
+              }
+              onClearAll={hasSearch ? () => setSearch("") : undefined}
             />
-          ) : (
-            <EmptyState
-              icon={Users}
-              title={t(translations.noStudents)}
-              description={t(translations.noStudentsDescription)}
-              action={editable ? {
-                label: "Ajouter un stagiaire",
-                icon: Plus,
-                onClick: handleCreateStudent,
-              } : undefined}
-            />
-          )
-        ) : viewMode === "list" ? (
-          <div className="rounded-lg border bg-card">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t(translations.student)}</TableHead>
-                  <TableHead>{t(translations.email)}</TableHead>
-                  <TableHead>{t(translations.phone)}</TableHead>
-                  <TableHead>{t(translations.city)}</TableHead>
-                  <TableHead>{t(translations.company)}</TableHead>
-                  <TableHead>{t(translations.registration)}</TableHead>
-                  <TableHead className="text-right">{t(translations.actions)}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {students.map((student) => (
-                  <TableRow key={student.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
-                          {getInitials(student.first_name, student.last_name)}
-                        </div>
-                        <span className="font-medium">
-                          {student.first_name} {student.last_name}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {studentEmailForSend(student.email) ? (
-                        student.email
-                      ) : (
-                        <span className="text-muted-foreground italic">
-                          {studentEmailLabel(student.email)}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>{student.phone || "-"}</TableCell>
-                    <TableCell>{student.city || "-"}</TableCell>
-                    <TableCell>
-                      {student.company ? (
-                        <Badge variant="outline" className="flex items-center gap-1 w-fit">
-                          <Building2 className="h-3 w-3" />
-                          {student.company}
-                        </Badge>
-                      ) : "-"}
-                    </TableCell>
-                    <TableCell>{formatDate(student.created_at)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8"
-                          onClick={() => navigate(`/students/${student.id}`)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        {editable && (
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8"
-                            onClick={() => handleEditStudent(student)}
-                            title={t(translations.edit)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {studentEmailForSend(student.email) && (
-                          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                            <a href={`mailto:${student.email}`} aria-label="Envoyer un e-mail">
-                              <Mail className="h-4 w-4" />
-                            </a>
-                          </Button>
-                        )}
-                        {student.phone && (
-                          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                            <a href={`tel:${student.phone}`} aria-label="Appeler">
-                              <Phone className="h-4 w-4" />
-                            </a>
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {students.map((student) => (
-              <Card key={student.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-lg">
-                        {getInitials(student.first_name, student.last_name)}
-                      </div>
-                      <div>
-                        <p className="font-semibold">
-                          {student.first_name} {student.last_name}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {student.city || t(translations.cityNotProvided)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {student.company && (
-                    <Badge variant="outline" className="flex items-center gap-1 w-fit">
-                      <Building2 className="h-3 w-3" />
-                      {student.company}
-                    </Badge>
-                  )}
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">{t(translations.email)}</p>
-                      <p
-                        className={`font-medium truncate ${
-                          studentEmailForSend(student.email) ? "" : "text-muted-foreground italic"
-                        }`}
-                      >
-                        {studentEmailLabel(student.email)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">{t(translations.phone)}</p>
-                      <p className="font-medium">{student.phone || "-"}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 pt-2 border-t">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="flex-1"
-                      onClick={() => navigate(`/students/${student.id}`)}
-                    >
-                      <Eye className="mr-2 h-4 w-4" />
-                      {t(translations.viewProfile)}
-                    </Button>
-                    {editable && (
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8"
-                        onClick={() => handleEditStudent(student)}
-                        title={t(translations.edit)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {studentEmailForSend(student.email) && (
-                      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                        <a href={`mailto:${student.email}`} aria-label="Envoyer un e-mail">
-                          <Mail className="h-4 w-4" />
-                        </a>
-                      </Button>
-                    )}
-                    {student.phone && (
-                      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                        <a href={`tel:${student.phone}`} aria-label="Appeler">
-                          <Phone className="h-4 w-4" />
-                        </a>
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+          }
+          footer={
+            total > 0 ? (
+              <p className="text-sm text-muted-foreground tabular">
+                {t(translations.showing)} {total}{" "}
+                {total === 1 ? t(translations.studentSingular) : t(translations.students)}
+              </p>
+            ) : undefined
+          }
+        >
+          {renderBody()}
+        </SurfaceCard>
+      </PageShell>
 
-        {students && students.length > 0 && (
-          <p className="text-sm text-muted-foreground">
-            {t(translations.showing)}{" "}
-            {students.length}{" "}
-            {students.length === 1
-              ? t(translations.studentSingular)
-              : t(translations.students)}
-          </p>
-        )}
-      </div>
-
-      <StudentFormDialog 
+      <StudentFormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         student={selectedStudent}

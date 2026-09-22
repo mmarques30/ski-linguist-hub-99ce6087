@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUnreadCount, useRecentNotifications, useMarkAsRead, useMarkAllAsRead } from "@/hooks/useNotifications";
 import fliLogo from "@/assets/fli-marca-yellow.png";
 import { GlobalSearch } from "./GlobalSearch";
+import { ThemeToggle } from "./ThemeToggle";
 import { SeasonFilterControl } from "./SeasonFilterControl";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
@@ -71,8 +72,9 @@ export function TopHeader() {
 
   return (
     <header
+      data-app-header
       className={cn(
-        "sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b border-[hsl(219_52%_25%)] bg-[hsl(219_52%_16%)] backdrop-blur-md px-4 lg:px-6 transition-transform duration-300",
+        "sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-sidebar-border bg-sidebar/95 px-3 backdrop-blur-md transition-transform duration-300 supports-[backdrop-filter]:bg-sidebar/85 sm:gap-4 sm:px-4 lg:px-6",
         visible ? "translate-y-0" : "-translate-y-full"
       )}
     >
@@ -88,19 +90,22 @@ export function TopHeader() {
           <SeasonFilterControl />
         </div>
         {/* Global search */}
-        <div className="mr-2">
+        <div className="mr-1 sm:mr-2">
           <GlobalSearch />
         </div>
+        {/* Thème clair / sombre */}
+        <ThemeToggle variant="header" className="mr-1" />
+
         {/* Notifications */}
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <button
-              className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-white/70 transition-all duration-200 hover:scale-110 hover:bg-white/20 hover:text-white hover:shadow-md"
+              className="relative flex h-9 w-9 items-center justify-center rounded-[var(--radius)] bg-white/10 text-white/70 transition-all duration-200 hover:bg-white/20 hover:text-white"
               aria-label={t(CHROME_UI.notifications)}
             >
               <Bell className="h-[18px] w-[18px]" />
               {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-pill bg-destructive px-1 text-[10px] font-bold tabular text-destructive-foreground">
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               )}
@@ -182,7 +187,7 @@ export function TopHeader() {
         {/* Profile → Paramètres */}
         <button
           type="button"
-          className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-white/70 transition-all duration-200 hover:scale-110 hover:bg-white/20 hover:text-white hover:shadow-md"
+          className="flex h-9 w-9 items-center justify-center rounded-[var(--radius)] bg-white/10 text-white/70 transition-all duration-200 hover:bg-white/20 hover:text-white"
           aria-label={t(CHROME_NAV["/settings"])}
           onClick={() => navigate("/settings")}
         >

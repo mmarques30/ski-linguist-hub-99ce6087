@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { Layers } from "lucide-react";
+import { RankedBarList, SurfaceCard } from "@/components/ui-kit";
 
 interface CostCategory {
   name: string;
@@ -31,24 +31,21 @@ export function CostsByCategory({ formations }: CostsByCategoryProps) {
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(val);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Coûts par Catégorie</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {categories.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-4">Aucun coût pour cette période</p>
-        )}
-        {categories.map((cat) => (
-          <div key={cat.name} className="space-y-1.5">
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-medium">{cat.name}</span>
-              <span className="text-muted-foreground">{formatPrice(cat.value)}</span>
-            </div>
-            <Progress value={(cat.value / maxValue) * 100} className="h-2" />
-          </div>
-        ))}
-      </CardContent>
-    </Card>
+    <SurfaceCard
+      title="Coûts par Catégorie"
+      description="Coûts directs cumulés sur la période"
+      icon={Layers}
+    >
+      <RankedBarList
+        items={categories.map((cat) => ({
+          key: cat.name,
+          label: cat.name,
+          value: cat.value,
+          display: formatPrice(cat.value),
+        }))}
+        max={maxValue}
+        emptyMessage="Aucun coût pour cette période"
+      />
+    </SurfaceCard>
   );
 }

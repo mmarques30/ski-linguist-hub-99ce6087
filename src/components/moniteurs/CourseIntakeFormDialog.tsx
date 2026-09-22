@@ -188,7 +188,7 @@ export function CourseIntakeFormDialog({ open, onOpenChange, intake }: Props) {
             </div>
           </div>
 
-          <div className="rounded-lg border p-4 space-y-3 bg-muted/30">
+          <div className="fli-sunken space-y-3 border border-border p-4">
             <div className="flex items-start gap-3">
               <Users className="h-5 w-5 text-primary mt-0.5 shrink-0" />
               <div className="flex-1 space-y-2">
@@ -211,7 +211,7 @@ export function CourseIntakeFormDialog({ open, onOpenChange, intake }: Props) {
               />
             </div>
             {form.open_to_other_schools && (
-              <div className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded p-2">
+              <div className="flex items-start gap-2 rounded-[var(--radius)] bg-[hsl(var(--tint-gold-bg))] p-2 text-sm text-[hsl(var(--tint-gold-fg))]">
                 <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                 <span>L'email sera envoyé à <strong>toute la base moniteurs active</strong>, toutes écoles confondues.</span>
               </div>

@@ -1,7 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info } from "lucide-react";
+import { Info, Building2, ScrollText } from "lucide-react";
 import fliLogo from "@/assets/fli-logo.png";
+import { SurfaceCard } from "@/components/ui-kit";
 import { useOrganizationIdentity } from "@/hooks/useOrganizationIdentity";
 import {
   formatOrganizationAddress,
@@ -36,22 +36,24 @@ export default function ConditionsGenerales() {
   const adresse = identity ? formatOrganizationAddress(identity) : "";
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <img src={fliLogo} alt="FLI" className="h-12 w-auto" />
+    <div className="flex min-h-screen flex-col bg-[hsl(var(--surface-page))]">
+      <header className="border-b border-border bg-[hsl(var(--surface-raised))]">
+        <div className="container mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-3 px-4 py-4">
+          <img src={fliLogo} alt="FLI" className="h-10 w-auto sm:h-12" />
           <p className="text-sm text-muted-foreground">
             Mise à jour du {formatDateFr(CONDITIONS_GENERALES_UPDATED_AT)}
           </p>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-3xl mx-auto space-y-6">
-          <div>
-            <h1 className="text-2xl font-bold">{CONDITIONS_GENERALES_TITLE}</h1>
+      <main className="container mx-auto flex-1 px-4 py-6 sm:py-8">
+        <div className="mx-auto max-w-3xl animate-fade-up space-y-5">
+          <div className="space-y-1">
+            <h1 className="text-xl font-semibold tracking-tight text-balance sm:text-2xl">
+              {CONDITIONS_GENERALES_TITLE}
+            </h1>
             {identity?.legal_name && (
-              <p className="text-muted-foreground">{identity.legal_name}</p>
+              <p className="text-sm text-muted-foreground">{identity.legal_name}</p>
             )}
           </div>
 
@@ -61,55 +63,47 @@ export default function ConditionsGenerales() {
           </Alert>
 
           {identity?.legal_name && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Organisme de formation</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-1 text-sm">
+            <SurfaceCard title="Organisme de formation" icon={Building2}>
+              <div className="space-y-1 text-sm">
                 <p className="font-medium">{identity.legal_name}</p>
-                {identity.representative && (
-                  <p>Représenté par {identity.representative}</p>
-                )}
+                {identity.representative && <p>Représenté par {identity.representative}</p>}
                 {adresse && <p>{adresse}</p>}
                 {identity.phone && <p>Téléphone : {identity.phone}</p>}
-                {identity.email && <p>Email : {identity.email}</p>}
-                {identity.website && <p>{identity.website}</p>}
+                {identity.email && <p className="break-all">Email : {identity.email}</p>}
+                {identity.website && <p className="break-all">{identity.website}</p>}
                 {mentions.map((mention) => (
                   <p key={mention} className="text-muted-foreground">
                     {mention}
                   </p>
                 ))}
-              </CardContent>
-            </Card>
+              </div>
+            </SurfaceCard>
           )}
 
           {CONDITIONS_GENERALES_SECTIONS.map((section, index) => (
-            <Card key={section.id} id={section.id}>
-              <CardHeader>
-                <CardTitle className="text-lg">
+            <section key={section.id} id={section.id} className="scroll-mt-20">
+              <SurfaceCard>
+                {/* Le titre est rendu dans le corps : un intitulé d'article est
+                    long et doit passer à la ligne plutôt qu'être tronqué. */}
+                <h2 className="text-base font-semibold leading-snug text-balance text-foreground">
                   Article {index + 1} — {section.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm leading-relaxed">
-                {section.paragraphs.map((paragraph) => (
-                  <p key={paragraph}>{paragraph}</p>
-                ))}
-              </CardContent>
-            </Card>
+                </h2>
+                <div className="mt-3 space-y-3 text-sm leading-relaxed">
+                  {section.paragraphs.map((paragraph) => (
+                    <p key={paragraph}>{paragraph}</p>
+                  ))}
+                </div>
+              </SurfaceCard>
+            </section>
           ))}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Règlement intérieur</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm leading-relaxed">
-              {REGLEMENT_INTERIEUR_ON_REQUEST}
-            </CardContent>
-          </Card>
+          <SurfaceCard title="Règlement intérieur" icon={ScrollText}>
+            <p className="text-sm leading-relaxed">{REGLEMENT_INTERIEUR_ON_REQUEST}</p>
+          </SurfaceCard>
         </div>
       </main>
 
-      <footer className="border-t bg-card">
+      <footer className="border-t border-border bg-[hsl(var(--surface-raised))]">
         <div className="container mx-auto px-4 py-4">
           <p className="text-center text-sm text-muted-foreground">
             {identity?.legal_name || "France Langues International"}

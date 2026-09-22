@@ -1,21 +1,46 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { UserPlus, Shield, User, GraduationCap, ToggleLeft, ToggleRight, Settings2 } from "lucide-react";
+  UserPlus,
+  Shield,
+  User,
+  GraduationCap,
+  ToggleLeft,
+  ToggleRight,
+  Settings2,
+  Users,
+} from "lucide-react";
 import { useUserManagement } from "@/hooks/useUserManagement";
 import { UserFormDialog } from "@/components/admin/UserFormDialog";
 import { EditPermissionsDialog } from "@/components/admin/EditPermissionsDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
+import {
+  CardList,
+  CardListItem,
+  IdentityCell,
+  PageHeader,
+  PageShell,
+  StatusPill,
+  SurfaceCard,
+  TableCell,
+  TableEmpty,
+  TableFrame,
+  TableHeadCell,
+  TableHeadRow,
+  TableRow,
+  TableSkeleton,
+  type PillTone,
+} from "@/components/ui-kit";
+
+/** Rôle → libellé + icône + teinte. Le libellé reste celui affiché aujourd'hui. */
+const ROLE_META: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; tone: PillTone }> = {
+  admin: { label: "Admin", icon: Shield, tone: "accent" },
+  formateur: { label: "Formateur", icon: GraduationCap, tone: "info" },
+  student: { label: "Stagiaire", icon: User, tone: "purple" },
+};
+const DEFAULT_ROLE_META = { label: "Utilisateur", icon: User, tone: "neutral" as PillTone };
 
 export default function UserManagement() {
   const { users, isLoading, createUser, toggleUserActive } = useUserManagement();
@@ -65,119 +90,152 @@ export default function UserManagement() {
     });
   };
 
+  const roleMeta = (role: string) => ROLE_META[role] ?? DEFAULT_ROLE_META;
+
+  const rowActions = (u: (typeof users)[number]) => (
+    <>
+      {u.role === "user" && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setEditUserId(u.id)}
+          title="Modifier les permissions"
+          aria-label={`Modifier les permissions de ${u.full_name || u.email}`}
+        >
+          <Settings2 className="h-4 w-4" />
+        </Button>
+      )}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => handleToggleActive(u.id, u.is_active)}
+        title={u.is_active ? "Désactiver" : "Activer"}
+        aria-label={`${u.is_active ? "Désactiver" : "Activer"} ${u.full_name || u.email}`}
+      >
+        {u.is_active ? (
+          <ToggleRight className="h-4 w-4 text-primary" />
+        ) : (
+          <ToggleLeft className="h-4 w-4 text-muted-foreground" />
+        )}
+      </Button>
+    </>
+  );
+
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Gestion des utilisateurs</h1>
-            <p className="text-muted-foreground text-sm">
-              Gérez les accès et permissions de chaque utilisateur
-            </p>
-          </div>
-          <Button onClick={() => setFormOpen(true)}>
-            <UserPlus className="h-4 w-4 mr-2" />
-            Ajouter un utilisateur
-          </Button>
-        </div>
+      <PageShell>
+        <PageHeader
+          title="Gestion des utilisateurs"
+          description="Gérez les accès et permissions de chaque utilisateur"
+          icon={Users}
+          tone="navy"
+          actions={
+            <Button onClick={() => setFormOpen(true)}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Ajouter un utilisateur
+            </Button>
+          }
+        />
 
-        <div className="border rounded-lg">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nom</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Rôle</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    Chargement...
-                  </TableCell>
-                </TableRow>
-              ) : users.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    Aucun utilisateur
-                  </TableCell>
-                </TableRow>
-              ) : (
-                users.map((u) => (
-                  <TableRow key={u.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        {u.full_name || u.email}
-                        {!u.has_complete_profile && (
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-orange-300 text-orange-600 bg-orange-50">
-                            Profil incomplet
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>{u.email}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          u.role === "admin"
-                            ? "default"
-                            : u.role === "formateur"
-                              ? "outline"
-                              : "secondary"
-                        }
-                      >
-                        {u.role === "admin" ? (
-                          <><Shield className="h-3 w-3 mr-1" />Admin</>
-                        ) : u.role === "formateur" ? (
-                          <><GraduationCap className="h-3 w-3 mr-1" />Formateur</>
-                        ) : u.role === "student" ? (
-                          <><User className="h-3 w-3 mr-1" />Stagiaire</>
-                        ) : (
-                          <><User className="h-3 w-3 mr-1" />Utilisateur</>
-                        )}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={u.is_active ? "default" : "outline"}>
-                        {u.is_active ? "Actif" : "Inactif"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        {u.role === "user" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setEditUserId(u.id)}
-                            title="Modifier les permissions"
-                          >
-                            <Settings2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleToggleActive(u.id, u.is_active)}
-                          title={u.is_active ? "Désactiver" : "Activer"}
-                        >
-                          {u.is_active ? (
-                            <ToggleRight className="h-4 w-4 text-primary" />
-                          ) : (
-                            <ToggleLeft className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+        <SurfaceCard flush>
+          {isLoading ? (
+            <TableSkeleton rows={5} cols={5} />
+          ) : users.length === 0 ? (
+            <TableEmpty
+              title="Aucun utilisateur"
+              description="Aucun compte d'accès n'est encore provisionné."
+              icon={Users}
+              action={
+                <Button onClick={() => setFormOpen(true)}>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Ajouter un utilisateur
+                </Button>
+              }
+            />
+          ) : (
+            <>
+              <TableFrame>
+                <table className="hidden w-full md:table">
+                  <thead>
+                    <TableHeadRow>
+                      <TableHeadCell>Nom</TableHeadCell>
+                      <TableHeadCell className="hidden lg:table-cell">Email</TableHeadCell>
+                      <TableHeadCell>Rôle</TableHeadCell>
+                      <TableHeadCell>Statut</TableHeadCell>
+                      <TableHeadCell align="right">Actions</TableHeadCell>
+                    </TableHeadRow>
+                  </thead>
+                  <tbody>
+                    {users.map((u) => {
+                      const meta = roleMeta(u.role);
+                      return (
+                        <TableRow key={u.id}>
+                          <TableCell>
+                            <div className="flex min-w-0 items-center gap-2">
+                              <IdentityCell
+                                name={u.full_name || u.email}
+                                secondary={<span className="lg:hidden">{u.email}</span>}
+                              />
+                              {!u.has_complete_profile && (
+                                <StatusPill tone="warning" size="sm">
+                                  Profil incomplet
+                                </StatusPill>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell hideBelow="lg" className="text-muted-foreground">
+                            {u.email}
+                          </TableCell>
+                          <TableCell>
+                            <StatusPill tone={meta.tone} icon={meta.icon} size="sm">
+                              {meta.label}
+                            </StatusPill>
+                          </TableCell>
+                          <TableCell>
+                            <StatusPill tone={u.is_active ? "success" : "neutral"} size="sm" dot>
+                              {u.is_active ? "Actif" : "Inactif"}
+                            </StatusPill>
+                          </TableCell>
+                          <TableCell align="right">
+                            <div className="flex justify-end gap-1">{rowActions(u)}</div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </TableFrame>
+
+              {/* Doublure mobile du tableau — mêmes colonnes, mêmes actions. */}
+              <CardList className="md:hidden">
+                {users.map((u) => {
+                  const meta = roleMeta(u.role);
+                  return (
+                    <CardListItem
+                      key={u.id}
+                      title={u.full_name || u.email}
+                      subtitle={u.email}
+                      meta={
+                        <StatusPill tone={u.is_active ? "success" : "neutral"} size="sm" dot>
+                          {u.is_active ? "Actif" : "Inactif"}
+                        </StatusPill>
+                      }
+                      fields={[
+                        { label: "Rôle", value: meta.label },
+                        {
+                          label: "Profil",
+                          value: u.has_complete_profile ? "Complet" : "Incomplet",
+                        },
+                      ]}
+                      actions={rowActions(u)}
+                    />
+                  );
+                })}
+              </CardList>
+            </>
+          )}
+        </SurfaceCard>
+      </PageShell>
 
       <UserFormDialog
         open={formOpen}

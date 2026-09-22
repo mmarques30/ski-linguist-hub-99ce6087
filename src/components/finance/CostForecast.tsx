@@ -1,8 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { format, addMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 import { TrendingUp } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 
 interface CostForecastProps {
   formations: Array<{
@@ -48,35 +48,54 @@ export function CostForecast({ formations }: CostForecastProps) {
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(val);
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Prévision de Coûts</CardTitle>
-          <Badge className="bg-[hsl(var(--fli-yellow))]/15 text-[hsl(var(--fli-yellow))] border-[hsl(var(--fli-yellow))]/30">
-            <TrendingUp className="h-3 w-3 mr-1" />
-            Projection
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {projectedMonths.map((m) => (
-          <div key={m.label} className="flex items-center justify-between text-sm border-b border-border pb-2 last:border-0">
-            <span className="capitalize font-medium">{m.label}</span>
-            <div className="flex items-center gap-4">
-              <span className="text-muted-foreground">{formatPrice(m.costs)}</span>
-              <span className={m.profit >= 0 ? "text-[hsl(var(--fli-yellow))] font-medium" : "text-destructive font-medium"}>
-                {formatPrice(m.profit)}
-              </span>
-            </div>
-          </div>
-        ))}
-        <div className="flex items-center justify-between pt-2 border-t border-border">
-          <span className="font-semibold text-sm">Profit projeté (trimestre)</span>
-          <span className={`font-bold ${totalProfit >= 0 ? "text-[hsl(var(--fli-yellow))]" : "text-destructive"}`}>
+    <SurfaceCard
+      title="Prévision de Coûts"
+      description="Moyenne mobile des 3 derniers mois, projetée sur le trimestre"
+      icon={TrendingUp}
+      actions={
+        <StatusPill tone="warning" icon={TrendingUp}>
+          Projection
+        </StatusPill>
+      }
+      footer={
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-sm font-semibold">Profit projeté (trimestre)</span>
+          <span
+            className={cn(
+              "font-bold tabular",
+              totalProfit >= 0
+                ? "text-[hsl(var(--status-good))]"
+                : "text-[hsl(var(--status-critical))]"
+            )}
+          >
             {formatPrice(totalProfit)}
           </span>
         </div>
-      </CardContent>
-    </Card>
+      }
+    >
+      <ul className="space-y-3">
+        {projectedMonths.map((m) => (
+          <li
+            key={m.label}
+            className="flex items-center justify-between gap-3 border-b border-border pb-2 text-sm last:border-0 last:pb-0"
+          >
+            <span className="font-medium capitalize">{m.label}</span>
+            <div className="flex items-center gap-4">
+              <span className="text-muted-foreground tabular">{formatPrice(m.costs)}</span>
+              <span
+                className={cn(
+                  "font-medium tabular",
+                  m.profit >= 0
+                    ? "text-[hsl(var(--status-good))]"
+                    : "text-[hsl(var(--status-critical))]"
+                )}
+              >
+                {formatPrice(m.profit)}
+              </span>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </SurfaceCard>
   );
 }

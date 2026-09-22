@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import {
   Select,
   SelectContent,
@@ -106,13 +106,15 @@ export function PhraseSelector({
   }
 
   return (
-    <div className="space-y-4 p-4 border rounded-lg">
-      <h3 className="text-lg font-semibold flex items-center gap-2">
-        {CATEGORY_LABELS[category] || category}
-        <Badge variant="outline" className="ml-auto">
+    <SurfaceCard
+      title={CATEGORY_LABELS[category] || category}
+      actions={
+        <StatusPill tone={selectedIds.length > 0 ? "info" : "neutral"} size="sm">
           {selectedIds.length} phrase{selectedIds.length > 1 ? "s" : ""} dans ce bloc
-        </Badge>
-      </h3>
+        </StatusPill>
+      }
+      bodyClassName="space-y-4"
+    >
 
       {selectedPhrases.length > 0 && (
         <div className="space-y-2">
@@ -121,14 +123,14 @@ export function PhraseSelector({
             {selectedPhrases.map((phrase) => (
               <div
                 key={phrase.id}
-                className="flex items-start gap-2 rounded-md bg-muted/50 px-2 py-1.5"
+                className="flex items-start gap-2 rounded-[var(--radius)] bg-[hsl(var(--surface-sunken))] px-2 py-1.5"
               >
                 <span className="flex-1 text-sm leading-relaxed">
                   {phrase.text_fr}
                   {hasTutoiement(phrase.text_fr) && (
-                    <Badge variant="destructive" className="ml-2 text-[10px]">
+                    <StatusPill tone="danger" size="sm" className="ml-2">
                       tutoiement
-                    </Badge>
+                    </StatusPill>
                   )}
                 </span>
                 <Button
@@ -147,7 +149,7 @@ export function PhraseSelector({
         </div>
       )}
 
-      <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
+      <div className="space-y-3 rounded-[var(--radius-card)] border border-border bg-[hsl(var(--surface-sunken))] p-3">
         <div className="grid gap-2 sm:grid-cols-[1fr_1fr_1.4fr]">
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Langue</Label>
@@ -214,45 +216,42 @@ export function PhraseSelector({
               return (
                 <div
                   key={phrase.id}
-                  className="flex items-start gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/50"
+                  className="flex items-start gap-2 rounded-[var(--radius)] px-2 py-1.5 transition-colors hover:bg-[hsl(var(--surface-raised))]"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="text-sm leading-relaxed">{phrase.text_fr}</p>
                     <div className="mt-1 flex flex-wrap items-center gap-1.5">
                       {phrase.code && (
-                        <span className="font-mono text-[11px] text-muted-foreground">
+                        <span className="font-mono text-2xs text-muted-foreground">
                           {phrase.code}
                         </span>
                       )}
-                      <Badge variant="outline" className="text-[10px]">
+                      <StatusPill tone="neutral" size="sm">
                         {FILE_LANGUAGE_FLAGS[phrase.language] ?? ""}{" "}
                         {fileLanguageLabel(phrase.language)}
-                      </Badge>
-                      <Badge variant="outline" className="text-[10px]">
+                      </StatusPill>
+                      <StatusPill tone="neutral" size="sm">
                         {fileCategoryLabel(phrase.category)}
-                      </Badge>
+                      </StatusPill>
                       {phrase.error_type && (
-                        <Badge variant="secondary" className="text-[10px]">
+                        <StatusPill tone="purple" size="sm">
                           {phrase.error_type}
-                        </Badge>
+                        </StatusPill>
                       )}
                       {phrase.context && (
-                        <span className="text-[10px] text-muted-foreground">
+                        <span className="text-2xs text-muted-foreground">
                           {phrase.context}
                         </span>
                       )}
                       {phrase.is_correction && (
-                        <Badge
-                          variant="secondary"
-                          className="bg-orange-100 text-[10px] text-orange-800 hover:bg-orange-100"
-                        >
+                        <StatusPill tone="accent" size="sm">
                           Correction
-                        </Badge>
+                        </StatusPill>
                       )}
                       {hasTutoiement(phrase.text_fr) && (
-                        <Badge variant="destructive" className="text-[10px]">
+                        <StatusPill tone="danger" size="sm">
                           tutoiement
-                        </Badge>
+                        </StatusPill>
                       )}
                     </div>
                   </div>
@@ -274,7 +273,7 @@ export function PhraseSelector({
         )}
       </div>
 
-      <div className="pt-4 border-t">
+      <div className="border-t border-border pt-4">
         <Label className="flex items-center gap-2 mb-2">
           <MessageSquare className="h-4 w-4" />
           Commentaires {CATEGORY_LABELS[category]?.toLowerCase() || category} (optionnel)
@@ -286,6 +285,6 @@ export function PhraseSelector({
           rows={3}
         />
       </div>
-    </div>
+    </SurfaceCard>
   );
 }

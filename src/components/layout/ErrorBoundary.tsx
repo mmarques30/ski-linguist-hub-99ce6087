@@ -30,9 +30,9 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-6">
-          <div className="max-w-md w-full text-center space-y-6 rounded-lg border bg-card p-8 shadow-sm">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+        <div className="flex min-h-screen items-center justify-center bg-[hsl(var(--surface-page))] p-6">
+          <div className="w-full max-w-md space-y-6 rounded-[var(--radius-card)] border border-border bg-card p-8 text-center shadow-lg">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-pill bg-destructive/10">
               <AlertTriangle className="h-8 w-8 text-destructive" />
             </div>
             <div className="space-y-2">
@@ -42,7 +42,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 tableau de bord pour continuer.
               </p>
               {this.state.error?.message && (
-                <p className="text-xs text-muted-foreground/80 font-mono mt-3 p-2 bg-muted rounded break-all">
+                <p className="mt-3 break-all rounded-[var(--radius)] bg-muted p-2 font-mono text-xs text-muted-foreground/80">
                   {this.state.error.message}
                 </p>
               )}

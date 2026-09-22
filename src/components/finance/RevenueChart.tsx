@@ -1,20 +1,20 @@
 import { useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
-} from "recharts";
+import { LineChart as LineChartIcon } from "lucide-react";
 import { format, addMonths } from "date-fns";
 import { fr } from "date-fns/locale";
+import { SurfaceCard, TrendChart, seriesColor } from "@/components/ui-kit";
 
 const i18n = {
   title: { fr: 'CA et Projections', 'pt-BR': 'Receita e Projeções', en: 'Revenue & Projections' },
   actual: { fr: 'CA Réel', 'pt-BR': 'Receita Real', en: 'Actual Revenue' },
   projection: { fr: 'Projection', 'pt-BR': 'Projeção', en: 'Projection' },
+  description: {
+    fr: 'Moyenne mobile des 3 derniers mois, projetée sur 3 mois',
+    'pt-BR': 'Média móvel dos últimos 3 meses, projetada para 3 meses',
+    en: 'Three-month moving average, projected over three months',
+  },
 };
-
-const BRAND_GOLD = "hsl(45, 93%, 47%)";
-const BRAND_NAVY = "hsl(213, 50%, 20%)";
 
 interface RevenueChartProps {
   caByMonth: Array<{ month: string; total: number; totalN1: number }> | undefined;
@@ -59,42 +59,24 @@ export function RevenueChart({ caByMonth }: RevenueChartProps) {
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t(i18n.title)}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis dataKey="month" className="text-xs" />
-              <YAxis tickFormatter={v => `${(v / 1000).toFixed(0)}k`} className="text-xs" />
-              <Tooltip formatter={(value: number) => formatPrice(value)} />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="real"
-                name={t(i18n.actual)}
-                stroke={BRAND_GOLD}
-                strokeWidth={2}
-                dot={{ fill: BRAND_GOLD, r: 4 }}
-                connectNulls={false}
-              />
-              <Line
-                type="monotone"
-                dataKey="projection"
-                name={t(i18n.projection)}
-                stroke={BRAND_NAVY}
-                strokeWidth={2}
-                strokeDasharray="6 4"
-                dot={false}
-                connectNulls
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </CardContent>
-    </Card>
+    <SurfaceCard
+      title={t(i18n.title)}
+      description={t(i18n.description)}
+      icon={LineChartIcon}
+    >
+      <TrendChart
+        data={chartData}
+        xKey="month"
+        variant="line"
+        height={300}
+        series={[
+          { key: "real", label: t(i18n.actual), color: seriesColor(0) },
+          { key: "projection", label: t(i18n.projection), color: seriesColor(0), dashed: true },
+        ]}
+        formatValue={(value) => formatPrice(Number(value))}
+        formatAxisValue={(value) => `${Math.round(value / 1000)}k`}
+        ariaLabel={t(i18n.title)}
+      />
+    </SurfaceCard>
   );
 }

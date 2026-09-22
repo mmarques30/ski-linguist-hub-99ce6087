@@ -8,9 +8,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SlidersHorizontal } from "lucide-react";
 import type { RegistrationData } from "@/pages/register/Index";
 import { REGISTRATION_LANGUAGES } from "@/lib/registration-languages";
+import { OptionCard, StepActions, StepCard } from "./StepLayout";
 
 interface TrainingConfigStepProps {
   data: Partial<RegistrationData>;
@@ -34,6 +35,12 @@ const locations = [
   { value: "chamonix", label: "Chamonix" },
 ];
 
+const modalities = [
+  { value: "in_person", label: "Présentiel" },
+  { value: "online_individual", label: "En ligne (Individuel)" },
+  { value: "online_group", label: "En ligne (Groupe)" },
+];
+
 export function TrainingConfigStep({ data, onUpdate, onNext }: TrainingConfigStepProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,15 +48,13 @@ export function TrainingConfigStep({ data, onUpdate, onNext }: TrainingConfigSte
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Configuration de la formation</CardTitle>
-        <CardDescription>
-          Sélectionnez vos préférences de formation
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <StepCard
+        title="Configuration de la formation"
+        description="Sélectionnez vos préférences de formation"
+        icon={SlidersHorizontal}
+      >
+        <div className="space-y-6">
           {/* Type de financement */}
           <div className="space-y-3">
             <Label>Mode de financement</Label>
@@ -58,36 +63,45 @@ export function TrainingConfigStep({ data, onUpdate, onNext }: TrainingConfigSte
               onValueChange={(value) => onUpdate({ fundingType: value })}
               className="space-y-2"
             >
-              <div className="flex items-center space-x-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors">
-                <RadioGroupItem value="fifpl" id="fifpl" />
-                <Label htmlFor="fifpl" className="font-normal cursor-pointer flex-1">
+              <OptionCard selected={data.fundingType === "fifpl"}>
+                <Label
+                  htmlFor="fifpl"
+                  className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
+                >
+                  <RadioGroupItem value="fifpl" id="fifpl" />
                   FIFPL (Financé par le FIFPL)
                 </Label>
-              </div>
-              <div className="flex flex-col rounded-lg border p-3 hover:bg-muted/50 transition-colors space-y-1">
-                <div className="flex items-center space-x-3">
-                  <RadioGroupItem value="opco" id="opco" />
-                  <Label htmlFor="opco" className="font-normal cursor-pointer flex-1">
+              </OptionCard>
+              <OptionCard selected={data.fundingType === "opco"}>
+                <Label htmlFor="opco" className="flex cursor-pointer flex-col gap-1 px-4 py-3 font-normal">
+                  <span className="flex min-h-6 items-center gap-3">
+                    <RadioGroupItem value="opco" id="opco" />
                     OPCO (Financé par votre OPCO)
-                  </Label>
-                </div>
-                <p className="text-xs text-muted-foreground pl-7">
-                  Contactez FLI pour les modalités de prise en charge. Aucun frais de dossier
-                  automatique à cette étape.
-                </p>
-              </div>
-              <div className="flex items-center space-x-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors">
-                <RadioGroupItem value="company" id="company" />
-                <Label htmlFor="company" className="font-normal cursor-pointer flex-1">
+                  </span>
+                  <span className="block pl-7 text-xs text-muted-foreground">
+                    Contactez FLI pour les modalités de prise en charge. Aucun frais de dossier
+                    automatique à cette étape.
+                  </span>
+                </Label>
+              </OptionCard>
+              <OptionCard selected={data.fundingType === "company"}>
+                <Label
+                  htmlFor="company"
+                  className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
+                >
+                  <RadioGroupItem value="company" id="company" />
                   Entreprise (L'école de ski paie)
                 </Label>
-              </div>
-              <div className="flex items-center space-x-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors">
-                <RadioGroupItem value="self" id="self" />
-                <Label htmlFor="self" className="font-normal cursor-pointer flex-1">
+              </OptionCard>
+              <OptionCard selected={data.fundingType === "self"}>
+                <Label
+                  htmlFor="self"
+                  className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
+                >
+                  <RadioGroupItem value="self" id="self" />
                   Autofinancement
                 </Label>
-              </div>
+              </OptionCard>
             </RadioGroup>
           </div>
 
@@ -97,26 +111,19 @@ export function TrainingConfigStep({ data, onUpdate, onNext }: TrainingConfigSte
             <RadioGroup
               value={data.modality || ""}
               onValueChange={(value) => onUpdate({ modality: value })}
-              className="grid gap-2 md:grid-cols-3"
+              className="grid gap-2 sm:grid-cols-3"
             >
-              <div className="flex items-center space-x-2 rounded-lg border p-3 hover:bg-muted/50 transition-colors">
-                <RadioGroupItem value="in_person" id="in_person" />
-                <Label htmlFor="in_person" className="font-normal cursor-pointer">
-                  Présentiel
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2 rounded-lg border p-3 hover:bg-muted/50 transition-colors">
-                <RadioGroupItem value="online_individual" id="online_individual" />
-                <Label htmlFor="online_individual" className="font-normal cursor-pointer">
-                  En ligne (Individuel)
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2 rounded-lg border p-3 hover:bg-muted/50 transition-colors">
-                <RadioGroupItem value="online_group" id="online_group" />
-                <Label htmlFor="online_group" className="font-normal cursor-pointer">
-                  En ligne (Groupe)
-                </Label>
-              </div>
+              {modalities.map((modality) => (
+                <OptionCard key={modality.value} selected={data.modality === modality.value}>
+                  <Label
+                    htmlFor={modality.value}
+                    className="flex min-h-12 cursor-pointer items-center gap-2.5 px-3 py-3 font-normal"
+                  >
+                    <RadioGroupItem value={modality.value} id={modality.value} />
+                    <span className="min-w-0">{modality.label}</span>
+                  </Label>
+                </OptionCard>
+              ))}
             </RadioGroup>
           </div>
 
@@ -127,7 +134,7 @@ export function TrainingConfigStep({ data, onUpdate, onNext }: TrainingConfigSte
               value={data.language || ""}
               onValueChange={(value) => onUpdate({ language: value })}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-11">
                 <SelectValue placeholder="Sélectionnez une langue" />
               </SelectTrigger>
               <SelectContent>
@@ -146,39 +153,34 @@ export function TrainingConfigStep({ data, onUpdate, onNext }: TrainingConfigSte
             <RadioGroup
               value={data.duration || ""}
               onValueChange={(value) => onUpdate({ duration: value })}
-              className="grid gap-2 md:grid-cols-3 lg:grid-cols-5"
+              className="grid gap-2 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5"
             >
               {durations.map((duration) => (
-                <div
-                  key={duration.value}
-                  className="flex flex-col items-center rounded-lg border p-3 hover:bg-muted/50 transition-colors"
-                >
+                <OptionCard key={duration.value} selected={data.duration === duration.value}>
                   <RadioGroupItem value={duration.value} id={duration.value} className="sr-only" />
                   <Label
                     htmlFor={duration.value}
-                    className={`cursor-pointer text-center w-full p-2 rounded ${
-                      data.duration === duration.value
-                        ? "bg-primary text-primary-foreground"
-                        : ""
-                    }`}
+                    className="flex min-h-16 w-full cursor-pointer flex-col items-center justify-center gap-0.5 p-3 text-center"
                   >
-                    <span className="block font-semibold">{duration.label}</span>
-                    <span className="block text-sm opacity-80">{duration.price} EUR</span>
+                    <span className="block font-semibold text-foreground">{duration.label}</span>
+                    <span className="block text-sm tabular text-muted-foreground">
+                      {duration.price} EUR
+                    </span>
                   </Label>
-                </div>
+                </OptionCard>
               ))}
             </RadioGroup>
           </div>
 
           {/* Lieu - Uniquement pour le présentiel */}
           {data.modality === "in_person" && (
-            <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+            <div className="animate-in fade-in slide-in-from-top-2 space-y-2">
               <Label>Lieu de la formation</Label>
               <Select
                 value={data.location || ""}
                 onValueChange={(value) => onUpdate({ location: value })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-11">
                   <SelectValue placeholder="Sélectionnez un lieu" />
                 </SelectTrigger>
                 <SelectContent>
@@ -191,16 +193,18 @@ export function TrainingConfigStep({ data, onUpdate, onNext }: TrainingConfigSte
               </Select>
             </div>
           )}
+        </div>
+      </StepCard>
 
-          <Button 
-            type="submit" 
-            className="w-full"
-            disabled={!data.fundingType || !data.modality || !data.language || !data.duration}
-          >
-            Continuer vers le test de niveau
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+      <StepActions>
+        <Button
+          type="submit"
+          className="h-12 w-full text-base sm:w-auto"
+          disabled={!data.fundingType || !data.modality || !data.language || !data.duration}
+        >
+          Continuer vers le test de niveau
+        </Button>
+      </StepActions>
+    </form>
   );
 }

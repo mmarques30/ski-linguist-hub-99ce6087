@@ -1,31 +1,45 @@
 import { useMemo } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { FinanceKPICard } from "@/components/finance/FinanceKPICard";
 import {
   TresorerieSubnav,
   useTresorerieTab,
 } from "@/components/finance/PilotageSubnav";
 import { useTresoreriePrevisionnelle } from "@/hooks/useFinancialDashboard";
-import { AlertTriangle, Wallet, ArrowUpRight, ArrowDownRight, Scale } from "lucide-react";
-import { cn } from "@/lib/utils";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart,
-} from "recharts";
+  AlertTriangle,
+  Wallet,
+  ArrowUpRight,
+  ArrowDownRight,
+  Scale,
+  Info,
+  LineChart as LineChartIcon,
+  Table2,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Navigate } from "react-router-dom";
-
-const BRAND_GOLD = 'hsl(40, 97%, 54%)';
-const BRAND_NAVY = 'hsl(219, 52%, 16%)';
+import {
+  CardList,
+  CardListItem,
+  IconChip,
+  PageHeader,
+  PageShell,
+  StatTile,
+  StatTileGrid,
+  StatusPill,
+  SurfaceCard,
+  TableCell,
+  TableEmpty,
+  TableFrame,
+  TableHeadCell,
+  TableHeadRow,
+  TableRow,
+  TableSkeleton,
+  TrendChart,
+} from "@/components/ui-kit";
 
 export default function FinanceTresorerie() {
   const tab = useTresorerieTab();
   const { data: tresorerie, isLoading } = useTresoreriePrevisionnelle(6);
-
-  if (tab === "charges") {
-    return <Navigate to="/finance/charges-fixes" replace />;
-  }
 
   const formatPrice = (value: number) => {
     return new Intl.NumberFormat('fr-FR', {
@@ -62,195 +76,269 @@ export default function FinanceTresorerie() {
     })) || [];
   }, [tresorerieWithCumulative]);
 
+  if (tab === "charges") {
+    return <Navigate to="/finance/charges-fixes" replace />;
+  }
+
+  const months = tresorerieWithCumulative ?? [];
+
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Trésorerie &amp; charges</h1>
-          <p className="text-muted-foreground">
-            Projection des flux de trésorerie et charges fixes
-          </p>
-        </div>
-
-        <TresorerieSubnav activeTab="previsionnel" />
+      <PageShell>
+        <PageHeader
+          title="Trésorerie & charges"
+          description="Projection des flux de trésorerie et charges fixes"
+          icon={Wallet}
+          tone="teal"
+          meta={
+            hasNegativeBalance ? (
+              <StatusPill tone="danger" icon={AlertTriangle}>
+                Solde prévisionnel négatif
+              </StatusPill>
+            ) : undefined
+          }
+          tabs={<TresorerieSubnav activeTab="previsionnel" />}
+        />
 
         {/* KPI Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <FinanceKPICard
-            title="Solde actuel"
-            value={summaryKPIs.soldeActuel}
-            variant={summaryKPIs.soldeActuel >= 0 ? 'gold' : 'navy'}
-            formatAsPrice
+        <StatTileGrid cols={4}>
+          <StatTile
+            label="Solde actuel"
+            value={formatPrice(summaryKPIs.soldeActuel)}
             icon={Wallet}
+            tone={summaryKPIs.soldeActuel >= 0 ? 'teal' : 'rose'}
+            loading={isLoading}
           />
-          <FinanceKPICard
-            title="Entrées prévues"
-            value={summaryKPIs.entreesPrevues}
-            variant="gold"
-            formatAsPrice
+          <StatTile
+            label="Entrées prévues"
+            value={formatPrice(summaryKPIs.entreesPrevues)}
             icon={ArrowUpRight}
+            tone="gold"
+            loading={isLoading}
           />
-          <FinanceKPICard
-            title="Sorties prévues"
-            value={summaryKPIs.sortiesPrevues}
-            variant="navy"
-            formatAsPrice
+          <StatTile
+            label="Sorties prévues"
+            value={formatPrice(summaryKPIs.sortiesPrevues)}
             icon={ArrowDownRight}
+            tone="navy"
+            loading={isLoading}
           />
-          <FinanceKPICard
-            title="Solde prévisionnel"
-            value={summaryKPIs.soldePrevisionnel}
-            variant={summaryKPIs.soldePrevisionnel >= 0 ? 'gold' : 'navy'}
-            formatAsPrice
+          <StatTile
+            label="Solde prévisionnel"
+            value={formatPrice(summaryKPIs.soldePrevisionnel)}
             icon={Scale}
+            tone={summaryKPIs.soldePrevisionnel >= 0 ? 'teal' : 'rose'}
+            loading={isLoading}
           />
-        </div>
+        </StatTileGrid>
 
         {hasNegativeBalance && (
-          <Card className="border-destructive/50 bg-destructive/5">
-            <CardContent className="flex items-center gap-3 py-4">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              <div>
-                <p className="font-medium">Attention: Solde prévisionnel négatif détecté</p>
-                <p className="text-sm text-muted-foreground">
-                  Certains mois présentent un déficit de trésorerie prévu
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <SurfaceCard
+            className="border-[hsl(var(--status-critical))]/40"
+            bodyClassName="flex items-center gap-3"
+          >
+            <IconChip icon={AlertTriangle} tone="rose" size="md" />
+            <div className="min-w-0">
+              <p className="font-medium">Attention: Solde prévisionnel négatif détecté</p>
+              <p className="text-sm text-muted-foreground">
+                Certains mois présentent un déficit de trésorerie prévu
+              </p>
+            </div>
+          </SurfaceCard>
         )}
 
         {/* Projection Chart */}
         {chartData.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Projection de Trésorerie</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[250px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="name" className="text-xs" />
-                    <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} className="text-xs" />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
-                      formatter={(value: number) => [formatPrice(value), 'Solde cumulatif']}
-                    />
-                    <defs>
-                      <linearGradient id="soldeGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={BRAND_GOLD} stopOpacity={0.3} />
-                        <stop offset="95%" stopColor={BRAND_GOLD} stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <Area type="monotone" dataKey="solde" stroke={BRAND_GOLD} strokeWidth={2} fill="url(#soldeGradient)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
+          <SurfaceCard
+            title="Projection de Trésorerie"
+            description="Solde cumulatif mois par mois, sur 6 mois glissants"
+            icon={LineChartIcon}
+          >
+            <TrendChart
+              data={chartData}
+              xKey="name"
+              variant="area"
+              height={250}
+              series={[{ key: "solde", label: "Solde cumulatif" }]}
+              formatValue={(value) => formatPrice(Number(value))}
+              formatAxisValue={(value) => `${Math.round(value / 1000)}k`}
+              ariaLabel="Projection du solde cumulatif de trésorerie"
+            />
+          </SurfaceCard>
         )}
 
         {/* Flux Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Flux de trésorerie prévisionnels</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <p className="text-center text-muted-foreground py-8">Chargement...</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="min-w-[150px]"></TableHead>
-                      {tresorerieWithCumulative?.map((m) => (
-                        <TableHead key={m.mois} className="text-center min-w-[120px]">
+        <SurfaceCard
+          title="Flux de trésorerie prévisionnels"
+          description="Entrées = factures dues · Sorties = charges fixes + formateurs à payer"
+          icon={Table2}
+          flush
+        >
+          {isLoading ? (
+            <TableSkeleton rows={8} cols={7} />
+          ) : months.length === 0 ? (
+            <TableEmpty
+              title="Aucun flux prévisionnel"
+              description="Aucune facture à encaisser ni charge planifiée sur les 6 prochains mois."
+              icon={Wallet}
+            />
+          ) : (
+            <>
+              <TableFrame className="hidden md:block">
+                <table className="w-full">
+                  <thead>
+                    <TableHeadRow>
+                      <TableHeadCell className="min-w-[160px]">
+                        <span className="sr-only">Poste</span>
+                      </TableHeadCell>
+                      {months.map((m) => (
+                        <TableHeadCell key={m.mois} align="right" className="min-w-[120px]">
                           {m.moisLabel}
-                        </TableHead>
+                        </TableHeadCell>
                       ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow className="bg-[hsl(var(--fli-yellow))]/5">
-                      <TableCell className="font-medium text-[hsl(var(--fli-yellow))]">Entrées prévues</TableCell>
-                      {tresorerieWithCumulative?.map((m) => (
-                        <TableCell key={m.mois} className="text-center font-medium text-[hsl(var(--fli-yellow))]">
+                    </TableHeadRow>
+                  </thead>
+                  <tbody>
+                    <TableRow className="bg-[hsl(var(--surface-sunken))]">
+                      <TableCell className="font-medium text-[hsl(var(--tint-teal-fg))]">
+                        Entrées prévues
+                      </TableCell>
+                      {months.map((m) => (
+                        <TableCell
+                          key={m.mois}
+                          align="right"
+                          className="font-medium tabular text-[hsl(var(--tint-teal-fg))]"
+                        >
                           {formatPrice(m.entrees)}
                         </TableCell>
                       ))}
                     </TableRow>
                     <TableRow>
-                      <TableCell className="text-sm text-muted-foreground pl-8">Factures à encaisser</TableCell>
-                      {tresorerieWithCumulative?.map((m) => (
-                        <TableCell key={m.mois} className="text-center text-sm">{formatPrice(m.facturesAEncaisser)}</TableCell>
+                      <TableCell className="pl-8 text-sm text-muted-foreground">
+                        Factures à encaisser
+                      </TableCell>
+                      {months.map((m) => (
+                        <TableCell key={m.mois} align="right" className="text-sm tabular">
+                          {formatPrice(m.facturesAEncaisser)}
+                        </TableCell>
                       ))}
                     </TableRow>
                     <TableRow>
-                      <TableCell className="text-sm text-muted-foreground pl-8">Formations planifiées</TableCell>
-                      {tresorerieWithCumulative?.map((m) => (
-                        <TableCell key={m.mois} className="text-center text-sm">{formatPrice(m.formationsPlanifiees)}</TableCell>
+                      <TableCell className="pl-8 text-sm text-muted-foreground">
+                        Formations planifiées
+                      </TableCell>
+                      {months.map((m) => (
+                        <TableCell key={m.mois} align="right" className="text-sm tabular">
+                          {formatPrice(m.formationsPlanifiees)}
+                        </TableCell>
                       ))}
                     </TableRow>
-                    <TableRow className="bg-[hsl(var(--fli-navy))]/5">
-                      <TableCell className="font-medium text-[hsl(var(--fli-navy))]">Sorties prévues</TableCell>
-                      {tresorerieWithCumulative?.map((m) => (
-                        <TableCell key={m.mois} className="text-center font-medium text-[hsl(var(--fli-navy))]">
+                    <TableRow className="bg-[hsl(var(--surface-sunken))]">
+                      <TableCell className="font-medium text-[hsl(var(--tint-navy-fg))]">
+                        Sorties prévues
+                      </TableCell>
+                      {months.map((m) => (
+                        <TableCell
+                          key={m.mois}
+                          align="right"
+                          className="font-medium tabular text-[hsl(var(--tint-navy-fg))]"
+                        >
                           {formatPrice(m.sorties)}
                         </TableCell>
                       ))}
                     </TableRow>
                     <TableRow>
-                      <TableCell className="text-sm text-muted-foreground pl-8">Charges fixes</TableCell>
-                      {tresorerieWithCumulative?.map((m) => (
-                        <TableCell key={m.mois} className="text-center text-sm">{formatPrice(m.chargesFixes)}</TableCell>
+                      <TableCell className="pl-8 text-sm text-muted-foreground">Charges fixes</TableCell>
+                      {months.map((m) => (
+                        <TableCell key={m.mois} align="right" className="text-sm tabular">
+                          {formatPrice(m.chargesFixes)}
+                        </TableCell>
                       ))}
                     </TableRow>
                     <TableRow>
-                      <TableCell className="text-sm text-muted-foreground pl-8">Formateurs à payer</TableCell>
-                      {tresorerieWithCumulative?.map((m) => (
-                        <TableCell key={m.mois} className="text-center text-sm">{formatPrice(m.formateursAPayer)}</TableCell>
+                      <TableCell className="pl-8 text-sm text-muted-foreground">
+                        Formateurs à payer
+                      </TableCell>
+                      {months.map((m) => (
+                        <TableCell key={m.mois} align="right" className="text-sm tabular">
+                          {formatPrice(m.formateursAPayer)}
+                        </TableCell>
                       ))}
                     </TableRow>
-                    <TableRow className="border-t-2">
+                    <TableRow className="border-t-2 border-border">
                       <TableCell className="font-medium">Solde mensuel</TableCell>
-                      {tresorerieWithCumulative?.map((m) => (
-                        <TableCell key={m.mois} className={cn("text-center font-medium", m.solde >= 0 ? "text-[hsl(var(--fli-yellow))]" : "text-destructive")}>
+                      {months.map((m) => (
+                        <TableCell
+                          key={m.mois}
+                          align="right"
+                          className={cn(
+                            "font-medium tabular",
+                            m.solde >= 0
+                              ? "text-[hsl(var(--status-good))]"
+                              : "text-[hsl(var(--status-critical))]"
+                          )}
+                        >
                           {formatPrice(m.solde)}
                         </TableCell>
                       ))}
                     </TableRow>
-                    <TableRow className="bg-muted/50">
+                    <TableRow className="bg-[hsl(var(--surface-sunken))]">
                       <TableCell className="font-bold">Solde cumulatif</TableCell>
-                      {tresorerieWithCumulative?.map((m) => (
-                        <TableCell key={m.mois} className="text-center">
-                          <Badge
-                            variant={m.soldeCumulatif >= 0 ? "default" : "destructive"}
-                            className={cn("text-sm font-bold", m.soldeCumulatif >= 0 ? "bg-[hsl(var(--fli-yellow))]/15 text-[hsl(var(--fli-yellow))] border-[hsl(var(--fli-yellow))]/30" : "")}
+                      {months.map((m) => (
+                        <TableCell key={m.mois} align="right">
+                          <StatusPill
+                            tone={m.soldeCumulatif >= 0 ? "success" : "danger"}
+                            className="font-bold tabular"
                           >
                             {formatPrice(m.soldeCumulatif)}
-                          </Badge>
+                          </StatusPill>
                         </TableCell>
                       ))}
                     </TableRow>
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  </tbody>
+                </table>
+              </TableFrame>
 
-        <Card>
-          <CardContent className="py-4">
-            <p className="text-sm text-muted-foreground">
-              <strong>Note:</strong> Ces prévisions sont basées sur les factures en attente, 
-              les formations planifiées et les modèles de charges fixes. Les montants réels 
-              peuvent varier en fonction des encaissements et dépenses effectives.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+              <CardList className="md:hidden">
+                {months.map((m) => (
+                  <CardListItem
+                    key={m.mois}
+                    title={m.moisLabel}
+                    meta={
+                      <StatusPill
+                        tone={m.soldeCumulatif >= 0 ? "success" : "danger"}
+                        size="sm"
+                        className="tabular"
+                      >
+                        {formatPrice(m.soldeCumulatif)}
+                      </StatusPill>
+                    }
+                    subtitle="Solde cumulatif à droite"
+                    fields={[
+                      { label: "Entrées prévues", value: formatPrice(m.entrees) },
+                      { label: "Factures à encaisser", value: formatPrice(m.facturesAEncaisser) },
+                      { label: "Formations planifiées", value: formatPrice(m.formationsPlanifiees) },
+                      { label: "Sorties prévues", value: formatPrice(m.sorties) },
+                      { label: "Charges fixes", value: formatPrice(m.chargesFixes) },
+                      { label: "Formateurs à payer", value: formatPrice(m.formateursAPayer) },
+                      { label: "Solde mensuel", value: formatPrice(m.solde) },
+                    ]}
+                  />
+                ))}
+              </CardList>
+            </>
+          )}
+        </SurfaceCard>
+
+        <SurfaceCard bodyClassName="flex items-start gap-3">
+          <IconChip icon={Info} tone="neutral" size="sm" />
+          <p className="text-sm text-muted-foreground">
+            <strong>Note:</strong> Ces prévisions sont basées sur les factures en attente,
+            les formations planifiées et les modèles de charges fixes. Les montants réels
+            peuvent varier en fonction des encaissements et dépenses effectives.
+          </p>
+        </SurfaceCard>
+      </PageShell>
     </MainLayout>
   );
 }

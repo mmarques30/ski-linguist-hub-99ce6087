@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SurfaceCard } from "@/components/ui-kit";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CATEGORY_LABELS } from "@/lib/evaluation-utils";
 import type { TestPhrase } from "@/hooks/useTestPhrases";
@@ -56,39 +56,35 @@ export function AppreciationPreview({ sections, generalComments }: AppreciationP
   const isEmpty = !generatedText.trim();
 
   return (
-    <Card className="sticky top-4">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <Eye className="h-4 w-4" />
-          Prévisualisation du texte généré
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[400px] pr-4">
-          {isEmpty ? (
-            <p className="text-sm text-muted-foreground italic">
-              Sélectionnez des phrases et ajoutez des commentaires pour voir la prévisualisation...
-            </p>
-          ) : (
-            <div className="prose prose-sm max-w-none">
-              {generatedText.split("\n\n").map((paragraph, idx) => {
-                const [title, ...rest] = paragraph.split(":** ");
-                const boldTitle = title.replace(/\*\*/g, "");
-                const content = rest.join(":** ");
+    <SurfaceCard
+      className="lg:sticky lg:top-4"
+      title="Prévisualisation du texte généré"
+      icon={Eye}
+    >
+      <ScrollArea className="h-[400px] pr-4">
+        {isEmpty ? (
+          <p className="text-sm italic text-muted-foreground">
+            Sélectionnez des phrases et ajoutez des commentaires pour voir la prévisualisation...
+          </p>
+        ) : (
+          <div className="prose prose-sm max-w-none">
+            {generatedText.split("\n\n").map((paragraph, idx) => {
+              const [title, ...rest] = paragraph.split(":** ");
+              const boldTitle = title.replace(/\*\*/g, "");
+              const content = rest.join(":** ");
 
-                return (
-                  <div key={idx} className="mb-4">
-                    <span className="font-semibold text-foreground">
-                      {boldTitle}:
-                    </span>{" "}
-                    <span className="text-muted-foreground">{content}</span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </ScrollArea>
-      </CardContent>
-    </Card>
+              return (
+                <div key={idx} className="mb-4">
+                  <span className="font-semibold text-foreground">
+                    {boldTitle}:
+                  </span>{" "}
+                  <span className="text-muted-foreground">{content}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </ScrollArea>
+    </SurfaceCard>
   );
 }

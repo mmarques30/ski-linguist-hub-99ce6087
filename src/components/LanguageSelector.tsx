@@ -29,7 +29,8 @@ export const LanguageSelector = ({ collapsed = false }: LanguageSelectorProps) =
         <Button
           variant="ghost"
           size={collapsed ? 'icon' : 'default'}
-          className="w-full justify-start gap-2"
+          className="w-full justify-start gap-2 text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          aria-label={currentLanguage.label}
         >
           <Globe className="h-4 w-4" />
           {!collapsed && (

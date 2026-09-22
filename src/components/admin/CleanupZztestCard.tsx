@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -7,6 +6,7 @@ import { Loader2, Trash2, ListChecks } from "lucide-react";
 import { toast } from "sonner";
 import { invokeAdminEdgeFunction } from "@/lib/admin-edge-invoke";
 import { ZZTEST_EMAIL_DOMAIN, ZZTEST_PREFIX } from "@/lib/zztest";
+import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 
 export type CleanupZztestEntry = {
   stagiaire: string;
@@ -50,14 +50,11 @@ function JournalTable({ journal }: { journal: CleanupZztestJournal }) {
   ];
 
   return (
-    <div className="rounded-lg border text-sm">
+    <div className="divide-y divide-border rounded-[var(--radius)] border border-border text-sm">
       {rows.map(([label, value]) => (
-        <div
-          key={label}
-          className="flex items-center justify-between border-b px-3 py-2 last:border-b-0"
-        >
-          <span className="text-muted-foreground">{label}</span>
-          <span className="font-medium">{value}</span>
+        <div key={label} className="flex items-center justify-between gap-3 px-3 py-2">
+          <span className="min-w-0 text-muted-foreground">{label}</span>
+          <span className="shrink-0 font-medium tabular">{value}</span>
         </div>
       ))}
     </div>
@@ -66,9 +63,9 @@ function JournalTable({ journal }: { journal: CleanupZztestJournal }) {
 
 function AuteursTable({ entries }: { entries: CleanupZztestEntry[] }) {
   return (
-    <div className="rounded-lg border text-sm">
+    <div className="divide-y divide-border rounded-[var(--radius)] border border-border text-sm">
       {entries.map((entry) => (
-        <div key={entry.stagiaire} className="border-b px-3 py-2 last:border-b-0">
+        <div key={entry.stagiaire} className="px-3 py-2">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <span className="font-medium">{entry.stagiaire}</span>
             <span className="text-xs text-muted-foreground">
@@ -138,13 +135,17 @@ export function CleanupZztestCard() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Trash2 className="h-5 w-5" />
-          Nettoyer les données de test
-        </CardTitle>
-        <CardDescription>
+    <SurfaceCard
+      title="Nettoyer les données de test"
+      icon={Trash2}
+      actions={
+        <StatusPill tone="danger" icon={Trash2}>
+          Zone destructive
+        </StatusPill>
+      }
+      className="border-destructive/40"
+      description={
+        <>
           Supprime uniquement les stagiaires dont le nom commence par {ZZTEST_PREFIX} et
           l&apos;email se termine par @{ZZTEST_EMAIL_DOMAIN}, plus inscriptions, factures,
           paiements, certificats, fichiers, comptes liés et phrases de référentiel
@@ -153,9 +154,10 @@ export function CleanupZztestCard() {
           supprimés via l&apos;API Storage (clé service) puis le SQL suit : un seul
           bouton, y compris s&apos;il existe un certificat. La prochaine facture
           reprend le dernier numéro réel. Journal sans donnée personnelle.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+        </>
+      }
+    >
+      <div className="space-y-4">
         <Alert>
           <AlertTitle>Deux temps : simulation, puis confirmation</AlertTitle>
           <AlertDescription>
@@ -207,8 +209,11 @@ export function CleanupZztestCard() {
           </div>
         )}
 
-        <div className="space-y-2 rounded-lg border border-destructive/40 p-4">
-          <p className="text-sm font-medium text-destructive">Exécution réelle</p>
+        <div className="space-y-2 rounded-[var(--radius)] border border-destructive/40 bg-destructive/5 p-4">
+          <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-destructive">
+            <StatusPill tone="danger" size="sm">Irréversible</StatusPill>
+            Exécution réelle
+          </p>
           <p className="text-sm text-muted-foreground">
             Tapez {CONFIRM_WORD} puis cliquez. Irréversible pour les lignes de test.
           </p>
@@ -235,7 +240,7 @@ export function CleanupZztestCard() {
             </Button>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </SurfaceCard>
   );
 }

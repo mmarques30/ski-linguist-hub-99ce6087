@@ -1,12 +1,24 @@
 import { useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FinanceKPICard } from "@/components/finance/FinanceKPICard";
 import { CostsByCategory } from "@/components/finance/CostsByCategory";
 import { CostForecast } from "@/components/finance/CostForecast";
-import { TrendingUp, Receipt, Landmark, CalendarDays, Users, Percent } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import {
+  TrendingUp,
+  Receipt,
+  Landmark,
+  CalendarDays,
+  Users,
+  Percent,
+  LineChart as LineChartIcon,
+} from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import {
+  StatTile,
+  StatTileGrid,
+  SurfaceCard,
+  TrendChart,
+  seriesColor,
+} from "@/components/ui-kit";
 
 interface Formation {
   id: string | null;
@@ -93,50 +105,81 @@ export function RentabiliteDashboard({ formations }: RentabiliteDashboardProps) 
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(val);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-5">
       {/* KPI Grid */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <FinanceKPICard title="Marge Brute" value={margeTotal} subtitle={`${margeMoyenne.toFixed(1)}% en moyenne`} variant="gold" formatAsPrice icon={TrendingUp} />
-        <FinanceKPICard title="Coûts Directs" value={coutsTotal} subtitle="Formateurs + matériel" variant="navy" formatAsPrice icon={Receipt} />
-        <FinanceKPICard title="CA Formations" value={caTotal} subtitle={`${nbFormations} formations`} variant="gold" formatAsPrice icon={Landmark} />
-      </div>
-      <div className="grid gap-4 md:grid-cols-3">
-        <FinanceKPICard title="Dépenses Mensuelles" value={depensesMensuelles} subtitle="Moyenne sur la période" variant="default" formatAsPrice icon={CalendarDays} />
-        <FinanceKPICard title="Coût par Formation" value={coutParEleve} subtitle={`${nbFormations} formations`} variant="default" formatAsPrice icon={Users} />
-        <FinanceKPICard title="Marge de Profit" value={`${margeMoyenne.toFixed(1)}%`} subtitle="Moyenne pondérée" variant="gold" icon={Percent} />
-      </div>
+      <StatTileGrid cols={3}>
+        <StatTile
+          label="Marge Brute"
+          value={formatPrice(margeTotal)}
+          hint={`${margeMoyenne.toFixed(1)}% en moyenne`}
+          icon={TrendingUp}
+          tone="gold"
+        />
+        <StatTile
+          label="Coûts Directs"
+          value={formatPrice(coutsTotal)}
+          hint="Formateurs + matériel"
+          icon={Receipt}
+          tone="navy"
+        />
+        <StatTile
+          label="CA Formations"
+          value={formatPrice(caTotal)}
+          hint={`${nbFormations} formations`}
+          icon={Landmark}
+          tone="teal"
+        />
+      </StatTileGrid>
+      <StatTileGrid cols={3}>
+        <StatTile
+          label="Dépenses Mensuelles"
+          value={formatPrice(depensesMensuelles)}
+          hint="Moyenne sur la période"
+          icon={CalendarDays}
+          tone="neutral"
+        />
+        <StatTile
+          label="Coût par Formation"
+          value={formatPrice(coutParEleve)}
+          hint={`${nbFormations} formations`}
+          icon={Users}
+          tone="neutral"
+        />
+        <StatTile
+          label="Marge de Profit"
+          value={`${margeMoyenne.toFixed(1)}%`}
+          hint="Moyenne pondérée"
+          icon={Percent}
+          tone="gold"
+        />
+      </StatTileGrid>
 
       {/* Chart */}
       {chartData.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Coûts et Projections</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="month" className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                  <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                  <Tooltip
-                    formatter={(value: number) => formatPrice(value)}
-                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
-                    labelStyle={{ color: 'hsl(var(--foreground))' }}
-                  />
-                  <Legend />
-                  <Line type="monotone" dataKey="couts" name="Coûts réels" stroke="hsl(var(--destructive))" strokeWidth={2} dot={{ r: 3 }} connectNulls={false} />
-                  <Line type="monotone" dataKey="ca" name="CA" stroke="hsl(var(--fli-yellow))" strokeWidth={2} dot={{ r: 3 }} connectNulls={false} />
-                  <Line type="monotone" dataKey="projection" name="Projection" stroke="hsl(var(--destructive))" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3 }} connectNulls />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+        <SurfaceCard
+          title="Coûts et Projections"
+          description="Coûts réels et CA par mois, prolongés par la moyenne mobile des 3 derniers mois"
+          icon={LineChartIcon}
+        >
+          <TrendChart
+            data={chartData}
+            xKey="month"
+            variant="line"
+            height={300}
+            series={[
+              { key: "couts", label: "Coûts réels", color: seriesColor(0) },
+              { key: "ca", label: "CA", color: seriesColor(1) },
+              { key: "projection", label: "Projection", color: seriesColor(0), dashed: true },
+            ]}
+            formatValue={(value) => formatPrice(Number(value))}
+            formatAxisValue={(value) => `${Math.round(value / 1000)}k`}
+            ariaLabel="Coûts réels, CA et projection des coûts"
+          />
+        </SurfaceCard>
       )}
 
       {/* Costs by Category + Forecast */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 lg:gap-5">
         <CostsByCategory formations={formations} />
         <CostForecast formations={formations} />
       </div>

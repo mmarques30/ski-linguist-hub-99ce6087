@@ -1,7 +1,5 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -14,11 +12,21 @@ import { History, Search } from "lucide-react";
 import { useAuditLog } from "@/hooks/useQualiopiAudit";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import {
+  FilterBar,
+  PageHeader,
+  PageShell,
+  StatusPill,
+  SurfaceCard,
+  TableEmpty,
+  TableSkeleton,
+} from "@/components/ui-kit";
+import type { PillTone } from "@/components/ui-kit";
 
-const actionLabels: Record<string, { label: string; className: string }> = {
-  create: { label: "Création", className: "bg-emerald-100 text-emerald-800" },
-  update: { label: "Modification", className: "bg-blue-100 text-blue-800" },
-  delete: { label: "Suppression", className: "bg-red-100 text-red-800" },
+const actionLabels: Record<string, { label: string; tone: PillTone }> = {
+  create: { label: "Création", tone: "success" },
+  update: { label: "Modification", tone: "info" },
+  delete: { label: "Suppression", tone: "danger" },
 };
 
 const TABLE_OPTIONS = [
@@ -43,91 +51,154 @@ export default function AuditHistory() {
     limit: 500,
   });
 
+  const tableLabel = TABLE_OPTIONS.find((t) => t.value === tableFilter)?.label ?? tableFilter;
+
+  const activeFilters = [
+    ...(tableFilter !== "all"
+      ? [{ key: "table", label: tableLabel, onRemove: () => setTableFilter("all") }]
+      : []),
+    ...(startDate
+      ? [{ key: "start", label: `Du ${startDate}`, onRemove: () => setStartDate("") }]
+      : []),
+    ...(endDate
+      ? [{ key: "end", label: `Au ${endDate}`, onRemove: () => setEndDate("") }]
+      : []),
+  ];
+
+  const clearAll = () => {
+    setTableFilter("all");
+    setStartDate("");
+    setEndDate("");
+  };
+
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <History className="h-6 w-6" /> Historique des modifications
-          </h1>
-          <p className="text-muted-foreground">
-            Journal d'audit avec traçabilité complète
-          </p>
-        </div>
+      <PageShell>
+        <PageHeader
+          title="Historique des modifications"
+          description="Journal d'audit avec traçabilité complète"
+          icon={History}
+          tone="navy"
+          meta={
+            !isLoading && (
+              <StatusPill tone="neutral">
+                {logs.length} entrée{logs.length > 1 ? "s" : ""}
+              </StatusPill>
+            )
+          }
+        />
 
-        <div className="flex items-center gap-3 flex-wrap">
-          <Select value={tableFilter} onValueChange={setTableFilter}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TABLE_OPTIONS.map((t) => (
-                <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div className="flex items-center gap-2">
-            <Input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-[160px]"
-              placeholder="Du"
+        <SurfaceCard
+          toolbar={
+            <FilterBar
+              filters={
+                <>
+                  <Select value={tableFilter} onValueChange={setTableFilter}>
+                    <SelectTrigger className="w-[200px]" aria-label="Table auditée">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TABLE_OPTIONS.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-[160px]"
+                      placeholder="Du"
+                      aria-label="Date de début"
+                    />
+                    <span className="text-muted-foreground" aria-hidden>→</span>
+                    <Input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-[160px]"
+                      placeholder="Au"
+                      aria-label="Date de fin"
+                    />
+                  </div>
+                </>
+              }
+              activeFilters={activeFilters}
+              onClearAll={activeFilters.length > 0 ? clearAll : undefined}
             />
-            <span className="text-muted-foreground">→</span>
-            <Input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-[160px]"
-              placeholder="Au"
+          }
+          flush
+        >
+          {isLoading ? (
+            <TableSkeleton rows={6} cols={4} />
+          ) : logs.length === 0 ? (
+            <TableEmpty
+              icon={Search}
+              title="Aucune entrée dans le journal."
+              description="Aucune modification enregistrée pour la table et la période sélectionnées."
             />
-          </div>
-        </div>
-
-        {isLoading ? (
-          <div className="text-center py-12 text-muted-foreground">Chargement...</div>
-        ) : logs.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Aucune entrée dans le journal.</p>
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="p-0">
-              <div className="divide-y">
-                {logs.map((log) => {
-                  const ac = actionLabels[log.action] || actionLabels.update;
-                  return (
-                    <div key={log.id} className="p-4 hover:bg-muted/50">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                          <Badge className={ac.className}>{ac.label}</Badge>
-                          <span className="text-sm font-medium">{log.table_name}</span>
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          {format(new Date(log.created_at), "d MMM yyyy HH:mm", { locale: fr })}
+          ) : (
+            <ul className="divide-y divide-border">
+              {logs.map((log) => {
+                const ac = actionLabels[log.action] || actionLabels.update;
+                return (
+                  <li
+                    key={log.id}
+                    className="space-y-2 px-4 py-4 transition-colors hover:bg-[hsl(var(--surface-sunken))] sm:px-5"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        <StatusPill tone={ac.tone} size="sm">{ac.label}</StatusPill>
+                        <span className="truncate text-sm font-semibold text-foreground">
+                          {log.table_name}
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground truncate">
-                        ID: {log.record_id?.slice(0, 8)}...
-                        {log.user_id && ` • Utilisateur: ${log.user_id.slice(0, 8)}...`}
-                      </p>
-                      {log.action === "update" && log.old_values && log.new_values && (
-                        <ChangeSummary oldValues={log.old_values} newValues={log.new_values} />
-                      )}
+                      <span className="shrink-0 text-xs text-muted-foreground tabular">
+                        {format(new Date(log.created_at), "d MMM yyyy HH:mm", { locale: fr })}
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+
+                    {/* Les identifiants restent lisibles en entier : ils SONT l'enregistrement. */}
+                    <dl className="grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
+                      <div className="min-w-0">
+                        <dt className="text-2xs uppercase tracking-wide text-muted-foreground">
+                          Enregistrement
+                        </dt>
+                        <dd
+                          className="truncate font-mono text-xs text-foreground"
+                          title={log.record_id ?? undefined}
+                        >
+                          {log.record_id ?? "—"}
+                        </dd>
+                      </div>
+                      {log.user_id && (
+                        <div className="min-w-0">
+                          <dt className="text-2xs uppercase tracking-wide text-muted-foreground">
+                            Utilisateur
+                          </dt>
+                          <dd className="truncate font-mono text-xs text-foreground" title={log.user_id}>
+                            {log.user_id}
+                          </dd>
+                        </div>
+                      )}
+                    </dl>
+
+                    {log.action === "update" && log.old_values && log.new_values && (
+                      <ChangeSummary oldValues={log.old_values} newValues={log.new_values} />
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </SurfaceCard>
+      </PageShell>
     </MainLayout>
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ChangeSummary({ oldValues, newValues }: { oldValues: any; newValues: any }) {
   const changes: { field: string; from: string; to: string }[] = [];
   const skip = new Set(["updated_at", "created_at"]);
@@ -149,12 +220,13 @@ function ChangeSummary({ oldValues, newValues }: { oldValues: any; newValues: an
   const shown = changes.slice(0, 3);
 
   return (
-    <div className="mt-2 text-xs space-y-0.5">
+    <div className="space-y-1 rounded-[var(--radius)] bg-[hsl(var(--surface-sunken))] px-3 py-2 text-xs">
       {shown.map((c) => (
-        <p key={c.field}>
-          <span className="text-muted-foreground">{c.field}:</span>{" "}
-          <span className="line-through text-red-600/70">{c.from}</span>{" → "}
-          <span className="text-emerald-700">{c.to}</span>
+        <p key={c.field} className="flex flex-wrap items-baseline gap-1.5">
+          <span className="text-muted-foreground">{c.field} :</span>
+          <span className="text-[hsl(var(--status-critical))] line-through">{c.from}</span>
+          <span className="text-muted-foreground" aria-hidden>→</span>
+          <span className="font-medium text-[hsl(var(--status-good))]">{c.to}</span>
         </p>
       ))}
       {changes.length > 3 && (
