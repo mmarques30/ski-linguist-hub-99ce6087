@@ -171,6 +171,16 @@ export const NAV_SECTIONS: NavSection[] = [
         children: [
           { href: "/invoices", label: L["/invoices"], routeKey: "invoices" },
           {
+            href: "/invoices?status=en_attente",
+            label: G.invoicesPending,
+            routeKey: "invoices",
+          },
+          {
+            href: "/invoices?status=a_relancer",
+            label: G.invoicesToChase,
+            routeKey: "invoices",
+          },
+          {
             href: "/invoices?status=a_verifier",
             label: G.invoicesToCheck,
             routeKey: "invoices",

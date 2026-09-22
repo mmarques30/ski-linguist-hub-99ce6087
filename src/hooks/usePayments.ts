@@ -120,7 +120,7 @@ export function usePaymentKPIs(startDate?: string, endDate?: string) {
       const { data: overdueInvoices } = await supabase
         .from("invoices")
         .select("amount_ttc")
-        .eq("status", "sent")
+        .in("status", ["draft", "sent", "en_attente", "a_relancer"])
         .eq("origin", INVOICE_ORIGIN_APP)
         .lt("due_date", today.toISOString().split("T")[0]);
 

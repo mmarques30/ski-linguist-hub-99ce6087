@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
         )
       `)
       .lt('due_date', today)
-      .in('status', ['draft', 'sent'])
+      .in('status', ['draft', 'sent', 'en_attente', 'a_relancer'])
       .eq('origin', 'app')
 
     if (error) {

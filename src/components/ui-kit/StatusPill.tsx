@@ -75,6 +75,8 @@ const TONE_BY_STATUS: Record<string, PillTone> = {
   // Factures
   draft: "neutral",
   sent: "info",
+  en_attente: "warning",
+  a_relancer: "accent",
   paid: "success",
   a_verifier: "warning",
   cancelled: "danger",
