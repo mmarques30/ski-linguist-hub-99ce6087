@@ -1,16 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { FinanceKPICard } from "@/components/finance/FinanceKPICard";
 import { usePayments, usePaymentKPIs, useCreatePayment } from "@/hooks/usePayments";
 import { useInvoices } from "@/hooks/useInvoices";
 import {
@@ -21,19 +17,40 @@ import {
   chequeStatusLabel,
 } from "@/lib/payment-methods";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
-import { DollarSign, Clock, AlertTriangle, Percent, Plus } from "lucide-react";
+import { DollarSign, Clock, AlertTriangle, Percent, Plus, Wallet } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
-import { fr } from "date-fns/locale";
 import { toast } from "sonner";
-
-const STATUS_STYLES: Record<string, string> = {
-  en_attente: "bg-yellow-100 text-yellow-800",
-  recu: "bg-emerald-100 text-emerald-800",
-  echoue: "bg-red-100 text-red-800",
-  rembourse: "bg-blue-100 text-blue-800",
-};
+import {
+  CardList,
+  CardListItem,
+  FilterBar,
+  PageHeader,
+  PageShell,
+  StatTile,
+  StatTileGrid,
+  StatusPill,
+  SurfaceCard,
+  TableCell,
+  TableEmpty,
+  TableFrame,
+  TableHeadCell,
+  TableHeadRow,
+  TableRow,
+  TableSkeleton,
+  toneForStatus,
+  type PillTone,
+} from "@/components/ui-kit";
 
 const STATUS_LABELS = PAYMENT_STATUS_LABELS;
+
+/** Teintes des statuts propres aux paiements, en complément de `toneForStatus`. */
+const PAYMENT_STATUS_TONES: Record<string, PillTone> = {
+  echoue: "danger",
+  rembourse: "info",
+};
+
+const paymentStatusTone = (status: string): PillTone =>
+  PAYMENT_STATUS_TONES[status] ?? toneForStatus(status);
 
 const PAYER_LABELS: Record<string, string> = {
   stagiaire: "Stagiaire",
@@ -57,7 +74,7 @@ export default function FinancePayments() {
     status: statusFilter,
     method: methodFilter,
   });
-  const { data: kpis } = usePaymentKPIs(startDate, endDate);
+  const { data: kpis, isLoading: loadingKpis } = usePaymentKPIs(startDate, endDate);
   const createPayment = useCreatePayment();
   const { data: invoices = [] } = useInvoices();
 
@@ -132,253 +149,301 @@ export default function FinancePayments() {
     return "-";
   };
 
-  return (
-    <MainLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Suivi des Paiements</h1>
-            <p className="text-muted-foreground">Gestion centralisée de tous les encaissements</p>
+  const methodLine = (p: typeof payments[0]) =>
+    `${paymentMethodLabel(p.payment_method)}${
+      p.payment_method === "cheque" && p.cheque_status
+        ? ` · ${chequeStatusLabel(p.cheque_status)}`
+        : ""
+    }`;
+
+  const activeFilters = [
+    ...(statusFilter !== "all"
+      ? [
+          {
+            key: "status",
+            label: STATUS_LABELS[statusFilter] || statusFilter,
+            onRemove: () => setStatusFilter("all"),
+          },
+        ]
+      : []),
+    ...(methodFilter !== "all"
+      ? [
+          {
+            key: "method",
+            label: paymentMethodLabel(methodFilter),
+            onRemove: () => setMethodFilter("all"),
+          },
+        ]
+      : []),
+  ];
+
+  const createDialog = (
+    <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+      <DialogTrigger asChild>
+        <Button className="gap-2">
+          <Plus className="h-4 w-4" />
+          Enregistrer un paiement
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Enregistrer un paiement</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Facture</Label>
+            <Select
+              value={form.invoice_id}
+              onValueChange={(v) => {
+                const invoice = invoices.find((inv) => inv.id === v);
+                setForm({
+                  ...form,
+                  invoice_id: v,
+                  amount: form.amount || String(invoice?.amount_ttc || invoice?.amount_ht || ""),
+                  payer_name: form.payer_name || invoice?.inscription?.student_name || "",
+                });
+              }}
+            >
+              <SelectTrigger><SelectValue placeholder="Choisir une facture" /></SelectTrigger>
+              <SelectContent>
+                {invoices.map((inv) => (
+                  <SelectItem key={inv.id} value={inv.id}>
+                    {inv.invoice_number || inv.id.slice(0, 8)} · {inv.amount_ttc ?? inv.amount_ht} €
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedInvoice?.inscription_id && (
+              <p className="text-xs text-muted-foreground">Inscription liée automatiquement</p>
+            )}
           </div>
-          {editable && (
-            <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-              <DialogTrigger asChild>
-                <Button className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Enregistrer un paiement
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Enregistrer un paiement</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Facture</Label>
-                    <Select
-                      value={form.invoice_id}
-                      onValueChange={(v) => {
-                        const invoice = invoices.find((inv) => inv.id === v);
-                        setForm({
-                          ...form,
-                          invoice_id: v,
-                          amount: form.amount || String(invoice?.amount_ttc || invoice?.amount_ht || ""),
-                          payer_name: form.payer_name || invoice?.inscription?.student_name || "",
-                        });
-                      }}
-                    >
-                      <SelectTrigger><SelectValue placeholder="Choisir une facture" /></SelectTrigger>
-                      <SelectContent>
-                        {invoices.map((inv) => (
-                          <SelectItem key={inv.id} value={inv.id}>
-                            {inv.invoice_number || inv.id.slice(0, 8)} · {inv.amount_ttc ?? inv.amount_ht} €
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {selectedInvoice?.inscription_id && (
-                      <p className="text-xs text-muted-foreground">Inscription liée automatiquement</p>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Montant (€)</Label>
-                      <Input
-                        type="number"
-                        value={form.amount}
-                        onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                        placeholder="0.00"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Date</Label>
-                      <Input
-                        type="date"
-                        value={form.payment_date}
-                        onChange={(e) => setForm({ ...form, payment_date: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Méthode</Label>
-                      <Select value={form.payment_method} onValueChange={(v) => setForm({ ...form, payment_method: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {PAYMENT_METHODS.map((method) => (
-                            <SelectItem key={method.value} value={method.value}>{method.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Statut</Label>
-                      <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(STATUS_LABELS).map(([k, v]) => (
-                            <SelectItem key={k} value={k}>{v}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  {form.payment_method === "cheque" && (
-                    <div className="space-y-2">
-                      <Label>Statut du chèque</Label>
-                      <Select value={form.cheque_status} onValueChange={(v) => setForm({ ...form, cheque_status: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {CHEQUE_STATUSES.map((status) => (
-                            <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Type de payeur</Label>
-                      <Select value={form.payer_type} onValueChange={(v) => setForm({ ...form, payer_type: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(PAYER_LABELS).map(([k, v]) => (
-                            <SelectItem key={k} value={k}>{v}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Nom du payeur</Label>
-                      <Input
-                        value={form.payer_name}
-                        onChange={(e) => setForm({ ...form, payer_name: e.target.value })}
-                        placeholder="Nom / Entreprise"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Référence</Label>
-                    <Input
-                      value={form.reference}
-                      onChange={(e) => setForm({ ...form, reference: e.target.value })}
-                      placeholder="N° de transaction, chèque..."
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Notes</Label>
-                    <Textarea
-                      value={form.notes}
-                      onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                      rows={2}
-                    />
-                  </div>
-                  <Button onClick={handleSubmit} className="w-full" disabled={createPayment.isPending}>
-                    {createPayment.isPending ? "Enregistrement..." : "Enregistrer"}
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
-
-        {/* KPIs */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <FinanceKPICard
-            title="Encaissé ce mois"
-            value={kpis?.totalReceived || 0}
-            variant="gold"
-            formatAsPrice
-            icon={DollarSign}
-          />
-          <FinanceKPICard
-            title="En attente"
-            value={kpis?.totalPending || 0}
-            variant="navy"
-            formatAsPrice
-            icon={Clock}
-          />
-          <FinanceKPICard
-            title="Retard de paiement"
-            value={kpis?.totalOverdue || 0}
-            variant={kpis?.totalOverdue && kpis.totalOverdue > 0 ? "navy" : "default"}
-            formatAsPrice
-            icon={AlertTriangle}
-          />
-          <FinanceKPICard
-            title="Taux de recouvrement"
-            value={`${(kpis?.recoveryRate || 0).toFixed(0)}%`}
-            variant="gold"
-            icon={Percent}
-          />
-        </div>
-
-        {/* Filters */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-wrap gap-4">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Statut" />
-                </SelectTrigger>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Montant (€)</Label>
+              <Input
+                type="number"
+                value={form.amount}
+                onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                placeholder="0.00"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Date</Label>
+              <Input
+                type="date"
+                value={form.payment_date}
+                onChange={(e) => setForm({ ...form, payment_date: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Méthode</Label>
+              <Select value={form.payment_method} onValueChange={(v) => setForm({ ...form, payment_method: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous les statuts</SelectItem>
-                  {Object.entries(STATUS_LABELS).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>{v}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={methodFilter} onValueChange={setMethodFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Méthode" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toutes les méthodes</SelectItem>
                   {PAYMENT_METHODS.map((method) => (
                     <SelectItem key={method.value} value={method.value}>{method.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-          </CardContent>
-        </Card>
+            <div className="space-y-2">
+              <Label>Statut</Label>
+              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(STATUS_LABELS).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          {form.payment_method === "cheque" && (
+            <div className="space-y-2">
+              <Label>Statut du chèque</Label>
+              <Select value={form.cheque_status} onValueChange={(v) => setForm({ ...form, cheque_status: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CHEQUE_STATUSES.map((status) => (
+                    <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Type de payeur</Label>
+              <Select value={form.payer_type} onValueChange={(v) => setForm({ ...form, payer_type: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(PAYER_LABELS).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Nom du payeur</Label>
+              <Input
+                value={form.payer_name}
+                onChange={(e) => setForm({ ...form, payer_name: e.target.value })}
+                placeholder="Nom / Entreprise"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Référence</Label>
+            <Input
+              value={form.reference}
+              onChange={(e) => setForm({ ...form, reference: e.target.value })}
+              placeholder="N° de transaction, chèque..."
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Notes</Label>
+            <Textarea
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              rows={2}
+            />
+          </div>
+          <Button onClick={handleSubmit} className="w-full" disabled={createPayment.isPending}>
+            {createPayment.isPending ? "Enregistrement..." : "Enregistrer"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
+  return (
+    <MainLayout>
+      <PageShell>
+        <PageHeader
+          title="Suivi des Paiements"
+          description="Gestion centralisée de tous les encaissements"
+          icon={Wallet}
+          tone="teal"
+          actions={editable ? createDialog : undefined}
+        />
+
+        {/* KPIs — chaque tuile filtre la liste ou ouvre les factures concernées. */}
+        <StatTileGrid cols={4}>
+          <StatTile
+            label="Encaissé ce mois"
+            value={formatPrice(kpis?.totalReceived || 0)}
+            icon={DollarSign}
+            tone="teal"
+            loading={loadingKpis}
+            onClick={() => setStatusFilter("recu")}
+          />
+          <StatTile
+            label="En attente"
+            value={formatPrice(kpis?.totalPending || 0)}
+            icon={Clock}
+            tone="gold"
+            loading={loadingKpis}
+            onClick={() => setStatusFilter("en_attente")}
+          />
+          <StatTile
+            label="Retard de paiement"
+            value={formatPrice(kpis?.totalOverdue || 0)}
+            icon={AlertTriangle}
+            tone={kpis?.totalOverdue && kpis.totalOverdue > 0 ? "rose" : "neutral"}
+            loading={loadingKpis}
+            to="/invoices?status=sent"
+          />
+          <StatTile
+            label="Taux de recouvrement"
+            value={`${(kpis?.recoveryRate || 0).toFixed(0)}%`}
+            icon={Percent}
+            tone="blue"
+            loading={loadingKpis}
+          />
+        </StatTileGrid>
 
         {/* Payments Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">
-              Paiements ({payments.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <p className="text-center text-muted-foreground py-8">Chargement...</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Facture</TableHead>
-                      <TableHead>Client</TableHead>
-                      <TableHead>Inscription</TableHead>
-                      <TableHead>Méthode</TableHead>
-                      <TableHead className="text-right">Montant</TableHead>
-                      <TableHead>Référence</TableHead>
-                      <TableHead>Statut</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+        <SurfaceCard
+          title={`Paiements (${payments.length})`}
+          description="Encaissements enregistrés, tous exercices confondus"
+          toolbar={
+            <FilterBar
+              activeFilters={activeFilters}
+              onClearAll={
+                activeFilters.length > 0
+                  ? () => {
+                      setStatusFilter("all");
+                      setMethodFilter("all");
+                    }
+                  : undefined
+              }
+              filters={
+                <>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Statut" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous les statuts</SelectItem>
+                      {Object.entries(STATUS_LABELS).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>{v}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={methodFilter} onValueChange={setMethodFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Méthode" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Toutes les méthodes</SelectItem>
+                      {PAYMENT_METHODS.map((method) => (
+                        <SelectItem key={method.value} value={method.value}>{method.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </>
+              }
+            />
+          }
+          flush
+        >
+          {isLoading ? (
+            <TableSkeleton rows={6} cols={6} />
+          ) : payments.length === 0 ? (
+            <TableEmpty
+              title="Aucun paiement enregistré"
+              description="Aucun encaissement ne correspond aux filtres actifs."
+              icon={Wallet}
+            />
+          ) : (
+            <>
+              <TableFrame className="hidden md:block">
+                <table className="w-full">
+                  <thead>
+                    <TableHeadRow>
+                      <TableHeadCell>Date</TableHeadCell>
+                      <TableHeadCell>Facture</TableHeadCell>
+                      <TableHeadCell>Client</TableHeadCell>
+                      <TableHeadCell>Inscription</TableHeadCell>
+                      <TableHeadCell>Méthode</TableHeadCell>
+                      <TableHeadCell align="right">Montant</TableHeadCell>
+                      <TableHeadCell>Référence</TableHeadCell>
+                      <TableHeadCell>Statut</TableHeadCell>
+                    </TableHeadRow>
+                  </thead>
+                  <tbody>
                     {payments.map((p) => (
                       <TableRow key={p.id}>
-                        <TableCell className="whitespace-nowrap">
+                        <TableCell className="whitespace-nowrap tabular">
                           {format(new Date(p.payment_date), "dd/MM/yyyy")}
                         </TableCell>
                         <TableCell className="font-mono text-xs">
                           {p.invoice_id && p.invoice?.invoice_number ? (
                             <Link
                               to={`/invoices?q=${encodeURIComponent(p.invoice.invoice_number)}`}
-                              className="text-primary hover:underline"
+                              className="text-[hsl(var(--tint-blue-fg))] hover:underline"
                             >
                               {p.invoice.invoice_number}
                             </Link>
@@ -389,11 +454,11 @@ export default function FinancePayments() {
                         <TableCell className="max-w-[150px] truncate">
                           {getClientName(p)}
                         </TableCell>
-                        <TableCell className="font-mono text-xs">
+                        <TableCell className="font-mono text-xs" hideBelow="lg">
                           {p.inscription_id && p.inscription?.code ? (
                             <Link
                               to={`/inscriptions/${p.inscription_id}`}
-                              className="text-primary hover:underline"
+                              className="text-[hsl(var(--tint-blue-fg))] hover:underline"
                             >
                               {p.inscription.code}
                             </Link>
@@ -401,39 +466,78 @@ export default function FinancePayments() {
                             "-"
                           )}
                         </TableCell>
-                        <TableCell>
-                          {paymentMethodLabel(p.payment_method)}
-                          {p.payment_method === "cheque" && p.cheque_status
-                            ? ` · ${chequeStatusLabel(p.cheque_status)}`
-                            : ""}
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
+                        <TableCell hideBelow="lg">{methodLine(p)}</TableCell>
+                        <TableCell align="right" className="font-medium tabular">
                           {formatPrice(Number(p.amount))}
                         </TableCell>
-                        <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate">
+                        <TableCell
+                          className="max-w-[120px] truncate text-xs text-muted-foreground"
+                          hideBelow="xl"
+                        >
                           {p.reference || "-"}
                         </TableCell>
                         <TableCell>
-                          <Badge className={STATUS_STYLES[p.status] || "bg-muted"}>
+                          <StatusPill tone={paymentStatusTone(p.status)} size="sm">
                             {STATUS_LABELS[p.status] || p.status}
-                          </Badge>
+                          </StatusPill>
                         </TableCell>
                       </TableRow>
                     ))}
-                    {payments.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                          Aucun paiement enregistré
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                  </tbody>
+                </table>
+              </TableFrame>
+
+              <CardList className="md:hidden">
+                {payments.map((p) => (
+                  <CardListItem
+                    key={p.id}
+                    title={getClientName(p)}
+                    subtitle={methodLine(p)}
+                    meta={
+                      <StatusPill tone={paymentStatusTone(p.status)} size="sm">
+                        {STATUS_LABELS[p.status] || p.status}
+                      </StatusPill>
+                    }
+                    fields={[
+                      { label: "Date", value: format(new Date(p.payment_date), "dd/MM/yyyy") },
+                      { label: "Montant", value: formatPrice(Number(p.amount)) },
+                      {
+                        label: "Facture",
+                        value:
+                          p.invoice_id && p.invoice?.invoice_number ? (
+                            <Link
+                              to={`/invoices?q=${encodeURIComponent(p.invoice.invoice_number)}`}
+                              className="text-[hsl(var(--tint-blue-fg))] hover:underline"
+                            >
+                              {p.invoice.invoice_number}
+                            </Link>
+                          ) : (
+                            "—"
+                          ),
+                      },
+                      {
+                        label: "Inscription",
+                        value:
+                          p.inscription_id && p.inscription?.code ? (
+                            <Link
+                              to={`/inscriptions/${p.inscription_id}`}
+                              className="text-[hsl(var(--tint-blue-fg))] hover:underline"
+                            >
+                              {p.inscription.code}
+                            </Link>
+                          ) : (
+                            "-"
+                          ),
+                      },
+                      { label: "Référence", value: p.reference || "-" },
+                    ]}
+                  />
+                ))}
+              </CardList>
+            </>
+          )}
+        </SurfaceCard>
+      </PageShell>
     </MainLayout>
   );
 }

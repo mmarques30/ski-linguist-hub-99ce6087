@@ -1,15 +1,24 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Calendar, Star, Trash2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Plus, Calendar, Star, Trash2, CalendarRange, Target, Tags } from "lucide-react";
 import { useSeasons, useActivateSeason, useDeleteSeason, type Season } from "@/hooks/useSeasons";
 import { SeasonFormDialog } from "@/components/admin/SeasonFormDialog";
 import { PricingRulesTable } from "@/components/admin/PricingRulesTable";
+import {
+  CardGrid,
+  PageHeader,
+  PageShell,
+  StatusPill,
+  SurfaceCard,
+  TableEmpty,
+  type PillTone,
+} from "@/components/ui-kit";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,11 +52,12 @@ const translations = {
   noSeasons: { fr: "Aucune saison configurée", "pt-BR": "Nenhuma temporada configurada", en: "No seasons configured" },
 };
 
-const statusVariant = (status: string) => {
+/** Teinte de la pastille d'état — le libellé reste porté par `translations`. */
+const statusTone = (status: string): PillTone => {
   switch (status) {
-    case "active": return "default" as const;
-    case "terminee": return "secondary" as const;
-    default: return "outline" as const;
+    case "active": return "success";
+    case "terminee": return "neutral";
+    default: return "info";
   }
 };
 
@@ -88,82 +98,152 @@ export default function Seasons() {
     setDeleteId(null);
   };
 
+  const currentSeason = seasons?.find((s) => s.is_current);
+
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">{t(translations.title)}</h1>
-            <p className="text-muted-foreground">{t(translations.subtitle)}</p>
-          </div>
-          <Button onClick={() => { setEditSeason(null); setFormOpen(true); }}>
-            <Plus className="h-4 w-4 mr-2" />
-            {t(translations.newSeason)}
-          </Button>
-        </div>
+      <PageShell>
+        <PageHeader
+          title={t(translations.title)}
+          description={t(translations.subtitle)}
+          icon={CalendarRange}
+          tone="gold"
+          meta={
+            currentSeason ? (
+              <StatusPill tone="success" icon={Star}>
+                {t(translations.current)} : {currentSeason.name}
+              </StatusPill>
+            ) : undefined
+          }
+          actions={
+            <Button onClick={() => { setEditSeason(null); setFormOpen(true); }}>
+              <Plus className="h-4 w-4 mr-2" />
+              {t(translations.newSeason)}
+            </Button>
+          }
+        />
 
-        {/* Season Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {seasons?.map((season) => (
-            <Card
-              key={season.id}
-              className={`cursor-pointer transition-all hover:shadow-md ${
-                selectedSeason?.id === season.id ? "ring-2 ring-primary" : ""
-              } ${season.is_current ? "border-[hsl(var(--fli-yellow))] border-2" : ""}`}
-              onClick={() => setSelectedSeason(season)}
-            >
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {season.is_current && <Star className="h-4 w-4 text-[hsl(var(--fli-yellow))] fill-current" />}
-                    <h3 className="font-semibold">{season.name}</h3>
+        {/* Cartes de saison — une carte par saison, sélection = grille tarifaire en dessous. */}
+        {isLoading ? (
+          <CardGrid cols={3}>
+            {[0, 1, 2].map((index) => (
+              <div key={index} className="fli-surface space-y-3 p-4 sm:p-5">
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-4 w-52" />
+                <Skeleton className="h-8 w-32" />
+              </div>
+            ))}
+          </CardGrid>
+        ) : !seasons || seasons.length === 0 ? (
+          <SurfaceCard flush>
+            <TableEmpty
+              title={t(translations.noSeasons)}
+              icon={CalendarRange}
+              action={
+                <Button onClick={() => { setEditSeason(null); setFormOpen(true); }}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t(translations.newSeason)}
+                </Button>
+              }
+            />
+          </SurfaceCard>
+        ) : (
+          <CardGrid cols={3}>
+            {seasons.map((season) => {
+              const selected = selectedSeason?.id === season.id;
+              return (
+                <SurfaceCard
+                  key={season.id}
+                  interactive
+                  accent={season.is_current ? "primary" : "none"}
+                  className={cn(
+                    "cursor-pointer",
+                    selected && "ring-2 ring-primary ring-offset-2 ring-offset-[hsl(var(--surface-page))]"
+                  )}
+                  bodyClassName="space-y-3"
+                  title={
+                    <span className="flex min-w-0 items-center gap-2">
+                      {season.is_current && (
+                        <Star className="h-4 w-4 shrink-0 fill-current text-primary" aria-hidden />
+                      )}
+                      <span className="truncate">{season.name}</span>
+                    </span>
+                  }
+                  actions={
+                    <StatusPill tone={statusTone(season.status)}>
+                      {t(
+                        translations[season.status as keyof typeof translations] || {
+                          fr: season.status,
+                          "pt-BR": season.status,
+                          en: season.status,
+                        }
+                      )}
+                    </StatusPill>
+                  }
+                >
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSeason(season)}
+                    aria-pressed={selected}
+                    className="block w-full space-y-2 text-left"
+                  >
+                    <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                      <span className="tabular">
+                        {format(new Date(season.start_date), "dd/MM/yyyy")} — {format(new Date(season.end_date), "dd/MM/yyyy")}
+                      </span>
+                    </span>
+                    {season.revenue_target ? (
+                      <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Target className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        <span>
+                          {t(translations.target)} :{" "}
+                          <span className="font-medium tabular text-foreground">
+                            {formatPrice(Number(season.revenue_target))}
+                          </span>
+                        </span>
+                      </span>
+                    ) : null}
+                  </button>
+
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {!season.is_current && season.status !== "terminee" && (
+                      <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setActivateId(season.id); }}>
+                        {t(translations.activate)}
+                      </Button>
+                    )}
+                    <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setEditSeason(season); setFormOpen(true); }}>
+                      Modifier
+                    </Button>
+                    {!season.is_current && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        aria-label={`${t(translations.confirmDelete)} ${season.name}`}
+                        onClick={(e) => { e.stopPropagation(); setDeleteId(season.id); }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
                   </div>
-                  <Badge variant={statusVariant(season.status)}>
-                    {t(translations[season.status as keyof typeof translations] || { fr: season.status, "pt-BR": season.status, en: season.status })}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="h-3.5 w-3.5" />
-                  {format(new Date(season.start_date), "dd/MM/yyyy")} — {format(new Date(season.end_date), "dd/MM/yyyy")}
-                </div>
-                {season.revenue_target ? (
-                  <p className="text-sm text-muted-foreground">
-                    {t(translations.target)} : {formatPrice(Number(season.revenue_target))}
-                  </p>
-                ) : null}
-                <div className="flex gap-2 pt-1">
-                  {!season.is_current && season.status !== "terminee" && (
-                    <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setActivateId(season.id); }}>
-                      {t(translations.activate)}
-                    </Button>
-                  )}
-                  <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setEditSeason(season); setFormOpen(true); }}>
-                    Modifier
-                  </Button>
-                  {!season.is_current && (
-                    <Button size="sm" variant="ghost" className="text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteId(season.id); }}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-          {!isLoading && (!seasons || seasons.length === 0) && (
-            <p className="col-span-full text-center text-muted-foreground py-12">{t(translations.noSeasons)}</p>
-          )}
-        </div>
-
-        {/* Pricing Rules for selected season */}
-        {selectedSeason && (
-          <div className="space-y-3">
-            <h2 className="text-lg font-semibold">
-              {t(translations.pricingRules)} — {selectedSeason.name}
-            </h2>
-            <PricingRulesTable seasonId={selectedSeason.id} />
-          </div>
+                </SurfaceCard>
+              );
+            })}
+          </CardGrid>
         )}
-      </div>
+
+        {/* Grille tarifaire de la saison sélectionnée */}
+        {selectedSeason && (
+          <SurfaceCard
+            title={`${t(translations.pricingRules)} — ${selectedSeason.name}`}
+            icon={Tags}
+            description={`${format(new Date(selectedSeason.start_date), "dd/MM/yyyy")} — ${format(new Date(selectedSeason.end_date), "dd/MM/yyyy")}`}
+          >
+            <PricingRulesTable seasonId={selectedSeason.id} />
+          </SurfaceCard>
+        )}
+      </PageShell>
 
       <SeasonFormDialog
         open={formOpen}
@@ -189,7 +269,10 @@ export default function Seasons() {
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t(translations.confirmDelete)}</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-4 w-4 text-destructive" aria-hidden />
+              {t(translations.confirmDelete)}
+            </AlertDialogTitle>
             <AlertDialogDescription>{t(translations.confirmDeleteDesc)}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -1,8 +1,8 @@
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatusPill, SurfaceCard, toneForStatus } from "@/components/ui-kit";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, Mail, Link2, CreditCard, Copy, Check, Eye, RefreshCw } from "lucide-react";
 import { useState } from "react";
@@ -112,11 +112,17 @@ export function InscriptionClientAccessCard({
 
   if (isLoading || tokenLoading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-10">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
+      <SurfaceCard
+        title="Liens publics"
+        description="Suivi, inscription, enquête et espace stagiaire"
+        icon={Link2}
+      >
+        <div className="space-y-3">
+          {[0, 1, 2, 3].map((index) => (
+            <Skeleton key={index} className="h-16 w-full rounded-[var(--radius)]" />
+          ))}
+        </div>
+      </SurfaceCard>
     );
   }
 
@@ -130,17 +136,14 @@ export function InscriptionClientAccessCard({
         </AlertDescription>
       </Alert>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Link2 className="h-4 w-4" />
-            Liens publics
-          </CardTitle>
-          <CardDescription>Suivi, inscription, enquête et espace stagiaire</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <SurfaceCard
+        title="Liens publics"
+        description="Suivi, inscription, enquête et espace stagiaire"
+        icon={Link2}
+        bodyClassName="space-y-3"
+      >
           {inscriptionCode && (
-            <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 px-4 py-3">
+            <div className="flex items-center justify-between gap-3 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))] px-4 py-3">
               <div>
                 <p className="text-sm text-muted-foreground">Code inscription</p>
                 <p className="text-lg font-semibold tracking-wide">{inscriptionCode}</p>
@@ -153,7 +156,7 @@ export function InscriptionClientAccessCard({
                 aria-label="Copier le code d'inscription"
               >
                 {codeCopied ? (
-                  <Check className="h-4 w-4 text-emerald-600" />
+                  <Check className="h-4 w-4 text-[hsl(var(--tint-teal-fg))]" />
                 ) : (
                   <Copy className="h-4 w-4" />
                 )}
@@ -191,7 +194,7 @@ export function InscriptionClientAccessCard({
             </p>
           )}
 
-          <Alert className="border-amber-200 bg-amber-50 text-amber-950">
+          <Alert className="border-[hsl(var(--tint-gold-ring))] bg-[hsl(var(--tint-gold-bg))] text-[hsl(var(--tint-gold-fg))]">
             <Eye className="h-4 w-4" />
             <AlertTitle>Mode Assister (staff)</AlertTitle>
             <AlertDescription>
@@ -224,7 +227,7 @@ export function InscriptionClientAccessCard({
               badgeVariant={latestSurvey.completed_at ? "default" : "outline"}
             />
           ) : (
-            <div className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 rounded-[var(--radius)] border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="font-medium">Enquête de satisfaction</p>
                 <p className="text-sm text-muted-foreground">Aucun lien généré pour cette inscription</p>
@@ -251,70 +254,66 @@ export function InscriptionClientAccessCard({
             badge="Admin"
             badgeVariant="outline"
           />
-        </CardContent>
-      </Card>
+      </SurfaceCard>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <CreditCard className="h-4 w-4" />
-            Statut &amp; mode de paiement
-          </CardTitle>
-          <CardDescription>
-            Les paiements et relances sont gérés dans l&apos;onglet Financier.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex flex-wrap gap-2">
-            {status && <Badge variant="outline">Statut : {status}</Badge>}
-            {paymentMethod && <Badge variant="outline">Mode : {paymentMethod}</Badge>}
-          </div>
-          <Button type="button" variant="outline" size="sm" asChild>
-            <Link to={`/inscriptions/${inscriptionId}?tab=financial`}>
-              Voir paiements &amp; relances
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Mail className="h-4 w-4" />
-            Emails envoyés
-          </CardTitle>
-          <CardDescription>
-            Historique des envois automatiques{studentEmail ? ` à ${studentEmail}` : ""}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {!data?.emails.length ? (
-            <p className="text-sm text-muted-foreground">Aucun email enregistré pour cette inscription.</p>
-          ) : (
-            <div className="space-y-2">
-              {data.emails.map((email) => (
-                <div key={email.id} className="rounded-lg border px-4 py-3 text-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-medium">
-                      {EMAIL_TEMPLATE_LABELS[email.template_slug] || email.template_slug}
-                    </span>
-                    <Badge variant={email.status === "sent" ? "default" : "destructive"}>
-                      {email.status}
-                    </Badge>
-                  </div>
-                  <p className="text-muted-foreground mt-1">
-                    {format(new Date(email.sent_at), "dd MMM yyyy à HH:mm", { locale: fr })} ·{" "}
-                    {email.recipient_email}
-                  </p>
-                  {email.error_message && (
-                    <p className="text-destructive text-xs mt-1">{email.error_message}</p>
-                  )}
-                </div>
-              ))}
-            </div>
+      <SurfaceCard
+        title={"Statut & mode de paiement"}
+        description={"Les paiements et relances sont gérés dans l’onglet Financier."}
+        icon={CreditCard}
+        bodyClassName="space-y-3"
+      >
+        <div className="flex flex-wrap gap-2">
+          {status && (
+            <StatusPill tone={toneForStatus(status)}>Statut : {status}</StatusPill>
           )}
-        </CardContent>
-      </Card>
+          {paymentMethod && (
+            <StatusPill tone="neutral">Mode : {paymentMethod}</StatusPill>
+          )}
+        </div>
+        <Button type="button" variant="outline" size="sm" asChild>
+          <Link to={`/inscriptions/${inscriptionId}?tab=financial`}>
+            Voir paiements &amp; relances
+          </Link>
+        </Button>
+      </SurfaceCard>
+
+      <SurfaceCard
+        title="Emails envoyés"
+        description={`Historique des envois automatiques${studentEmail ? ` à ${studentEmail}` : ""}`}
+        icon={Mail}
+      >
+        {!data?.emails.length ? (
+          <p className="text-sm text-muted-foreground">Aucun email enregistré pour cette inscription.</p>
+        ) : (
+          <ul className="space-y-2">
+            {data.emails.map((email) => (
+              <li
+                key={email.id}
+                className="rounded-[var(--radius)] border border-border px-4 py-3 text-sm"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-medium">
+                    {EMAIL_TEMPLATE_LABELS[email.template_slug] || email.template_slug}
+                  </span>
+                  <StatusPill
+                    tone={email.status === "sent" ? "success" : "danger"}
+                    size="sm"
+                  >
+                    {email.status}
+                  </StatusPill>
+                </div>
+                <p className="text-muted-foreground mt-1">
+                  {format(new Date(email.sent_at), "dd MMM yyyy à HH:mm", { locale: fr })} ·{" "}
+                  {email.recipient_email}
+                </p>
+                {email.error_message && (
+                  <p className="text-destructive text-xs mt-1">{email.error_message}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </SurfaceCard>
 
       <div className="flex justify-end">
         <Button type="button" variant="ghost" size="sm" asChild>

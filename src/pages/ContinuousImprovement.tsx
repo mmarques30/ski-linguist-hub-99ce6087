@@ -1,17 +1,6 @@
 import { useState, useMemo } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -25,7 +14,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Search, MoreHorizontal, Pencil, Trash2, TrendingUp } from "lucide-react";
+import {
+  Plus,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  TrendingUp,
+  CheckCircle2,
+  Clock,
+  CalendarPlus,
+  ClipboardList,
+} from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useContinuousImprovement, ContinuousImprovement, ImprovementType, ImprovementStatus, ContinuousImprovementFormData } from "@/hooks/useContinuousImprovement";
@@ -41,6 +40,25 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import {
+  CardList,
+  CardListItem,
+  FilterBar,
+  PageHeader,
+  PageShell,
+  StatTile,
+  StatTileGrid,
+  StatusPill,
+  SurfaceCard,
+  TableCell,
+  TableEmpty,
+  TableFrame,
+  TableHeadCell,
+  TableHeadRow,
+  TableRow,
+  TableSkeleton,
+} from "@/components/ui-kit";
+import type { PillTone } from "@/components/ui-kit";
 
 const typeLabels: Record<ImprovementType, string> = {
   'VEILLE_PEDAGOGIQUE': 'Veille pédagogique',
@@ -56,29 +74,31 @@ const statusLabels: Record<ImprovementStatus, string> = {
   'ABANDONNE': 'Abandonné',
 };
 
-const statusColors: Record<ImprovementStatus, string> = {
-  'EN_COURS': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  'TERMINE': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  'ABANDONNE': 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
+/** Teintes d'état — jetons du kit, jamais de couleur en dur. */
+const statusTones: Record<ImprovementStatus, PillTone> = {
+  'EN_COURS': 'info',
+  'TERMINE': 'success',
+  'ABANDONNE': 'neutral',
 };
 
-const typeColors: Record<ImprovementType, string> = {
-  'VEILLE_PEDAGOGIQUE': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
-  'VEILLE_REGLEMENTAIRE': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
-  'VEILLE_FINANCIERE': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
-  'AMELIORATION': 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400',
-  'RECLAMATION': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+/** Teintes de type — mêmes familles que les couleurs historiques. */
+const typeTones: Record<ImprovementType, PillTone> = {
+  'VEILLE_PEDAGOGIQUE': 'purple',
+  'VEILLE_REGLEMENTAIRE': 'accent',
+  'VEILLE_FINANCIERE': 'success',
+  'AMELIORATION': 'info',
+  'RECLAMATION': 'danger',
 };
 
 export default function ContinuousImprovementPage() {
   const { improvements, isLoading, createImprovement, updateImprovement, deleteImprovement } = useContinuousImprovement();
   const { canEdit } = useUserPermissions();
   const editable = canEdit("amelioration");
-  
+
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ContinuousImprovement | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -86,17 +106,17 @@ export default function ContinuousImprovementPage() {
 
   const filteredImprovements = useMemo(() => {
     if (!improvements) return [];
-    
+
     return improvements.filter((item) => {
-      const matchesSearch = 
+      const matchesSearch =
         item.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.theme?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.source?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.problem?.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
       const matchesType = typeFilter === "all" || item.type === typeFilter;
       const matchesStatus = statusFilter === "all" || item.status === statusFilter;
-      
+
       return matchesSearch && matchesType && matchesStatus;
     });
   }, [improvements, searchTerm, typeFilter, statusFilter]);
@@ -139,13 +159,13 @@ export default function ContinuousImprovementPage() {
   // Stats
   const stats = useMemo(() => {
     if (!improvements) return { total: 0, enCours: 0, termine: 0, thisMonth: 0 };
-    
+
     const now = new Date();
     const thisMonth = improvements.filter(i => {
       const date = new Date(i.created_at);
       return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
     });
-    
+
     return {
       total: improvements.length,
       enCours: improvements.filter(i => i.status === 'EN_COURS').length,
@@ -154,182 +174,239 @@ export default function ContinuousImprovementPage() {
     };
   }, [improvements]);
 
+  /** Filtres actifs rappelés en chips effaçables. */
+  const activeFilters = [
+    ...(typeFilter !== "all"
+      ? [{
+          key: "type",
+          label: typeLabels[typeFilter as ImprovementType] ?? typeFilter,
+          onRemove: () => setTypeFilter("all"),
+        }]
+      : []),
+    ...(statusFilter !== "all"
+      ? [{
+          key: "status",
+          label: statusLabels[statusFilter as ImprovementStatus] ?? statusFilter,
+          onRemove: () => setStatusFilter("all"),
+        }]
+      : []),
+    ...(searchTerm
+      ? [{ key: "search", label: `« ${searchTerm} »`, onRemove: () => setSearchTerm("") }]
+      : []),
+  ];
+
+  const clearAll = () => {
+    setTypeFilter("all");
+    setStatusFilter("all");
+    setSearchTerm("");
+  };
+
+  const renderRowActions = (item: ContinuousImprovement) =>
+    editable ? (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" aria-label="Actions sur cette ligne">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => handleEdit(item)}>
+            <Pencil className="mr-2 h-4 w-4" />
+            Modifier
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => handleDelete(item)}
+            className="text-destructive"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Supprimer
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ) : null;
+
   return (
     <MainLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Amélioration Continue</h1>
-            <p className="text-muted-foreground">Suivi Qualiopi des actions d'amélioration et de veille</p>
-          </div>
-        </div>
+      <PageShell>
+        <PageHeader
+          title="Amélioration Continue"
+          description="Suivi Qualiopi des actions d'amélioration et de veille"
+          icon={TrendingUp}
+          tone="teal"
+          actions={
+            editable && (
+              <Button onClick={handleCreate}>
+                <Plus className="mr-2 h-4 w-4" />
+                Nouvelle action
+              </Button>
+            )
+          }
+        />
 
-        {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total actions</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">En cours</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{stats.enCours}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Terminées</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.termine}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Ce mois</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.thisMonth}</div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* KPI — chaque compteur filtre la liste ci-dessous. */}
+        <StatTileGrid cols={4}>
+          <StatTile
+            label="Total actions"
+            value={stats.total}
+            icon={TrendingUp}
+            tone="gold"
+            loading={isLoading}
+            onClick={clearAll}
+          />
+          <StatTile
+            label="En cours"
+            value={stats.enCours}
+            icon={Clock}
+            tone="blue"
+            loading={isLoading}
+            onClick={() => setStatusFilter("EN_COURS")}
+          />
+          <StatTile
+            label="Terminées"
+            value={stats.termine}
+            icon={CheckCircle2}
+            tone="teal"
+            loading={isLoading}
+            onClick={() => setStatusFilter("TERMINE")}
+          />
+          <StatTile
+            label="Ce mois"
+            value={stats.thisMonth}
+            icon={CalendarPlus}
+            tone="purple"
+            loading={isLoading}
+          />
+        </StatTileGrid>
 
-        {/* Filters */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Rechercher..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les types</SelectItem>
-                  {Object.entries(typeLabels).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="Statut" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les statuts</SelectItem>
-                  {Object.entries(statusLabels).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+        <SurfaceCard
+          title="Registre des actions"
+          description={`${filteredImprovements.length} action${filteredImprovements.length > 1 ? "s" : ""} affichée${filteredImprovements.length > 1 ? "s" : ""}`}
+          toolbar={
+            <FilterBar
+              search={{
+                value: searchTerm,
+                onChange: setSearchTerm,
+                placeholder: "Rechercher...",
+                ariaLabel: "Rechercher une action d'amélioration",
+              }}
+              filters={
+                <>
+                  <Select value={typeFilter} onValueChange={setTypeFilter}>
+                    <SelectTrigger className="w-full sm:w-[200px]" aria-label="Type">
+                      <SelectValue placeholder="Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous les types</SelectItem>
+                      {Object.entries(typeLabels).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full sm:w-[180px]" aria-label="Statut">
+                      <SelectValue placeholder="Statut" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous les statuts</SelectItem>
+                      {Object.entries(statusLabels).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </>
+              }
+              activeFilters={activeFilters}
+              onClearAll={activeFilters.length > 0 ? clearAll : undefined}
+            />
+          }
+          flush
+        >
+          {isLoading ? (
+            <TableSkeleton rows={6} cols={6} />
+          ) : filteredImprovements.length === 0 ? (
+            <TableEmpty
+              icon={ClipboardList}
+              title="Aucune action trouvée"
+              description="Aucune action d'amélioration ne correspond aux filtres en cours."
+              action={
+                editable ? (
+                  <Button onClick={handleCreate}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Nouvelle action
+                  </Button>
+                ) : undefined
+              }
+            />
+          ) : (
+            <>
+              <TableFrame className="hidden md:block">
+                <table className="w-full">
+                  <thead>
+                    <TableHeadRow>
+                      <TableHeadCell>Type</TableHeadCell>
+                      <TableHeadCell>Thème</TableHeadCell>
+                      <TableHeadCell className="hidden md:table-cell">Source</TableHeadCell>
+                      <TableHeadCell>Action</TableHeadCell>
+                      <TableHeadCell>Statut</TableHeadCell>
+                      <TableHeadCell className="hidden lg:table-cell">Date début</TableHeadCell>
+                      <TableHeadCell className="w-[56px]">
+                        <span className="sr-only">Actions</span>
+                      </TableHeadCell>
+                    </TableHeadRow>
+                  </thead>
+                  <tbody>
+                    {filteredImprovements.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <StatusPill tone={typeTones[item.type]} size="sm">
+                            {typeLabels[item.type]}
+                          </StatusPill>
+                        </TableCell>
+                        <TableCell className="font-medium">{item.theme || '-'}</TableCell>
+                        <TableCell hideBelow="md">{item.source || '-'}</TableCell>
+                        <TableCell className="max-w-[300px] truncate">{item.action}</TableCell>
+                        <TableCell>
+                          <StatusPill tone={statusTones[item.status]} size="sm">
+                            {statusLabels[item.status]}
+                          </StatusPill>
+                        </TableCell>
+                        <TableCell hideBelow="lg" className="tabular">
+                          {format(new Date(item.start_date), 'dd MMM yyyy', { locale: fr })}
+                        </TableCell>
+                        <TableCell align="right">{renderRowActions(item)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </tbody>
+                </table>
+              </TableFrame>
 
-        {/* Table */}
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Thème</TableHead>
-                  <TableHead className="hidden md:table-cell">Source</TableHead>
-                  <TableHead>Action</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead className="hidden lg:table-cell">Date début</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
-                      Chargement...
-                    </TableCell>
-                  </TableRow>
-                ) : filteredImprovements.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      Aucune action trouvée
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredImprovements.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <Badge className={typeColors[item.type]} variant="secondary">
-                          {typeLabels[item.type]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-medium">{item.theme || '-'}</TableCell>
-                      <TableCell className="hidden md:table-cell">{item.source || '-'}</TableCell>
-                      <TableCell className="max-w-[300px] truncate">{item.action}</TableCell>
-                      <TableCell>
-                        <Badge className={statusColors[item.status]} variant="secondary">
-                          {statusLabels[item.status]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        {format(new Date(item.start_date), 'dd MMM yyyy', { locale: fr })}
-                      </TableCell>
-                      <TableCell>
-                        {editable && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleEdit(item)}>
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Modifier
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => handleDelete(item)}
-                                className="text-destructive"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Supprimer
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        {/* Floating Action Button */}
-        {editable && (
-          <Button
-            onClick={handleCreate}
-            className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg"
-            size="icon"
-          >
-            <Plus className="h-6 w-6" />
-          </Button>
-        )}
+              {/* Doublure mobile : un tableau à 7 colonnes ne se lit pas sur un téléphone. */}
+              <CardList className="md:hidden">
+                {filteredImprovements.map((item) => (
+                  <CardListItem
+                    key={item.id}
+                    title={item.theme || item.action}
+                    subtitle={item.action}
+                    meta={
+                      <StatusPill tone={statusTones[item.status]} size="sm">
+                        {statusLabels[item.status]}
+                      </StatusPill>
+                    }
+                    fields={[
+                      { label: "Type", value: typeLabels[item.type] },
+                      { label: "Source", value: item.source || "-" },
+                      {
+                        label: "Date début",
+                        value: format(new Date(item.start_date), 'dd MMM yyyy', { locale: fr }),
+                      },
+                    ]}
+                    actions={renderRowActions(item)}
+                  />
+                ))}
+              </CardList>
+            </>
+          )}
+        </SurfaceCard>
 
         {/* Form Dialog */}
         <ImprovementFormDialog
@@ -357,7 +434,7 @@ export default function ContinuousImprovementPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
+      </PageShell>
     </MainLayout>
   );
 }

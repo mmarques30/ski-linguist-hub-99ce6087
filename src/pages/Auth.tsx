@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { GraduationCap, ShieldCheck, ClipboardList } from "lucide-react";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { StudentAuthCard } from "@/components/auth/StudentAuthCard";
 import { useAuth } from "@/hooks/useAuth";
@@ -41,57 +42,73 @@ export default function Auth() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-10 w-10 animate-spin rounded-pill border-4 border-primary border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden">
-      {/* Background image with blur */}
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-10">
+      {/* Photo de fond floutée */}
       <div
-        className="absolute inset-0 -m-4 bg-cover bg-center blur-sm scale-105"
+        className="absolute inset-0 -m-4 scale-105 bg-cover bg-center blur-sm"
         style={{ backgroundImage: `url(${authBg})` }}
+        aria-hidden
       />
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-black/40" />
+      {/* Voile teinté navy — jeton de marque, pas une couleur en dur */}
+      <div className="absolute inset-0 bg-[hsl(var(--fli-navy))]/55" aria-hidden />
 
-      {/* Content */}
-      <div className="relative z-10 w-full flex flex-col items-center">
+      {/* Contenu */}
+      <div className="relative z-10 flex w-full max-w-md flex-col items-center gap-6">
         {isStudentMode ? <StudentAuthCard /> : <AuthCard />}
 
-        <div className="mt-8 text-center space-y-2">
-          {!isStudentMode && (
-            <Link
-              to="/auth?mode=student"
-              className="block text-sm text-white/80 hover:text-white transition-colors"
-            >
-              Espace stagiaire
-            </Link>
-          )}
-          {isStudentMode && (
-            <Link
-              to="/auth"
-              className="block text-sm text-white/80 hover:text-white transition-colors"
-            >
-              Connexion administrateur
-            </Link>
-          )}
-          <Link
-            to="/register"
-            className="block text-sm text-white/80 hover:text-white transition-colors"
-          >
-            Formulaire d&apos;inscription publique
-          </Link>
-        </div>
+        {/* Les deux parcours restent visibles : staff et stagiaire. */}
+        <nav
+          aria-label="Autres accès"
+          className="fli-glass w-full rounded-[var(--radius-card)] border border-border/60 p-2 shadow-md"
+        >
+          <ul className="flex flex-col gap-1">
+            {!isStudentMode && (
+              <li>
+                <Link
+                  to="/auth?mode=student"
+                  className="flex min-h-11 items-center gap-2.5 rounded-[var(--radius)] px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-[hsl(var(--surface-sunken))]"
+                >
+                  <GraduationCap className="h-4 w-4 shrink-0 text-[hsl(var(--tint-blue-fg))]" />
+                  Espace stagiaire
+                </Link>
+              </li>
+            )}
+            {isStudentMode && (
+              <li>
+                <Link
+                  to="/auth"
+                  className="flex min-h-11 items-center gap-2.5 rounded-[var(--radius)] px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-[hsl(var(--surface-sunken))]"
+                >
+                  <ShieldCheck className="h-4 w-4 shrink-0 text-[hsl(var(--tint-navy-fg))]" />
+                  Connexion administrateur
+                </Link>
+              </li>
+            )}
+            <li>
+              <Link
+                to="/register"
+                className="flex min-h-11 items-center gap-2.5 rounded-[var(--radius)] px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-[hsl(var(--surface-sunken))]"
+              >
+                <ClipboardList className="h-4 w-4 shrink-0 text-[hsl(var(--tint-gold-fg))]" />
+                Formulaire d&apos;inscription publique
+              </Link>
+            </li>
+          </ul>
+        </nav>
+
+        <footer className="text-center">
+          <p className="fli-glass inline-block rounded-pill border border-border/60 px-3 py-1 text-xs text-muted-foreground">
+            France Langues International
+          </p>
+        </footer>
       </div>
-      
-      <footer className="absolute bottom-4 z-10 text-center">
-        <p className="text-xs text-white/60">
-          France Langues International
-        </p>
-      </footer>
     </div>
   );
 }

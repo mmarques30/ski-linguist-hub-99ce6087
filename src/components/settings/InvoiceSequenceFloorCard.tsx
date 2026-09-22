@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Hash, Loader2 } from "lucide-react";
+import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -75,39 +76,45 @@ export function InvoiceSequenceFloorCard() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Numérotation des factures</CardTitle>
-        <CardDescription>
-          Plancher de séquence ({SETTING_KEY}). Une nouvelle facture sans numéro
-          reçoit GREATEST(MAX existant, plancher) + 1. Mettre 0 après l&apos;import
-          historique : le MAX en base suffit.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {query.isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="invoice-sequence-floor">Plancher (0 = désactivé)</Label>
-              <Input
-                id="invoice-sequence-floor"
-                type="number"
-                min={0}
-                step={1}
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                className="w-40"
-              />
-            </div>
-            <Button onClick={handleSave} disabled={save.isPending}>
-              {save.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Enregistrer le plancher
-            </Button>
+    <SurfaceCard
+      title="Numérotation des factures"
+      icon={Hash}
+      description={`Plancher de séquence (${SETTING_KEY}). Une nouvelle facture sans numéro reçoit GREATEST(MAX existant, plancher) + 1. Mettre 0 après l'import historique : le MAX en base suffit.`}
+      actions={
+        query.isLoading ? undefined : (
+          <StatusPill tone={(query.data?.floor ?? 0) > 0 ? "warning" : "neutral"}>
+            {(query.data?.floor ?? 0) > 0
+              ? `Plancher ${query.data?.floor}`
+              : "Plancher désactivé"}
+          </StatusPill>
+        )
+      }
+    >
+      {query.isLoading ? (
+        <div aria-busy="true">
+          <span className="sr-only">Chargement...</span>
+          <Skeleton className="h-10 w-64 rounded-[var(--radius)]" />
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="space-y-2">
+            <Label htmlFor="invoice-sequence-floor">Plancher (0 = désactivé)</Label>
+            <Input
+              id="invoice-sequence-floor"
+              type="number"
+              min={0}
+              step={1}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              className="w-40 tabular"
+            />
           </div>
-        )}
-      </CardContent>
-    </Card>
+          <Button onClick={handleSave} disabled={save.isPending}>
+            {save.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            Enregistrer le plancher
+          </Button>
+        </div>
+      )}
+    </SurfaceCard>
   );
 }

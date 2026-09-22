@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Mail, UserPlus } from "lucide-react";
@@ -12,6 +10,7 @@ import { useInviteStudentPortal } from "@/hooks/useInviteStudentPortal";
 import { isFliPlaceholderEmail } from "@/lib/email-guards";
 import { useStudentPortalEnabled } from "@/hooks/useStudentPortalSettings";
 import { MassEmailConfirmDialog } from "@/components/email/MassEmailConfirmDialog";
+import { StatusPill, SurfaceCard, TableSkeleton } from "@/components/ui-kit";
 
 export function PortalInvitesBulkCard() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -100,17 +99,19 @@ export function PortalInvitesBulkCard() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <UserPlus className="h-4 w-4" />
-          Invitations portail stagiaire
-        </CardTitle>
-        <CardDescription>
-          Envoi en masse d&apos;un lien de connexion magic link vers l&apos;espace /student/*
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <SurfaceCard
+      icon={UserPlus}
+      title="Invitations portail stagiaire"
+      description="Envoi en masse d'un lien de connexion magic link vers l'espace /student/*"
+      actions={
+        candidates.length > 0 ? (
+          <StatusPill tone={selectedCount ? "info" : "neutral"}>
+            {selectedCount} sélectionné(s)
+          </StatusPill>
+        ) : undefined
+      }
+    >
+      <div className="space-y-4">
         <Alert>
           <AlertDescription className="text-sm">
             Chaque stagiaire reçoit un email avec un lien sécurisé. Un compte est créé automatiquement
@@ -120,39 +121,39 @@ export function PortalInvitesBulkCard() {
         </Alert>
 
         {isLoading ? (
-          <div className="flex justify-center py-6">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
+          <TableSkeleton rows={4} cols={3} />
         ) : candidates.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Tous les stagiaires avec email ont déjà un compte portail lié.
           </p>
         ) : (
           <>
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Checkbox checked={allSelected} onCheckedChange={toggleAll} id="select-all-portal" />
                 <label htmlFor="select-all-portal" className="text-sm cursor-pointer">
                   Tout sélectionner ({candidates.length})
                 </label>
               </div>
-              <Badge variant="outline">{selectedCount} sélectionné(s)</Badge>
+              <StatusPill tone={selectedCount ? "info" : "neutral"} size="sm">
+                {selectedCount} sélectionné(s)
+              </StatusPill>
             </div>
 
-            <div className="max-h-64 overflow-y-auto rounded-lg border divide-y">
+            <div className="max-h-64 divide-y divide-border overflow-y-auto rounded-[var(--radius)] border border-border scrollbar-thin">
               {candidates.map((student) => (
                 <label
                   key={student.id}
-                  className="flex items-center gap-3 px-3 py-2 text-sm cursor-pointer hover:bg-muted/50"
+                  className="flex cursor-pointer items-center gap-3 px-3 py-2 text-sm transition-colors hover:bg-[hsl(var(--surface-sunken))]"
                 >
                   <Checkbox
                     checked={selectedIds.has(student.id)}
                     onCheckedChange={() => toggleOne(student.id)}
                   />
-                  <span className="flex-1">
+                  <span className="min-w-0 flex-1 truncate">
                     {student.first_name} {student.last_name}
                   </span>
-                  <span className="text-muted-foreground text-xs truncate max-w-[180px]">
+                  <span className="max-w-[180px] truncate text-xs text-muted-foreground">
                     {student.email}
                   </span>
                 </label>
@@ -174,7 +175,8 @@ export function PortalInvitesBulkCard() {
             </Button>
           </>
         )}
-      </CardContent>
+      </div>
+
       <MassEmailConfirmDialog
         open={confirmOpen}
         count={selectedCount}
@@ -182,6 +184,6 @@ export function PortalInvitesBulkCard() {
         onOpenChange={setConfirmOpen}
         onConfirm={() => void sendInvites()}
       />
-    </Card>
+    </SurfaceCard>
   );
 }

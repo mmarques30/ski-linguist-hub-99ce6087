@@ -1,14 +1,24 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Link2, ExternalLink, Copy, Check, FileQuestion, Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Link2, ExternalLink, Copy, Check, FileQuestion, GraduationCap } from "lucide-react";
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { REGISTRATION_LANGUAGES } from "@/lib/registration-languages";
 import { NIVEAU_NON_RENSEIGNE, usePlacementTestStats } from "@/hooks/usePlacementTestStats";
 import { Link } from "react-router-dom";
+import {
+  CardGrid,
+  MeterRow,
+  PageHeader,
+  PageShell,
+  RankedBarList,
+  StatusPill,
+  SurfaceCard,
+  TableEmpty,
+  seriesColor,
+} from "@/components/ui-kit";
+import type { PillTone } from "@/components/ui-kit";
 
 const translations = {
   title: {
@@ -35,6 +45,11 @@ const translations = {
     fr: "Chaque lien pré-sélectionne la langue. Le test commence à la piste verte (5 questions/piste, ≥3 pour continuer).",
     "pt-BR": "Cada link pré-seleciona o idioma. O teste começa na pista verde.",
     en: "Each link pre-selects the language. Test starts on green slope.",
+  },
+  copyLink: {
+    fr: "Copier le lien",
+    "pt-BR": "Copiar o link",
+    en: "Copy link",
   },
   noTestsTitle: {
     fr: "Aucun test complété via /register",
@@ -78,13 +93,32 @@ const translations = {
   },
 };
 
-const levelColors: Record<string, string> = {
-  "Piste verte": "bg-emerald-100 text-emerald-800",
-  "Piste bleue": "bg-blue-100 text-blue-800",
-  "Piste rouge": "bg-red-100 text-red-800",
-  "Piste noire": "bg-zinc-800 text-zinc-50",
-  [NIVEAU_NON_RENSEIGNE]: "bg-muted text-muted-foreground",
+/**
+ * Pistes dans un ordre figé : la teinte suit la piste (l'entité), jamais son
+ * rang dans la liste d'une langue donnée. Cinq pistes au plus — on ne replie
+ * donc jamais sur « Autre » ici.
+ */
+const PISTE_SERIES_ORDER = [
+  "Piste verte",
+  "Piste bleue",
+  "Piste rouge",
+  "Piste noire",
+  NIVEAU_NON_RENSEIGNE,
+];
+
+const levelTones: Record<string, PillTone> = {
+  "Piste verte": "success",
+  "Piste bleue": "info",
+  "Piste rouge": "danger",
+  "Piste noire": "neutral",
+  [NIVEAU_NON_RENSEIGNE]: "neutral",
 };
+
+/** Couleur de série attachée à la piste, pas à sa position. */
+function pisteColor(level: string): string {
+  const index = PISTE_SERIES_ORDER.indexOf(level);
+  return seriesColor(index === -1 ? PISTE_SERIES_ORDER.length - 1 : index);
+}
 
 export default function PlacementTests() {
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
@@ -100,110 +134,123 @@ export default function PlacementTests() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">{t(translations.title)}</h1>
-            <p className="text-muted-foreground">{t(translations.subtitle)}</p>
-          </div>
-          <Button asChild>
-            <Link to="/register">
-              <ExternalLink className="mr-2 h-4 w-4" />
-              {t(translations.viewTest)}
-            </Link>
-          </Button>
-        </div>
+      <PageShell>
+        <PageHeader
+          title={t(translations.title)}
+          description={t(translations.subtitle)}
+          icon={GraduationCap}
+          tone="blue"
+          actions={
+            <Button asChild>
+              <Link to="/register">
+                <ExternalLink className="mr-2 h-4 w-4" />
+                {t(translations.viewTest)}
+              </Link>
+            </Button>
+          }
+        />
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">{t(translations.publicLinksTitle)}</CardTitle>
-            <CardDescription>{t(translations.publicLinksDesc)}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {REGISTRATION_LANGUAGES.map((lang) => (
-                <div
-                  key={lang.value}
-                  className="flex items-center justify-between rounded-lg border p-3"
-                >
-                  <div className="flex items-center gap-2">
-                    <Link2 className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{lang.label}</span>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => copyTestLink(lang.value)}>
-                    {copiedLink === lang.value ? (
-                      <Check className="h-4 w-4 text-emerald-600" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
+        <SurfaceCard
+          title={t(translations.publicLinksTitle)}
+          description={t(translations.publicLinksDesc)}
+          icon={Link2}
+        >
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {REGISTRATION_LANGUAGES.map((lang) => (
+              <div
+                key={lang.value}
+                className="flex items-center justify-between gap-2 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))] px-3 py-2.5"
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <Link2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="truncate font-medium">{lang.label}</span>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => copyTestLink(lang.value)}
+                  aria-label={`${t(translations.copyLink)} — ${lang.label}`}
+                >
+                  {copiedLink === lang.value ? (
+                    <Check className="h-4 w-4 text-[hsl(var(--status-good))]" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            ))}
+          </div>
+        </SurfaceCard>
 
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
+          <CardGrid cols={2}>
+            {[0, 1].map((index) => (
+              <SurfaceCard key={index}>
+                <div className="space-y-4">
+                  <Skeleton className="h-5 w-48" />
+                  <Skeleton className="h-2 w-full" />
+                  <Skeleton className="h-2 w-full" />
+                  <Skeleton className="h-2 w-2/3" />
+                </div>
+              </SurfaceCard>
+            ))}
+          </CardGrid>
         ) : testStats.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border bg-card">
-            <FileQuestion className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium">{t(translations.noTestsTitle)}</h3>
-            <p className="text-muted-foreground mt-1 max-w-md">{t(translations.noTestsDesc)}</p>
-          </div>
+          <SurfaceCard flush>
+            <TableEmpty
+              icon={FileQuestion}
+              title={t(translations.noTestsTitle)}
+              description={t(translations.noTestsDesc)}
+            />
+          </SurfaceCard>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2">
+          <CardGrid cols={2}>
             {testStats.map((test) => (
-              <Card key={test.languageLabel}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>
-                      {t(translations.testTitle)} {test.languageLabel}
-                    </CardTitle>
-                    <Badge variant="outline">
-                      {test.totalQuestions} {t(translations.questions)}
-                    </Badge>
-                  </div>
-                  <CardDescription>
-                    {test.completedTests}{" "}
-                    {test.completedTests === 1
-                      ? t(translations.testCompleted)
-                      : t(translations.testsCompleted)}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">{t(translations.averageScore)}</span>
-                      <span className="font-medium">{test.averageScore}%</span>
-                    </div>
-                    <Progress value={test.averageScore} className="h-2" />
-                  </div>
+              <SurfaceCard
+                key={test.languageLabel}
+                title={`${t(translations.testTitle)} ${test.languageLabel}`}
+                description={`${test.completedTests} ${
+                  test.completedTests === 1
+                    ? t(translations.testCompleted)
+                    : t(translations.testsCompleted)
+                }`}
+                actions={
+                  <StatusPill tone="neutral">
+                    {test.totalQuestions} {t(translations.questions)}
+                  </StatusPill>
+                }
+              >
+                <div className="space-y-6">
+                  <MeterRow
+                    label={t(translations.averageScore)}
+                    value={test.averageScore}
+                    max={100}
+                    display={`${test.averageScore}%`}
+                  />
 
                   <div className="space-y-3">
                     <p className="text-sm font-medium">{t(translations.levelDistribution)}</p>
-                    <div className="space-y-2">
-                      {test.levelDistribution.map((level) => (
-                        <div key={level.level} className="flex items-center gap-3">
-                          <Badge className={levelColors[level.level] || ""}>{level.level}</Badge>
-                          <div className="flex-1">
-                            <Progress value={level.percentage} className="h-2" />
-                          </div>
-                          <span className="text-sm text-muted-foreground w-16 text-right">
-                            {level.count} ({level.percentage}%)
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                    <RankedBarList
+                      max={test.completedTests}
+                      items={test.levelDistribution.map((level) => ({
+                        key: level.level,
+                        label: (
+                          <StatusPill tone={levelTones[level.level] ?? "neutral"} size="sm">
+                            {level.level}
+                          </StatusPill>
+                        ),
+                        value: level.count,
+                        display: `${level.count} (${level.percentage}%)`,
+                        color: pisteColor(level.level),
+                      }))}
+                    />
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </SurfaceCard>
             ))}
-          </div>
+          </CardGrid>
         )}
-      </div>
+      </PageShell>
     </MainLayout>
   );
 }

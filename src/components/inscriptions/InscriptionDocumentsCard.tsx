@@ -1,10 +1,10 @@
 import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ExternalLink, FileText, Loader2, Mail, AlertTriangle } from "lucide-react";
+import { ExternalLink, FileText, Mail, AlertTriangle } from "lucide-react";
 import { CertificatePdfButton } from "@/components/certificates/CertificatePdfButton";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useInscriptionDocuments } from "@/hooks/useInscriptionDocuments";
@@ -83,11 +83,17 @@ export function InscriptionDocumentsCard({
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-10">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
+      <SurfaceCard
+        title="Documents envoyés au stagiaire"
+        description="Historique des envois automatiques liés à cette inscription"
+        icon={FileText}
+      >
+        <div className="space-y-3">
+          {[0, 1, 2].map((index) => (
+            <Skeleton key={index} className="h-20 w-full rounded-[var(--radius)]" />
+          ))}
+        </div>
+      </SurfaceCard>
     );
   }
 
@@ -126,72 +132,67 @@ export function InscriptionDocumentsCard({
         </Alert>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Documents envoyés au stagiaire</CardTitle>
-          <CardDescription>
-            Historique des envois automatiques liés à cette inscription
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {sendings.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Aucun document envoyé pour le moment.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {sendings.map((doc) => (
-                <div
-                  key={doc.id}
-                  className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-primary" />
-                      <p className="font-medium">
-                        {DOCUMENT_TYPE_LABELS[doc.document_type] || doc.document_type}
-                      </p>
-                      <Badge variant="secondary">Envoyé</Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {formatSentAt(doc.sent_at)} · {doc.sent_to}
+      <SurfaceCard
+        title="Documents envoyés au stagiaire"
+        description="Historique des envois automatiques liés à cette inscription"
+        icon={FileText}
+      >
+        {sendings.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Aucun document envoyé pour le moment.
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {sendings.map((doc) => (
+              <li
+                key={doc.id}
+                className="flex flex-col gap-3 rounded-[var(--radius)] border border-border p-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0 space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary" />
+                    <p className="font-medium">
+                      {DOCUMENT_TYPE_LABELS[doc.document_type] || doc.document_type}
                     </p>
+                    <StatusPill tone="success" size="sm">
+                      Envoyé
+                    </StatusPill>
                   </div>
-                  {doc.pdf_url && (
-                    <CertificatePdfButton pathOrUrl={doc.pdf_url} />
-                  )}
+                  <p className="text-sm text-muted-foreground">
+                    {formatSentAt(doc.sent_at)} · {doc.sent_to}
+                  </p>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                {doc.pdf_url && (
+                  <CertificatePdfButton pathOrUrl={doc.pdf_url} />
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </SurfaceCard>
 
       {showWelcomePack && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Pack moniteur de ski — documents d&apos;inscription</CardTitle>
-            <CardDescription>
-              Envoyés automatiquement à toute inscription moniteur de ski (hors devis / format
-              personnalisé) — ou à renvoyer manuellement
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <SurfaceCard
+          title={"Pack moniteur de ski — documents d’inscription"}
+          description="Envoyés automatiquement à toute inscription moniteur de ski (hors devis / format personnalisé) — ou à renvoyer manuellement"
+          icon={FileText}
+        >
+          <ul className="space-y-3">
             {REGISTRATION_WELCOME_DOCUMENTS.map((doc) => {
               const wasSent = sentTypes.has(doc.documentType);
               const publicUrl = getRegistrationDocumentPublicUrl(doc.internalFile);
 
               return (
-                <div
+                <li
                   key={doc.documentType}
-                  className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-3 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))] p-4 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
+                  <div className="min-w-0 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
                       <p className="font-medium">{doc.label}</p>
-                      <Badge variant={wasSent ? "default" : "outline"}>
+                      <StatusPill tone={wasSent ? "success" : "warning"} size="sm">
                         {wasSent ? "Envoyé" : "En attente"}
-                      </Badge>
+                      </StatusPill>
                     </div>
                     <p className="text-sm text-muted-foreground">{doc.filename}</p>
                   </div>
@@ -201,11 +202,11 @@ export function InscriptionDocumentsCard({
                       Ouvrir
                     </a>
                   </Button>
-                </div>
+                </li>
               );
             })}
-          </CardContent>
-        </Card>
+          </ul>
+        </SurfaceCard>
       )}
     </div>
   );

@@ -1,9 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { UserPlus } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { UserPlus, Users } from "lucide-react";
 import { useUnassignedInscriptions, useEnrollStudent } from "@/hooks/useSessions";
 import { toast } from "sonner";
+import { StatusPill, SurfaceCard, TableEmpty } from "@/components/ui-kit";
+import { Link } from "react-router-dom";
 
 interface Props {
   selectedSessionId: string | undefined;
@@ -31,22 +32,37 @@ export function UnassignedSidebar({ selectedSessionId }: Props) {
   };
 
   return (
-    <Card className="h-fit">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm">Inscriptions non affectées</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2 max-h-[400px] overflow-y-auto">
-        {inscriptions && inscriptions.length > 0 ? (
-          inscriptions.map((i) => (
-            <div
+    <SurfaceCard
+      title="Inscriptions non affectées"
+      icon={Users}
+      className="h-fit"
+      flush
+      bodyClassName="max-h-[400px] overflow-y-auto scrollbar-thin"
+    >
+      {isLoading ? (
+        <div className="space-y-2 px-4 pb-4">
+          {[0, 1, 2].map((index) => (
+            <Skeleton key={index} className="h-12 w-full rounded-[var(--radius)]" />
+          ))}
+        </div>
+      ) : inscriptions && inscriptions.length > 0 ? (
+        <ul className="space-y-2 px-4 pb-4">
+          {inscriptions.map((i) => (
+            <li
               key={i.id}
-              className="flex items-center justify-between p-2 rounded border bg-muted/30 text-xs"
+              className="flex items-center justify-between gap-2 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))] p-2 text-xs"
             >
-              <div className="min-w-0 flex-1">
-                <p className="font-medium truncate">{i.student_name}</p>
+              <div className="min-w-0 flex-1 space-y-1">
+                {/* Le nom mène à la fiche inscription — l'id est déjà dans la donnée. */}
+                <Link
+                  to={`/inscriptions/${i.id}`}
+                  className="block truncate font-medium text-foreground hover:underline"
+                >
+                  {i.student_name}
+                </Link>
                 <div className="flex items-center gap-1.5">
-                  <Badge variant="outline" className="text-[10px] px-1">{i.language}</Badge>
-                  {i.code && <span className="text-muted-foreground">{i.code}</span>}
+                  <StatusPill tone="neutral" size="sm">{i.language}</StatusPill>
+                  {i.code && <span className="truncate text-muted-foreground">{i.code}</span>}
                 </div>
               </div>
               <Button
@@ -56,17 +72,20 @@ export function UnassignedSidebar({ selectedSessionId }: Props) {
                 disabled={!selectedSessionId || enrollMutation.isPending}
                 onClick={() => handleAssign(i.id, i.student_id)}
                 title={selectedSessionId ? "Affecter à la session sélectionnée" : "Sélectionnez une session d'abord"}
+                aria-label={selectedSessionId ? "Affecter à la session sélectionnée" : "Sélectionnez une session d'abord"}
               >
                 <UserPlus className="h-3.5 w-3.5" />
               </Button>
-            </div>
-          ))
-        ) : (
-          <p className="text-xs text-muted-foreground text-center py-4">
-            {isLoading ? "Chargement..." : "Toutes les inscriptions sont affectées"}
-          </p>
-        )}
-      </CardContent>
-    </Card>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <TableEmpty
+          icon={Users}
+          title="Toutes les inscriptions sont affectées"
+          description="Aucune inscription en attente d'affectation à une session."
+        />
+      )}
+    </SurfaceCard>
   );
 }

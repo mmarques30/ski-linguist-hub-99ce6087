@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ImageOff, Loader2, TriangleAlert, Upload } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Building2, ImageOff, Loader2, TriangleAlert, Upload } from "lucide-react";
+import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import fliLogoFallback from "@/assets/fli-logo.png";
@@ -146,18 +147,28 @@ export function OrganizationIdentityCard() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Identité de l&apos;organisation</CardTitle>
-        <CardDescription>
-          Ces mentions alimentent les conventions, les factures et les PDF
-          d&apos;évaluation. Elles sont enregistrées dans les paramètres de
-          l&apos;application ({ORGANIZATION_IDENTITY_KEY}).
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <SurfaceCard
+      title="Identité de l'organisation"
+      icon={Building2}
+      description={`Ces mentions alimentent les conventions, les factures et les PDF d'évaluation. Elles sont enregistrées dans les paramètres de l'application (${ORGANIZATION_IDENTITY_KEY}).`}
+      actions={
+        query.isLoading ? undefined : (
+          <StatusPill tone={manquantes.length > 0 ? "warning" : "success"} dot>
+            {manquantes.length > 0
+              ? `${manquantes.length} mention${manquantes.length > 1 ? "s" : ""} manquante${manquantes.length > 1 ? "s" : ""}`
+              : "Complète"}
+          </StatusPill>
+        )
+      }
+    >
+      <div className="space-y-6">
         {query.isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <div className="space-y-3" aria-busy="true">
+            <span className="sr-only">Chargement...</span>
+            <Skeleton className="h-24 w-full rounded-[var(--radius)]" />
+            <Skeleton className="h-10 w-full rounded-[var(--radius)]" />
+            <Skeleton className="h-10 w-full rounded-[var(--radius)]" />
+          </div>
         ) : (
           <>
             {query.error && (
@@ -179,7 +190,7 @@ export function OrganizationIdentityCard() {
               </Alert>
             )}
 
-            <div className="space-y-3 rounded-lg border p-4">
+            <div className="space-y-3 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))] p-4">
               <div>
                 <Label>Logo de l&apos;organisation</Label>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -190,7 +201,7 @@ export function OrganizationIdentityCard() {
                 <img
                   src={displayLogoUrl}
                   alt="Logo de l'organisation"
-                  className="h-16 w-auto rounded border bg-white object-contain p-1"
+                  className="h-16 w-auto rounded-[var(--radius)] border border-border bg-card object-contain p-1"
                 />
                 <div className="flex flex-wrap gap-2">
                   <input
@@ -233,7 +244,7 @@ export function OrganizationIdentityCard() {
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               {ORGANIZATION_IDENTITY_FIELDS.map((field) => (
                 <div key={field.key} className="space-y-2">
                   <Label htmlFor={`identity-${field.key}`}>
@@ -275,7 +286,7 @@ export function OrganizationIdentityCard() {
             </div>
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </SurfaceCard>
   );
 }

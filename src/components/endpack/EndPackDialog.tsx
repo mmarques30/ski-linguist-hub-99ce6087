@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { StatusPill, toneForStatus } from "@/components/ui-kit";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -34,7 +34,6 @@ import {
   canCloseWithEndPack,
   endPackBlockedReason,
   getStatusLabel,
-  getStatusStyle,
 } from "@/lib/inscription-status";
 import { resolveEndPackDeposit } from "@/lib/end-pack";
 
@@ -205,15 +204,15 @@ export function EndPackDialog({
         {!result ? (
           <>
             <div className="flex flex-wrap gap-2 mb-4">
-              <Badge variant="outline">{inscription.code}</Badge>
-              <Badge variant="secondary">{inscription.language}</Badge>
+              <StatusPill tone="neutral">{inscription.code}</StatusPill>
+              <StatusPill tone="info">{inscription.language}</StatusPill>
               {inscription.duration_hours && (
-                <Badge variant="secondary">{inscription.duration_hours}h</Badge>
+                <StatusPill tone="neutral">{inscription.duration_hours}h</StatusPill>
               )}
               {statut && (
-                <Badge className={getStatusStyle(statut)}>
+                <StatusPill tone={toneForStatus(statut)}>
                   {getStatusLabel(statut, "fr")}
-                </Badge>
+                </StatusPill>
               )}
             </div>
 
@@ -240,7 +239,7 @@ export function EndPackDialog({
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
               ) : exitReady ? (
-                <div className="rounded-lg border p-3 text-sm space-y-1 bg-muted/30">
+                <div className="rounded-[var(--radius)] border border-border p-3 text-sm space-y-1 bg-[hsl(var(--surface-sunken))]">
                   <p>
                     Général : {merged.niveau_general_entree || "—"} →{" "}
                     {merged.niveau_general_sortie}
@@ -286,7 +285,7 @@ export function EndPackDialog({
               <Label className="text-base font-medium">Documents à générer</Label>
 
               <div className="space-y-3">
-                <div className="flex items-center space-x-3 p-3 rounded-lg border bg-muted/30">
+                <div className="flex items-center space-x-3 p-3 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))]">
                   <Checkbox
                     id="invoice"
                     checked={generateInvoice}
@@ -297,7 +296,7 @@ export function EndPackDialog({
                       htmlFor="invoice"
                       className="flex items-center gap-2 font-medium cursor-pointer"
                     >
-                      <FileText className="h-4 w-4 text-blue-600" />
+                      <FileText className="h-4 w-4 text-[hsl(var(--tint-blue-fg))]" />
                       Facture de solde
                     </label>
                     <p className="text-xs text-muted-foreground">
@@ -308,7 +307,7 @@ export function EndPackDialog({
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3 p-3 rounded-lg border bg-muted/30">
+                <div className="flex items-center space-x-3 p-3 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))]">
                   <Checkbox
                     id="certificate"
                     checked={generateCertificate && exitReady}
@@ -322,7 +321,7 @@ export function EndPackDialog({
                       htmlFor="certificate"
                       className="flex items-center gap-2 font-medium cursor-pointer"
                     >
-                      <Award className="h-4 w-4 text-amber-600" />
+                      <Award className="h-4 w-4 text-[hsl(var(--tint-gold-fg))]" />
                       Certificat de fin de formation
                     </label>
                     <p className="text-xs text-muted-foreground">
@@ -332,7 +331,7 @@ export function EndPackDialog({
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3 p-3 rounded-lg border bg-muted/30">
+                <div className="flex items-center space-x-3 p-3 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))]">
                   <Checkbox
                     id="survey"
                     checked={sendSurvey}
@@ -343,7 +342,7 @@ export function EndPackDialog({
                       htmlFor="survey"
                       className="flex items-center gap-2 font-medium cursor-pointer"
                     >
-                      <ClipboardCheck className="h-4 w-4 text-emerald-600" />
+                      <ClipboardCheck className="h-4 w-4 text-[hsl(var(--tint-teal-fg))]" />
                       Questionnaire de satisfaction
                     </label>
                   </div>
@@ -383,30 +382,30 @@ export function EndPackDialog({
         ) : (
           <>
             <div className="py-6 text-center">
-              <div className="mx-auto w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
-                <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+              <div className="mx-auto w-12 h-12 rounded-pill bg-[hsl(var(--tint-teal-bg))] flex items-center justify-center mb-4">
+                <CheckCircle2 className="h-6 w-6 text-[hsl(var(--tint-teal-fg))]" />
               </div>
               <h3 className="text-lg font-semibold mb-2">Pack généré</h3>
               <div className="space-y-3 text-left max-w-sm mx-auto">
                 {result.invoiceId && (
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 border border-blue-200">
-                    <FileText className="h-5 w-5 text-blue-600" />
+                  <div className="flex items-center gap-3 p-3 rounded-[var(--radius)] bg-[hsl(var(--tint-blue-bg))] border border-[hsl(var(--tint-blue-ring))]">
+                    <FileText className="h-5 w-5 text-[hsl(var(--tint-blue-fg))]" />
                     <p className="font-medium text-sm">
                       Facture créée{result.invoiceNumber ? ` ${result.invoiceNumber}` : ""}
                     </p>
                   </div>
                 )}
                 {result.certificateId && (
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 border border-amber-200">
-                    <Award className="h-5 w-5 text-amber-600" />
+                  <div className="flex items-center gap-3 p-3 rounded-[var(--radius)] bg-[hsl(var(--tint-gold-bg))] border border-[hsl(var(--tint-gold-ring))]">
+                    <Award className="h-5 w-5 text-[hsl(var(--tint-gold-fg))]" />
                     <p className="font-medium text-sm">
                       Certificat créé (bilan de progression)
                     </p>
                   </div>
                 )}
                 {result.surveyToken && (
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
-                    <ClipboardCheck className="h-5 w-5 text-emerald-600" />
+                  <div className="flex items-center gap-3 p-3 rounded-[var(--radius)] bg-[hsl(var(--tint-teal-bg))] border border-[hsl(var(--tint-teal-ring))]">
+                    <ClipboardCheck className="h-5 w-5 text-[hsl(var(--tint-teal-fg))]" />
                     <p className="font-medium text-sm">
                       Questionnaire /survey/{result.surveyToken}
                     </p>

@@ -1,12 +1,14 @@
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { BarChart3, LayoutDashboard, Percent } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SubNav, type SubNavItem } from "@/components/ui-kit";
 
 export type PilotageTabId = "overview" | "analyses" | "rentabilite";
 
-const PILOTAGE_TABS: { id: PilotageTabId; label: string; href: string }[] = [
-  { id: "overview", label: "Vue d'ensemble", href: "/finance" },
-  { id: "analyses", label: "Analyses", href: "/finance/analyses" },
-  { id: "rentabilite", label: "Rentabilité", href: "/finance/rentabilite" },
+const PILOTAGE_TABS: (SubNavItem & { id: PilotageTabId })[] = [
+  { id: "overview", to: "/finance", label: "Vue d'ensemble", icon: LayoutDashboard, end: true },
+  { id: "analyses", to: "/finance/analyses", label: "Analyses", icon: BarChart3 },
+  { id: "rentabilite", to: "/finance/rentabilite", label: "Rentabilité", icon: Percent },
 ];
 
 export function resolvePilotageTab(pathname: string): PilotageTabId {
@@ -17,30 +19,7 @@ export function resolvePilotageTab(pathname: string): PilotageTabId {
 
 /** Sous-navigation Pilotage — Vue d'ensemble · Analyses · Rentabilité (Vague C). */
 export function PilotageSubnav() {
-  const location = useLocation();
-  const current = resolvePilotageTab(location.pathname);
-
-  return (
-    <nav className="flex flex-wrap gap-1 border-b pb-px" aria-label="Sous-pages pilotage">
-      {PILOTAGE_TABS.map((tab) => {
-        const active = current === tab.id;
-        return (
-          <Link
-            key={tab.id}
-            to={tab.href}
-            className={cn(
-              "px-3 py-2 text-sm rounded-t-md border-b-2 -mb-px transition-colors",
-              active
-                ? "border-primary text-foreground font-medium"
-                : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30"
-            )}
-          >
-            {tab.label}
-          </Link>
-        );
-      })}
-    </nav>
-  );
+  return <SubNav items={PILOTAGE_TABS} />;
 }
 
 const TRESORERIE_TABS = [
@@ -48,20 +27,29 @@ const TRESORERIE_TABS = [
   { id: "charges", label: "Charges fixes", href: "/finance/tresorerie?tab=charges" },
 ] as const;
 
+/**
+ * Même grammaire de pastilles que `SubNav`, mais l'onglet actif est imposé :
+ * les deux routes partagent `/finance/tresorerie` (l'onglet « charges fixes »
+ * passe par une redirection), donc `NavLink` ne peut pas les distinguer seul.
+ */
 export function TresorerieSubnav({ activeTab }: { activeTab: "previsionnel" | "charges" }) {
   return (
-    <nav className="flex flex-wrap gap-1 border-b pb-px" aria-label="Sous-pages trésorerie">
+    <nav
+      className="flex max-w-full items-center gap-1 overflow-x-auto rounded-pill border border-border bg-[hsl(var(--surface-sunken))] p-1 scrollbar-thin"
+      aria-label="Sous-pages trésorerie"
+    >
       {TRESORERIE_TABS.map((tab) => {
         const active = activeTab === tab.id;
         return (
           <Link
             key={tab.id}
             to={tab.href}
+            aria-current={active ? "page" : undefined}
             className={cn(
-              "px-3 py-2 text-sm rounded-t-md border-b-2 -mb-px transition-colors",
+              "inline-flex shrink-0 items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-sm font-medium transition-all duration-200",
               active
-                ? "border-primary text-foreground font-medium"
-                : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30"
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             {tab.label}

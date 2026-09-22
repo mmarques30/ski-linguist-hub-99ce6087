@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle2, Copy, ExternalLink, Loader2, XCircle } from "lucide-react";
+import { CheckCircle2, Copy, CreditCard, ExternalLink, Loader2, XCircle } from "lucide-react";
+import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import { toast } from "sonner";
 import { useProvisionStripeWebhook, useStripeConfig } from "@/hooks/useStripeConfig";
 
@@ -44,37 +43,30 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <CardTitle className="flex flex-wrap items-center gap-2">
-              Stripe
-              {isLoading ? (
-                <Badge variant="secondary">Vérification...</Badge>
-              ) : isFullyConfigured ? (
-                <Badge className="bg-emerald-600 hover:bg-emerald-600">Opérationnel</Badge>
-              ) : webhookMissing ? (
-                <Badge variant="destructive">Webhook manquant</Badge>
-              ) : (
-                <Badge variant="destructive">À configurer</Badge>
-              )}
-              {data?.mode && (
-                <Badge variant="outline">
-                  {data.mode === "live" ? "Mode live" : "Mode test"}
-                </Badge>
-              )}
-            </CardTitle>
-            <CardDescription>
-              Paiements en ligne pour les inscriptions (/register) — frais de dossier (150 €) et paiement intégral.
-            </CardDescription>
-          </div>
-          <div className="h-10 w-10 rounded bg-muted flex items-center justify-center shrink-0">
-            <span className="font-bold text-primary">S</span>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <SurfaceCard
+      title="Stripe"
+      icon={CreditCard}
+      description="Paiements en ligne pour les inscriptions (/register) — frais de dossier (150 €) et paiement intégral."
+      actions={
+        <>
+          {isLoading ? (
+            <StatusPill tone="neutral">Vérification...</StatusPill>
+          ) : isFullyConfigured ? (
+            <StatusPill tone="success" dot>Opérationnel</StatusPill>
+          ) : webhookMissing ? (
+            <StatusPill tone="danger" dot>Webhook manquant</StatusPill>
+          ) : (
+            <StatusPill tone="danger" dot>À configurer</StatusPill>
+          )}
+          {data?.mode && (
+            <StatusPill tone={data.mode === "live" ? "accent" : "neutral"}>
+              {data.mode === "live" ? "Mode live" : "Mode test"}
+            </StatusPill>
+          )}
+        </>
+      }
+    >
+      <div className="space-y-6">
         {isError && (
           <Alert variant="destructive">
             <AlertTitle>Impossible de vérifier Stripe</AlertTitle>
@@ -195,7 +187,7 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
           <div className="space-y-2">
             <p className="text-sm font-medium">URL du webhook Stripe</p>
             <div className="flex flex-col gap-2 sm:flex-row">
-              <code className="flex-1 rounded-md border bg-muted/50 px-3 py-2 text-xs break-all">
+              <code className="flex-1 break-all rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))] px-3 py-2 text-xs">
                 {data.webhookUrl}
               </code>
               <Button
@@ -237,26 +229,18 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
             Vérifier à nouveau
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </SurfaceCard>
   );
 }
 
 function StatusRow({ label, ok }: { label: string; ok: boolean }) {
   return (
-    <div className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm">
-      <code>{label}</code>
-      {ok ? (
-        <span className="flex items-center gap-1 text-emerald-600">
-          <CheckCircle2 className="h-4 w-4" />
-          OK
-        </span>
-      ) : (
-        <span className="flex items-center gap-1 text-destructive">
-          <XCircle className="h-4 w-4" />
-          Manquant
-        </span>
-      )}
+    <div className="flex items-center justify-between gap-2 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))] px-3 py-2 text-sm">
+      <code className="min-w-0 truncate">{label}</code>
+      <StatusPill tone={ok ? "success" : "danger"} icon={ok ? CheckCircle2 : XCircle} size="sm">
+        {ok ? "OK" : "Manquant"}
+      </StatusPill>
     </div>
   );
 }

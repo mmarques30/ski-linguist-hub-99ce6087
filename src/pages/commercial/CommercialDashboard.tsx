@@ -1,12 +1,10 @@
 import { useState } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Search, TrendingUp, Euro, Clock, Target, AlertTriangle, Link2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { MainLayout } from "@/components/layout/MainLayout";
+import { Button } from "@/components/ui/button";
+import {
+  Plus, TrendingUp, Euro, Clock, Target, AlertTriangle, Link2, KanbanSquare, BarChart3,
+} from "lucide-react";
 import {
   useLeads, useLeadKPIs, useUpdateLead,
   LEAD_STATUSES, LEAD_SOURCES, EXPANSION_CHANNELS,
@@ -19,71 +17,93 @@ import { useSeasonFilter } from "@/contexts/SeasonContext";
 import { toast } from "sonner";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
-} from "recharts";
+  BarsChart,
+  DonutChart,
+  FilterBar,
+  PageHeader,
+  PageShell,
+  SectionHeading,
+  SegmentedControl,
+  StatTile,
+  StatTileGrid,
+  StatusPill,
+  SurfaceCard,
+  type PillTone,
+} from "@/components/ui-kit";
 
 const KANBAN_COLUMNS = LEAD_STATUSES.filter((s) => s.key !== "perdu");
-const PIE_COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
-function ChannelKPIs({ channel }: { channel: ExpansionChannel }) {
-  const { data: kpis } = useLeadKPIs(channel);
+/** Teinte de chaque statut commercial — le libellé reste celui de `LEAD_STATUSES`. */
+const LEAD_STATUS_TONES: Record<string, PillTone> = {
+  nouveau: "info",
+  contacte: "warning",
+  en_negociation: "purple",
+  converti: "success",
+  perdu: "danger",
+};
+
+type PipelineView = "kanban" | "analytics";
+
+const formatEuros = (value: number) => `${Number(value || 0).toLocaleString("fr-FR")} €`;
+
+function ChannelKPIs({
+  channel,
+  onOpenPipeline,
+  onOpenAnalytics,
+}: {
+  channel: ExpansionChannel;
+  onOpenPipeline: () => void;
+  onOpenAnalytics: () => void;
+}) {
+  const { data: kpis, isLoading } = useLeadKPIs(channel);
   const channelMeta = EXPANSION_CHANNELS.find((c) => c.key === channel)!;
 
-  if (!kpis) return null;
-
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">{channelMeta.description}</p>
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card>
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-              <Target className="h-3.5 w-3.5" /> Taux de conversion
-            </div>
-            <p className="text-2xl font-bold">{kpis.conversionRate.toFixed(0)}%</p>
-            <p className="text-xs text-muted-foreground">{kpis.convertedCount} convertis / {kpis.lostCount} perdus</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-              <Euro className="h-3.5 w-3.5" /> Pipeline actif
-            </div>
-            <p className="text-2xl font-bold">{kpis.totalPipelineRevenue.toLocaleString("fr-FR")} €</p>
-            <p className="text-xs text-muted-foreground">{kpis.total - kpis.convertedCount - kpis.lostCount} leads en cours</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-              <Clock className="h-3.5 w-3.5" /> Délai moyen
-            </div>
-            <p className="text-2xl font-bold">{kpis.avgConversionDays.toFixed(0)}j</p>
-            <p className="text-xs text-muted-foreground">création → conversion</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-              <TrendingUp className="h-3.5 w-3.5" /> Total leads
-            </div>
-            <p className="text-2xl font-bold">{kpis.total}</p>
-            <p className="text-xs text-muted-foreground">canal {channelMeta.label}</p>
-          </CardContent>
-        </Card>
-        <Card className={kpis.overdueActions > 0 ? "border-destructive/50" : undefined}>
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-              <AlertTriangle className="h-3.5 w-3.5" /> Actions en retard
-            </div>
-            <p className={`text-2xl font-bold ${kpis.overdueActions > 0 ? "text-destructive" : ""}`}>
-              {kpis.overdueActions}
-            </p>
-            <p className="text-xs text-muted-foreground">à relancer</p>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    <StatTileGrid cols={5}>
+      <StatTile
+        label="Taux de conversion"
+        value={`${(kpis?.conversionRate ?? 0).toFixed(0)}%`}
+        hint={`${kpis?.convertedCount ?? 0} convertis / ${kpis?.lostCount ?? 0} perdus`}
+        icon={Target}
+        tone="teal"
+        loading={isLoading}
+        onClick={onOpenAnalytics}
+      />
+      <StatTile
+        label="Pipeline actif"
+        value={formatEuros(kpis?.totalPipelineRevenue ?? 0)}
+        hint={`${(kpis?.total ?? 0) - (kpis?.convertedCount ?? 0) - (kpis?.lostCount ?? 0)} leads en cours`}
+        icon={Euro}
+        tone="gold"
+        loading={isLoading}
+        onClick={onOpenAnalytics}
+      />
+      <StatTile
+        label="Délai moyen"
+        value={`${(kpis?.avgConversionDays ?? 0).toFixed(0)}j`}
+        hint="création → conversion"
+        icon={Clock}
+        tone="blue"
+        loading={isLoading}
+      />
+      <StatTile
+        label="Total leads"
+        value={kpis?.total ?? 0}
+        hint={`canal ${channelMeta.label}`}
+        icon={TrendingUp}
+        tone="purple"
+        loading={isLoading}
+        onClick={onOpenPipeline}
+      />
+      <StatTile
+        label="Actions en retard"
+        value={kpis?.overdueActions ?? 0}
+        hint="à relancer"
+        icon={AlertTriangle}
+        tone={(kpis?.overdueActions ?? 0) > 0 ? "rose" : "neutral"}
+        loading={isLoading}
+      />
+    </StatTileGrid>
   );
 }
 
@@ -91,15 +111,17 @@ function ChannelPipeline({
   channel,
   search,
   editable,
+  view,
   onEdit,
 }: {
   channel: ExpansionChannel;
   search: string;
   editable: boolean;
+  view: PipelineView;
   onEdit: (lead: Lead) => void;
 }) {
   const { seasonId, seasonStart, seasonEnd } = useSeasonFilter();
-  const { data: leads = [] } = useLeads({
+  const { data: leads = [], isLoading } = useLeads({
     search,
     expansion_channel: channel,
     seasonId,
@@ -181,157 +203,154 @@ function ChannelPipeline({
 
   const lostLeads = leads.filter((l) => l.status === "perdu");
 
+  /** Lien « Moniteur lié » — la fiche moniteur vit dans l'écran moniteurs. */
+  const monitorLink = (lead: Lead) =>
+    lead.ski_monitor_id ? (
+      <Link
+        to="/gestion/moniteurs"
+        className="flex items-center gap-1 px-1 text-2xs font-medium text-[hsl(var(--tint-blue-fg))] hover:underline"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Link2 className="h-3 w-3" />
+        Moniteur lié
+      </Link>
+    ) : null;
+
   return (
     <>
-    <Tabs defaultValue="kanban">
-      <TabsList>
-        <TabsTrigger value="kanban">Pipeline</TabsTrigger>
-        <TabsTrigger value="analytics">Analyses</TabsTrigger>
-      </TabsList>
+      {view === "kanban" ? (
+        <div className="space-y-6">
+          {/* Kanban — défile horizontalement sur téléphone plutôt que de se comprimer. */}
+          <div className="-mx-1 flex snap-x gap-4 overflow-x-auto px-1 pb-2 scrollbar-thin md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 xl:grid-cols-4">
+            {KANBAN_COLUMNS.map((col) => {
+              const colLeads = leads.filter((l) => l.status === col.key);
+              const colRevenue = colLeads.reduce((s, l) => s + Number(l.estimated_revenue || 0), 0);
 
-      <TabsContent value="kanban" className="mt-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {KANBAN_COLUMNS.map((col) => {
-            const colLeads = leads.filter((l) => l.status === col.key);
-            const colRevenue = colLeads.reduce((s, l) => s + Number(l.estimated_revenue || 0), 0);
-
-            return (
-              <div
-                key={col.key}
-                className="rounded-xl border bg-muted/30 p-3 min-h-[300px]"
-                onDrop={(e) => handleDrop(e, col.key)}
-                onDragOver={handleDragOver}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2.5 h-2.5 rounded-full ${col.color}`} />
-                    <span className="font-medium text-sm">{col.label}</span>
-                    <Badge variant="secondary" className="text-xs">{colLeads.length}</Badge>
-                  </div>
-                  <span className="text-xs text-muted-foreground">{colRevenue.toLocaleString("fr-FR")} €</span>
-                </div>
-                <div className="space-y-2">
-                  {colLeads.map((lead) => (
-                    <div key={lead.id} className="space-y-1">
-                      <LeadCard
-                        lead={lead}
-                        onClick={() => onEdit(lead)}
-                        draggable={editable}
-                        onDragStart={(e) => handleDragStart(e, lead.id)}
-                      />
-                      {lead.ski_monitor_id && (
-                        <Link
-                          to="/gestion/moniteurs"
-                          className="flex items-center gap-1 text-[10px] text-primary hover:underline px-1"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Link2 className="h-3 w-3" />
-                          Moniteur lié
-                        </Link>
-                      )}
-                      {editable && !["converti", "perdu"].includes(lead.status) && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 text-[10px] text-muted-foreground w-full"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleMarkLost(lead);
-                          }}
-                        >
-                          Marquer perdu
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                  {colLeads.length === 0 && (
-                    <p className="text-xs text-muted-foreground text-center py-8">Aucun lead</p>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {lostLeads.length > 0 && (
-          <div className="mt-6">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">
-              Leads perdus ({lostLeads.length})
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-              {lostLeads.slice(0, 8).map((lead) => (
-                <div key={lead.id} className="space-y-1">
-                  <LeadCard lead={lead} onClick={() => onEdit(lead)} />
-                  {lead.loss_reason && (
-                    <p className="text-[10px] text-muted-foreground px-1 line-clamp-2">
-                      Motif : {lead.loss_reason}
-                    </p>
-                  )}
-                  {lead.ski_monitor_id && (
-                    <Link
-                      to="/gestion/moniteurs"
-                      className="flex items-center gap-1 text-[10px] text-primary hover:underline px-1"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Link2 className="h-3 w-3" />
-                      Moniteur lié
-                    </Link>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </TabsContent>
-
-      <TabsContent value="analytics" className="mt-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">CA par statut</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={pipelineChartData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v: number) => `${v.toLocaleString("fr-FR")} €`} />
-                  <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Sources d'acquisition</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={sourceChartData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={90}
-                    dataKey="value"
-                    label={({ name, value }) => `${name}: ${value}`}
+              return (
+                <div
+                  key={col.key}
+                  className="w-[280px] shrink-0 snap-start md:w-auto"
+                  onDrop={(e) => handleDrop(e, col.key)}
+                  onDragOver={handleDragOver}
+                >
+                  <SurfaceCard
+                    className="h-full min-h-[300px]"
+                    title={
+                      <span className="flex items-center gap-2">
+                        <StatusPill tone={LEAD_STATUS_TONES[col.key] ?? "neutral"} size="sm" dot>
+                          {col.label}
+                        </StatusPill>
+                        <span className="rounded-pill bg-muted px-1.5 text-2xs tabular text-muted-foreground">
+                          {colLeads.length}
+                        </span>
+                      </span>
+                    }
+                    actions={
+                      <span className="text-xs text-muted-foreground tabular">
+                        {formatEuros(colRevenue)}
+                      </span>
+                    }
+                    bodyClassName="space-y-2"
                   >
-                    {sourceChartData.map((_, i) => (
-                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+                    {isLoading ? (
+                      <div className="space-y-2">
+                        {[0, 1, 2].map((index) => (
+                          <div key={index} className="h-24 animate-shimmer rounded-[var(--radius)]" />
+                        ))}
+                      </div>
+                    ) : colLeads.length === 0 ? (
+                      <p className="py-8 text-center text-xs text-muted-foreground">Aucun lead</p>
+                    ) : (
+                      colLeads.map((lead) => (
+                        <div key={lead.id} className="space-y-1">
+                          <LeadCard
+                            lead={lead}
+                            onClick={() => onEdit(lead)}
+                            draggable={editable}
+                            onDragStart={(e) => handleDragStart(e, lead.id)}
+                          />
+                          {monitorLink(lead)}
+                          {editable && !["converti", "perdu"].includes(lead.status) && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-full text-2xs text-muted-foreground"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleMarkLost(lead);
+                              }}
+                            >
+                              Marquer perdu
+                            </Button>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </SurfaceCard>
+                </div>
+              );
+            })}
+          </div>
+
+          {lostLeads.length > 0 && (
+            <div className="space-y-3">
+              <SectionHeading
+                title={`Leads perdus (${lostLeads.length})`}
+                description="Les 8 dernières fiches perdues de ce canal, avec leur motif."
+              />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                {lostLeads.slice(0, 8).map((lead) => (
+                  <div key={lead.id} className="space-y-1">
+                    <LeadCard lead={lead} onClick={() => onEdit(lead)} />
+                    {lead.loss_reason && (
+                      <p className="line-clamp-2 px-1 text-2xs text-muted-foreground">
+                        Motif : {lead.loss_reason}
+                      </p>
+                    )}
+                    {monitorLink(lead)}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      </TabsContent>
-    </Tabs>
-    {confirmDialog}
+      ) : (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5">
+          <SurfaceCard
+            title="CA par statut"
+            description="CA estimé cumulé des leads de ce canal, par statut commercial."
+            icon={BarChart3}
+          >
+            <BarsChart
+              data={pipelineChartData}
+              series={[{ key: "revenue", label: "CA estimé" }]}
+              xKey="name"
+              height={250}
+              ariaLabel="CA estimé par statut commercial"
+              formatValue={(value) => formatEuros(Number(value))}
+              formatAxisValue={(value) => Number(value).toLocaleString("fr-FR")}
+              emptyMessage="Aucun lead sur ce canal"
+            />
+          </SurfaceCard>
+
+          <SurfaceCard
+            title="Sources d'acquisition"
+            description="Répartition des leads par origine ; au-delà de 6 sources, le reste est replié sur « Autre »."
+            icon={Target}
+          >
+            <DonutChart
+              data={sourceChartData}
+              height={220}
+              centerLabel="leads"
+              ariaLabel="Répartition des leads par source d'acquisition"
+              emptyMessage="Aucun lead sur ce canal"
+            />
+          </SurfaceCard>
+        </div>
+      )}
+
+      {confirmDialog}
     </>
   );
 }
@@ -341,6 +360,7 @@ export default function CommercialDashboard() {
   const [formOpen, setFormOpen] = useState(false);
   const [editLead, setEditLead] = useState<Lead | null>(null);
   const [activeChannel, setActiveChannel] = useState<ExpansionChannel>("cpf");
+  const [view, setView] = useState<PipelineView>("kanban");
 
   const { canEdit } = useUserPermissions();
   const editable = canEdit("commercial");
@@ -350,52 +370,74 @@ export default function CommercialDashboard() {
     setFormOpen(true);
   };
 
+  const channelMeta = EXPANSION_CHANNELS.find((c) => c.key === activeChannel)!;
+
   return (
     <MainLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Pipeline Commercial</h1>
-            <p className="text-sm text-muted-foreground">CPF · B2B Alpespace · DSF — prospection et conversions</p>
-          </div>
-          {editable && (
-            <Button onClick={() => { setEditLead(null); setFormOpen(true); }}>
-              <Plus className="h-4 w-4 mr-2" /> Nouveau lead
-            </Button>
-          )}
-        </div>
+      <PageShell>
+        <PageHeader
+          title="Pipeline Commercial"
+          description="CPF · B2B Alpespace · DSF — prospection et conversions"
+          icon={TrendingUp}
+          tone="gold"
+          meta={<StatusPill tone="info">{channelMeta.description}</StatusPill>}
+          actions={
+            editable ? (
+              <Button onClick={() => { setEditLead(null); setFormOpen(true); }}>
+                <Plus className="mr-2 h-4 w-4" /> Nouveau lead
+              </Button>
+            ) : undefined
+          }
+          tabs={
+            <SegmentedControl<ExpansionChannel>
+              value={activeChannel}
+              onChange={setActiveChannel}
+              ariaLabel="Canal d'expansion"
+              options={EXPANSION_CHANNELS.map((ch) => ({ value: ch.key, label: ch.label }))}
+            />
+          }
+        />
 
-        <Tabs value={activeChannel} onValueChange={(v) => setActiveChannel(v as ExpansionChannel)}>
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <TabsList>
-              {EXPANSION_CHANNELS.map((ch) => (
-                <TabsTrigger key={ch.key} value={ch.key}>{ch.label}</TabsTrigger>
-              ))}
-            </TabsList>
-            <div className="relative w-64">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher un lead..."
-                className="pl-8"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-          </div>
+        <ChannelKPIs
+          channel={activeChannel}
+          onOpenPipeline={() => setView("kanban")}
+          onOpenAnalytics={() => setView("analytics")}
+        />
 
-          {EXPANSION_CHANNELS.map((ch) => (
-            <TabsContent key={ch.key} value={ch.key} className="mt-4 space-y-6">
-              <ChannelKPIs channel={ch.key} />
-              <ChannelPipeline
-                channel={ch.key}
-                search={search}
-                editable={editable}
-                onEdit={openEdit}
-              />
-            </TabsContent>
-          ))}
-        </Tabs>
-      </div>
+        <FilterBar
+          search={{
+            value: search,
+            onChange: setSearch,
+            placeholder: "Rechercher un lead...",
+            ariaLabel: "Rechercher un lead",
+          }}
+          actions={
+            <SegmentedControl<PipelineView>
+              value={view}
+              onChange={setView}
+              size="sm"
+              ariaLabel="Vue du pipeline"
+              options={[
+                { value: "kanban", label: "Pipeline", icon: KanbanSquare },
+                { value: "analytics", label: "Analyses", icon: BarChart3 },
+              ]}
+            />
+          }
+          activeFilters={
+            search
+              ? [{ key: "search", label: `Recherche : ${search}`, onRemove: () => setSearch("") }]
+              : undefined
+          }
+        />
+
+        <ChannelPipeline
+          channel={activeChannel}
+          search={search}
+          editable={editable}
+          view={view}
+          onEdit={openEdit}
+        />
+      </PageShell>
 
       <LeadFormDialog
         open={formOpen}

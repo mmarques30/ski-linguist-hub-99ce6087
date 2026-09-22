@@ -1,8 +1,9 @@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { GraduationCap } from "lucide-react";
 import { toast } from "sonner";
+import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import {
   useSetStudentPortalEnabled,
   useStudentPortalEnabled,
@@ -30,31 +31,33 @@ export function StudentPortalEnabledCard() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Portail stagiaire</CardTitle>
-        <CardDescription>
-          Autorise l&apos;envoi d&apos;invitations (lien magique) depuis les fiches
-          stagiaire. Désactivé hors saison.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-        ) : (
-          <div className="flex items-center justify-between gap-4">
-            <Label htmlFor="student-portal-enabled" className="cursor-pointer">
-              Invitations portail activées
-            </Label>
-            <Switch
-              id="student-portal-enabled"
-              checked={enabled}
-              disabled={setEnabled.isPending}
-              onCheckedChange={handleChange}
-            />
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <SurfaceCard
+      title="Portail stagiaire"
+      icon={GraduationCap}
+      description="Autorise l'envoi d'invitations (lien magique) depuis les fiches stagiaire. Désactivé hors saison."
+      actions={
+        isLoading ? undefined : (
+          <StatusPill tone={enabled ? "success" : "neutral"} dot>
+            {enabled ? "Activé" : "Désactivé"}
+          </StatusPill>
+        )
+      }
+    >
+      {isLoading ? (
+        <Skeleton className="h-10 w-full rounded-[var(--radius)]" />
+      ) : (
+        <div className="flex items-center justify-between gap-4 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))] px-3 py-2.5">
+          <Label htmlFor="student-portal-enabled" className="cursor-pointer">
+            Invitations portail activées
+          </Label>
+          <Switch
+            id="student-portal-enabled"
+            checked={enabled}
+            disabled={setEnabled.isPending}
+            onCheckedChange={handleChange}
+          />
+        </div>
+      )}
+    </SurfaceCard>
   );
 }

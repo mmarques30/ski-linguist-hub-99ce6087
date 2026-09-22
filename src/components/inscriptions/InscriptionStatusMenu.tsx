@@ -10,7 +10,6 @@ import {
   Receipt,
   XCircle,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,7 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+import { StatusPill, toneForStatus } from "@/components/ui-kit";
 import { useUpdateInscriptionStatus } from "@/hooks/useInscriptions";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
 import {
@@ -28,7 +27,6 @@ import {
   describeRefusedTransition,
   getNextStatuses,
   getStatusLabel,
-  getStatusStyle,
   type InscriptionStatus,
 } from "@/lib/inscription-status";
 import { todayKey } from "@/lib/schedule-validation";
@@ -72,7 +70,9 @@ export function InscriptionStatusMenu({
   );
 
   const badge = (
-    <Badge className={getStatusStyle(status)}>{getStatusLabel(status, "fr")}</Badge>
+    <StatusPill tone={toneForStatus(status)} icon={STATUS_ICON[status as InscriptionStatus]}>
+      {getStatusLabel(status, "fr")}
+    </StatusPill>
   );
 
   const apply = async (cible: InscriptionStatus) => {
@@ -130,9 +130,13 @@ export function InscriptionStatusMenu({
             className="h-auto gap-1 p-0 hover:bg-transparent"
             disabled={updateStatus.isPending}
           >
-            <Badge className={cn(getStatusStyle(status), "cursor-pointer hover:opacity-80")}>
+            <StatusPill
+              tone={toneForStatus(status)}
+              icon={STATUS_ICON[status as InscriptionStatus]}
+              className="cursor-pointer transition-opacity hover:opacity-80"
+            >
               {getStatusLabel(status, "fr")}
-            </Badge>
+            </StatusPill>
             {updateStatus.isPending ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
             ) : (

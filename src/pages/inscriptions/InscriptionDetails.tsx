@@ -4,10 +4,23 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  CardGrid,
+  DefinitionList,
+  PageHeader,
+  PageShell,
+  SegmentedControl,
+  StatusPill,
+  SurfaceCard,
+  TableCell,
+  TableEmpty,
+  TableFrame,
+  TableHeadCell,
+  TableHeadRow,
+  TableRow,
+  toneForStatus,
+} from "@/components/ui-kit";
 import { InscriptionOpsChecklist } from "@/components/inscriptions/InscriptionOpsChecklist";
 import { InscriptionFinancialPayments } from "@/components/inscriptions/InscriptionFinancialPayments";
 import { InscriptionFundingCard } from "@/components/inscriptions/InscriptionFundingCard";
@@ -34,23 +47,27 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { 
-  ArrowLeft, 
-  Calendar, 
-  Clock, 
-  Euro, 
-  GraduationCap, 
-  Loader2, 
-  Mail, 
-  MapPin, 
-  Phone, 
-  User, 
-  Building2, 
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Euro,
+  GraduationCap,
+  Loader2,
+  Mail,
+  MapPin,
+  Phone,
+  User,
+  Building2,
   FileText,
   Edit,
   Package,
   Receipt,
   Trash2,
+  ClipboardList,
+  Link2,
+  History,
+  Wallet,
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
@@ -118,16 +135,6 @@ const translations = {
   statusCompleted: { fr: "Terminée", "pt-BR": "Concluída", en: "Completed" },
   statusCancelled: { fr: "Annulée", "pt-BR": "Cancelada", en: "Cancelled" },
   statusBilled: { fr: "Facturée", "pt-BR": "Faturada", en: "Billed" },
-};
-
-const statusStyles: Record<string, string> = {
-  brouillon: "bg-gray-100 text-gray-800",
-  en_attente: "bg-yellow-100 text-yellow-800",
-  confirmee: "bg-blue-100 text-blue-800",
-  en_cours: "bg-indigo-100 text-indigo-800",
-  terminee: "bg-gray-100 text-gray-800",
-  facturee: "bg-emerald-100 text-emerald-800",
-  annulee: "bg-red-100 text-red-800",
 };
 
 const VALID_TABS = new Set([

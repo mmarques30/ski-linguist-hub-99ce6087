@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { StatusPill, toneForStatus } from "@/components/ui-kit";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Dialog,
@@ -50,7 +50,7 @@ export function PartnerDedupPanel({ partner, matches, onMerged }: PartnerDedupPa
 
   return (
     <>
-      <Alert className="border-violet-300 bg-violet-50 dark:bg-violet-950/20">
+      <Alert className="border-[hsl(var(--tint-purple-ring))] bg-[hsl(var(--tint-purple-bg))]">
         <GitMerge className="h-4 w-4" />
         <AlertTitle>Doublons détectés (BL-038)</AlertTitle>
         <AlertDescription className="space-y-3">
@@ -71,7 +71,7 @@ export function PartnerDedupPanel({ partner, matches, onMerged }: PartnerDedupPa
               return (
                 <li
                   key={m.partner.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius)] border border-border bg-card px-3 py-2 text-sm"
                 >
                   <div className="min-w-0 space-y-0.5">
                     <Link
@@ -81,8 +81,12 @@ export function PartnerDedupPanel({ partner, matches, onMerged }: PartnerDedupPa
                       {m.partner.name}
                     </Link>
                     <div className="flex flex-wrap gap-1 text-xs text-muted-foreground">
-                      <Badge variant="outline">{m.partner.status}</Badge>
-                      <Badge variant="outline">{m.partner.type}</Badge>
+                      <StatusPill tone={toneForStatus(m.partner.status)} size="sm">
+                        {m.partner.status}
+                      </StatusPill>
+                      <StatusPill tone="neutral" size="sm">
+                        {m.partner.type}
+                      </StatusPill>
                       <span>{partnerDedupReasonLabel(m.reason)}</span>
                       {m.partner.station ? <span>· {m.partner.station}</span> : null}
                     </div>

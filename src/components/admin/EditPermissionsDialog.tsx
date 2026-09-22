@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -16,6 +17,8 @@ import {
 } from "@/hooks/useUserManagement";
 import { ALL_ROUTE_KEYS } from "@/lib/route-permissions";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ShieldCheck } from "lucide-react";
 
 interface Props {
   userId: string | null;
@@ -69,19 +72,31 @@ export function EditPermissionsDialog({ userId, open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] max-w-xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Modifier les permissions</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-muted-foreground" aria-hidden />
+            Modifier les permissions
+          </DialogTitle>
+          <DialogDescription>
+            Cochez « Voir » pour donner l&apos;accès à une page, « Modifier » pour
+            autoriser l&apos;écriture. Seules les lignes cochées sont enregistrées.
+          </DialogDescription>
         </DialogHeader>
         {isLoading ? (
-          <p className="text-muted-foreground text-sm py-4">Chargement...</p>
+          <div className="space-y-3 py-2" aria-busy="true">
+            <span className="sr-only">Chargement...</span>
+            {[0, 1, 2].map((index) => (
+              <Skeleton key={index} className="h-12 w-full rounded-[var(--radius)]" />
+            ))}
+          </div>
         ) : (
           <div className="space-y-4">
             <UserPermissionsEditor
               permissions={permissions}
               onChange={setPermissions}
             />
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Annuler
               </Button>

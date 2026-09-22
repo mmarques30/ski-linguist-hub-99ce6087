@@ -3,6 +3,14 @@ import { LucideIcon, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+/**
+ * État vide partagé par tout l'applicatif — même grammaire que `TableEmpty`
+ * du kit (chip d'icône encastré, titre, description, action).
+ *
+ * Contrat stable : les props et le nom exporté ne changent pas, d'autres
+ * écrans en dépendent. Seule l'habillage suit le design system.
+ */
+
 interface EmptyStateProps {
   icon?: LucideIcon;
   title: string;
@@ -27,21 +35,19 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center rounded-lg border border-dashed bg-card/50 px-6 py-16 text-center",
+        "flex flex-col items-center justify-center rounded-[var(--radius-card)] border border-dashed border-border bg-card/60 px-6 py-14 text-center",
         className
       )}
     >
-      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-        <Icon className="h-8 w-8 text-muted-foreground" />
-      </div>
-      <h3 className="text-lg font-semibold">{title}</h3>
+      <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-pill bg-[hsl(var(--surface-sunken))]">
+        <Icon className="h-7 w-7 text-muted-foreground" />
+      </span>
+      <h3 className="text-base font-semibold text-foreground">{title}</h3>
       {description && (
-        <p className="mt-2 max-w-md text-sm text-muted-foreground">
-          {description}
-        </p>
+        <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">{description}</p>
       )}
       {action && (
-        <Button onClick={action.onClick} className="mt-6">
+        <Button onClick={action.onClick} className="mt-5">
           {action.icon && <action.icon className="mr-2 h-4 w-4" />}
           {action.label}
         </Button>

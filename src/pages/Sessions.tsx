@@ -1,13 +1,11 @@
 import { useState, useMemo } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ChevronLeft, ChevronRight, Plus, Info } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, Info, CalendarRange, CalendarClock } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSeasonFilter } from "@/contexts/SeasonContext";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
@@ -15,12 +13,20 @@ import { useSessions, type Session } from "@/hooks/useSessions";
 import { SessionFormDialog } from "@/components/sessions/SessionFormDialog";
 import { SessionDetailPanel } from "@/components/sessions/SessionDetailPanel";
 import { UnassignedSidebar } from "@/components/sessions/UnassignedSidebar";
-import { LANG_BG } from "@/lib/session-utils";
+import { LANGUAGE_BLOCK_CLASS, toneForLanguage } from "@/components/sessions/session-tints";
 import { LANGUAGE_LABELS } from "@/lib/language-catalog";
+import {
+  FilterBar,
+  PageHeader,
+  PageShell,
+  SegmentedControl,
+  SplitLayout,
+  SurfaceCard,
+} from "@/components/ui-kit";
 import {
   startOfWeek, endOfWeek, startOfMonth, endOfMonth,
   addWeeks, subWeeks, addMonths, subMonths,
-  eachDayOfInterval, format, isSameDay, isToday,
+  eachDayOfInterval, format, isToday,
 } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -132,126 +138,175 @@ export default function Sessions() {
     ? `${format(rangeStart, "d MMM", { locale: fr })} — ${format(rangeEnd, "d MMM yyyy", { locale: fr })}`
     : format(currentDate, "MMMM yyyy", { locale: fr });
 
+  const instructorLabel = (id: string) => {
+    const hit = instructors?.find((i) => i.id === id);
+    return hit ? `${hit.first_name} ${hit.last_name}` : id;
+  };
+
+  /** Rappel des filtres actifs, effaçables un à un. */
+  const activeFilters = [
+    ...(filterLang !== "all"
+      ? [{ key: "lang", label: filterLang, onRemove: () => setFilterLang("all") }]
+      : []),
+    ...(filterInstructor !== "all"
+      ? [
+          {
+            key: "instructor",
+            label: instructorLabel(filterInstructor),
+            onRemove: () => setFilterInstructor("all"),
+          },
+        ]
+      : []),
+  ];
+
   return (
     <MainLayout>
-      <div className="flex gap-6">
-        {/* Main calendar area */}
-        <div className="flex-1 space-y-4 min-w-0">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">{t(translations.title)}</h1>
-              <p className="text-muted-foreground text-sm">{t(translations.subtitle)}</p>
-            </div>
-            {editable && (
+      <PageShell>
+        <PageHeader
+          title={t(translations.title)}
+          description={t(translations.subtitle)}
+          icon={CalendarDays}
+          tone="blue"
+          actions={
+            editable ? (
               <Button onClick={() => { setEditSession(null); setClickedSlot(null); setFormOpen(true); }}>
                 <Plus className="h-4 w-4 mr-2" />{t(translations.newSession)}
               </Button>
-            )}
-          </div>
+            ) : undefined
+          }
+        />
 
-          {/* Navigation bar */}
-          <div className="flex items-center justify-between rounded-lg border bg-card p-3">
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigate(-1)}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <h2 className="text-sm font-semibold capitalize min-w-[180px] text-center">{headerLabel}</h2>
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigate(1)}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setCurrentDate(new Date())}>
-                {t(translations.today)}
-              </Button>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="flex border rounded-md overflow-hidden">
-                <Button
-                  variant={viewMode === "week" ? "default" : "ghost"}
-                  size="sm" className="rounded-none h-8"
-                  onClick={() => setViewMode("week")}
-                >
-                  {t(translations.week)}
-                </Button>
-                <Button
-                  variant={viewMode === "month" ? "default" : "ghost"}
-                  size="sm" className="rounded-none h-8"
-                  onClick={() => setViewMode("month")}
-                >
-                  {t(translations.month)}
-                </Button>
-              </div>
-              <Select value={filterLang} onValueChange={setFilterLang}>
-                <SelectTrigger className="w-[150px] h-8 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t(translations.allLangs)}</SelectItem>
-                  {LANGUAGE_LABELS.map((l) => (
-                    <SelectItem key={l} value={l}>{l}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={filterInstructor} onValueChange={setFilterInstructor}>
-                <SelectTrigger className="w-[160px] h-8 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t(translations.allInstructors)}</SelectItem>
-                  {instructors?.map((i) => (
-                    <SelectItem key={i.id} value={i.id}>{i.first_name} {i.last_name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+        <SplitLayout
+          main={
+            <>
+              {(sessions?.length ?? 0) === 0 && (
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertTitle>Aucune session sur cette période</AlertTitle>
+                  <AlertDescription>
+                    Le planning est vide pour les dates affichées
+                    {filterLang !== "all" || filterInstructor !== "all"
+                      ? " (avec les filtres actifs)"
+                      : ""}
+                    . Ce n&apos;est pas un bug : créez une session ou changez de semaine / mois.
+                  </AlertDescription>
+                </Alert>
+              )}
 
-          {(sessions?.length ?? 0) === 0 && (
-            <Alert>
-              <Info className="h-4 w-4" />
-              <AlertTitle>Aucune session sur cette période</AlertTitle>
-              <AlertDescription>
-                Le planning est vide pour les dates affichées
-                {filterLang !== "all" || filterInstructor !== "all"
-                  ? " (avec les filtres actifs)"
-                  : ""}
-                . Ce n&apos;est pas un bug : créez une session ou changez de semaine / mois.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Calendar */}
-          {viewMode === "week" ? (
-            <WeekView
-              days={days}
-              sessionsByDay={sessionsByDay}
-              onSlotClick={handleSlotClick}
-              onSessionClick={handleSessionClick}
-              selectedSessionId={selectedSession?.id}
-            />
-          ) : (
-            <MonthView
-              days={days}
-              sessionsByDay={sessionsByDay}
-              onDayClick={(day) => handleSlotClick(day, 9)}
-              onSessionClick={handleSessionClick}
-              currentDate={currentDate}
-            />
-          )}
-        </div>
-
-        {/* Right sidebar */}
-        <div className="w-72 shrink-0 space-y-4 hidden lg:block">
-          {selectedSession ? (
-            <SessionDetailPanel
-              session={selectedSession}
-              onClose={() => setSelectedSession(null)}
-              onEdit={handleEditSession}
-            />
-          ) : null}
-          <UnassignedSidebar selectedSessionId={selectedSession?.id} />
-        </div>
-      </div>
+              <SurfaceCard
+                flush
+                title={<span className="capitalize">{headerLabel}</span>}
+                actions={
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => navigate(-1)}
+                      aria-label="Période précédente"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => navigate(1)}
+                      aria-label="Période suivante"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setCurrentDate(new Date())}>
+                      {t(translations.today)}
+                    </Button>
+                  </div>
+                }
+                toolbar={
+                  <FilterBar
+                    filters={
+                      <>
+                        <Select value={filterLang} onValueChange={setFilterLang}>
+                          <SelectTrigger className="h-9 w-full text-xs sm:w-[170px]" aria-label={t(translations.allLangs)}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">{t(translations.allLangs)}</SelectItem>
+                            {LANGUAGE_LABELS.map((l) => (
+                              <SelectItem key={l} value={l}>{l}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Select value={filterInstructor} onValueChange={setFilterInstructor}>
+                          <SelectTrigger className="h-9 w-full text-xs sm:w-[190px]" aria-label={t(translations.allInstructors)}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">{t(translations.allInstructors)}</SelectItem>
+                            {instructors?.map((i) => (
+                              <SelectItem key={i.id} value={i.id}>{i.first_name} {i.last_name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </>
+                    }
+                    actions={
+                      <SegmentedControl<"week" | "month">
+                        value={viewMode}
+                        onChange={setViewMode}
+                        size="sm"
+                        ariaLabel={t(translations.title)}
+                        options={[
+                          { value: "week", label: t(translations.week), icon: CalendarRange },
+                          { value: "month", label: t(translations.month), icon: CalendarClock },
+                        ]}
+                      />
+                    }
+                    activeFilters={activeFilters}
+                    onClearAll={
+                      activeFilters.length > 0
+                        ? () => {
+                            setFilterLang("all");
+                            setFilterInstructor("all");
+                          }
+                        : undefined
+                    }
+                  />
+                }
+              >
+                {viewMode === "week" ? (
+                  <WeekView
+                    days={days}
+                    sessionsByDay={sessionsByDay}
+                    onSlotClick={handleSlotClick}
+                    onSessionClick={handleSessionClick}
+                    selectedSessionId={selectedSession?.id}
+                  />
+                ) : (
+                  <MonthView
+                    days={days}
+                    sessionsByDay={sessionsByDay}
+                    onDayClick={(day) => handleSlotClick(day, 9)}
+                    onSessionClick={handleSessionClick}
+                    currentDate={currentDate}
+                  />
+                )}
+              </SurfaceCard>
+            </>
+          }
+          rail={
+            <>
+              {selectedSession ? (
+                <SessionDetailPanel
+                  session={selectedSession}
+                  onClose={() => setSelectedSession(null)}
+                  onEdit={handleEditSession}
+                />
+              ) : null}
+              <UnassignedSidebar selectedSessionId={selectedSession?.id} />
+            </>
+          }
+        />
+      </PageShell>
 
       <SessionFormDialog
         open={formOpen}
@@ -278,83 +333,83 @@ function WeekView({
   selectedSessionId?: string;
 }) {
   return (
-    <div className="border rounded-lg bg-card overflow-hidden">
-      {/* Day headers */}
-      <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b">
-        <div className="p-2" />
-        {days.slice(0, 7).map((day) => (
-          <div
-            key={day.toISOString()}
-            className={cn(
-              "p-2 text-center text-xs font-medium border-l",
-              isToday(day) && "bg-primary/5"
-            )}
-          >
-            <div className="text-muted-foreground capitalize">{format(day, "EEE", { locale: fr })}</div>
-            <div className={cn(
-              "text-lg font-semibold",
-              isToday(day) && "text-primary"
-            )}>{format(day, "d")}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Time grid */}
-      <div className="grid grid-cols-[60px_repeat(7,1fr)] max-h-[600px] overflow-y-auto">
-        {HOURS.map((hour) => (
-          <div key={hour} className="contents">
-            <div className="p-1.5 text-[10px] text-muted-foreground text-right border-t h-14 flex items-start justify-end pr-2">
-              {hour}:00
+    <div className="overflow-x-auto scrollbar-thin">
+      <div className="min-w-[640px]">
+        {/* Day headers */}
+        <div className="grid grid-cols-[52px_repeat(7,1fr)] border-y border-border bg-[hsl(var(--surface-sunken))]">
+          <div className="p-2" />
+          {days.slice(0, 7).map((day) => (
+            <div
+              key={day.toISOString()}
+              className={cn(
+                "border-l border-border p-2 text-center text-xs font-medium",
+                isToday(day) && "bg-primary/5"
+              )}
+            >
+              <div className="capitalize text-muted-foreground">{format(day, "EEE", { locale: fr })}</div>
+              <div className={cn("text-lg font-semibold tabular", isToday(day) && "text-primary")}>
+                {format(day, "d")}
+              </div>
             </div>
-            {days.slice(0, 7).map((day) => {
-              const key = format(day, "yyyy-MM-dd");
-              const daySessions = sessionsByDay.get(key) || [];
-              const hourSessions = daySessions.filter((s) => {
-                const h = new Date(s.start_datetime).getHours();
-                return h === hour;
-              });
+          ))}
+        </div>
 
-              return (
-                <div
-                  key={`${key}-${hour}`}
-                  className={cn(
-                    "border-t border-l h-14 relative cursor-pointer hover:bg-muted/30 transition-colors",
-                    isToday(day) && "bg-primary/[0.02]"
-                  )}
-                  onClick={() => onSlotClick(day, hour)}
-                >
-                  {hourSessions.map((s) => {
-                    const startH = new Date(s.start_datetime).getHours();
-                    const endH = new Date(s.end_datetime).getHours();
-                    const durationBlocks = Math.max(endH - startH, 1);
-                    const colorClasses = LANG_BG[s.language] || "bg-muted border-border text-foreground";
+        {/* Time grid */}
+        <div className="grid max-h-[600px] grid-cols-[52px_repeat(7,1fr)] overflow-y-auto scrollbar-thin">
+          {HOURS.map((hour) => (
+            <div key={hour} className="contents">
+              <div className="flex h-14 items-start justify-end border-t border-border p-1.5 pr-2 text-2xs tabular text-muted-foreground">
+                {hour}:00
+              </div>
+              {days.slice(0, 7).map((day) => {
+                const key = format(day, "yyyy-MM-dd");
+                const daySessions = sessionsByDay.get(key) || [];
+                const hourSessions = daySessions.filter((s) => {
+                  const h = new Date(s.start_datetime).getHours();
+                  return h === hour;
+                });
 
-                    return (
-                      <div
-                        key={s.id}
-                        className={cn(
-                          "absolute inset-x-0.5 rounded border px-1 py-0.5 text-[10px] leading-tight cursor-pointer z-10 overflow-hidden",
-                          colorClasses,
-                          selectedSessionId === s.id && "ring-2 ring-primary"
-                        )}
-                        style={{ height: `${durationBlocks * 56 - 4}px`, top: 0 }}
-                        onClick={(e) => { e.stopPropagation(); onSessionClick(s); }}
-                      >
-                        <div className="font-semibold truncate">{s.title}</div>
-                        <div className="truncate">
-                          {format(new Date(s.start_datetime), "HH:mm")}–{format(new Date(s.end_datetime), "HH:mm")}
+                return (
+                  <div
+                    key={`${key}-${hour}`}
+                    className={cn(
+                      "relative h-14 cursor-pointer border-l border-t border-border transition-colors hover:bg-[hsl(var(--surface-sunken))]",
+                      isToday(day) && "bg-primary/[0.03]"
+                    )}
+                    onClick={() => onSlotClick(day, hour)}
+                  >
+                    {hourSessions.map((s) => {
+                      const startH = new Date(s.start_datetime).getHours();
+                      const endH = new Date(s.end_datetime).getHours();
+                      const durationBlocks = Math.max(endH - startH, 1);
+
+                      return (
+                        <div
+                          key={s.id}
+                          className={cn(
+                            "absolute inset-x-0.5 z-10 cursor-pointer overflow-hidden rounded-sm border px-1 py-0.5 text-2xs leading-tight shadow-xs",
+                            LANGUAGE_BLOCK_CLASS[toneForLanguage(s.language)],
+                            selectedSessionId === s.id && "ring-2 ring-primary"
+                          )}
+                          style={{ height: `${durationBlocks * 56 - 4}px`, top: 0 }}
+                          onClick={(e) => { e.stopPropagation(); onSessionClick(s); }}
+                        >
+                          <div className="truncate font-semibold">{s.title}</div>
+                          <div className="truncate tabular">
+                            {format(new Date(s.start_datetime), "HH:mm")}–{format(new Date(s.end_datetime), "HH:mm")}
+                          </div>
+                          {s.instructor_last_name && (
+                            <div className="truncate opacity-75">{s.instructor_first_name} {s.instructor_last_name}</div>
+                          )}
                         </div>
-                        {s.instructor_last_name && (
-                          <div className="truncate opacity-75">{s.instructor_first_name} {s.instructor_last_name}</div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })}
-          </div>
-        ))}
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -380,56 +435,58 @@ function MonthView({
   const paddingBefore = (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
 
   return (
-    <div className="border rounded-lg bg-card overflow-hidden">
-      {/* Day of week headers */}
-      <div className="grid grid-cols-7 border-b">
-        {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((d) => (
-          <div key={d} className="p-2 text-center text-xs font-medium text-muted-foreground">{d}</div>
-        ))}
-      </div>
-      <div className="grid grid-cols-7">
-        {/* Empty padding cells */}
-        {Array.from({ length: paddingBefore }).map((_, i) => (
-          <div key={`pad-${i}`} className="border-t border-r min-h-[100px] bg-muted/20" />
-        ))}
-        {days.map((day) => {
-          const key = format(day, "yyyy-MM-dd");
-          const daySessions = sessionsByDay.get(key) || [];
-          return (
+    <div className="overflow-x-auto scrollbar-thin">
+      <div className="min-w-[640px]">
+        {/* Day of week headers */}
+        <div className="grid grid-cols-7 border-y border-border bg-[hsl(var(--surface-sunken))]">
+          {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((d) => (
+            <div key={d} className="p-2 text-center text-xs font-medium text-muted-foreground">{d}</div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7">
+          {/* Empty padding cells */}
+          {Array.from({ length: paddingBefore }).map((_, i) => (
             <div
-              key={key}
-              className={cn(
-                "border-t border-r min-h-[100px] p-1.5 cursor-pointer hover:bg-muted/30 transition-colors",
-                isToday(day) && "bg-primary/5"
-              )}
-              onClick={() => onDayClick(day)}
-            >
-              <div className={cn(
-                "text-xs font-medium mb-1",
-                isToday(day) && "text-primary font-bold"
-              )}>
-                {format(day, "d")}
-              </div>
-              <div className="space-y-0.5">
-                {daySessions.slice(0, 3).map((s) => {
-                  const colorClasses = LANG_BG[s.language] || "bg-muted text-foreground";
-                  return (
+              key={`pad-${i}`}
+              className="min-h-[100px] border-r border-t border-border bg-[hsl(var(--surface-sunken))]"
+            />
+          ))}
+          {days.map((day) => {
+            const key = format(day, "yyyy-MM-dd");
+            const daySessions = sessionsByDay.get(key) || [];
+            return (
+              <div
+                key={key}
+                className={cn(
+                  "min-h-[100px] cursor-pointer border-r border-t border-border p-1.5 transition-colors hover:bg-[hsl(var(--surface-sunken))]",
+                  isToday(day) && "bg-primary/5"
+                )}
+                onClick={() => onDayClick(day)}
+              >
+                <div className={cn("mb-1 text-xs font-medium tabular", isToday(day) && "font-bold text-primary")}>
+                  {format(day, "d")}
+                </div>
+                <div className="space-y-0.5">
+                  {daySessions.slice(0, 3).map((s) => (
                     <div
                       key={s.id}
-                      className={cn("text-[9px] px-1 py-0.5 rounded truncate border", colorClasses)}
+                      className={cn(
+                        "truncate rounded-sm border px-1 py-0.5 text-2xs",
+                        LANGUAGE_BLOCK_CLASS[toneForLanguage(s.language)]
+                      )}
                       onClick={(e) => { e.stopPropagation(); onSessionClick(s); }}
                     >
                       {format(new Date(s.start_datetime), "HH:mm")} {s.title}
                     </div>
-                  );
-                })}
-                {daySessions.length > 3 && (
-                  <div className="text-[9px] text-muted-foreground">+{daySessions.length - 3} autres</div>
-                )}
+                  ))}
+                  {daySessions.length > 3 && (
+                    <div className="text-2xs text-muted-foreground">+{daySessions.length - 3} autres</div>
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

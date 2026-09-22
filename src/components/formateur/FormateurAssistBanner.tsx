@@ -9,7 +9,7 @@ export function FormateurAssistBanner() {
   if (!isAssistMode) return null;
 
   return (
-    <div className="bg-amber-100 border border-amber-300 text-amber-950 rounded-lg px-4 py-2.5 mb-4 flex flex-wrap items-center justify-between gap-2 text-sm">
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius-card)] border border-[hsl(var(--tint-gold-ring))] bg-[hsl(var(--tint-gold-bg))] px-4 py-2.5 text-sm text-[hsl(var(--tint-gold-fg))]">
       <div className="flex items-center gap-2 font-medium">
         <Eye className="h-4 w-4 shrink-0" />
         <span>
@@ -17,7 +17,7 @@ export function FormateurAssistBanner() {
           {instructorName || "ce formateur"}
         </span>
       </div>
-      <Button variant="outline" size="sm" className="h-8 bg-white" asChild>
+      <Button variant="outline" size="sm" className="h-8 bg-card" asChild>
         <Link to={instructorId ? `/formateurs/${instructorId}` : "/formateurs"}>
           <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
           Quitter

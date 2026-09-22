@@ -6,6 +6,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ROUTE_GROUPS } from "@/lib/route-permissions";
+import { StatusPill } from "@/components/ui-kit";
 
 export interface PermissionEntry {
   route_key: string;
@@ -18,6 +19,13 @@ interface Props {
   onChange: (permissions: PermissionEntry[]) => void;
 }
 
+/**
+ * Matrice de permissions : une section par groupe de routes, une ligne par
+ * clé de route, deux colonnes « Voir » / « Modifier ».
+ *
+ * Sous `sm`, les colonnes ne sont pas comprimées : la ligne s'empile et
+ * chaque case porte son propre libellé visible.
+ */
 export function UserPermissionsEditor({ permissions, onChange }: Props) {
   const getPerm = (key: string) =>
     permissions.find((p) => p.route_key === key) || {
@@ -54,55 +62,82 @@ export function UserPermissionsEditor({ permissions, onChange }: Props) {
   };
 
   return (
-    <Accordion type="multiple" defaultValue={ROUTE_GROUPS.map((g) => g.label)} className="w-full">
+    <Accordion
+      type="multiple"
+      defaultValue={ROUTE_GROUPS.map((g) => g.label)}
+      className="w-full space-y-2"
+    >
       {ROUTE_GROUPS.map((group) => {
         const groupKeys = group.routes.map((r) => r.key);
         const allChecked = groupKeys.every((k) => getPerm(k).can_view);
+        const grantedCount = groupKeys.filter((k) => getPerm(k).can_view).length;
 
         return (
-          <AccordionItem key={group.label} value={group.label}>
-            <AccordionTrigger className="text-sm font-medium">
-              <div className="flex items-center gap-3">
-                <Checkbox
-                  checked={allChecked}
-                  onCheckedChange={(v) => {
-                    toggleGroupAll(groupKeys, !!v);
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <span>{group.label}</span>
+          <AccordionItem
+            key={group.label}
+            value={group.label}
+            className="overflow-hidden rounded-[var(--radius)] border border-border bg-card"
+          >
+            <AccordionTrigger className="px-3 py-2.5 text-sm font-semibold hover:no-underline">
+              <div className="flex min-w-0 flex-1 items-center justify-between gap-3 pr-2">
+                <span className="flex min-w-0 items-center gap-3">
+                  <Checkbox
+                    checked={allChecked}
+                    aria-label={`Tout cocher — ${group.label}`}
+                    onCheckedChange={(v) => {
+                      toggleGroupAll(groupKeys, !!v);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <span className="truncate text-left">{group.label}</span>
+                </span>
+                <StatusPill tone={grantedCount > 0 ? "info" : "neutral"} size="sm">
+                  {grantedCount}/{groupKeys.length}
+                </StatusPill>
               </div>
             </AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-2 pl-4">
-                <div className="grid grid-cols-[1fr_80px_80px] gap-2 text-xs text-muted-foreground font-medium pb-1 border-b">
-                  <span>Page</span>
-                  <span className="text-center">Voir</span>
-                  <span className="text-center">Modifier</span>
-                </div>
+
+            <AccordionContent className="border-t border-border pb-0">
+              {/* En-tête de colonnes — masqué quand la ligne s'empile. */}
+              <div className="hidden grid-cols-[minmax(0,1fr)_72px_72px] gap-2 bg-[hsl(var(--surface-sunken))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid">
+                <span>Page</span>
+                <span className="text-center">Voir</span>
+                <span className="text-center">Modifier</span>
+              </div>
+
+              <div className="divide-y divide-border">
                 {group.routes.map((route) => {
                   const perm = getPerm(route.key);
                   return (
                     <div
                       key={route.key}
-                      className="grid grid-cols-[1fr_80px_80px] gap-2 items-center py-1"
+                      className="flex flex-col gap-2 px-3 py-2.5 sm:grid sm:grid-cols-[minmax(0,1fr)_72px_72px] sm:items-center sm:gap-2"
                     >
-                      <span className="text-sm">{route.label}</span>
-                      <div className="flex justify-center">
-                        <Checkbox
-                          checked={perm.can_view}
-                          onCheckedChange={(v) =>
-                            setPerm(route.key, "can_view", !!v)
-                          }
-                        />
-                      </div>
-                      <div className="flex justify-center">
-                        <Checkbox
-                          checked={perm.can_edit}
-                          onCheckedChange={(v) =>
-                            setPerm(route.key, "can_edit", !!v)
-                          }
-                        />
+                      <span className="min-w-0 text-sm text-foreground sm:truncate">
+                        {route.label}
+                      </span>
+
+                      <div className="flex items-center gap-4 sm:contents">
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground sm:justify-center sm:gap-0">
+                          <Checkbox
+                            checked={perm.can_view}
+                            aria-label={`Voir — ${route.label}`}
+                            onCheckedChange={(v) =>
+                              setPerm(route.key, "can_view", !!v)
+                            }
+                          />
+                          <span className="sm:hidden">Voir</span>
+                        </label>
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground sm:justify-center sm:gap-0">
+                          <Checkbox
+                            checked={perm.can_edit}
+                            aria-label={`Modifier — ${route.label}`}
+                            onCheckedChange={(v) =>
+                              setPerm(route.key, "can_edit", !!v)
+                            }
+                          />
+                          <span className="sm:hidden">Modifier</span>
+                        </label>
                       </div>
                     </div>
                   );

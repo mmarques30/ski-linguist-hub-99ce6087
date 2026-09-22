@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { StatusPill } from "@/components/ui-kit";
 import { Link2, UserRound, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -92,10 +92,9 @@ export function EvaluationStudentBridge({
   if (studentId) {
     return (
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="secondary" className="gap-1 font-normal">
-          <UserRound className="h-3 w-3" />
+        <StatusPill tone="success" icon={UserRound} size="sm">
           Stagiaire lié
-        </Badge>
+        </StatusPill>
         <Button asChild variant="link" size="sm" className="h-auto px-0">
           <Link to={`/students/${studentId}`}>Voir la fiche</Link>
         </Button>
@@ -161,7 +160,7 @@ export function EvaluationStudentBridge({
                 <button
                   key={s.id}
                   type="button"
-                  className="flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm hover:bg-accent"
+                  className="flex w-full items-center justify-between rounded-[var(--radius)] border border-border px-3 py-2 text-left text-sm transition-colors hover:bg-[hsl(var(--surface-sunken))]"
                   onClick={() => linkMutation.mutate(s.id)}
                   disabled={linkMutation.isPending}
                 >
