@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import fliLogo from "@/assets/fli-marca-black.png";
+import fliLogoDark from "@/assets/fli-marca-yellow.png";
 
 const authSchema = z.object({
   email: z
@@ -102,7 +103,13 @@ export function AuthCard() {
             <img
               src={fliLogo}
               alt="FLI - France Langues International"
-              className="h-14 w-auto sm:h-16"
+              className="h-14 w-auto dark:hidden sm:h-16"
+            />
+            <img
+              src={fliLogoDark}
+              alt=""
+              aria-hidden
+              className="hidden h-14 w-auto dark:block sm:h-16"
             />
           </motion.div>
 

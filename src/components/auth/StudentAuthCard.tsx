@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { IconChip } from "@/components/ui-kit";
 import fliLogo from "@/assets/fli-marca-black.png";
+import fliLogoDark from "@/assets/fli-marca-yellow.png";
 
 const emailSchema = z.object({
   email: z.string().trim().email("Format d'email invalide"),
@@ -52,7 +53,13 @@ export function StudentAuthCard() {
   return (
     <div className="fli-surface fli-glass mx-auto w-full max-w-md rounded-[var(--radius-panel)] border-border/60 p-6 shadow-xl sm:p-7">
       <div className="space-y-4 text-center">
-        <img src={fliLogo} alt="FLI" className="mx-auto h-12 w-auto" />
+        <img src={fliLogo} alt="FLI" className="mx-auto h-12 w-auto dark:hidden" />
+        <img
+          src={fliLogoDark}
+          alt=""
+          aria-hidden
+          className="mx-auto hidden h-12 w-auto dark:block"
+        />
         <div className="space-y-1">
           <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
             Espace stagiaire
