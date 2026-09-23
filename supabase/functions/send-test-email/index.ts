@@ -28,7 +28,7 @@ const TEST_VARIABLES: Record<string, string> = {
   location_details: "Salle A — chalet FLI",
   modality_label: "Présentiel",
   slope_label: "Piste verte",
-  schedule_label: "Groupe matin, 9 h à 12 h",
+  schedule_label: "Groupe matin, de 8h30 à 12h30",
   total_hours: "30",
   student_count: "8",
   invoice_number: "26-27.99999",

@@ -2,6 +2,24 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { ScheduleStatus } from "@/lib/placement-test-engine";
+import {
+  scheduleTextForSlot,
+  type FliScheduleSlot,
+} from "@/lib/fli-schedule-slots";
+
+/** Payload J-10 : jeton technique + plage FLI exacte (BL-019). Ne touche pas `code`. */
+export function buildScheduleApprovalPatch(
+  scheduleStatus: Exclude<ScheduleStatus, "pending">,
+  approvedBy: string | null
+) {
+  const slot = scheduleStatus as FliScheduleSlot;
+  return {
+    schedule_status: scheduleStatus,
+    schedule: scheduleTextForSlot(slot),
+    schedule_approved_at: new Date().toISOString(),
+    schedule_approved_by: approvedBy,
+  };
+}
 
 export function useApproveSchedule() {
   const queryClient = useQueryClient();
@@ -17,12 +35,7 @@ export function useApproveSchedule() {
     }) => {
       const { data, error } = await supabase
         .from("inscriptions")
-        .update({
-          schedule_status: scheduleStatus,
-          schedule: scheduleStatus,
-          schedule_approved_at: new Date().toISOString(),
-          schedule_approved_by: user?.id || null,
-        })
+        .update(buildScheduleApprovalPatch(scheduleStatus, user?.id || null))
         .eq("id", inscriptionId)
         .select()
         .single();
@@ -55,12 +68,7 @@ export function useBulkApproveSchedule() {
 
       const { data, error } = await supabase
         .from("inscriptions")
-        .update({
-          schedule_status: scheduleStatus,
-          schedule: scheduleStatus,
-          schedule_approved_at: new Date().toISOString(),
-          schedule_approved_by: user?.id || null,
-        })
+        .update(buildScheduleApprovalPatch(scheduleStatus, user?.id || null))
         .in("id", inscriptionIds)
         .select("id");
 
