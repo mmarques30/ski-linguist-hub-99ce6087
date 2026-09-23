@@ -3780,10 +3780,6 @@ export type Database = {
         Args: { _dry_run?: boolean }
         Returns: Json
       }
-      _zztest_make_auth_user: {
-        Args: { _email: string; _password: string }
-        Returns: string
-      }
       activate_season: { Args: { p_season_id: string }; Returns: undefined }
       avancer_statuts_inscriptions: {
         Args: { _dry_run?: boolean }
