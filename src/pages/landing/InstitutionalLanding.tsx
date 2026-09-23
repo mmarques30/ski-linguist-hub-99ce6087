@@ -211,12 +211,22 @@ export default function InstitutionalLanding() {
             />
           </a>
 
-          <nav className="hidden items-center gap-7 text-sm font-medium text-[hsl(var(--fli-dark))] md:flex">
+          <nav
+            className={`hidden items-center gap-7 text-sm font-medium md:flex ${
+              scrolled
+                ? "text-[hsl(var(--fli-dark))]"
+                : "text-white/85"
+            }`}
+          >
             {NAV.map((item) => (
               <a
                 key={item.href}
                 href={item.href}
-                className="transition-colors hover:text-[hsl(var(--fli-orange))]"
+                className={`transition-colors ${
+                  scrolled
+                    ? "hover:text-[hsl(var(--fli-orange))]"
+                    : "hover:text-[hsl(var(--fli-yellow))]"
+                }`}
               >
                 {item.label}
               </a>
@@ -233,7 +243,11 @@ export default function InstitutionalLanding() {
             </Link>
             <button
               type="button"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border md:hidden"
+              className={`inline-flex h-10 w-10 items-center justify-center rounded-full border md:hidden ${
+                scrolled
+                  ? "border-border text-foreground"
+                  : "border-white/25 text-white"
+              }`}
               aria-expanded={menuOpen}
               aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"}
               onClick={() => setMenuOpen((o) => !o)}
@@ -263,25 +277,11 @@ export default function InstitutionalLanding() {
       </header>
 
       <main>
-        {/* —— Dobra 1 : Hero —— */}
+        {/* —— Dobra 1 : Hero —— fond gris foncé uni, sans photo de fond */}
         <section
           id="inicio"
-          className="relative overflow-hidden bg-[hsl(var(--fli-navy))] pt-16 text-white sm:pt-[4.25rem]"
+          className="relative overflow-hidden bg-[#2c2c2e] pt-16 text-white sm:pt-[4.25rem]"
         >
-          <div
-            className="pointer-events-none absolute inset-0 opacity-35"
-            style={{
-              backgroundImage: `url(${RECOMMENDED.atmosphereBg})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
-            aria-hidden
-          />
-          <div
-            className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[hsl(219_52%_12%/0.92)] via-[hsl(219_45%_16%/0.85)] to-[hsl(27_80%_28%/0.55)]"
-            aria-hidden
-          />
-
           <div className="relative mx-auto grid max-w-6xl gap-10 px-4 pb-8 pt-12 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-8 lg:pb-6 lg:pt-16">
             <div>
               <p className="lp-display text-xs font-semibold uppercase tracking-[0.22em] text-[hsl(var(--fli-yellow))]">
@@ -312,31 +312,27 @@ export default function InstitutionalLanding() {
               </div>
             </div>
 
-            <div className="relative mx-auto w-full max-w-md lg:max-w-none">
-              <div className="relative aspect-[4/5] overflow-hidden rounded-[1.5rem] bg-[hsl(219_40%_18%)] shadow-xl ring-1 ring-white/10 sm:aspect-[3/4] lg:aspect-[4/5]">
-                {/* Placeholder photo — remplacer par photo pro moniteur (spec §7) */}
-                <img
-                  src={RECOMMENDED.heroCharacter}
-                  alt="Moniteur de ski en formation FLI"
-                  className="absolute inset-0 h-full w-full object-contain object-bottom pt-8"
-                />
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[hsl(219_52%_10%/0.7)] to-transparent" />
-              </div>
+            <div className="relative mx-auto flex w-full max-w-md justify-center lg:max-w-none">
+              <img
+                src={RECOMMENDED.heroCharacter}
+                alt="Moniteur de ski en formation FLI"
+                className="relative z-10 max-h-[min(70vh,560px)] w-auto object-contain"
+              />
 
-              <div className="lp-float absolute -left-2 top-8 rounded-full bg-white px-3.5 py-2 text-xs font-semibold text-[hsl(var(--fli-navy))] shadow-lg sm:left-0 sm:text-sm">
+              <div className="lp-float absolute left-0 top-10 z-20 rounded-full bg-white px-3.5 py-2 text-xs font-semibold text-[hsl(var(--fli-navy))] shadow-lg sm:text-sm">
                 {BADGES[0]}
               </div>
-              <div className="lp-float lp-float-delay absolute -right-1 top-1/3 rounded-full bg-[hsl(var(--fli-yellow))] px-3.5 py-2 text-xs font-semibold text-[hsl(var(--fli-navy))] shadow-lg sm:right-2 sm:text-sm">
+              <div className="lp-float lp-float-delay absolute right-0 top-1/3 z-20 rounded-full bg-[hsl(var(--fli-yellow))] px-3.5 py-2 text-xs font-semibold text-[hsl(var(--fli-navy))] shadow-lg sm:text-sm">
                 {BADGES[1]}
               </div>
-              <div className="lp-float absolute bottom-16 left-4 rounded-full bg-white px-3.5 py-2 text-xs font-semibold text-[hsl(var(--fli-navy))] shadow-lg sm:bottom-20 sm:left-6 sm:text-sm">
+              <div className="lp-float absolute bottom-12 left-2 z-20 rounded-full bg-white px-3.5 py-2 text-xs font-semibold text-[hsl(var(--fli-navy))] shadow-lg sm:left-4 sm:text-sm">
                 {BADGES[2]}
               </div>
             </div>
           </div>
 
           {/* Barre d'indicateurs */}
-          <div className="relative border-t border-white/10 bg-black/25 backdrop-blur-sm">
+          <div className="relative border-t border-white/10 bg-black/20">
             <div className="mx-auto grid max-w-6xl grid-cols-2 gap-px sm:grid-cols-4">
               {INDICATORS.map((item) => (
                 <div key={item.value} className="px-4 py-5 text-center sm:py-6">
