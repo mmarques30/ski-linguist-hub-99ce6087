@@ -287,7 +287,7 @@ export default function InstitutionalLanding() {
               <p className="lp-display text-xs font-semibold uppercase tracking-[0.22em] text-[hsl(var(--fli-yellow))]">
                 France Langues International
               </p>
-              <h1 className="lp-display mt-4 max-w-xl text-3xl font-extrabold leading-[1.12] tracking-tight sm:text-4xl lg:text-[2.75rem]">
+              <h1 className="lp-display mt-4 max-w-xl text-3xl font-extrabold leading-[1.12] tracking-tight text-white sm:text-4xl lg:text-[2.75rem]">
                 Formez-vous dans la langue de votre métier, sans sacrifier votre saison.
               </h1>
               <p className="mt-5 max-w-lg text-base leading-relaxed text-white/80 sm:text-lg">
@@ -332,7 +332,7 @@ export default function InstitutionalLanding() {
           </div>
 
           {/* Barre d'indicateurs */}
-          <div className="relative border-t border-white/10 bg-black/20">
+          <div className="relative border-t border-white/10 bg-[#1f1f21]">
             <div className="mx-auto grid max-w-6xl grid-cols-2 gap-px sm:grid-cols-4">
               {INDICATORS.map((item) => (
                 <div key={item.value} className="px-4 py-5 text-center sm:py-6">
