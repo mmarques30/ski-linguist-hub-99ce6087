@@ -33,14 +33,16 @@ export type InscriptionDocumentsRow = {
   language?: string | null;
   start_date?: string | null;
   end_date?: string | null;
-  duration_hours?: number | null;
+  dates_to_confirm?: boolean | null;
+  duration_hours?: number | string | null;
   course_location?: string | null;
   modality?: string | null;
-  price?: number | null;
-  deposit_amount?: number | null;
-  balance_after_deposit?: number | null;
-  group_size?: number | null;
+  price?: number | string | null;
+  deposit_amount?: number | string | null;
+  balance_after_deposit?: number | string | null;
+  group_size?: number | string | null;
   funding_organization?: string | null;
+  payment_method?: string | null;
 };
 
 export type InscriptionDocumentPdfModel = {
@@ -51,9 +53,13 @@ export type InscriptionDocumentPdfModel = {
   studentDisplayName: string;
   studentCivility: string;
   studentAddressLines: string[];
+  studentEmail: string;
+  studentPhone: string;
+  studentCompany: string;
   language: string;
   startDateLabel: string;
   endDateLabel: string;
+  datesLabel: string;
   durationHoursLabel: string;
   locationLabel: string;
   modalityLabel: string;
@@ -62,6 +68,7 @@ export type InscriptionDocumentPdfModel = {
   depositLabel: string;
   balanceLabel: string;
   fundingLabel: string;
+  paymentTermsLabel: string;
   organization: OrganizationIdentity;
   organizationAddress: string;
   organizationLegalLines: string[];
@@ -73,6 +80,12 @@ export type InscriptionDocumentPdfModel = {
 
 function texte(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function asNumber(value: unknown): number | null {
+  if (value == null || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
 }
 
 function formatDateFr(iso: string | null | undefined): string {
@@ -96,12 +109,87 @@ function formatDateFr(iso: string | null | undefined): string {
   });
 }
 
-function formatEuros(amount: number | null | undefined): string {
-  if (amount == null || Number.isNaN(Number(amount))) return "—";
+function formatEuros(amount: number | string | null | undefined): string {
+  const n = asNumber(amount);
+  if (n == null) return "—";
   return new Intl.NumberFormat("fr-FR", {
     style: "currency",
     currency: "EUR",
-  }).format(Number(amount));
+  }).format(n);
+}
+
+function normalizeCivility(value: string | null | undefined): string {
+  const raw = texte(value).toLowerCase();
+  if (!raw) return "";
+  if (raw === "madame" || raw === "mme" || raw === "mlle" || raw === "mademoiselle") {
+    return "Mme";
+  }
+  if (raw === "monsieur" || raw === "m." || raw === "mr" || raw === "m") {
+    return "M.";
+  }
+  return texte(value);
+}
+
+function paymentMethodLabelFr(method: string | null | undefined): string {
+  const m = (method || "").toLowerCase();
+  if (m.includes("virement")) return "virement bancaire";
+  if (m.includes("cheque") || m.includes("chèque")) return "chèque";
+  if (m.includes("stripe") || m.includes("carte")) return "carte bancaire";
+  if (m.includes("especes") || m.includes("espèces")) return "espèces";
+  return method?.trim() || "selon les modalités convenues";
+}
+
+function buildDatesLabel(input: {
+  start_date?: string | null;
+  end_date?: string | null;
+  dates_to_confirm?: boolean | null;
+}): { startDateLabel: string; endDateLabel: string; datesLabel: string } {
+  const startDateLabel = formatDateFr(input.start_date);
+  const endDateLabel = formatDateFr(input.end_date);
+  if (input.dates_to_confirm) {
+    const wished = startDateLabel !== "—" ? startDateLabel : endDateLabel;
+    const datesLabel =
+      wished !== "—"
+        ? `À planifier — début souhaité le ${wished}`
+        : "À planifier";
+    return { startDateLabel: datesLabel, endDateLabel: datesLabel, datesLabel };
+  }
+  if (startDateLabel === endDateLabel) {
+    return {
+      startDateLabel,
+      endDateLabel,
+      datesLabel: startDateLabel,
+    };
+  }
+  return {
+    startDateLabel,
+    endDateLabel,
+    datesLabel: `du ${startDateLabel} au ${endDateLabel}`,
+  };
+}
+
+function buildPaymentTermsLabel(input: {
+  priceLabel: string;
+  depositLabel: string;
+  balanceLabel: string;
+  payment_method?: string | null;
+  fundingLabel: string;
+}): string {
+  const method = paymentMethodLabelFr(input.payment_method);
+  const parts = [
+    `Coût pédagogique total : ${input.priceLabel}.`,
+    `Frais de dossier / acompte : ${input.depositLabel} (mode : ${method}).`,
+    `Solde : ${input.balanceLabel}.`,
+  ];
+  if (input.fundingLabel && input.fundingLabel !== "—") {
+    parts.push(`Financement : ${input.fundingLabel}.`);
+  }
+  if ((input.payment_method || "").toLowerCase().includes("virement")) {
+    parts.push(
+      "Le solde peut être réglé par chèque à l'inscription, encaissé après clôture du dossier, sauf paiement intégral."
+    );
+  }
+  return parts.join(" ");
 }
 
 function modalityLabelFr(modality: string | null | undefined): string {
@@ -130,12 +218,12 @@ export function isOnlineModality(modality: string | null | undefined): boolean {
 /** Articles de la convention « formations en ligne » (texte Paula, Version 4). */
 export function buildOnlineConventionSections(input: {
   language: string;
-  startDateLabel: string;
-  endDateLabel: string;
+  datesLabel: string;
   durationHoursLabel: string;
   groupSizeLabel: string;
   studentAddressLines: string[];
   pedagogicalContact: string;
+  paymentTermsLabel: string;
 }): Array<{ title: string; paragraphs: string[] }> {
   const language = input.language || "la langue choisie";
   const addressHint = input.studentAddressLines.join(" ").trim();
@@ -168,11 +256,15 @@ export function buildOnlineConventionSections(input: {
       title: "Article IV : Organisation de l'action de formation",
       paragraphs: [
         `Lieu de la formation : ${lieu}.`,
-        `Dates de la formation : du ${input.startDateLabel} au ${input.endDateLabel}.`,
+        `Dates de la formation : ${input.datesLabel}.`,
         `Durée du pack : ${input.durationHoursLabel}.`,
         "Horaires : à définir en fonction de vos disponibilités et celles du professeur.",
         `Effectif : ${input.groupSizeLabel}.`,
       ],
+    },
+    {
+      title: "Article V : Prix et modalités de règlement",
+      paragraphs: [input.paymentTermsLabel],
     },
     {
       title: "Description des équipements",
@@ -219,10 +311,12 @@ function studentAddressLines(student: InscriptionDocumentsStudent): string[] {
 }
 
 function balanceAmount(row: InscriptionDocumentsRow): number | null {
-  if (row.balance_after_deposit != null) return Number(row.balance_after_deposit);
-  if (row.price == null) return null;
-  const deposit = Number(row.deposit_amount ?? 0);
-  return Number(row.price) - deposit;
+  const balance = asNumber(row.balance_after_deposit);
+  if (balance != null) return balance;
+  const price = asNumber(row.price);
+  if (price == null) return null;
+  const deposit = asNumber(row.deposit_amount) ?? 0;
+  return price - deposit;
 }
 
 const PROGRAMME_SECTIONS: Array<{ title: string; paragraphs: string[] }> = [
@@ -269,15 +363,26 @@ export function buildConventionPdfModel(input: {
   const generatedAt = input.generatedAt ?? new Date();
   const name = studentFullName(input.student) || "Stagiaire";
   const language = texte(input.inscription.language) || "—";
-  const startDateLabel = formatDateFr(input.inscription.start_date);
-  const endDateLabel = formatDateFr(input.inscription.end_date);
-  const durationHoursLabel =
-    input.inscription.duration_hours != null
-      ? `${input.inscription.duration_hours} heures`
-      : "—";
+  const { startDateLabel, endDateLabel, datesLabel } = buildDatesLabel(
+    input.inscription
+  );
+  const hours = asNumber(input.inscription.duration_hours);
+  const durationHoursLabel = hours != null ? `${hours} heures` : "—";
   const addressLines = studentAddressLines(input.student);
   const groupSizeLabel = String(input.inscription.group_size ?? 1);
   const online = isOnlineModality(input.inscription.modality);
+  const civility = normalizeCivility(input.student.civility);
+  const priceLabel = formatEuros(input.inscription.price);
+  const depositLabel = formatEuros(input.inscription.deposit_amount);
+  const balanceLabel = formatEuros(balanceAmount(input.inscription));
+  const fundingLabel = texte(input.inscription.funding_organization) || "—";
+  const paymentTermsLabel = buildPaymentTermsLabel({
+    priceLabel,
+    depositLabel,
+    balanceLabel,
+    payment_method: input.inscription.payment_method,
+    fundingLabel,
+  });
 
   const sections = online
     ? [
@@ -285,19 +390,19 @@ export function buildConventionPdfModel(input: {
           title: "Entre les soussignés",
           paragraphs: [
             `1/ L'organisme de formation : ${organization.legal_name || "France Langues International"}, ${formatOrganizationAddress(organization) || "25 avenue de la gare, 73800 Montmélian"}${organization.siret ? `, Siret : ${organization.siret}` : ""}${organization.activity_number ? `, enregistré sous le n° de déclaration d'activité : ${organization.activity_number}` : ""}${organization.activity_authority ? ` auprès du ${organization.activity_authority}` : ""}${organization.representative ? `, représenté par ${organization.representative}` : ""}.`,
-            `2/ L'entreprise ou le stagiaire : ${[texte(input.student.civility), name].filter(Boolean).join(" ")}${addressLines.length ? `, ${addressLines.join(", ")}` : ""}.`,
+            `2/ L'entreprise ou le stagiaire : ${[civility, name].filter(Boolean).join(" ")}${addressLines.length ? `, ${addressLines.join(", ")}` : ""}${texte(input.student.company) ? ` (${texte(input.student.company)})` : ""}.`,
             "Est conclue la convention de formation professionnelle suivante.",
           ],
         },
         ...buildOnlineConventionSections({
           language,
-          startDateLabel,
-          endDateLabel,
+          datesLabel,
           durationHoursLabel,
           groupSizeLabel,
           studentAddressLines: addressLines,
           pedagogicalContact:
             organization.representative || "Paula Rangel-Halbwachs",
+          paymentTermsLabel,
         }),
       ]
     : [
@@ -316,6 +421,10 @@ export function buildConventionPdfModel(input: {
           title: s.title,
           paragraphs: s.paragraphs,
         })),
+        {
+          title: "Prix et modalités de règlement",
+          paragraphs: [paymentTermsLabel],
+        },
       ];
 
   return {
@@ -324,19 +433,24 @@ export function buildConventionPdfModel(input: {
     generatedAtLabel: formatDateFr(generatedAt.toISOString()),
     inscriptionCode: texte(input.inscription.code) || "—",
     studentDisplayName: name,
-    studentCivility: texte(input.student.civility),
+    studentCivility: civility,
     studentAddressLines: addressLines,
+    studentEmail: texte(input.student.email),
+    studentPhone: texte(input.student.phone),
+    studentCompany: texte(input.student.company),
     language,
     startDateLabel,
     endDateLabel,
+    datesLabel,
     durationHoursLabel,
     locationLabel: texte(input.inscription.course_location) || "—",
     modalityLabel: modalityLabelFr(input.inscription.modality),
     groupSizeLabel,
-    priceLabel: formatEuros(input.inscription.price),
-    depositLabel: formatEuros(input.inscription.deposit_amount),
-    balanceLabel: formatEuros(balanceAmount(input.inscription)),
-    fundingLabel: texte(input.inscription.funding_organization) || "—",
+    priceLabel,
+    depositLabel,
+    balanceLabel,
+    fundingLabel,
+    paymentTermsLabel,
     organization,
     organizationAddress: formatOrganizationAddress(organization),
     organizationLegalLines: organizationLegalMentions(organization),
@@ -357,6 +471,15 @@ export function buildProgrammePdfModel(input: {
   const generatedAt = input.generatedAt ?? new Date();
   const name = studentFullName(input.student) || "Stagiaire";
   const language = texte(input.inscription.language) || "la langue choisie";
+  const { startDateLabel, endDateLabel, datesLabel } = buildDatesLabel(
+    input.inscription
+  );
+  const hours = asNumber(input.inscription.duration_hours);
+  const durationHoursLabel = hours != null ? `${hours} heures` : "—";
+  const priceLabel = formatEuros(input.inscription.price);
+  const depositLabel = formatEuros(input.inscription.deposit_amount);
+  const balanceLabel = formatEuros(balanceAmount(input.inscription));
+  const fundingLabel = texte(input.inscription.funding_organization) || "—";
 
   return {
     kind: "programme",
@@ -364,22 +487,30 @@ export function buildProgrammePdfModel(input: {
     generatedAtLabel: formatDateFr(generatedAt.toISOString()),
     inscriptionCode: texte(input.inscription.code) || "—",
     studentDisplayName: name,
-    studentCivility: texte(input.student.civility),
+    studentCivility: normalizeCivility(input.student.civility),
     studentAddressLines: studentAddressLines(input.student),
+    studentEmail: texte(input.student.email),
+    studentPhone: texte(input.student.phone),
+    studentCompany: texte(input.student.company),
     language: texte(input.inscription.language) || "—",
-    startDateLabel: formatDateFr(input.inscription.start_date),
-    endDateLabel: formatDateFr(input.inscription.end_date),
-    durationHoursLabel:
-      input.inscription.duration_hours != null
-        ? `${input.inscription.duration_hours} heures`
-        : "—",
+    startDateLabel,
+    endDateLabel,
+    datesLabel,
+    durationHoursLabel,
     locationLabel: texte(input.inscription.course_location) || "—",
     modalityLabel: modalityLabelFr(input.inscription.modality),
     groupSizeLabel: String(input.inscription.group_size ?? 1),
-    priceLabel: formatEuros(input.inscription.price),
-    depositLabel: formatEuros(input.inscription.deposit_amount),
-    balanceLabel: formatEuros(balanceAmount(input.inscription)),
-    fundingLabel: texte(input.inscription.funding_organization) || "—",
+    priceLabel,
+    depositLabel,
+    balanceLabel,
+    fundingLabel,
+    paymentTermsLabel: buildPaymentTermsLabel({
+      priceLabel,
+      depositLabel,
+      balanceLabel,
+      payment_method: input.inscription.payment_method,
+      fundingLabel,
+    }),
     organization,
     organizationAddress: formatOrganizationAddress(organization),
     organizationLegalLines: organizationLegalMentions(organization),

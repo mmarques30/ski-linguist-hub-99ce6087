@@ -276,15 +276,17 @@ export async function renderInscriptionDocumentPdf(
   cursor.heading("Stagiaire");
   if (model.studentCivility) cursor.kv("Civilité", model.studentCivility);
   cursor.kv("Nom", model.studentDisplayName);
+  if (model.studentCompany) cursor.kv("Entreprise", model.studentCompany);
   if (model.studentAddressLines.length) {
     cursor.kv("Adresse", model.studentAddressLines.join(", "));
   }
+  if (model.studentEmail) cursor.kv("Email", model.studentEmail);
+  if (model.studentPhone) cursor.kv("Téléphone", model.studentPhone);
 
   cursor.heading("Formation");
   cursor.kv("Code inscription", model.inscriptionCode);
   cursor.kv("Langue", model.language);
-  cursor.kv("Du", model.startDateLabel);
-  cursor.kv("Au", model.endDateLabel);
+  cursor.kv("Dates", model.datesLabel || `${model.startDateLabel} → ${model.endDateLabel}`);
   cursor.kv("Durée", model.durationHoursLabel);
   cursor.kv("Lieu", model.locationLabel);
   cursor.kv("Modalité", model.modalityLabel);
@@ -296,6 +298,10 @@ export async function renderInscriptionDocumentPdf(
     cursor.kv("Acompte", model.depositLabel);
     cursor.kv("Solde", model.balanceLabel);
     cursor.kv("Financement", model.fundingLabel);
+    if (model.paymentTermsLabel) {
+      cursor.gap(4);
+      cursor.paragraph(model.paymentTermsLabel);
+    }
   }
 
   for (const section of model.sections) {
