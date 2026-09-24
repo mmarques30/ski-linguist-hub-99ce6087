@@ -12,6 +12,7 @@ import {
   useInscriptionCertificates,
   useInscriptionProgression,
 } from "@/hooks/useInscriptionProgression";
+import { DOCUMENTS_BUCKET } from "@/lib/certificateStorage";
 import {
   DOCUMENT_TYPE_LABELS,
   expectsSkiMonitorWelcomePack,
@@ -163,7 +164,10 @@ export function InscriptionDocumentsCard({
                   </p>
                 </div>
                 {doc.pdf_url && (
-                  <CertificatePdfButton pathOrUrl={doc.pdf_url} />
+                  <CertificatePdfButton
+                    pathOrUrl={doc.pdf_url}
+                    bucket={DOCUMENTS_BUCKET}
+                  />
                 )}
               </li>
             ))}

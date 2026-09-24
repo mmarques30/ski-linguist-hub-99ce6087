@@ -89,9 +89,9 @@ Deno.serve(async (req) => {
         `
         id, code, language, start_date, end_date, duration_hours,
         course_location, modality, price, deposit_amount, balance_after_deposit,
-        group_size, funding_organization, documents_sent_at,
+        group_size, funding_organization, documents_sent_at, student_id,
         students!inscriptions_student_id_fkey (
-          civility, first_name, last_name, street_address, postal_code, city,
+          id, civility, first_name, last_name, street_address, postal_code, city,
           email, phone, company
         )
       `,
@@ -154,7 +154,21 @@ Deno.serve(async (req) => {
       ]);
 
     const code = inscription.code || "sans-code";
-    const basePath = `inscriptions/${inscriptionId}`;
+    // Convention bucket privé `documents` : 1er segment = student_id (RLS stagiaire).
+    const studentId =
+      (typeof student.id === "string" && student.id) ||
+      (inscription as { student_id?: string }).student_id ||
+      "";
+    if (!studentId) {
+      return new Response(
+        JSON.stringify({ success: false, error: "student_id manquant" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+    const basePath = `${studentId}/${inscriptionId}`;
     const files = [
       {
         type: "CONVENTION",
