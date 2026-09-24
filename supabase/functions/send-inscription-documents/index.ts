@@ -20,6 +20,7 @@ import {
   programmeFilename,
 } from "../_shared/inscription-documents-pdf-model.ts";
 import { renderInscriptionDocumentPdf } from "../_shared/inscription-documents-pdf-render.ts";
+import { loadInscriptionOrganismSignature } from "../_shared/inscription-documents-assets.ts";
 import {
   loadSkiMonitorWelcomeDocument,
   SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS,
@@ -258,13 +259,23 @@ Deno.serve(async (req) => {
           identity: identityRow?.value,
         });
 
+        const organismSignaturePng = await loadInscriptionOrganismSignature();
+        if (!organismSignaturePng?.length) {
+          throw new Error("signature organisme introuvable (PNG vide)");
+        }
+
         const [conventionBytes, programmeBytes, criteriaBytes, tutorielBytes] =
           await Promise.all([
-            renderInscriptionDocumentPdf(conventionModel),
+            renderInscriptionDocumentPdf(conventionModel, { organismSignaturePng }),
             renderInscriptionDocumentPdf(programmeModel),
             loadSkiMonitorWelcomeDocument(CRITERIA_DOC.internalFile, supabase),
             loadSkiMonitorWelcomeDocument(TUTORIEL_DOC.internalFile, supabase),
           ]);
+        if (conventionBytes.byteLength < 20_000) {
+          throw new Error(
+            `convention trop petite (${conventionBytes.byteLength} o) — signature probablement absente`,
+          );
+        }
 
         const code = inscription.code || "sans-code";
         const attachments = [
