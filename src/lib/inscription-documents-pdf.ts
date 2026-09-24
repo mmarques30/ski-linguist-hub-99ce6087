@@ -353,6 +353,68 @@ const PROGRAMME_SECTIONS: Array<{ title: string; paragraphs: string[] }> = [
   },
 ];
 
+/**
+ * Programme « formation individualisée en ligne » — texte Paula (Version 2).
+ * Placeholders «Langue» / durée remplacés à l'appel.
+ */
+export function buildOnlineProgrammeSections(input: {
+  language: string;
+  durationHoursLabel: string;
+}): Array<{ title: string; paragraphs: string[] }> {
+  const language = input.language || "la langue choisie";
+  const duree = input.durationHoursLabel || "—";
+  return [
+    {
+      title: "Objectifs",
+      paragraphs: [
+        "Les objectifs de cette formation sont de :",
+        "• Développer les compétences en communication orale.",
+        "• Améliorer les capacités de compréhension.",
+        "• Enrichir les connaissances lexicales courantes et relatives à l'enseignement du ski.",
+        "• Consolider les connaissances grammaticales et lexicales.",
+      ],
+    },
+    {
+      title: "Méthode et contenu",
+      paragraphs: [
+        "• Parcours personnalisé adapté à votre niveau et à vos besoins spécifiques.",
+        "• Travail en face à face pédagogique via Google Meet.",
+        `• Exercices de compréhension et d'expression en ${language}.`,
+        "• Support de cours fourni.",
+        "• Matériel nécessaire : un ordinateur avec Webcam, casque, microphone et une connexion internet haut débit.",
+      ],
+    },
+    {
+      title: "Durée",
+      paragraphs: [`${duree}.`],
+    },
+    {
+      title: "Déroulement d'un cours",
+      paragraphs: [
+        "• Vérification des acquis et corrections des exercices.",
+        "• Cours théorique spécifique et pratique afin de permettre la pratique du langage propre à votre profession.",
+        "• Jeux de rôles adaptés à votre profession et à votre niveau.",
+        "• Utilisation de tout autre moyen audio ou audio-visuel que le professeur estimera nécessaire.",
+        "• Cours pour l'acquisition des structures grammaticales de bases et du vocabulaire commun au milieu montagne ; ainsi que le vocabulaire technique professionnel.",
+      ],
+    },
+    {
+      title: "Contenu prévisionnel",
+      paragraphs: [
+        "Ce stage va permettre au stagiaire d'utiliser entre autres les fonctions langagières suivantes :",
+        "• Bases linguistiques.",
+        "• Grammaire (conjugaison, syntaxe de la langue apprise, etc.).",
+        "• Expression orale – donner des informations et instructions précises et brèves.",
+        "• Expression écrite – les outils pour une communication écrite – mail et texto – efficace avec vos clients.",
+        "• Compréhension écrite – comprendre des textes courts et simples et de reconnaître les idées principales d'un contenu.",
+        "• Compréhension orale – comprendre des informations, questions et instructions précises et brèves.",
+        "• Les composants culturels pouvant aider à une meilleure communication avec la clientèle étrangère.",
+        "Ceci est un contenu prévisionnel qui sera réajusté tout au long de la formation en fonction de votre niveau, progression et de vos besoins.",
+      ],
+    },
+  ];
+}
+
 export function buildConventionPdfModel(input: {
   inscription: InscriptionDocumentsRow;
   student: InscriptionDocumentsStudent;
@@ -480,24 +542,44 @@ export function buildProgrammePdfModel(input: {
   const depositLabel = formatEuros(input.inscription.deposit_amount);
   const balanceLabel = formatEuros(balanceAmount(input.inscription));
   const fundingLabel = texte(input.inscription.funding_organization) || "—";
+  const addressLines = studentAddressLines(input.student);
+  const online = isOnlineModality(input.inscription.modality);
+
+  const locationLabel = online
+    ? addressLines.length
+      ? `Cours en ligne — ${addressLines.join(" ")}`
+      : "Cours en ligne"
+    : texte(input.inscription.course_location) || "—";
+
+  const programmeDatesLabel = online
+    ? input.inscription.dates_to_confirm
+      ? datesLabel
+      : startDateLabel === endDateLabel
+        ? `du ${startDateLabel} au ${endDateLabel}`
+        : datesLabel.startsWith("du ")
+          ? datesLabel
+          : `du ${startDateLabel} au ${endDateLabel}`
+    : datesLabel;
 
   return {
     kind: "programme",
-    title: "Programme de formation",
+    title: online
+      ? `Formation individualisée, en ligne, en ${language}`
+      : "Programme de formation",
     generatedAtLabel: formatDateFr(generatedAt.toISOString()),
     inscriptionCode: texte(input.inscription.code) || "—",
     studentDisplayName: name,
     studentCivility: normalizeCivility(input.student.civility),
-    studentAddressLines: studentAddressLines(input.student),
+    studentAddressLines: addressLines,
     studentEmail: texte(input.student.email),
     studentPhone: texte(input.student.phone),
     studentCompany: texte(input.student.company),
     language: texte(input.inscription.language) || "—",
     startDateLabel,
     endDateLabel,
-    datesLabel,
+    datesLabel: programmeDatesLabel,
     durationHoursLabel,
-    locationLabel: texte(input.inscription.course_location) || "—",
+    locationLabel,
     modalityLabel: modalityLabelFr(input.inscription.modality),
     groupSizeLabel: String(input.inscription.group_size ?? 1),
     priceLabel,
@@ -514,15 +596,21 @@ export function buildProgrammePdfModel(input: {
     organization,
     organizationAddress: formatOrganizationAddress(organization),
     organizationLegalLines: organizationLegalMentions(organization),
-    documentFooterLines: fliDocumentFooterLines(),
-    sections: PROGRAMME_SECTIONS.map((s) => ({
-      title: s.title,
-      paragraphs: s.paragraphs.map((p) =>
-        p.replace(/l'exercice professionnel/g, `l'exercice professionnel en ${language}`)
-      ),
-    })),
-    footerNote:
-      "Programme personnalisé généré pour cette inscription. Les modalités précises figurent aussi sur la convention.",
+    documentFooterLines: fliDocumentFooterLines(online ? 2 : 4),
+    sections: online
+      ? buildOnlineProgrammeSections({ language, durationHoursLabel })
+      : PROGRAMME_SECTIONS.map((s) => ({
+          title: s.title,
+          paragraphs: s.paragraphs.map((p) =>
+            p.replace(
+              /l'exercice professionnel/g,
+              `l'exercice professionnel en ${language}`
+            )
+          ),
+        })),
+    footerNote: online
+      ? "Programme pédagogique en ligne — Version 2. Les modalités précises figurent aussi sur la convention."
+      : "Programme personnalisé généré pour cette inscription. Les modalités précises figurent aussi sur la convention.",
   };
 }
 
