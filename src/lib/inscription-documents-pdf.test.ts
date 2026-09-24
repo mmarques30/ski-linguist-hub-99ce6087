@@ -3,10 +3,15 @@ import { describe, expect, it } from "vitest";
 import {
   buildConventionPdfModel,
   buildProgrammePdfModel,
+  buildOnlineConventionSections,
   conventionFilename,
+  isOnlineModality,
   programmeFilename,
 } from "./inscription-documents-pdf";
 import { renderInscriptionDocumentPdf } from "./inscription-documents-pdf-render";
+import { FLI_DOCUMENT_FOOTER_V4_LINES } from "./organization-identity";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 const IDENTITY = {
   legal_name: "France Langues International",
@@ -113,5 +118,69 @@ describe("PDF dossier inscription", () => {
   it("nomme les fichiers PDF avec le code", () => {
     expect(conventionFilename("FLI-2026-TEST")).toBe("Convention-formation-FLI-2026-TEST.pdf");
     expect(programmeFilename("A/B")).toBe("Programme-formation-A_B.pdf");
+  });
+
+  it("détecte la modalité en ligne", () => {
+    expect(isOnlineModality("en_ligne_individuel")).toBe(true);
+    expect(isOnlineModality("presentiel")).toBe(false);
+  });
+
+  it("construit la convention en ligne avec articles Paula + pied Version 4", async () => {
+    const model = buildConventionPdfModel({
+      inscription: {
+        ...INSCRIPTION,
+        modality: "en_ligne_individuel",
+        course_location: "En ligne",
+        duration_hours: 12,
+      },
+      student: STUDENT,
+      identity: IDENTITY,
+      generatedAt: new Date("2026-09-24T10:00:00.000Z"),
+    });
+    expect(model.sections.some((s) => s.title.startsWith("Article I"))).toBe(true);
+    expect(model.sections.some((s) => s.title.includes("Réservation"))).toBe(true);
+    expect(model.documentFooterLines).toEqual([...FLI_DOCUMENT_FOOTER_V4_LINES]);
+
+    const bytes = await renderInscriptionDocumentPdf(model);
+    const text = pdfVisibleText(bytes);
+    expect(text).toMatch(/Article I/);
+    expect(text).toMatch(/zoom\.us/i);
+    expect(text).toMatch(/Version 4/);
+    expect(text).toMatch(/Montm/);
+    expect(text).toMatch(/484/);
+  });
+
+  it("expose les articles en ligne comme helper", () => {
+    const sections = buildOnlineConventionSections({
+      language: "Anglais",
+      startDateLabel: "28 septembre 2026",
+      endDateLabel: "28 septembre 2026",
+      durationHoursLabel: "12 heures",
+      groupSizeLabel: "1",
+      studentAddressLines: [],
+      pedagogicalContact: "Paula Rangel-Halbwachs",
+    });
+    expect(sections[0].title).toContain("Article I");
+    expect(sections.some((s) => s.paragraphs.some((p) => p.includes("24 h")))).toBe(true);
+  });
+
+  it("garde la copie Deno d'accord avec le module front", () => {
+    const source = (rel: string) =>
+      readFileSync(resolve(process.cwd(), rel), "utf8");
+    const front = source("src/lib/inscription-documents-pdf.ts");
+    const deno = source("supabase/functions/_shared/inscription-documents-pdf-model.ts");
+    const extraire = (texte: string, nom: string) => {
+      const debut = texte.indexOf(`export function ${nom}`);
+      expect(debut).toBeGreaterThan(-1);
+      const fin = texte.indexOf("\nexport ", debut + 1);
+      return texte.slice(debut, fin === -1 ? undefined : fin);
+    };
+    expect(extraire(deno, "isOnlineModality")).toBe(extraire(front, "isOnlineModality"));
+    expect(extraire(deno, "buildOnlineConventionSections")).toBe(
+      extraire(front, "buildOnlineConventionSections")
+    );
+    expect(extraire(deno, "buildConventionPdfModel")).toBe(
+      extraire(front, "buildConventionPdfModel")
+    );
   });
 });
