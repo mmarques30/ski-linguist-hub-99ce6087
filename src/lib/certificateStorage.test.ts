@@ -4,6 +4,7 @@ import {
   DOCUMENTS_BUCKET,
   buildCertificatePath,
   isLegacyPublicUrl,
+  resolveDownloadBuckets,
 } from "./certificateStorage";
 
 describe("certificateStorage", () => {
@@ -23,5 +24,27 @@ describe("certificateStorage", () => {
       true
     );
     expect(isLegacyPublicUrl("stu-1/insc-2/cert-3.pdf")).toBe(false);
+  });
+
+  it("essaie documents puis certificates quand le bucket demandé est documents", () => {
+    expect(resolveDownloadBuckets(DOCUMENTS_BUCKET)).toEqual([
+      DOCUMENTS_BUCKET,
+      CERTIFICATE_BUCKET,
+    ]);
+  });
+
+  it("essaie certificates puis documents quand le bucket demandé est certificates", () => {
+    expect(resolveDownloadBuckets(CERTIFICATE_BUCKET)).toEqual([
+      CERTIFICATE_BUCKET,
+      DOCUMENTS_BUCKET,
+    ]);
+  });
+
+  it("garde un bucket tiers en tête (evaluation-pdfs) puis documents/certificates", () => {
+    expect(resolveDownloadBuckets("evaluation-pdfs")).toEqual([
+      "evaluation-pdfs",
+      DOCUMENTS_BUCKET,
+      CERTIFICATE_BUCKET,
+    ]);
   });
 });
