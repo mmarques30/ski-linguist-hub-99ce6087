@@ -14,6 +14,13 @@ import {
   resolveInscriptionDates,
 } from "../_shared/registration-dates.ts";
 import { isStudentPayer } from "../_shared/inscription-payer.ts";
+import {
+  buildRegistrationAdminNotifyHtml,
+  buildRegistrationAdminNotifyMessage,
+  buildRegistrationAdminNotifySubject,
+  buildRegistrationAdminNotifyTitle,
+  type RegistrationAdminSummaryInput,
+} from "../_shared/registration-admin-notify.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -460,7 +467,6 @@ Deno.serve(async (req) => {
           registration.offeringId ? `Offre catalogue: ${registration.offeringId}` : null,
           registration.profession === "ski_instructor" ? "Moniteur de ski" : "Autre profession",
           registration.hasHandicap ? "Situation de handicap signalée" : null,
-          needsAdminCall ? "⚠️ ALERTE: Niveau très faible — contacter le stagiaire" : null,
           registration.testSummary
             ? `Test adaptatif: ${registration.testSummary.passedSlopes.join(" → ") || "vocab ski"}`
             : null,
@@ -661,22 +667,59 @@ Deno.serve(async (req) => {
         console.error("enqueue inscription_documents error:", docError);
       }
 
-      if (needsAdminCall) {
-        const adminSubject = `[ALERTE FLI] Test de niveau faible — ${studentName}`;
-        const adminHtml = `<p>Le stagiaire <strong>${studentName}</strong> (${email}) nécessite un contact téléphonique suite au test de niveau.</p>
-          <p>Code inscription: <strong>${inscription.code}</strong></p>
-          <p>Merci de le contacter par téléphone.</p>`;
-        await sendFliEmail({ resendApiKey, to: ADMIN_EMAIL, subject: adminSubject, html: adminHtml });
-      }
+      // Une seule notif e-mail admin par inscription, avec résumé des choix.
+      // Plus d'alerte « test niveau faible » (demande Paula, 24/09/2026).
+      const datesLabel = inscriptionDatesSentenceFr({
+        start_date: startDate,
+        end_date: endDate,
+        dates_to_confirm: datesToConfirm,
+      });
+      const adminSummary: RegistrationAdminSummaryInput = {
+        firstName: registration.firstName,
+        lastName: registration.lastName,
+        email,
+        phone: registration.phone,
+        language,
+        modalityLabel:
+          MODALITY_LABELS[registration.modality] || registration.modality || "À confirmer",
+        fundingLabel:
+          FUNDING_MAP[registration.fundingType] || registration.fundingType || "—",
+        level: registration.currentLevel || "—",
+        slopeLabel: studentFacingSlopeLabel(registration.testSummary),
+        durationHours,
+        courseLocation: courseLocation || null,
+        datesLabel,
+        paymentLabel: registration.paymentOption
+          ? paymentLabels[registration.paymentOption] || registration.paymentOption
+          : isCustomFormat || isOpco
+            ? "Devis / à définir"
+            : null,
+        inscriptionCode: inscription.code,
+        isCustomFormat,
+        customFormatDetails: registration.customFormatDetails || null,
+        isOpco,
+        opcoObservation: isOpco ? formatOpcoObservation(registration) : null,
+        price,
+      };
 
-      if (isCustomFormat) {
-        const adminSubject = `[DEVIS FLI] Format personnalisé — ${studentName}`;
-        const adminHtml = `<p><strong>${studentName}</strong> (${email}) demande un devis pour un format personnalisé.</p>
-          <p>Code inscription: <strong>${inscription.code}</strong></p>
-          <p>Langue: ${language} · Lieu: ${courseLocation || "—"}</p>
-          <p><strong>Projet décrit:</strong></p>
-          <p>${(registration.customFormatDetails || "").replace(/\n/g, "<br>")}</p>`;
-        await sendFliEmail({ resendApiKey, to: ADMIN_EMAIL, subject: adminSubject, html: adminHtml });
+      try {
+        const adminSend = await sendFliEmail({
+          resendApiKey,
+          to: ADMIN_EMAIL,
+          subject: buildRegistrationAdminNotifySubject(adminSummary),
+          html: buildRegistrationAdminNotifyHtml(adminSummary),
+        });
+        await supabase.from("email_log").insert({
+          template_slug: "admin_new_inscription",
+          recipient_email: ADMIN_EMAIL,
+          recipient_name: "FLI Admin",
+          status: adminSend.ok ? "sent" : adminSend.skipped ? "skipped" : "failed",
+          error_message: adminSend.error ?? null,
+          inscription_id: inscription.id,
+          variables_used: adminSummary as unknown as Record<string, unknown>,
+        });
+      } catch (adminEmailError) {
+        console.error("admin new-inscription email error:", adminEmailError);
       }
 
       const { data: adminUsers } = await supabase
@@ -684,20 +727,10 @@ Deno.serve(async (req) => {
         .select("user_id")
         .eq("role", "admin");
 
-      for (const admin of adminUsers || []) {
-        const notifTitle = isOpco
-          ? `OPCO à analyser — ${registration.firstName}`
-          : isCustomFormat
-            ? `📋 Devis à préparer — ${registration.firstName}`
-            : needsAdminCall
-              ? `⚠️ Inscription — appeler ${registration.firstName}`
-              : `Nouvelle inscription — ${registration.firstName}`;
-        const notifMessage = isOpco
-          ? `Inscription ${inscription.code} — financement OPCO. Définir les modalités du contrat.`
-          : isCustomFormat
-            ? `Inscription ${inscription.code} — format personnalisé (${language}). Envoyer une proposition.`
-            : `Inscription ${inscription.code} pour ${language}. Niveau: ${registration.currentLevel}. Horaire: en attente de validation.`;
+      const notifTitle = buildRegistrationAdminNotifyTitle(adminSummary);
+      const notifMessage = buildRegistrationAdminNotifyMessage(adminSummary);
 
+      for (const admin of adminUsers || []) {
         await supabase.from("notifications").insert({
           user_id: admin.user_id,
           type: "inscription",
