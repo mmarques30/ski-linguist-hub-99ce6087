@@ -18,11 +18,18 @@ import {
 
 const docTypeLabels: Record<string, string> = {
   convention: "Convention de formation",
+  CONVENTION: "Convention de formation",
   attestation: "Attestation de présence",
+  ATTESTATION_PRESENCE: "Attestation de présence",
   certificat: "Certificat de fin de formation",
   CERTIFICAT: "Certificat de fin de formation",
   convocation: "Convocation",
+  CONVOCATION: "Convocation",
   programme: "Programme de formation",
+  PROGRAMME: "Programme de formation",
+  REGLEMENT: "Critères de prise en charge FIF-PL",
+  LIVRET: "Tutoriel FIF-PL",
+  FACTURE: "Facture",
 };
 
 function isCertificateDoc(type: string | null | undefined): boolean {
