@@ -312,22 +312,48 @@ export async function renderInscriptionDocumentPdf(
   }
 
   if (model.kind === "convention") {
-    cursor.heading("Signatures");
-    cursor.paragraph(
-      `Fait à ${model.organization.city || "Montmélian"}, le ${model.generatedAtLabel}.`
-    );
-    cursor.gap(8);
-    cursor.kv(
-      "Pour l'organisme",
-      model.organization.representative
-        ? model.organization.representative
-        : model.organization.legal_name || "FLI"
-    );
-    cursor.kv("Le stagiaire", model.studentDisplayName);
-    cursor.gap(28);
-    cursor.paragraph("Signature : ____________________");
-    cursor.gap(20);
-    cursor.paragraph("Signature : ____________________");
+    if (model.onlineSignatureBlock) {
+      cursor.gap(8);
+      cursor.paragraph(
+        `Fait à ${model.organization.city || "Montmélian"}, en double exemplaire le ${model.generatedAtLabel}.`
+      );
+      cursor.gap(12);
+      cursor.kv(
+        "Pour l'entreprise, le stagiaire",
+        "(Cachet + Nom + signature) — Bon pour Accord"
+      );
+      cursor.kv("Le stagiaire", model.studentDisplayName);
+      cursor.gap(10);
+      cursor.kv(
+        "Pour l'Organisme de Formation",
+        model.organization.legal_name || "France Langues International"
+      );
+      cursor.kv(
+        "Représenté par",
+        model.organization.representative || "Paula Rangel-Halbwachs"
+      );
+      cursor.gap(28);
+      cursor.paragraph("Signature stagiaire : ____________________");
+      cursor.gap(16);
+      cursor.paragraph("Signature organisme : ____________________");
+    } else {
+      cursor.heading("Signatures");
+      cursor.paragraph(
+        `Fait à ${model.organization.city || "Montmélian"}, le ${model.generatedAtLabel}.`
+      );
+      cursor.gap(8);
+      cursor.kv(
+        "Pour l'organisme",
+        model.organization.representative
+          ? model.organization.representative
+          : model.organization.legal_name || "FLI"
+      );
+      cursor.kv("Le stagiaire", model.studentDisplayName);
+      cursor.gap(28);
+      cursor.paragraph("Signature : ____________________");
+      cursor.gap(20);
+      cursor.paragraph("Signature : ____________________");
+    }
   }
 
   cursor.footerNote(model.footerNote);
