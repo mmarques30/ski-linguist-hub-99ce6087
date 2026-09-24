@@ -145,7 +145,12 @@ describe("PDF dossier inscription", () => {
     expect(model.sections.some((s) => s.title.includes("Réservation"))).toBe(true);
     expect(model.documentFooterLines).toEqual([...FLI_DOCUMENT_FOOTER_V4_LINES]);
 
-    const bytes = await renderInscriptionDocumentPdf(model);
+    const signature = readFileSync(
+      resolve(process.cwd(), "public/inscription-documents/fli-signature-cachet.png")
+    );
+    const bytes = await renderInscriptionDocumentPdf(model, {
+      organismSignaturePng: new Uint8Array(signature),
+    });
     const text = pdfVisibleText(bytes);
     expect(text).toMatch(/Article I/);
     expect(text).toMatch(/zoom\.us/i);
@@ -154,6 +159,8 @@ describe("PDF dossier inscription", () => {
     expect(model.documentFooterLines.some((l) => l.includes("Version 4"))).toBe(
       true
     );
+    // Image embedded → PDF larger than text-only (~9 KB without signature).
+    expect(bytes.byteLength).toBeGreaterThan(20_000);
   });
 
   it("expose les articles en ligne comme helper", () => {

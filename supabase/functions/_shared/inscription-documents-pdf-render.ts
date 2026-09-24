@@ -13,7 +13,15 @@ const INK = rgb(0.12, 0.12, 0.12);
 const MUTED = rgb(0.35, 0.35, 0.35);
 const RULE = rgb(0.75, 0.78, 0.82);
 
+/** Largeur max du cachet + signature organisme sur la convention. */
+const ORGANISM_SIGNATURE_MAX_WIDTH = 220;
+
 type Fonts = { regular: PDFFont; bold: PDFFont; italic: PDFFont };
+
+export type RenderInscriptionDocumentOptions = {
+  /** PNG cachet + signature manuscrite (Paula) pour le bloc organisme. */
+  organismSignaturePng?: Uint8Array | null;
+};
 
 function pdfSafe(text: string): string {
   return text
@@ -236,6 +244,22 @@ class Cursor {
       }
     }
   }
+
+  /** Dessine une image PNG en bas à gauche du curseur ; avance `y`. */
+  async drawPng(bytes: Uint8Array, maxWidth: number): Promise<void> {
+    const image = await this.doc.embedPng(bytes);
+    const scale = Math.min(1, maxWidth / image.width);
+    const width = image.width * scale;
+    const height = image.height * scale;
+    const page = this.ensure(height + 8);
+    page.drawImage(image, {
+      x: MARGIN,
+      y: this.y - height,
+      width,
+      height,
+    });
+    this.y -= height + 8;
+  }
 }
 
 function drawPageChrome(page: PDFPage) {
@@ -249,7 +273,8 @@ function drawPageChrome(page: PDFPage) {
 }
 
 export async function renderInscriptionDocumentPdf(
-  model: InscriptionDocumentPdfModel
+  model: InscriptionDocumentPdfModel,
+  options: RenderInscriptionDocumentOptions = {}
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   const fonts: Fonts = {
@@ -324,6 +349,8 @@ export async function renderInscriptionDocumentPdf(
       );
       cursor.kv("Le stagiaire", model.studentDisplayName);
       cursor.gap(10);
+      cursor.paragraph("Signature stagiaire : ____________________");
+      cursor.gap(16);
       cursor.kv(
         "Pour l'Organisme de Formation",
         model.organization.legal_name || "France Langues International"
@@ -332,10 +359,15 @@ export async function renderInscriptionDocumentPdf(
         "Représenté par",
         model.organization.representative || "Paula Rangel-Halbwachs"
       );
-      cursor.gap(28);
-      cursor.paragraph("Signature stagiaire : ____________________");
-      cursor.gap(16);
-      cursor.paragraph("Signature organisme : ____________________");
+      cursor.gap(8);
+      if (options.organismSignaturePng?.length) {
+        await cursor.drawPng(
+          options.organismSignaturePng,
+          ORGANISM_SIGNATURE_MAX_WIDTH
+        );
+      } else {
+        cursor.paragraph("Signature organisme : ____________________");
+      }
     } else {
       cursor.heading("Signatures");
       cursor.paragraph(
@@ -352,7 +384,14 @@ export async function renderInscriptionDocumentPdf(
       cursor.gap(28);
       cursor.paragraph("Signature : ____________________");
       cursor.gap(20);
-      cursor.paragraph("Signature : ____________________");
+      if (options.organismSignaturePng?.length) {
+        await cursor.drawPng(
+          options.organismSignaturePng,
+          ORGANISM_SIGNATURE_MAX_WIDTH
+        );
+      } else {
+        cursor.paragraph("Signature : ____________________");
+      }
     }
   }
 
