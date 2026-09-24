@@ -202,7 +202,7 @@ export default function InstructorDetails() {
   };
 
   const adminStatutOptions = useMemo(() => {
-    const options = STATUT_ADMINISTRATIF_PRESETS.map((option) => ({
+    const options: { value: string; label: string }[] = STATUT_ADMINISTRATIF_PRESETS.map((option) => ({
       value: option.value,
       label: option.label,
     }));
