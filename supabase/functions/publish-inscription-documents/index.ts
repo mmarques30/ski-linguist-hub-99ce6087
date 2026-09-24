@@ -150,9 +150,12 @@ Deno.serve(async (req) => {
       identity: identityRow?.value,
     });
 
-    const organismSignaturePng = await loadInscriptionOrganismSignature().catch(
-      () => null,
-    );
+    // Signature obligatoire sur la convention : ne plus avaler l'erreur en silence
+    // (sinon PDF ~8 Ko sans cachet — Paula ne voit rien).
+    const organismSignaturePng = await loadInscriptionOrganismSignature();
+    if (!organismSignaturePng?.length) {
+      throw new Error("signature organisme introuvable (PNG vide)");
+    }
 
     const [conventionBytes, programmeBytes, criteriaBytes, tutorielBytes] =
       await Promise.all([
@@ -161,6 +164,11 @@ Deno.serve(async (req) => {
         loadSkiMonitorWelcomeDocument(CRITERIA_DOC.internalFile, supabase),
         loadSkiMonitorWelcomeDocument(TUTORIEL_DOC.internalFile, supabase),
       ]);
+    if (conventionBytes.byteLength < 20_000) {
+      throw new Error(
+        `convention trop petite (${conventionBytes.byteLength} o) — signature probablement absente`,
+      );
+    }
 
     const code = inscription.code || "sans-code";
     // Convention bucket privé `documents` : 1er segment = student_id (RLS stagiaire).
@@ -293,7 +301,12 @@ Deno.serve(async (req) => {
         sent,
         emailSent: sendEmail ? sent : false,
         email,
-        documents: files.map((f) => ({ type: f.type, path: f.path })),
+        signatureBytes: organismSignaturePng.byteLength,
+        documents: files.map((f) => ({
+          type: f.type,
+          path: f.path,
+          bytes: f.bytes.byteLength,
+        })),
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
