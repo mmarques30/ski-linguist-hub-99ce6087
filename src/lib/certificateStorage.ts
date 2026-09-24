@@ -20,3 +20,15 @@ export function buildCertificatePath(
 export function isLegacyPublicUrl(value: string): boolean {
   return /^https?:\/\//i.test(value);
 }
+
+/**
+ * Ordre de tentative pour createSignedUrl : bucket demandé d'abord, puis
+ * documents / certificates (évite « Document indisponible » si le mauvais
+ * bucket est passé par erreur). Les buckets hors de cette liste (ex.
+ * evaluation-pdfs) ne sont pas ajoutés en secours.
+ */
+export function resolveDownloadBuckets(preferred: string): string[] {
+  const extras = [DOCUMENTS_BUCKET, CERTIFICATE_BUCKET];
+  const ordered = [preferred, ...extras.filter((b) => b !== preferred)];
+  return [...new Set(ordered)];
+}
