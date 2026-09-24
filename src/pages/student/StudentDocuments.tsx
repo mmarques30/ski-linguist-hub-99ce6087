@@ -6,6 +6,7 @@ import {
   useStudentDocuments,
   useStudentCertificates,
 } from "@/hooks/useStudentPortal";
+import { DOCUMENTS_BUCKET } from "@/lib/certificateStorage";
 import { format } from "date-fns";
 import {
   PageHeader,
@@ -18,11 +19,18 @@ import {
 
 const docTypeLabels: Record<string, string> = {
   convention: "Convention de formation",
+  CONVENTION: "Convention de formation",
   attestation: "Attestation de présence",
+  ATTESTATION_PRESENCE: "Attestation de présence",
   certificat: "Certificat de fin de formation",
   CERTIFICAT: "Certificat de fin de formation",
   convocation: "Convocation",
+  CONVOCATION: "Convocation",
   programme: "Programme de formation",
+  PROGRAMME: "Programme de formation",
+  REGLEMENT: "Critères de prise en charge FIF-PL",
+  LIVRET: "Tutoriel FIF-PL",
+  FACTURE: "Facture",
 };
 
 function isCertificateDoc(type: string | null | undefined): boolean {
@@ -104,7 +112,11 @@ export default function StudentDocuments() {
                           </StatusPill>
                         )}
                         {d.pdf_url && (
-                          <CertificatePdfButton pathOrUrl={d.pdf_url} label="PDF" />
+                          <CertificatePdfButton
+                            pathOrUrl={d.pdf_url}
+                            label="PDF"
+                            bucket={DOCUMENTS_BUCKET}
+                          />
                         )}
                       </div>
                     </li>
