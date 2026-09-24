@@ -4,12 +4,16 @@ import {
   buildConventionPdfModel,
   buildProgrammePdfModel,
   buildOnlineConventionSections,
+  buildOnlineProgrammeSections,
   conventionFilename,
   isOnlineModality,
   programmeFilename,
 } from "./inscription-documents-pdf";
 import { renderInscriptionDocumentPdf } from "./inscription-documents-pdf-render";
-import { FLI_DOCUMENT_FOOTER_V4_LINES } from "./organization-identity";
+import {
+  FLI_DOCUMENT_FOOTER_V2_LINES,
+  FLI_DOCUMENT_FOOTER_V4_LINES,
+} from "./organization-identity";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -194,7 +198,7 @@ describe("PDF dossier inscription", () => {
         city: "Beaufort ",
         email: "cassandre.lore@gmail.com",
         phone: "0659223877",
-        company: "Courchevel village ",
+        company: "ESF Courchevel Village",
       },
       identity: IDENTITY,
     });
@@ -215,6 +219,64 @@ describe("PDF dossier inscription", () => {
     expect(text).toMatch(/Beaufort/);
   });
 
+  it("construit le programme en ligne Version 2 (texte Paula)", async () => {
+    const model = buildProgrammePdfModel({
+      inscription: {
+        code: "FLI-260014",
+        language: "Anglais",
+        start_date: "2026-09-28",
+        end_date: "2026-09-28",
+        dates_to_confirm: true,
+        duration_hours: "12",
+        course_location: "En ligne",
+        modality: "en_ligne_individuel",
+        price: "600",
+        deposit_amount: "150",
+        balance_after_deposit: "450",
+        group_size: 1,
+        funding_organization: "FIFPL",
+        payment_method: "virement",
+      },
+      student: {
+        civility: "madame",
+        first_name: "Cassandre",
+        last_name: "Viard-Gaudin",
+        street_address: "663, Route De Domelin ",
+        postal_code: "73270",
+        city: "Beaufort ",
+        company: "ESF Courchevel Village",
+      },
+      identity: IDENTITY,
+      generatedAt: new Date("2026-09-24T10:00:00.000Z"),
+    });
+    expect(model.title).toMatch(/Formation individualisée/);
+    expect(model.title).toMatch(/Anglais/);
+    expect(model.documentFooterLines).toEqual([...FLI_DOCUMENT_FOOTER_V2_LINES]);
+    expect(model.studentCompany).toBe("ESF Courchevel Village");
+    expect(model.locationLabel).toMatch(/Cours en ligne/);
+    expect(model.locationLabel).toMatch(/Beaufort/);
+    expect(model.sections.some((s) => s.title === "Méthode et contenu")).toBe(true);
+    expect(model.sections.some((s) => s.title === "Contenu prévisionnel")).toBe(true);
+    expect(
+      model.sections.some((s) =>
+        s.paragraphs.some((p) => p.includes("Google Meet"))
+      )
+    ).toBe(true);
+
+    const helper = buildOnlineProgrammeSections({
+      language: "Anglais",
+      durationHoursLabel: "12 heures",
+    });
+    expect(helper.some((s) => s.title === "Déroulement d'un cours")).toBe(true);
+
+    const bytes = await renderInscriptionDocumentPdf(model);
+    const text = pdfVisibleText(bytes);
+    expect(text).toMatch(/Google Meet/);
+    expect(text).toMatch(/ESF Courchevel Village/);
+    expect(text).toMatch(/Version 2/);
+    expect(text).toMatch(/Contenu pr/);
+  });
+
   it("garde la copie Deno d'accord avec le module front", () => {
     const source = (rel: string) =>
       readFileSync(resolve(process.cwd(), rel), "utf8");
@@ -230,8 +292,14 @@ describe("PDF dossier inscription", () => {
     expect(extraire(deno, "buildOnlineConventionSections")).toBe(
       extraire(front, "buildOnlineConventionSections")
     );
+    expect(extraire(deno, "buildOnlineProgrammeSections")).toBe(
+      extraire(front, "buildOnlineProgrammeSections")
+    );
     expect(extraire(deno, "buildConventionPdfModel")).toBe(
       extraire(front, "buildConventionPdfModel")
+    );
+    expect(extraire(deno, "buildProgrammePdfModel")).toBe(
+      extraire(front, "buildProgrammePdfModel")
     );
   });
 });
