@@ -164,11 +164,19 @@ describe("PDF dossier inscription", () => {
       groupSizeLabel: "1",
       studentAddressLines: [],
       pedagogicalContact: "Paula Rangel-Halbwachs",
-      paymentTermsLabel: "Coût pédagogique total : 600,00 €.",
+      priceLabel: "600,00 €",
+      depositLabel: "150,00 €",
+      balanceLabel: "450,00 €",
     });
     expect(sections[0].title).toContain("Article I");
-    expect(sections.some((s) => s.title.includes("Prix"))).toBe(true);
+    expect(sections.some((s) => s.title.includes("Délai de rétractation"))).toBe(true);
+    expect(sections.some((s) => s.title.includes("Dispositions financières"))).toBe(true);
+    expect(sections.some((s) => s.title.includes("Accessibilité"))).toBe(true);
+    expect(sections.some((s) => s.title.includes("Suivi de l'exécution"))).toBe(true);
     expect(sections.some((s) => s.paragraphs.some((p) => p.includes("24 h")))).toBe(true);
+    expect(
+      sections.some((s) => s.paragraphs.some((p) => p.includes("600,00") && p.includes("150,00")))
+    ).toBe(true);
   });
 
   it("renseigne dates à planifier et montants depuis les strings Supabase", async () => {
@@ -216,7 +224,11 @@ describe("PDF dossier inscription", () => {
     expect(text).toMatch(/150/);
     expect(text).toMatch(/450/);
     expect(text).toMatch(/Article V/);
+    expect(text).toMatch(/r.tractation|rtractation/i);
+    expect(text).toMatch(/Article VI/);
+    expect(text).toMatch(/Article IX/);
     expect(text).toMatch(/Beaufort/);
+    expect(text).toMatch(/double exemplaire/);
   });
 
   it("construit le programme en ligne Version 2 (texte Paula)", async () => {
