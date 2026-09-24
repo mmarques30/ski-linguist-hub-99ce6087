@@ -9,6 +9,7 @@ import {
   CONDITIONS_GENERALES_TITLE,
 } from "./conditions-generales-content.ts";
 import {
+  fliDocumentFooterLines,
   formatOrganizationAddress,
   organizationLegalMentions,
   parseOrganizationIdentity,
@@ -64,6 +65,8 @@ export type InscriptionDocumentPdfModel = {
   organization: OrganizationIdentity;
   organizationAddress: string;
   organizationLegalLines: string[];
+  /** Pied de page légal (Version 4) en bas du document. */
+  documentFooterLines: string[];
   sections: Array<{ title: string; paragraphs: string[] }>;
   footerNote: string;
 };
@@ -112,6 +115,95 @@ function modalityLabelFr(modality: string | null | undefined): string {
   }
   if (m.includes("mixte")) return "Mixte";
   return modality?.trim() || "—";
+}
+
+export function isOnlineModality(modality: string | null | undefined): boolean {
+  const m = (modality || "").toLowerCase();
+  return (
+    m.includes("en_ligne") ||
+    m.includes("e-learning") ||
+    m.includes("distanciel") ||
+    m.includes("online")
+  );
+}
+
+/** Articles de la convention « formations en ligne » (texte Paula, Version 4). */
+export function buildOnlineConventionSections(input: {
+  language: string;
+  startDateLabel: string;
+  endDateLabel: string;
+  durationHoursLabel: string;
+  groupSizeLabel: string;
+  studentAddressLines: string[];
+  pedagogicalContact: string;
+}): Array<{ title: string; paragraphs: string[] }> {
+  const language = input.language || "la langue choisie";
+  const addressHint = input.studentAddressLines.join(" ").trim();
+  const lieu = addressHint
+    ? `formation en ligne — ${addressHint}`
+    : "formation en ligne";
+  const contact = input.pedagogicalContact || "Paula Rangel-Halbwachs";
+
+  return [
+    {
+      title: "Article I : Objet",
+      paragraphs: [
+        `En exécution du présent contrat, F.L.I. s'engage à organiser l'action de formation suivante : formation individualisée ${language}.`,
+      ],
+    },
+    {
+      title: "Article II : Nature et caractéristique des actions de formation",
+      paragraphs: [
+        "L'action de formation entre dans la catégorie des actions d'acquisition et de perfectionnement des connaissances prévue à l'article L.6313-1 du code du travail.",
+        `L'objectif de la formation est de permettre au stagiaire de développer les bases en ${language} afin de pouvoir communiquer avec la clientèle étrangère dans le cadre de son activité professionnelle.`,
+        "À l'issue de la formation une attestation de stage sera délivrée au stagiaire.",
+        "Le programme du stage est joint à la présente convention.",
+      ],
+    },
+    {
+      title: "Article III : Niveau de connaissances préalables nécessaire",
+      paragraphs: ["Avoir des notions dans la langue."],
+    },
+    {
+      title: "Article IV : Organisation de l'action de formation",
+      paragraphs: [
+        `Lieu de la formation : ${lieu}.`,
+        `Dates de la formation : du ${input.startDateLabel} au ${input.endDateLabel}.`,
+        `Durée du pack : ${input.durationHoursLabel}.`,
+        "Horaires : à définir en fonction de vos disponibilités et celles du professeur.",
+        `Effectif : ${input.groupSizeLabel}.`,
+      ],
+    },
+    {
+      title: "Description des équipements",
+      paragraphs: [
+        "Le stagiaire devra disposer :",
+        "• d'un ordinateur équipé d'une Webcam,",
+        "• d'une connexion internet haut débit,",
+        "• d'un casque ou enceintes et microphone,",
+        "• d'un compte zoom.us — gratuit.",
+      ],
+    },
+    {
+      title: "Moyens pédagogiques et de suivi",
+      paragraphs: [
+        "• cours en face à face en ligne avec le formateur via notre plateforme www.zoom.us,",
+        "• remise d'un fascicule support de cours,",
+        "• exercices en ligne,",
+        "• mise en situation,",
+        "• travaux d'écoute et de compréhension orale (support audio fourni).",
+        "Évaluation en continue de la progression via des exercices écrits et oraux adaptés aux besoins de l'apprenant.",
+        `Personne assurant le suivi pédagogique : ${contact}.`,
+      ],
+    },
+    {
+      title: "Réservation des cours",
+      paragraphs: [
+        "L'apprenant réservera ses cours en ligne directement avec le formateur par téléphone ou e-mail.",
+        "Pour les cours en ligne réservés auprès de nos formateurs, le stagiaire dispose d'un délai d'annulation de minimum 24 h. En cas de non-respect du délai, ou d'absence lors d'un cours, le cours sera facturé.",
+      ],
+    },
+  ];
 }
 
 function studentFullName(student: InscriptionDocumentsStudent): string {
@@ -176,6 +268,55 @@ export function buildConventionPdfModel(input: {
   const organization = parseOrganizationIdentity(input.identity);
   const generatedAt = input.generatedAt ?? new Date();
   const name = studentFullName(input.student) || "Stagiaire";
+  const language = texte(input.inscription.language) || "—";
+  const startDateLabel = formatDateFr(input.inscription.start_date);
+  const endDateLabel = formatDateFr(input.inscription.end_date);
+  const durationHoursLabel =
+    input.inscription.duration_hours != null
+      ? `${input.inscription.duration_hours} heures`
+      : "—";
+  const addressLines = studentAddressLines(input.student);
+  const groupSizeLabel = String(input.inscription.group_size ?? 1);
+  const online = isOnlineModality(input.inscription.modality);
+
+  const sections = online
+    ? [
+        {
+          title: "Entre les soussignés",
+          paragraphs: [
+            `1/ L'organisme de formation : ${organization.legal_name || "France Langues International"}, ${formatOrganizationAddress(organization) || "25 avenue de la gare, 73800 Montmélian"}${organization.siret ? `, Siret : ${organization.siret}` : ""}${organization.activity_number ? `, enregistré sous le n° de déclaration d'activité : ${organization.activity_number}` : ""}${organization.activity_authority ? ` auprès du ${organization.activity_authority}` : ""}${organization.representative ? `, représenté par ${organization.representative}` : ""}.`,
+            `2/ L'entreprise ou le stagiaire : ${[texte(input.student.civility), name].filter(Boolean).join(" ")}${addressLines.length ? `, ${addressLines.join(", ")}` : ""}.`,
+            "Est conclue la convention de formation professionnelle suivante.",
+          ],
+        },
+        ...buildOnlineConventionSections({
+          language,
+          startDateLabel,
+          endDateLabel,
+          durationHoursLabel,
+          groupSizeLabel,
+          studentAddressLines: addressLines,
+          pedagogicalContact:
+            organization.representative || "Paula Rangel-Halbwachs",
+        }),
+      ]
+    : [
+        {
+          title: "Objet",
+          paragraphs: [
+            `${organization.legal_name || "L'organisme de formation"} organise une action de formation professionnelle au bénéfice de ${name}.`,
+            "L'action entre dans la catégorie des actions d'acquisition et de perfectionnement des connaissances prévue par l'article L.6313-1 du code du travail.",
+          ],
+        },
+        {
+          title: CONDITIONS_GENERALES_TITLE,
+          paragraphs: [CONDITIONS_GENERALES_PROVENANCE],
+        },
+        ...CONDITIONS_GENERALES_SECTIONS.map((s) => ({
+          title: s.title,
+          paragraphs: s.paragraphs,
+        })),
+      ];
 
   return {
     kind: "convention",
@@ -184,17 +325,14 @@ export function buildConventionPdfModel(input: {
     inscriptionCode: texte(input.inscription.code) || "—",
     studentDisplayName: name,
     studentCivility: texte(input.student.civility),
-    studentAddressLines: studentAddressLines(input.student),
-    language: texte(input.inscription.language) || "—",
-    startDateLabel: formatDateFr(input.inscription.start_date),
-    endDateLabel: formatDateFr(input.inscription.end_date),
-    durationHoursLabel:
-      input.inscription.duration_hours != null
-        ? `${input.inscription.duration_hours} heures`
-        : "—",
+    studentAddressLines: addressLines,
+    language,
+    startDateLabel,
+    endDateLabel,
+    durationHoursLabel,
     locationLabel: texte(input.inscription.course_location) || "—",
     modalityLabel: modalityLabelFr(input.inscription.modality),
-    groupSizeLabel: String(input.inscription.group_size ?? 1),
+    groupSizeLabel,
     priceLabel: formatEuros(input.inscription.price),
     depositLabel: formatEuros(input.inscription.deposit_amount),
     balanceLabel: formatEuros(balanceAmount(input.inscription)),
@@ -202,23 +340,8 @@ export function buildConventionPdfModel(input: {
     organization,
     organizationAddress: formatOrganizationAddress(organization),
     organizationLegalLines: organizationLegalMentions(organization),
-    sections: [
-      {
-        title: "Objet",
-        paragraphs: [
-          `${organization.legal_name || "L'organisme de formation"} organise une action de formation professionnelle au bénéfice de ${name}.`,
-          "L'action entre dans la catégorie des actions d'acquisition et de perfectionnement des connaissances prévue par l'article L.6313-1 du code du travail.",
-        ],
-      },
-      {
-        title: CONDITIONS_GENERALES_TITLE,
-        paragraphs: [CONDITIONS_GENERALES_PROVENANCE],
-      },
-      ...CONDITIONS_GENERALES_SECTIONS.map((s) => ({
-        title: s.title,
-        paragraphs: s.paragraphs,
-      })),
-    ],
+    documentFooterLines: fliDocumentFooterLines(),
+    sections,
     footerNote:
       "Document généré automatiquement à partir des données de l'inscription. La convention signée fait foi.",
   };
@@ -260,6 +383,7 @@ export function buildProgrammePdfModel(input: {
     organization,
     organizationAddress: formatOrganizationAddress(organization),
     organizationLegalLines: organizationLegalMentions(organization),
+    documentFooterLines: fliDocumentFooterLines(),
     sections: PROGRAMME_SECTIONS.map((s) => ({
       title: s.title,
       paragraphs: s.paragraphs.map((p) =>

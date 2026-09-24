@@ -209,6 +209,33 @@ class Cursor {
       this.y -= 11;
     }
   }
+
+  legalFooter(lines: string[]) {
+    if (!lines.length) return;
+    this.gap(16);
+    const page = this.ensure(12 + lines.length * 11);
+    page.drawLine({
+      start: { x: MARGIN, y: this.y + 6 },
+      end: { x: PAGE.width - MARGIN, y: this.y + 6 },
+      thickness: 0.5,
+      color: RULE,
+    });
+    this.y -= 6;
+    for (const line of lines) {
+      const wrapped = wrapText(this.fonts.regular, line, 8, PAGE.width - MARGIN * 2);
+      for (const w of wrapped) {
+        const p = this.ensure(11);
+        p.drawText(w, {
+          x: MARGIN,
+          y: this.y,
+          size: 8,
+          font: this.fonts.regular,
+          color: MUTED,
+        });
+        this.y -= 11;
+      }
+    }
+  }
 }
 
 function drawPageChrome(page: PDFPage) {
@@ -298,6 +325,7 @@ export async function renderInscriptionDocumentPdf(
   }
 
   cursor.footerNote(model.footerNote);
+  cursor.legalFooter(model.documentFooterLines ?? []);
 
   return doc.save();
 }
