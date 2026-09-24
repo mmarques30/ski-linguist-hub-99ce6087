@@ -7,7 +7,26 @@ import {
   CERTIFICATE_BUCKET,
   CERTIFICATE_SIGNED_URL_TTL_SECONDS,
   isLegacyPublicUrl,
+  resolveDownloadBuckets,
 } from "@/lib/certificateStorage";
+
+async function signViaEdge(
+  pathOrUrl: string,
+  bucket: string
+): Promise<string | null> {
+  const { data, error } = await supabase.functions.invoke("sign-private-download", {
+    body: { bucket, path: pathOrUrl },
+  });
+  if (error) {
+    console.error("sign-private-download failed:", error);
+    return null;
+  }
+  const signedUrl =
+    data && typeof data === "object" && "signedUrl" in data
+      ? (data as { signedUrl?: string }).signedUrl
+      : null;
+  return typeof signedUrl === "string" && signedUrl ? signedUrl : null;
+}
 
 async function getCertificateDownloadUrl(
   pathOrUrl: string,
@@ -15,15 +34,23 @@ async function getCertificateDownloadUrl(
 ): Promise<string | null> {
   if (isLegacyPublicUrl(pathOrUrl)) return pathOrUrl;
 
-  const { data, error } = await supabase.storage
-    .from(bucket)
-    .createSignedUrl(pathOrUrl, CERTIFICATE_SIGNED_URL_TTL_SECONDS);
+  for (const candidate of resolveDownloadBuckets(bucket)) {
+    const { data, error } = await supabase.storage
+      .from(candidate)
+      .createSignedUrl(pathOrUrl, CERTIFICATE_SIGNED_URL_TTL_SECONDS);
 
-  if (error) {
-    console.error("Certificate signed URL failed:", error);
-    return null;
+    if (!error && data?.signedUrl) {
+      return data.signedUrl;
+    }
   }
-  return data?.signedUrl ?? null;
+
+  // Secours : signature service-role après contrôle d'accès (staff / propriétaire)
+  for (const candidate of resolveDownloadBuckets(bucket)) {
+    const signed = await signViaEdge(pathOrUrl, candidate);
+    if (signed) return signed;
+  }
+
+  return null;
 }
 
 interface CertificatePdfButtonProps {
