@@ -209,6 +209,21 @@ export function organizationLegalMentions(identity: OrganizationIdentity): strin
   ].filter(Boolean);
 }
 
+/**
+ * Pied de page Version 4 des conventions / programmes FLI (en ligne),
+ * fourni par Paula le 24 septembre 2026.
+ */
+export const FLI_DOCUMENT_FOOTER_V4_LINES = [
+  "Formation Professionnelle Continue : Langues Étrangères",
+  "SARL au capital de 5000 euros. 25 avenue de la gare, 73800 Montmélian",
+  "Siret : 484 772 041 00048- RCS Chambéry – NAF : 8559A Organisme de formation n° 82 73 01 366 73",
+  "Version 4 du 24 septembre 2026",
+] as const;
+
+export function fliDocumentFooterLines(): string[] {
+  return [...FLI_DOCUMENT_FOOTER_V4_LINES];
+}
+
 function escapeHtml(value: string): string {
   return value
     .replaceAll("&", "&amp;")
