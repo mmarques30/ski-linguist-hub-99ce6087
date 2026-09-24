@@ -76,6 +76,8 @@ export type InscriptionDocumentPdfModel = {
   documentFooterLines: string[];
   sections: Array<{ title: string; paragraphs: string[] }>;
   footerNote: string;
+  /** Bloc signatures convention en ligne (texte Paula). */
+  onlineSignatureBlock?: boolean;
 };
 
 function texte(value: unknown): string {
@@ -223,7 +225,9 @@ export function buildOnlineConventionSections(input: {
   groupSizeLabel: string;
   studentAddressLines: string[];
   pedagogicalContact: string;
-  paymentTermsLabel: string;
+  priceLabel: string;
+  depositLabel: string;
+  balanceLabel: string;
 }): Array<{ title: string; paragraphs: string[] }> {
   const language = input.language || "la langue choisie";
   const addressHint = input.studentAddressLines.join(" ").trim();
@@ -231,6 +235,9 @@ export function buildOnlineConventionSections(input: {
     ? `formation en ligne — ${addressHint}`
     : "formation en ligne";
   const contact = input.pedagogicalContact || "Paula Rangel-Halbwachs";
+  const price = input.priceLabel !== "—" ? input.priceLabel : "—";
+  const deposit = input.depositLabel !== "—" ? input.depositLabel : "—";
+  const balance = input.balanceLabel !== "—" ? input.balanceLabel : "—";
 
   return [
     {
@@ -263,10 +270,6 @@ export function buildOnlineConventionSections(input: {
       ],
     },
     {
-      title: "Article V : Prix et modalités de règlement",
-      paragraphs: [input.paymentTermsLabel],
-    },
-    {
       title: "Description des équipements",
       paragraphs: [
         "Le stagiaire devra disposer :",
@@ -293,6 +296,45 @@ export function buildOnlineConventionSections(input: {
       paragraphs: [
         "L'apprenant réservera ses cours en ligne directement avec le formateur par téléphone ou e-mail.",
         "Pour les cours en ligne réservés auprès de nos formateurs, le stagiaire dispose d'un délai d'annulation de minimum 24 h. En cas de non-respect du délai, ou d'absence lors d'un cours, le cours sera facturé.",
+      ],
+    },
+    {
+      title: "Suivi de l'exécution et appréciation des résultats",
+      paragraphs: [
+        "• Une feuille d'émargement où figureront les dates et la durée des séances sera établie et validée par la responsable de formation.",
+        "• Travaux corrigés au fur et à mesure par le formateur pendant les séances.",
+        "• Test de niveau en entrée et sortie de formation.",
+      ],
+    },
+    {
+      title: "Article V : Délai de rétractation",
+      paragraphs: [
+        "À compter de la date de signature de la présente convention, le stagiaire a un délai de 10 jours pour se rétracter, il en informe l'organisme de formation par lettre recommandée ; dans ce cas aucune somme ne pourra être exigée du stagiaire.",
+      ],
+    },
+    {
+      title: "Article VI : Dispositions financières",
+      paragraphs: [
+        `En contrepartie de la présente convention, l'entreprise/stagiaire signataire s'engage à acquitter la somme de : ${price} nets* à l'ordre de F.L.I., correspondant au coût pédagogique de la formation. Le règlement de la formation s'effectuera en deux fois : ${deposit} par virement ou carte bancaire lors de l'inscription et le restant (${balance}) par chèque avant le début des cours. Vous avez la possibilité de demander un délai pour l'encaissement du chèque. (* organisme exonéré de TVA — formulaire 3511)`,
+      ],
+    },
+    {
+      title: "Article VII : Interruption de la formation",
+      paragraphs: [
+        "En cas de l'abandon du stage par le stagiaire pour un autre motif que la force majeure reconnue, le présent contrat est résilié selon les modalités financières suivantes : règlement du montant total de ce contrat, sans remboursement des cours non suivis. En cas de cessation anticipée de la formation du fait de l'organisme de formation ou si le stagiaire est empêché de suivre la formation par suite de force majeure dûment reconnue, le contrat de formation professionnelle est résilié. Dans ce cas seules les prestations effectivement dispensées sont dues au pro rata temporis de leur valeur prévue au présent contrat.",
+      ],
+    },
+    {
+      title: "Article VIII : Cas de différend",
+      paragraphs: [
+        "Si une contestation ou un différend n'ont pu être réglés à l'amiable, le tribunal de Chambéry sera seul compétent pour régler le litige.",
+      ],
+    },
+    {
+      title: "Article IX : Accessibilité",
+      paragraphs: [
+        "Nos formations en ligne sont accessibles et adaptées aux personnes à mobilité réduite. Les formations en présentiel se déroulant dans des locaux externes à notre structure, FLI ne peut garantir de manière systématique leur conformité avec la norme PMR.",
+        "FLI ne dispose pas de contenus pédagogiques adaptés pour les stagiaires en situation de handicap visuel et auditif. Cependant, nous ferons notre possible pour vous orienter vers nos partenaires offrant des formations adaptées à vos besoins à l'aide de notre base de données.",
       ],
     },
   ];
@@ -464,7 +506,9 @@ export function buildConventionPdfModel(input: {
           studentAddressLines: addressLines,
           pedagogicalContact:
             organization.representative || "Paula Rangel-Halbwachs",
-          paymentTermsLabel,
+          priceLabel,
+          depositLabel,
+          balanceLabel,
         }),
       ]
     : [
@@ -520,6 +564,7 @@ export function buildConventionPdfModel(input: {
     sections,
     footerNote:
       "Document généré automatiquement à partir des données de l'inscription. La convention signée fait foi.",
+    onlineSignatureBlock: online,
   };
 }
 
