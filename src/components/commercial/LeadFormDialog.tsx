@@ -283,7 +283,7 @@ export function LeadFormDialog({ open, onOpenChange, lead, defaultChannel = "cpf
                   <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Aucun</SelectItem>
-                    {skiMonitors.map((m) => (
+                    {(Array.isArray(skiMonitors) ? skiMonitors : skiMonitors.rows).map((m) => (
                       <SelectItem key={m.id} value={m.id}>
                         {m.first_name} {m.last_name} — {m.email}
                       </SelectItem>
