@@ -53,13 +53,15 @@ Deno.serve(async (req) => {
   try {
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const inscriptionId = String(body.inscriptionId || DEFAULT_INSCRIPTION_ID);
+    // Paula : jamais d'e-mail sans validation explicite.
+    const sendEmail = body.sendEmail === true;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    if (!resendApiKey) {
+    if (sendEmail && !resendApiKey) {
       return new Response(
         JSON.stringify({ success: false, error: "RESEND_API_KEY absente" }),
         {
@@ -69,8 +71,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    const template = await loadEmailTemplate(supabase, TEMPLATE_SLUG);
-    if (!template) {
+    const template = sendEmail
+      ? await loadEmailTemplate(supabase, TEMPLATE_SLUG)
+      : null;
+    if (sendEmail && !template) {
       return new Response(
         JSON.stringify({
           success: false,
@@ -87,9 +91,9 @@ Deno.serve(async (req) => {
       .from("inscriptions")
       .select(
         `
-        id, code, language, start_date, end_date, duration_hours,
+        id, code, language, start_date, end_date, dates_to_confirm, duration_hours,
         course_location, modality, price, deposit_amount, balance_after_deposit,
-        group_size, funding_organization, documents_sent_at, student_id,
+        group_size, funding_organization, payment_method, documents_sent_at, student_id,
         students!inscriptions_student_id_fkey (
           id, civility, first_name, last_name, street_address, postal_code, city,
           email, phone, company
@@ -230,52 +234,59 @@ Deno.serve(async (req) => {
       language: inscription.language || "formation",
       inscription_code: code,
     };
-    const rendered = renderEmailTemplate(template, variables);
-    const attachments = files.map((f) => ({
-      filename: f.filename,
-      content: bytesToBase64(f.bytes),
-    }));
 
-    const sent = (
-      await sendFliEmail({
-        resendApiKey,
-        to: email,
-        subject: rendered.subject,
-        html: rendered.html,
-        attachments,
-      })
-    ).ok;
+    let sent = false;
+    if (sendEmail && template && resendApiKey) {
+      const rendered = renderEmailTemplate(template, variables);
+      const attachments = files.map((f) => ({
+        filename: f.filename,
+        content: bytesToBase64(f.bytes),
+      }));
 
-    await supabase.from("email_log").insert({
-      template_slug: TEMPLATE_SLUG,
-      recipient_email: email,
-      recipient_name: studentName || null,
-      status: sent ? "sent" : "failed",
-      inscription_id: inscriptionId,
-      variables_used: {
-        ...variables,
-        attachments: attachments.map((a) => a.filename),
-        channel: "manual_publish_portail",
-      },
-      error_message: sent ? null : "envoi Resend échoué",
-    });
+      sent = (
+        await sendFliEmail({
+          resendApiKey,
+          to: email,
+          subject: rendered.subject,
+          html: rendered.html,
+          attachments,
+        })
+      ).ok;
+
+      await supabase.from("email_log").insert({
+        template_slug: TEMPLATE_SLUG,
+        recipient_email: email,
+        recipient_name: studentName || null,
+        status: sent ? "sent" : "failed",
+        inscription_id: inscriptionId,
+        variables_used: {
+          ...variables,
+          attachments: attachments.map((a) => a.filename),
+          channel: "manual_publish_portail",
+        },
+        error_message: sent ? null : "envoi Resend échoué",
+      });
+    }
 
     await supabase
       .from("inscriptions")
       .update({ documents_sent_at: nowIso })
       .eq("id", inscriptionId);
 
-    await supabase
-      .from("scheduled_reminders")
-      .update({ status: "SENT", sent_at: nowIso })
-      .eq("related_id", inscriptionId)
-      .eq("type", "DOCUMENT")
-      .eq("status", "PENDING");
+    if (sendEmail && sent) {
+      await supabase
+        .from("scheduled_reminders")
+        .update({ status: "SENT", sent_at: nowIso })
+        .eq("related_id", inscriptionId)
+        .eq("type", "DOCUMENT")
+        .eq("status", "PENDING");
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
         sent,
+        emailSent: sendEmail ? sent : false,
         email,
         documents: files.map((f) => ({ type: f.type, path: f.path })),
       }),
