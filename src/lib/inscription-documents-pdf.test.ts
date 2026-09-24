@@ -145,23 +145,74 @@ describe("PDF dossier inscription", () => {
     const text = pdfVisibleText(bytes);
     expect(text).toMatch(/Article I/);
     expect(text).toMatch(/zoom\.us/i);
-    expect(text).toMatch(/Version 4/);
     expect(text).toMatch(/Montm/);
     expect(text).toMatch(/484/);
+    expect(model.documentFooterLines.some((l) => l.includes("Version 4"))).toBe(
+      true
+    );
   });
 
   it("expose les articles en ligne comme helper", () => {
     const sections = buildOnlineConventionSections({
       language: "Anglais",
-      startDateLabel: "28 septembre 2026",
-      endDateLabel: "28 septembre 2026",
+      datesLabel: "À planifier — début souhaité le 28 septembre 2026",
       durationHoursLabel: "12 heures",
       groupSizeLabel: "1",
       studentAddressLines: [],
       pedagogicalContact: "Paula Rangel-Halbwachs",
+      paymentTermsLabel: "Coût pédagogique total : 600,00 €.",
     });
     expect(sections[0].title).toContain("Article I");
+    expect(sections.some((s) => s.title.includes("Prix"))).toBe(true);
     expect(sections.some((s) => s.paragraphs.some((p) => p.includes("24 h")))).toBe(true);
+  });
+
+  it("renseigne dates à planifier et montants depuis les strings Supabase", async () => {
+    const model = buildConventionPdfModel({
+      inscription: {
+        code: "FLI-260014",
+        language: "Anglais",
+        start_date: "2026-09-28",
+        end_date: "2026-09-28",
+        dates_to_confirm: true,
+        duration_hours: "12",
+        course_location: "En ligne",
+        modality: "en_ligne_individuel",
+        price: "600",
+        deposit_amount: "150",
+        balance_after_deposit: "450",
+        group_size: 1,
+        funding_organization: "FIFPL",
+        payment_method: "virement",
+      },
+      student: {
+        civility: "madame",
+        first_name: "Cassandre",
+        last_name: "Viard-Gaudin",
+        street_address: "663, Route De Domelin ",
+        postal_code: "73270",
+        city: "Beaufort ",
+        email: "cassandre.lore@gmail.com",
+        phone: "0659223877",
+        company: "Courchevel village ",
+      },
+      identity: IDENTITY,
+    });
+    expect(model.studentCivility).toBe("Mme");
+    expect(model.priceLabel).toContain("600");
+    expect(model.depositLabel).toContain("150");
+    expect(model.balanceLabel).toContain("450");
+    expect(model.datesLabel).toMatch(/À planifier/);
+    expect(model.studentAddressLines.join(" ")).toMatch(/Beaufort/);
+    expect(model.paymentTermsLabel).toMatch(/virement/);
+
+    const bytes = await renderInscriptionDocumentPdf(model);
+    const text = pdfVisibleText(bytes);
+    expect(text).toMatch(/600/);
+    expect(text).toMatch(/150/);
+    expect(text).toMatch(/450/);
+    expect(text).toMatch(/Article V/);
+    expect(text).toMatch(/Beaufort/);
   });
 
   it("garde la copie Deno d'accord avec le module front", () => {
