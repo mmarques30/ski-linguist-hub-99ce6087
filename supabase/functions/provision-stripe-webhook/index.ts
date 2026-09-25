@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { stripeCorsHeaders as corsHeaders } from "../_shared/stripe.ts";
+import { getStripeMode, stripeCorsHeaders as corsHeaders } from "../_shared/stripe.ts";
 import { ensureStripeWebhookEndpoint } from "../_shared/provision-stripe-webhook.ts";
 import { saveStripeWebhookSecret } from "../_shared/stripe-webhook-secret.ts";
 
@@ -55,8 +55,9 @@ Deno.serve(async (req) => {
     }
 
     const webhookUrl = `${supabaseUrl.replace(/\/$/, "")}/functions/v1/stripe-webhook`;
+    const mode = getStripeMode(stripeSecretKey);
     const result = await ensureStripeWebhookEndpoint(stripeSecretKey, webhookUrl);
-    await saveStripeWebhookSecret(adminClient, result.secret, result.endpointId);
+    await saveStripeWebhookSecret(adminClient, result.secret, result.endpointId, mode);
 
     return new Response(
       JSON.stringify({
@@ -65,11 +66,12 @@ Deno.serve(async (req) => {
           webhookUrl,
           endpointId: result.endpointId,
           created: result.created,
+          mode,
           webhookSecretConfigured: true,
           envSecretConfigured: Boolean(Deno.env.get("STRIPE_WEBHOOK_SECRET")),
           message: result.created
-            ? "Webhook Stripe créé et secret enregistré."
-            : "Webhook Stripe existant — secret régénéré et enregistré.",
+            ? `Webhook Stripe ${mode ?? "?"} créé et secret enregistré.`
+            : `Webhook Stripe ${mode ?? "?"} existant — secret régénéré et enregistré.`,
         },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

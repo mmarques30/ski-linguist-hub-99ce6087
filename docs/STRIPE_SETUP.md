@@ -127,24 +127,22 @@ LIMIT 5;
 ## Passage en production (live)
 
 1. Activer le compte Stripe (KYC terminé) — bascule **Live** dans le Dashboard.
-2. Copier la **Secret key** live : [API Keys (live)](https://dashboard.stripe.com/apikeys) → `sk_live_...`
-3. Dans [Supabase → Edge Functions → Secrets](https://supabase.com/dashboard/project/nghkrmvakjomzmfwdhbo/settings/functions) :
+2. Mettre à jour la clé via le **chat Lovable** (« Update Stripe secret key ») avec `sk_live_...`
+   (le badge Lovable sur `STRIPE_SECRET_KEY` empêche l'édition depuis Cloud → Secrets).
+3. **Settings → Intégrations** : le badge doit passer en **Mode live**. Si **Webhook live manquant**
+   apparaît, cliquer **Configurer le webhook automatiquement** (crée l'endpoint live + enregistre
+   le `whsec_` dans `app_settings`, avec le mode `live`).
+4. Vérifier dans [Stripe → Webhooks (live)](https://dashboard.stripe.com/webhooks) qu'un endpoint
+   pointe vers  
+   `https://nghkrmvakjomzmfwdhbo.supabase.co/functions/v1/stripe-webhook`  
+   (événement `checkout.session.completed`). Le webhook de test (`CursorFLI0909`, etc.) ne compte pas.
+5. `check-stripe-config` contrôle désormais **l'existence réelle** de l'endpoint dans le mode de la
+   clé (pas seulement la présence d'un `whsec_` en base — souvent celui du mode test).
+6. Badge **Mode live** + **Opérationnel** uniquement si clé live valide **et** endpoint live présent.
+7. Test réel (petit montant) sur `/register` — la page de confirmation ne doit plus afficher
+   l'avertissement « mode test ».
 
-```bash
-supabase secrets set STRIPE_SECRET_KEY=sk_live_...
-```
-
-4. Recréer le webhook **live** (le secret test `whsec_` ne fonctionne pas en live) :
-   - Settings → Intégrations → **Configurer le webhook automatiquement**, **ou**
-   - [Stripe → Webhooks (live)](https://dashboard.stripe.com/webhooks) → même URL  
-     `https://nghkrmvakjomzmfwdhbo.supabase.co/functions/v1/stripe-webhook`  
-     → événement `checkout.session.completed` → copier le nouveau `whsec_...` dans  
-     `STRIPE_WEBHOOK_SECRET` (ou laisser `provision-stripe-webhook` l’écrire dans `app_settings`).
-5. Redéployer au besoin : `stripe-webhook`, `provision-stripe-webhook`, `verify-registration-checkout`, `create-registration-checkout`, `check-stripe-config`.
-6. **Settings → Intégration de paiement** : badge **Mode live** + **Opérationnel**.
-7. Test réel (petit montant) sur `/register` — la page de confirmation ne doit plus afficher l’avertissement « mode test ».
-
-**Important :** tant que `STRIPE_SECRET_KEY` commence par `sk_test_`, aucun argent n’arrive sur le compte bancaire FLI.
+**Important :** tant que `STRIPE_SECRET_KEY` commence par `sk_test_`, aucun argent n'arrive sur le compte bancaire FLI. Un secret webhook test laissé en `app_settings` ne suffit **pas** en live.
 
 ---
 
@@ -157,5 +155,6 @@ supabase secrets set STRIPE_SECRET_KEY=sk_live_...
 | Checkout OK mais pas de paiement en BD | Configurer `STRIPE_WEBHOOK_SECRET` (auto ou manuel) + redéployer `stripe-webhook` et `verify-registration-checkout` |
 | Paiement confirmé mais rien sur Stripe / carte | Vérifier le **mode test** ([dashboard test](https://dashboard.stripe.com/test/payments)) ; carte test `4242…` = pas de débit réel |
 | Page « Paiement confirmé » sans trace | La page vérifie la session Stripe ; sans `session_id` valide, le paiement n'est pas confirmé |
+| « Opérationnel » alors qu'aucun webhook live n'existe | Ancien bug : un `whsec_` test en `app_settings` suffisait. Corrigé — `check-stripe-config` liste les endpoints Stripe du mode courant. Recréer via **Configurer le webhook automatiquement**. |
 | « Invalid signature » | Vérifier que le `whsec_` correspond au bon mode test/live |
 | Fonction introuvable | `supabase functions deploy` depuis la branche `main` GitHub |
