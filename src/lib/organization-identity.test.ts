@@ -103,10 +103,34 @@ describe("identité de l'organisation", () => {
     expect(header.name).toBe("France Langues International");
     expect(header.address).toBe("25 avenue de la gare");
     expect(header.cityLine).toBe("73800 Montmélian");
-    expect(header.phone).toBe("+33 (0)6 27 13 45 16");
-    expect(header.email).toBe("contact@france-langues-international.com");
+    expect(header.phone).toBe("04 79 28 21 09");
+    expect(header.email).toBe("info@fli.fr");
     expect(header.siret).toBe("484 772 041 00048");
     expect(header.logoUrl).toBe("");
+  });
+
+  it("garde la copie Deno d'accord avec le module front", () => {
+    const front = readFileSync(
+      join(process.cwd(), "src/lib/organization-identity.ts"),
+      "utf8"
+    );
+    const deno = readFileSync(
+      join(process.cwd(), "supabase/functions/_shared/organization-identity.ts"),
+      "utf8"
+    );
+    const blocDefauts = (texte: string) => {
+      const debut = texte.indexOf("const FLI_INVOICE_DEFAULTS");
+      expect(debut).toBeGreaterThan(-1);
+      const fin = texte.indexOf("} as const;", debut);
+      return texte.slice(debut, fin + "} as const;".length);
+    };
+    expect(blocDefauts(deno)).toBe(blocDefauts(front));
+    expect(blocDefauts(front)).toContain('phone: "04 79 28 21 09"');
+    expect(blocDefauts(front)).toContain('email: "info@fli.fr"');
+    expect(front).not.toContain("contact@france-langues-international.com");
+    expect(front).not.toContain("+33 (0)6 27 13 45 16");
+    expect(deno).not.toContain("contact@france-langues-international.com");
+    expect(deno).not.toContain("+33 (0)6 27 13 45 16");
   });
 
   it("couvre les mentions attendues sur une convention", () => {
