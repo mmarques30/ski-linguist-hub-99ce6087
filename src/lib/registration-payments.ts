@@ -66,10 +66,11 @@ export const CHEQUE_BALANCE_INSTRUCTION =
 
 export const PAYMENT_OPTION_LABELS: Record<RegistrationPaymentOption, string> = {
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]:
-    "150 € en ligne (Stripe) + solde par chèque à l'inscription",
+    "150 € par carte bancaire en ligne + solde par chèque à l'inscription",
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]:
     "150 € par virement bancaire + solde par chèque à l'inscription",
-  [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]: "Paiement intégral en ligne (Stripe)",
+  [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]:
+    "Paiement intégral par carte bancaire en ligne",
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]: "Paiement intégral par virement bancaire",
 };
 

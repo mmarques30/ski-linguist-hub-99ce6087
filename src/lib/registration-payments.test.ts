@@ -4,6 +4,7 @@ import { join } from "node:path";
 import {
   getRegistrationPaymentSummary,
   hasChequeBalance,
+  PAYMENT_OPTION_LABELS,
   REGISTRATION_PAYMENT_OPTIONS,
   requiresStripeCheckout,
   requiresVirementInstructions,
@@ -45,6 +46,18 @@ describe("modes de règlement /register", () => {
     expect(requiresVirementInstructions(null)).toBe(false);
     expect(hasChequeBalance(null)).toBe(false);
     expect(requiresStripeCheckout(undefined)).toBe(false);
+  });
+
+  it("affiche « carte bancaire en ligne » et non Stripe sur /register", () => {
+    for (const label of Object.values(PAYMENT_OPTION_LABELS)) {
+      expect(label.toLowerCase()).not.toContain("stripe");
+    }
+    expect(
+      PAYMENT_OPTION_LABELS[REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]
+    ).toMatch(/carte bancaire en ligne/i);
+    expect(
+      PAYMENT_OPTION_LABELS[REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]
+    ).toMatch(/carte bancaire en ligne/i);
   });
 
   it("garde le détail du règlement une fois le mode choisi", () => {
