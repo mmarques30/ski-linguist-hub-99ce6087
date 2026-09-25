@@ -173,7 +173,7 @@ export const EMAIL_PREVIEW_SAMPLE: Record<string, string> = {
   course_location: "Val d'Isère",
   modality_label: "Présentiel",
   slope_label: "Piste bleue",
-  payment_label: "150 € Stripe + solde chèque à l'inscription",
+  payment_label: "150 € carte bancaire en ligne + solde chèque à l'inscription",
   magic_link: "https://exemple.invalid/portail/lien-magique",
   invoice_number: "2026-0147",
   amount: "1 240,00 €",

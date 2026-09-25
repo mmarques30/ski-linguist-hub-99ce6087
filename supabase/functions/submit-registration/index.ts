@@ -421,10 +421,11 @@ Deno.serve(async (req) => {
 
     const paymentLabels: Record<string, string> = {
       [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]:
-        "150 € Stripe + solde chèque à l'inscription (encaissement après clôture dossier)",
+        "150 € carte bancaire en ligne + solde chèque à l'inscription (encaissement après clôture dossier)",
       [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]:
         "150 € virement + solde chèque à l'inscription (encaissement après clôture dossier)",
-      [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]: "Paiement intégral Stripe",
+      [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]:
+        "Paiement intégral par carte bancaire en ligne",
       [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]: "Paiement intégral virement",
       virement:
         "150 € virement + solde chèque à l'inscription (encaissement après clôture dossier)",
