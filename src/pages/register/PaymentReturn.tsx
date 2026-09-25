@@ -193,7 +193,6 @@ export function PaymentSuccessPage() {
       }
     >
       {state.inscriptionCode && <InscriptionCode code={state.inscriptionCode} />}
-<<<<<<< HEAD
       {state.stripeMode === "test" && (
         <Alert>
           <AlertDescription className="text-sm text-muted-foreground">
@@ -202,14 +201,6 @@ export function PaymentSuccessPage() {
           </AlertDescription>
         </Alert>
       )}
-=======
-      <Alert>
-        <AlertDescription className="text-sm text-muted-foreground">
-          Le paiement en ligne est actuellement en <strong>mode test</strong> : il
-          n&apos;apparaît pas sur un relevé bancaire réel.
-        </AlertDescription>
-      </Alert>
->>>>>>> origin/main
       {showChequeReminder && (
         <Alert>
           <AlertDescription className="space-y-2 text-left">
