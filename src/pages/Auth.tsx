@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import authBg from "@/assets/fli-auth-bg.png";
+import { ADMIN_HOME_PATH } from "@/lib/admin-home";
 
 export default function Auth() {
   const { user, loading } = useAuth();
@@ -35,7 +36,7 @@ export default function Auth() {
           ? "/student/dashboard"
           : role === "formateur"
             ? "/formateur/evaluations"
-            : "/";
+            : ADMIN_HOME_PATH;
       navigate(home, { replace: true });
     }
   }, [user, loading, roleLoading, role, navigate]);

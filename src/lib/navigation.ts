@@ -352,7 +352,7 @@ export function navRouteKey(node: { href: string; routeKey?: string }): string |
 
 /** Le pathname courant relève-t-il de ce chemin de menu ? */
 export function isPathActive(pathname: string, path: string): boolean {
-  if (path === "/") return pathname === "/";
+  if (path === "/app") return pathname === "/app";
   if (path === "/inscriptions") {
     if (pathname === "/inscriptions/schedule-validation") return false;
     return pathname === "/inscriptions" || /^\/inscriptions\/[^/]+$/.test(pathname);
