@@ -31,7 +31,7 @@ export type ProposalPayerType = (typeof PROPOSAL_PAYER_TYPES)[number]["value"];
 export const PROPOSAL_PAYMENT_FORMULAS = [
   {
     value: REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE,
-    label: "150 € Stripe + solde chèque",
+    label: "150 € carte bancaire en ligne + solde chèque",
   },
   {
     value: REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT,
@@ -39,7 +39,7 @@ export const PROPOSAL_PAYMENT_FORMULAS = [
   },
   {
     value: REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL,
-    label: "Paiement intégral Stripe",
+    label: "Paiement intégral carte bancaire en ligne",
   },
   {
     value: REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL,
