@@ -85,8 +85,8 @@ const FLI_INVOICE_DEFAULTS = {
   address: "25 avenue de la gare",
   postalCode: "73800",
   city: "Montmélian",
-  phone: "+33 (0)6 27 13 45 16",
-  email: "contact@france-langues-international.com",
+  phone: "04 79 28 21 09",
+  email: "info@fli.fr",
   siret: "484 772 041 00048",
 } as const;
 
