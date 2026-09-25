@@ -15,7 +15,12 @@ import { formatPriceEUR } from "@/lib/registration-offerings";
 
 type PaymentSuccessState =
   | { status: "loading" }
-  | { status: "paid"; inscriptionCode?: string | null; amountPaid?: number }
+  | {
+      status: "paid";
+      inscriptionCode?: string | null;
+      amountPaid?: number;
+      stripeMode?: "test" | "live" | null;
+    }
   | { status: "unpaid"; inscriptionCode?: string | null }
   | { status: "error"; message: string };
 
@@ -103,6 +108,7 @@ export function PaymentSuccessPage() {
             status: "paid",
             inscriptionCode: result.inscriptionCode ?? code,
             amountPaid: result.amountPaid,
+            stripeMode: result.stripeMode ?? null,
           });
           return;
         }
@@ -187,12 +193,14 @@ export function PaymentSuccessPage() {
       }
     >
       {state.inscriptionCode && <InscriptionCode code={state.inscriptionCode} />}
-      <Alert>
-        <AlertDescription className="text-sm text-muted-foreground">
-          Le paiement en ligne est actuellement en <strong>mode test</strong> : il
-          n&apos;apparaît pas sur un relevé bancaire réel.
-        </AlertDescription>
-      </Alert>
+      {state.stripeMode === "test" && (
+        <Alert>
+          <AlertDescription className="text-sm text-muted-foreground">
+            Le paiement en ligne est actuellement en <strong>mode test</strong> : il
+            n&apos;apparaît pas sur un relevé bancaire réel.
+          </AlertDescription>
+        </Alert>
+      )}
       {showChequeReminder && (
         <Alert>
           <AlertDescription className="space-y-2 text-left">

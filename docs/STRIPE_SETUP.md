@@ -10,7 +10,7 @@ Ne pas se fier à un statut figé dans ce fichier : la configuration évolue sel
 2. La carte appelle l'edge function **`check-stripe-config`** et affiche deux lignes **`StatusRow`** :
    - `STRIPE_SECRET_KEY` — clé présente et valide
    - `STRIPE_WEBHOOK_SECRET` — signing secret présent (Supabase Secrets ou `app_settings`)
-3. Badge **Opérationnel** = les deux secrets OK + clé valide (**constaté live 22/09/2026**, mode **test**).
+3. Badge **Opérationnel** = les deux secrets OK + clé valide. Le badge **Mode live** / **Mode test** indique si les paiements sont réels.
 4. Si le webhook manque, utiliser **Configurer le webhook automatiquement** (edge `provision-stripe-webhook`) ou suivre les étapes manuelles ci-dessous.
 
 Sans webhook, le checkout Stripe peut s'afficher, mais l'inscription n'est pas mise à jour automatiquement en base.
@@ -126,12 +126,25 @@ LIMIT 5;
 
 ## Passage en production (live)
 
-1. Activer le compte Stripe (KYC)
-2. `supabase secrets set STRIPE_SECRET_KEY=sk_live_...`
-3. Nouveau webhook live → même URL Supabase
-4. `supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...` (live)
-5. Redéployer les fonctions + test réel
-6. Re-vérifier **Settings → Intégration de paiement** (mode live, `StatusRow` OK)
+1. Activer le compte Stripe (KYC terminé) — bascule **Live** dans le Dashboard.
+2. Copier la **Secret key** live : [API Keys (live)](https://dashboard.stripe.com/apikeys) → `sk_live_...`
+3. Dans [Supabase → Edge Functions → Secrets](https://supabase.com/dashboard/project/nghkrmvakjomzmfwdhbo/settings/functions) :
+
+```bash
+supabase secrets set STRIPE_SECRET_KEY=sk_live_...
+```
+
+4. Recréer le webhook **live** (le secret test `whsec_` ne fonctionne pas en live) :
+   - Settings → Intégrations → **Configurer le webhook automatiquement**, **ou**
+   - [Stripe → Webhooks (live)](https://dashboard.stripe.com/webhooks) → même URL  
+     `https://nghkrmvakjomzmfwdhbo.supabase.co/functions/v1/stripe-webhook`  
+     → événement `checkout.session.completed` → copier le nouveau `whsec_...` dans  
+     `STRIPE_WEBHOOK_SECRET` (ou laisser `provision-stripe-webhook` l’écrire dans `app_settings`).
+5. Redéployer au besoin : `stripe-webhook`, `provision-stripe-webhook`, `verify-registration-checkout`, `create-registration-checkout`, `check-stripe-config`.
+6. **Settings → Intégration de paiement** : badge **Mode live** + **Opérationnel**.
+7. Test réel (petit montant) sur `/register` — la page de confirmation ne doit plus afficher l’avertissement « mode test ».
+
+**Important :** tant que `STRIPE_SECRET_KEY` commence par `sk_test_`, aucun argent n’arrive sur le compte bancaire FLI.
 
 ---
 
