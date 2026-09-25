@@ -15,7 +15,12 @@ import { formatPriceEUR } from "@/lib/registration-offerings";
 
 type PaymentSuccessState =
   | { status: "loading" }
-  | { status: "paid"; inscriptionCode?: string | null; amountPaid?: number }
+  | {
+      status: "paid";
+      inscriptionCode?: string | null;
+      amountPaid?: number;
+      stripeMode?: "test" | "live" | null;
+    }
   | { status: "unpaid"; inscriptionCode?: string | null }
   | { status: "error"; message: string };
 
@@ -103,6 +108,7 @@ export function PaymentSuccessPage() {
             status: "paid",
             inscriptionCode: result.inscriptionCode ?? code,
             amountPaid: result.amountPaid,
+            stripeMode: result.stripeMode ?? null,
           });
           return;
         }
@@ -118,7 +124,7 @@ export function PaymentSuccessPage() {
           message:
             error instanceof Error
               ? error.message
-              : "Impossible de vérifier le paiement auprès de Stripe.",
+              : "Impossible de vérifier le paiement en ligne.",
         });
       });
 
@@ -146,7 +152,7 @@ export function PaymentSuccessPage() {
         icon={XCircle}
         tone="gold"
         title="Paiement non finalisé"
-        description="Stripe n'a pas confirmé le règlement. Votre inscription peut être enregistrée, mais les frais de dossier restent en attente."
+        description="Le paiement en ligne n'a pas été confirmé. Votre inscription peut être enregistrée, mais les frais de dossier restent en attente."
       >
         {state.inscriptionCode && <InscriptionCode code={state.inscriptionCode} />}
         <Button asChild className="h-12 w-full text-base">
@@ -187,12 +193,14 @@ export function PaymentSuccessPage() {
       }
     >
       {state.inscriptionCode && <InscriptionCode code={state.inscriptionCode} />}
-      <Alert>
-        <AlertDescription className="text-sm text-muted-foreground">
-          Stripe est actuellement en <strong>mode test</strong> : le paiement apparaît dans le
-          dashboard Stripe test, pas sur votre relevé bancaire réel.
-        </AlertDescription>
-      </Alert>
+      {state.stripeMode === "test" && (
+        <Alert>
+          <AlertDescription className="text-sm text-muted-foreground">
+            Le paiement en ligne est actuellement en <strong>mode test</strong> : il
+            n&apos;apparaît pas sur un relevé bancaire réel.
+          </AlertDescription>
+        </Alert>
+      )}
       {showChequeReminder && (
         <Alert>
           <AlertDescription className="space-y-2 text-left">
