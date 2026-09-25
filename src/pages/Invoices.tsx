@@ -759,6 +759,25 @@ export default function Invoices() {
   const getPreviewData = (invoice: InvoiceWithInscription): InvoiceData => {
     const inscription = invoice.inscription;
     const clientName = resolveInvoiceClientName(invoice);
+    const notesLine = (invoice.notes || "")
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .find((l) => l.length > 0 && !l.startsWith("---"));
+    const designationFromNotes = notesLine
+      ?.split(/\s+[—–-]\s+/)
+      .slice(1)
+      .join(" — ")
+      .trim();
+    const lineDescription =
+      designationFromNotes ||
+      (invoice.invoice_type === "test"
+        ? "Test de niveau"
+        : invoice.invoice_type === "soustraitance"
+          ? "Prestation de sous-traitance"
+          : undefined);
+    const needsLineItems =
+      invoice.invoice_type === "test" || invoice.invoice_type === "soustraitance";
+
     return {
       invoiceNumber: invoice.invoice_number || "",
       invoiceDate: new Date(invoice.invoice_date),
@@ -781,6 +800,17 @@ export default function Invoices() {
       acompteAmount: inscription?.deposit_amount || undefined,
       acompteDate: inscription?.deposit_date ? new Date(inscription.deposit_date) : undefined,
       paymentDate: invoice.payment_date ? new Date(invoice.payment_date) : undefined,
+      paymentMethod: invoice.payment_method || undefined,
+      items: needsLineItems
+        ? [
+            {
+              description: lineDescription || "Prestation",
+              quantity: 1,
+              unitPrice: Number(invoice.amount_ht),
+              total: Number(invoice.amount_ht),
+            },
+          ]
+        : undefined,
     };
   };
 
