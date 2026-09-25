@@ -25,7 +25,26 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
   const [isCopying, setIsCopying] = useState(false);
 
   const isFullyConfigured = Boolean(data?.configured);
-  const webhookMissing = Boolean(data?.secretKeyConfigured && data?.secretKeyValid && !data?.webhookSecretConfigured);
+  const webhookEndpointMissing = Boolean(
+    data?.secretKeyConfigured &&
+      data?.secretKeyValid &&
+      data?.webhookEndpointExists === false
+  );
+  const webhookSecretStale = Boolean(
+    data?.secretKeyConfigured &&
+      data?.secretKeyValid &&
+      data?.webhookSecretConfigured &&
+      (data.webhookModeMismatch || data.webhookEndpointExists === false)
+  );
+  const webhookMissing = Boolean(
+    data?.secretKeyConfigured &&
+      data?.secretKeyValid &&
+      (!data.webhookSecretConfigured ||
+        data.webhookEndpointExists === false ||
+        data.webhookModeMismatch ||
+        data.webhookHasRequiredEvents === false ||
+        data.webhookEndpointError)
+  );
   const isTestMode = data?.mode !== "live";
   const keysUrl = isTestMode ? STRIPE_TEST_KEYS_URL : STRIPE_LIVE_KEYS_URL;
   const webhooksUrl = isTestMode ? STRIPE_TEST_WEBHOOKS_URL : STRIPE_LIVE_WEBHOOKS_URL;
@@ -78,12 +97,35 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
 
         {webhookMissing && (
           <Alert variant="destructive">
-            <AlertTitle>Webhook manquant</AlertTitle>
+            <AlertTitle>
+              {webhookEndpointMissing || webhookSecretStale
+                ? `Webhook ${data?.mode === "live" ? "live" : "test"} manquant`
+                : "Webhook manquant"}
+            </AlertTitle>
             <AlertDescription className="space-y-3">
               <p>
                 Les paiements Stripe ne sont pas enregistrés dans FLI tant que le webhook n&apos;est pas
-                configuré (<code>checkout.session.completed</code>).
+                configuré (<code>checkout.session.completed</code>) dans le mode de la clé actuelle
+                {data?.mode ? ` (${data.mode})` : ""}.
               </p>
+              {data?.webhookEndpointError && (
+                <p className="text-sm">Erreur Stripe : {data.webhookEndpointError}</p>
+              )}
+              {data?.webhookModeMismatch && (
+                <p className="text-sm">
+                  Un secret webhook est stocké pour le mode{" "}
+                  <strong>{data.storedWebhookMode}</strong>, alors que la clé est en mode{" "}
+                  <strong>{data.mode}</strong>. Recréez le webhook pour ce mode.
+                </p>
+              )}
+              {data?.webhookSecretConfigured && data.webhookEndpointExists === false && (
+                <p className="text-sm">
+                  Un signing secret est encore en base, mais aucun endpoint n&apos;existe chez Stripe
+                  pour{" "}
+                  <code className="break-all">{data.webhookUrl}</code> en mode{" "}
+                  <strong>{data.mode}</strong> (endpoints listés : {data.webhookEndpointCount ?? 0}).
+                </p>
+              )}
               <Button
                 type="button"
                 variant="secondary"
@@ -104,19 +146,23 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
                 Configurer le webhook automatiquement
               </Button>
               <p className="text-xs text-muted-foreground">
-                Crée le endpoint Stripe et enregistre le secret. Déployez d&apos;abord la fonction{" "}
-                <code>provision-stripe-webhook</code> si le bouton échoue.
+                Crée le endpoint Stripe ({data?.mode ?? "test/live"}) et enregistre le secret. Déployez
+                d&apos;abord la fonction <code>provision-stripe-webhook</code> si le bouton échoue.
               </p>
             </AlertDescription>
           </Alert>
         )}
 
-        {data?.webhookSecretConfigured && data.webhookSecretFromSettings && (
+        {data?.webhookSecretConfigured &&
+          data.webhookSecretFromSettings &&
+          data.webhookEndpointExists &&
+          !data.webhookModeMismatch && (
           <Alert>
             <AlertTitle>Webhook configuré via l&apos;application</AlertTitle>
             <AlertDescription>
-              Le signing secret est stocké de façon sécurisée. Vous pouvez aussi le copier dans
-              Supabase Secrets (<code>STRIPE_WEBHOOK_SECRET</code>) pour une config classique.
+              Endpoint <code>{data.webhookEndpointId}</code> ({data.mode}) — signing secret stocké de
+              façon sécurisée. Vous pouvez aussi le copier dans Supabase Secrets (
+              <code>STRIPE_WEBHOOK_SECRET</code>) pour une config classique.
             </AlertDescription>
           </Alert>
         )}
@@ -136,22 +182,46 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
               label="STRIPE_SECRET_KEY"
               ok={data.secretKeyConfigured && data.secretKeyValid}
             />
+            <StatusRow
+              label="Webhook Stripe (endpoint)"
+              ok={Boolean(
+                data.webhookEndpointExists &&
+                  data.webhookHasRequiredEvents &&
+                  !data.webhookModeMismatch &&
+                  !data.webhookEndpointError
+              )}
+            />
             <StatusRow label="STRIPE_WEBHOOK_SECRET" ok={data.webhookSecretConfigured} />
           </div>
         )}
 
         {isFullyConfigured ? (
           <Alert>
-            <AlertTitle>Prêt pour les tests</AlertTitle>
+            <AlertTitle>
+              {data?.mode === "live" ? "Prêt pour les paiements réels" : "Prêt pour les tests"}
+            </AlertTitle>
             <AlertDescription className="space-y-2 text-sm">
-              <p>
-                Mode <strong>test</strong> : sur <code>/register</code>, choisir un paiement Stripe
-                (150 € ou intégral), puis carte <code>4242 4242 4242 4242</code>.
-              </p>
-              <p className="text-muted-foreground">
-                Le montant s&apos;affiche en euros. Après paiement, une ligne apparaît dans{" "}
-                <code>payments</code> (méthode Stripe) et le webhook met à jour l&apos;inscription.
-              </p>
+              {data?.mode === "live" ? (
+                <p>
+                  Mode <strong>live</strong> : les paiements sur <code>/register</code> débitent de
+                  vraies cartes. Vérifiez aussi{" "}
+                  <a href={STRIPE_LIVE_WEBHOOKS_URL} target="_blank" rel="noreferrer" className="underline">
+                    Stripe → Webhooks (live)
+                  </a>
+                  .
+                </p>
+              ) : (
+                <>
+                  <p>
+                    Mode <strong>test</strong> : sur <code>/register</code>, choisir un paiement Stripe
+                    (150 € ou intégral), puis carte <code>4242 4242 4242 4242</code>.
+                  </p>
+                  <p className="text-muted-foreground">
+                    Le montant s&apos;affiche en euros. Après paiement, une ligne apparaît dans{" "}
+                    <code>payments</code> (méthode Stripe) et le webhook met à jour l&apos;inscription.
+                  </p>
+                </>
+              )}
             </AlertDescription>
           </Alert>
         ) : (
