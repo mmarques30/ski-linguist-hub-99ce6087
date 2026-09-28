@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  isFifplFunding,
   isOpcoFunding,
   REGISTRATION_FUNDING_MAP,
 } from "./registration-utils";
@@ -24,6 +25,11 @@ describe("BL-027 — FIFPL et OPCO séparés", () => {
     expect(isOpcoFunding("company")).toBe(false);
   });
 
+  it("isFifplFunding ne cible que fifpl", () => {
+    expect(isFifplFunding("fifpl")).toBe(true);
+    expect(isFifplFunding("opco")).toBe(false);
+  });
+
   it("PaymentStep saute les options de paiement pour OPCO", () => {
     const paymentStep = source("src/components/registration/PaymentStep.tsx");
     expect(paymentStep).toContain('from "@/lib/registration-utils"');
@@ -33,6 +39,13 @@ describe("BL-027 — FIFPL et OPCO séparés", () => {
     expect(paymentStep).toContain("OPCO_REGISTER_COPY");
     expect(paymentStep).toContain("validateOpcoQuestionnaire");
     expect(paymentStep).toContain("opcoKnowsOpco");
+  });
+
+  it("PaymentStep collecte l'attestation CFP pour FIFPL", () => {
+    const paymentStep = source("src/components/registration/PaymentStep.tsx");
+    expect(paymentStep).toContain("isFifplFunding");
+    expect(paymentStep).toContain("FifplCfpSection");
+    expect(paymentStep).toContain("validateFifplQuestionnaire");
   });
 
   it("ConfirmationStep traite OPCO comme sans paiement", () => {
@@ -50,8 +63,11 @@ describe("BL-027 — FIFPL et OPCO séparés", () => {
     expect(edge).toContain("isOpcoFunding");
     expect(edge).toMatch(/!isOpco &&/);
     expect(edge).toContain("funding_details");
-    expect(edge).toContain("OPCO à analyser");
     expect(edge).toContain("formatOpcoObservation");
+    expect(edge).toContain("formatFifplObservation");
+    expect(edge).toContain("isFifplFunding");
+    const notify = source("supabase/functions/_shared/registration-admin-notify.ts");
+    expect(notify).toContain("OPCO à analyser");
   });
 
   it("CourseSelectionStep affiche le texte OPCO validé", () => {

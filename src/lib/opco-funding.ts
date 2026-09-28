@@ -7,6 +7,7 @@
  */
 
 import { REGISTRATION_PAYMENT_OPTIONS } from "@/lib/registration-payments";
+import type { FifplQuestionnaire } from "@/lib/fifpl-funding";
 
 export const FUNDING_ORGANIZATION_OPTIONS = [
   { value: "FIFPL", label: "FIFPL" },
@@ -87,6 +88,8 @@ export interface FundingDetailsPayload {
   version: 1;
   source: "register" | "admin";
   opco?: OpcoQuestionnaire;
+  /** Questionnaire FIFPL (attestation CFP + droits) — optionnel. */
+  fifpl?: FifplQuestionnaire;
 }
 
 export function serializeFundingDetails(payload: FundingDetailsPayload): string {

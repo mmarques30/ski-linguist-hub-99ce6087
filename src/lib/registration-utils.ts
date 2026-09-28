@@ -29,6 +29,11 @@ export function isOpcoFunding(type: string): boolean {
   return type === "opco";
 }
 
+/** Financement FIFPL : frais de dossier + attestation CFP URSSAF. */
+export function isFifplFunding(type: string): boolean {
+  return type === "fifpl";
+}
+
 export const LOCATION_LABELS: Record<string, string> = {
   valdisere: "Val d'Isère",
   courchevel: "Courchevel",
