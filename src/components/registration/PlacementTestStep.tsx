@@ -13,6 +13,7 @@ import {
   evaluateSlope,
   getNextSlopeAfterSlope,
   getQuestionsForSlope,
+  PASS_THRESHOLD,
   QUESTIONS_PER_SLOPE,
   SLOPE_LABELS,
   studentFacingPisteLabel,
@@ -270,15 +271,19 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
   }
 
   if (testStarted && currentQuestion) {
-    const progressInSlope = ((questionIndex) / slopeQuestions.length) * 100;
+    const questionNumber = questionIndex + 1;
+    const questionsInSlope = slopeQuestions.length;
+    const slopeLabelLower = SLOPE_LABELS[currentSlope].toLowerCase();
+    const progressLabel = `${questionNumber}/${questionsInSlope} ${slopeLabelLower}`;
+    const progressValue = (questionNumber / questionsInSlope) * 100;
 
     return (
       <SurfaceCard
         title="Test de niveau adaptatif"
         description={
           currentSlope === "vocab_ski"
-            ? "Vocabulaire technique du ski"
-            : `Répondez à ${QUESTIONS_PER_SLOPE} questions — il faut ${QUESTIONS_PER_SLOPE - 2} bonnes réponses ou plus pour passer à la piste suivante`
+            ? "Partie commune à tous les niveaux — vocabulaire technique du ski"
+            : `Comme au ski : ${QUESTIONS_PER_SLOPE} questions sur cette piste. Il faut au moins ${PASS_THRESHOLD} bonnes réponses pour passer à la suivante.`
         }
         actions={
           <StatusPill tone={SLOPE_TONES[currentSlope]} dot>
@@ -287,9 +292,9 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
         }
         toolbar={
           <MeterRow
-            label={`Question ${questionIndex + 1} / ${slopeQuestions.length}`}
-            value={progressInSlope}
-            display={`${Math.round(progressInSlope)} %`}
+            label="Progression"
+            value={progressValue}
+            display={progressLabel}
           />
         }
       >
@@ -300,17 +305,22 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
             </p>
           </div>
 
-          <RadioGroup onValueChange={selectAnswer} className="space-y-3">
+          {/* key = remount à chaque question : aucune réponse présélectionnée */}
+          <RadioGroup key={currentQuestion.id} onValueChange={selectAnswer} className="space-y-3">
             {currentQuestion.options.map((option, index) => (
               <div
                 key={index}
                 className="rounded-[var(--radius-card)] border border-border bg-card transition-colors hover:bg-[hsl(var(--surface-sunken))]"
               >
                 <Label
-                  htmlFor={`option-${index}`}
+                  htmlFor={`option-${currentQuestion.id}-${index}`}
                   className="flex min-h-14 cursor-pointer items-center gap-3 p-4 text-base font-normal leading-snug"
                 >
-                  <RadioGroupItem value={option} id={`option-${index}`} className="shrink-0" />
+                  <RadioGroupItem
+                    value={option}
+                    id={`option-${currentQuestion.id}-${index}`}
+                    className="shrink-0"
+                  />
                   <span className="min-w-0">{option}</span>
                 </Label>
               </div>
@@ -324,15 +334,31 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
   return (
     <StepCard
       title="Test de niveau obligatoire"
-      description="Test adaptatif par pistes (verte → bleue → rouge → noire) — requis pour toutes les inscriptions, même si vous connaissez déjà votre niveau"
+      description="Progressif comme les pistes de ski — requis pour toutes les inscriptions, même si vous connaissez déjà votre niveau"
       icon={Mountain}
     >
       <div className="space-y-5">
         <Alert>
           <Mountain className="h-4 w-4" />
-          <AlertDescription>
-            Ce test permet à FLI de placer chaque stagiaire dans le groupe adapté. Il est
-            obligatoire et ne peut pas être remplacé par une auto-évaluation.
+          <AlertDescription className="space-y-3">
+            <p>
+              Ce test place chaque stagiaire dans le groupe adapté. Il est obligatoire et ne peut
+              pas être remplacé par une auto-évaluation.
+            </p>
+            <p>
+              <strong className="font-medium text-foreground">Comment ça fonctionne</strong> —
+              l’évolution suit les pistes de ski : vous commencez en{" "}
+              <strong className="font-medium text-foreground">piste verte</strong>, puis{" "}
+              <strong className="font-medium text-foreground">bleue</strong>,{" "}
+              <strong className="font-medium text-foreground">rouge</strong> et{" "}
+              <strong className="font-medium text-foreground">noire</strong> si vous validez chaque
+              étape ({PASS_THRESHOLD} bonnes réponses sur {QUESTIONS_PER_SLOPE}).
+            </p>
+            <p>
+              Dès qu’une piste n’est pas validée, le parcours se termine par une partie{" "}
+              <strong className="font-medium text-foreground">Vocabulaire du ski</strong>, commune
+              à tous les niveaux.
+            </p>
           </AlertDescription>
         </Alert>
 
