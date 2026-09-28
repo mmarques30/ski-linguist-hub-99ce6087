@@ -64,10 +64,15 @@ import {
   type RegistrationFailureNotice,
 } from "@/lib/registration-error-message";
 import {
+  isFifplFunding,
   isOpcoFunding,
   REGISTRATION_FUNDING_MAP,
 } from "@/lib/registration-utils";
 import { OPCO_REGISTER_COPY } from "@/lib/opco-funding";
+import {
+  estimateFifplRights,
+  FIFPL_REGISTER_COPY,
+} from "@/lib/fifpl-funding";
 import { StepActions, StepCard, SummaryPanel, SummaryRow } from "./StepLayout";
 
 interface ConfirmationStepProps {
@@ -118,6 +123,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
   const isStationGroup = expectsStationGroupAssignment(data.modality);
   const isCustomFormat = data.isCustomFormat || isCustomFormatDuration(data.duration);
   const isOpco = isOpcoFunding(data.fundingType);
+  const isFifpl = isFifplFunding(data.fundingType);
   const coursePrice = data.price ?? 0;
   const hasPaymentStep = !isCustomFormat && coursePrice > 0 && !isOpco;
   // Décision Paula : aucun mode de règlement coché par défaut, donc aucun repli ici.
@@ -364,6 +370,24 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             </Alert>
           )}
 
+          {isFifpl && (
+            <Alert>
+              <AlertDescription>
+                {FIFPL_REGISTER_COPY.confirmationAlert(
+                  estimateFifplRights({
+                    status: data.fifplStatus ?? null,
+                    cfpContributionEur: data.fifplCfpContributionEur ?? null,
+                    modality: data.modality,
+                    alreadyCoveredEur:
+                      data.fifplHadOtherTrainingThisYear === true
+                        ? data.fifplOtherAmountAlreadyCoveredEur
+                        : 0,
+                  })?.remainingRightsEur ?? null
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+
           {isStationGroup && (
             <Alert>
               <Mountain className="h-4 w-4" />
@@ -489,6 +513,24 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             <Alert>
               <Phone className="h-4 w-4" />
               <AlertDescription>{OPCO_REGISTER_COPY.confirmationAlert}</AlertDescription>
+            </Alert>
+          )}
+
+          {isFifpl && (
+            <Alert>
+              <AlertDescription>
+                {FIFPL_REGISTER_COPY.confirmationAlert(
+                  estimateFifplRights({
+                    status: data.fifplStatus ?? null,
+                    cfpContributionEur: data.fifplCfpContributionEur ?? null,
+                    modality: data.modality,
+                    alreadyCoveredEur:
+                      data.fifplHadOtherTrainingThisYear === true
+                        ? data.fifplOtherAmountAlreadyCoveredEur
+                        : 0,
+                  })?.remainingRightsEur ?? null
+                )}
+              </AlertDescription>
             </Alert>
           )}
 

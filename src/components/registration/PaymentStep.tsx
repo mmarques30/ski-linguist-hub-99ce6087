@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CreditCard, Landmark, Receipt, Wallet } from "lucide-react";
+import { CreditCard, Landmark, Receipt, Wallet, FileText } from "lucide-react";
 import type { RegistrationData } from "@/pages/register/Index";
 import {
   CHEQUE_BALANCE_INSTRUCTION,
@@ -19,16 +19,22 @@ import {
   type RegistrationPaymentOption,
 } from "@/lib/registration-payments";
 import { formatPriceEUR, isCustomFormatDuration } from "@/lib/registration-offerings";
-import { isOpcoFunding } from "@/lib/registration-utils";
+import { isFifplFunding, isOpcoFunding } from "@/lib/registration-utils";
 import {
   OPCO_REGISTER_COPY,
   validateOpcoQuestionnaire,
   type OpcoQuestionnaire,
 } from "@/lib/opco-funding";
+import {
+  FIFPL_REGISTER_COPY,
+  validateFifplQuestionnaire,
+  type FifplQuestionnaire,
+} from "@/lib/fifpl-funding";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { OptionCard, StepActions, StepCard, SummaryPanel, SummaryRow } from "./StepLayout";
+import { FifplCfpSection } from "./FifplCfpSection";
 
 interface PaymentStepProps {
   data: Partial<RegistrationData>;
@@ -49,11 +55,37 @@ const paymentOptions: Array<{
 export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
   const isCustomFormat = data.isCustomFormat || isCustomFormatDuration(data.duration);
   const isOpco = isOpcoFunding(data.fundingType ?? "");
+  const isFifpl = isFifplFunding(data.fundingType ?? "");
   const coursePrice = data.price ?? 0;
   const hasPrice = coursePrice > 0;
 
   // Décision Paula : aucun mode de règlement coché par défaut.
   const selectedOption: RegistrationPaymentOption | null = data.paymentOption ?? null;
+
+  const fifplQuestionnaire: FifplQuestionnaire = {
+    status: data.fifplStatus ?? null,
+    cfpAttestationYear: data.fifplCfpAttestationYear ?? null,
+    cfpContributionEur: data.fifplCfpContributionEur ?? null,
+    cfpAttestationPath: data.fifplCfpAttestationPath ?? null,
+    cfpAttestationFileName: data.fifplCfpAttestationFileName ?? null,
+    hadOtherFifplTrainingThisYear: data.fifplHadOtherTrainingThisYear ?? null,
+    otherFifplAmountAlreadyCoveredEur: data.fifplOtherAmountAlreadyCoveredEur ?? null,
+    parseWarnings: data.fifplParseWarnings ?? [],
+  };
+
+  const patchFifpl = (patch: Partial<FifplQuestionnaire>) => {
+    const next = { ...fifplQuestionnaire, ...patch };
+    onUpdate({
+      fifplStatus: next.status,
+      fifplCfpAttestationYear: next.cfpAttestationYear,
+      fifplCfpContributionEur: next.cfpContributionEur,
+      fifplCfpAttestationPath: next.cfpAttestationPath,
+      fifplCfpAttestationFileName: next.cfpAttestationFileName,
+      fifplHadOtherTrainingThisYear: next.hadOtherFifplTrainingThisYear,
+      fifplOtherAmountAlreadyCoveredEur: next.otherFifplAmountAlreadyCoveredEur,
+      fifplParseWarnings: next.parseWarnings,
+    });
+  };
 
   useEffect(() => {
     if (isOpco && data.paymentOption) {
@@ -71,6 +103,13 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isFifpl) {
+      const error = validateFifplQuestionnaire(fifplQuestionnaire);
+      if (error) {
+        toast.error(error);
+        return;
+      }
+    }
     if (!isCustomFormat && hasPrice && !selectedOption) {
       toast.error("Veuillez choisir un mode de règlement pour continuer.");
       return;
@@ -199,8 +238,33 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
   }
 
   if (isCustomFormat || !hasPrice) {
+    const handleContinueWithoutPrice = () => {
+      if (isFifpl) {
+        const error = validateFifplQuestionnaire(fifplQuestionnaire);
+        if (error) {
+          toast.error(error);
+          return;
+        }
+      }
+      onNext();
+    };
+
     return (
       <div className="space-y-4">
+        {isFifpl && (
+          <StepCard
+            title={FIFPL_REGISTER_COPY.sectionTitle}
+            description={FIFPL_REGISTER_COPY.sectionDescription}
+            icon={FileText}
+          >
+            <FifplCfpSection
+              questionnaire={fifplQuestionnaire}
+              modality={data.modality}
+              onChange={patchFifpl}
+            />
+          </StepCard>
+        )}
+
         <StepCard
           title="Paiement"
           description="Format sur devis — les modalités de paiement vous seront communiquées avec la proposition commerciale."
@@ -216,7 +280,11 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
         </StepCard>
 
         <StepActions>
-          <Button type="button" onClick={onNext} className="h-12 w-full text-base sm:w-auto">
+          <Button
+            type="button"
+            onClick={handleContinueWithoutPrice}
+            className="h-12 w-full text-base sm:w-auto"
+          >
             Continuer
           </Button>
         </StepActions>
@@ -226,6 +294,20 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {isFifpl && (
+        <StepCard
+          title={FIFPL_REGISTER_COPY.sectionTitle}
+          description={FIFPL_REGISTER_COPY.sectionDescription}
+          icon={FileText}
+        >
+          <FifplCfpSection
+            questionnaire={fifplQuestionnaire}
+            modality={data.modality}
+            onChange={patchFifpl}
+          />
+        </StepCard>
+      )}
+
       <StepCard
         title="Frais de dossier et paiement"
         description={`Les frais de dossier de ${formatPriceEUR(FRAIS_DOSSIER_EUR)} sont déduits du tarif total de la formation (${formatPriceEUR(coursePrice)}).`}

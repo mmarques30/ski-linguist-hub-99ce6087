@@ -516,10 +516,16 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                     <OptionCard selected={data.fundingType === "fifpl"}>
                       <Label
                         htmlFor="fifpl"
-                        className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
+                        className="flex cursor-pointer flex-col gap-1 px-4 py-3 font-normal"
                       >
-                        <RadioGroupItem value="fifpl" id="fifpl" />
-                        FIFPL
+                        <span className="flex min-h-6 items-center gap-3">
+                          <RadioGroupItem value="fifpl" id="fifpl" />
+                          FIFPL
+                        </span>
+                        <span className="block pl-7 text-xs text-muted-foreground">
+                          Prise en charge FIFPL — attestation CFP URSSAF requise pour vérifier vos
+                          droits (frais de dossier à l&apos;inscription).
+                        </span>
                       </Label>
                     </OptionCard>
                     <OptionCard selected={data.fundingType === "opco"}>

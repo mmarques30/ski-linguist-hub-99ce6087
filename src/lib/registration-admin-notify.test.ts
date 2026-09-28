@@ -72,10 +72,13 @@ describe("registration-admin-notify", () => {
     expect(buildRegistrationAdminNotifyHtml(sample)).not.toContain("ALERTE");
   });
 
-  it("marque OPCO / devis dans le sujet", () => {
+  it("marque OPCO / FIFPL / devis dans le sujet", () => {
     expect(
       buildRegistrationAdminNotifySubject({ ...sample, isOpco: true })
     ).toContain("OPCO");
+    expect(
+      buildRegistrationAdminNotifySubject({ ...sample, isFifpl: true })
+    ).toContain("FIFPL");
     expect(
       buildRegistrationAdminNotifySubject({
         ...sample,

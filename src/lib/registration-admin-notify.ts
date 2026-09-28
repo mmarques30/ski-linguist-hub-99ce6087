@@ -22,6 +22,8 @@ export type RegistrationAdminSummaryInput = {
   customFormatDetails?: string | null;
   isOpco?: boolean;
   opcoObservation?: string | null;
+  isFifpl?: boolean;
+  fifplObservation?: string | null;
   price?: number | null;
 };
 
@@ -83,6 +85,9 @@ export function registrationAdminSummaryLines(
   if (input.isOpco && input.opcoObservation?.trim()) {
     rows.push({ label: "OPCO", value: input.opcoObservation.trim() });
   }
+  if (input.isFifpl && input.fifplObservation?.trim()) {
+    rows.push({ label: "FIFPL", value: input.fifplObservation.trim() });
+  }
   return rows;
 }
 
@@ -91,6 +96,7 @@ export function buildRegistrationAdminNotifySubject(
 ): string {
   const name = fullName(input);
   if (input.isOpco) return `[FLI] Nouvelle inscription OPCO — ${name}`;
+  if (input.isFifpl) return `[FLI] Nouvelle inscription FIFPL — ${name}`;
   if (input.isCustomFormat) return `[FLI] Nouvelle inscription (devis) — ${name}`;
   return `[FLI] Nouvelle inscription — ${name}`;
 }
@@ -132,6 +138,7 @@ export function buildRegistrationAdminNotifyTitle(
 ): string {
   const name = fullName(input);
   if (input.isOpco) return `OPCO à analyser — ${name}`;
+  if (input.isFifpl) return `FIFPL — attestation CFP — ${name}`;
   if (input.isCustomFormat) return `Devis à préparer — ${name}`;
   return `Nouvelle inscription — ${name}`;
 }
