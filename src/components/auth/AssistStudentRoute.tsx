@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
+import { ADMIN_HOME_PATH } from "@/lib/admin-home";
 
 interface Props {
   children: React.ReactNode;
@@ -27,7 +28,7 @@ export function AssistStudentRoute({ children }: Props) {
 
   useEffect(() => {
     if (!loading && !permsLoading && roleResolved && user && !isStaff) {
-      navigate("/", { replace: true });
+      navigate(ADMIN_HOME_PATH, { replace: true });
     }
   }, [user, loading, permsLoading, roleResolved, isStaff, navigate]);
 

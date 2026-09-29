@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { ADMIN_HOME_PATH } from "@/lib/admin-home";
 import fliLogo from "@/assets/fli-marca-black.png";
 import fliLogoDark from "@/assets/fli-marca-yellow.png";
 
@@ -77,7 +78,7 @@ export function AuthCard() {
         setLoginSuccess(true);
         triggerConfetti();
         setTimeout(() => {
-          navigate("/");
+          navigate(ADMIN_HOME_PATH);
         }, 1500);
       }
     } finally {

@@ -62,7 +62,7 @@ export const ALL_ROUTE_KEYS = ROUTE_GROUPS.flatMap((g) =>
 
 /** Chemins exacts → clé (les plus longs d'abord pour resolveRouteKey). */
 export const PATH_TO_ROUTE_KEY: Record<string, string> = {
-  "/": "dashboard",
+  "/app": "dashboard",
   "/finance": "finance",
   "/finance/analyses": "finance",
   "/finance/rentabilite": "finance",

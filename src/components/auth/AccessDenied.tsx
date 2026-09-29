@@ -2,6 +2,7 @@ import { ShieldOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/common/EmptyState";
+import { ADMIN_HOME_PATH } from "@/lib/admin-home";
 
 /** Page affichée quand canView refuse l'accès (Vague C). */
 export function AccessDenied({ routeLabel }: { routeLabel?: string }) {
@@ -18,7 +19,7 @@ export function AccessDenied({ routeLabel }: { routeLabel?: string }) {
         className="w-full max-w-md bg-card"
       >
         <Button asChild variant="outline" className="mt-5">
-          <Link to="/">Retour au tableau de bord</Link>
+          <Link to={ADMIN_HOME_PATH}>Retour au tableau de bord</Link>
         </Button>
       </EmptyState>
     </div>
