@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,20 +32,32 @@ const certifications = [
 ];
 
 export function ExpectationsStep({ data, onUpdate, onNext }: ExpectationsStepProps) {
+  const isSkiInstructor = data.profession === "ski_instructor";
+  const offersCertification = !isSkiInstructor;
+
+  // Moniteurs de ski : pas de certification proposée — on fige « none ».
+  useEffect(() => {
+    if (isSkiInstructor && data.certification !== "none") {
+      onUpdate({ certification: "none" });
+    }
+  }, [isSkiInstructor, data.certification, onUpdate]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (offersCertification && !data.certification) return;
     onNext();
   };
+
+  const canContinue = isSkiInstructor || Boolean(data.certification);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <StepCard
-        title="Attentes et certification"
+        title={offersCertification ? "Attentes et certification" : "Attentes"}
         description="Parlez-nous de vos objectifs pour cette formation"
         icon={Target}
       >
         <div className="space-y-6">
-          {/* Attentes */}
           <div className="space-y-2">
             <Label htmlFor="expectations">Quelles sont vos attentes pour cette formation ?</Label>
             <Textarea
@@ -59,33 +72,43 @@ export function ExpectationsStep({ data, onUpdate, onNext }: ExpectationsStepPro
             </p>
           </div>
 
-          {/* Certification */}
-          <div className="space-y-3">
-            <Label>Souhaitez-vous obtenir une certification ?</Label>
-            <RadioGroup
-              value={data.certification || ""}
-              onValueChange={(value) => onUpdate({ certification: value })}
-              className="space-y-3"
-            >
-              {certifications.map((cert) => (
-                <OptionCard key={cert.value} selected={data.certification === cert.value}>
-                  <Label htmlFor={cert.value} className="flex cursor-pointer items-start gap-3 p-4 font-normal">
-                    <RadioGroupItem value={cert.value} id={cert.value} className="mt-0.5" />
-                    <span className="min-w-0 space-y-1">
-                      <span className="block font-medium text-foreground">{cert.label}</span>
-                      <span className="block text-sm text-muted-foreground">{cert.description}</span>
-                    </span>
-                  </Label>
-                </OptionCard>
-              ))}
-            </RadioGroup>
-          </div>
+          {offersCertification && (
+            <div className="space-y-3">
+              <Label>Souhaitez-vous obtenir une certification ?</Label>
+              <RadioGroup
+                value={data.certification || ""}
+                onValueChange={(value) => onUpdate({ certification: value })}
+                className="space-y-3"
+              >
+                {certifications.map((cert) => (
+                  <OptionCard key={cert.value} selected={data.certification === cert.value}>
+                    <Label
+                      htmlFor={cert.value}
+                      className="flex cursor-pointer items-start gap-3 p-4 font-normal"
+                    >
+                      <RadioGroupItem value={cert.value} id={cert.value} className="mt-0.5" />
+                      <span className="min-w-0 space-y-1">
+                        <span className="block font-medium text-foreground">{cert.label}</span>
+                        <span className="block text-sm text-muted-foreground">
+                          {cert.description}
+                        </span>
+                      </span>
+                    </Label>
+                  </OptionCard>
+                ))}
+              </RadioGroup>
+            </div>
+          )}
         </div>
       </StepCard>
 
       <StepActions>
-        <Button type="submit" className="h-12 w-full text-base sm:w-auto" disabled={!data.certification}>
-          Continuer vers la confirmation
+        <Button
+          type="submit"
+          className="h-12 w-full text-base sm:w-auto"
+          disabled={!canContinue}
+        >
+          Continuer vers le paiement
         </Button>
       </StepActions>
     </form>

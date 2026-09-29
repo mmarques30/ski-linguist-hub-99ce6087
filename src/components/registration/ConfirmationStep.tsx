@@ -502,10 +502,12 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                   }
                 />
               )}
-              <SummaryRow
-                label="Certification"
-                value={certificationLabels[data.certification] || data.certification}
-              />
+              {data.profession !== "ski_instructor" && (
+                <SummaryRow
+                  label="Certification"
+                  value={certificationLabels[data.certification] || data.certification}
+                />
+              )}
             </SummaryPanel>
           </div>
 
