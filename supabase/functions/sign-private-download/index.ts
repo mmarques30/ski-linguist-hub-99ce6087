@@ -1,6 +1,7 @@
 /**
  * Signed URL for private storage objects (documents / certificates / evaluation-pdfs).
- * Auth: staff always; student only for paths under their student_id; formateur for evaluation-pdfs.
+ * Auth: staff always; student under their student_id; formateur for evaluation-pdfs
+ * and own CV under documents/staff/instructors/<id>/…
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -70,6 +71,20 @@ Deno.serve(async (req) => {
     let allowed = isStaff;
     if (!allowed && bucket === "evaluation-pdfs" && isFormateur) {
       allowed = true;
+    }
+    if (!allowed && isFormateur && bucket === "documents") {
+      const { data: instructor } = await admin
+        .from("instructors")
+        .select("id")
+        .eq("auth_user_id", userId)
+        .maybeSingle();
+      const parts = path.split("/");
+      allowed = Boolean(
+        instructor?.id &&
+          parts[0] === "staff" &&
+          parts[1] === "instructors" &&
+          parts[2] === instructor.id
+      );
     }
     if (!allowed && isStudent && (bucket === "documents" || bucket === "certificates")) {
       const { data: student } = await admin

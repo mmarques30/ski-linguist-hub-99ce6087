@@ -6,6 +6,9 @@ import {
   Calendar,
   Users,
   ClipboardCheck,
+  User,
+  Wallet,
+  FileText,
   LogOut,
   Eye,
   ArrowLeft,
@@ -25,6 +28,9 @@ const formateurNavPages = [
   { name: "Planning", page: "planning", icon: Calendar, short: "Planning" },
   { name: "Stagiaires", page: "stagiaires", icon: Users, short: "Stagiaires" },
   { name: "Évaluations", page: "evaluations", icon: ClipboardCheck, short: "Évals" },
+  { name: "Documents", page: "documents", icon: FileText, short: "Docs" },
+  { name: "Paiements", page: "paiements", icon: Wallet, short: "Paie" },
+  { name: "Profil", page: "profil", icon: User, short: "Profil" },
 ] as const;
 
 /**

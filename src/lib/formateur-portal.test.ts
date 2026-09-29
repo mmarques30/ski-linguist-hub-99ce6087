@@ -99,13 +99,32 @@ describe("portail formateur — câblage", () => {
     expect(sql).toContain("rls_instructor_sessions_select_formateur");
   });
 
-  it("App expose tableau-de-bord / planning / stagiaires + Assister", () => {
+  it("migration suite 2 paiements / contrats / invite existe", () => {
+    const path = "supabase/migrations/20260929140000_formateur_portal_suite2.sql";
+    expect(existsSync(join(process.cwd(), path))).toBe(true);
+    const sql = source(path);
+    expect(sql).toContain("rls_instructor_payments_select_formateur");
+    expect(sql).toContain("rls_instructor_contracts_select_formateur");
+    expect(sql).toContain("rls_documents_storage_select_formateur_own");
+    expect(sql).toContain("formateur_portal_invite");
+  });
+
+  it("App expose tableau-de-bord / planning / stagiaires / docs / paiements / profil + Assister", () => {
     const app = source("src/App.tsx");
     expect(app).toContain('path="/formateur/tableau-de-bord"');
     expect(app).toContain('path="/formateur/planning"');
     expect(app).toContain('path="/formateur/stagiaires"');
+    expect(app).toContain('path="/formateur/documents"');
+    expect(app).toContain('path="/formateur/paiements"');
+    expect(app).toContain('path="/formateur/profil"');
     expect(app).toContain('path="tableau-de-bord"');
+    expect(app).toContain('path="documents"');
+    expect(app).toContain('path="paiements"');
+    expect(app).toContain('path="profil"');
     expect(app).toContain("FormateurDashboard");
+    expect(app).toContain("FormateurDocuments");
+    expect(app).toContain("FormateurPaiements");
+    expect(app).toContain("FormateurProfil");
   });
 
   it("Auth et ProtectedRoute redirigent vers tableau-de-bord", () => {
@@ -124,6 +143,29 @@ describe("portail formateur — câblage", () => {
     ).toBe(true);
     const layout = source("src/components/layout/FormateurLayout.tsx");
     expect(layout).toContain("tableau-de-bord");
+    expect(layout).toContain("documents");
+    expect(layout).toContain("paiements");
+    expect(layout).toContain("profil");
     expect(layout).toContain("Espace formateur");
+  });
+
+  it("fiche formateur expose invitation portail + Assister", () => {
+    expect(
+      existsSync(join(process.cwd(), "src/components/formateurs/FormateurPortalAccessCard.tsx"))
+    ).toBe(true);
+    const details = source("src/pages/formateurs/InstructorDetails.tsx");
+    expect(details).toContain("FormateurPortalAccessCard");
+    expect(
+      existsSync(join(process.cwd(), "supabase/functions/invite-formateur-portal/index.ts"))
+    ).toBe(true);
+    const invite = source("supabase/functions/invite-formateur-portal/index.ts");
+    expect(invite).toContain("formateur_portal_invite");
+    expect(invite).toContain("requireAdmin");
+  });
+
+  it("sign-private-download autorise le CV formateur sous staff/instructors", () => {
+    const edge = source("supabase/functions/sign-private-download/index.ts");
+    expect(edge).toContain('parts[0] === "staff"');
+    expect(edge).toContain('parts[1] === "instructors"');
   });
 });

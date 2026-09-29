@@ -16,6 +16,9 @@ describe("Vague A fin — Assister formateur, portail, pistes", () => {
     expect(source("src/App.tsx")).toContain('path="/portails/formateur/:instructorId"');
     expect(source("src/contexts/FormateurViewContext.tsx")).toContain("FormateurAssistViewProvider");
     expect(source("src/pages/formateurs/InstructorDetails.tsx")).toContain(
+      "FormateurPortalAccessCard"
+    );
+    expect(source("src/components/formateurs/FormateurPortalAccessCard.tsx")).toContain(
       "Voir comme le formateur"
     );
     // Garde SPA : attendre le rôle (isPending / roleResolved) avant redirect

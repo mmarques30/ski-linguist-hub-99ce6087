@@ -30,7 +30,7 @@ export function useFormateurProfile() {
         const { data, error } = await supabase
           .from("instructors")
           .select(
-            "id, first_name, last_name, email, phone, languages, status, city, photo_url"
+            "id, first_name, last_name, email, phone, languages, status, city, photo_url, address, postal_code, pays, civilite, siret, tax_status, identifiant_etranger, assujetti_tva, statut_administratif, cv_url, vigilance_attestation_url, vigilance_attestation_received_at, vigilance_attestation_expires_at, specialty_details, bio, hourly_rate"
           )
           .eq("id", assistInstructorId!)
           .maybeSingle();
@@ -40,7 +40,7 @@ export function useFormateurProfile() {
       const { data, error } = await supabase
         .from("instructors")
         .select(
-          "id, first_name, last_name, email, phone, languages, status, city, photo_url"
+          "id, first_name, last_name, email, phone, languages, status, city, photo_url, address, postal_code, pays, civilite, siret, tax_status, identifiant_etranger, assujetti_tva, statut_administratif, cv_url, vigilance_attestation_url, vigilance_attestation_received_at, vigilance_attestation_expires_at, specialty_details, bio, hourly_rate"
         )
         .eq("auth_user_id", user!.id)
         .maybeSingle();
@@ -78,6 +78,42 @@ export function useFormateurSessions(instructorId: string | undefined) {
         )
         .eq("instructor_id", instructorId!)
         .order("session_date", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useFormateurPayments(instructorId: string | undefined) {
+  return useQuery({
+    queryKey: ["formateur-portal-payments", instructorId],
+    enabled: Boolean(instructorId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("instructor_payments")
+        .select(
+          "id, montant, periode_debut, periode_fin, date_paiement, moyen_paiement, reference_paiement, statut, notes"
+        )
+        .eq("instructor_id", instructorId!)
+        .order("periode_debut", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useFormateurContracts(instructorId: string | undefined) {
+  return useQuery({
+    queryKey: ["formateur-portal-contracts", instructorId],
+    enabled: Boolean(instructorId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("instructor_contracts")
+        .select(
+          "id, contract_number, start_date, end_date, signed_at, pdf_url, student_or_company, created_at"
+        )
+        .eq("instructor_id", instructorId!)
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },

@@ -47,6 +47,9 @@ import EvaluationVerify from "./pages/formateur/EvaluationVerify";
 import FormateurDashboard from "./pages/formateur/FormateurDashboard";
 import FormateurPlanning from "./pages/formateur/FormateurPlanning";
 import FormateurStagiaires from "./pages/formateur/FormateurStagiaires";
+import FormateurProfil from "./pages/formateur/FormateurProfil";
+import FormateurPaiements from "./pages/formateur/FormateurPaiements";
+import FormateurDocuments from "./pages/formateur/FormateurDocuments";
 import Register from "./pages/register/Index";
 import BookTest from "./pages/test/BookTest";
 import { PaymentSuccessPage, PaymentCancelPage } from "./pages/register/PaymentReturn";
@@ -182,6 +185,36 @@ const App = () => (
                 <ProtectedRoute>
                   <FormateurOwnViewProvider>
                     <FormateurStagiaires />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/formateur/documents"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <FormateurDocuments />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/formateur/paiements"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <FormateurPaiements />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/formateur/profil"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <FormateurProfil />
                   </FormateurOwnViewProvider>
                 </ProtectedRoute>
               }
@@ -337,6 +370,9 @@ const App = () => (
               <Route path="tableau-de-bord" element={<FormateurDashboard />} />
               <Route path="planning" element={<FormateurPlanning />} />
               <Route path="stagiaires" element={<FormateurStagiaires />} />
+              <Route path="documents" element={<FormateurDocuments />} />
+              <Route path="paiements" element={<FormateurPaiements />} />
+              <Route path="profil" element={<FormateurProfil />} />
               <Route path="evaluations" element={<EvaluationsList />} />
               <Route path="evaluations/:id/verifier" element={<EvaluationVerify />} />
               <Route path="evaluation/:bookingId" element={<EvaluationForm />} />
