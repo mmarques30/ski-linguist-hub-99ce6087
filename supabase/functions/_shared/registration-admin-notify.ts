@@ -24,6 +24,8 @@ export type RegistrationAdminSummaryInput = {
   opcoObservation?: string | null;
   isFifpl?: boolean;
   fifplObservation?: string | null;
+  /** Candidat·e a coché le besoin d'aménagements (accessibilité handicap). */
+  hasHandicap?: boolean;
   price?: number | null;
 };
 

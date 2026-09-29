@@ -72,7 +72,7 @@ describe("registration-admin-notify", () => {
     expect(buildRegistrationAdminNotifyHtml(sample)).not.toContain("ALERTE");
   });
 
-  it("marque OPCO / FIFPL / devis dans le sujet", () => {
+  it("marque OPCO / FIFPL / devis / handicap dans le sujet", () => {
     expect(
       buildRegistrationAdminNotifySubject({ ...sample, isOpco: true })
     ).toContain("OPCO");
@@ -86,5 +86,19 @@ describe("registration-admin-notify", () => {
         customFormatDetails: "12 h le soir",
       })
     ).toContain("devis");
+    expect(
+      buildRegistrationAdminNotifySubject({ ...sample, hasHandicap: true })
+    ).toBe("[FLI] Aménagements handicap — Cassandre Viard Gaudin");
+    expect(
+      buildRegistrationAdminNotifyTitle({ ...sample, hasHandicap: true })
+    ).toContain("Aménagements handicap");
+    expect(
+      buildRegistrationAdminNotifyHtml({ ...sample, hasHandicap: true })
+    ).toContain("Aménagements handicap");
+    expect(
+      registrationAdminSummaryLines({ ...sample, hasHandicap: true }).some(
+        (l) => l.label === "Accessibilité"
+      )
+    ).toBe(true);
   });
 });

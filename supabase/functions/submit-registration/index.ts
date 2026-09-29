@@ -893,6 +893,7 @@ Deno.serve(async (req) => {
         opcoObservation: isOpco ? formatOpcoObservation(registration) : null,
         isFifpl,
         fifplObservation: isFifpl ? formatFifplObservation(registration) : null,
+        hasHandicap: Boolean(registration.hasHandicap),
         price,
       };
 
