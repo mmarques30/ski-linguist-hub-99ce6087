@@ -2,7 +2,7 @@
 
 Règle : noter ici, **ne pas corriger** tant que le point courant n’est pas validé.
 
-Dernière mise à jour : 2026-09-21 (BL-014 peaufinage clos PR #87).
+Dernière mise à jour : 2026-09-29 (BL-015 restes formateur clos).
 
 ## Conventions de lecture
 
@@ -82,7 +82,7 @@ BL-030 / BL-050 **fusionnés** (PR #73 + #75). BL-014 peaufinage **clos** (#87).
 
 ### Hors périmètre du 1er octobre
 
-BL-001, BL-008, BL-009, BL-010, BL-011, BL-015, BL-017, BL-019, BL-020,
+BL-001, BL-008, BL-009, BL-010, BL-011, BL-017, BL-019, BL-020,
 BL-022 : dette antérieure, non remontée par la recette.
 
 ---
@@ -134,7 +134,7 @@ BL-022 : dette antérieure, non remontée par la recette.
 | BL-010 | Phrases 321 vs 540 — point 7 fusionné | Point 7 |
 | BL-011 | `soustraitance` vs `sous_traitance` | Plus tard |
 | BL-014 | UI candidat → actif — **clos** PR #77 (CTA) + #87 (bannière gaps, confirm enrichie, liste, presets admin, inactif) | Recrutement |
-| BL-015 | Backfill formateur CSV (si restes) | Avant rattachement |
+| BL-015 | Backfill formateur CSV (si restes) — **clos** 29/09 : Point 3 déjà livré ; 2 fiches facturées restantes (Sofie → Tulio, Lana → Claire) rattachées en live (`audit_log` `c7e5b048-…`, `9e3ffd31-…`) ; 0 fiche active avec texte formateur orphelin | Avant rattachement |
 | BL-017 | Imports massifs hors UI | Avant point 9 |
 | BL-019 | J-10 horaires FLI exacts + pas de code depuis horaires | Point 10 |
 | BL-020 | Policies storage certificats (vue `inscriptions_complete` OK live) | Ops |
@@ -194,6 +194,7 @@ BL-022 : dette antérieure, non remontée par la recette.
 | BL-038 (hard) | Hard dedup partenaires — PR #80 |
 | BL-014 (partiel), Qualiopi/statuts/dashboard | Suite 6 octobre — PR #77 |
 | BL-014 (peaufinage) | Bannière gaps, confirm, liste, presets, inactif — PR #87 |
+| BL-015 | Restes backfill formateur (2 `instructor_id`) — live 29/09 |
 | `/documents`, pagination morte, STRIPE_SETUP | Suite 7 octobre — PR #78 |
 | BL-046, 047, 031 | Vague 0 deploy 19/09 — front + edges + Resend |
 | Onda D5–D8 | Identité org, chrome i18n, import idempotent, CRM leads — PR #70 |
