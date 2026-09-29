@@ -270,13 +270,7 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
           description="Format sur devis — les modalités de paiement vous seront communiquées avec la proposition commerciale."
           icon={Wallet}
         >
-          <Alert>
-            <AlertDescription>
-              Pour les formats personnalisés, aucun règlement n&apos;est demandé à cette étape.
-              Les frais de dossier ({formatPriceEUR(FRAIS_DOSSIER_EUR)}) seront précisés dans le
-              devis.
-            </AlertDescription>
-          </Alert>
+          {null}
         </StepCard>
 
         <StepActions>
@@ -366,7 +360,7 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
               <Receipt className="h-4 w-4" />
               <AlertDescription className="space-y-1 text-sm">
                 <p className="font-medium">
-                  Chèque de {formatPriceEUR(summary.balanceAfterDossier)} à envoyer avec votre inscription
+                  Chèque de {formatPriceEUR(summary.balanceAfterDossier)} à envoyer avant le début de la formation
                 </p>
                 <p className="text-muted-foreground">{CHEQUE_BALANCE_INSTRUCTION}</p>
               </AlertDescription>

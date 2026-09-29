@@ -16,8 +16,8 @@ import { isRegistrationLanguageKey } from "@/lib/registration-languages";
 import type { RegistrationPaymentOption } from "@/lib/registration-payments";
 
 export interface RegistrationData {
-  // Informations personnelles
-  civility: string;
+  // Informations personnelles — civility non demandée (langage inclusif)
+  civility?: string;
   firstName: string;
   lastName: string;
   email: string;

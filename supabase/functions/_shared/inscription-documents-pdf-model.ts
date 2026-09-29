@@ -188,7 +188,7 @@ function buildPaymentTermsLabel(input: {
   }
   if ((input.payment_method || "").toLowerCase().includes("virement")) {
     parts.push(
-      "Le solde peut être réglé par chèque à l'inscription, encaissé après clôture du dossier, sauf paiement intégral."
+      "Le solde peut être réglé par chèque avant le début de la formation, sauf paiement intégral."
     );
   }
   return parts.join(" ");

@@ -342,8 +342,10 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
           <Mountain className="h-4 w-4" />
           <AlertDescription className="space-y-3">
             <p>
-              Ce test place chaque stagiaire dans le groupe adapté. Il est obligatoire et ne peut
-              pas être remplacé par une auto-évaluation.
+              Ce test nous permet de vérifier votre niveau d&apos;entrée et, pour les cours
+              collectifs, de vous placer dans le groupe le plus adapté. Vous le repasserez aussi en
+              fin de formation pour mesurer votre progression. Il est obligatoire et ne peut pas être
+              remplacé par une auto-évaluation.
             </p>
             <p>
               <strong className="font-medium text-foreground">Comment ça fonctionne</strong> —

@@ -58,29 +58,29 @@ export function getRegistrationPaymentSummary(
 
 /** Libellé du solde chèque dans le récapitulatif paiement */
 export const CHEQUE_BALANCE_SUMMARY_LABEL =
-  "Solde par chèque (à envoyer à l'inscription)";
+  "Solde par chèque (avant le début de la formation)";
 
 /** Instruction affichée lorsque le solde est réglé par chèque */
 export const CHEQUE_BALANCE_INSTRUCTION =
-  "Le chèque pour le solde est à envoyer lors de l'inscription. Il sera encaissé uniquement après la clôture de votre dossier.";
+  "Le chèque pour le solde est à envoyer avant le début de la formation.";
 
 export const PAYMENT_OPTION_LABELS: Record<RegistrationPaymentOption, string> = {
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]:
-    "150 € par carte bancaire en ligne + solde par chèque à l'inscription",
+    "150 € paiement sécurisé en ligne + solde par chèque avant le début de la formation",
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]:
-    "150 € par virement bancaire + solde par chèque à l'inscription",
+    "150 € par virement bancaire + solde par chèque avant le début de la formation",
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]:
-    "Paiement intégral par carte bancaire en ligne",
+    "Paiement sécurisé en ligne — montant total",
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]: "Paiement intégral par virement bancaire",
 };
 
 export const PAYMENT_OPTION_DESCRIPTIONS: Record<RegistrationPaymentOption, string> = {
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]:
-    `Réglez les frais de dossier maintenant par carte. ${CHEQUE_BALANCE_INSTRUCTION}`,
+    `Réglez les frais de dossier maintenant par paiement sécurisé en ligne (plusieurs fois si éligible). ${CHEQUE_BALANCE_INSTRUCTION}`,
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]:
     `Effectuez un virement de 150 € pour les frais de dossier. ${CHEQUE_BALANCE_INSTRUCTION}`,
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]:
-    "Réglez la totalité du tarif formation en une seule fois par carte bancaire.",
+    "Réglez la totalité du tarif formation par paiement sécurisé en ligne (plusieurs fois si éligible).",
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]:
     "Effectuez un virement bancaire pour le montant total de la formation.",
 };
@@ -93,7 +93,7 @@ export function formatPaymentBreakdown(summary: RegistrationPaymentSummary): str
 
   if (summary.balanceAfterDossier > 0) {
     lines.push(
-      `${CHEQUE_BALANCE_SUMMARY_LABEL} : ${formatPriceEUR(summary.balanceAfterDossier)} (encaissement après clôture du dossier)`
+      `${CHEQUE_BALANCE_SUMMARY_LABEL} : ${formatPriceEUR(summary.balanceAfterDossier)}`
     );
   }
 

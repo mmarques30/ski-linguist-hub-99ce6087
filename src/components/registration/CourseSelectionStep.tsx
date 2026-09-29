@@ -243,14 +243,6 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
         icon={MapPin}
       >
         <div className="space-y-6">
-          <Alert className="bg-[hsl(var(--surface-sunken))]">
-            <AlertDescription className="text-sm">
-              <strong>Présentiel en station :</strong> aucune session n'est programmée pour le moment.
-              Choisissez <strong>En ligne</strong> ou l'option <strong>Autres formats — sur devis</strong> pour
-              une formation en station ou un projet personnalisé.
-            </AlertDescription>
-          </Alert>
-
           {/* 1. Lieu — toujours en premier */}
           <div className="space-y-2">
             <Label>Lieu du cours *</Label>

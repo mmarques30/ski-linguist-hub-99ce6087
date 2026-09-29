@@ -356,7 +356,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                         result.paymentOption as RegistrationPaymentOption
                       ).balanceAfterDossier
                     )}{" "}
-                    à envoyer avec votre inscription
+                    à envoyer avant le début de la formation
                   </p>
                   <p className="text-sm text-muted-foreground">{CHEQUE_BALANCE_INSTRUCTION}</p>
                 </AlertDescription>
@@ -422,7 +422,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             <SummaryPanel>
               <SummaryRow
                 label="Nom"
-                value={`${data.civility === "madame" ? "Mme" : "M."} ${data.firstName} ${data.lastName}`}
+                value={`${data.firstName} ${data.lastName}`.trim()}
               />
               <SummaryRow label="Email" value={<span className="break-all">{data.email}</span>} />
               <SummaryRow label="Téléphone" value={data.phone} />
@@ -502,10 +502,12 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                   }
                 />
               )}
-              <SummaryRow
-                label="Certification"
-                value={certificationLabels[data.certification] || data.certification}
-              />
+              {data.profession !== "ski_instructor" && (
+                <SummaryRow
+                  label="Certification"
+                  value={certificationLabels[data.certification] || data.certification}
+                />
+              )}
             </SummaryPanel>
           </div>
 

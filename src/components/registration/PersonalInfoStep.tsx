@@ -1,11 +1,15 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { UserRound } from "lucide-react";
+import { toast } from "sonner";
 import type { RegistrationData } from "@/pages/register/Index";
-import { OptionCard, StepActions, StepCard } from "./StepLayout";
+import {
+  sanitizeFrenchPostalCodeInput,
+  validatePersonalInfoFormats,
+} from "@/lib/registration-personal-formats";
+import { StepActions, StepCard } from "./StepLayout";
 
 interface PersonalInfoStepProps {
   data: Partial<RegistrationData>;
@@ -16,47 +20,25 @@ interface PersonalInfoStepProps {
 export function PersonalInfoStep({ data, onUpdate, onNext }: PersonalInfoStepProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const error = validatePersonalInfoFormats({
+      email: data.email,
+      postalCode: data.postalCode,
+    });
+    if (error) {
+      toast.error(error);
+      return;
+    }
     onNext();
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
       <StepCard
         title="Informations personnelles"
         description="Veuillez renseigner vos informations personnelles pour l'inscription"
         icon={UserRound}
       >
         <div className="space-y-6">
-          {/* Civilité */}
-          <div className="space-y-3">
-            <Label>Civilité</Label>
-            <RadioGroup
-              value={data.civility || ""}
-              onValueChange={(value) => onUpdate({ civility: value })}
-              className="grid gap-2 xs:grid-cols-2"
-            >
-              <OptionCard selected={data.civility === "madame"}>
-                <Label
-                  htmlFor="madame"
-                  className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
-                >
-                  <RadioGroupItem value="madame" id="madame" />
-                  Madame
-                </Label>
-              </OptionCard>
-              <OptionCard selected={data.civility === "monsieur"}>
-                <Label
-                  htmlFor="monsieur"
-                  className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
-                >
-                  <RadioGroupItem value="monsieur" id="monsieur" />
-                  Monsieur
-                </Label>
-              </OptionCard>
-            </RadioGroup>
-          </div>
-
-          {/* Nom */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="firstName">Prénom</Label>
@@ -84,7 +66,6 @@ export function PersonalInfoStep({ data, onUpdate, onNext }: PersonalInfoStepPro
             </div>
           </div>
 
-          {/* Contact */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -96,6 +77,8 @@ export function PersonalInfoStep({ data, onUpdate, onNext }: PersonalInfoStepPro
                 value={data.email || ""}
                 onChange={(e) => onUpdate({ email: e.target.value })}
                 placeholder="votre.email@exemple.com"
+                pattern="[^@\s]+@[^@\s]+\.[^@\s]+"
+                title="Adresse e-mail avec un @"
                 className="h-11"
                 required
               />
@@ -116,18 +99,20 @@ export function PersonalInfoStep({ data, onUpdate, onNext }: PersonalInfoStepPro
             </div>
           </div>
 
-          {/* Adresse */}
           <div className="space-y-2">
-            <Label htmlFor="address">Adresse</Label>
+            <Label htmlFor="address">Adresse en France</Label>
             <Input
               id="address"
               value={data.address || ""}
               onChange={(e) => onUpdate({ address: e.target.value })}
-              placeholder="Adresse complète"
+              placeholder="Numéro et rue"
               autoComplete="street-address"
               className="h-11"
               required
             />
+            <p className="text-xs text-muted-foreground">
+              Merci d&apos;indiquer une adresse postale en France (code postal à 5 chiffres).
+            </p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -136,10 +121,15 @@ export function PersonalInfoStep({ data, onUpdate, onNext }: PersonalInfoStepPro
               <Input
                 id="postalCode"
                 value={data.postalCode || ""}
-                onChange={(e) => onUpdate({ postalCode: e.target.value })}
+                onChange={(e) =>
+                  onUpdate({ postalCode: sanitizeFrenchPostalCodeInput(e.target.value) })
+                }
                 placeholder="73000"
                 inputMode="numeric"
                 autoComplete="postal-code"
+                maxLength={5}
+                pattern="\d{5}"
+                title="5 chiffres"
                 className="h-11"
                 required
               />
@@ -158,7 +148,6 @@ export function PersonalInfoStep({ data, onUpdate, onNext }: PersonalInfoStepPro
             </div>
           </div>
 
-          {/* Handicap */}
           <div className="flex items-center justify-between gap-4 rounded-[var(--radius-card)] border border-border bg-[hsl(var(--surface-sunken))] p-4">
             <div className="min-w-0">
               <p className="font-medium">Accessibilité handicap</p>
