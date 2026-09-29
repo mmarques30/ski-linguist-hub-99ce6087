@@ -26,6 +26,8 @@ export type RegistrationAdminSummaryInput = {
   fifplObservation?: string | null;
   /** Candidat·e a coché le besoin d'aménagements (accessibilité handicap). */
   hasHandicap?: boolean;
+  /** Profession « autre » (hors moniteur de ski) — à recontacter. */
+  isOtherProfession?: boolean;
   price?: number | null;
 };
 
@@ -97,6 +99,13 @@ export function registrationAdminSummaryLines(
         "Aménagements spéciaux demandés en raison d'un handicap — contacter la personne pour étudier les adaptations.",
     });
   }
+  if (input.isOtherProfession) {
+    rows.push({
+      label: "Profession",
+      value:
+        "Autre profession (hors moniteur de ski) — recontacter la personne pour étudier ses besoins.",
+    });
+  }
   return rows;
 }
 
@@ -106,6 +115,9 @@ export function buildRegistrationAdminNotifySubject(
   const name = fullName(input);
   if (input.hasHandicap) {
     return `[FLI] Aménagements handicap — ${name}`;
+  }
+  if (input.isOtherProfession) {
+    return `[FLI] Autre profession — à recontacter — ${name}`;
   }
   if (input.isOpco) return `[FLI] Nouvelle inscription OPCO — ${name}`;
   if (input.isFifpl) return `[FLI] Nouvelle inscription FIFPL — ${name}`;
@@ -124,11 +136,19 @@ export function buildRegistrationAdminNotifyHtml(
     )
     .join("");
 
-  const handicapBanner = input.hasHandicap
-    ? `<p style="margin:0 0 16px;padding:12px 14px;background:#fff4e5;border:1px solid #f5c26b;border-radius:6px;color:#7a4b00;font-size:14px;line-height:1.45"><strong>Aménagements handicap</strong> — la personne a indiqué avoir besoin d'aménagements spéciaux. Merci de la recontacter pour étudier les adaptations possibles.</p>`
-    : "";
+  const banners: string[] = [];
+  if (input.hasHandicap) {
+    banners.push(
+      `<p style="margin:0 0 16px;padding:12px 14px;background:#fff4e5;border:1px solid #f5c26b;border-radius:6px;color:#7a4b00;font-size:14px;line-height:1.45"><strong>Aménagements handicap</strong> — la personne a indiqué avoir besoin d'aménagements spéciaux. Merci de la recontacter pour étudier les adaptations possibles.</p>`
+    );
+  }
+  if (input.isOtherProfession) {
+    banners.push(
+      `<p style="margin:0 0 16px;padding:12px 14px;background:#eef6ff;border:1px solid #9ec5fe;border-radius:6px;color:#084298;font-size:14px;line-height:1.45"><strong>Autre profession</strong> — la personne n'est pas moniteur·rice de ski. Merci de la recontacter pour étudier ses besoins.</p>`
+    );
+  }
 
-  return `${handicapBanner}<p>Nouvelle inscription reçue via le formulaire public.</p>
+  return `${banners.join("")}<p>Nouvelle inscription reçue via le formulaire public.</p>
 <table style="border-collapse:collapse;font-size:14px;line-height:1.45">${rows}</table>
 <p style="margin-top:16px;color:#555;font-size:13px">Consultez la fiche dans le back-office FLI.</p>`;
 }
@@ -145,6 +165,7 @@ export function buildRegistrationAdminNotifyMessage(
   ];
   if (input.inscriptionCode) parts.unshift(input.inscriptionCode);
   if (input.hasHandicap) parts.push("aménagements handicap");
+  if (input.isOtherProfession) parts.push("autre profession");
   if (input.fundingLabel) parts.push(input.fundingLabel);
   if (input.datesLabel) parts.push(input.datesLabel);
   return parts.filter(Boolean).join(" · ");
@@ -155,6 +176,7 @@ export function buildRegistrationAdminNotifyTitle(
 ): string {
   const name = fullName(input);
   if (input.hasHandicap) return `Aménagements handicap — ${name}`;
+  if (input.isOtherProfession) return `Autre profession — à recontacter — ${name}`;
   if (input.isOpco) return `OPCO à analyser — ${name}`;
   if (input.isFifpl) return `FIFPL — attestation CFP — ${name}`;
   if (input.isCustomFormat) return `Devis à préparer — ${name}`;

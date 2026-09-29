@@ -100,5 +100,11 @@ describe("registration-admin-notify", () => {
         (l) => l.label === "Accessibilité"
       )
     ).toBe(true);
+    expect(
+      buildRegistrationAdminNotifySubject({ ...sample, isOtherProfession: true })
+    ).toBe("[FLI] Autre profession — à recontacter — Cassandre Viard Gaudin");
+    expect(
+      buildRegistrationAdminNotifyHtml({ ...sample, isOtherProfession: true })
+    ).toContain("Autre profession");
   });
 });

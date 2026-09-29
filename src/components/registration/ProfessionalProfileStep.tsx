@@ -79,10 +79,9 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
           {data.profession === "other" && (
             <div className="animate-in fade-in slide-in-from-top-2 rounded-[var(--radius-card)] bg-[hsl(var(--surface-sunken))] p-4">
               <p className="text-sm text-muted-foreground">
-                Nos programmes de formation sont principalement conçus pour les moniteurs de ski.
-                Veuillez nous contacter directement à{" "}
-                <span className="font-medium text-foreground">info@fli.fr</span> pour discuter de vos
-                besoins spécifiques.
+                Nos programmes sont principalement conçus pour les moniteurs de ski. Nous avons bien
+                noté votre situation : l&apos;équipe FLI prendra contact avec vous pour étudier vos
+                besoins.
               </p>
             </div>
           )}
