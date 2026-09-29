@@ -15,7 +15,6 @@ import {
   CreditCard,
   User,
   Clock,
-  Eye,
   FileText,
   ExternalLink,
   Languages as LanguagesIcon,
@@ -40,7 +39,7 @@ import {
 import { InstructorFormDialog, TAX_STATUSES } from "@/components/formateurs/InstructorFormDialog";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { displayLanguageLabel } from "@/lib/taught-languages";
-import { formateurAssistPath } from "@/lib/client-links";
+import { FormateurPortalAccessCard } from "@/components/formateurs/FormateurPortalAccessCard";
 import { getStatusLabel } from "@/lib/inscription-status";
 import {
   activationConfirmDescription,
@@ -418,14 +417,6 @@ export default function InstructorDetails() {
           }
           actions={
             <>
-              {id && (
-                <Button variant="secondary" asChild>
-                  <Link to={formateurAssistPath(id, "evaluations")}>
-                    <Eye className="mr-2 h-4 w-4" />
-                    Voir comme le formateur
-                  </Link>
-                </Button>
-              )}
               {editable && instructor.status === "candidat" && (
                 <Button onClick={activateCandidat} disabled={updateInstructor.isPending}>
                   Passer en actif·ve
@@ -462,6 +453,15 @@ export default function InstructorDetails() {
             />
           }
         />
+
+        {id ? (
+          <FormateurPortalAccessCard
+            instructorId={id}
+            instructorName={`${instructor.first_name} ${instructor.last_name}`}
+            email={instructor.email}
+            authUserId={instructor.auth_user_id}
+          />
+        ) : null}
 
         {instructor.status === "candidat" && (
           <Alert className="border-[hsl(var(--tint-blue-ring))] bg-[hsl(var(--tint-blue-bg))] text-[hsl(var(--tint-blue-fg))]">

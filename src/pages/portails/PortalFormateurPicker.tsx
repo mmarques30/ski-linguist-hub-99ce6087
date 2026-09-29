@@ -31,7 +31,7 @@ export default function PortalFormateurPicker() {
         <SurfaceCard
           icon={UserCog}
           title="Choisir un formateur"
-          description="Évaluations filtrées sous bandeau ambre staff."
+          description="Portail formateur filtré sous bandeau ambre staff."
           flush
           footer={
             <p className="text-xs text-muted-foreground">
@@ -62,7 +62,7 @@ export default function PortalFormateurPicker() {
                   subtitle={i.email}
                   meta={
                     <Button size="sm" variant="outline" asChild>
-                      <Link to={formateurAssistPath(i.id, "evaluations")}>
+                      <Link to={formateurAssistPath(i.id, "tableau-de-bord")}>
                         <Eye className="mr-1.5 h-3.5 w-3.5" />
                         Assister
                       </Link>
