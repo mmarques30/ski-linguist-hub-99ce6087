@@ -33,7 +33,7 @@ Mesure Qualiopi **PROC-026** = taux d’inscriptions terminées/facturées avec 
 
 1. Pas de certificat sans formulaire de sortie complet
 2. Absence → « Documents manquants » sur la fiche inscription
-3. PDF stocké (`documents` storage), `certificates.pdf_url`, visible portail stagiaire
+3. PDF stocké dans le bucket privé `certificates` (chemin `<student_id>/<inscription_id>/<certificate_id>.pdf`), `certificates.pdf_url` = chemin (téléchargement via URL signée), visible portail stagiaire — voir `docs/SECURITE_A_TEST_EVALUATIONS.md`
 4. Aucune donnée stagiaire en dur dans le template
 
 ## Fichiers clés
