@@ -91,10 +91,9 @@ lignes créées entre l'inventaire et l'application de la migration.
 `inscriptions` ne porte aucune colonne d'URL de document ; la table de rattachement est
 `document_sendings`.
 
-**Hors périmètre, à cadrer** : `instructors.cv_url` contient 16 liens `drive.google.com`.
-Ce ne sont pas des objets Supabase Storage, donc ni la mise en privé ni la réécriture ne
-s'y appliquent. Si ces CV doivent être rapatriés dans le bucket, c'est une reprise de
-données distincte.
+**Hors périmètre A2 — traité BL-022** : `instructors.cv_url` (16 liens
+`drive.google.com`). Voir `docs/POINT_BL022_CV_URL.md` : pas de scrape auto ;
+affichage fiche + upload manuel vers `documents/staff/instructors/<id>/cv.pdf`.
 
 ## 6. Preuve exécutée sur la base live
 
@@ -193,7 +192,6 @@ présence est sans effet fonctionnel).
 
 - La suppression d'objets reste réservée à `is_admin()` et n'est exposée par aucun écran ;
   à câbler si une purge RGPD manuelle devient nécessaire.
-- `instructors.cv_url` : liens Google Drive, hors Storage (section 5).
 - Point C.2 : politiques candidat réécrites sur `sponsor_type` (`docs/POINT_C2_SPONSOR_TYPE.md`).
   Les politiques de stockage du présent point ne sont pas concernées. `attestation_type`
   reste en colonne jusqu’à C.3 / C.5.

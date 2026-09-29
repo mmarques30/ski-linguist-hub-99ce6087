@@ -83,6 +83,7 @@ type FormState = {
   consentement_photo: string;
   date_naissance: string;
   formulaire_2026: boolean;
+  cv_url: string;
   vigilance_attestation_url: string;
   vigilance_attestation_received_at: string;
   vigilance_attestation_expires_at: string;
@@ -116,6 +117,7 @@ const emptyForm = (): FormState => ({
   consentement_photo: "",
   date_naissance: "",
   formulaire_2026: false,
+  cv_url: "",
   vigilance_attestation_url: "",
   vigilance_attestation_received_at: "",
   vigilance_attestation_expires_at: "",
@@ -164,6 +166,7 @@ export function InstructorFormDialog({ open, onOpenChange, instructor }: Props) 
         consentement_photo: instructor.consentement_photo || "",
         date_naissance: instructor.date_naissance || "",
         formulaire_2026: instructor.formulaire_2026 === true,
+        cv_url: instructor.cv_url || "",
         vigilance_attestation_url: instructor.vigilance_attestation_url || "",
         vigilance_attestation_received_at: instructor.vigilance_attestation_received_at || "",
         vigilance_attestation_expires_at: instructor.vigilance_attestation_expires_at || "",
@@ -218,6 +221,7 @@ export function InstructorFormDialog({ open, onOpenChange, instructor }: Props) 
       consentement_photo: form.consentement_photo || null,
       date_naissance: form.date_naissance || null,
       formulaire_2026: form.formulaire_2026,
+      cv_url: form.cv_url.trim() || null,
       vigilance_attestation_url: form.vigilance_attestation_url || null,
       vigilance_attestation_received_at: form.vigilance_attestation_received_at || null,
       vigilance_attestation_expires_at: form.vigilance_attestation_expires_at || null,
@@ -564,6 +568,14 @@ export function InstructorFormDialog({ open, onOpenChange, instructor }: Props) 
             />
             Formulaire saison 2026 reçu
           </label>
+          <div>
+            <Label>CV (lien ou chemin Storage)</Label>
+            <Input
+              placeholder="https://… ou staff/instructors/…/cv.pdf"
+              value={form.cv_url}
+              onChange={(e) => setForm((f) => ({ ...f, cv_url: e.target.value }))}
+            />
+          </div>
           <div className="rounded-lg border p-3 space-y-3">
             <p className="text-sm font-medium">Attestation de vigilance</p>
             <div>

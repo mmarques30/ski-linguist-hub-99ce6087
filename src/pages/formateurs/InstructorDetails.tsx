@@ -47,6 +47,14 @@ import {
   candidatActivationGaps,
   STATUT_ADMINISTRATIF_PRESETS,
 } from "@/lib/instructor-candidat";
+import {
+  INSTRUCTOR_CV_BUCKET,
+  buildInstructorCvPath,
+  instructorCvOpenLabel,
+} from "@/lib/instructor-cv";
+import { CertificatePdfButton } from "@/components/certificates/CertificatePdfButton";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
@@ -173,6 +181,8 @@ export default function InstructorDetails() {
   const { data: contracts = [] } = useInstructorContracts(id);
   const updateInstructor = useUpdateInstructor();
   const [adminStatut, setAdminStatut] = useState("");
+  const [cvUrl, setCvUrl] = useState("");
+  const [cvUploading, setCvUploading] = useState(false);
   const [vigilanceUrl, setVigilanceUrl] = useState("");
   const [vigilanceReceived, setVigilanceReceived] = useState("");
   const [vigilanceExpires, setVigilanceExpires] = useState("");
@@ -180,6 +190,10 @@ export default function InstructorDetails() {
   useEffect(() => {
     setAdminStatut(instructor?.statut_administratif || "");
   }, [instructor?.statut_administratif]);
+
+  useEffect(() => {
+    setCvUrl(instructor?.cv_url || "");
+  }, [instructor?.cv_url]);
 
   useEffect(() => {
     setVigilanceUrl(instructor?.vigilance_attestation_url || "");
@@ -190,6 +204,43 @@ export default function InstructorDetails() {
     instructor?.vigilance_attestation_received_at,
     instructor?.vigilance_attestation_expires_at,
   ]);
+
+  const saveCvUrl = () => {
+    if (!id) return;
+    updateInstructor.mutate({
+      id,
+      cv_url: cvUrl.trim() || null,
+    });
+  };
+
+  const uploadCvFile = async (file: File | undefined) => {
+    if (!id || !file) return;
+    if (file.type && file.type !== "application/pdf" && file.type !== "application/octet-stream") {
+      toast.error("Le CV doit être un PDF");
+      return;
+    }
+    if (file.size <= 0 || file.size > 10 * 1024 * 1024) {
+      toast.error("Fichier vide ou trop volumineux (max 10 Mo)");
+      return;
+    }
+    setCvUploading(true);
+    try {
+      const path = buildInstructorCvPath(id);
+      const { error } = await supabase.storage.from(INSTRUCTOR_CV_BUCKET).upload(path, file, {
+        upsert: true,
+        contentType: "application/pdf",
+      });
+      if (error) throw error;
+      setCvUrl(path);
+      updateInstructor.mutate({ id, cv_url: path });
+      toast.success("CV déposé dans le stockage privé");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Dépôt impossible";
+      toast.error(message);
+    } finally {
+      setCvUploading(false);
+    }
+  };
 
   const saveVigilance = () => {
     if (!id) return;
@@ -722,6 +773,53 @@ export default function InstructorDetails() {
                     </Select>
                   ) : (
                     <p className="font-medium">{adminStatutLabel(instructor.statut_administratif)}</p>
+                  )}
+                </div>
+              </SurfaceCard>
+
+              <SurfaceCard title="Curriculum vitæ" icon={FileText}>
+                <div className="space-y-4 text-sm">
+                  {editable ? (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="cv-url">Lien ou chemin Storage</Label>
+                        <Input
+                          id="cv-url"
+                          placeholder="https://… ou staff/instructors/…/cv.pdf"
+                          value={cvUrl}
+                          onChange={(e) => setCvUrl(e.target.value)}
+                          onBlur={saveCvUrl}
+                          disabled={updateInstructor.isPending || cvUploading}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Les liens Google Drive importés restent valides. Pour
+                          rapatrier un PDF : déposez-le ci-dessous (bucket privé).
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="cv-upload">Déposer un PDF</Label>
+                        <Input
+                          id="cv-upload"
+                          type="file"
+                          accept="application/pdf,.pdf"
+                          disabled={updateInstructor.isPending || cvUploading}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            void uploadCvFile(file);
+                            e.target.value = "";
+                          }}
+                        />
+                      </div>
+                    </>
+                  ) : null}
+                  {instructor.cv_url ? (
+                    <CertificatePdfButton
+                      pathOrUrl={instructor.cv_url}
+                      bucket={INSTRUCTOR_CV_BUCKET}
+                      label={instructorCvOpenLabel(instructor.cv_url)}
+                    />
+                  ) : (
+                    <p className="text-muted-foreground">Aucun CV renseigné.</p>
                   )}
                 </div>
               </SurfaceCard>
