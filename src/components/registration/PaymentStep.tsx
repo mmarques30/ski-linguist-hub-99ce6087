@@ -270,13 +270,7 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
           description="Format sur devis — les modalités de paiement vous seront communiquées avec la proposition commerciale."
           icon={Wallet}
         >
-          <Alert>
-            <AlertDescription>
-              Pour les formats personnalisés, aucun règlement n&apos;est demandé à cette étape.
-              Les frais de dossier ({formatPriceEUR(FRAIS_DOSSIER_EUR)}) seront précisés dans le
-              devis.
-            </AlertDescription>
-          </Alert>
+          {null}
         </StepCard>
 
         <StepActions>
