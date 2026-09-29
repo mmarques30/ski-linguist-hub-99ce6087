@@ -245,7 +245,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             <p className="max-w-md text-sm text-muted-foreground">
               Merci de vous être inscrit chez France Langues International.
               {result.documentsSent
-                ? " Les documents d'inscription (convention, programme et critères FIF-PL) vous seront envoyés par email dans les 30 minutes."
+                ? " Les documents d'inscription (convention, programme et critères FIF-PL) vous seront envoyés par email."
                 : result.emailSent
                   ? " Un email de confirmation vous a été envoyé."
                   : " Notre équipe vous contactera prochainement."}
