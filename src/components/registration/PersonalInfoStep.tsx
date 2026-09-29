@@ -4,7 +4,12 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { UserRound } from "lucide-react";
+import { toast } from "sonner";
 import type { RegistrationData } from "@/pages/register/Index";
+import {
+  sanitizeFrenchPostalCodeInput,
+  validatePersonalInfoFormats,
+} from "@/lib/registration-personal-formats";
 import { OptionCard, StepActions, StepCard } from "./StepLayout";
 
 interface PersonalInfoStepProps {
@@ -16,11 +21,19 @@ interface PersonalInfoStepProps {
 export function PersonalInfoStep({ data, onUpdate, onNext }: PersonalInfoStepProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const error = validatePersonalInfoFormats({
+      email: data.email,
+      postalCode: data.postalCode,
+    });
+    if (error) {
+      toast.error(error);
+      return;
+    }
     onNext();
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
       <StepCard
         title="Informations personnelles"
         description="Veuillez renseigner vos informations personnelles pour l'inscription"
@@ -96,6 +109,8 @@ export function PersonalInfoStep({ data, onUpdate, onNext }: PersonalInfoStepPro
                 value={data.email || ""}
                 onChange={(e) => onUpdate({ email: e.target.value })}
                 placeholder="votre.email@exemple.com"
+                pattern="[^@\s]+@[^@\s]+\.[^@\s]+"
+                title="Adresse e-mail avec un @"
                 className="h-11"
                 required
               />
@@ -136,10 +151,15 @@ export function PersonalInfoStep({ data, onUpdate, onNext }: PersonalInfoStepPro
               <Input
                 id="postalCode"
                 value={data.postalCode || ""}
-                onChange={(e) => onUpdate({ postalCode: e.target.value })}
+                onChange={(e) =>
+                  onUpdate({ postalCode: sanitizeFrenchPostalCodeInput(e.target.value) })
+                }
                 placeholder="73000"
                 inputMode="numeric"
                 autoComplete="postal-code"
+                maxLength={5}
+                pattern="\d{5}"
+                title="5 chiffres"
                 className="h-11"
                 required
               />
