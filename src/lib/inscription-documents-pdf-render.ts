@@ -1,13 +1,22 @@
 /**
  * Rendu pdf-lib des PDF Convention / Programme (dossier inscription).
  * Aligné sur supabase/functions/_shared/inscription-documents-pdf-render.ts.
+ *
+ * En-tête (logo FLI) et pied de page (mentions FLI) sur **toutes** les pages.
  */
 
-import { PDFDocument, PDFFont, PDFPage, rgb, StandardFonts } from "pdf-lib";
+import { PDFDocument, PDFFont, PDFImage, PDFPage, rgb, StandardFonts } from "pdf-lib";
 import type { InscriptionDocumentPdfModel } from "./inscription-documents-pdf";
 
 const PAGE = { width: 595.28, height: 841.89 };
 const MARGIN = 48;
+/** Zone réservée à l'en-tête (logo + filet). */
+const HEADER_HEIGHT = 64;
+/** Zone réservée au pied (mentions FLI + n° de page). */
+const FOOTER_HEIGHT = 56;
+const CONTENT_TOP = PAGE.height - HEADER_HEIGHT - 12;
+const CONTENT_BOTTOM = FOOTER_HEIGHT + 10;
+
 const NAVY = rgb(0.07, 0.18, 0.38);
 const INK = rgb(0.12, 0.12, 0.12);
 const MUTED = rgb(0.35, 0.35, 0.35);
@@ -21,6 +30,8 @@ type Fonts = { regular: PDFFont; bold: PDFFont; italic: PDFFont };
 export type RenderInscriptionDocumentOptions = {
   /** PNG cachet + signature manuscrite (Paula) pour le bloc organisme. */
   organismSignaturePng?: Uint8Array | null;
+  /** PNG papier à en-tête FLI (logo) — dessinés sur chaque page. */
+  letterheadPng?: Uint8Array | null;
 };
 
 function pdfSafe(text: string): string {
@@ -69,22 +80,124 @@ export function wrapText(
   return lines;
 }
 
+function drawFitted(
+  page: PDFPage,
+  image: PDFImage,
+  box: { x: number; y: number; width: number; height: number }
+) {
+  const scale = Math.min(box.width / image.width, box.height / image.height);
+  const width = image.width * scale;
+  const height = image.height * scale;
+  const x = box.x + (box.width - width) / 2;
+  const y = box.y + (box.height - height) / 2;
+  page.drawImage(image, { x, y, width, height });
+}
+
+/** En-tête FLI (logo) — répété sur chaque page. */
+function drawPageHeader(
+  page: PDFPage,
+  fonts: Fonts,
+  letterhead: PDFImage | null,
+  orgName: string
+) {
+  page.drawRectangle({
+    x: 0,
+    y: PAGE.height - 6,
+    width: PAGE.width,
+    height: 6,
+    color: NAVY,
+  });
+
+  const bandY = PAGE.height - HEADER_HEIGHT;
+  const bandH = HEADER_HEIGHT - 10;
+
+  if (letterhead) {
+    drawFitted(page, letterhead, {
+      x: MARGIN,
+      y: bandY,
+      width: PAGE.width - MARGIN * 2,
+      height: bandH,
+    });
+  } else {
+    page.drawText(pdfSafe(orgName || "France Langues International"), {
+      x: MARGIN,
+      y: bandY + bandH / 2 - 6,
+      size: 14,
+      font: fonts.bold,
+      color: NAVY,
+    });
+  }
+
+  page.drawLine({
+    start: { x: MARGIN, y: bandY - 2 },
+    end: { x: PAGE.width - MARGIN, y: bandY - 2 },
+    thickness: 0.6,
+    color: RULE,
+  });
+}
+
+/** Pied de page FLI — répété sur chaque page. */
+function drawPageFooter(
+  page: PDFPage,
+  fonts: Fonts,
+  footerLines: string[],
+  pageIndex: number,
+  pageCount: number
+) {
+  page.drawLine({
+    start: { x: MARGIN, y: FOOTER_HEIGHT + 4 },
+    end: { x: PAGE.width - MARGIN, y: FOOTER_HEIGHT + 4 },
+    thickness: 0.5,
+    color: RULE,
+  });
+
+  const pageLabel = `Page ${pageIndex} / ${pageCount}`;
+  const pageWidth = fonts.regular.widthOfTextAtSize(pageLabel, 7);
+  page.drawText(pageLabel, {
+    x: PAGE.width - MARGIN - pageWidth,
+    y: FOOTER_HEIGHT - 8,
+    size: 7,
+    font: fonts.regular,
+    color: MUTED,
+  });
+
+  const maxWidth = PAGE.width - MARGIN * 2 - pageWidth - 10;
+  let y = FOOTER_HEIGHT - 8;
+  for (const line of footerLines.slice(0, 4)) {
+    const wrapped = wrapText(fonts.regular, line, 6.5, maxWidth);
+    for (const w of wrapped.slice(0, 1)) {
+      page.drawText(w, {
+        x: MARGIN,
+        y,
+        size: 6.5,
+        font: fonts.regular,
+        color: MUTED,
+      });
+      y -= 8;
+      if (y < 10) break;
+    }
+    if (y < 10) break;
+  }
+}
+
 class Cursor {
   y: number;
   constructor(
     private page: PDFPage,
     private fonts: Fonts,
     private doc: PDFDocument,
+    private letterhead: PDFImage | null,
+    private orgName: string,
     startY: number
   ) {
     this.y = startY;
   }
 
   private ensure(space: number): PDFPage {
-    if (this.y - space < MARGIN + 36) {
+    if (this.y - space < CONTENT_BOTTOM) {
       this.page = this.doc.addPage([PAGE.width, PAGE.height]);
-      this.y = PAGE.height - MARGIN;
-      drawPageChrome(this.page);
+      drawPageHeader(this.page, this.fonts, this.letterhead, this.orgName);
+      this.y = CONTENT_TOP;
     }
     return this.page;
   }
@@ -218,33 +331,6 @@ class Cursor {
     }
   }
 
-  legalFooter(lines: string[]) {
-    if (!lines.length) return;
-    this.gap(16);
-    const page = this.ensure(12 + lines.length * 11);
-    page.drawLine({
-      start: { x: MARGIN, y: this.y + 6 },
-      end: { x: PAGE.width - MARGIN, y: this.y + 6 },
-      thickness: 0.5,
-      color: RULE,
-    });
-    this.y -= 6;
-    for (const line of lines) {
-      const wrapped = wrapText(this.fonts.regular, line, 8, PAGE.width - MARGIN * 2);
-      for (const w of wrapped) {
-        const p = this.ensure(11);
-        p.drawText(w, {
-          x: MARGIN,
-          y: this.y,
-          size: 8,
-          font: this.fonts.regular,
-          color: MUTED,
-        });
-        this.y -= 11;
-      }
-    }
-  }
-
   /** Dessine une image PNG en bas à gauche du curseur ; avance `y`. */
   async drawPng(bytes: Uint8Array, maxWidth: number): Promise<void> {
     const image = await this.doc.embedPng(bytes);
@@ -262,16 +348,6 @@ class Cursor {
   }
 }
 
-function drawPageChrome(page: PDFPage) {
-  page.drawRectangle({
-    x: 0,
-    y: PAGE.height - 8,
-    width: PAGE.width,
-    height: 8,
-    color: NAVY,
-  });
-}
-
 export async function renderInscriptionDocumentPdf(
   model: InscriptionDocumentPdfModel,
   options: RenderInscriptionDocumentOptions = {}
@@ -282,20 +358,25 @@ export async function renderInscriptionDocumentPdf(
     bold: await doc.embedFont(StandardFonts.HelveticaBold),
     italic: await doc.embedFont(StandardFonts.HelveticaOblique),
   };
+
+  let letterhead: PDFImage | null = null;
+  if (options.letterheadPng?.length) {
+    try {
+      letterhead = await doc.embedPng(options.letterheadPng);
+    } catch {
+      letterhead = null;
+    }
+  }
+
+  const orgName = model.organization.legal_name || "France Langues International";
+  const footerLines = model.documentFooterLines ?? [];
+
   const first = doc.addPage([PAGE.width, PAGE.height]);
-  drawPageChrome(first);
-  const cursor = new Cursor(first, fonts, doc, PAGE.height - MARGIN - 8);
+  drawPageHeader(first, fonts, letterhead, orgName);
+  const cursor = new Cursor(first, fonts, doc, letterhead, orgName, CONTENT_TOP);
 
   cursor.title(model.title);
-  cursor.subtitle(
-    `${model.organization.legal_name || "France Langues International"} — ${model.generatedAtLabel}`
-  );
-  if (model.organizationAddress) {
-    cursor.subtitle(model.organizationAddress);
-  }
-  for (const legal of model.organizationLegalLines) {
-    cursor.subtitle(legal);
-  }
+  cursor.subtitle(`Document généré le ${model.generatedAtLabel}`);
   cursor.gap(8);
 
   cursor.heading("Stagiaire");
@@ -396,7 +477,11 @@ export async function renderInscriptionDocumentPdf(
   }
 
   cursor.footerNote(model.footerNote);
-  cursor.legalFooter(model.documentFooterLines ?? []);
+
+  const pages = doc.getPages();
+  pages.forEach((page, i) => {
+    drawPageFooter(page, fonts, footerLines, i + 1, pages.length);
+  });
 
   return doc.save();
 }
