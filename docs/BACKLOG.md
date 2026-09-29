@@ -2,7 +2,7 @@
 
 Règle : noter ici, **ne pas corriger** tant que le point courant n’est pas validé.
 
-Dernière mise à jour : 2026-09-21 (BL-014 peaufinage clos PR #87).
+Dernière mise à jour : 2026-09-29 (BL-022 CV formateur·rices cadré).
 
 ## Conventions de lecture
 
@@ -82,8 +82,8 @@ BL-030 / BL-050 **fusionnés** (PR #73 + #75). BL-014 peaufinage **clos** (#87).
 
 ### Hors périmètre du 1er octobre
 
-BL-001, BL-008, BL-009, BL-010, BL-011, BL-015, BL-017, BL-019, BL-020,
-BL-022 : dette antérieure, non remontée par la recette.
+BL-001, BL-008, BL-009, BL-010, BL-011, BL-015, BL-017, BL-019 :
+dette antérieure, non remontée par la recette.
 
 ---
 
@@ -138,7 +138,7 @@ BL-022 : dette antérieure, non remontée par la recette.
 | BL-017 | Imports massifs hors UI | Avant point 9 |
 | BL-019 | J-10 horaires FLI exacts + pas de code depuis horaires | Point 10 |
 | BL-020 | Policies storage certificats (vue `inscriptions_complete` OK live) | Ops |
-| BL-022 | `instructors.cv_url` : 16 liens `drive.google.com`, hors Supabase Storage — rapatriement à cadrer | Faible |
+| BL-022 | `instructors.cv_url` Drive — **cadré** 29/09 : `docs/POINT_BL022_CV_URL.md` ; *(live)* 16/72 liens Drive, 0 Storage ; pas de scrape auto ; UI Administratif + upload `documents/staff/instructors/<id>/cv.pdf` | Faible |
 
 ---
 
@@ -179,6 +179,7 @@ BL-022 : dette antérieure, non remontée par la recette.
 | BL-013 | Statut `candidat` |
 | BL-018 | Mapping certificat→piste remplacé par bilan Entrée/Sortie |
 | BL-021 | Bucket `documents` privé — point A2, `docs/SECURITE_A2_BUCKET_DOCUMENTS.md` |
+| BL-022 | CV formateur Drive → Storage cadré — `docs/POINT_BL022_CV_URL.md` (UI + upload manuel ; pas de scrape) |
 | BL-006 | Outreach sans unsubscribe — traité par le gel, point 5, `docs/GEL_PROSPECTION_MONITEURS.md`. Condition de réouverture vérifiée à l'exécution. |
 | BL-023…026, 028, 036 | Vague 1 — PR #44 |
 | BL-029 | Dates flexibles — PR #45 |
