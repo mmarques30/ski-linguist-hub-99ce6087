@@ -356,7 +356,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                         result.paymentOption as RegistrationPaymentOption
                       ).balanceAfterDossier
                     )}{" "}
-                    à envoyer avec votre inscription
+                    à envoyer avant le début de la formation
                   </p>
                   <p className="text-sm text-muted-foreground">{CHEQUE_BALANCE_INSTRUCTION}</p>
                 </AlertDescription>

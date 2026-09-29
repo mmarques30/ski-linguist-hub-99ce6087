@@ -611,14 +611,14 @@ Deno.serve(async (req) => {
 
     const paymentLabels: Record<string, string> = {
       [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]:
-        "150 € paiement sécurisé en ligne + solde chèque à l'inscription (encaissement après clôture dossier)",
+        "150 € paiement sécurisé en ligne + solde chèque avant le début de la formation",
       [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]:
-        "150 € virement + solde chèque à l'inscription (encaissement après clôture dossier)",
+        "150 € virement + solde chèque avant le début de la formation",
       [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]:
         "Paiement sécurisé en ligne — montant total",
       [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]: "Paiement intégral virement",
       virement:
-        "150 € virement + solde chèque à l'inscription (encaissement après clôture dossier)",
+        "150 € virement + solde chèque avant le début de la formation",
     };
 
     const { data: inscription, error: inscriptionError } = await supabase
@@ -667,7 +667,7 @@ Deno.serve(async (req) => {
             ? `Paiement: ${paymentLabels[registration.paymentOption] || registration.paymentOption}`
             : null,
           paymentFields && paymentFields.balanceAfterDeposit > 0
-            ? `Frais de dossier: ${FRAIS_DOSSIER_EUR} € · Solde chèque: ${paymentFields.balanceAfterDeposit} € (à envoyer à l'inscription, encaissement après clôture dossier)`
+            ? `Frais de dossier: ${FRAIS_DOSSIER_EUR} € · Solde chèque: ${paymentFields.balanceAfterDeposit} € (avant le début de la formation)`
             : paymentFields?.paymentType === "total" && paymentFields.paymentFlow === "virement"
               ? `Paiement intégral par virement: ${price} €`
               : null,
@@ -716,7 +716,7 @@ Deno.serve(async (req) => {
         payer_type: "stagiaire",
         payer_name: `${registration.firstName} ${registration.lastName}`,
         notes:
-          "Chèque à envoyer à l'inscription — encaissement après clôture du dossier",
+          "Chèque à envoyer avant le début de la formation",
         cheque_deposited: false,
       });
     }

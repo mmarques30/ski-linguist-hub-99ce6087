@@ -41,7 +41,7 @@ export const CONDITIONS_GENERALES_SECTIONS: ConditionsGeneralesSection[] = [
     title: "Tarif et règlement",
     paragraphs: [
       "Le tarif de la formation est celui affiché dans le récapitulatif de votre inscription.",
-      "Le règlement s'effectue selon le mode que vous choisissez à l'étape « Paiement » : soit des frais de dossier de 150 €, déduits du tarif total, puis le solde par chèque remis à l'inscription et encaissé après la clôture de votre dossier ; soit le paiement intégral, en ligne ou par virement.",
+      "Le règlement s'effectue selon le mode que vous choisissez à l'étape « Paiement » : soit des frais de dossier de 150 €, déduits du tarif total, puis le solde par chèque avant le début de la formation ; soit le paiement intégral, en ligne ou par virement.",
       "Organisme exonéré de TVA (formulaire 3511).",
     ],
   },

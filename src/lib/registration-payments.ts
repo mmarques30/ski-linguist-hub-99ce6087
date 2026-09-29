@@ -58,17 +58,17 @@ export function getRegistrationPaymentSummary(
 
 /** Libellé du solde chèque dans le récapitulatif paiement */
 export const CHEQUE_BALANCE_SUMMARY_LABEL =
-  "Solde par chèque (à envoyer à l'inscription)";
+  "Solde par chèque (avant le début de la formation)";
 
 /** Instruction affichée lorsque le solde est réglé par chèque */
 export const CHEQUE_BALANCE_INSTRUCTION =
-  "Le chèque pour le solde est à envoyer lors de l'inscription. Il sera encaissé uniquement après la clôture de votre dossier.";
+  "Le chèque pour le solde est à envoyer avant le début de la formation.";
 
 export const PAYMENT_OPTION_LABELS: Record<RegistrationPaymentOption, string> = {
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]:
-    "150 € paiement sécurisé en ligne + solde par chèque à l'inscription",
+    "150 € paiement sécurisé en ligne + solde par chèque avant le début de la formation",
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]:
-    "150 € par virement bancaire + solde par chèque à l'inscription",
+    "150 € par virement bancaire + solde par chèque avant le début de la formation",
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]:
     "Paiement sécurisé en ligne — montant total",
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]: "Paiement intégral par virement bancaire",
@@ -93,7 +93,7 @@ export function formatPaymentBreakdown(summary: RegistrationPaymentSummary): str
 
   if (summary.balanceAfterDossier > 0) {
     lines.push(
-      `${CHEQUE_BALANCE_SUMMARY_LABEL} : ${formatPriceEUR(summary.balanceAfterDossier)} (encaissement après clôture du dossier)`
+      `${CHEQUE_BALANCE_SUMMARY_LABEL} : ${formatPriceEUR(summary.balanceAfterDossier)}`
     );
   }
 

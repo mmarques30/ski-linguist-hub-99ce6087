@@ -366,7 +366,7 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
               <Receipt className="h-4 w-4" />
               <AlertDescription className="space-y-1 text-sm">
                 <p className="font-medium">
-                  Chèque de {formatPriceEUR(summary.balanceAfterDossier)} à envoyer avec votre inscription
+                  Chèque de {formatPriceEUR(summary.balanceAfterDossier)} à envoyer avant le début de la formation
                 </p>
                 <p className="text-muted-foreground">{CHEQUE_BALANCE_INSTRUCTION}</p>
               </AlertDescription>
