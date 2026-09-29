@@ -2,6 +2,7 @@
 
 Migration : `supabase/migrations/20260910090000_secure_test_evaluations_rls.sql`
 Journal : `audit_log.action = 'securite_rls_test_evaluations'` (aucune donnée personnelle)
+**BL-020 clos** 29/09 : policies storage certificats recontrôlées en live (bucket privé, 5 RLS, 0 objet, URL publique morte).
 
 ## 1. Constat corrigé
 
