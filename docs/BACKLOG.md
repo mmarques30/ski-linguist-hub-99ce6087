@@ -2,11 +2,7 @@
 
 Règle : noter ici, **ne pas corriger** tant que le point courant n’est pas validé.
 
-<<<<<<< HEAD
-Dernière mise à jour : 2026-09-29 (BL-020 policies storage certificats clos).
-=======
-Dernière mise à jour : 2026-09-29 (BL-015 restes formateur clos).
->>>>>>> origin/main
+Dernière mise à jour : 2026-09-29 (BL-015 restes formateur + BL-020 policies certificats clos).
 
 ## Conventions de lecture
 
@@ -86,11 +82,7 @@ BL-030 / BL-050 **fusionnés** (PR #73 + #75). BL-014 peaufinage **clos** (#87).
 
 ### Hors périmètre du 1er octobre
 
-<<<<<<< HEAD
-BL-001, BL-008, BL-009, BL-010, BL-011, BL-015, BL-017, BL-019,
-=======
-BL-001, BL-008, BL-009, BL-010, BL-011, BL-017, BL-019, BL-020,
->>>>>>> origin/main
+BL-001, BL-008, BL-009, BL-010, BL-011, BL-017, BL-019,
 BL-022 : dette antérieure, non remontée par la recette.
 
 ---
