@@ -122,7 +122,8 @@ function studentFacingSlopeLabel(summary?: {
 }
 
 interface RegistrationPayload {
-  civility: string;
+  /** Optionnel — plus demandé à l'inscription (langage inclusif). */
+  civility?: string | null;
   firstName: string;
   lastName: string;
   email: string;
@@ -552,7 +553,7 @@ Deno.serve(async (req) => {
       await supabase
         .from("students")
         .update({
-          civility: registration.civility,
+          civility: registration.civility?.trim() || null,
           first_name: registration.firstName,
           last_name: registration.lastName,
           phone: registration.phone,
@@ -566,7 +567,7 @@ Deno.serve(async (req) => {
       const { data: newStudent, error: studentError } = await supabase
         .from("students")
         .insert({
-          civility: registration.civility,
+          civility: registration.civility?.trim() || null,
           first_name: registration.firstName,
           last_name: registration.lastName,
           email,

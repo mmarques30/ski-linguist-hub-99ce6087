@@ -40,3 +40,18 @@ describe("registration-personal-formats", () => {
     ).toMatch(/5 chiffres/);
   });
 });
+
+describe("PersonalInfoStep — inclusif + adresse France", () => {
+  it("ne demande plus la civilité et précise l'adresse en France", () => {
+    const { readFileSync } = require("node:fs") as typeof import("node:fs");
+    const { join } = require("node:path") as typeof import("node:path");
+    const step = readFileSync(
+      join(process.cwd(), "src/components/registration/PersonalInfoStep.tsx"),
+      "utf8"
+    );
+    expect(step).not.toContain("Civilité");
+    expect(step).not.toContain("Madame");
+    expect(step).not.toContain("Monsieur");
+    expect(step).toContain("Adresse en France");
+  });
+});

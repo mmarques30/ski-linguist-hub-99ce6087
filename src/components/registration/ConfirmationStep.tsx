@@ -422,7 +422,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             <SummaryPanel>
               <SummaryRow
                 label="Nom"
-                value={`${data.civility === "madame" ? "Mme" : "M."} ${data.firstName} ${data.lastName}`}
+                value={`${data.firstName} ${data.lastName}`.trim()}
               />
               <SummaryRow label="Email" value={<span className="break-all">{data.email}</span>} />
               <SummaryRow label="Téléphone" value={data.phone} />
