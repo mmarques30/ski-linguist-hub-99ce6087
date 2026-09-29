@@ -66,21 +66,21 @@ export const CHEQUE_BALANCE_INSTRUCTION =
 
 export const PAYMENT_OPTION_LABELS: Record<RegistrationPaymentOption, string> = {
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]:
-    "150 € par carte bancaire en ligne + solde par chèque à l'inscription",
+    "150 € en ligne (carte ou Klarna) + solde par chèque à l'inscription",
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]:
     "150 € par virement bancaire + solde par chèque à l'inscription",
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]:
-    "Paiement intégral par carte bancaire en ligne",
+    "Paiement intégral en ligne (carte ou Klarna)",
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]: "Paiement intégral par virement bancaire",
 };
 
 export const PAYMENT_OPTION_DESCRIPTIONS: Record<RegistrationPaymentOption, string> = {
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]:
-    `Réglez les frais de dossier maintenant par carte. ${CHEQUE_BALANCE_INSTRUCTION}`,
+    `Réglez les frais de dossier maintenant par carte ou Klarna (paiement en plusieurs fois si éligible). ${CHEQUE_BALANCE_INSTRUCTION}`,
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]:
     `Effectuez un virement de 150 € pour les frais de dossier. ${CHEQUE_BALANCE_INSTRUCTION}`,
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]:
-    "Réglez la totalité du tarif formation en une seule fois par carte bancaire.",
+    "Réglez la totalité du tarif formation en une fois par carte, ou en plusieurs fois via Klarna si vous y êtes éligible.",
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]:
     "Effectuez un virement bancaire pour le montant total de la formation.",
 };

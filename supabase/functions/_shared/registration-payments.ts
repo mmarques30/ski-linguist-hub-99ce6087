@@ -104,6 +104,8 @@ export async function createStripeCheckoutSession(params: {
     cancel_url: params.cancelUrl,
     customer_email: params.customerEmail,
     locale: "fr",
+    // Adresse de facturation : utile pour Klarna (éligibilité / pays acheteur).
+    billing_address_collection: "required",
     // Empêche Stripe de proposer une conversion USD selon le navigateur.
     "adaptive_pricing[enabled]": "false",
     "line_items[0][price_data][currency]": "eur",
@@ -111,6 +113,10 @@ export async function createStripeCheckoutSession(params: {
     "line_items[0][price_data][product_data][name]": params.productName,
     "line_items[0][quantity]": "1",
   });
+
+  // Klarna est activé sur le compte Stripe FLI — proposé au Checkout avec la carte.
+  body.append("payment_method_types[]", "card");
+  body.append("payment_method_types[]", "klarna");
 
   for (const [key, value] of Object.entries(params.metadata)) {
     body.set(`metadata[${key}]`, value);

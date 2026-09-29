@@ -12,4 +12,14 @@ describe("Stripe Checkout EUR", () => {
     expect(source).toContain('"adaptive_pricing[enabled]": "false"');
     expect(source).toContain('"line_items[0][price_data][currency]": "eur"');
   });
+
+  it("propose carte et Klarna au Checkout", () => {
+    const source = readFileSync(
+      join(process.cwd(), "supabase/functions/_shared/registration-payments.ts"),
+      "utf8"
+    );
+    expect(source).toContain('body.append("payment_method_types[]", "card")');
+    expect(source).toContain('body.append("payment_method_types[]", "klarna")');
+    expect(source).toContain('billing_address_collection: "required"');
+  });
 });
