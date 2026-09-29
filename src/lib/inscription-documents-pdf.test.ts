@@ -10,6 +10,7 @@ import {
   programmeFilename,
 } from "./inscription-documents-pdf";
 import { renderInscriptionDocumentPdf } from "./inscription-documents-pdf-render";
+import { INSCRIPTION_DOCUMENT_ASSET_FILES } from "./inscription-documents-assets";
 import {
   FLI_DOCUMENT_FOOTER_V2_LINES,
   FLI_DOCUMENT_FOOTER_V4_LINES,
@@ -55,6 +56,34 @@ const INSCRIPTION = {
   group_size: 1,
   funding_organization: "OPCO / FIFPL",
 };
+
+function loadLetterheadPng(): Uint8Array {
+  return new Uint8Array(
+    readFileSync(
+      resolve(
+        process.cwd(),
+        `public/inscription-documents/${INSCRIPTION_DOCUMENT_ASSET_FILES.letterhead}`
+      )
+    )
+  );
+}
+
+function loadSignaturePng(): Uint8Array {
+  return new Uint8Array(
+    readFileSync(
+      resolve(
+        process.cwd(),
+        `public/inscription-documents/${INSCRIPTION_DOCUMENT_ASSET_FILES.organismSignature}`
+      )
+    )
+  );
+}
+
+async function countPdfPages(bytes: Uint8Array): Promise<number> {
+  const { PDFDocument } = await import("pdf-lib");
+  const doc = await PDFDocument.load(bytes);
+  return doc.getPageCount();
+}
 
 function pdfVisibleText(bytes: Uint8Array): string {
   const latin = Buffer.from(bytes).toString("latin1");
@@ -103,8 +132,12 @@ describe("PDF dossier inscription", () => {
       student: STUDENT,
       identity: IDENTITY,
     });
-    const conventionBytes = await renderInscriptionDocumentPdf(convention);
-    const programmeBytes = await renderInscriptionDocumentPdf(programme);
+    const conventionBytes = await renderInscriptionDocumentPdf(convention, {
+      letterheadPng: loadLetterheadPng(),
+    });
+    const programmeBytes = await renderInscriptionDocumentPdf(programme, {
+      letterheadPng: loadLetterheadPng(),
+    });
     expect(conventionBytes.byteLength).toBeGreaterThan(1000);
     expect(programmeBytes.byteLength).toBeGreaterThan(800);
 
@@ -113,10 +146,45 @@ describe("PDF dossier inscription", () => {
     expect(cText).toMatch(/Martin/);
     expect(cText).toMatch(/FLI-2026-TEST/);
     expect(cText).toMatch(/Anglais/);
+    expect(cText).toMatch(/Formation Professionnelle Continue/);
+    expect(cText).toMatch(/Page 1 \//);
 
     const pText = pdfVisibleText(programmeBytes);
     expect(pText).toMatch(/Programme/);
     expect(pText).toMatch(/Objectifs|Contenu/);
+    expect(pText).toMatch(/Formation Professionnelle Continue/);
+  });
+
+  it("répète en-tête logo et pied FLI sur chaque page", async () => {
+    const model = buildConventionPdfModel({
+      inscription: {
+        ...INSCRIPTION,
+        modality: "en_ligne_individuel",
+        course_location: "En ligne",
+        duration_hours: 12,
+      },
+      student: STUDENT,
+      identity: IDENTITY,
+      generatedAt: new Date("2026-09-24T10:00:00.000Z"),
+    });
+    const bytes = await renderInscriptionDocumentPdf(model, {
+      organismSignaturePng: loadSignaturePng(),
+      letterheadPng: loadLetterheadPng(),
+    });
+    const pages = await countPdfPages(bytes);
+    expect(pages).toBeGreaterThanOrEqual(2);
+
+    const text = pdfVisibleText(bytes);
+    const footerHits = (text.match(/Formation Professionnelle Continue/g) || [])
+      .length;
+    expect(footerHits).toBeGreaterThanOrEqual(pages);
+
+    for (let i = 1; i <= pages; i++) {
+      expect(text).toContain(`Page ${i} / ${pages}`);
+    }
+
+    // Logo embarqué (XObject) : PDF nettement plus lourd qu'un texte seul.
+    expect(bytes.byteLength).toBeGreaterThan(25_000);
   });
 
   it("nomme les fichiers PDF avec le code", () => {
@@ -145,11 +213,9 @@ describe("PDF dossier inscription", () => {
     expect(model.sections.some((s) => s.title.includes("Réservation"))).toBe(true);
     expect(model.documentFooterLines).toEqual([...FLI_DOCUMENT_FOOTER_V4_LINES]);
 
-    const signature = readFileSync(
-      resolve(process.cwd(), "public/inscription-documents/fli-signature-cachet.png")
-    );
     const bytes = await renderInscriptionDocumentPdf(model, {
-      organismSignaturePng: new Uint8Array(signature),
+      organismSignaturePng: loadSignaturePng(),
+      letterheadPng: loadLetterheadPng(),
     });
     const text = pdfVisibleText(bytes);
     expect(text).toMatch(/Article I/);
@@ -225,7 +291,9 @@ describe("PDF dossier inscription", () => {
     expect(model.studentAddressLines.join(" ")).toMatch(/Beaufort/);
     expect(model.paymentTermsLabel).toMatch(/virement/);
 
-    const bytes = await renderInscriptionDocumentPdf(model);
+    const bytes = await renderInscriptionDocumentPdf(model, {
+      letterheadPng: loadLetterheadPng(),
+    });
     const text = pdfVisibleText(bytes);
     expect(text).toMatch(/600/);
     expect(text).toMatch(/150/);
@@ -236,6 +304,7 @@ describe("PDF dossier inscription", () => {
     expect(text).toMatch(/Article IX/);
     expect(text).toMatch(/Beaufort/);
     expect(text).toMatch(/double exemplaire/);
+    expect(text).toMatch(/Formation Professionnelle Continue/);
   });
 
   it("construit le programme en ligne Version 2 (texte Paula)", async () => {
@@ -288,12 +357,15 @@ describe("PDF dossier inscription", () => {
     });
     expect(helper.some((s) => s.title === "Déroulement d'un cours")).toBe(true);
 
-    const bytes = await renderInscriptionDocumentPdf(model);
+    const bytes = await renderInscriptionDocumentPdf(model, {
+      letterheadPng: loadLetterheadPng(),
+    });
     const text = pdfVisibleText(bytes);
     expect(text).toMatch(/Google Meet/);
     expect(text).toMatch(/ESF Courchevel Village/);
     expect(text).toMatch(/Version 2/);
     expect(text).toMatch(/Contenu pr/);
+    expect(text).toMatch(/Formation Professionnelle Continue/);
   });
 
   it("garde la copie Deno d'accord avec le module front", () => {
@@ -320,5 +392,14 @@ describe("PDF dossier inscription", () => {
     expect(extraire(deno, "buildProgrammePdfModel")).toBe(
       extraire(front, "buildProgrammePdfModel")
     );
+
+    const frontAssets = source("src/lib/inscription-documents-assets.ts");
+    const denoAssets = source(
+      "supabase/functions/_shared/inscription-documents-assets.ts"
+    );
+    expect(frontAssets).toContain("letterhead");
+    expect(denoAssets).toContain("letterhead");
+    expect(denoAssets).toContain("loadInscriptionLetterhead");
+    expect(denoAssets).toContain("inscription-documents-letterhead-b64");
   });
 });

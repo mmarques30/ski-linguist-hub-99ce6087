@@ -1,16 +1,17 @@
 /**
- * Assets PDF dossier inscription (cachet + signature organisme).
+ * Assets PDF dossier inscription (cachet + signature organisme + en-tête).
  * Aligné sur src/lib/inscription-documents-assets.ts.
  *
- * Edge : le PNG est embarqué en base64 (`inscription-documents-signature-b64.ts`)
- * car `Deno.readFile` + `import.meta.url` ne livre pas fiablement les binaires
- * au déploiement Supabase/Lovable (PDF convention ~8 Ko sans image).
+ * Edge : les PNG sont embarqués en base64 car `Deno.readFile` + `import.meta.url`
+ * ne livrent pas fiablement les binaires au déploiement Supabase/Lovable.
  * Fallback fichier local pour les tests Deno hors Edge.
  */
 import { ORGANISM_SIGNATURE_PNG_BASE64 } from "./inscription-documents-signature-b64.ts";
+import { LETTERHEAD_PNG_BASE64 } from "./inscription-documents-letterhead-b64.ts";
 
 export const INSCRIPTION_DOCUMENT_ASSET_FILES = {
   organismSignature: "fli-signature-cachet.png",
+  letterhead: "fli-entete.png",
 } as const;
 
 function decodeBase64Png(b64: string): Uint8Array {
@@ -20,14 +21,20 @@ function decodeBase64Png(b64: string): Uint8Array {
   return out;
 }
 
+async function loadAssetFile(fileName: string): Promise<Uint8Array> {
+  return await Deno.readFile(
+    new URL(`./inscription-documents-assets/${fileName}`, import.meta.url),
+  );
+}
+
 export async function loadInscriptionOrganismSignature(): Promise<Uint8Array> {
   const embedded = decodeBase64Png(ORGANISM_SIGNATURE_PNG_BASE64);
   if (embedded.length > 0) return embedded;
+  return await loadAssetFile(INSCRIPTION_DOCUMENT_ASSET_FILES.organismSignature);
+}
 
-  return await Deno.readFile(
-    new URL(
-      `./inscription-documents-assets/${INSCRIPTION_DOCUMENT_ASSET_FILES.organismSignature}`,
-      import.meta.url,
-    ),
-  );
+export async function loadInscriptionLetterhead(): Promise<Uint8Array> {
+  const embedded = decodeBase64Png(LETTERHEAD_PNG_BASE64);
+  if (embedded.length > 0) return embedded;
+  return await loadAssetFile(INSCRIPTION_DOCUMENT_ASSET_FILES.letterhead);
 }

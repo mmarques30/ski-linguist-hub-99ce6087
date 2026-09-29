@@ -20,7 +20,10 @@ import {
   programmeFilename,
 } from "../_shared/inscription-documents-pdf-model.ts";
 import { renderInscriptionDocumentPdf } from "../_shared/inscription-documents-pdf-render.ts";
-import { loadInscriptionOrganismSignature } from "../_shared/inscription-documents-assets.ts";
+import {
+  loadInscriptionLetterhead,
+  loadInscriptionOrganismSignature,
+} from "../_shared/inscription-documents-assets.ts";
 import {
   loadSkiMonitorWelcomeDocument,
   SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS,
@@ -259,15 +262,24 @@ Deno.serve(async (req) => {
           identity: identityRow?.value,
         });
 
-        const organismSignaturePng = await loadInscriptionOrganismSignature();
+        const [organismSignaturePng, letterheadPng] = await Promise.all([
+          loadInscriptionOrganismSignature(),
+          loadInscriptionLetterhead(),
+        ]);
         if (!organismSignaturePng?.length) {
           throw new Error("signature organisme introuvable (PNG vide)");
+        }
+        if (!letterheadPng?.length) {
+          throw new Error("en-tête FLI introuvable (PNG vide)");
         }
 
         const [conventionBytes, programmeBytes, criteriaBytes, tutorielBytes] =
           await Promise.all([
-            renderInscriptionDocumentPdf(conventionModel, { organismSignaturePng }),
-            renderInscriptionDocumentPdf(programmeModel),
+            renderInscriptionDocumentPdf(conventionModel, {
+              organismSignaturePng,
+              letterheadPng,
+            }),
+            renderInscriptionDocumentPdf(programmeModel, { letterheadPng }),
             loadSkiMonitorWelcomeDocument(CRITERIA_DOC.internalFile, supabase),
             loadSkiMonitorWelcomeDocument(TUTORIEL_DOC.internalFile, supabase),
           ]);
