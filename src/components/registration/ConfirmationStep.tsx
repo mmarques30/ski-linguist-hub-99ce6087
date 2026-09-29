@@ -396,14 +396,6 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
               </AlertDescription>
             </Alert>
           )}
-          {result.needsAdminCall && (
-            <Alert>
-              <Phone className="h-4 w-4" />
-              <AlertDescription>
-                Notre équipe vous contactera par téléphone suite à votre résultat au test.
-              </AlertDescription>
-            </Alert>
-          )}
         </div>
       </SurfaceCard>
     );

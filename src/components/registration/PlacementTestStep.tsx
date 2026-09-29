@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, Loader2, Phone, Mountain } from "lucide-react";
+import { CheckCircle, Loader2, Mountain } from "lucide-react";
 import type { RegistrationData } from "@/pages/register/Index";
 import { usePlacementQuestions } from "@/hooks/usePlacementQuestions";
 import { MeterRow, StatusPill, SurfaceCard } from "@/components/ui-kit";
@@ -240,15 +240,6 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
                 ))}
               </div>
             </div>
-
-            {result.needsAdminCall && (
-              <Alert variant="destructive">
-                <Phone className="h-4 w-4" />
-                <AlertDescription>
-                  Notre équipe vous contactera par téléphone pour affiner votre niveau.
-                </AlertDescription>
-              </Alert>
-            )}
 
             {isStationGroup && (
               <Alert>
