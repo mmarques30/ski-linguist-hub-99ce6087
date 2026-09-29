@@ -10,8 +10,8 @@ export const ZZTEST_FORMATEUR_LOGIN = {
   roleLabel: "Formateur",
   email: "zztest.formateur@example.invalid",
   password: "ZZTEST-Formateur1!",
-  homePath: "/formateur/evaluations",
-  howTo: "Sur /auth, carte Administration FLI → email + mot de passe. Redirection vers /formateur/evaluations.",
+  homePath: "/formateur/tableau-de-bord",
+  howTo: "Sur /auth, carte Administration FLI → email + mot de passe. Redirection vers /formateur/tableau-de-bord.",
 } as const;
 
 export const ZZTEST_STAGIAIRE_LOGIN = {

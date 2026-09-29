@@ -1,6 +1,6 @@
 import { ReactNode, useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { FormateurPageShell } from "@/components/layout/FormateurPageShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,7 +45,6 @@ import {
   type EvaluationListFilters,
 } from "@/lib/dsf-evaluation-export";
 import { useFormateurView } from "@/contexts/FormateurViewContext";
-import { FormateurAssistBanner } from "@/components/formateur/FormateurAssistBanner";
 import { EvaluationStudentBridge } from "@/components/evaluations/EvaluationStudentBridge";
 import {
   CardList,
@@ -234,9 +233,8 @@ export default function EvaluationsList() {
   );
 
   return (
-    <MainLayout>
+    <FormateurPageShell>
       <PageShell>
-        <FormateurAssistBanner />
 
         <PageHeader
           title="Évaluations"
@@ -848,6 +846,6 @@ export default function EvaluationsList() {
           )}
         </SurfaceCard>
       </PageShell>
-    </MainLayout>
+    </FormateurPageShell>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { FormateurPageShell } from "@/components/layout/FormateurPageShell";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -54,7 +54,6 @@ import { collectTutoiement } from "@/lib/vouvoiement";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useFormateurView } from "@/contexts/FormateurViewContext";
-import { FormateurAssistBanner } from "@/components/formateur/FormateurAssistBanner";
 
 interface SectionState {
   selectedIds: string[];
@@ -306,19 +305,19 @@ export default function EvaluationForm() {
 
   if (isLoading) {
     return (
-      <MainLayout>
+      <FormateurPageShell>
         <PageShell>
           <Skeleton className="h-10 w-64" />
           <Skeleton className="h-40 w-full" />
           <Skeleton className="h-60 w-full" />
         </PageShell>
-      </MainLayout>
+      </FormateurPageShell>
     );
   }
 
   if (!booking) {
     return (
-      <MainLayout>
+      <FormateurPageShell>
         <PageShell>
           <SurfaceCard flush>
             <TableEmpty
@@ -333,13 +332,13 @@ export default function EvaluationForm() {
             />
           </SurfaceCard>
         </PageShell>
-      </MainLayout>
+      </FormateurPageShell>
     );
   }
 
   if (alreadySubmitted) {
     return (
-      <MainLayout>
+      <FormateurPageShell>
         <PageShell>
           <SurfaceCard>
             <div className="flex flex-col items-center py-8 text-center">
@@ -362,14 +361,13 @@ export default function EvaluationForm() {
             </div>
           </SurfaceCard>
         </PageShell>
-      </MainLayout>
+      </FormateurPageShell>
     );
   }
 
   return (
-    <MainLayout>
+    <FormateurPageShell>
       <PageShell>
-        <FormateurAssistBanner />
 
         <PageHeader
           back={backLink}
@@ -525,6 +523,6 @@ export default function EvaluationForm() {
           </div>
         </div>
       </PageShell>
-    </MainLayout>
+    </FormateurPageShell>
   );
 }

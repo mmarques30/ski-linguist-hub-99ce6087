@@ -328,6 +328,39 @@ export const FORMATEUR_SECTIONS: NavSection[] = [
     icon: DoorOpen,
     items: [
       {
+        id: "formateur-dashboard",
+        label: {
+          fr: "Tableau de bord",
+          "pt-BR": "Painel",
+          en: "Dashboard",
+        },
+        icon: LayoutDashboard,
+        href: "/formateur/tableau-de-bord",
+        routeKey: "evaluations",
+      },
+      {
+        id: "formateur-planning",
+        label: {
+          fr: "Planning",
+          "pt-BR": "Agenda",
+          en: "Schedule",
+        },
+        icon: CalendarDays,
+        href: "/formateur/planning",
+        routeKey: "evaluations",
+      },
+      {
+        id: "formateur-stagiaires",
+        label: {
+          fr: "Stagiaires",
+          "pt-BR": "Alunos",
+          en: "Students",
+        },
+        icon: Users,
+        href: "/formateur/stagiaires",
+        routeKey: "evaluations",
+      },
+      {
         id: "mes-evaluations",
         label: L["/formateur/evaluations"],
         icon: ClipboardCheck,
