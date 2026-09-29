@@ -40,7 +40,7 @@ export function ProtectedRoute({ children, routeKey: routeKeyProp }: ProtectedRo
       !location.pathname.startsWith("/formateur") &&
       !location.pathname.startsWith("/portails/formateur")
     ) {
-      navigate("/formateur/evaluations", { replace: true });
+      navigate("/formateur/tableau-de-bord", { replace: true });
     }
   }, [role, permsLoading, location.pathname, navigate]);
 

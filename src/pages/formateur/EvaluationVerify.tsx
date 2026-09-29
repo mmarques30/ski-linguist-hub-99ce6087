@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { FormateurPageShell } from "@/components/layout/FormateurPageShell";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -37,7 +37,6 @@ import {
 } from "@/lib/evaluation-spellcheck";
 import { useToast } from "@/hooks/use-toast";
 import { useFormateurView } from "@/contexts/FormateurViewContext";
-import { FormateurAssistBanner } from "@/components/formateur/FormateurAssistBanner";
 import {
   PageHeader,
   PageShell,
@@ -142,18 +141,18 @@ export default function EvaluationVerify() {
 
   if (isLoading) {
     return (
-      <MainLayout>
+      <FormateurPageShell>
         <PageShell width="full" className="max-w-5xl">
           <Skeleton className="h-10 w-64" />
           <Skeleton className="h-40 w-full" />
         </PageShell>
-      </MainLayout>
+      </FormateurPageShell>
     );
   }
 
   if (!evaluation || !booking) {
     return (
-      <MainLayout>
+      <FormateurPageShell>
         <PageShell width="full" className="max-w-5xl">
           <SurfaceCard flush>
             <TableEmpty
@@ -168,14 +167,14 @@ export default function EvaluationVerify() {
             />
           </SurfaceCard>
         </PageShell>
-      </MainLayout>
+      </FormateurPageShell>
     );
   }
 
   const actionsEnabled = isAdmin && !isAssistMode && evaluation.status === "a_verifier";
 
   return (
-    <MainLayout>
+    <FormateurPageShell>
       <PageShell width="full" className="max-w-5xl">
         <PageHeader
           back={
@@ -356,6 +355,6 @@ export default function EvaluationVerify() {
           </SurfaceCard>
         )}
       </PageShell>
-    </MainLayout>
+    </FormateurPageShell>
   );
 }

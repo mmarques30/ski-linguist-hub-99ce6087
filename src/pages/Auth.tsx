@@ -34,7 +34,7 @@ export default function Auth() {
         role === "student"
           ? "/student/dashboard"
           : role === "formateur"
-            ? "/formateur/evaluations"
+            ? "/formateur/tableau-de-bord"
             : "/";
       navigate(home, { replace: true });
     }

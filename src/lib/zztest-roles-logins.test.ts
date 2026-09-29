@@ -11,7 +11,7 @@ describe("logins ZZTEST rôles", () => {
   });
 
   it("pointe vers les bons espaces", () => {
-    expect(ZZTEST_FORMATEUR_LOGIN.homePath).toBe("/formateur/evaluations");
+    expect(ZZTEST_FORMATEUR_LOGIN.homePath).toBe("/formateur/tableau-de-bord");
     expect(ZZTEST_STAGIAIRE_LOGIN.homePath).toBe("/student/dashboard");
   });
 });

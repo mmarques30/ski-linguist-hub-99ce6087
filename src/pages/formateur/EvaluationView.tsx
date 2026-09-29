@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { FormateurPageShell } from "@/components/layout/FormateurPageShell";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Edit, FileText, FileDown } from "lucide-react";
@@ -13,7 +13,6 @@ import { CertificatePdfButton } from "@/components/certificates/CertificatePdfBu
 import { EVALUATION_PDF_BUCKET } from "@/lib/evaluation-pdf";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { useFormateurView } from "@/contexts/FormateurViewContext";
-import { FormateurAssistBanner } from "@/components/formateur/FormateurAssistBanner";
 import {
   PageHeader,
   PageShell,
@@ -34,18 +33,18 @@ export default function EvaluationView() {
 
   if (isLoading) {
     return (
-      <MainLayout>
+      <FormateurPageShell>
         <PageShell>
           <Skeleton className="h-10 w-64" />
           <Skeleton className="h-96 w-full" />
         </PageShell>
-      </MainLayout>
+      </FormateurPageShell>
     );
   }
 
   if (!data) {
     return (
-      <MainLayout>
+      <FormateurPageShell>
         <PageShell>
           <SurfaceCard flush>
             <TableEmpty
@@ -63,16 +62,15 @@ export default function EvaluationView() {
             />
           </SurfaceCard>
         </PageShell>
-      </MainLayout>
+      </FormateurPageShell>
     );
   }
 
   const { evaluation, booking } = data;
 
   return (
-    <MainLayout>
+    <FormateurPageShell>
       <PageShell>
-        <FormateurAssistBanner />
 
         <PageHeader
           back={
@@ -134,6 +132,6 @@ export default function EvaluationView() {
           <EvaluationPDFPreview evaluation={evaluation} booking={booking} />
         )}
       </PageShell>
-    </MainLayout>
+    </FormateurPageShell>
   );
 }

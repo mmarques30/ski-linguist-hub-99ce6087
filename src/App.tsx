@@ -44,6 +44,9 @@ import EvaluationsList from "./pages/formateur/EvaluationsList";
 import EvaluationForm from "./pages/formateur/EvaluationForm";
 import EvaluationView from "./pages/formateur/EvaluationView";
 import EvaluationVerify from "./pages/formateur/EvaluationVerify";
+import FormateurDashboard from "./pages/formateur/FormateurDashboard";
+import FormateurPlanning from "./pages/formateur/FormateurPlanning";
+import FormateurStagiaires from "./pages/formateur/FormateurStagiaires";
 import Register from "./pages/register/Index";
 import BookTest from "./pages/test/BookTest";
 import { PaymentSuccessPage, PaymentCancelPage } from "./pages/register/PaymentReturn";
@@ -154,6 +157,36 @@ const App = () => (
             <Route path="/admin/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
             <Route path="/admin/seasons" element={<ProtectedRoute><Seasons /></ProtectedRoute>} />
             <Route
+              path="/formateur/tableau-de-bord"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <FormateurDashboard />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/formateur/planning"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <FormateurPlanning />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/formateur/stagiaires"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <FormateurStagiaires />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/formateur/evaluations"
               element={
                 <ProtectedRoute>
@@ -202,7 +235,8 @@ const App = () => (
                   </FormateurOwnViewProvider>
                 </ProtectedRoute>
               }
-            />            <Route path="/amelioration" element={<ProtectedRoute><ContinuousImprovement /></ProtectedRoute>} />
+            />
+            <Route path="/amelioration" element={<ProtectedRoute><ContinuousImprovement /></ProtectedRoute>} />
             <Route path="/satisfaction-stats" element={<ProtectedRoute><SatisfactionStats /></ProtectedRoute>} />
             <Route path="/formateurs" element={<ProtectedRoute><InstructorsList /></ProtectedRoute>} />
             <Route path="/formateurs/:id" element={<ProtectedRoute><InstructorDetails /></ProtectedRoute>} />
@@ -284,7 +318,7 @@ const App = () => (
               <Route path="evaluation" element={<StudentEvaluation />} />
             </Route>
 
-            {/* Mode Assister formateur — évaluations filtrées */}
+            {/* Mode Assister formateur — portail formateur filtré */}
             <Route
               path="/portails/formateur"
               element={<ProtectedRoute routeKey="portails.formateur"><PortalFormateurPicker /></ProtectedRoute>}
@@ -299,7 +333,10 @@ const App = () => (
                 </AssistFormateurRoute>
               }
             >
-              <Route index element={<Navigate to="evaluations" replace />} />
+              <Route index element={<Navigate to="tableau-de-bord" replace />} />
+              <Route path="tableau-de-bord" element={<FormateurDashboard />} />
+              <Route path="planning" element={<FormateurPlanning />} />
+              <Route path="stagiaires" element={<FormateurStagiaires />} />
               <Route path="evaluations" element={<EvaluationsList />} />
               <Route path="evaluations/:id/verifier" element={<EvaluationVerify />} />
               <Route path="evaluation/:bookingId" element={<EvaluationForm />} />
