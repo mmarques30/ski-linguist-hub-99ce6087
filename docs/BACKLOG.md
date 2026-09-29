@@ -82,7 +82,7 @@ BL-030 / BL-050 **fusionnés** (PR #73 + #75). BL-014 peaufinage **clos** (#87).
 
 ### Hors périmètre du 1er octobre
 
-BL-001, BL-008, BL-009, BL-010, BL-011, BL-015, BL-017, BL-019 :
+BL-001, BL-008, BL-009, BL-010, BL-011, BL-015, BL-017, BL-019, BL-020 :
 dette antérieure, non remontée par la recette.
 
 ---
