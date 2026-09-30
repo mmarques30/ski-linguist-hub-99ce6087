@@ -29,7 +29,18 @@ export interface RegistrationData {
 
   // Profil professionnel
   profession: "ski_instructor" | "other";
+  /** Libellé école (compat / affichage) — dérivé du référentiel. */
   skiSchool: string;
+  /** ESF | ESI | Evolution 2 | Prosneige | Oxygène | Indépendant.e | Autre */
+  skiNetwork?: string;
+  /** Code ski_school_directory, ou `__autre__` pour saisie libre. */
+  skiSchoolCode?: string;
+  /** Saisie libre Autre / Autre ESF. */
+  skiSchoolOther?: string;
+  /** Indépendant·e : station ou vallée. */
+  stationOrValley?: string;
+  carteSyndicale?: string;
+  carteSyndicalePending?: boolean;
 
   // Formation (catalogue registration_offerings)
   offeringId?: string;

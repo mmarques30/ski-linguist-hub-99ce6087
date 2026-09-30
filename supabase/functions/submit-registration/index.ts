@@ -134,6 +134,12 @@ interface RegistrationPayload {
   hasHandicap: boolean;
   profession: "ski_instructor" | "other";
   skiSchool: string;
+  skiNetwork?: string;
+  skiSchoolCode?: string;
+  skiSchoolOther?: string;
+  stationOrValley?: string;
+  carteSyndicale?: string;
+  carteSyndicalePending?: boolean;
   offeringId?: string;
   fundingType: string;
   modality: string;
@@ -549,6 +555,26 @@ Deno.serve(async (req) => {
     let studentId = existingStudent?.id;
     let createdStudent = false;
 
+    const skiSchoolCode =
+      registration.skiSchoolCode && registration.skiSchoolCode !== "__autre__"
+        ? registration.skiSchoolCode
+        : null;
+    const skiSchoolOther =
+      registration.skiSchoolOther?.trim() ||
+      (registration.skiNetwork === "Indépendant.e"
+        ? registration.stationOrValley?.trim() || null
+        : null);
+    const studentSchoolFields = {
+      company: registration.skiSchool || null,
+      ski_network: registration.skiNetwork || null,
+      ski_school_code: skiSchoolCode,
+      ski_school_other: skiSchoolOther,
+      carte_syndicale: registration.carteSyndicalePending
+        ? null
+        : registration.carteSyndicale?.trim() || null,
+      carte_syndicale_pending: Boolean(registration.carteSyndicalePending),
+    };
+
     if (studentId) {
       await supabase
         .from("students")
@@ -560,7 +586,7 @@ Deno.serve(async (req) => {
           street_address: registration.address,
           postal_code: registration.postalCode,
           city: registration.city,
-          company: registration.skiSchool || null,
+          ...studentSchoolFields,
         })
         .eq("id", studentId);
     } else {
@@ -575,7 +601,7 @@ Deno.serve(async (req) => {
           street_address: registration.address,
           postal_code: registration.postalCode,
           city: registration.city,
-          company: registration.skiSchool || null,
+          ...studentSchoolFields,
         })
         .select("id")
         .single();
