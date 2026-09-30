@@ -21,6 +21,10 @@ import {
   buildRegistrationAdminNotifyTitle,
   type RegistrationAdminSummaryInput,
 } from "../_shared/registration-admin-notify.ts";
+import {
+  isWaitlistOffering,
+  resolveOfferingPrice,
+} from "../_shared/registration-offerings.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -523,13 +527,33 @@ Deno.serve(async (req) => {
 
     let price: number | null = registration.price ?? null;
 
-    if (price == null && registration.offeringId) {
+    if (registration.offeringId) {
       const { data: offering } = await supabase
         .from("registration_offerings")
-        .select("base_price")
+        .select("base_price, partner_price, partner_school_codes, enrollment_status, is_active")
         .eq("id", registration.offeringId)
         .maybeSingle();
-      price = offering?.base_price ?? null;
+
+      if (offering && isWaitlistOffering(offering)) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error:
+              "Cette formation est en attente de confirmation. Les inscriptions ne sont pas encore ouvertes.",
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (offering) {
+        const skiCode =
+          registration.skiSchoolCode && registration.skiSchoolCode !== "__autre__"
+            ? registration.skiSchoolCode
+            : null;
+        price = resolveOfferingPrice(offering, skiCode);
+      } else if (price == null) {
+        price = null;
+      }
     }
 
     if (price == null && season?.id && registration.currentLevel && registration.modality && durationHours) {

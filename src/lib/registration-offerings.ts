@@ -1,6 +1,9 @@
+export type EnrollmentStatus = "open" | "waitlist";
+
 export interface RegistrationOffering {
   id: string;
   season_id: string | null;
+  session_code?: string | null;
   location_key: string;
   location_label: string;
   language_key: string;
@@ -11,7 +14,12 @@ export interface RegistrationOffering {
   start_date: string | null;
   end_date: string | null;
   date_label: string | null;
+  format_label?: string | null;
+  instructor_label?: string | null;
   base_price: number;
+  partner_price?: number | null;
+  partner_school_codes?: string[] | null;
+  enrollment_status?: EnrollmentStatus | null;
   sort_order: number;
 }
 
@@ -26,6 +34,77 @@ export interface DateOption {
   label: string;
   start_date: string | null;
   end_date: string | null;
+}
+
+/** Tarif appliqué selon l'école (SESSIONS §3.1). */
+export function resolveOfferingPrice(
+  offering: Pick<RegistrationOffering, "base_price" | "partner_price" | "partner_school_codes">,
+  skiSchoolCode?: string | null
+): number {
+  const partner = offering.partner_price;
+  const codes = offering.partner_school_codes ?? [];
+  if (
+    partner != null &&
+    skiSchoolCode &&
+    skiSchoolCode !== "__autre__" &&
+    codes.includes(skiSchoolCode)
+  ) {
+    return Number(partner);
+  }
+  return Number(offering.base_price);
+}
+
+export function isPartnerSchool(
+  offering: Pick<RegistrationOffering, "partner_school_codes">,
+  skiSchoolCode?: string | null
+): boolean {
+  const codes = offering.partner_school_codes ?? [];
+  return Boolean(
+    skiSchoolCode && skiSchoolCode !== "__autre__" && codes.includes(skiSchoolCode)
+  );
+}
+
+export function isWaitlistOffering(
+  offering: Pick<RegistrationOffering, "enrollment_status">
+): boolean {
+  return offering.enrollment_status === "waitlist";
+}
+
+export function isOpenOffering(
+  offering: Pick<RegistrationOffering, "enrollment_status">
+): boolean {
+  return (offering.enrollment_status ?? "open") === "open";
+}
+
+/** Libellé tarif avant connaissance de l'école. */
+export function formatOfferingPriceHint(
+  offering: Pick<RegistrationOffering, "base_price" | "partner_price" | "partner_school_codes">
+): string {
+  const base = Number(offering.base_price);
+  const partner = offering.partner_price != null ? Number(offering.partner_price) : base;
+  const hasPartnerList = (offering.partner_school_codes ?? []).length > 0;
+  if (hasPartnerList && partner !== base) {
+    return `${formatPriceEUR(partner)} école partenaire · ${formatPriceEUR(base)} autres`;
+  }
+  return formatPriceEUR(base);
+}
+
+export function filterInPersonSessions(offerings: RegistrationOffering[]) {
+  return offerings
+    .filter((o) => o.modality_key === "in_person")
+    .sort((a, b) => a.sort_order - b.sort_order);
+}
+
+export function filterOnlineGroupSessions(offerings: RegistrationOffering[]) {
+  return offerings
+    .filter((o) => o.modality_key === "online_group")
+    .sort((a, b) => a.sort_order - b.sort_order);
+}
+
+export function filterOnlineIndividual(offerings: RegistrationOffering[]) {
+  return offerings
+    .filter((o) => o.modality_key === "online_individual")
+    .sort((a, b) => a.sort_order - b.sort_order);
 }
 
 export function uniqueLocations(offerings: RegistrationOffering[]): LocationOption[] {
@@ -67,7 +146,9 @@ export function uniqueDateOptions(offerings: RegistrationOffering[]): DateOption
     const key = o.start_date && o.end_date ? `${o.start_date}_${o.end_date}` : o.date_label || "flex";
     const label =
       o.date_label ||
-      (o.start_date && o.end_date ? `${formatDateFr(o.start_date)} → ${formatDateFr(o.end_date)}` : "Dates à confirmer");
+      (o.start_date && o.end_date
+        ? `${formatDateFr(o.start_date)} → ${formatDateFr(o.end_date)}`
+        : "Dates à confirmer");
     map.set(key, { key, label, start_date: o.start_date, end_date: o.end_date });
   }
   return Array.from(map.values());
@@ -82,6 +163,7 @@ export function uniqueDurations(offerings: RegistrationOffering[]) {
 export function formatDurationLabel(hours: number, modalityKey?: string): string {
   if (modalityKey === "in_person") {
     if (hours === 20) return "20 heures — 1 semaine";
+    if (hours === 24) return "24 heures — 1 semaine";
     if (hours === 40) return "40 heures — 2 semaines";
   }
   return `${hours} heures`;
@@ -95,16 +177,19 @@ export function matchOffering(
     languageKey?: string;
     dateKey?: string;
     durationHours?: number;
+    sessionCode?: string;
   }
 ): RegistrationOffering | null {
   return (
     offerings.find((o) => {
+      if (filters.sessionCode && o.session_code !== filters.sessionCode) return false;
       if (o.location_key !== filters.locationKey) return false;
       if (filters.modalityKey && o.modality_key !== filters.modalityKey) return false;
       if (filters.languageKey && o.language_key !== filters.languageKey) return false;
       if (filters.durationHours != null && o.duration_hours !== filters.durationHours) return false;
       if (filters.dateKey) {
-        const oKey = o.start_date && o.end_date ? `${o.start_date}_${o.end_date}` : o.date_label || "flex";
+        const oKey =
+          o.start_date && o.end_date ? `${o.start_date}_${o.end_date}` : o.date_label || "flex";
         if (oKey !== filters.dateKey) return false;
       }
       return true;
@@ -114,14 +199,22 @@ export function matchOffering(
 
 function formatDateFr(iso: string): string {
   try {
-    return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+    return new Date(iso).toLocaleDateString("fr-FR", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
   } catch {
     return iso;
   }
 }
 
 export function formatPriceEUR(price: number): string {
-  return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(price);
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 0,
+  }).format(price);
 }
 
 /** Valeur spéciale pour « Autres formats — sur devis » */
@@ -130,3 +223,6 @@ export const CUSTOM_FORMAT_DURATION = "custom";
 export function isCustomFormatDuration(duration?: string): boolean {
   return duration === CUSTOM_FORMAT_DURATION;
 }
+
+export const WAITLIST_MESSAGE =
+  "Cette formation est en attente de confirmation. Merci de nous laisser vos coordonnées : nous vous appellerons dès que la session est confirmée.";

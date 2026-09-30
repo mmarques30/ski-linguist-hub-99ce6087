@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -11,10 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Briefcase } from "lucide-react";
+import { Briefcase, Euro } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { StatusPill } from "@/components/ui-kit";
 import type { RegistrationData } from "@/pages/register/Index";
 import { OptionCard, StepActions, StepCard } from "./StepLayout";
 import { useSkiSchoolDirectory } from "@/hooks/useSkiSchoolDirectory";
+import { useRegistrationOfferings } from "@/hooks/useRegistrationOfferings";
 import {
   OTHER_SCHOOL_OPTION,
   SKI_NETWORKS,
@@ -23,6 +26,11 @@ import {
   isValidCarteSyndicale,
   resolveSkiSchoolLabel,
 } from "@/lib/ski-school-directory";
+import {
+  formatPriceEUR,
+  isPartnerSchool,
+  resolveOfferingPrice,
+} from "@/lib/registration-offerings";
 import { cn } from "@/lib/utils";
 
 interface ProfessionalProfileStepProps {
@@ -37,6 +45,24 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
   const { data: schools = [], isLoading: loadingSchools } = useSkiSchoolDirectory(
     isDirectoryNetwork(network) ? network : null
   );
+  const { data: offerings = [] } = useRegistrationOfferings();
+  const selectedOffering = useMemo(
+    () => (data.offeringId ? offerings.find((o) => o.id === data.offeringId) : null),
+    [offerings, data.offeringId]
+  );
+
+  // Tarif partenaire selon l'école choisie (SESSIONS §3.1)
+  useEffect(() => {
+    if (!selectedOffering || data.isCustomFormat) return;
+    const code =
+      data.skiSchoolCode && data.skiSchoolCode !== OTHER_SCHOOL_OPTION
+        ? data.skiSchoolCode
+        : null;
+    const nextPrice = resolveOfferingPrice(selectedOffering, code);
+    if (data.price !== nextPrice) {
+      onUpdate({ price: nextPrice });
+    }
+  }, [selectedOffering, data.skiSchoolCode, data.isCustomFormat]);
 
   const filteredSchools = useMemo(() => {
     const q = schoolFilter.trim().toLowerCase();
@@ -87,9 +113,28 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
       skiSchoolOther: data.skiSchoolOther,
       stationOrValley: data.stationOrValley,
     });
-    onUpdate({ skiSchool: label });
+    const code = isOtherSchool ? null : data.skiSchoolCode;
+    const price =
+      selectedOffering && !data.isCustomFormat
+        ? resolveOfferingPrice(selectedOffering, code)
+        : data.price;
+    onUpdate({ skiSchool: label, price });
     onNext();
   };
+
+  const resolvedPrice =
+    selectedOffering && !data.isCustomFormat
+      ? resolveOfferingPrice(
+          selectedOffering,
+          data.skiSchoolCode === OTHER_SCHOOL_OPTION ? null : data.skiSchoolCode
+        )
+      : data.price;
+  const partnerApplied =
+    !!selectedOffering &&
+    isPartnerSchool(
+      selectedOffering,
+      data.skiSchoolCode === OTHER_SCHOOL_OPTION ? null : data.skiSchoolCode
+    );
 
   const setNetwork = (value: string) => {
     setSchoolFilter("");
@@ -343,6 +388,23 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
           )}
         </div>
       </StepCard>
+
+      {selectedOffering && resolvedPrice != null && !data.isCustomFormat && (
+        <Alert className="border-primary/20 bg-[hsl(var(--surface-sunken))]">
+          <Euro className="h-4 w-4" />
+          <AlertDescription className="flex flex-wrap items-center gap-2">
+            <span>Tarif selon votre école :</span>
+            <StatusPill tone="warning" className="px-3 py-1 text-base">
+              {formatPriceEUR(resolvedPrice)}
+            </StatusPill>
+            {partnerApplied ? (
+              <span className="text-sm text-muted-foreground">— tarif école partenaire</span>
+            ) : (selectedOffering.partner_school_codes?.length ?? 0) > 0 ? (
+              <span className="text-sm text-muted-foreground">— tarif autres écoles</span>
+            ) : null}
+          </AlertDescription>
+        </Alert>
+      )}
 
       <StepActions>
         <Button type="submit" className="h-12 w-full text-base sm:w-auto" disabled={!canContinue}>
