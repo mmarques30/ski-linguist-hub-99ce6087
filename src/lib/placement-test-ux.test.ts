@@ -20,6 +20,7 @@ describe("PlacementTestStep — UX progressif pistes", () => {
     expect(step).toContain("commune");
     expect(step).toContain("PASS_THRESHOLD");
     expect(step).toContain("QUESTIONS_PER_SLOPE");
+    expect(step).toContain("Auto-diagnostic");
   });
 
   it("affiche la progression au format n/total piste X", () => {

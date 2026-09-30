@@ -173,6 +173,12 @@ interface RegistrationPayload {
     highestSlopeReached: string;
     endedAtVocab: boolean;
   };
+  /** Auto-diagnostic (avant QCM) — feuille Excel Auto-diagnostic */
+  autoDiagnostic?: {
+    version: 1;
+    answers: Record<string, string | string[]>;
+    completedAt: string;
+  };
   expectations: string;
   certification: string;
   paymentOption?: string;
@@ -387,6 +393,16 @@ Deno.serve(async (req) => {
     if (!registration?.email || !registration?.firstName || !registration?.lastName) {
       return new Response(
         JSON.stringify({ success: false, error: "Données d'inscription incomplètes" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!registration.autoDiagnostic?.answers) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Veuillez compléter l’auto-diagnostic avant le test de niveau",
+        }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -822,6 +838,7 @@ Deno.serve(async (req) => {
           answers: {
             responses: registration.testAnswers,
             summary: registration.testSummary ?? null,
+            autoDiagnostic: registration.autoDiagnostic ?? null,
           },
           status: "completed",
           completed_at: new Date().toISOString(),

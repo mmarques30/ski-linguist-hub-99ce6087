@@ -75,6 +75,12 @@ export interface RegistrationData {
     highestSlopeReached: string;
     endedAtVocab: boolean;
   };
+  /** Auto-diagnostic (feuille Excel) — avant le QCM pistes. */
+  autoDiagnostic?: {
+    version: 1;
+    answers: Record<string, string | string[]>;
+    completedAt: string;
+  };
 
   // Attentes
   expectations: string;
