@@ -217,10 +217,8 @@ function buildFifplFundingDetails(registration: RegistrationPayload): string | n
       : 0;
   // Estimation alignée sur src/lib/fifpl-funding.ts (copie Deno volontairement
   // allégée — le détail complet reste dans funding_details.fifpl).
-  const annualBase =
-    registration.modality === "online_individual" || registration.modality === "online_group"
-      ? 450
-      : 900;
+  // Visio FLI = présentiel FIFPL (pas e-learning asynchrone → pas de plafond 450 €).
+  const annualBase = 900;
   let percent = 100;
   let provisionalMicro = false;
   if (status === "micro_entrepreneur") {

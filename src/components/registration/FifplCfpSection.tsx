@@ -335,7 +335,8 @@ export function FifplCfpSection({
           )}
           {rights.isElearning && (
             <p className="pt-1 text-xs text-muted-foreground">
-              Formation e-learning : plafonds réduits de 50 % selon les critères FIFPL.
+              Formation e-learning asynchrone : plafonds réduits de 50 % selon les critères
+              FIFPL (hors visio FLI, traitée comme du présentiel).
             </p>
           )}
           <p className="pt-2 text-xs text-muted-foreground">

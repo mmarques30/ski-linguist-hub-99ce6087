@@ -5,7 +5,8 @@
  * (Conseil de Gestion du 20 novembre 2025) :
  * - Formations cœur de métier (dont langues étrangères) : plafond 900 € / an,
  *   300 € / jour, au coût réel
- * - E-learning : 50 % des critères journaliers et annuels
+ * - E-learning asynchrone : 50 % des critères journaliers et annuels
+ *   (la visio FLI synchrone compte comme du présentiel — plafond 900 €)
  * - Indépendants : 100 % des critères
  * - Micro-entrepreneurs : % selon cotisation CFP (tableau page 3)
  * - Autre formation déjà prise en charge sur le forfait annuel : déduite des droits
@@ -19,7 +20,10 @@ export const FIFPL_ANNUAL_CEILING_EUR = 900;
 /** Plafond journalier cœur de métier. */
 export const FIFPL_DAILY_CEILING_EUR = 300;
 
-/** E-learning : 50 % des critères annuels / journaliers. */
+/**
+ * E-learning asynchrone uniquement : 50 % des critères annuels / journaliers.
+ * Les formations FLI en visio (synchrone) sont traitées comme du présentiel FIFPL.
+ */
 export const FIFPL_ELEARNING_FACTOR = 0.5;
 
 export type FifplProfessionalStatus = "independant" | "micro_entrepreneur";
@@ -96,13 +100,20 @@ export interface FifplRightsEstimate {
   remainingChargeEur: number | null;
 }
 
+/**
+ * Plafond e-learning FIFPL (50 %) = formations asynchrones uniquement.
+ * Les modalités FLI `online_*` / `en_ligne_*` sont de la visio synchrone :
+ * elles comptent comme du présentiel (plafond 900 €), pas comme e-learning.
+ */
 export function isElearningModality(modality: string | null | undefined): boolean {
-  const m = (modality || "").trim();
+  const m = (modality || "").trim().toLowerCase();
+  if (!m) return false;
   return (
-    m === "online_individual" ||
-    m === "online_group" ||
-    m === "en_ligne_individuel" ||
-    m === "en_ligne_groupe"
+    m === "elearning" ||
+    m === "e_learning" ||
+    m === "e-learning" ||
+    m === "asynchrone" ||
+    m === "async"
   );
 }
 
@@ -352,10 +363,10 @@ export const FIFPL_REGISTER_COPY = {
     "Montant de cotisation CFP figurant sur votre attestation URSSAF (grille micro-entrepreneurs des critères 2026).",
   otherTrainingLabel: `Avez-vous déjà bénéficié d’une prise en charge FIFPL pour une autre formation en ${FIFPL_CRITERIA_YEAR} ?`,
   otherTrainingHelp:
-    "Si oui, indiquez le montant déjà pris en charge : il sera déduit du plafond annuel (900 €, ou 450 € en e-learning).",
+    "Si oui, indiquez le montant déjà pris en charge : il sera déduit du plafond annuel (900 € pour les formations FLI, y compris en visio).",
   alreadyCoveredLabel: "Montant déjà pris en charge par le FIFPL (€)",
   estimateDisclaimer:
-    "Estimation selon les critères FIFPL Moniteurs de ski 2026 — seul l’accord du FIFPL fait foi. Formation en ligne synchrone : sur votre demande FIFPL, cochez « présentiel » (conseil du FIFPL). FLI est exonérée de TVA : HT = TTC.",
+    "Estimation selon les critères FIFPL Moniteurs de ski 2026 — seul l’accord du FIFPL fait foi. Les formations FLI en ligne (visio synchrone) sont considérées comme du présentiel pour le FIFPL ; le plafond e-learning 50 % ne s’applique qu’à l’asynchrone. Sur votre demande FIFPL, cochez « présentiel ». FLI est exonérée de TVA : HT = TTC.",
   confirmationAlert: (remainingEur: number | null) =>
     remainingEur == null
       ? `Financement FIFPL ${FIFPL_CRITERIA_YEAR}. Les frais de dossier restent dus à l’inscription.`

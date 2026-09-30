@@ -47,11 +47,24 @@ describe("fifpl-funding — grille micro CFP 2026", () => {
     expect(rights?.remainingChargeEur).toBe(500);
   });
 
-  it("réduit le plafond e-learning de 50 % avant le % micro", () => {
+  it("traite la visio FLI (online_*) comme du présentiel FIFPL, pas e-learning", () => {
+    for (const modality of ["online_individual", "online_group", "in_person", "en_ligne_groupe"]) {
+      const rights = estimateFifplRights({
+        status: "independant",
+        cfpContributionEur: null,
+        modality,
+        alreadyCoveredEur: 0,
+      });
+      expect(rights?.annualCeilingBaseEur).toBe(FIFPL_ANNUAL_CEILING_EUR);
+      expect(rights?.isElearning).toBe(false);
+    }
+  });
+
+  it("réduit le plafond uniquement pour l’e-learning asynchrone", () => {
     const rights = estimateFifplRights({
       status: "micro_entrepreneur",
       cfpContributionEur: 50, // 60 %
-      modality: "online_individual",
+      modality: "elearning",
       alreadyCoveredEur: 0,
     });
     // base 450 × 60 % = 270
