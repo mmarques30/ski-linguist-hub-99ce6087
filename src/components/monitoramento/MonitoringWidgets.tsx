@@ -143,8 +143,17 @@ export function ErrorHeatmap({
   matrix: number[][];
   dayLabels: string[];
 }) {
-  const flat = matrix.flat();
+  const safeMatrix =
+    matrix.length > 0
+      ? matrix
+      : Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => 0));
+  const labels =
+    dayLabels.length === safeMatrix.length
+      ? dayLabels
+      : ["j-6", "j-5", "j-4", "j-3", "j-2", "j-1", "auj."];
+  const flat = safeMatrix.flat();
   const max = Math.max(...flat, 1);
+  const hasSignal = flat.some((v) => v > 0);
 
   return (
     <div className="overflow-x-auto">
@@ -163,18 +172,18 @@ export function ErrorHeatmap({
               {h % 3 === 0 ? h : ""}
             </div>
           ))}
-          {matrix.map((row, dayIndex) => (
+          {safeMatrix.map((row, dayIndex) => (
             <div key={dayIndex} className="contents">
               <div className="flex items-center text-[10px] text-muted-foreground">
-                {dayLabels[dayIndex] ?? `J${dayIndex}`}
+                {labels[dayIndex] ?? `J${dayIndex}`}
               </div>
               {row.map((value, hour) => {
                 const intensity = value / max;
                 return (
                   <div
                     key={`${dayIndex}-${hour}`}
-                    title={`${dayLabels[dayIndex] ?? ""} ${hour}h — ${value} erreur(s)`}
-                    className="aspect-square rounded-[3px]"
+                    title={`${labels[dayIndex] ?? ""} ${hour}h — ${value} erreur(s)`}
+                    className="aspect-square min-h-[10px] rounded-[3px]"
                     style={{
                       backgroundColor:
                         value === 0
@@ -190,7 +199,9 @@ export function ErrorHeatmap({
           ))}
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          Intensité = actions type erreur / sécurité (7 derniers jours)
+          {hasSignal
+            ? "Intensité = actions type erreur / sécurité (7 derniers jours)"
+            : "Aucune erreur taguée sur 7 jours — grille au repos (données audit_log)"}
         </p>
       </div>
     </div>
@@ -237,6 +248,14 @@ export function RolesStackBar({
 }: {
   roles: Array<{ role: string; label: string; count: number }>;
 }) {
+  if (!roles.length) {
+    return (
+      <p className="rounded-lg border border-dashed border-border px-3 py-4 text-sm text-muted-foreground">
+        Aucun rôle lisible (RLS / session admin requise pour <code>user_roles</code>).
+      </p>
+    );
+  }
+
   const total = roles.reduce((sum, r) => sum + r.count, 0) || 1;
   const palette = [
     "hsl(var(--chart-1))",
