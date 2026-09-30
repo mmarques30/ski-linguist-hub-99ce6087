@@ -4,6 +4,7 @@ import {
   estimateFifplRights,
   FIFPL_ANNUAL_CEILING_EUR,
   FIFPL_CRITERIA_YEAR,
+  FIFPL_REGISTER_COPY,
   formatFifplQuestionnaireSummary,
   microPercentFromCfpContribution,
   parseCfpAttestationText,
@@ -31,6 +32,7 @@ describe("fifpl-funding — grille micro CFP 2026", () => {
     expect(rights?.rightsPercent).toBe(100);
     expect(rights?.grossRightsEur).toBe(FIFPL_ANNUAL_CEILING_EUR);
     expect(rights?.remainingRightsEur).toBe(600);
+    expect(rights?.isProvisionalMicroEstimate).toBe(false);
   });
 
   it("réduit le plafond e-learning de 50 % avant le % micro", () => {
@@ -44,6 +46,15 @@ describe("fifpl-funding — grille micro CFP 2026", () => {
     expect(rights?.annualCeilingBaseEur).toBe(450);
     expect(rights?.grossRightsEur).toBe(270);
     expect(rights?.isElearning).toBe(true);
+  });
+
+  it("utilise le pire cas 20 % pour un micro sans cotisation", () => {
+    const rights = estimateFifplRights({
+      status: "micro_entrepreneur",
+      cfpContributionEur: null,
+    });
+    expect(rights?.rightsPercent).toBe(20);
+    expect(rights?.isProvisionalMicroEstimate).toBe(true);
   });
 });
 
@@ -69,13 +80,36 @@ describe("fifpl-funding — parse attestation", () => {
   });
 });
 
-describe("fifpl-funding — validation", () => {
-  it("exige attestation, statut et question autre formation", () => {
-    expect(validateFifplQuestionnaire(EMPTY_FIFPL_QUESTIONNAIRE)).toMatch(/attestation CFP/i);
+describe("fifpl-funding — validation (attestation facultative)", () => {
+  it("exige le choix maintenant / plus tard avant le reste", () => {
+    expect(validateFifplQuestionnaire(EMPTY_FIFPL_QUESTIONNAIRE)).toMatch(/maintenant ou plus tard/i);
+  });
+
+  it("autorise de continuer sans attestation si « plus tard »", () => {
+    expect(
+      validateFifplQuestionnaire({
+        ...EMPTY_FIFPL_QUESTIONNAIRE,
+        provideCfpAttestation: false,
+        status: "independant",
+        hadOtherFifplTrainingThisYear: false,
+      })
+    ).toBeNull();
+  });
+
+  it("exige le fichier si dépôt maintenant", () => {
+    expect(
+      validateFifplQuestionnaire({
+        ...EMPTY_FIFPL_QUESTIONNAIRE,
+        provideCfpAttestation: true,
+        status: "independant",
+        hadOtherFifplTrainingThisYear: false,
+      })
+    ).toMatch(/Déposez votre attestation|fournir plus tard/i);
 
     expect(
       validateFifplQuestionnaire({
         ...EMPTY_FIFPL_QUESTIONNAIRE,
+        provideCfpAttestation: true,
         cfpAttestationFileName: "cfp.pdf",
         cfpAttestationPath: "register/cfp/x.pdf",
         cfpAttestationYear: FIFPL_CRITERIA_YEAR,
@@ -83,10 +117,13 @@ describe("fifpl-funding — validation", () => {
         hadOtherFifplTrainingThisYear: false,
       })
     ).toBeNull();
+  });
 
+  it("refuse une attestation hors année critères si déposée", () => {
     expect(
       validateFifplQuestionnaire({
         ...EMPTY_FIFPL_QUESTIONNAIRE,
+        provideCfpAttestation: true,
         cfpAttestationFileName: "cfp.pdf",
         cfpAttestationPath: "register/cfp/x.pdf",
         cfpAttestationYear: 2025,
@@ -96,9 +133,16 @@ describe("fifpl-funding — validation", () => {
     ).toMatch(/2026/);
   });
 
+  it("rappelle que l'attestation est facultative dans les textes", () => {
+    expect(FIFPL_REGISTER_COPY.sectionDescription.toLowerCase()).toMatch(/plus tard/);
+    expect(FIFPL_REGISTER_COPY.fundingChoiceHelp.toLowerCase()).toMatch(/plus tard|facultatif|maintenant/);
+    expect(FIFPL_REGISTER_COPY.confirmationAlert(null, true)).toMatch(/plus tard/);
+  });
+
   it("résume pour observations", () => {
     const q = {
       ...EMPTY_FIFPL_QUESTIONNAIRE,
+      provideCfpAttestation: true as const,
       status: "micro_entrepreneur" as const,
       cfpAttestationYear: 2026,
       cfpContributionEur: 50,

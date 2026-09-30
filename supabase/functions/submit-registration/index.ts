@@ -181,8 +181,10 @@ interface RegistrationPayload {
   opcoName?: string;
   opcoNafCode?: string;
   opcoCaseNotes?: string;
-  /** FIFPL — attestation CFP + droits */
+  /** FIFPL — attestation CFP (facultative) + droits */
   fifplStatus?: "independant" | "micro_entrepreneur" | null;
+  /** true = dépôt maintenant ; false = plus tard */
+  fifplProvideCfpAttestation?: boolean | null;
   fifplCfpAttestationYear?: number | null;
   fifplCfpContributionEur?: number | null;
   fifplCfpAttestationPath?: string | null;
@@ -221,6 +223,7 @@ function buildFifplFundingDetails(registration: RegistrationPayload): string | n
       ? 450
       : 900;
   let percent = 100;
+  let provisionalMicro = false;
   if (status === "micro_entrepreneur") {
     const c = Number(contribution) || 0;
     if (c >= 116) percent = 100;
@@ -229,16 +232,22 @@ function buildFifplFundingDetails(registration: RegistrationPayload): string | n
     else if (c >= 41) percent = 60;
     else if (c >= 21) percent = 40;
     else if (c >= 1) percent = 20;
-    else percent = 0;
+    else {
+      // Sans cotisation : pire cas 20 % (aligné src/lib/fifpl-funding.ts)
+      percent = 20;
+      provisionalMicro = true;
+    }
   }
   const gross = Math.round((annualBase * percent) / 100);
   const remaining = Math.max(0, gross - (Number(already) || 0));
+  const provideAttestation = registration.fifplProvideCfpAttestation;
 
   return JSON.stringify({
     version: 1,
     source: "register",
     fifpl: {
       status,
+      provideCfpAttestation: provideAttestation ?? null,
       cfpAttestationYear: registration.fifplCfpAttestationYear ?? null,
       cfpContributionEur: contribution,
       cfpAttestationPath: registration.fifplCfpAttestationPath ?? null,
@@ -255,6 +264,7 @@ function buildFifplFundingDetails(registration: RegistrationPayload): string | n
         alreadyCoveredEur: Number(already) || 0,
         remainingRightsEur: remaining,
         annualCeilingBaseEur: annualBase,
+        isProvisionalMicroEstimate: provisionalMicro,
       },
     },
   });
@@ -420,23 +430,49 @@ Deno.serve(async (req) => {
     }
 
     if (isFifpl) {
-      if (!registration.fifplCfpAttestationPath && !registration.fifplCfpAttestationFileName) {
+      const provideNow = registration.fifplProvideCfpAttestation === true;
+      const provideLater = registration.fifplProvideCfpAttestation === false;
+      if (!provideNow && !provideLater) {
         return new Response(
           JSON.stringify({
             success: false,
-            error: "Déposez votre attestation CFP téléchargeable depuis votre espace URSSAF.",
+            error: "Indiquez si vous déposez votre attestation CFP maintenant ou plus tard.",
           }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (registration.fifplCfpAttestationYear !== 2026) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: "L’attestation CFP doit dater de 2026.",
-          }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      if (provideNow) {
+        if (!registration.fifplCfpAttestationPath && !registration.fifplCfpAttestationFileName) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error:
+                "Déposez votre attestation CFP, ou choisissez de la fournir plus tard.",
+            }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (registration.fifplCfpAttestationYear !== 2026) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: "L’attestation CFP doit dater de 2026.",
+            }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (
+          registration.fifplStatus === "micro_entrepreneur" &&
+          !(Number(registration.fifplCfpContributionEur) >= 1)
+        ) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: "Indiquez le montant de votre cotisation CFP (micro-entrepreneur).",
+            }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
       }
       if (
         registration.fifplStatus !== "independant" &&
@@ -446,18 +482,6 @@ Deno.serve(async (req) => {
           JSON.stringify({
             success: false,
             error: "Indiquez si vous êtes indépendant ou micro-entrepreneur.",
-          }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (
-        registration.fifplStatus === "micro_entrepreneur" &&
-        !(Number(registration.fifplCfpContributionEur) >= 1)
-      ) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: "Indiquez le montant de votre cotisation CFP (micro-entrepreneur).",
           }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );

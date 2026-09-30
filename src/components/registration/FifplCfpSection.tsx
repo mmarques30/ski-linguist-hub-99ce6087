@@ -40,12 +40,16 @@ export function FifplCfpSection({ questionnaire, modality, onChange }: FifplCfpS
     alreadyCoveredEur: alreadyCovered,
   });
 
+  const provideNow = questionnaire.provideCfpAttestation === true;
+  const provideLater = questionnaire.provideCfpAttestation === false;
+
   const handleFile = async (file: File | undefined) => {
     if (!file) return;
     setAnalyzing(true);
     try {
       const analysis = await analyzeCfpAttestationFile(file);
       onChange({
+        provideCfpAttestation: true,
         cfpAttestationFileName: file.name,
         cfpAttestationYear: analysis.year,
         cfpContributionEur: analysis.contributionEur ?? questionnaire.cfpContributionEur,
@@ -60,6 +64,7 @@ export function FifplCfpSection({ questionnaire, modality, onChange }: FifplCfpS
         file,
       });
       onChange({
+        provideCfpAttestation: true,
         cfpAttestationPath: path,
         cfpAttestationFileName: file.name,
         cfpAttestationYear: analysis.year,
@@ -91,84 +96,178 @@ export function FifplCfpSection({ questionnaire, modality, onChange }: FifplCfpS
         </AlertDescription>
       </Alert>
 
-      <div className="space-y-2">
-        <Label htmlFor="cfp-attestation">Attestation CFP URSSAF {FIFPL_CRITERIA_YEAR} *</Label>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Input
-            id="cfp-attestation"
-            type="file"
-            accept="application/pdf,.pdf,image/jpeg,image/png"
-            disabled={busy}
-            className="h-11 cursor-pointer"
-            onChange={(e) => void handleFile(e.target.files?.[0])}
-          />
-          {busy && (
-            <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              {analyzing ? "Analyse…" : "Dépôt…"}
-            </span>
+      <div className="space-y-3">
+        <Label>{FIFPL_REGISTER_COPY.provideChoiceLabel} *</Label>
+        <RadioGroup
+          value={provideNow ? "now" : provideLater ? "later" : ""}
+          onValueChange={(value) => {
+            if (value === "later") {
+              onChange({
+                provideCfpAttestation: false,
+                cfpAttestationPath: null,
+                cfpAttestationFileName: null,
+                cfpAttestationYear: null,
+                parseWarnings: [],
+              });
+              return;
+            }
+            onChange({ provideCfpAttestation: true });
+          }}
+          className="space-y-2"
+        >
+          <OptionCard selected={provideNow}>
+            <Label
+              htmlFor="cfp-provide-now"
+              className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
+            >
+              <RadioGroupItem value="now" id="cfp-provide-now" />
+              {FIFPL_REGISTER_COPY.provideNowLabel}
+            </Label>
+          </OptionCard>
+          <OptionCard selected={provideLater}>
+            <Label
+              htmlFor="cfp-provide-later"
+              className="flex cursor-pointer flex-col gap-1 px-4 py-3 font-normal"
+            >
+              <span className="flex min-h-6 items-center gap-3">
+                <RadioGroupItem value="later" id="cfp-provide-later" />
+                {FIFPL_REGISTER_COPY.provideLaterLabel}
+              </span>
+              <span className="block pl-7 text-xs text-muted-foreground">
+                {FIFPL_REGISTER_COPY.provideLaterHelp}
+              </span>
+            </Label>
+          </OptionCard>
+        </RadioGroup>
+      </div>
+
+      {provideNow && (
+        <div className="animate-in fade-in space-y-4 border-t border-border pt-4">
+          <div className="space-y-2">
+            <Label htmlFor="cfp-attestation">{FIFPL_REGISTER_COPY.attestationUploadLabel}</Label>
+            <p className="text-xs text-muted-foreground">
+              {FIFPL_REGISTER_COPY.attestationUploadHelp}
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Input
+                id="cfp-attestation"
+                type="file"
+                accept="application/pdf,.pdf,image/jpeg,image/png"
+                disabled={busy}
+                className="h-11 cursor-pointer"
+                onChange={(e) => void handleFile(e.target.files?.[0])}
+              />
+              {busy && (
+                <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {analyzing ? "Analyse…" : "Dépôt…"}
+                </span>
+              )}
+            </div>
+            {questionnaire.cfpAttestationFileName && (
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Upload className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                {questionnaire.cfpAttestationFileName}
+                {questionnaire.cfpAttestationPath ? " — déposée" : ""}
+              </p>
+            )}
+            {questionnaire.parseWarnings.length > 0 && (
+              <Alert variant="destructive">
+                <AlertDescription className="space-y-1 text-sm">
+                  {questionnaire.parseWarnings.map((w) => (
+                    <p key={w}>{w}</p>
+                  ))}
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="cfp-year">Année de l&apos;attestation *</Label>
+              <Input
+                id="cfp-year"
+                type="number"
+                inputMode="numeric"
+                value={questionnaire.cfpAttestationYear ?? ""}
+                onChange={(e) =>
+                  onChange({
+                    cfpAttestationYear: e.target.value ? Number(e.target.value) : null,
+                  })
+                }
+                placeholder={String(FIFPL_CRITERIA_YEAR)}
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cfp-amount">Cotisation CFP (€)</Label>
+              <Input
+                id="cfp-amount"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step="0.01"
+                value={questionnaire.cfpContributionEur ?? ""}
+                onChange={(e) =>
+                  onChange({
+                    cfpContributionEur: e.target.value ? Number(e.target.value) : null,
+                  })
+                }
+                placeholder="Ex. 87,50"
+                className="h-11"
+              />
+              <p className="text-xs text-muted-foreground">
+                {FIFPL_REGISTER_COPY.contributionHelp}
+              </p>
+            </div>
+          </div>
+
+          {questionnaire.cfpAttestationPath && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-fit"
+              onClick={() =>
+                onChange({
+                  cfpAttestationPath: null,
+                  cfpAttestationFileName: null,
+                  parseWarnings: [],
+                })
+              }
+            >
+              Remplacer l&apos;attestation
+            </Button>
           )}
         </div>
-        {questionnaire.cfpAttestationFileName && (
-          <p className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Upload className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            {questionnaire.cfpAttestationFileName}
-            {questionnaire.cfpAttestationPath ? " — déposée" : ""}
-          </p>
-        )}
-        {questionnaire.parseWarnings.length > 0 && (
-          <Alert variant="destructive">
-            <AlertDescription className="space-y-1 text-sm">
-              {questionnaire.parseWarnings.map((w) => (
-                <p key={w}>{w}</p>
-              ))}
-            </AlertDescription>
-          </Alert>
-        )}
-      </div>
+      )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="cfp-year">Année de l&apos;attestation *</Label>
-          <Input
-            id="cfp-year"
-            type="number"
-            inputMode="numeric"
-            value={questionnaire.cfpAttestationYear ?? ""}
-            onChange={(e) =>
-              onChange({
-                cfpAttestationYear: e.target.value ? Number(e.target.value) : null,
-              })
-            }
-            placeholder={String(FIFPL_CRITERIA_YEAR)}
-            className="h-11"
-          />
+      {provideLater && (
+        <div className="space-y-2 border-t border-border pt-4">
+          <div className="space-y-2">
+            <Label htmlFor="cfp-amount-later">Cotisation CFP (€) — facultatif</Label>
+            <Input
+              id="cfp-amount-later"
+              type="number"
+              inputMode="decimal"
+              min={0}
+              step="0.01"
+              value={questionnaire.cfpContributionEur ?? ""}
+              onChange={(e) =>
+                onChange({
+                  cfpContributionEur: e.target.value ? Number(e.target.value) : null,
+                })
+              }
+              placeholder="Si vous la connaissez"
+              className="h-11"
+            />
+            <p className="text-xs text-muted-foreground">{FIFPL_REGISTER_COPY.contributionHelp}</p>
+          </div>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="cfp-amount">Cotisation CFP (€)</Label>
-          <Input
-            id="cfp-amount"
-            type="number"
-            inputMode="decimal"
-            min={0}
-            step="0.01"
-            value={questionnaire.cfpContributionEur ?? ""}
-            onChange={(e) =>
-              onChange({
-                cfpContributionEur: e.target.value ? Number(e.target.value) : null,
-              })
-            }
-            placeholder="Ex. 87,50"
-            className="h-11"
-          />
-          <p className="text-xs text-muted-foreground">
-            Obligatoire pour les micro-entrepreneurs (grille FIFPL).
-          </p>
-        </div>
-      </div>
+      )}
 
       <div className="space-y-3">
-        <Label>Votre statut professionnel *</Label>
+        <Label>{FIFPL_REGISTER_COPY.statusLabel} *</Label>
         <RadioGroup
           value={questionnaire.status ?? ""}
           onValueChange={(value) => onChange({ status: value as FifplProfessionalStatus })}
@@ -180,7 +279,7 @@ export function FifplCfpSection({ questionnaire, modality, onChange }: FifplCfpS
               className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
             >
               <RadioGroupItem value="independant" id="fifpl-independant" />
-              Indépendant — 100 % des critères
+              {FIFPL_REGISTER_COPY.statusIndependant}
             </Label>
           </OptionCard>
           <OptionCard selected={questionnaire.status === "micro_entrepreneur"}>
@@ -189,7 +288,7 @@ export function FifplCfpSection({ questionnaire, modality, onChange }: FifplCfpS
               className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
             >
               <RadioGroupItem value="micro_entrepreneur" id="fifpl-micro" />
-              Micro-entrepreneur — selon cotisation CFP
+              {FIFPL_REGISTER_COPY.statusMicro}
             </Label>
           </OptionCard>
         </RadioGroup>
@@ -276,30 +375,20 @@ export function FifplCfpSection({ questionnaire, modality, onChange }: FifplCfpS
             value={formatPriceEUR(rights.remainingRightsEur)}
             emphasis
           />
+          {rights.isProvisionalMicroEstimate && (
+            <p className="pt-1 text-xs text-[hsl(var(--status-warning))]">
+              Estimation provisoire (pire cas 20 %) — à confirmer avec votre attestation CFP.
+            </p>
+          )}
           {rights.isElearning && (
             <p className="pt-1 text-xs text-muted-foreground">
               Formation e-learning : plafonds réduits de 50 % selon les critères FIFPL.
             </p>
           )}
+          <p className="pt-2 text-xs text-muted-foreground">
+            {FIFPL_REGISTER_COPY.estimateDisclaimer}
+          </p>
         </SummaryPanel>
-      )}
-
-      {questionnaire.cfpAttestationPath && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="w-fit"
-          onClick={() =>
-            onChange({
-              cfpAttestationPath: null,
-              cfpAttestationFileName: null,
-              parseWarnings: [],
-            })
-          }
-        >
-          Remplacer l&apos;attestation
-        </Button>
       )}
     </div>
   );

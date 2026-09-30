@@ -89,8 +89,10 @@ export interface RegistrationData {
   opcoNafCode?: string;
   opcoCaseNotes?: string;
 
-  /** FIFPL — attestation CFP URSSAF + estimation des droits */
+  /** FIFPL — attestation CFP URSSAF (facultative) + estimation des droits */
   fifplStatus?: "independant" | "micro_entrepreneur" | null;
+  /** true = dépôt maintenant ; false = plus tard */
+  fifplProvideCfpAttestation?: boolean | null;
   fifplCfpAttestationYear?: number | null;
   fifplCfpContributionEur?: number | null;
   fifplCfpAttestationPath?: string | null;

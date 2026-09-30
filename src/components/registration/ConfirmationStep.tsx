@@ -382,7 +382,8 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                       data.fifplHadOtherTrainingThisYear === true
                         ? data.fifplOtherAmountAlreadyCoveredEur
                         : 0,
-                  })?.remainingRightsEur ?? null
+                  })?.remainingRightsEur ?? null,
+                  data.fifplProvideCfpAttestation === false
                 )}
               </AlertDescription>
             </Alert>
@@ -522,7 +523,8 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                       data.fifplHadOtherTrainingThisYear === true
                         ? data.fifplOtherAmountAlreadyCoveredEur
                         : 0,
-                  })?.remainingRightsEur ?? null
+                  })?.remainingRightsEur ?? null,
+                  data.fifplProvideCfpAttestation === false
                 )}
               </AlertDescription>
             </Alert>

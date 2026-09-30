@@ -39,9 +39,14 @@ export const FIFPL_MICRO_CFP_BRACKETS: ReadonlyArray<{
 export interface FifplQuestionnaire {
   /** Indépendant (100 %) ou micro-entrepreneur (grille CFP). */
   status: FifplProfessionalStatus | null;
-  /** Année de l'attestation CFP URSSAF (doit être 2026). */
+  /**
+   * true = dépôt maintenant ; false = plus tard (facultatif à l'inscription) ;
+   * null = pas encore choisi.
+   */
+  provideCfpAttestation: boolean | null;
+  /** Année de l'attestation CFP URSSAF (attendue : année des critères). */
   cfpAttestationYear: number | null;
-  /** Montant de cotisation CFP lu / saisi (€). Requis pour les micro. */
+  /** Montant de cotisation CFP lu / saisi (€). Utile pour les micro. */
   cfpContributionEur: number | null;
   /** Chemin storage après upload (bucket documents). */
   cfpAttestationPath: string | null;
@@ -64,6 +69,7 @@ export interface FifplQuestionnaire {
 
 export const EMPTY_FIFPL_QUESTIONNAIRE: FifplQuestionnaire = {
   status: null,
+  provideCfpAttestation: null,
   cfpAttestationYear: null,
   cfpContributionEur: null,
   cfpAttestationPath: null,
@@ -82,6 +88,8 @@ export interface FifplRightsEstimate {
   alreadyCoveredEur: number;
   remainingRightsEur: number;
   dailyCeilingEur: number;
+  /** true si micro sans cotisation → pire cas 20 % (à confirmer avec l'attestation). */
+  isProvisionalMicroEstimate: boolean;
 }
 
 export function isElearningModality(modality: string | null | undefined): boolean {
@@ -116,7 +124,13 @@ export function estimateFifplRights(input: {
   alreadyCoveredEur?: number | null;
 }): FifplRightsEstimate | null {
   if (!input.status) return null;
-  const percent = rightsPercentForStatus(input.status, input.cfpContributionEur);
+  let percent = rightsPercentForStatus(input.status, input.cfpContributionEur);
+  let isProvisionalMicroEstimate = false;
+  // Micro sans cotisation : pire cas 20 % (SESSIONS §3.2), à confirmer avec l'attestation.
+  if (percent == null && input.status === "micro_entrepreneur") {
+    percent = 20;
+    isProvisionalMicroEstimate = true;
+  }
   if (percent == null) return null;
 
   const elearning = isElearningModality(input.modality);
@@ -140,6 +154,7 @@ export function estimateFifplRights(input: {
     alreadyCoveredEur: already,
     remainingRightsEur: remaining,
     dailyCeilingEur: dailyBase,
+    isProvisionalMicroEstimate,
   };
 }
 
@@ -210,22 +225,30 @@ export function parseCfpAttestationText(text: string): {
 }
 
 export function validateFifplQuestionnaire(q: FifplQuestionnaire): string | null {
-  if (!q.cfpAttestationPath && !q.cfpAttestationFileName) {
-    return "Déposez votre attestation CFP téléchargeable depuis votre espace URSSAF.";
+  if (q.provideCfpAttestation !== true && q.provideCfpAttestation !== false) {
+    return "Indiquez si vous déposez votre attestation CFP maintenant ou plus tard.";
   }
-  if (q.cfpAttestationYear == null) {
-    return `Indiquez l’année de l’attestation CFP (attendu : ${FIFPL_CRITERIA_YEAR}).`;
-  }
-  if (q.cfpAttestationYear !== FIFPL_CRITERIA_YEAR) {
-    return `L’attestation doit dater de ${FIFPL_CRITERIA_YEAR}. Téléchargez-la depuis votre espace URSSAF.`;
+  if (q.provideCfpAttestation === true) {
+    if (!q.cfpAttestationPath && !q.cfpAttestationFileName) {
+      return "Déposez votre attestation CFP (PDF ou image), ou choisissez de la fournir plus tard.";
+    }
+    if (q.cfpAttestationYear == null) {
+      return `Indiquez l’année de l’attestation CFP (attendu : ${FIFPL_CRITERIA_YEAR}).`;
+    }
+    if (q.cfpAttestationYear !== FIFPL_CRITERIA_YEAR) {
+      return `L’attestation doit dater de ${FIFPL_CRITERIA_YEAR}. Téléchargez-la depuis votre espace URSSAF.`;
+    }
   }
   if (!q.status) {
     return "Indiquez si vous êtes indépendant ou micro-entrepreneur.";
   }
-  if (q.status === "micro_entrepreneur") {
-    if (q.cfpContributionEur == null || !(q.cfpContributionEur >= 1)) {
-      return "Indiquez le montant de votre cotisation CFP (micro-entrepreneur).";
-    }
+  // Cotisation CFP : obligatoire seulement si attestation déposée + micro.
+  if (
+    q.provideCfpAttestation === true &&
+    q.status === "micro_entrepreneur" &&
+    (q.cfpContributionEur == null || !(q.cfpContributionEur >= 1))
+  ) {
+    return "Indiquez le montant de votre cotisation CFP (micro-entrepreneur).";
   }
   if (q.hadOtherFifplTrainingThisYear === null) {
     return `Indiquez si vous avez déjà suivi une formation prise en charge par le FIFPL en ${FIFPL_CRITERIA_YEAR}.`;
@@ -246,12 +269,22 @@ export function formatFifplQuestionnaireSummary(
   rights: FifplRightsEstimate | null
 ): string {
   const lines = [
-    `Financement FIFPL ${FIFPL_CRITERIA_YEAR} — attestation CFP URSSAF + estimation des droits.`,
+    `Financement FIFPL ${FIFPL_CRITERIA_YEAR} — estimation des droits` +
+      (q.provideCfpAttestation === false
+        ? " (attestation CFP à fournir plus tard)."
+        : " — attestation CFP URSSAF."),
   ];
+  if (q.provideCfpAttestation === true) {
+    lines.push("Attestation CFP : déposée à l’inscription.");
+  } else if (q.provideCfpAttestation === false) {
+    lines.push("Attestation CFP : non jointe — le stagiaire la fournira plus tard.");
+  }
   if (q.status === "independant") lines.push("Statut : indépendant (100 % des critères).");
   if (q.status === "micro_entrepreneur") {
     lines.push(
-      `Statut : micro-entrepreneur — cotisation CFP ${q.cfpContributionEur ?? "?"} € → ${rights?.rightsPercent ?? "?"} % des critères.`
+      `Statut : micro-entrepreneur — cotisation CFP ${q.cfpContributionEur ?? "non renseignée"} € → ${rights?.rightsPercent ?? "?"} % des critères` +
+        (rights?.isProvisionalMicroEstimate ? " (estimation provisoire 20 %)" : "") +
+        "."
     );
   }
   if (q.cfpAttestationYear != null) {
@@ -273,7 +306,8 @@ export function formatFifplQuestionnaireSummary(
   if (rights) {
     lines.push(
       `Droits estimés : ${rights.grossRightsEur} € bruts · reste ${rights.remainingRightsEur} €` +
-        (rights.isElearning ? " (plafond e-learning 50 %)" : "")
+        (rights.isElearning ? " (plafond e-learning 50 %)" : "") +
+        " — indicatif, seul l’accord du FIFPL fait foi."
     );
   }
   if (q.parseWarnings.length) {
@@ -284,17 +318,38 @@ export function formatFifplQuestionnaireSummary(
 
 export const FIFPL_REGISTER_COPY = {
   fundingChoiceHelp:
-    "Prise en charge FIFPL (moniteurs de ski) — attestation CFP URSSAF requise pour vérifier vos droits.",
-  sectionTitle: "Attestation CFP et droits FIFPL",
-  sectionDescription: `Pour une prise en charge FIFPL ${FIFPL_CRITERIA_YEAR}, déposez votre attestation de contribution à la formation professionnelle (CFP), téléchargeable depuis votre espace URSSAF. Elle sert à vérifier votre éligibilité et sera également demandée par le FIFPL.`,
+    "Prise en charge FIFPL (moniteurs de ski). Vous pourrez joindre votre attestation CFP maintenant ou plus tard.",
+  sectionTitle: "Droits FIFPL et attestation CFP",
+  sectionDescription: `Pour une prise en charge FIFPL ${FIFPL_CRITERIA_YEAR}, nous estimons vos droits à partir de votre statut (indépendant ou micro-entrepreneur). L’attestation de contribution à la formation professionnelle (CFP), téléchargeable depuis votre espace URSSAF, permet de confirmer ces éléments — notamment le montant de cotisation pour les micro-entrepreneurs. Vous pouvez la déposer maintenant ou la fournir plus tard ; un rappel vous sera envoyé si elle manque.`,
   urssafHint:
-    "Espace URSSAF → documents / attestations → attestation de contribution à la formation professionnelle (CFP).",
+    "Où la trouver : espace URSSAF → documents / attestations → attestation de contribution à la formation professionnelle (CFP).",
+  provideChoiceLabel: "Souhaitez-vous déposer votre attestation CFP maintenant ?",
+  provideNowLabel: "Oui, je la dépose maintenant",
+  provideLaterLabel: "Non, je la fournirai plus tard",
+  provideLaterHelp:
+    "Vous pourrez l’envoyer ensuite. FLI pourra vous relancer. Sans attestation, l’estimation des droits reste indicative — seul l’accord du FIFPL fait foi.",
+  attestationUploadLabel: `Attestation CFP URSSAF ${FIFPL_CRITERIA_YEAR}`,
+  attestationUploadHelp:
+    "PDF ou image. Nous lisons l’année et, si possible, le montant de cotisation ; vous pourrez corriger les valeurs.",
+  statusLabel: "Votre statut professionnel",
+  statusIndependant: "Indépendant — 100 % des critères FIFPL",
+  statusMicro: "Micro-entrepreneur — selon la cotisation CFP",
+  contributionHelp:
+    "Pour les micro-entrepreneurs : indiquez le montant figurant sur l’attestation. Sans montant, l’estimation utilise le pire cas (20 %), à confirmer ensuite.",
   otherTrainingLabel: `Avez-vous déjà suivi une autre formation prise en charge par le FIFPL en ${FIFPL_CRITERIA_YEAR} ?`,
   otherTrainingHelp:
     "Le montant déjà pris en charge sera déduit du montant total de vos droits FIFPL pour l’année.",
   alreadyCoveredLabel: "Montant déjà pris en charge cette année (€)",
-  confirmationAlert: (remainingEur: number | null) =>
-    remainingEur == null
-      ? `Financement FIFPL ${FIFPL_CRITERIA_YEAR} : attestation CFP jointe. Les frais de dossier restent dus à l’inscription.`
-      : `Financement FIFPL ${FIFPL_CRITERIA_YEAR} : droits restants estimés à ${remainingEur} € (après déduction des prises en charge déjà accordées). Les frais de dossier restent dus à l’inscription.`,
+  estimateDisclaimer:
+    "Montants indicatifs — seul l’accord du FIFPL fait foi. Formation en ligne synchrone : sur votre demande FIFPL, cochez « présentiel » (conseil du FIFPL). FLI est exonérée de TVA : HT = TTC.",
+  confirmationAlert: (remainingEur: number | null, attestationDeferred?: boolean) => {
+    const base =
+      remainingEur == null
+        ? `Financement FIFPL ${FIFPL_CRITERIA_YEAR}.`
+        : `Financement FIFPL ${FIFPL_CRITERIA_YEAR} : droits restants estimés à ${remainingEur} € (après déduction des prises en charge déjà accordées).`;
+    const att = attestationDeferred
+      ? " Attestation CFP à fournir plus tard."
+      : " Attestation CFP jointe ou en cours de traitement.";
+    return `${base}${att} Les frais de dossier restent dus à l’inscription.`;
+  },
 } as const;
