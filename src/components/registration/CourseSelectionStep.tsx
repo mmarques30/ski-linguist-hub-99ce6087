@@ -294,10 +294,12 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                   <span className="flex items-center gap-3">
                     <RadioGroupItem value="in_person" id="path-in-person" />
                     <Mountain className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
-                    <span className="font-semibold text-foreground">Présentiel en station</span>
+                    <span className="font-semibold text-foreground">
+                      Présentiel en station ou en vallée
+                    </span>
                   </span>
                   <span className="pl-8 text-sm text-muted-foreground">
-                    Stages sur site — choisissez ensuite la station, la langue et les dates (
+                    Stages sur site — choisissez ensuite le lieu, la langue et les dates (
                     {inPerson.length} sessions).
                   </span>
                 </Label>
