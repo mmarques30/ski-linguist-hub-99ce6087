@@ -12,7 +12,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MapPin, Calendar, MessageSquare, Phone, User } from "lucide-react";
+import { Calendar, MessageSquare, Monitor, Mountain, Phone, User } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,6 +52,14 @@ type OnlineKind = "individual" | "group";
 
 function sessionDateKey(o: RegistrationOffering): string {
   return o.start_date && o.end_date ? `${o.start_date}_${o.end_date}` : o.date_label || "flex";
+}
+
+/** Dates + durée — sans formateur, sans répéter la modalité. */
+function sessionScheduleLine(o: RegistrationOffering): string {
+  const parts: string[] = [];
+  if (o.date_label) parts.push(o.date_label);
+  if (o.duration_hours) parts.push(`${o.duration_hours} h`);
+  return parts.join(" · ");
 }
 
 export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionStepProps) {
@@ -228,12 +236,12 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
 
   if (isLoading) {
     return (
-      <SurfaceCard title="Choisir une formation" icon={MapPin}>
+      <SurfaceCard title="Choisir une formation" icon={Calendar}>
         <div className="space-y-4" aria-busy="true" aria-live="polite">
           <Skeleton className="h-4 w-40" />
           <div className="grid gap-2 sm:grid-cols-2">
-            <Skeleton className="h-16 rounded-[var(--radius-card)]" />
-            <Skeleton className="h-16 rounded-[var(--radius-card)]" />
+            <Skeleton className="h-20 rounded-[var(--radius-card)]" />
+            <Skeleton className="h-20 rounded-[var(--radius-card)]" />
           </div>
           <Skeleton className="h-24 w-full rounded-[var(--radius)]" />
         </div>
@@ -246,7 +254,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
       <StepCard
         title="Catalogue indisponible"
         description="Le catalogue des formations n'a pas pu être chargé."
-        icon={MapPin}
+        icon={Calendar}
       >
         <Alert variant="destructive">
           <AlertDescription>
@@ -262,56 +270,68 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
     <form onSubmit={handleSubmit} className="space-y-4">
       <StepCard
         title="Choisir une formation"
-        description="Présentiel en station ou formation en ligne — les tarifs s’affichent après le choix de votre école. Les sessions en attente restent visibles pour laisser vos coordonnées."
-        icon={MapPin}
+        description="D’abord la modalité (présentiel ou en ligne), puis la session. Les tarifs s’affichent après le choix de votre école."
+        icon={Calendar}
       >
         <div className="space-y-6">
-          {/* 1. Présentiel / En ligne */}
+          {/* 1. Modalité — distincte des lieux / sessions */}
           <div className="space-y-3">
-            <Label>Type de formation *</Label>
+            <Label>Modalité *</Label>
+            <p className="text-sm text-muted-foreground">
+              Le présentiel et l&apos;en ligne sont deux parcours séparés — « En ligne » n&apos;est
+              pas un lieu.
+            </p>
             <RadioGroup
               value={pathMode}
               onValueChange={(v) => handlePathChange(v as PathMode)}
-              className="grid gap-2 sm:grid-cols-2"
+              className="grid gap-3 sm:grid-cols-2"
             >
               <OptionCard selected={pathMode === "in_person"}>
                 <Label
                   htmlFor="path-in-person"
-                  className="flex min-h-14 cursor-pointer flex-col justify-center gap-0.5 px-4 py-3 font-normal"
+                  className="flex min-h-[5.5rem] cursor-pointer flex-col justify-center gap-2 px-4 py-4 font-normal"
                 >
-                  <span className="flex items-center gap-3 font-medium">
+                  <span className="flex items-center gap-3">
                     <RadioGroupItem value="in_person" id="path-in-person" />
-                    Présentiel
+                    <Mountain className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+                    <span className="font-semibold text-foreground">
+                      Présentiel en station ou en vallée
+                    </span>
                   </span>
-                  <span className="pl-7 text-xs text-muted-foreground">
-                    Stages en station ({inPerson.length} sessions)
+                  <span className="pl-8 text-sm text-muted-foreground">
+                    Stages sur site — choisissez ensuite le lieu, la langue et les dates (
+                    {inPerson.length} sessions).
                   </span>
                 </Label>
               </OptionCard>
               <OptionCard selected={pathMode === "online"}>
                 <Label
                   htmlFor="path-online"
-                  className="flex min-h-14 cursor-pointer flex-col justify-center gap-0.5 px-4 py-3 font-normal"
+                  className="flex min-h-[5.5rem] cursor-pointer flex-col justify-center gap-2 px-4 py-4 font-normal"
                 >
-                  <span className="flex items-center gap-3 font-medium">
+                  <span className="flex items-center gap-3">
                     <RadioGroupItem value="online" id="path-online" />
-                    En ligne
+                    <Monitor className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+                    <span className="font-semibold text-foreground">Formation en ligne</span>
                   </span>
-                  <span className="pl-7 text-xs text-muted-foreground">
-                    Individuel ou collectif visio
+                  <span className="pl-8 text-sm text-muted-foreground">
+                    Visio — cours individuel (packs d&apos;heures) ou session collective.
                   </span>
                 </Label>
               </OptionCard>
             </RadioGroup>
           </div>
 
-          {/* 2a. Stages présentiel */}
+          {/* 2a. Stages présentiel — lieux / stations uniquement */}
           {pathMode === "in_person" && (
-            <div className="animate-in fade-in slide-in-from-top-2 space-y-3">
+            <div className="animate-in fade-in slide-in-from-top-2 space-y-3 border-t border-border pt-6">
               <Label className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Session / stage *
+                <Mountain className="h-4 w-4" />
+                Stage en station *
               </Label>
+              <p className="text-sm text-muted-foreground">
+                Station, langue et dates — uniquement les formations présentiel.
+              </p>
               <RadioGroup
                 value={data.offeringId || ""}
                 onValueChange={(id) => {
@@ -342,9 +362,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                               )}
                             </span>
                             <span className="block text-sm text-muted-foreground">
-                              {o.date_label}
-                              {o.format_label ? ` · ${o.format_label}` : ""}
-                              {o.instructor_label ? ` · ${o.instructor_label}` : ""}
+                              {sessionScheduleLine(o)}
                             </span>
                           </span>
                         </span>
@@ -358,8 +376,11 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
 
           {/* 2b. En ligne : individuel / collectif */}
           {pathMode === "online" && (
-            <div className="animate-in fade-in slide-in-from-top-2 space-y-3">
-              <Label>Formule en ligne *</Label>
+            <div className="animate-in fade-in slide-in-from-top-2 space-y-3 border-t border-border pt-6">
+              <Label className="flex items-center gap-2">
+                <Monitor className="h-4 w-4" />
+                Formule en ligne *
+              </Label>
               <RadioGroup
                 value={onlineKind}
                 onValueChange={(v) => handleOnlineKindChange(v as OnlineKind)}
@@ -368,19 +389,29 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                 <OptionCard selected={onlineKind === "individual"}>
                   <Label
                     htmlFor="online-individual"
-                    className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
+                    className="flex min-h-14 cursor-pointer flex-col justify-center gap-0.5 px-4 py-3 font-normal"
                   >
-                    <RadioGroupItem value="individual" id="online-individual" />
-                    Individuel (packs d&apos;heures)
+                    <span className="flex items-center gap-3 font-medium">
+                      <RadioGroupItem value="individual" id="online-individual" />
+                      Individuel
+                    </span>
+                    <span className="pl-7 text-xs text-muted-foreground">
+                      Packs d&apos;heures en visio, planning flexible
+                    </span>
                   </Label>
                 </OptionCard>
                 <OptionCard selected={onlineKind === "group"}>
                   <Label
                     htmlFor="online-group"
-                    className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
+                    className="flex min-h-14 cursor-pointer flex-col justify-center gap-0.5 px-4 py-3 font-normal"
                   >
-                    <RadioGroupItem value="group" id="online-group" />
-                    Collectif (visio groupée)
+                    <span className="flex items-center gap-3 font-medium">
+                      <RadioGroupItem value="group" id="online-group" />
+                      Collectif
+                    </span>
+                    <span className="pl-7 text-xs text-muted-foreground">
+                      Session de groupe datée en visio
+                    </span>
                   </Label>
                 </OptionCard>
               </RadioGroup>
@@ -389,7 +420,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
 
           {pathMode === "online" && onlineKind === "group" && (
             <div className="animate-in fade-in slide-in-from-top-2 space-y-3">
-              <Label>Session collective *</Label>
+              <Label>Session collective en visio *</Label>
               <RadioGroup
                 value={data.offeringId || ""}
                 onValueChange={(id) => {
@@ -418,8 +449,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                               )}
                             </span>
                             <span className="block text-sm text-muted-foreground">
-                              {o.date_label}
-                              {o.instructor_label ? ` · ${o.instructor_label}` : ""}
+                              {sessionScheduleLine(o)}
                             </span>
                           </span>
                         </span>
