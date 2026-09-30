@@ -36,8 +36,10 @@ describe("arborescence de navigation — 3 niveaux", () => {
       "qualite",
       "portails",
       "administration",
+      "monitoramento",
     ]);
     expect(NAV_SECTIONS.find((s) => s.id === "administration")?.adminOnly).toBe(true);
+    expect(NAV_SECTIONS.find((s) => s.id === "monitoramento")?.adminOnly).toBe(true);
   });
 
   it("place chaque destination sous un seul sous-menu", () => {
