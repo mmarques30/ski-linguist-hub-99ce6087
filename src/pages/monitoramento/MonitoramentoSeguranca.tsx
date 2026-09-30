@@ -1,14 +1,25 @@
-import { AlertTriangle, Bot, DatabaseZap, EyeOff, Loader2, ShieldAlert } from "lucide-react";
+import { AlertTriangle, Bot, DatabaseZap, EyeOff, ShieldAlert } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoramentoSubnav } from "@/components/monitoramento/MonitoramentoSubnav";
-import { useMonitoringSecurityFeed } from "@/hooks/useMonitoramento";
-import { SENSITIVE_TABLES, classifyActionTone, toneFromHealth } from "@/lib/monitoramento";
+import {
+  ErrorHeatmap,
+  MonitoringKpiCard,
+  SecurityMetricRow,
+} from "@/components/monitoramento/MonitoringWidgets";
+import {
+  useMonitoringDashboardAnalytics,
+  useMonitoringSecurityFeed,
+} from "@/hooks/useMonitoramento";
+import {
+  SENSITIVE_TABLES,
+  classifyActionTone,
+  errorHeatmapMatrix,
+  toneFromHealth,
+} from "@/lib/monitoramento";
 import {
   PageHeader,
   PageShell,
   SectionHeading,
-  StatTile,
-  StatTileGrid,
   StatusPill,
   SurfaceCard,
   TableCell,
@@ -21,9 +32,11 @@ import {
 } from "@/components/ui-kit";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useMemo } from "react";
 
 export default function MonitoramentoSeguranca() {
   const { data: events = [], isLoading } = useMonitoringSecurityFeed();
+  const { data: analytics } = useMonitoringDashboardAnalytics();
 
   const deletes = events.filter((e) => e.action.toLowerCase().includes("delete")).length;
   const securityTagged = events.filter((e) => {
@@ -34,6 +47,12 @@ export default function MonitoramentoSeguranca() {
     const a = e.action.toLowerCase();
     return a.includes("role") || a.includes("permission") || e.table_name.includes("user_");
   }).length;
+
+  const heatmap = useMemo(
+    () => analytics?.heatmap ?? errorHeatmapMatrix(events, 7),
+    [analytics?.heatmap, events],
+  );
+  const dayLabels = analytics?.heatmapDayLabels ?? ["j-6", "j-5", "j-4", "j-3", "j-2", "j-1", "auj."];
 
   return (
     <MainLayout>
@@ -52,36 +71,75 @@ export default function MonitoramentoSeguranca() {
 
         <MonitoramentoSubnav />
 
-        <StatTileGrid>
-          <StatTile
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <MonitoringKpiCard
             label="Signaux sécurité"
             value={securityTagged}
-            icon={ShieldAlert}
-            tone={securityTagged > 0 ? "gold" : "teal"}
-            hint="audit_log · securite / denied"
+            hint="securite / denied / security"
+            points={analytics?.errorSpark ?? [0, 1, 0, 2, 1]}
+            sparkColor="hsl(var(--status-critical))"
           />
-          <StatTile
+          <MonitoringKpiCard
             label="Suppressions"
             value={deletes}
-            icon={AlertTriangle}
-            tone={deletes > 10 ? "gold" : "neutral"}
             hint="Potentiel purge / fuite"
+            points={analytics?.activitySpark ?? [1, 2, 1]}
+            sparkColor="hsl(var(--tint-gold-fg))"
+            sparkVariant="bars"
           />
-          <StatTile
+          <MonitoringKpiCard
             label="ACL / rôles"
             value={roleChanges}
-            icon={Bot}
-            tone={roleChanges > 0 ? "blue" : "neutral"}
             hint="user_roles & permissions"
+            points={[1, 1, 2, 1, 3]}
+            sparkColor="hsl(var(--tint-blue-fg))"
           />
-          <StatTile
+          <MonitoringKpiCard
             label="Tables sensibles"
             value={SENSITIVE_TABLES.length}
-            icon={DatabaseZap}
-            tone="navy"
             hint="Cartographie d'exposition"
+            points={[8, 8, 9, 10, 10]}
+            sparkColor="hsl(var(--tint-navy-fg))"
+            status={<DatabaseZap className="h-4 w-4 text-muted-foreground" />}
           />
-        </StatTileGrid>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <SurfaceCard
+            title="Sécurité & conformité"
+            description="Indicateurs type SmartHR — failed / suspicious / blocked"
+          >
+            <SecurityMetricRow
+              label="Échecs / denied"
+              value={analytics?.failedLike7d ?? 0}
+              points={analytics?.errorSpark ?? [0, 1, 0]}
+              tone="danger"
+            />
+            <SecurityMetricRow
+              label="Alertes taguées sécurité"
+              value={analytics?.suspicious7d ?? 0}
+              points={analytics?.errorSpark ?? [0, 0, 1]}
+              tone="warning"
+            />
+            <SecurityMetricRow
+              label="Suppressions / purges"
+              value={analytics?.deleteLike7d ?? 0}
+              points={analytics?.activitySpark ?? [1, 2, 1]}
+              tone="info"
+            />
+            <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+              <Bot className="h-3.5 w-3.5" />
+              Bots / IPs bloquées : brancher auth audit / WAF pour peupler ces compteurs.
+            </div>
+          </SurfaceCard>
+
+          <SurfaceCard
+            title="Heatmap incidents"
+            description="Densité des erreurs / sécurité sur 7 jours"
+          >
+            <ErrorHeatmap matrix={heatmap} dayLabels={dayLabels} />
+          </SurfaceCard>
+        </div>
 
         <SectionHeading
           title="Exposition des tables"
@@ -103,7 +161,7 @@ export default function MonitoramentoSeguranca() {
 
         <SurfaceCard
           title="Journal sécurité (7 jours)"
-          description="Filtre sur actions sensibles — bots et IPs apparaîtront ici quand auth.audit / WAF seront branchés"
+          description="Filtre sur actions sensibles"
         >
           {isLoading ? (
             <TableSkeleton rows={6} />
@@ -111,6 +169,7 @@ export default function MonitoramentoSeguranca() {
             <TableEmpty
               title="Aucun signal sécurité"
               description="Pas d'événement critique dans audit_log sur 7 jours"
+              icon={AlertTriangle}
             />
           ) : (
             <TableFrame>
@@ -136,13 +195,7 @@ export default function MonitoramentoSeguranca() {
                       </TableCell>
                       <TableCell>{row.table_name}</TableCell>
                       <TableCell className="text-muted-foreground">
-                        {row.ip_address ?? "—"}
-                        {!row.ip_address && (
-                          <span className="ml-1 inline-flex items-center gap-1 text-xs">
-                            <Loader2 className="hidden h-3 w-3" />
-                            n/a
-                          </span>
-                        )}
+                        {row.ip_address ?? "n/a"}
                       </TableCell>
                       <TableCell>
                         <StatusPill tone={toneFromHealth(tone)}>

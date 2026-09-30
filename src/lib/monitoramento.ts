@@ -166,3 +166,131 @@ export const MONITORING_SECRET_CATALOG: Omit<MonitoringSecretStatus, "configured
     where: "supabase",
   },
 ];
+
+export type LoadBand = "low" | "medium" | "high" | "peak";
+
+export interface HourlyBucket {
+  hour: number;
+  label: string;
+  count: number;
+  errors: number;
+  band: LoadBand;
+}
+
+export interface DayBucket {
+  day: string;
+  label: string;
+  count: number;
+  errors: number;
+}
+
+export interface RoleShare {
+  role: string;
+  label: string;
+  count: number;
+}
+
+export function loadBand(count: number, max: number): LoadBand {
+  if (max <= 0 || count <= 0) return "low";
+  const ratio = count / max;
+  if (ratio >= 0.85) return "peak";
+  if (ratio >= 0.55) return "high";
+  if (ratio >= 0.25) return "medium";
+  return "low";
+}
+
+export function loadBandColor(band: LoadBand): string {
+  switch (band) {
+    case "peak":
+      return "hsl(var(--status-critical))";
+    case "high":
+      return "hsl(var(--tint-orange-fg))";
+    case "medium":
+      return "hsl(var(--tint-gold-fg))";
+    default:
+      return "hsl(var(--status-good))";
+  }
+}
+
+/** Agrège des timestamps ISO en 24 seaux horaires (jour courant local). */
+export function bucketByHour(
+  timestamps: Array<{ created_at: string; action?: string }>,
+): HourlyBucket[] {
+  const counts = Array.from({ length: 24 }, () => ({ count: 0, errors: 0 }));
+  for (const row of timestamps) {
+    const h = new Date(row.created_at).getHours();
+    if (h < 0 || h > 23) continue;
+    counts[h].count += 1;
+    if (row.action && isErrorLikeAction(row.action)) counts[h].errors += 1;
+  }
+  const max = Math.max(...counts.map((c) => c.count), 1);
+  return counts.map((c, hour) => ({
+    hour,
+    label: `${String(hour).padStart(2, "0")}h`,
+    count: c.count,
+    errors: c.errors,
+    band: loadBand(c.count, max),
+  }));
+}
+
+/** 7 derniers jours (labels courts fr). */
+export function bucketByDay(
+  timestamps: Array<{ created_at: string; action?: string }>,
+  days = 7,
+): DayBucket[] {
+  const labels = ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."];
+  const map = new Map<string, DayBucket>();
+  const today = new Date();
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    map.set(key, {
+      day: key,
+      label: labels[d.getDay()],
+      count: 0,
+      errors: 0,
+    });
+  }
+  for (const row of timestamps) {
+    const key = row.created_at.slice(0, 10);
+    const bucket = map.get(key);
+    if (!bucket) continue;
+    bucket.count += 1;
+    if (row.action && isErrorLikeAction(row.action)) bucket.errors += 1;
+  }
+  return Array.from(map.values());
+}
+
+/** Matrice 7×24 pour heatmap d'erreurs (lignes = jours, colonnes = heures). */
+export function errorHeatmapMatrix(
+  timestamps: Array<{ created_at: string; action?: string }>,
+  days = 7,
+): number[][] {
+  const matrix = Array.from({ length: days }, () => Array.from({ length: 24 }, () => 0));
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  for (const row of timestamps) {
+    if (!row.action || !isErrorLikeAction(row.action)) continue;
+    const dt = new Date(row.created_at);
+    const dayStart = new Date(dt);
+    dayStart.setHours(0, 0, 0, 0);
+    const diff = Math.round((today.getTime() - dayStart.getTime()) / 86_400_000);
+    const rowIndex = days - 1 - diff;
+    if (rowIndex < 0 || rowIndex >= days) continue;
+    matrix[rowIndex][dt.getHours()] += 1;
+  }
+  return matrix;
+}
+
+export function sparkSeriesFromHours(hours: HourlyBucket[], key: "count" | "errors" = "count"): number[] {
+  return hours.map((h) => h[key]);
+}
+
+export const ROLE_LABELS: Record<string, string> = {
+  admin: "Admins",
+  staff: "Staff",
+  formateur: "Formateurs",
+  student: "Stagiaires",
+};

@@ -2,9 +2,17 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeAdminEdgeFunction } from "@/lib/admin-edge-invoke";
 import {
+  ROLE_LABELS,
+  bucketByDay,
+  bucketByHour,
+  errorHeatmapMatrix,
   isErrorLikeAction,
+  sparkSeriesFromHours,
+  type DayBucket,
+  type HourlyBucket,
   type MonitoringConfigStatus,
   type MonitoringOverviewPayload,
+  type RoleShare,
 } from "@/lib/monitoramento";
 import type { AuditLogEntry } from "@/hooks/useQualiopiAudit";
 
@@ -29,7 +37,6 @@ export function useMonitoringConfig() {
           data: MonitoringConfigStatus;
         }>("check-monitoring-config");
       } catch (error) {
-        // Fonction pas encore déployée : statut local dérivé.
         const db = await pingDatabase();
         const fallback: MonitoringConfigStatus = {
           success: false,
@@ -74,7 +81,7 @@ export function useMonitoringOverview() {
         .select("id, action, table_name, created_at, user_id")
         .gte("created_at", since)
         .order("created_at", { ascending: false })
-        .limit(200);
+        .limit(500);
 
       const rows = (auditRows ?? []) as AuditLogEntry[];
       const errorLike = rows.filter((r) => isErrorLikeAction(r.action)).length;
@@ -122,6 +129,105 @@ export function useMonitoringOverview() {
             user_id: r.user_id,
           })),
         },
+      };
+    },
+    staleTime: 30_000,
+  });
+}
+
+export interface MonitoringDashboardAnalytics {
+  hours: HourlyBucket[];
+  days: DayBucket[];
+  heatmap: number[][];
+  heatmapDayLabels: string[];
+  activitySpark: number[];
+  errorSpark: number[];
+  roles: RoleShare[];
+  activeActors24h: number;
+  securityAlerts7d: number;
+  failedLike7d: number;
+  deleteLike7d: number;
+  suspicious7d: number;
+  weekRows: AuditLogEntry[];
+}
+
+export function useMonitoringDashboardAnalytics() {
+  return useQuery({
+    queryKey: ["monitoring-dashboard-analytics"],
+    queryFn: async (): Promise<MonitoringDashboardAnalytics> => {
+      const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+      const [{ data: weekData }, { data: roleData }] = await Promise.all([
+        supabase
+          .from("audit_log")
+          .select("id, action, table_name, created_at, user_id, ip_address")
+          .gte("created_at", since7d)
+          .order("created_at", { ascending: false })
+          .limit(1000),
+        supabase.from("user_roles").select("role"),
+      ]);
+
+      const weekRows = (weekData ?? []) as AuditLogEntry[];
+      const todayRows = weekRows.filter((r) => r.created_at >= since24h);
+      const hours = bucketByHour(todayRows);
+      const days = bucketByDay(weekRows, 7);
+      const heatmap = errorHeatmapMatrix(weekRows, 7);
+
+      const roleCounts = new Map<string, number>();
+      for (const row of roleData ?? []) {
+        const role = (row as { role: string }).role;
+        roleCounts.set(role, (roleCounts.get(role) ?? 0) + 1);
+      }
+      const roles: RoleShare[] = Array.from(roleCounts.entries()).map(([role, count]) => ({
+        role,
+        label: ROLE_LABELS[role] ?? role,
+        count,
+      }));
+
+      const actors = new Set(
+        todayRows.map((r) => r.user_id).filter((id): id is string => Boolean(id)),
+      );
+
+      const securityAlerts7d = weekRows.filter((r) => {
+        const a = r.action.toLowerCase();
+        return (
+          isErrorLikeAction(a) ||
+          a.includes("securite") ||
+          a.includes("security") ||
+          a.includes("denied")
+        );
+      }).length;
+
+      const failedLike7d = weekRows.filter((r) => {
+        const a = r.action.toLowerCase();
+        return a.includes("fail") || a.includes("error") || a.includes("denied");
+      }).length;
+
+      const deleteLike7d = weekRows.filter((r) => {
+        const a = r.action.toLowerCase();
+        return a.includes("delete") || a.includes("purge");
+      }).length;
+
+      const suspicious7d = weekRows.filter((r) => {
+        const a = r.action.toLowerCase();
+        return a.includes("securite") || a.includes("security") || a.includes("suspicious");
+      }).length;
+
+      return {
+        hours,
+        days,
+        heatmap,
+        heatmapDayLabels: days.map((d) => d.label),
+        activitySpark: sparkSeriesFromHours(hours, "count"),
+        errorSpark: sparkSeriesFromHours(hours, "errors"),
+        roles,
+        activeActors24h: actors.size,
+        securityAlerts7d,
+        failedLike7d,
+        deleteLike7d,
+        suspicious7d,
+        weekRows,
       };
     },
     staleTime: 30_000,

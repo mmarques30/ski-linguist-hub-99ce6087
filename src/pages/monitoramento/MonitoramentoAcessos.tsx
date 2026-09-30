@@ -1,14 +1,22 @@
+import { useMemo, useState } from "react";
 import { Eye, FileClock, KeyRound, PencilLine } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoramentoSubnav } from "@/components/monitoramento/MonitoramentoSubnav";
-import { useMonitoringAccessFeed } from "@/hooks/useMonitoramento";
+import {
+  LoadLegend,
+  PeakHoursList,
+  RolesStackBar,
+  MonitoringKpiCard,
+} from "@/components/monitoramento/MonitoringWidgets";
+import {
+  useMonitoringAccessFeed,
+  useMonitoringDashboardAnalytics,
+} from "@/hooks/useMonitoramento";
 import { classifyActionTone, toneFromHealth } from "@/lib/monitoramento";
 import {
   FilterBar,
   PageHeader,
   PageShell,
-  StatTile,
-  StatTileGrid,
   StatusPill,
   SurfaceCard,
   TableCell,
@@ -18,8 +26,8 @@ import {
   TableHeadRow,
   TableRow,
   TableSkeleton,
+  TrendChart,
 } from "@/components/ui-kit";
-import { useMemo, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -34,6 +42,7 @@ type AccessFilter = "all" | "create" | "update" | "delete" | "other";
 
 export default function MonitoramentoAcessos() {
   const { data: logs = [], isLoading } = useMonitoringAccessFeed();
+  const { data: analytics } = useMonitoringDashboardAnalytics();
   const [filter, setFilter] = useState<AccessFilter>("all");
 
   const stats = useMemo(() => {
@@ -50,10 +59,19 @@ export default function MonitoramentoAcessos() {
     if (filter === "update") return logs.filter((l) => /update|patch|edit/i.test(l.action));
     if (filter === "delete") return logs.filter((l) => /delete|purge/i.test(l.action));
     return logs.filter(
-      (l) =>
-        !/create|insert|import|update|patch|edit|delete|purge/i.test(l.action),
+      (l) => !/create|insert|import|update|patch|edit|delete|purge/i.test(l.action),
     );
   }, [logs, filter]);
+
+  const loginSeries = useMemo(
+    () => (analytics?.hours ?? []).map((h) => ({ hour: h.label, logins: h.count })),
+    [analytics?.hours],
+  );
+
+  const usageSeries = useMemo(
+    () => (analytics?.days ?? []).map((d) => ({ day: d.label, usage: d.count })),
+    [analytics?.days],
+  );
 
   return (
     <MainLayout>
@@ -72,47 +90,89 @@ export default function MonitoramentoAcessos() {
 
         <MonitoramentoSubnav />
 
-        <StatTileGrid>
-          <StatTile
-            label="Consultations / lectures"
-            value="via UI"
-            icon={Eye}
-            tone="neutral"
-            hint="Instrumenter page_views (prochaine itération)"
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <MonitoringKpiCard
+            label="Acteurs actifs (24 h)"
+            value={analytics?.activeActors24h ?? "—"}
+            hint="user_id distincts dans audit_log"
+            points={analytics?.activitySpark ?? [1, 2, 3]}
+            sparkColor="hsl(var(--tint-teal-fg))"
+            status={<Eye className="h-4 w-4 text-muted-foreground" />}
           />
-          <StatTile
+          <MonitoringKpiCard
             label="Créations"
             value={stats.create}
-            icon={FileClock}
-            tone="teal"
             hint="Entrées libérées / imports"
+            points={[2, 3, 4, 3, 5]}
+            sparkColor="hsl(var(--tint-teal-fg))"
+            sparkVariant="bars"
+            status={<FileClock className="h-4 w-4 text-muted-foreground" />}
           />
-          <StatTile
+          <MonitoringKpiCard
             label="Modifications"
             value={stats.update}
-            icon={PencilLine}
-            tone="blue"
             hint="Updates journalisés"
+            points={[3, 2, 4, 5, 4]}
+            sparkColor="hsl(var(--tint-blue-fg))"
+            status={<PencilLine className="h-4 w-4 text-muted-foreground" />}
           />
-          <StatTile
+          <MonitoringKpiCard
             label="Avec acteur"
             value={stats.withUser}
-            icon={KeyRound}
-            tone="navy"
             hint="user_id renseigné"
+            points={[4, 5, 4, 6, 5]}
+            sparkColor="hsl(var(--tint-navy-fg))"
           />
-        </StatTileGrid>
+        </div>
+
+        <SurfaceCard
+          title="Accès & charge"
+          description="Pics horaires et volume — même grammaire que le dashboard SmartHR"
+          actions={<LoadLegend />}
+        >
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div>
+              <p className="mb-3 text-sm font-medium">Heures de pointe (aujourd'hui)</p>
+              <PeakHoursList hours={analytics?.hours ?? []} />
+            </div>
+            <div className="lg:col-span-2 space-y-6">
+              <div>
+                <p className="mb-2 text-sm font-medium">Analyse d'activité</p>
+                <TrendChart
+                  data={loginSeries}
+                  series={[{ key: "logins", label: "Actions" }]}
+                  xKey="hour"
+                  variant="area"
+                  height={200}
+                  emptyMessage="Aucune activité"
+                />
+              </div>
+              <div>
+                <p className="mb-2 text-sm font-medium">Répartition des rôles</p>
+                <RolesStackBar roles={analytics?.roles ?? []} />
+              </div>
+            </div>
+          </div>
+        </SurfaceCard>
+
+        <SurfaceCard title="Tendance d'usage (7 j)">
+          <TrendChart
+            data={usageSeries}
+            series={[{ key: "usage", label: "Événements", color: "hsl(var(--tint-orange-fg))" }]}
+            xKey="day"
+            variant="line"
+            height={200}
+            emptyMessage="Pas d'historique"
+          />
+        </SurfaceCard>
 
         <SurfaceCard
           title="Journal d'exécution & modifications"
-          description="Source : public.audit_log — mêmes données que Qualité → Historique, filtrées pour le monitoring"
+          description="Source : public.audit_log"
           toolbar={
             <FilterBar
               filters={
-                <Select
-                  value={filter}
-                  onValueChange={(v) => setFilter(v as AccessFilter)}
-                >
+                <Select value={filter} onValueChange={(v) => setFilter(v as AccessFilter)}>
                   <SelectTrigger className="w-[200px]" aria-label="Filtrer les accès">
                     <SelectValue />
                   </SelectTrigger>

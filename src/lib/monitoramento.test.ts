@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  bucketByHour,
   classifyActionTone,
   computeOverallHealth,
+  errorHeatmapMatrix,
   isErrorLikeAction,
+  loadBand,
   MONITORING_SECRET_CATALOG,
   SENSITIVE_TABLES,
 } from "@/lib/monitoramento";
@@ -60,6 +63,24 @@ describe("monitoramento — modèle", () => {
       expect.arrayContaining(["GITHUB_TOKEN", "GITHUB_REPO", "SENTRY_DSN"]),
     );
     expect(SENSITIVE_TABLES.length).toBeGreaterThanOrEqual(8);
+  });
+
+  it("agrége les heures et la heatmap", () => {
+    const now = new Date();
+    now.setMinutes(0, 0, 0);
+    const iso = now.toISOString();
+    const buckets = bucketByHour([
+      { created_at: iso, action: "create" },
+      { created_at: iso, action: "error_failed" },
+    ]);
+    expect(buckets).toHaveLength(24);
+    expect(buckets[now.getHours()].count).toBe(2);
+    expect(buckets[now.getHours()].errors).toBe(1);
+    expect(loadBand(10, 10)).toBe("peak");
+
+    const matrix = errorHeatmapMatrix([{ created_at: iso, action: "security_denied" }], 7);
+    expect(matrix).toHaveLength(7);
+    expect(matrix[6][now.getHours()]).toBe(1);
   });
 });
 
@@ -125,6 +146,18 @@ describe("monitoramento — navigation & routes", () => {
     );
     expect(source("supabase/functions/monitoring-overview/index.ts")).toContain(
       "api.github.com",
+    );
+  });
+
+  it("embarque les widgets du modèle SmartHR", () => {
+    expect(source("src/components/monitoramento/MonitoringWidgets.tsx")).toContain(
+      "ErrorHeatmap",
+    );
+    expect(source("src/pages/monitoramento/MonitoramentoDashboard.tsx")).toContain(
+      "PeakHoursList",
+    );
+    expect(source("src/pages/monitoramento/MonitoramentoDashboard.tsx")).toContain(
+      "EnvToggle",
     );
   });
 });
