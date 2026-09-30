@@ -40,6 +40,10 @@ import AdminPhrases from "./pages/admin/Phrases";
 import TestingChecklist from "./pages/admin/TestingChecklist";
 import Seasons from "./pages/admin/Seasons";
 import UserManagement from "./pages/admin/UserManagement";
+import MonitoramentoDashboard from "./pages/monitoramento/MonitoramentoDashboard";
+import MonitoramentoSeguranca from "./pages/monitoramento/MonitoramentoSeguranca";
+import MonitoramentoQualidade from "./pages/monitoramento/MonitoramentoQualidade";
+import MonitoramentoAcessos from "./pages/monitoramento/MonitoramentoAcessos";
 import EvaluationsList from "./pages/formateur/EvaluationsList";
 import EvaluationForm from "./pages/formateur/EvaluationForm";
 import EvaluationView from "./pages/formateur/EvaluationView";
@@ -159,6 +163,10 @@ const App = () => (
             <Route path="/admin/testing" element={<ProtectedRoute><TestingChecklist /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
             <Route path="/admin/seasons" element={<ProtectedRoute><Seasons /></ProtectedRoute>} />
+            <Route path="/monitoramento" element={<ProtectedRoute routeKey="monitoramento"><MonitoramentoDashboard /></ProtectedRoute>} />
+            <Route path="/monitoramento/seguranca" element={<ProtectedRoute routeKey="monitoramento"><MonitoramentoSeguranca /></ProtectedRoute>} />
+            <Route path="/monitoramento/qualidade" element={<ProtectedRoute routeKey="monitoramento"><MonitoramentoQualidade /></ProtectedRoute>} />
+            <Route path="/monitoramento/acessos" element={<ProtectedRoute routeKey="monitoramento"><MonitoramentoAcessos /></ProtectedRoute>} />
             <Route
               path="/formateur/tableau-de-bord"
               element={

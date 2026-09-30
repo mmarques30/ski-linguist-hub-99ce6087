@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import {
+  Activity,
   Award,
   BadgeCheck,
   BarChart3,
@@ -320,6 +321,43 @@ export const NAV_SECTIONS: NavSection[] = [
       },
     ],
   },
+  {
+    id: "monitoramento",
+    label: CHROME_SECTIONS.monitoramento,
+    icon: Activity,
+    adminOnly: true,
+    items: [
+      {
+        id: "monitoramento-hub",
+        label: G.monitoramentoHub,
+        icon: LayoutDashboard,
+        href: "/monitoramento",
+        routeKey: "monitoramento",
+        children: [
+          {
+            href: "/monitoramento",
+            label: G.monitoramentoOverview,
+            routeKey: "monitoramento",
+          },
+          {
+            href: "/monitoramento/seguranca",
+            label: G.monitoramentoSecurite,
+            routeKey: "monitoramento",
+          },
+          {
+            href: "/monitoramento/qualidade",
+            label: G.monitoramentoQualidade,
+            routeKey: "monitoramento",
+          },
+          {
+            href: "/monitoramento/acessos",
+            label: G.monitoramentoAcessos,
+            routeKey: "monitoramento",
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 /** Navigation réduite affichée aux comptes formateur. */
@@ -427,6 +465,9 @@ export function isPathActive(pathname: string, path: string): boolean {
   }
   if (path === "/finance") {
     return pathname === "/finance";
+  }
+  if (path === "/monitoramento") {
+    return pathname === "/monitoramento";
   }
   if (path === "/finance/tresorerie") {
     return (

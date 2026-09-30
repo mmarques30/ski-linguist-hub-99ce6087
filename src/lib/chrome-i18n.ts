@@ -11,6 +11,11 @@ export const CHROME_SECTIONS: Record<string, Translations> = {
   qualite: { fr: "Qualité", "pt-BR": "Qualidade", en: "Quality" },
   portails: { fr: "Portails", "pt-BR": "Portais", en: "Portals" },
   administration: { fr: "Administration", "pt-BR": "Administração", en: "Administration" },
+  monitoramento: {
+    fr: "Monitoring",
+    "pt-BR": "Monitoramento",
+    en: "Monitoring",
+  },
 };
 
 export const CHROME_NAV: Record<string, Translations> = {
@@ -73,6 +78,26 @@ export const CHROME_NAV: Record<string, Translations> = {
   "/admin/testing": { fr: "Tests QA", "pt-BR": "Testes QA", en: "QA tests" },
   "/admin/users": { fr: "Utilisateurs", "pt-BR": "Utilizadores", en: "Users" },
   "/settings": { fr: "Paramètres", "pt-BR": "Configurações", en: "Settings" },
+  "/monitoramento": {
+    fr: "Vue d'ensemble",
+    "pt-BR": "Visão geral",
+    en: "Overview",
+  },
+  "/monitoramento/seguranca": {
+    fr: "Sécurité",
+    "pt-BR": "Segurança",
+    en: "Security",
+  },
+  "/monitoramento/qualidade": {
+    fr: "Qualité système",
+    "pt-BR": "Qualidade",
+    en: "System quality",
+  },
+  "/monitoramento/acessos": {
+    fr: "Accès système",
+    "pt-BR": "Acessos",
+    en: "System access",
+  },
 };
 
 /**
@@ -142,6 +167,21 @@ export const CHROME_NAV_GROUPS: Record<string, Translations> = {
   },
   settingsNotifications: { fr: "Notifications", "pt-BR": "Notificações", en: "Notifications" },
   settingsIntegrations: { fr: "Intégrations", "pt-BR": "Integrações", en: "Integrations" },
+
+  // Monitoring
+  monitoramentoHub: {
+    fr: "Santé du système",
+    "pt-BR": "Saúde do sistema",
+    en: "System health",
+  },
+  monitoramentoOverview: {
+    fr: "Tableau de bord",
+    "pt-BR": "Painel geral",
+    en: "Dashboard",
+  },
+  monitoramentoSecurite: CHROME_NAV["/monitoramento/seguranca"],
+  monitoramentoQualidade: CHROME_NAV["/monitoramento/qualidade"],
+  monitoramentoAcessos: CHROME_NAV["/monitoramento/acessos"],
 };
 
 export const CHROME_UI: Record<string, Translations> = {
@@ -204,4 +244,8 @@ export const CHROME_BREADCRUMB: Record<string, Translations> = {
   dashboard: { fr: "Tableau de bord", "pt-BR": "Painel", en: "Dashboard" },
   portails: CHROME_SECTIONS.portails,
   stagiaire: { fr: "Stagiaire", "pt-BR": "Aluno", en: "Student" },
+  monitoramento: CHROME_SECTIONS.monitoramento,
+  seguranca: CHROME_NAV["/monitoramento/seguranca"],
+  qualidade: CHROME_NAV["/monitoramento/qualidade"],
+  acessos: CHROME_NAV["/monitoramento/acessos"],
 };
