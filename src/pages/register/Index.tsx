@@ -101,7 +101,7 @@ export interface RegistrationData {
 }
 
 const steps = [
-  { id: 1, name: "Lieu et formation" },
+  { id: 1, name: "Formation" },
   { id: 2, name: "Informations personnelles" },
   { id: 3, name: "Profil professionnel" },
   { id: 4, name: "Test de niveau" },

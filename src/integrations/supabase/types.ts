@@ -2590,7 +2590,10 @@ export type Database = {
           date_label: string | null
           duration_hours: number
           end_date: string | null
+          enrollment_status: string
+          format_label: string | null
           id: string
+          instructor_label: string | null
           is_active: boolean
           language_key: string
           language_label: string
@@ -2598,7 +2601,10 @@ export type Database = {
           location_label: string
           modality_key: string
           modality_label: string
+          partner_price: number | null
+          partner_school_codes: string[]
           season_id: string | null
+          session_code: string | null
           sort_order: number
           start_date: string | null
           updated_at: string
@@ -2609,7 +2615,10 @@ export type Database = {
           date_label?: string | null
           duration_hours: number
           end_date?: string | null
+          enrollment_status?: string
+          format_label?: string | null
           id?: string
+          instructor_label?: string | null
           is_active?: boolean
           language_key: string
           language_label: string
@@ -2617,7 +2626,10 @@ export type Database = {
           location_label: string
           modality_key: string
           modality_label: string
+          partner_price?: number | null
+          partner_school_codes?: string[]
           season_id?: string | null
+          session_code?: string | null
           sort_order?: number
           start_date?: string | null
           updated_at?: string
@@ -2628,7 +2640,10 @@ export type Database = {
           date_label?: string | null
           duration_hours?: number
           end_date?: string | null
+          enrollment_status?: string
+          format_label?: string | null
           id?: string
+          instructor_label?: string | null
           is_active?: boolean
           language_key?: string
           language_label?: string
@@ -2636,7 +2651,10 @@ export type Database = {
           location_label?: string
           modality_key?: string
           modality_label?: string
+          partner_price?: number | null
+          partner_school_codes?: string[]
           season_id?: string | null
+          session_code?: string | null
           sort_order?: number
           start_date?: string | null
           updated_at?: string
@@ -2647,6 +2665,53 @@ export type Database = {
             columns: ["season_id"]
             isOneToOne: false
             referencedRelation: "seasons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      registration_waitlist_requests: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          notes: string | null
+          offering_id: string | null
+          phone: string | null
+          session_code: string | null
+          ski_school: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          notes?: string | null
+          offering_id?: string | null
+          phone?: string | null
+          session_code?: string | null
+          ski_school?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          notes?: string | null
+          offering_id?: string | null
+          phone?: string | null
+          session_code?: string | null
+          ski_school?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registration_waitlist_requests_offering_id_fkey"
+            columns: ["offering_id"]
+            isOneToOne: false
+            referencedRelation: "registration_offerings"
             referencedColumns: ["id"]
           },
         ]
