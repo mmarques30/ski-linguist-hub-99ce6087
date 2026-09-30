@@ -181,13 +181,14 @@ interface RegistrationPayload {
   opcoName?: string;
   opcoNafCode?: string;
   opcoCaseNotes?: string;
-  /** FIFPL — attestation CFP + droits */
+  /** FIFPL — estimation des droits (critères Moniteurs de ski) ; attestation CFP facultative */
   fifplStatus?: "independant" | "micro_entrepreneur" | null;
   fifplCfpAttestationYear?: number | null;
   fifplCfpContributionEur?: number | null;
   fifplCfpAttestationPath?: string | null;
   fifplCfpAttestationFileName?: string | null;
   fifplHadOtherTrainingThisYear?: boolean | null;
+  /** Montant déjà pris en charge FIFPL pour une autre formation cette année */
   fifplOtherAmountAlreadyCoveredEur?: number | null;
   fifplParseWarnings?: string[];
 }
@@ -216,11 +217,10 @@ function buildFifplFundingDetails(registration: RegistrationPayload): string | n
       : 0;
   // Estimation alignée sur src/lib/fifpl-funding.ts (copie Deno volontairement
   // allégée — le détail complet reste dans funding_details.fifpl).
-  const annualBase =
-    registration.modality === "online_individual" || registration.modality === "online_group"
-      ? 450
-      : 900;
+  // Visio FLI = présentiel FIFPL (pas e-learning asynchrone → pas de plafond 450 €).
+  const annualBase = 900;
   let percent = 100;
+  let provisionalMicro = false;
   if (status === "micro_entrepreneur") {
     const c = Number(contribution) || 0;
     if (c >= 116) percent = 100;
@@ -229,10 +229,27 @@ function buildFifplFundingDetails(registration: RegistrationPayload): string | n
     else if (c >= 41) percent = 60;
     else if (c >= 21) percent = 40;
     else if (c >= 1) percent = 20;
-    else percent = 0;
+    else {
+      // Sans cotisation : pire cas 20 % (aligné src/lib/fifpl-funding.ts)
+      percent = 20;
+      provisionalMicro = true;
+    }
   }
   const gross = Math.round((annualBase * percent) / 100);
   const remaining = Math.max(0, gross - (Number(already) || 0));
+  const coursePrice =
+    registration.price != null && Number(registration.price) > 0
+      ? Number(registration.price)
+      : null;
+  const coveredOnCourse =
+    coursePrice != null ? Math.min(coursePrice, remaining) : null;
+  const remainingCharge =
+    coursePrice != null && coveredOnCourse != null
+      ? Math.max(0, Math.round(coursePrice - coveredOnCourse))
+      : null;
+  const hasAttestation = Boolean(
+    registration.fifplCfpAttestationPath || registration.fifplCfpAttestationFileName
+  );
 
   return JSON.stringify({
     version: 1,
@@ -255,6 +272,10 @@ function buildFifplFundingDetails(registration: RegistrationPayload): string | n
         alreadyCoveredEur: Number(already) || 0,
         remainingRightsEur: remaining,
         annualCeilingBaseEur: annualBase,
+        isProvisionalMicroEstimate: provisionalMicro,
+        coveredOnCourseEur: coveredOnCourse,
+        remainingChargeEur: remainingCharge,
+        hasCfpAttestation: hasAttestation,
       },
     },
   });
@@ -420,24 +441,6 @@ Deno.serve(async (req) => {
     }
 
     if (isFifpl) {
-      if (!registration.fifplCfpAttestationPath && !registration.fifplCfpAttestationFileName) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: "Déposez votre attestation CFP téléchargeable depuis votre espace URSSAF.",
-          }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (registration.fifplCfpAttestationYear !== 2026) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: "L’attestation CFP doit dater de 2026.",
-          }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
       if (
         registration.fifplStatus !== "independant" &&
         registration.fifplStatus !== "micro_entrepreneur"
@@ -450,6 +453,29 @@ Deno.serve(async (req) => {
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+      const hasAttestation = Boolean(
+        registration.fifplCfpAttestationPath || registration.fifplCfpAttestationFileName
+      );
+      if (hasAttestation) {
+        if (registration.fifplCfpAttestationYear == null) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: "Indiquez l’année de l’attestation CFP (attendu : 2026).",
+            }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (registration.fifplCfpAttestationYear !== 2026) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: "L’attestation CFP doit dater de 2026.",
+            }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
       if (
         registration.fifplStatus === "micro_entrepreneur" &&
         !(Number(registration.fifplCfpContributionEur) >= 1)
@@ -457,7 +483,8 @@ Deno.serve(async (req) => {
         return new Response(
           JSON.stringify({
             success: false,
-            error: "Indiquez le montant de votre cotisation CFP (micro-entrepreneur).",
+            error:
+              "Indiquez le montant de votre cotisation CFP (micro-entrepreneur) pour estimer vos droits.",
           }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
@@ -470,19 +497,22 @@ Deno.serve(async (req) => {
           JSON.stringify({
             success: false,
             error:
-              "Indiquez si vous avez déjà suivi une formation prise en charge par le FIFPL en 2026.",
+              "Indiquez si vous avez déjà bénéficié d’une prise en charge FIFPL en 2026.",
           }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       if (
         registration.fifplHadOtherTrainingThisYear === true &&
-        !(Number(registration.fifplOtherAmountAlreadyCoveredEur) >= 0)
+        (registration.fifplOtherAmountAlreadyCoveredEur == null ||
+          !Number.isFinite(Number(registration.fifplOtherAmountAlreadyCoveredEur)) ||
+          Number(registration.fifplOtherAmountAlreadyCoveredEur) < 0)
       ) {
         return new Response(
           JSON.stringify({
             success: false,
-            error: "Indiquez le montant déjà pris en charge par le FIFPL cette année.",
+            error:
+              "Indiquez le montant déjà pris en charge par le FIFPL pour cette autre formation.",
           }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );

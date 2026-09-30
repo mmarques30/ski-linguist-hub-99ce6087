@@ -382,6 +382,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                       data.fifplHadOtherTrainingThisYear === true
                         ? data.fifplOtherAmountAlreadyCoveredEur
                         : 0,
+                    coursePriceEur: data.price ?? null,
                   })?.remainingRightsEur ?? null
                 )}
               </AlertDescription>
@@ -522,6 +523,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                       data.fifplHadOtherTrainingThisYear === true
                         ? data.fifplOtherAmountAlreadyCoveredEur
                         : 0,
+                    coursePriceEur: data.price ?? null,
                   })?.remainingRightsEur ?? null
                 )}
               </AlertDescription>

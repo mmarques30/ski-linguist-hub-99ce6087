@@ -21,10 +21,17 @@ import { OptionCard, SummaryPanel, SummaryRow } from "./StepLayout";
 interface FifplCfpSectionProps {
   questionnaire: FifplQuestionnaire;
   modality?: string;
+  /** Tarif formation (€) — pour estimer la prise en charge sur ce stage. */
+  coursePriceEur?: number | null;
   onChange: (patch: Partial<FifplQuestionnaire>) => void;
 }
 
-export function FifplCfpSection({ questionnaire, modality, onChange }: FifplCfpSectionProps) {
+export function FifplCfpSection({
+  questionnaire,
+  modality,
+  coursePriceEur,
+  onChange,
+}: FifplCfpSectionProps) {
   const [analyzing, setAnalyzing] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -38,6 +45,7 @@ export function FifplCfpSection({ questionnaire, modality, onChange }: FifplCfpS
     cfpContributionEur: questionnaire.cfpContributionEur,
     modality,
     alreadyCoveredEur: alreadyCovered,
+    coursePriceEur: coursePriceEur ?? null,
   });
 
   const handleFile = async (file: File | undefined) => {
@@ -80,6 +88,9 @@ export function FifplCfpSection({ questionnaire, modality, onChange }: FifplCfpS
   };
 
   const busy = analyzing || uploading;
+  const hasAttestation = Boolean(
+    questionnaire.cfpAttestationPath || questionnaire.cfpAttestationFileName
+  );
 
   return (
     <div className="space-y-6">
@@ -91,84 +102,8 @@ export function FifplCfpSection({ questionnaire, modality, onChange }: FifplCfpS
         </AlertDescription>
       </Alert>
 
-      <div className="space-y-2">
-        <Label htmlFor="cfp-attestation">Attestation CFP URSSAF {FIFPL_CRITERIA_YEAR} *</Label>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Input
-            id="cfp-attestation"
-            type="file"
-            accept="application/pdf,.pdf,image/jpeg,image/png"
-            disabled={busy}
-            className="h-11 cursor-pointer"
-            onChange={(e) => void handleFile(e.target.files?.[0])}
-          />
-          {busy && (
-            <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              {analyzing ? "Analyse…" : "Dépôt…"}
-            </span>
-          )}
-        </div>
-        {questionnaire.cfpAttestationFileName && (
-          <p className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Upload className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            {questionnaire.cfpAttestationFileName}
-            {questionnaire.cfpAttestationPath ? " — déposée" : ""}
-          </p>
-        )}
-        {questionnaire.parseWarnings.length > 0 && (
-          <Alert variant="destructive">
-            <AlertDescription className="space-y-1 text-sm">
-              {questionnaire.parseWarnings.map((w) => (
-                <p key={w}>{w}</p>
-              ))}
-            </AlertDescription>
-          </Alert>
-        )}
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="cfp-year">Année de l&apos;attestation *</Label>
-          <Input
-            id="cfp-year"
-            type="number"
-            inputMode="numeric"
-            value={questionnaire.cfpAttestationYear ?? ""}
-            onChange={(e) =>
-              onChange({
-                cfpAttestationYear: e.target.value ? Number(e.target.value) : null,
-              })
-            }
-            placeholder={String(FIFPL_CRITERIA_YEAR)}
-            className="h-11"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="cfp-amount">Cotisation CFP (€)</Label>
-          <Input
-            id="cfp-amount"
-            type="number"
-            inputMode="decimal"
-            min={0}
-            step="0.01"
-            value={questionnaire.cfpContributionEur ?? ""}
-            onChange={(e) =>
-              onChange({
-                cfpContributionEur: e.target.value ? Number(e.target.value) : null,
-              })
-            }
-            placeholder="Ex. 87,50"
-            className="h-11"
-          />
-          <p className="text-xs text-muted-foreground">
-            Obligatoire pour les micro-entrepreneurs (grille FIFPL).
-          </p>
-        </div>
-      </div>
-
       <div className="space-y-3">
-        <Label>Votre statut professionnel *</Label>
+        <Label>{FIFPL_REGISTER_COPY.statusLabel} *</Label>
         <RadioGroup
           value={questionnaire.status ?? ""}
           onValueChange={(value) => onChange({ status: value as FifplProfessionalStatus })}
@@ -180,7 +115,7 @@ export function FifplCfpSection({ questionnaire, modality, onChange }: FifplCfpS
               className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
             >
               <RadioGroupItem value="independant" id="fifpl-independant" />
-              Indépendant — 100 % des critères
+              {FIFPL_REGISTER_COPY.statusIndependant}
             </Label>
           </OptionCard>
           <OptionCard selected={questionnaire.status === "micro_entrepreneur"}>
@@ -189,10 +124,115 @@ export function FifplCfpSection({ questionnaire, modality, onChange }: FifplCfpS
               className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
             >
               <RadioGroupItem value="micro_entrepreneur" id="fifpl-micro" />
-              Micro-entrepreneur — selon cotisation CFP
+              {FIFPL_REGISTER_COPY.statusMicro}
             </Label>
           </OptionCard>
         </RadioGroup>
+      </div>
+
+      <div className="space-y-4 border-t border-border pt-4">
+        <div className="space-y-2">
+          <Label htmlFor="cfp-attestation">{FIFPL_REGISTER_COPY.attestationUploadLabel}</Label>
+          <p className="text-xs text-muted-foreground">
+            {FIFPL_REGISTER_COPY.attestationUploadHelp}
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Input
+              id="cfp-attestation"
+              type="file"
+              accept="application/pdf,.pdf,image/jpeg,image/png"
+              disabled={busy}
+              className="h-11 cursor-pointer"
+              onChange={(e) => void handleFile(e.target.files?.[0])}
+            />
+            {busy && (
+              <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {analyzing ? "Analyse…" : "Dépôt…"}
+              </span>
+            )}
+          </div>
+          {questionnaire.cfpAttestationFileName && (
+            <p className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Upload className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              {questionnaire.cfpAttestationFileName}
+              {questionnaire.cfpAttestationPath ? " — déposée" : ""}
+            </p>
+          )}
+          {questionnaire.parseWarnings.length > 0 && (
+            <Alert variant="destructive">
+              <AlertDescription className="space-y-1 text-sm">
+                {questionnaire.parseWarnings.map((w) => (
+                  <p key={w}>{w}</p>
+                ))}
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {hasAttestation && (
+            <div className="space-y-2">
+              <Label htmlFor="cfp-year">Année de l&apos;attestation *</Label>
+              <Input
+                id="cfp-year"
+                type="number"
+                inputMode="numeric"
+                value={questionnaire.cfpAttestationYear ?? ""}
+                onChange={(e) =>
+                  onChange({
+                    cfpAttestationYear: e.target.value ? Number(e.target.value) : null,
+                  })
+                }
+                placeholder={String(FIFPL_CRITERIA_YEAR)}
+                className="h-11"
+              />
+            </div>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="cfp-amount">
+              Cotisation CFP (€)
+              {questionnaire.status === "micro_entrepreneur" ? " *" : ""}
+            </Label>
+            <Input
+              id="cfp-amount"
+              type="number"
+              inputMode="decimal"
+              min={0}
+              step="0.01"
+              value={questionnaire.cfpContributionEur ?? ""}
+              onChange={(e) =>
+                onChange({
+                  cfpContributionEur: e.target.value ? Number(e.target.value) : null,
+                })
+              }
+              placeholder="Ex. 87,50"
+              className="h-11"
+            />
+            <p className="text-xs text-muted-foreground">
+              {FIFPL_REGISTER_COPY.contributionHelp}
+            </p>
+          </div>
+        </div>
+
+        {hasAttestation && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-fit"
+            onClick={() =>
+              onChange({
+                cfpAttestationPath: null,
+                cfpAttestationFileName: null,
+                cfpAttestationYear: null,
+                parseWarnings: [],
+              })
+            }
+          >
+            Retirer l&apos;attestation
+          </Button>
+        )}
       </div>
 
       <div className="space-y-3">
@@ -276,30 +316,33 @@ export function FifplCfpSection({ questionnaire, modality, onChange }: FifplCfpS
             value={formatPriceEUR(rights.remainingRightsEur)}
             emphasis
           />
-          {rights.isElearning && (
-            <p className="pt-1 text-xs text-muted-foreground">
-              Formation e-learning : plafonds réduits de 50 % selon les critères FIFPL.
+          {rights.coveredOnCourseEur != null && rights.remainingChargeEur != null && (
+            <>
+              <SummaryRow
+                label="Prise en charge estimée sur cette formation"
+                value={formatPriceEUR(rights.coveredOnCourseEur)}
+              />
+              <SummaryRow
+                label="Reste à charge estimé"
+                value={formatPriceEUR(rights.remainingChargeEur)}
+              />
+            </>
+          )}
+          {rights.isProvisionalMicroEstimate && (
+            <p className="pt-1 text-xs text-[hsl(var(--status-warning))]">
+              Estimation provisoire (pire cas 20 %) — saisissez votre cotisation CFP pour affiner.
             </p>
           )}
+          {rights.isElearning && (
+            <p className="pt-1 text-xs text-muted-foreground">
+              Formation e-learning asynchrone : plafonds réduits de 50 % selon les critères
+              FIFPL (hors visio FLI, traitée comme du présentiel).
+            </p>
+          )}
+          <p className="pt-2 text-xs text-muted-foreground">
+            {FIFPL_REGISTER_COPY.estimateDisclaimer}
+          </p>
         </SummaryPanel>
-      )}
-
-      {questionnaire.cfpAttestationPath && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="w-fit"
-          onClick={() =>
-            onChange({
-              cfpAttestationPath: null,
-              cfpAttestationFileName: null,
-              parseWarnings: [],
-            })
-          }
-        >
-          Remplacer l&apos;attestation
-        </Button>
       )}
     </div>
   );

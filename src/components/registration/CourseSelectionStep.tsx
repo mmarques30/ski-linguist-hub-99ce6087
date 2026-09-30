@@ -704,7 +704,8 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                       FIFPL
                     </span>
                     <span className="block pl-7 text-xs text-muted-foreground">
-                      Prise en charge FIFPL — attestation CFP URSSAF requise.
+                      Prise en charge FIFPL (moniteurs de ski). Estimation des droits
+                      selon les critères 2026 — attestation CFP facultative à ce stade.
                     </span>
                   </Label>
                 </OptionCard>
@@ -716,6 +717,10 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                     <span className="flex min-h-6 items-center gap-3">
                       <RadioGroupItem value="opco" id="opco" />
                       OPCO
+                    </span>
+                    <span className="block pl-7 text-xs text-muted-foreground">
+                      Financement par votre OPCO — votre dossier sera étudié par FLI. Aucun frais
+                      ne sera facturé pour le moment.
                     </span>
                   </Label>
                 </OptionCard>

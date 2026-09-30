@@ -4,6 +4,7 @@ import {
   estimateFifplRights,
   FIFPL_ANNUAL_CEILING_EUR,
   FIFPL_CRITERIA_YEAR,
+  FIFPL_REGISTER_COPY,
   formatFifplQuestionnaireSummary,
   microPercentFromCfpContribution,
   parseCfpAttestationText,
@@ -11,7 +12,7 @@ import {
 } from "./fifpl-funding";
 
 describe("fifpl-funding — grille micro CFP 2026", () => {
-  it("applique le tableau page 3", () => {
+  it("applique le tableau page 3 des critères Moniteurs de ski", () => {
     expect(microPercentFromCfpContribution(10)).toBe(20);
     expect(microPercentFromCfpContribution(21)).toBe(40);
     expect(microPercentFromCfpContribution(80)).toBe(60);
@@ -31,19 +32,54 @@ describe("fifpl-funding — grille micro CFP 2026", () => {
     expect(rights?.rightsPercent).toBe(100);
     expect(rights?.grossRightsEur).toBe(FIFPL_ANNUAL_CEILING_EUR);
     expect(rights?.remainingRightsEur).toBe(600);
+    expect(rights?.isProvisionalMicroEstimate).toBe(false);
   });
 
-  it("réduit le plafond e-learning de 50 % avant le % micro", () => {
+  it("estime la prise en charge sur le tarif de la formation", () => {
+    const rights = estimateFifplRights({
+      status: "independant",
+      cfpContributionEur: null,
+      alreadyCoveredEur: 200,
+      coursePriceEur: 1200,
+    });
+    expect(rights?.remainingRightsEur).toBe(700);
+    expect(rights?.coveredOnCourseEur).toBe(700);
+    expect(rights?.remainingChargeEur).toBe(500);
+  });
+
+  it("traite la visio FLI (online_*) comme du présentiel FIFPL, pas e-learning", () => {
+    for (const modality of ["online_individual", "online_group", "in_person", "en_ligne_groupe"]) {
+      const rights = estimateFifplRights({
+        status: "independant",
+        cfpContributionEur: null,
+        modality,
+        alreadyCoveredEur: 0,
+      });
+      expect(rights?.annualCeilingBaseEur).toBe(FIFPL_ANNUAL_CEILING_EUR);
+      expect(rights?.isElearning).toBe(false);
+    }
+  });
+
+  it("réduit le plafond uniquement pour l’e-learning asynchrone", () => {
     const rights = estimateFifplRights({
       status: "micro_entrepreneur",
       cfpContributionEur: 50, // 60 %
-      modality: "online_individual",
+      modality: "elearning",
       alreadyCoveredEur: 0,
     });
     // base 450 × 60 % = 270
     expect(rights?.annualCeilingBaseEur).toBe(450);
     expect(rights?.grossRightsEur).toBe(270);
     expect(rights?.isElearning).toBe(true);
+  });
+
+  it("utilise le pire cas 20 % pour un micro sans cotisation (aperçu seulement)", () => {
+    const rights = estimateFifplRights({
+      status: "micro_entrepreneur",
+      cfpContributionEur: null,
+    });
+    expect(rights?.rightsPercent).toBe(20);
+    expect(rights?.isProvisionalMicroEstimate).toBe(true);
   });
 });
 
@@ -69,21 +105,62 @@ describe("fifpl-funding — parse attestation", () => {
   });
 });
 
-describe("fifpl-funding — validation", () => {
-  it("exige attestation, statut et question autre formation", () => {
-    expect(validateFifplQuestionnaire(EMPTY_FIFPL_QUESTIONNAIRE)).toMatch(/attestation CFP/i);
+describe("fifpl-funding — validation (pas de dépôt « plus tard »)", () => {
+  it("exige le statut professionnel en premier", () => {
+    expect(validateFifplQuestionnaire(EMPTY_FIFPL_QUESTIONNAIRE)).toMatch(
+      /indépendant ou micro-entrepreneur/i
+    );
+  });
 
+  it("autorise de continuer sans attestation CFP", () => {
     expect(
       validateFifplQuestionnaire({
         ...EMPTY_FIFPL_QUESTIONNAIRE,
-        cfpAttestationFileName: "cfp.pdf",
-        cfpAttestationPath: "register/cfp/x.pdf",
-        cfpAttestationYear: FIFPL_CRITERIA_YEAR,
         status: "independant",
         hadOtherFifplTrainingThisYear: false,
       })
     ).toBeNull();
+  });
 
+  it("exige la cotisation CFP pour un micro-entrepreneur", () => {
+    expect(
+      validateFifplQuestionnaire({
+        ...EMPTY_FIFPL_QUESTIONNAIRE,
+        status: "micro_entrepreneur",
+        hadOtherFifplTrainingThisYear: false,
+      })
+    ).toMatch(/cotisation CFP/i);
+
+    expect(
+      validateFifplQuestionnaire({
+        ...EMPTY_FIFPL_QUESTIONNAIRE,
+        status: "micro_entrepreneur",
+        cfpContributionEur: 50,
+        hadOtherFifplTrainingThisYear: false,
+      })
+    ).toBeNull();
+  });
+
+  it("exige le montant déjà pris en charge si autre formation FIFPL", () => {
+    expect(
+      validateFifplQuestionnaire({
+        ...EMPTY_FIFPL_QUESTIONNAIRE,
+        status: "independant",
+        hadOtherFifplTrainingThisYear: true,
+      })
+    ).toMatch(/montant déjà pris en charge/i);
+
+    expect(
+      validateFifplQuestionnaire({
+        ...EMPTY_FIFPL_QUESTIONNAIRE,
+        status: "independant",
+        hadOtherFifplTrainingThisYear: true,
+        otherFifplAmountAlreadyCoveredEur: 250,
+      })
+    ).toBeNull();
+  });
+
+  it("refuse une attestation hors année critères si déposée", () => {
     expect(
       validateFifplQuestionnaire({
         ...EMPTY_FIFPL_QUESTIONNAIRE,
@@ -94,6 +171,15 @@ describe("fifpl-funding — validation", () => {
         hadOtherFifplTrainingThisYear: false,
       })
     ).toMatch(/2026/);
+  });
+
+  it("rappelle que l'attestation est facultative et demande le montant autre formation", () => {
+    expect(FIFPL_REGISTER_COPY.sectionDescription.toLowerCase()).toMatch(/facultative/);
+    expect(FIFPL_REGISTER_COPY.sectionDescription.toLowerCase()).not.toMatch(/plus tard/);
+    expect(FIFPL_REGISTER_COPY.alreadyCoveredLabel.toLowerCase()).toMatch(/pris en charge/);
+    expect(FIFPL_REGISTER_COPY.otherTrainingHelp.toLowerCase()).toMatch(/déduit/);
+    expect(FIFPL_REGISTER_COPY.confirmationAlert(600)).toMatch(/600/);
+    expect(FIFPL_REGISTER_COPY.confirmationAlert(null)).not.toMatch(/plus tard/);
   });
 
   it("résume pour observations", () => {
@@ -111,10 +197,13 @@ describe("fifpl-funding — validation", () => {
       status: q.status,
       cfpContributionEur: q.cfpContributionEur,
       alreadyCoveredEur: q.otherFifplAmountAlreadyCoveredEur,
+      coursePriceEur: 800,
     });
     const summary = formatFifplQuestionnaireSummary(q, rights);
     expect(summary).toContain("micro-entrepreneur");
     expect(summary).toContain("100 €");
     expect(summary).toContain("reste");
+    expect(summary).toContain("prise en charge estimée");
+    expect(summary).toContain(String(FIFPL_CRITERIA_YEAR));
   });
 });

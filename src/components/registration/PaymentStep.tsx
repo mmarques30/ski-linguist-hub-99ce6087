@@ -260,6 +260,7 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
             <FifplCfpSection
               questionnaire={fifplQuestionnaire}
               modality={data.modality}
+              coursePriceEur={hasPrice ? coursePrice : null}
               onChange={patchFifpl}
             />
           </StepCard>
@@ -297,6 +298,7 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
           <FifplCfpSection
             questionnaire={fifplQuestionnaire}
             modality={data.modality}
+            coursePriceEur={coursePrice}
             onChange={patchFifpl}
           />
         </StepCard>

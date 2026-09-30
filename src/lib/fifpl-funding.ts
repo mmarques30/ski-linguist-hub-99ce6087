@@ -1,12 +1,15 @@
 /**
- * FIFPL — moniteurs de ski 2026 (critères profession 8551 Z).
+ * FIFPL — moniteurs de ski 2026 (profession 8551 Z).
  *
  * Source : « Critères de prise en charge Moniteurs de ski 2026.pdf »
- * - Plafond annuel cœur de métier : 900 € (langues étrangères = cœur de métier)
+ * (Conseil de Gestion du 20 novembre 2025) :
+ * - Formations cœur de métier (dont langues étrangères) : plafond 900 € / an,
+ *   300 € / jour, au coût réel
+ * - E-learning asynchrone : 50 % des critères journaliers et annuels
+ *   (la visio FLI synchrone compte comme du présentiel — plafond 900 €)
  * - Indépendants : 100 % des critères
  * - Micro-entrepreneurs : % selon cotisation CFP (tableau page 3)
- * - E-learning : 50 % des critères journaliers et annuels
- * - Autre formation FIFPL déjà prise en charge cette année : déduite des droits
+ * - Autre formation déjà prise en charge sur le forfait annuel : déduite des droits
  */
 
 export const FIFPL_CRITERIA_YEAR = 2026;
@@ -17,7 +20,10 @@ export const FIFPL_ANNUAL_CEILING_EUR = 900;
 /** Plafond journalier cœur de métier. */
 export const FIFPL_DAILY_CEILING_EUR = 300;
 
-/** E-learning : 50 % des critères annuels / journaliers. */
+/**
+ * E-learning asynchrone uniquement : 50 % des critères annuels / journaliers.
+ * Les formations FLI en visio (synchrone) sont traitées comme du présentiel FIFPL.
+ */
 export const FIFPL_ELEARNING_FACTOR = 0.5;
 
 export type FifplProfessionalStatus = "independant" | "micro_entrepreneur";
@@ -39,11 +45,11 @@ export const FIFPL_MICRO_CFP_BRACKETS: ReadonlyArray<{
 export interface FifplQuestionnaire {
   /** Indépendant (100 %) ou micro-entrepreneur (grille CFP). */
   status: FifplProfessionalStatus | null;
-  /** Année de l'attestation CFP URSSAF (doit être 2026). */
+  /** Année de l'attestation CFP URSSAF (si déposée). */
   cfpAttestationYear: number | null;
-  /** Montant de cotisation CFP lu / saisi (€). Requis pour les micro. */
+  /** Montant de cotisation CFP (€) — pour les micro. */
   cfpContributionEur: number | null;
-  /** Chemin storage après upload (bucket documents). */
+  /** Chemin storage après upload (bucket documents) — facultatif. */
   cfpAttestationPath: string | null;
   cfpAttestationFileName: string | null;
   /** Autre formation déjà prise en charge FIFPL cette année ? */
@@ -75,18 +81,40 @@ export const EMPTY_FIFPL_QUESTIONNAIRE: FifplQuestionnaire = {
 
 export interface FifplRightsEstimate {
   criteriaYear: number;
+  /** Plafond annuel applicable (900 €, ou 450 € si e-learning). */
   annualCeilingBaseEur: number;
   isElearning: boolean;
   rightsPercent: number;
+  /** Droits bruts = plafond annuel × taux (avant déduction). */
   grossRightsEur: number;
+  /** Montant déjà pris en charge FIFPL cette année (saisi). */
   alreadyCoveredEur: number;
+  /** Droits restants sur le forfait annuel après déduction. */
   remainingRightsEur: number;
   dailyCeilingEur: number;
+  /** true si micro sans cotisation → pire cas 20 %. */
+  isProvisionalMicroEstimate: boolean;
+  /** Si tarif formation fourni : prise en charge estimée sur ce stage. */
+  coveredOnCourseEur: number | null;
+  /** Si tarif formation fourni : reste à charge estimé. */
+  remainingChargeEur: number | null;
 }
 
+/**
+ * Plafond e-learning FIFPL (50 %) = formations asynchrones uniquement.
+ * Les modalités FLI `online_*` / `en_ligne_*` sont de la visio synchrone :
+ * elles comptent comme du présentiel (plafond 900 €), pas comme e-learning.
+ */
 export function isElearningModality(modality: string | null | undefined): boolean {
-  const m = (modality || "").trim();
-  return m === "online_individual" || m === "online_group" || m === "en_ligne_individuel" || m === "en_ligne_groupe";
+  const m = (modality || "").trim().toLowerCase();
+  if (!m) return false;
+  return (
+    m === "elearning" ||
+    m === "e_learning" ||
+    m === "e-learning" ||
+    m === "asynchrone" ||
+    m === "async"
+  );
 }
 
 export function microPercentFromCfpContribution(contributionEur: number): number | null {
@@ -109,14 +137,25 @@ export function rightsPercentForStatus(
   return microPercentFromCfpContribution(cfpContributionEur);
 }
 
+/**
+ * Estimation des droits selon les critères Moniteurs de ski 2026.
+ * Langues étrangères = cœur de métier (900 € / an, 300 € / jour).
+ */
 export function estimateFifplRights(input: {
   status: FifplProfessionalStatus | null;
   cfpContributionEur: number | null;
   modality?: string | null;
   alreadyCoveredEur?: number | null;
+  /** Tarif formation (€) — pour estimer la prise en charge sur ce stage. */
+  coursePriceEur?: number | null;
 }): FifplRightsEstimate | null {
   if (!input.status) return null;
-  const percent = rightsPercentForStatus(input.status, input.cfpContributionEur);
+  let percent = rightsPercentForStatus(input.status, input.cfpContributionEur);
+  let isProvisionalMicroEstimate = false;
+  if (percent == null && input.status === "micro_entrepreneur") {
+    percent = 20;
+    isProvisionalMicroEstimate = true;
+  }
   if (percent == null) return null;
 
   const elearning = isElearningModality(input.modality);
@@ -131,6 +170,17 @@ export function estimateFifplRights(input: {
   const already = Math.max(0, Number(input.alreadyCoveredEur) || 0);
   const remaining = Math.max(0, gross - already);
 
+  const coursePrice =
+    input.coursePriceEur != null && Number.isFinite(input.coursePriceEur) && input.coursePriceEur > 0
+      ? Number(input.coursePriceEur)
+      : null;
+  const coveredOnCourseEur =
+    coursePrice != null ? Math.min(coursePrice, remaining) : null;
+  const remainingChargeEur =
+    coursePrice != null && coveredOnCourseEur != null
+      ? Math.max(0, Math.round(coursePrice - coveredOnCourseEur))
+      : null;
+
   return {
     criteriaYear: FIFPL_CRITERIA_YEAR,
     annualCeilingBaseEur: annualBase,
@@ -140,12 +190,14 @@ export function estimateFifplRights(input: {
     alreadyCoveredEur: already,
     remainingRightsEur: remaining,
     dailyCeilingEur: dailyBase,
+    isProvisionalMicroEstimate,
+    coveredOnCourseEur,
+    remainingChargeEur,
   };
 }
 
 /**
  * Extrait année et montant cotisation depuis le texte d'une attestation CFP URSSAF.
- * Heuristiques tolérantes : les modèles URSSAF varient.
  */
 export function parseCfpAttestationText(text: string): {
   year: number | null;
@@ -195,7 +247,7 @@ export function parseCfpAttestationText(text: string): {
   }
   if (contributionEur == null) {
     warnings.push(
-      "Montant de cotisation CFP introuvable dans le PDF — saisissez-le manuellement (obligatoire pour les micro-entrepreneurs)."
+      "Montant de cotisation CFP introuvable dans le PDF — saisissez-le manuellement (nécessaire pour les micro-entrepreneurs)."
     );
   }
 
@@ -210,32 +262,34 @@ export function parseCfpAttestationText(text: string): {
 }
 
 export function validateFifplQuestionnaire(q: FifplQuestionnaire): string | null {
-  if (!q.cfpAttestationPath && !q.cfpAttestationFileName) {
-    return "Déposez votre attestation CFP téléchargeable depuis votre espace URSSAF.";
-  }
-  if (q.cfpAttestationYear == null) {
-    return `Indiquez l’année de l’attestation CFP (attendu : ${FIFPL_CRITERIA_YEAR}).`;
-  }
-  if (q.cfpAttestationYear !== FIFPL_CRITERIA_YEAR) {
-    return `L’attestation doit dater de ${FIFPL_CRITERIA_YEAR}. Téléchargez-la depuis votre espace URSSAF.`;
-  }
   if (!q.status) {
     return "Indiquez si vous êtes indépendant ou micro-entrepreneur.";
   }
+  // Attestation facultative : si un fichier est joint, l'année doit coller aux critères.
+  const hasAttestation = Boolean(q.cfpAttestationPath || q.cfpAttestationFileName);
+  if (hasAttestation) {
+    if (q.cfpAttestationYear == null) {
+      return `Indiquez l’année de l’attestation CFP (attendu : ${FIFPL_CRITERIA_YEAR}).`;
+    }
+    if (q.cfpAttestationYear !== FIFPL_CRITERIA_YEAR) {
+      return `L’attestation doit dater de ${FIFPL_CRITERIA_YEAR}. Téléchargez-la depuis votre espace URSSAF.`;
+    }
+  }
   if (q.status === "micro_entrepreneur") {
     if (q.cfpContributionEur == null || !(q.cfpContributionEur >= 1)) {
-      return "Indiquez le montant de votre cotisation CFP (micro-entrepreneur).";
+      return "Indiquez le montant de votre cotisation CFP (micro-entrepreneur) pour estimer vos droits.";
     }
   }
   if (q.hadOtherFifplTrainingThisYear === null) {
-    return `Indiquez si vous avez déjà suivi une formation prise en charge par le FIFPL en ${FIFPL_CRITERIA_YEAR}.`;
+    return `Indiquez si vous avez déjà bénéficié d’une prise en charge FIFPL en ${FIFPL_CRITERIA_YEAR}.`;
   }
-  if (q.hadOtherFifplTrainingThisYear) {
+  if (q.hadOtherFifplTrainingThisYear === true) {
     if (
       q.otherFifplAmountAlreadyCoveredEur == null ||
-      !(q.otherFifplAmountAlreadyCoveredEur >= 0)
+      !Number.isFinite(q.otherFifplAmountAlreadyCoveredEur) ||
+      q.otherFifplAmountAlreadyCoveredEur < 0
     ) {
-      return "Indiquez le montant déjà pris en charge par le FIFPL cette année.";
+      return "Indiquez le montant déjà pris en charge par le FIFPL pour cette autre formation.";
     }
   }
   return null;
@@ -246,35 +300,45 @@ export function formatFifplQuestionnaireSummary(
   rights: FifplRightsEstimate | null
 ): string {
   const lines = [
-    `Financement FIFPL ${FIFPL_CRITERIA_YEAR} — attestation CFP URSSAF + estimation des droits.`,
+    `Financement FIFPL ${FIFPL_CRITERIA_YEAR} — estimation selon critères Moniteurs de ski (8551 Z).`,
   ];
   if (q.status === "independant") lines.push("Statut : indépendant (100 % des critères).");
   if (q.status === "micro_entrepreneur") {
     lines.push(
-      `Statut : micro-entrepreneur — cotisation CFP ${q.cfpContributionEur ?? "?"} € → ${rights?.rightsPercent ?? "?"} % des critères.`
+      `Statut : micro-entrepreneur — cotisation CFP ${q.cfpContributionEur ?? "?"} € → ${rights?.rightsPercent ?? "?"} % des critères` +
+        (rights?.isProvisionalMicroEstimate ? " (estimation provisoire 20 %)" : "") +
+        "."
     );
   }
-  if (q.cfpAttestationYear != null) {
-    lines.push(`Attestation CFP année : ${q.cfpAttestationYear}`);
-  }
   if (q.cfpAttestationFileName) {
-    lines.push(`Fichier : ${q.cfpAttestationFileName}`);
+    lines.push(
+      `Attestation CFP : ${q.cfpAttestationFileName}` +
+        (q.cfpAttestationYear != null ? ` (${q.cfpAttestationYear})` : "")
+    );
+  } else {
+    lines.push("Attestation CFP : non jointe.");
   }
   if (q.cfpAttestationPath) {
     lines.push(`Stockage : ${q.cfpAttestationPath}`);
   }
   if (q.hadOtherFifplTrainingThisYear === true) {
     lines.push(
-      `Autre formation FIFPL ${FIFPL_CRITERIA_YEAR} : oui — déjà pris en charge ${q.otherFifplAmountAlreadyCoveredEur ?? 0} € (déduit des droits).`
+      `Autre formation FIFPL ${FIFPL_CRITERIA_YEAR} : oui — montant déjà pris en charge ${q.otherFifplAmountAlreadyCoveredEur ?? 0} € (déduit du plafond annuel).`
     );
   } else if (q.hadOtherFifplTrainingThisYear === false) {
     lines.push(`Autre formation FIFPL ${FIFPL_CRITERIA_YEAR} : non`);
   }
   if (rights) {
     lines.push(
-      `Droits estimés : ${rights.grossRightsEur} € bruts · reste ${rights.remainingRightsEur} €` +
-        (rights.isElearning ? " (plafond e-learning 50 %)" : "")
+      `Droits estimés : plafond ${rights.annualCeilingBaseEur} € × ${rights.rightsPercent} % = ${rights.grossRightsEur} € bruts · reste ${rights.remainingRightsEur} €` +
+        (rights.isElearning ? " (e-learning : 50 % des critères)" : "") +
+        " — indicatif, seul l’accord du FIFPL fait foi."
     );
+    if (rights.coveredOnCourseEur != null && rights.remainingChargeEur != null) {
+      lines.push(
+        `Sur cette formation : prise en charge estimée ${rights.coveredOnCourseEur} € · reste à charge estimé ${rights.remainingChargeEur} €.`
+      );
+    }
   }
   if (q.parseWarnings.length) {
     lines.push(`Alertes parseur : ${q.parseWarnings.join(" · ")}`);
@@ -284,17 +348,27 @@ export function formatFifplQuestionnaireSummary(
 
 export const FIFPL_REGISTER_COPY = {
   fundingChoiceHelp:
-    "Prise en charge FIFPL (moniteurs de ski) — attestation CFP URSSAF requise pour vérifier vos droits.",
-  sectionTitle: "Attestation CFP et droits FIFPL",
-  sectionDescription: `Pour une prise en charge FIFPL ${FIFPL_CRITERIA_YEAR}, déposez votre attestation de contribution à la formation professionnelle (CFP), téléchargeable depuis votre espace URSSAF. Elle sert à vérifier votre éligibilité et sera également demandée par le FIFPL.`,
+    "Prise en charge FIFPL (moniteurs de ski) — estimation des droits selon les critères 2026.",
+  sectionTitle: "Droits FIFPL",
+  sectionDescription: `Si vous le souhaitez, nous pouvons vous aider à estimer vos droits FIFPL ${FIFPL_CRITERIA_YEAR} selon les critères Moniteurs de ski (8551 Z) : plafond annuel 900 € pour les langues (cœur de métier), proportionnel à la cotisation CFP pour les micro-entrepreneurs. L’attestation CFP URSSAF est facultative à ce stade.`,
   urssafHint:
-    "Espace URSSAF → documents / attestations → attestation de contribution à la formation professionnelle (CFP).",
-  otherTrainingLabel: `Avez-vous déjà suivi une autre formation prise en charge par le FIFPL en ${FIFPL_CRITERIA_YEAR} ?`,
+    "Attestation CFP (facultatif) : espace URSSAF → documents / attestations → attestation de contribution à la formation professionnelle (CFP).",
+  attestationUploadLabel: `Attestation CFP URSSAF ${FIFPL_CRITERIA_YEAR} (facultatif)`,
+  attestationUploadHelp:
+    "PDF ou image si vous l’avez sous la main. Nous lisons l’année et, si possible, le montant de cotisation ; vous pourrez corriger les valeurs.",
+  statusLabel: "Votre statut professionnel",
+  statusIndependant: "Indépendant — 100 % des critères FIFPL",
+  statusMicro: "Micro-entrepreneur — selon la cotisation CFP",
+  contributionHelp:
+    "Montant de cotisation CFP figurant sur votre attestation URSSAF (grille micro-entrepreneurs des critères 2026).",
+  otherTrainingLabel: `Avez-vous déjà bénéficié d’une prise en charge FIFPL pour une autre formation en ${FIFPL_CRITERIA_YEAR} ?`,
   otherTrainingHelp:
-    "Le montant déjà pris en charge sera déduit du montant total de vos droits FIFPL pour l’année.",
-  alreadyCoveredLabel: "Montant déjà pris en charge cette année (€)",
+    "Si oui, indiquez le montant déjà pris en charge : il sera déduit du plafond annuel (900 € pour les formations FLI, y compris en visio).",
+  alreadyCoveredLabel: "Montant déjà pris en charge par le FIFPL (€)",
+  estimateDisclaimer:
+    "Estimation selon les critères FIFPL Moniteurs de ski 2026 — seul l’accord du FIFPL fait foi. Les formations FLI en ligne (visio synchrone) sont considérées comme du présentiel pour le FIFPL ; le plafond e-learning 50 % ne s’applique qu’à l’asynchrone. Sur votre demande FIFPL, cochez « présentiel ». FLI est exonérée de TVA : HT = TTC.",
   confirmationAlert: (remainingEur: number | null) =>
     remainingEur == null
-      ? `Financement FIFPL ${FIFPL_CRITERIA_YEAR} : attestation CFP jointe. Les frais de dossier restent dus à l’inscription.`
+      ? `Financement FIFPL ${FIFPL_CRITERIA_YEAR}. Les frais de dossier restent dus à l’inscription.`
       : `Financement FIFPL ${FIFPL_CRITERIA_YEAR} : droits restants estimés à ${remainingEur} € (après déduction des prises en charge déjà accordées). Les frais de dossier restent dus à l’inscription.`,
 } as const;
