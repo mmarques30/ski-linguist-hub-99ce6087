@@ -320,7 +320,7 @@ export const FIFPL_REGISTER_COPY = {
   fundingChoiceHelp:
     "Prise en charge FIFPL (moniteurs de ski). Vous pourrez joindre votre attestation CFP maintenant ou plus tard.",
   sectionTitle: "Droits FIFPL et attestation CFP",
-  sectionDescription: `Pour une prise en charge FIFPL ${FIFPL_CRITERIA_YEAR}, nous estimons vos droits à partir de votre statut (indépendant ou micro-entrepreneur). L’attestation de contribution à la formation professionnelle (CFP), téléchargeable depuis votre espace URSSAF, permet de confirmer ces éléments — notamment le montant de cotisation pour les micro-entrepreneurs. Vous pouvez la déposer maintenant ou la fournir plus tard ; un rappel vous sera envoyé si elle manque.`,
+  sectionDescription: `Si vous le souhaitez, nous pouvons vous aider à estimer vos droits FIFPL ${FIFPL_CRITERIA_YEAR} à partir de votre statut (indépendant ou micro-entrepreneur). L’attestation de contribution à la formation professionnelle (CFP), téléchargeable depuis votre espace URSSAF, permet de confirmer ces éléments — notamment le montant de cotisation pour les micro-entrepreneurs. Vous pouvez la déposer maintenant ou la fournir plus tard ; un rappel vous sera envoyé si elle manque.`,
   urssafHint:
     "Où la trouver : espace URSSAF → documents / attestations → attestation de contribution à la formation professionnelle (CFP).",
   provideChoiceLabel: "Souhaitez-vous déposer votre attestation CFP maintenant ?",
