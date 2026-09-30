@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, Loader2, Mountain } from "lucide-react";
+import { CheckCircle, ClipboardList, Loader2, Mountain } from "lucide-react";
 import type { RegistrationData } from "@/pages/register/Index";
 import { usePlacementQuestions } from "@/hooks/usePlacementQuestions";
 import { MeterRow, StatusPill, SurfaceCard } from "@/components/ui-kit";
@@ -23,11 +23,17 @@ import {
   type SlopeResult,
 } from "@/lib/placement-test-engine";
 import {
+  buildAutoDiagnosticPayload,
+  expectationsFromAutoDiagnostic,
+  type AutoDiagnosticAnswers,
+} from "@/lib/auto-diagnostic";
+import {
   expectsStationGroupAssignment,
   STATION_GROUP_NOTICE_AFTER_TEST,
   STATION_GROUP_NOTICE_BEFORE_TEST,
   STATION_GROUP_SIGNATURE,
 } from "@/lib/registration-group-notice";
+import { AutoDiagnosticForm } from "./AutoDiagnosticForm";
 import { StepActions, StepCard, SummaryPanel } from "./StepLayout";
 
 /**
@@ -43,6 +49,8 @@ const SLOPE_TONES: Record<SlopeLevel, PillTone> = {
   vocab_ski: "warning",
 };
 
+type Phase = "intro" | "auto_diagnostic" | "mcq" | "results";
+
 interface PlacementTestStepProps {
   data: Partial<RegistrationData>;
   onUpdate: (data: Partial<RegistrationData>) => void;
@@ -51,13 +59,12 @@ interface PlacementTestStepProps {
 
 export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepProps) {
   const isStationGroup = expectsStationGroupAssignment(data.modality);
-  const [testStarted, setTestStarted] = useState(false);
+  const [phase, setPhase] = useState<Phase>("intro");
   const [currentSlope, setCurrentSlope] = useState<SlopeLevel>("verte");
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [slopeResults, setSlopeResults] = useState<SlopeResult[]>([]);
   const [passedSlopes, setPassedSlopes] = useState<SlopeLevel[]>([]);
-  const [testCompleted, setTestCompleted] = useState(false);
   const [result, setResult] = useState<AdaptiveTestResult | null>(null);
 
   const { data: allQuestions = [], isLoading } = usePlacementQuestions(data.language);
@@ -74,9 +81,34 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
     onNext();
   };
 
-  const startTest = () => {
+  const startAutoDiagnostic = () => {
+    setPhase("auto_diagnostic");
+  };
+
+  const handleAutoDiagnosticComplete = (diagAnswers: AutoDiagnosticAnswers) => {
+    const payload = buildAutoDiagnosticPayload(diagAnswers);
+    const expectations = expectationsFromAutoDiagnostic(diagAnswers);
+    onUpdate({
+      autoDiagnostic: payload,
+      // Q8 Excel → préremplit l’étape Attentes
+      ...(expectations ? { expectations } : {}),
+    });
+    setPhase("mcq");
+    setCurrentSlope("verte");
+    setQuestionIndex(0);
+    setAnswers({});
+    setSlopeResults([]);
+    setPassedSlopes([]);
+    setResult(null);
+  };
+
+  const startMcq = () => {
     if (allQuestions.length === 0) return;
-    setTestStarted(true);
+    if (!data.autoDiagnostic) {
+      setPhase("auto_diagnostic");
+      return;
+    }
+    setPhase("mcq");
     setCurrentSlope("verte");
     setQuestionIndex(0);
     setAnswers({});
@@ -114,7 +146,7 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
         endedAtVocab: testResult.endedAtVocab,
       },
     });
-    setTestCompleted(true);
+    setPhase("results");
   };
 
   const completeSlope = (
@@ -161,7 +193,6 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
       return;
     }
 
-    // Last question in current slope
     setAnswers(newAnswers);
 
     if (currentSlope === "vocab_ski") {
@@ -187,7 +218,17 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
     completeSlope(currentSlope, newAnswers, slopeResults, passedSlopes);
   };
 
-  if (testCompleted && result) {
+  if (phase === "auto_diagnostic") {
+    return (
+      <AutoDiagnosticForm
+        languageKey={data.language}
+        initialAnswers={data.autoDiagnostic?.answers}
+        onComplete={handleAutoDiagnosticComplete}
+      />
+    );
+  }
+
+  if (phase === "results" && result) {
     return (
       <form onSubmit={handleSubmit} className="space-y-4">
         <StepCard
@@ -261,7 +302,16 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
     );
   }
 
-  if (testStarted && currentQuestion) {
+  if (phase === "mcq") {
+    if (!currentQuestion) {
+      return (
+        <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          Préparation du test de niveau…
+        </div>
+      );
+    }
+
     const questionNumber = questionIndex + 1;
     const questionsInSlope = slopeQuestions.length;
     const slopeLabelLower = SLOPE_LABELS[currentSlope].toLowerCase();
@@ -322,10 +372,13 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
     );
   }
 
+  // Intro — ou reprise après auto-diagnostic déjà rempli (retour arrière)
+  const autoDone = Boolean(data.autoDiagnostic);
+
   return (
     <StepCard
       title="Test de niveau obligatoire"
-      description="Progressif comme les pistes de ski — requis pour toutes les inscriptions, même si vous connaissez déjà votre niveau"
+      description="D’abord un auto-diagnostic, puis le parcours adaptatif par pistes de ski"
       icon={Mountain}
     >
       <div className="space-y-5">
@@ -333,14 +386,13 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
           <Mountain className="h-4 w-4" />
           <AlertDescription className="space-y-3">
             <p>
-              Ce test nous permet de vérifier votre niveau d&apos;entrée et, pour les cours
-              collectifs, de vous placer dans le groupe le plus adapté. Vous le repasserez aussi en
-              fin de formation pour mesurer votre progression. Il est obligatoire et ne peut pas être
-              remplacé par une auto-évaluation.
+              <strong className="font-medium text-foreground">1. Auto-diagnostic</strong> — vos
+              besoins, votre parcours et votre confiance. Il prépare l’équipe FLI et ne remplace pas
+              le test.
             </p>
             <p>
-              <strong className="font-medium text-foreground">Comment ça fonctionne</strong> —
-              l’évolution suit les pistes de ski : vous commencez en{" "}
+              <strong className="font-medium text-foreground">2. Test de niveau</strong> — où vous
+              commencez en{" "}
               <strong className="font-medium text-foreground">piste verte</strong>, puis{" "}
               <strong className="font-medium text-foreground">bleue</strong>,{" "}
               <strong className="font-medium text-foreground">rouge</strong> et{" "}
@@ -350,7 +402,7 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
             <p>
               Dès qu’une piste n’est pas validée, le parcours se termine par une partie{" "}
               <strong className="font-medium text-foreground">Vocabulaire du ski</strong>, commune
-              à tous les niveaux.
+              à tous les niveaux. Comment ça fonctionne : comme les pistes de ski.
             </p>
           </AlertDescription>
         </Alert>
@@ -371,13 +423,35 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
         ) : allQuestions.length === 0 ? (
           <Alert variant="destructive">
             <AlertDescription>
-              Le test n'est pas disponible pour cette langue pour le moment. Merci de contacter
-              FLI à info@fli.fr.
+              Le test n&apos;est pas disponible pour cette langue pour le moment. Merci de
+              contacter FLI à info@fli.fr.
             </AlertDescription>
           </Alert>
+        ) : autoDone ? (
+          <div className="space-y-3">
+            <Alert>
+              <ClipboardList className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                Auto-diagnostic enregistré. Vous pouvez passer au test de niveau.
+              </AlertDescription>
+            </Alert>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={startAutoDiagnostic}
+                className="h-12 w-full text-base sm:w-auto"
+              >
+                Modifier l&apos;auto-diagnostic
+              </Button>
+              <Button type="button" onClick={startMcq} className="h-12 w-full text-base sm:w-auto">
+                Commencer le test (piste verte)
+              </Button>
+            </div>
+          </div>
         ) : (
-          <Button type="button" onClick={startTest} className="h-12 w-full text-base">
-            Commencer le test (piste verte)
+          <Button type="button" onClick={startAutoDiagnostic} className="h-12 w-full text-base">
+            Commencer l&apos;auto-diagnostic
           </Button>
         )}
       </div>

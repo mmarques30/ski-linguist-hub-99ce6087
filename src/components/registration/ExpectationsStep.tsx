@@ -68,7 +68,9 @@ export function ExpectationsStep({ data, onUpdate, onNext }: ExpectationsStepPro
               className="min-h-[120px]"
             />
             <p className="text-sm text-muted-foreground">
-              Cela nous aide à adapter la formation à vos besoins spécifiques
+              {data.autoDiagnostic
+                ? "Prérempli depuis l’auto-diagnostic — vous pouvez encore modifier."
+                : "Cela nous aide à adapter la formation à vos besoins spécifiques"}
             </p>
           </div>
 
