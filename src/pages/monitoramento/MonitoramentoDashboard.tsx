@@ -99,7 +99,7 @@ export default function MonitoramentoDashboard() {
                 value={data.counts.inscriptions}
                 hint={`${data.counts.students} stagiaires`}
                 icon={Activity}
-                tone="green"
+                tone="teal"
               />
               <StatTile
                 label="Formateurs"
