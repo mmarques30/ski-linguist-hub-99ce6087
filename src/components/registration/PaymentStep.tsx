@@ -64,7 +64,6 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
 
   const fifplQuestionnaire: FifplQuestionnaire = {
     status: data.fifplStatus ?? null,
-    provideCfpAttestation: data.fifplProvideCfpAttestation ?? null,
     cfpAttestationYear: data.fifplCfpAttestationYear ?? null,
     cfpContributionEur: data.fifplCfpContributionEur ?? null,
     cfpAttestationPath: data.fifplCfpAttestationPath ?? null,
@@ -78,7 +77,6 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
     const next = { ...fifplQuestionnaire, ...patch };
     onUpdate({
       fifplStatus: next.status,
-      fifplProvideCfpAttestation: next.provideCfpAttestation,
       fifplCfpAttestationYear: next.cfpAttestationYear,
       fifplCfpContributionEur: next.cfpContributionEur,
       fifplCfpAttestationPath: next.cfpAttestationPath,
@@ -262,6 +260,7 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
             <FifplCfpSection
               questionnaire={fifplQuestionnaire}
               modality={data.modality}
+              coursePriceEur={hasPrice ? coursePrice : null}
               onChange={patchFifpl}
             />
           </StepCard>
@@ -299,6 +298,7 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
           <FifplCfpSection
             questionnaire={fifplQuestionnaire}
             modality={data.modality}
+            coursePriceEur={coursePrice}
             onChange={patchFifpl}
           />
         </StepCard>

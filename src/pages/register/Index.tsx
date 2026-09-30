@@ -89,15 +89,14 @@ export interface RegistrationData {
   opcoNafCode?: string;
   opcoCaseNotes?: string;
 
-  /** FIFPL — attestation CFP URSSAF (facultative) + estimation des droits */
+  /** FIFPL — estimation des droits (critères Moniteurs de ski) ; attestation CFP facultative */
   fifplStatus?: "independant" | "micro_entrepreneur" | null;
-  /** true = dépôt maintenant ; false = plus tard */
-  fifplProvideCfpAttestation?: boolean | null;
   fifplCfpAttestationYear?: number | null;
   fifplCfpContributionEur?: number | null;
   fifplCfpAttestationPath?: string | null;
   fifplCfpAttestationFileName?: string | null;
   fifplHadOtherTrainingThisYear?: boolean | null;
+  /** Montant déjà pris en charge FIFPL pour une autre formation cette année */
   fifplOtherAmountAlreadyCoveredEur?: number | null;
   fifplParseWarnings?: string[];
 }

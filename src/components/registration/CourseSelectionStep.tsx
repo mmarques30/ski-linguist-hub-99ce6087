@@ -704,8 +704,8 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                       FIFPL
                     </span>
                     <span className="block pl-7 text-xs text-muted-foreground">
-                      Prise en charge FIFPL (moniteurs de ski). Attestation CFP
-                      facultative à ce stade — maintenant ou plus tard.
+                      Prise en charge FIFPL (moniteurs de ski). Estimation des droits
+                      selon les critères 2026 — attestation CFP facultative à ce stade.
                     </span>
                   </Label>
                 </OptionCard>

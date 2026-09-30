@@ -382,8 +382,8 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                       data.fifplHadOtherTrainingThisYear === true
                         ? data.fifplOtherAmountAlreadyCoveredEur
                         : 0,
-                  })?.remainingRightsEur ?? null,
-                  data.fifplProvideCfpAttestation === false
+                    coursePriceEur: data.price ?? null,
+                  })?.remainingRightsEur ?? null
                 )}
               </AlertDescription>
             </Alert>
@@ -523,8 +523,8 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                       data.fifplHadOtherTrainingThisYear === true
                         ? data.fifplOtherAmountAlreadyCoveredEur
                         : 0,
-                  })?.remainingRightsEur ?? null,
-                  data.fifplProvideCfpAttestation === false
+                    coursePriceEur: data.price ?? null,
+                  })?.remainingRightsEur ?? null
                 )}
               </AlertDescription>
             </Alert>
