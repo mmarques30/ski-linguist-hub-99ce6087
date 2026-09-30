@@ -1,10 +1,11 @@
-import { AlertTriangle, Bot, DatabaseZap, EyeOff, ShieldAlert } from "lucide-react";
+import { useMemo } from "react";
+import { AlertTriangle, DatabaseZap, ShieldAlert } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoramentoSubnav } from "@/components/monitoramento/MonitoramentoSubnav";
 import {
-  ErrorHeatmap,
+  KpiAnalysisTable,
   MonitoringKpiCard,
-  SecurityMetricRow,
+  type KpiAnalysisRow,
 } from "@/components/monitoramento/MonitoringWidgets";
 import {
   useMonitoringDashboardAnalytics,
@@ -13,7 +14,6 @@ import {
 import {
   SENSITIVE_TABLES,
   classifyActionTone,
-  errorHeatmapMatrix,
   toneFromHealth,
 } from "@/lib/monitoramento";
 import {
@@ -32,11 +32,10 @@ import {
 } from "@/components/ui-kit";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { useMemo } from "react";
 
 export default function MonitoramentoSeguranca() {
   const { data: events = [], isLoading } = useMonitoringSecurityFeed();
-  const { data: analytics } = useMonitoringDashboardAnalytics();
+  const { data: analytics, isLoading: analyticsLoading } = useMonitoringDashboardAnalytics();
 
   const deletes = events.filter((e) => e.action.toLowerCase().includes("delete")).length;
   const securityTagged = events.filter((e) => {
@@ -47,12 +46,82 @@ export default function MonitoramentoSeguranca() {
     const a = e.action.toLowerCase();
     return a.includes("role") || a.includes("permission") || e.table_name.includes("user_");
   }).length;
+  const withIp = events.filter((e) => e.ip_address).length;
+  const failed = analytics?.failedLike7d ?? 0;
+  const suspicious = analytics?.suspicious7d ?? 0;
 
-  const heatmap = useMemo(
-    () => analytics?.heatmap ?? errorHeatmapMatrix(events, 7),
-    [analytics?.heatmap, events],
+  const analysisRows: KpiAnalysisRow[] = useMemo(
+    () => [
+      {
+        indicator: "Tentatives / échecs (denied)",
+        value: failed,
+        analysis:
+          failed === 0
+            ? "Aucun échec tagué sur 7 j — pas de signal d'intrusion dans audit_log."
+            : `${failed} événement(s) fail/denied : investiguer IPs et acteurs.`,
+        tone: failed === 0 ? "ok" : failed >= 10 ? "danger" : "warn",
+        statusLabel: failed === 0 ? "Stable" : failed >= 10 ? "Critique" : "Attention",
+      },
+      {
+        indicator: "Alertes sécurité taguées",
+        value: suspicious || securityTagged,
+        analysis:
+          (suspicious || securityTagged) === 0
+            ? "Pas d'action securite_* récente."
+            : "Actions de durcissement ou d'alerte présentes — vérifier le détail ci-dessous.",
+        tone: (suspicious || securityTagged) > 0 ? "warn" : "ok",
+        statusLabel: (suspicious || securityTagged) > 0 ? "À revoir" : "OK",
+      },
+      {
+        indicator: "Suppressions / purges",
+        value: deletes,
+        analysis:
+          deletes === 0
+            ? "Aucune purge journalisée — risque de fuite via delete faible."
+            : `${deletes} suppression(s) : contrôler si attendues (import / cleanup).`,
+        tone: deletes > 10 ? "warn" : "neutral",
+        statusLabel: deletes > 10 ? "Volume élevé" : "Normal",
+      },
+      {
+        indicator: "Changements ACL / rôles",
+        value: roleChanges,
+        analysis:
+          roleChanges === 0
+            ? "Pas de modification de privilèges détectée."
+            : "Élévation ou changement de permissions — valider l'auteur.",
+        tone: roleChanges > 0 ? "info" : "ok",
+        statusLabel: roleChanges > 0 ? "Surveiller" : "OK",
+      },
+      {
+        indicator: "Accès bots / IP renseignée",
+        value: `${withIp} / ${events.length}`,
+        analysis:
+          withIp === 0
+            ? "IP absente du journal — brancher auth audit / WAF pour détecter les bots."
+            : `${withIp} ligne(s) avec IP : corréler avec les alertes.`,
+        tone: withIp === 0 ? "warn" : "info",
+        statusLabel: withIp === 0 ? "Non mappé" : "Partiel",
+      },
+      {
+        indicator: "Tables sensibles cartographiées",
+        value: SENSITIVE_TABLES.length,
+        analysis: "Exposition RLS listée en tableau — revue cutover Supabase recommandée.",
+        tone: "info",
+        statusLabel: "Cartographié",
+      },
+    ],
+    [failed, suspicious, securityTagged, deletes, roleChanges, withIp, events.length],
   );
-  const dayLabels = analytics?.heatmapDayLabels ?? ["j-6", "j-5", "j-4", "j-3", "j-2", "j-1", "auj."];
+
+  const tableExposureRows = SENSITIVE_TABLES.map((table) => ({
+    ...table,
+    status:
+      table.name === "user_roles" || table.name === "app_settings" || table.name === "user_permissions"
+        ? ("élevé" as const)
+        : table.name === "audit_log" || table.name === "email_log"
+          ? ("moyen" as const)
+          : ("standard" as const),
+  }));
 
   return (
     <MainLayout>
@@ -73,26 +142,26 @@ export default function MonitoramentoSeguranca() {
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MonitoringKpiCard
-            label="Signaux sécurité"
-            value={securityTagged}
-            hint="securite / denied / security"
+            label="Échecs / denied"
+            value={failed}
+            hint="7 derniers jours"
             points={analytics?.errorSpark ?? [0, 1, 0, 2, 1]}
             sparkColor="hsl(var(--status-critical))"
           />
           <MonitoringKpiCard
-            label="Suppressions"
-            value={deletes}
-            hint="Potentiel purge / fuite"
-            points={analytics?.activitySpark ?? [1, 2, 1]}
+            label="Alertes sécurité"
+            value={suspicious || securityTagged}
+            hint="securite / security / denied"
+            points={analytics?.errorSpark ?? [0, 0, 1, 0, 1]}
             sparkColor="hsl(var(--tint-gold-fg))"
             sparkVariant="bars"
           />
           <MonitoringKpiCard
-            label="ACL / rôles"
-            value={roleChanges}
-            hint="user_roles & permissions"
-            points={[1, 1, 2, 1, 3]}
-            sparkColor="hsl(var(--tint-blue-fg))"
+            label="Suppressions"
+            value={deletes}
+            hint="delete / purge"
+            points={analytics?.activitySpark ?? [1, 2, 1]}
+            sparkColor="hsl(var(--tint-orange-fg))"
           />
           <MonitoringKpiCard
             label="Tables sensibles"
@@ -104,64 +173,58 @@ export default function MonitoramentoSeguranca() {
           />
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <SurfaceCard
-            title="Sécurité & conformité"
-            description="Indicateurs type SmartHR — failed / suspicious / blocked"
-          >
-            <SecurityMetricRow
-              label="Échecs / denied"
-              value={analytics?.failedLike7d ?? 0}
-              points={analytics?.errorSpark ?? [0, 1, 0]}
-              tone="danger"
-            />
-            <SecurityMetricRow
-              label="Alertes taguées sécurité"
-              value={analytics?.suspicious7d ?? 0}
-              points={analytics?.errorSpark ?? [0, 0, 1]}
-              tone="warning"
-            />
-            <SecurityMetricRow
-              label="Suppressions / purges"
-              value={analytics?.deleteLike7d ?? 0}
-              points={analytics?.activitySpark ?? [1, 2, 1]}
-              tone="info"
-            />
-            <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-              <Bot className="h-3.5 w-3.5" />
-              Bots / IPs bloquées : brancher auth audit / WAF pour peupler ces compteurs.
-            </div>
-          </SurfaceCard>
-
-          <SurfaceCard
-            title="Heatmap incidents"
-            description="Densité des erreurs / sécurité sur 7 jours"
-          >
-            <ErrorHeatmap matrix={heatmap} dayLabels={dayLabels} />
-          </SurfaceCard>
-        </div>
+        <KpiAnalysisTable
+          title="Analyse résumé — Sécurité"
+          description="Lecture des principaux KPIs (intrusions, fuites, bots, exposition)"
+          rows={analysisRows}
+          loading={isLoading || analyticsLoading}
+        />
 
         <SectionHeading
-          title="Exposition des tables"
-          description="Risques non mappés = tables sans revue RLS récente — à valider au cutover Supabase"
+          title="Exposition des tables (analyse)"
+          description="Risque et niveau d'exposition RLS — format tableau"
         />
-        <div className="grid gap-3 md:grid-cols-2">
-          {SENSITIVE_TABLES.map((table) => (
-            <SurfaceCard key={table.name} title={table.name} icon={EyeOff}>
-              <p className="text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">Risque :</span> {table.risk}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">Exposition :</span>{" "}
-                {table.exposure}
-              </p>
-            </SurfaceCard>
-          ))}
-        </div>
+        <SurfaceCard>
+          <TableFrame>
+            <thead>
+              <TableHeadRow>
+                <TableHeadCell>Table</TableHeadCell>
+                <TableHeadCell>Risque</TableHeadCell>
+                <TableHeadCell>Exposition</TableHeadCell>
+                <TableHeadCell>Niveau</TableHeadCell>
+              </TableHeadRow>
+            </thead>
+            <tbody>
+              {tableExposureRows.map((table) => (
+                <TableRow key={table.name}>
+                  <TableCell>
+                    <code className="text-xs">{table.name}</code>
+                  </TableCell>
+                  <TableCell>{table.risk}</TableCell>
+                  <TableCell className="text-muted-foreground">{table.exposure}</TableCell>
+                  <TableCell>
+                    <StatusPill
+                      tone={
+                        table.status === "élevé"
+                          ? "danger"
+                          : table.status === "moyen"
+                            ? "warning"
+                            : "neutral"
+                      }
+                      size="sm"
+                    >
+                      {table.status}
+                    </StatusPill>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </tbody>
+          </TableFrame>
+        </SurfaceCard>
 
         <SurfaceCard
           title="Journal sécurité (7 jours)"
-          description="Filtre sur actions sensibles"
+          description="Détail des événements sensibles — analyse ligne à ligne"
         >
           {isLoading ? (
             <TableSkeleton rows={6} />
@@ -179,12 +242,19 @@ export default function MonitoramentoSeguranca() {
                   <TableHeadCell>Action</TableHeadCell>
                   <TableHeadCell>Table</TableHeadCell>
                   <TableHeadCell>IP</TableHeadCell>
+                  <TableHeadCell>Analyse</TableHeadCell>
                   <TableHeadCell>Sévérité</TableHeadCell>
                 </TableHeadRow>
               </thead>
               <tbody>
-                {events.slice(0, 40).map((row) => {
+                {events.slice(0, 50).map((row) => {
                   const tone = classifyActionTone(row.action);
+                  const analysis =
+                    tone === "danger"
+                      ? "Signal critique — vérifier acteur et portée"
+                      : tone === "warn"
+                        ? "Modification lourde ou purge"
+                        : "Événement informatif";
                   return (
                     <TableRow key={row.id}>
                       <TableCell>
@@ -197,8 +267,9 @@ export default function MonitoramentoSeguranca() {
                       <TableCell className="text-muted-foreground">
                         {row.ip_address ?? "n/a"}
                       </TableCell>
+                      <TableCell className="max-w-xs text-muted-foreground">{analysis}</TableCell>
                       <TableCell>
-                        <StatusPill tone={toneFromHealth(tone)}>
+                        <StatusPill tone={toneFromHealth(tone)} size="sm">
                           {tone === "danger"
                             ? "Critique"
                             : tone === "warn"

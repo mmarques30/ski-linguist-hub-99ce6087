@@ -160,4 +160,19 @@ describe("monitoramento — navigation & routes", () => {
       "EnvToggle",
     );
   });
+
+  it("structure chaque sous-menu en KPI cards + tableaux d'analyse", () => {
+    const widgets = source("src/components/monitoramento/MonitoringWidgets.tsx");
+    expect(widgets).toContain("KpiAnalysisTable");
+    for (const page of [
+      "src/pages/monitoramento/MonitoramentoSeguranca.tsx",
+      "src/pages/monitoramento/MonitoramentoQualidade.tsx",
+      "src/pages/monitoramento/MonitoramentoAcessos.tsx",
+    ]) {
+      const code = source(page);
+      expect(code, `${page} doit avoir des KPI cards`).toContain("MonitoringKpiCard");
+      expect(code, `${page} doit avoir le tableau d'analyse`).toContain("KpiAnalysisTable");
+      expect(code, `${page} doit avoir TableFrame`).toContain("TableFrame");
+    }
+  });
 });

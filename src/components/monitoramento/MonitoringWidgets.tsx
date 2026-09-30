@@ -368,3 +368,71 @@ export function HeaderStatBadge({
     </StatusPill>
   );
 }
+
+export type AnalysisRowTone = "ok" | "warn" | "danger" | "neutral" | "info";
+
+export interface KpiAnalysisRow {
+  indicator: string;
+  value: ReactNode;
+  analysis: string;
+  tone: AnalysisRowTone;
+  statusLabel: string;
+}
+
+function analysisToneToPill(tone: AnalysisRowTone): "success" | "warning" | "danger" | "neutral" | "info" {
+  if (tone === "ok") return "success";
+  if (tone === "warn") return "warning";
+  if (tone === "danger") return "danger";
+  if (tone === "info") return "info";
+  return "neutral";
+}
+
+/** Tableau d'analyse synthétique des KPIs — une ligne = un indicateur + lecture. */
+export function KpiAnalysisTable({
+  title,
+  description,
+  rows,
+  loading,
+}: {
+  title: string;
+  description?: string;
+  rows: KpiAnalysisRow[];
+  loading?: boolean;
+}) {
+  return (
+    <SurfaceCard title={title} description={description}>
+      {loading ? (
+        <p className="text-sm text-muted-foreground">Chargement de l'analyse…</p>
+      ) : rows.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Aucun indicateur à analyser.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] text-left text-sm">
+            <thead>
+              <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+                <th className="pb-2 pr-3 font-medium">Indicateur</th>
+                <th className="pb-2 pr-3 font-medium">Valeur</th>
+                <th className="pb-2 pr-3 font-medium">Analyse</th>
+                <th className="pb-2 font-medium">Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.indicator} className="border-b border-border/60 last:border-0">
+                  <td className="py-3 pr-3 font-medium text-foreground">{row.indicator}</td>
+                  <td className="py-3 pr-3 tabular text-foreground">{row.value}</td>
+                  <td className="py-3 pr-3 text-muted-foreground">{row.analysis}</td>
+                  <td className="py-3">
+                    <StatusPill tone={analysisToneToPill(row.tone)} size="sm">
+                      {row.statusLabel}
+                    </StatusPill>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </SurfaceCard>
+  );
+}
