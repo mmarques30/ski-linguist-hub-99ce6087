@@ -64,6 +64,9 @@ verify_jwt = false
 [functions.sign-private-download]
 verify_jwt = true
 
+[functions.monitoring-status]
+verify_jwt = true
+
 [functions.publish-inscription-documents]
 verify_jwt = false
 

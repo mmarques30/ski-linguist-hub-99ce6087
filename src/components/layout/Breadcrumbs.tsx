@@ -16,6 +16,7 @@ const NON_NAVIGABLE_PATHS = new Set([
   "/formation",
   "/student",
 ]);
+// /monitoramento a une page dédiée (dashboard) — navigable.
 
 export function Breadcrumbs() {
   const { pathname } = useLocation();

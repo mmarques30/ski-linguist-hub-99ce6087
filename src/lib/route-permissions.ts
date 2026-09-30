@@ -54,6 +54,12 @@ export const ROUTE_GROUPS: RouteGroup[] = [
       { key: "portails.formateur", label: "Espace formateur", parent: "formateurs" },
     ],
   },
+  {
+    label: "Monitoramento",
+    routes: [
+      { key: "monitoramento", label: "Monitoramento système" },
+    ],
+  },
 ];
 
 export const ALL_ROUTE_KEYS = ROUTE_GROUPS.flatMap((g) =>
@@ -97,6 +103,10 @@ export const PATH_TO_ROUTE_KEY: Record<string, string> = {
   "/qualite/historique": "audit_history",
   "/portails/stagiaire": "portails.stagiaire",
   "/portails/formateur": "portails.formateur",
+  "/monitoramento": "monitoramento",
+  "/monitoramento/seguranca": "monitoramento",
+  "/monitoramento/qualidade": "monitoramento",
+  "/monitoramento/acessos": "monitoramento",
 };
 
 const SORTED_PATHS = Object.keys(PATH_TO_ROUTE_KEY).sort(
@@ -113,6 +123,7 @@ export function resolveRouteKey(pathname: string): string | null {
     }
   }
   if (pathname.startsWith("/admin") || pathname === "/settings") return "admin";
+  if (pathname.startsWith("/monitoramento")) return "monitoramento";
   if (pathname.startsWith("/formateur")) return "evaluations";
   if (pathname.startsWith("/portails/stagiaire")) return "portails.stagiaire";
   if (pathname.startsWith("/portails/formateur")) return "portails.formateur";
