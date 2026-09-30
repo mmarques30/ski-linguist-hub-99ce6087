@@ -4027,6 +4027,7 @@ export type Database = {
         }[]
       }
       map_entry_level_to_cecrl: { Args: { _raw: string }; Returns: string }
+      monitoring_rls_summary: { Args: never; Returns: Json }
       notify_admins: {
         Args: {
           p_link?: string
