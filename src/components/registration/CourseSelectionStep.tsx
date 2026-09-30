@@ -12,7 +12,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MapPin, Calendar, Euro, MessageSquare, Phone, User } from "lucide-react";
+import { MapPin, Calendar, MessageSquare, Phone, User } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,12 +25,9 @@ import {
   filterInPersonSessions,
   filterOnlineGroupSessions,
   filterOnlineIndividual,
-  formatOfferingPriceHint,
-  formatPriceEUR,
   isCustomFormatDuration,
   isOpenOffering,
   isWaitlistOffering,
-  resolveOfferingPrice,
   uniqueDurations,
   uniqueLanguages,
   type RegistrationOffering,
@@ -124,10 +121,6 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
     ? requestedStartDateNotice(data.requestedStartDate, today)
     : null;
 
-  const displayPrice = selectedOffering
-    ? resolveOfferingPrice(selectedOffering, data.skiSchoolCode)
-    : undefined;
-
   const canContinue = isCustomFormat
     ? !!data.fundingType &&
       !requestedStartDateError &&
@@ -139,10 +132,10 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
 
   const applyOffering = (offering: RegistrationOffering) => {
     setWaitlistDone(false);
-    const price = resolveOfferingPrice(offering, data.skiSchoolCode);
+    // Tarif volontairement non fixé ici : affiché seulement après l'école (étape profil).
     onUpdate({
       offeringId: offering.id,
-      price,
+      price: undefined,
       duration: String(offering.duration_hours),
       dates: offering.date_label || undefined,
       startDate: offering.start_date || undefined,
@@ -269,7 +262,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
     <form onSubmit={handleSubmit} className="space-y-4">
       <StepCard
         title="Choisir une formation"
-        description="Présentiel en station ou formation en ligne — les sessions en attente restent visibles pour laisser vos coordonnées."
+        description="Présentiel en station ou formation en ligne — les tarifs s’affichent après le choix de votre école. Les sessions en attente restent visibles pour laisser vos coordonnées."
         icon={MapPin}
       >
         <div className="space-y-6">
@@ -353,9 +346,6 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                               {o.format_label ? ` · ${o.format_label}` : ""}
                               {o.instructor_label ? ` · ${o.instructor_label}` : ""}
                             </span>
-                            <span className="block text-sm tabular text-foreground">
-                              {formatOfferingPriceHint(o)}
-                            </span>
                           </span>
                         </span>
                       </Label>
@@ -431,9 +421,6 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                               {o.date_label}
                               {o.instructor_label ? ` · ${o.instructor_label}` : ""}
                             </span>
-                            <span className="block text-sm tabular">
-                              {formatOfferingPriceHint(o)}
-                            </span>
                           </span>
                         </span>
                       </Label>
@@ -501,7 +488,6 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                     className="grid gap-2 xs:grid-cols-2 lg:grid-cols-3"
                   >
                     {individualDurations.map((d) => {
-                      const offering = individualForLanguage.find((x) => x.duration_hours === d.hours);
                       const selected = data.duration === String(d.hours);
                       return (
                         <OptionCard key={d.hours} selected={selected}>
@@ -515,11 +501,6 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                             className="flex min-h-16 w-full cursor-pointer flex-col items-center justify-center gap-0.5 p-3 text-center"
                           >
                             <span className="block font-semibold">{d.label}</span>
-                            {offering && (
-                              <span className="block text-sm tabular text-muted-foreground">
-                                {formatPriceEUR(offering.base_price)}
-                              </span>
-                            )}
                           </Label>
                         </OptionCard>
                       );
@@ -760,25 +741,9 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
           )}
 
           {selectedOffering && !selectedIsWaitlist && !isCustomFormat && (
-            <Alert className="border-primary/20 bg-[hsl(var(--surface-sunken))]">
-              <Euro className="h-4 w-4" />
-              <AlertDescription className="flex flex-wrap items-center gap-2">
-                <span>Tarif indicatif :</span>
-                <StatusPill tone="warning" className="px-3 py-1 text-base">
-                  {formatPriceEUR(displayPrice ?? selectedOffering.base_price)}
-                </StatusPill>
-                <span className="text-sm text-muted-foreground">
-                  — {selectedOffering.location_label} · {selectedOffering.language_label}
-                  {selectedOffering.date_label ? ` · ${selectedOffering.date_label}` : ""}
-                </span>
-                {(selectedOffering.partner_school_codes?.length ?? 0) > 0 &&
-                  Number(selectedOffering.partner_price) !== Number(selectedOffering.base_price) && (
-                    <span className="w-full text-xs text-muted-foreground">
-                      Le tarif définitif dépend de votre école (étape profil professionnel).
-                    </span>
-                  )}
-              </AlertDescription>
-            </Alert>
+            <p className="text-sm text-muted-foreground">
+              Tarif selon votre école de ski — affiché à l&apos;étape profil professionnel.
+            </p>
           )}
         </div>
       </StepCard>

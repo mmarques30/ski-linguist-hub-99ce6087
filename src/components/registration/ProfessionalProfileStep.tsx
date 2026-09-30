@@ -51,19 +51,6 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
     [offerings, data.offeringId]
   );
 
-  // Tarif partenaire selon l'école choisie (SESSIONS §3.1)
-  useEffect(() => {
-    if (!selectedOffering || data.isCustomFormat) return;
-    const code =
-      data.skiSchoolCode && data.skiSchoolCode !== OTHER_SCHOOL_OPTION
-        ? data.skiSchoolCode
-        : null;
-    const nextPrice = resolveOfferingPrice(selectedOffering, code);
-    if (data.price !== nextPrice) {
-      onUpdate({ price: nextPrice });
-    }
-  }, [selectedOffering, data.skiSchoolCode, data.isCustomFormat]);
-
   const filteredSchools = useMemo(() => {
     const q = schoolFilter.trim().toLowerCase();
     if (!q) return schools;
@@ -79,6 +66,45 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
   const selectedCode = data.skiSchoolCode || "";
   const isOtherSchool = selectedCode === OTHER_SCHOOL_OPTION;
   const cartePending = Boolean(data.carteSyndicalePending);
+
+  /** École / rattachement assez renseigné pour afficher le tarif. */
+  const schoolReadyForPrice = (() => {
+    if (data.profession === "other") return true;
+    if (data.profession !== "ski_instructor") return false;
+    if (!network) return false;
+    if (network === "Indépendant.e") return Boolean(data.stationOrValley?.trim());
+    if (network === "Autre") return Boolean(data.skiSchoolOther?.trim());
+    if (!isDirectoryNetwork(network)) return false;
+    if (!selectedCode) return false;
+    if (isOtherSchool) return Boolean(data.skiSchoolOther?.trim());
+    return true;
+  })();
+
+  // Tarif partenaire selon l'école choisie (SESSIONS §3.1) — jamais avant.
+  useEffect(() => {
+    if (!selectedOffering || data.isCustomFormat) return;
+    if (!schoolReadyForPrice) {
+      if (data.price != null) onUpdate({ price: undefined });
+      return;
+    }
+    const code =
+      data.skiSchoolCode && data.skiSchoolCode !== OTHER_SCHOOL_OPTION
+        ? data.skiSchoolCode
+        : null;
+    const nextPrice = resolveOfferingPrice(selectedOffering, code);
+    if (data.price !== nextPrice) {
+      onUpdate({ price: nextPrice });
+    }
+  }, [
+    selectedOffering,
+    data.skiSchoolCode,
+    data.isCustomFormat,
+    data.profession,
+    network,
+    data.stationOrValley,
+    data.skiSchoolOther,
+    schoolReadyForPrice,
+  ]);
 
   const canContinue = (() => {
     if (!data.profession) return false;
@@ -123,13 +149,14 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
   };
 
   const resolvedPrice =
-    selectedOffering && !data.isCustomFormat
+    schoolReadyForPrice && selectedOffering && !data.isCustomFormat
       ? resolveOfferingPrice(
           selectedOffering,
           data.skiSchoolCode === OTHER_SCHOOL_OPTION ? null : data.skiSchoolCode
         )
-      : data.price;
+      : undefined;
   const partnerApplied =
+    schoolReadyForPrice &&
     !!selectedOffering &&
     isPartnerSchool(
       selectedOffering,
@@ -389,7 +416,13 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
         </div>
       </StepCard>
 
-      {selectedOffering && resolvedPrice != null && !data.isCustomFormat && (
+      {selectedOffering && !data.isCustomFormat && !schoolReadyForPrice && (
+        <p className="text-sm text-muted-foreground">
+          Indiquez votre école de ski pour afficher le tarif applicable.
+        </p>
+      )}
+
+      {resolvedPrice != null && selectedOffering && !data.isCustomFormat && (
         <Alert className="border-primary/20 bg-[hsl(var(--surface-sunken))]">
           <Euro className="h-4 w-4" />
           <AlertDescription className="flex flex-wrap items-center gap-2">
