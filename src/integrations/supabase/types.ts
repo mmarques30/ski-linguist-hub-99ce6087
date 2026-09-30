@@ -3056,70 +3056,70 @@ export type Database = {
       }
       ski_school_directory: {
         Row: {
-          id: string
-          reseau: string
-          code: string
-          nom_affiche: string
-          station: string | null
-          departement: string | null
-          ville: string | null
-          cp: string | null
-          region_esf: string | null
-          num_esf: string | null
           cartes_actifs: number | null
-          directeur: string | null
-          courriel_ecole: string | null
+          code: string
           courriel_direction: string | null
-          telephone: string | null
-          source: string | null
-          is_active: boolean
-          pending_validation: boolean
+          courriel_ecole: string | null
+          cp: string | null
           created_at: string
+          departement: string | null
+          directeur: string | null
+          id: string
+          is_active: boolean
+          nom_affiche: string
+          num_esf: string | null
+          pending_validation: boolean
+          region_esf: string | null
+          reseau: string
+          source: string | null
+          station: string | null
+          telephone: string | null
           updated_at: string
+          ville: string | null
         }
         Insert: {
-          id?: string
-          reseau: string
-          code: string
-          nom_affiche: string
-          station?: string | null
-          departement?: string | null
-          ville?: string | null
-          cp?: string | null
-          region_esf?: string | null
-          num_esf?: string | null
           cartes_actifs?: number | null
-          directeur?: string | null
-          courriel_ecole?: string | null
+          code: string
           courriel_direction?: string | null
-          telephone?: string | null
-          source?: string | null
-          is_active?: boolean
-          pending_validation?: boolean
+          courriel_ecole?: string | null
+          cp?: string | null
           created_at?: string
+          departement?: string | null
+          directeur?: string | null
+          id?: string
+          is_active?: boolean
+          nom_affiche: string
+          num_esf?: string | null
+          pending_validation?: boolean
+          region_esf?: string | null
+          reseau: string
+          source?: string | null
+          station?: string | null
+          telephone?: string | null
           updated_at?: string
+          ville?: string | null
         }
         Update: {
-          id?: string
-          reseau?: string
-          code?: string
-          nom_affiche?: string
-          station?: string | null
-          departement?: string | null
-          ville?: string | null
-          cp?: string | null
-          region_esf?: string | null
-          num_esf?: string | null
           cartes_actifs?: number | null
-          directeur?: string | null
-          courriel_ecole?: string | null
+          code?: string
           courriel_direction?: string | null
-          telephone?: string | null
-          source?: string | null
-          is_active?: boolean
-          pending_validation?: boolean
+          courriel_ecole?: string | null
+          cp?: string | null
           created_at?: string
+          departement?: string | null
+          directeur?: string | null
+          id?: string
+          is_active?: boolean
+          nom_affiche?: string
+          num_esf?: string | null
+          pending_validation?: boolean
+          region_esf?: string | null
+          reseau?: string
+          source?: string | null
+          station?: string | null
+          telephone?: string | null
           updated_at?: string
+          ville?: string | null
         }
         Relationships: []
       }
@@ -3170,14 +3170,11 @@ export type Database = {
       students: {
         Row: {
           auth_user_id: string | null
+          carte_syndicale: string | null
+          carte_syndicale_pending: boolean
           city: string | null
           civility: string | null
           company: string | null
-          ski_network: string | null
-          ski_school_code: string | null
-          ski_school_other: string | null
-          carte_syndicale: string | null
-          carte_syndicale_pending: boolean
           created_at: string
           email: string
           first_name: string
@@ -3185,19 +3182,19 @@ export type Database = {
           last_name: string
           phone: string | null
           postal_code: string | null
+          ski_network: string | null
+          ski_school_code: string | null
+          ski_school_other: string | null
           street_address: string | null
           updated_at: string
         }
         Insert: {
           auth_user_id?: string | null
+          carte_syndicale?: string | null
+          carte_syndicale_pending?: boolean
           city?: string | null
           civility?: string | null
           company?: string | null
-          ski_network?: string | null
-          ski_school_code?: string | null
-          ski_school_other?: string | null
-          carte_syndicale?: string | null
-          carte_syndicale_pending?: boolean
           created_at?: string
           email: string
           first_name: string
@@ -3205,19 +3202,19 @@ export type Database = {
           last_name: string
           phone?: string | null
           postal_code?: string | null
+          ski_network?: string | null
+          ski_school_code?: string | null
+          ski_school_other?: string | null
           street_address?: string | null
           updated_at?: string
         }
         Update: {
           auth_user_id?: string | null
+          carte_syndicale?: string | null
+          carte_syndicale_pending?: boolean
           city?: string | null
           civility?: string | null
           company?: string | null
-          ski_network?: string | null
-          ski_school_code?: string | null
-          ski_school_other?: string | null
-          carte_syndicale?: string | null
-          carte_syndicale_pending?: boolean
           created_at?: string
           email?: string
           first_name?: string
@@ -3225,6 +3222,9 @@ export type Database = {
           last_name?: string
           phone?: string | null
           postal_code?: string | null
+          ski_network?: string | null
+          ski_school_code?: string | null
+          ski_school_other?: string | null
           street_address?: string | null
           updated_at?: string
         }
