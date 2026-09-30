@@ -3054,6 +3054,75 @@ export type Database = {
           },
         ]
       }
+      ski_school_directory: {
+        Row: {
+          id: string
+          reseau: string
+          code: string
+          nom_affiche: string
+          station: string | null
+          departement: string | null
+          ville: string | null
+          cp: string | null
+          region_esf: string | null
+          num_esf: string | null
+          cartes_actifs: number | null
+          directeur: string | null
+          courriel_ecole: string | null
+          courriel_direction: string | null
+          telephone: string | null
+          source: string | null
+          is_active: boolean
+          pending_validation: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          reseau: string
+          code: string
+          nom_affiche: string
+          station?: string | null
+          departement?: string | null
+          ville?: string | null
+          cp?: string | null
+          region_esf?: string | null
+          num_esf?: string | null
+          cartes_actifs?: number | null
+          directeur?: string | null
+          courriel_ecole?: string | null
+          courriel_direction?: string | null
+          telephone?: string | null
+          source?: string | null
+          is_active?: boolean
+          pending_validation?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          reseau?: string
+          code?: string
+          nom_affiche?: string
+          station?: string | null
+          departement?: string | null
+          ville?: string | null
+          cp?: string | null
+          region_esf?: string | null
+          num_esf?: string | null
+          cartes_actifs?: number | null
+          directeur?: string | null
+          courriel_ecole?: string | null
+          courriel_direction?: string | null
+          telephone?: string | null
+          source?: string | null
+          is_active?: boolean
+          pending_validation?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ski_schools: {
         Row: {
           created_at: string
@@ -3104,6 +3173,11 @@ export type Database = {
           city: string | null
           civility: string | null
           company: string | null
+          ski_network: string | null
+          ski_school_code: string | null
+          ski_school_other: string | null
+          carte_syndicale: string | null
+          carte_syndicale_pending: boolean
           created_at: string
           email: string
           first_name: string
@@ -3119,6 +3193,11 @@ export type Database = {
           city?: string | null
           civility?: string | null
           company?: string | null
+          ski_network?: string | null
+          ski_school_code?: string | null
+          ski_school_other?: string | null
+          carte_syndicale?: string | null
+          carte_syndicale_pending?: boolean
           created_at?: string
           email: string
           first_name: string
@@ -3134,6 +3213,11 @@ export type Database = {
           city?: string | null
           civility?: string | null
           company?: string | null
+          ski_network?: string | null
+          ski_school_code?: string | null
+          ski_school_other?: string | null
+          carte_syndicale?: string | null
+          carte_syndicale_pending?: boolean
           created_at?: string
           email?: string
           first_name?: string
