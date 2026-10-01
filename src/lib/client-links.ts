@@ -37,10 +37,6 @@ export function buildInscriptionSuiviUrl(origin: string, accessToken: string): s
   return `${origin.replace(/\/$/, "")}/suivi/${accessToken}`;
 }
 
-export function buildEmargerUrl(origin: string, token: string): string {
-  return `${origin.replace(/\/$/, "")}/emarger/${token}`;
-}
-
 /** Mode Assister — vrais composants /student/* sous bandeau admin. */
 export function buildStudentAssistUrl(
   origin: string,
@@ -63,7 +59,6 @@ export function formateurAssistPath(
   page:
     | "tableau-de-bord"
     | "planning"
-    | "emargement"
     | "stagiaires"
     | "evaluations"
     | "documents"

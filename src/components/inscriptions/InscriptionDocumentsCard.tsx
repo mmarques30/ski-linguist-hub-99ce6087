@@ -24,6 +24,7 @@ import {
   isExitFormComplete,
   listMissingFormationDocuments,
 } from "@/lib/certificate-progression";
+import { PresenceFichesCard } from "@/components/inscriptions/PresenceFichesCard";
 
 interface InscriptionDocumentsCardProps {
   inscriptionId: string;
@@ -31,6 +32,15 @@ interface InscriptionDocumentsCardProps {
   courseLocation?: string | null;
   observations?: string | null;
   studentEmail?: string | null;
+  inscriptionCode?: string | null;
+  courseLanguage?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  durationHours?: number | null;
+  studentName?: string | null;
+  studentId?: string | null;
+  studentCity?: string | null;
+  formateurName?: string | null;
 }
 
 export function InscriptionDocumentsCard({
@@ -39,6 +49,15 @@ export function InscriptionDocumentsCard({
   courseLocation,
   observations,
   studentEmail,
+  inscriptionCode,
+  courseLanguage,
+  startDate,
+  endDate,
+  durationHours,
+  studentName,
+  studentId,
+  studentCity,
+  formateurName,
 }: InscriptionDocumentsCardProps) {
   const { language } = useLanguage();
   const { data: sendings = [], isLoading } = useInscriptionDocuments(inscriptionId);
@@ -100,6 +119,20 @@ export function InscriptionDocumentsCard({
 
   return (
     <div className="space-y-4">
+      <PresenceFichesCard
+        inscriptionCode={inscriptionCode}
+        language={courseLanguage}
+        startDate={startDate}
+        endDate={endDate}
+        durationHours={durationHours}
+        modality={modality}
+        courseLocation={courseLocation}
+        studentName={studentName}
+        studentId={studentId}
+        studentCity={studentCity}
+        formateurName={formateurName}
+      />
+
       {missingDocs.length > 0 && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
