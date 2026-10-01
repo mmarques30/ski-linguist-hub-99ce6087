@@ -6,6 +6,7 @@ import {
   Calendar,
   Users,
   ClipboardCheck,
+  ClipboardPen,
   User,
   Wallet,
   FileText,
@@ -26,6 +27,7 @@ interface FormateurLayoutProps {
 const formateurNavPages = [
   { name: "Tableau de bord", page: "tableau-de-bord", icon: LayoutDashboard, short: "Accueil" },
   { name: "Planning", page: "planning", icon: Calendar, short: "Planning" },
+  { name: "Émargement", page: "emargement", icon: ClipboardPen, short: "Émarge" },
   { name: "Stagiaires", page: "stagiaires", icon: Users, short: "Stagiaires" },
   { name: "Évaluations", page: "evaluations", icon: ClipboardCheck, short: "Évals" },
   { name: "Documents", page: "documents", icon: FileText, short: "Docs" },

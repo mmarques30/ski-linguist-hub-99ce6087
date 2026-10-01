@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useGenerateEndPack } from "@/hooks/useEndPack";
 import { useInscriptionProgression } from "@/hooks/useInscriptionProgression";
+import { useAttendanceRate } from "@/hooks/useAttendance";
 import {
   canIssueCertificate,
   OBJECTIF_ATTEINT_LABELS,
@@ -75,6 +76,7 @@ export function EndPackDialog({
   onSuccess,
 }: EndPackDialogProps) {
   const [attendanceRate, setAttendanceRate] = useState(100);
+  const [attendanceOverride, setAttendanceOverride] = useState(false);
   const [generateInvoice, setGenerateInvoice] = useState(true);
   const [generateCertificate, setGenerateCertificate] = useState(true);
   const [sendSurvey, setSendSurvey] = useState(true);
@@ -88,6 +90,9 @@ export function EndPackDialog({
   const generateEndPack = useGenerateEndPack();
   const { data: progression, isLoading: progressionLoading } =
     useInscriptionProgression(open ? inscription.id : undefined);
+  const { data: computedAttendance } = useAttendanceRate(
+    open ? inscription.id : undefined
+  );
 
   const merged = useMemo(
     () => ({
@@ -112,8 +117,17 @@ export function EndPackDialog({
   );
 
   useEffect(() => {
-    if (!open) setResult(null);
+    if (!open) {
+      setResult(null);
+      setAttendanceOverride(false);
+    }
   }, [open]);
+
+  useEffect(() => {
+    if (open && computedAttendance != null && !attendanceOverride) {
+      setAttendanceRate(Number(computedAttendance));
+    }
+  }, [open, computedAttendance, attendanceOverride]);
 
   const exitReady = useMemo(
     () =>
@@ -274,8 +288,19 @@ export function EndPackDialog({
                   min={0}
                   max={100}
                   value={attendanceRate}
-                  onChange={(e) => setAttendanceRate(Number(e.target.value))}
+                  readOnly={computedAttendance != null && !attendanceOverride}
+                  onChange={(e) => {
+                    setAttendanceOverride(true);
+                    setAttendanceRate(Number(e.target.value));
+                  }}
                 />
+                <p className="text-xs text-muted-foreground">
+                  {computedAttendance != null
+                    ? attendanceOverride
+                      ? "Valeur modifiée manuellement (créneaux contre-signés = source de vérité)."
+                      : `Calculé depuis l'émargement contre-signé (${computedAttendance} %).`
+                    : "Aucun créneau contre-signé : saisie manuelle."}
+                </p>
               </div>
             </div>
 

@@ -1,6 +1,6 @@
 # Émargement — fiche produit & schéma
 
-Statut : **décisions validées** (Paula, 2026-10-01) — prêt pour implémentation, pas encore au backlog officiel.  
+Statut : **MVP implémenté** (branche `cursor/emargement-spec-6594`, 2026-10-01) — décisions Paula figées ; pas encore au backlog officiel / `ETAT_APP`.  
 Objectif : une feuille d’émargement numérique par demi-journée, pour **présentiel** et **visio / individuel en ligne**, source de vérité pour l’attestation et le taux d’assiduité.
 
 Contexte actuel :

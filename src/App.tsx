@@ -58,6 +58,9 @@ import Register from "./pages/register/Index";
 import BookTest from "./pages/test/BookTest";
 import { PaymentSuccessPage, PaymentCancelPage } from "./pages/register/PaymentReturn";
 import SatisfactionSurvey from "./pages/survey/SatisfactionSurvey";
+import EmargerPage from "./pages/emarger/EmargerPage";
+import EmargementAdmin from "./pages/EmargementAdmin";
+import FormateurEmargement from "./pages/formateur/FormateurEmargement";
 import ContinuousImprovement from "./pages/ContinuousImprovement";
 import SatisfactionStats from "./pages/SatisfactionStats";
 import PortalStudentPicker from "./pages/portails/PortalStudentPicker";
@@ -112,6 +115,7 @@ const App = () => (
             <Route path="/register/payment-cancel" element={<PaymentCancelPage />} />
             <Route path="/survey/:token" element={<SatisfactionSurvey />} />
             <Route path="/suivi/:token" element={<InscriptionSuiviPage />} />
+            <Route path="/emarger/:token" element={<EmargerPage />} />
             <Route path="/conditions-generales" element={<ConditionsGenerales />} />
 
             {/* Design-validation mockup — staff only */}
@@ -152,6 +156,7 @@ const App = () => (
             <Route path="/tests" element={<ProtectedRoute><PlacementTests /></ProtectedRoute>} />
             <Route path="/classes" element={<Navigate to="/formation/sessions" replace />} />
             <Route path="/formation/sessions" element={<ProtectedRoute><Sessions /></ProtectedRoute>} />
+            <Route path="/emargement" element={<ProtectedRoute><EmargementAdmin /></ProtectedRoute>} />
             <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute routeKey="dashboard"><Notifications /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
@@ -183,6 +188,16 @@ const App = () => (
                 <ProtectedRoute>
                   <FormateurOwnViewProvider>
                     <FormateurPlanning />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/formateur/emargement"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <FormateurEmargement />
                   </FormateurOwnViewProvider>
                 </ProtectedRoute>
               }
@@ -377,6 +392,7 @@ const App = () => (
               <Route index element={<Navigate to="tableau-de-bord" replace />} />
               <Route path="tableau-de-bord" element={<FormateurDashboard />} />
               <Route path="planning" element={<FormateurPlanning />} />
+              <Route path="emargement" element={<FormateurEmargement />} />
               <Route path="stagiaires" element={<FormateurStagiaires />} />
               <Route path="documents" element={<FormateurDocuments />} />
               <Route path="paiements" element={<FormateurPaiements />} />

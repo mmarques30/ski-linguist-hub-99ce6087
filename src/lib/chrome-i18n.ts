@@ -33,6 +33,16 @@ export const CHROME_NAV: Record<string, Translations> = {
     "pt-BR": "Avaliações orais",
     en: "Oral evaluations",
   },
+  "/formateur/emargement": {
+    fr: "Émargement",
+    "pt-BR": "Assinatura de presença",
+    en: "Attendance",
+  },
+  "/emargement": {
+    fr: "Émargement",
+    "pt-BR": "Assinatura de presença",
+    en: "Attendance",
+  },
   "/gestion/commercial": {
     fr: "Pipeline commercial",
     "pt-BR": "Pipeline comercial",
