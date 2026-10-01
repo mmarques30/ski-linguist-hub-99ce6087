@@ -6,7 +6,7 @@ export type InscriptionPayerInput = {
   funding_organization?: string | null;
 };
 
-const STUDENT_PAYER_MARKERS = ["opco", "fifpl", "autofinancement", "self"];
+const STUDENT_PAYER_MARKERS = ["opco", "fifpl", "agefice", "autofinancement", "self"];
 
 const COMPANY_PAYER_MARKERS = [
   "entreprise",
