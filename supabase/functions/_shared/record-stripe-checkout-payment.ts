@@ -5,6 +5,7 @@ import {
   REGISTRATION_PAYMENT_OPTIONS,
   type RegistrationPaymentOption,
 } from "./registration-payments.ts";
+import { enqueueInscriptionDocuments } from "./enqueue-inscription-documents.ts";
 
 export interface StripeCheckoutSessionLike {
   id: string;
@@ -40,7 +41,7 @@ export async function recordStripeCheckoutPayment(
 
   const { data: inscription } = await supabase
     .from("inscriptions")
-    .select("id, price, code")
+    .select("id, price, code, funding_organization")
     .eq("id", inscriptionId)
     .maybeSingle();
 
@@ -52,11 +53,17 @@ export async function recordStripeCheckoutPayment(
   const paymentFields = getInscriptionPaymentFields(coursePrice, normalizedOption);
   const amountPaid = (session.amount_total || 0) / 100;
   const today = new Date().toISOString().split("T")[0];
+  const resolvedPaymentType =
+    paymentType === "acompte" || paymentType === "total"
+      ? paymentType
+      : normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL
+        ? "total"
+        : "acompte";
 
   await supabase.from("payments").insert({
     inscription_id: inscriptionId,
     amount: amountPaid,
-    payment_type: paymentType,
+    payment_type: resolvedPaymentType,
     payment_method: "stripe",
     status: "recu",
     payment_date: today,
@@ -87,6 +94,17 @@ export async function recordStripeCheckoutPayment(
         normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL ? "confirmee" : undefined,
     })
     .eq("id", inscriptionId);
+
+  // Dossier de formation : +30 min après confirmation du règlement (150 € ou intégral).
+  try {
+    await enqueueInscriptionDocuments({
+      supabase,
+      inscriptionId,
+      fundingOrganization: inscription.funding_organization ?? null,
+    });
+  } catch (docError) {
+    console.error("enqueue inscription_documents after Stripe:", docError);
+  }
 
   return { recorded: true, duplicate: false, inscriptionId };
 }

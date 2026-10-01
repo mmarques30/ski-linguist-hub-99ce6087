@@ -23,7 +23,7 @@ Le payeur d'une inscription (stagiaire lui-même, école de ski, partenaire) con
 |---|---|---|---|---|
 | 1a | inscription_confirmation_individual | Stagiaire | Inscription soumise, immédiat (synchrone), type individuel | — |
 | 1b | inscription_confirmation_group | Stagiaire | Inscription soumise, immédiat, type collectif | — |
-| 2 | inscription_documents | Stagiaire payeur | 30 min après l'inscription, une fois | Convention, programme (données stagiaire + formation), critères FIF-PL, tutoriel |
+| 2 | inscription_documents | Stagiaire payeur | 30 min après confirmation du règlement des frais de dossier (150 €) ou du paiement intégral (Stripe / virement BO) ; immédiat à l'inscription seulement si aucun flux de paiement (devis) | Convention, programme (données stagiaire + formation), critères FIF-PL / pack AGEFICE |
 | 3 | student_portal_invite | Stagiaire | Manuel (fiche ou masse) ; inactif cette saison | — |
 | 4 | schedule_validation_reminder | info@fli.fr | J-11 à 7 h 15, puis dès J-10 toutes les 2 h de 8 h à 20 h tant que non réparti | — |
 | 5a | invoice_reminder_1 | Payeur | Cron 9 h, échéance + 7 j | — |

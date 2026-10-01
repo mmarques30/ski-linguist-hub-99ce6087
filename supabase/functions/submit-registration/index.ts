@@ -13,7 +13,7 @@ import {
   REQUESTED_START_DATE_REQUIRED_MESSAGE,
   resolveInscriptionDates,
 } from "../_shared/registration-dates.ts";
-import { isStudentPayer } from "../_shared/inscription-payer.ts";
+import { enqueueInscriptionDocuments } from "../_shared/enqueue-inscription-documents.ts";
 import { buildAgeficeObservation } from "../_shared/agefice-funding.ts";
 import {
   buildRegistrationAdminNotifyHtml,
@@ -376,30 +376,6 @@ function parseDurationHours(duration?: string): number | null {
   if (!duration) return null;
   const match = duration.match(/(\d+)/);
   return match ? Number(match[1]) : null;
-}
-
-/** File d'attente modèle 2 : dossier FIF-PL à +30 min (payeur stagiaire). */
-async function enqueueInscriptionDocuments(params: {
-  supabase: ReturnType<typeof createClient>;
-  inscriptionId: string;
-  fundingOrganization: string | null;
-}): Promise<boolean> {
-  if (!isStudentPayer({ funding_organization: params.fundingOrganization })) {
-    return false;
-  }
-  const scheduledFor = new Date(Date.now() + 30 * 60 * 1000).toISOString();
-  const { error } = await params.supabase.from("scheduled_reminders").insert({
-    type: "DOCUMENT",
-    related_id: params.inscriptionId,
-    related_table: "inscriptions",
-    scheduled_for: scheduledFor,
-    status: "PENDING",
-  });
-  if (error) {
-    console.error("enqueue inscription_documents:", error);
-    return false;
-  }
-  return true;
 }
 
 Deno.serve(async (req) => {
@@ -967,16 +943,22 @@ Deno.serve(async (req) => {
         }
       }
 
+      // Règle Paula : si un règlement est attendu (Stripe / virement), le dossier
+      // part seulement après confirmation des 150 € (ou du paiement intégral) —
+      // via recordStripeCheckoutPayment ou le BO finance. Sans flux de paiement
+      // (devis OPCO / format personnalisé), on conserve l'enfilement immédiat.
       const fundingOrganization =
         FUNDING_MAP[registration.fundingType] || registration.fundingType || null;
-      try {
-        documentsSent = await enqueueInscriptionDocuments({
-          supabase,
-          inscriptionId: inscription.id,
-          fundingOrganization,
-        });
-      } catch (docError) {
-        console.error("enqueue inscription_documents error:", docError);
+      if (!paymentFields) {
+        try {
+          documentsSent = await enqueueInscriptionDocuments({
+            supabase,
+            inscriptionId: inscription.id,
+            fundingOrganization,
+          });
+        } catch (docError) {
+          console.error("enqueue inscription_documents error:", docError);
+        }
       }
 
       // Une seule notif e-mail admin par inscription, avec résumé des choix.
