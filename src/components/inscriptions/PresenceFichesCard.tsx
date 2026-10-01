@@ -5,11 +5,14 @@ import { Button } from "@/components/ui/button";
 import { SurfaceCard } from "@/components/ui-kit";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  downloadPresenceFichePdf,
+  downloadPresenceFichePdfAsync,
   presenceLocationLabel,
   type PresenceFicheInput,
   type PresenceFicheKind,
 } from "@/lib/presence-fiches-pdf";
+
+/** Logo d’en-tête des modèles Word 2025 (public/). */
+const PRESENCE_HEADER_LOGO_URL = "/presence-fiches/fli-header-logo.png";
 
 export type PresenceFichesCardProps = {
   inscriptionCode?: string | null;
@@ -60,7 +63,12 @@ export function PresenceFichesCard(props: PresenceFichesCardProps) {
     setBusy(kind);
     try {
       const input = await buildInput();
-      downloadPresenceFichePdf(kind, input, props.inscriptionCode);
+      await downloadPresenceFichePdfAsync(
+        kind,
+        input,
+        props.inscriptionCode,
+        PRESENCE_HEADER_LOGO_URL
+      );
       toast.success(
         kind === "formateur"
           ? "Fiche FORMATEUR téléchargée"
@@ -77,8 +85,18 @@ export function PresenceFichesCard(props: PresenceFichesCardProps) {
     setBusy("both");
     try {
       const input = await buildInput();
-      downloadPresenceFichePdf("formateur", input, props.inscriptionCode);
-      downloadPresenceFichePdf("stagiaire", input, props.inscriptionCode);
+      await downloadPresenceFichePdfAsync(
+        "formateur",
+        input,
+        props.inscriptionCode,
+        PRESENCE_HEADER_LOGO_URL
+      );
+      await downloadPresenceFichePdfAsync(
+        "stagiaire",
+        input,
+        props.inscriptionCode,
+        PRESENCE_HEADER_LOGO_URL
+      );
       toast.success("Deux fiches téléchargées");
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "Génération impossible");
