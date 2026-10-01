@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DefinitionList, StatusPill, SurfaceCard } from "@/components/ui-kit";
@@ -15,7 +14,18 @@ import { Loader2, Mountain } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { usePlacementTestDetails } from "@/hooks/usePlacementTestStats";
-import { SLOPE_LABELS, type SlopeLevel } from "@/lib/placement-test-engine";
+import {
+  AUTO_DIAGNOSTIC_QUESTIONS,
+  formatAutoDiagnosticSummary,
+  substituteLanguagePlaceholder,
+  type AutoDiagnosticAnswers,
+} from "@/lib/auto-diagnostic";
+import {
+  hasAdaptedScale,
+  SLOPE_LABELS,
+  studentFacingPisteLabel,
+  type SlopeLevel,
+} from "@/lib/placement-test-engine";
 import { CECRL_LEVELS } from "@/lib/certificate-progression";
 import { supabase } from "@/integrations/supabase/client";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
@@ -27,18 +37,36 @@ interface Props {
   inscriptionEntryLevel?: string | null;
 }
 
+interface VocabAnswerDetail {
+  questionId: string;
+  questionText: string;
+  selected: string;
+  correctAnswer: string;
+  isCorrect: boolean;
+}
+
 interface AdaptiveSummary {
   slopeResults?: Array<{ slope: string; correct: number; total: number; passed: boolean }>;
   passedSlopes?: string[];
   highestSlopeReached?: string;
+  /** @deprecated ancien champ — remplacé par vocabScore */
   endedAtVocab?: boolean;
+  vocabScore?: { correct: number; total: number };
+  vocabAnswers?: VocabAnswerDetail[];
+  presentationText?: string;
+  startedAt?: string | null;
+  completedAt?: string | null;
 }
 
-/**
- * Teinte de pastille par piste. `SLOPE_COLORS` (moteur de test) porte des
- * classes Tailwind brutes — dont `bg-gray-900` — illisibles en thème sombre :
- * on garde ses libellés, pas ses couleurs.
- */
+interface StoredAnswers {
+  summary?: AdaptiveSummary;
+  autoDiagnostic?: {
+    answers?: AutoDiagnosticAnswers;
+    completedAt?: string;
+  };
+  responses?: Record<string, string>;
+}
+
 const SLOPE_TONES: Record<SlopeLevel, PillTone> = {
   verte: "success",
   bleue: "info",
@@ -83,8 +111,20 @@ export function PlacementTestSummaryCard({
     );
   }
 
-  const answers = test?.answers as { summary?: AdaptiveSummary } | null;
-  const summary = answers?.summary;
+  const stored = test?.answers as StoredAnswers | null;
+  const summary = stored?.summary;
+  const pisteLabel = studentFacingPisteLabel({
+    passedSlopes: summary?.passedSlopes,
+    highestSlopeReached: summary?.highestSlopeReached,
+  });
+  const adapted = hasAdaptedScale(test?.language);
+  const autoAnswers = stored?.autoDiagnostic?.answers;
+  const slopeOnly = (summary?.slopeResults || []).filter((sr) => sr.slope !== "vocab_ski");
+  const vocabFromResults = (summary?.slopeResults || []).find((sr) => sr.slope === "vocab_ski");
+  const vocabScore = summary?.vocabScore ??
+    (vocabFromResults
+      ? { correct: vocabFromResults.correct, total: vocabFromResults.total }
+      : null);
 
   const persistLevel = async () => {
     if (!testId) return;
@@ -117,11 +157,21 @@ export function PlacementTestSummaryCard({
     <SurfaceCard
       title="Test adaptatif (pistes)"
       icon={Mountain}
-      bodyClassName="space-y-3"
+      bodyClassName="space-y-4"
     >
+        {adapted && (
+          <StatusPill tone="warning" size="sm">
+            Échelle adaptée
+          </StatusPill>
+        )}
+
         <DefinitionList
           columns={2}
           items={[
+            {
+              label: "Piste finale",
+              value: <span className="text-xl font-bold">{pisteLabel}</span>,
+            },
             {
               label: "Niveau déterminé",
               value: (
@@ -131,7 +181,7 @@ export function PlacementTestSummaryCard({
               ),
             },
             {
-              label: "Score",
+              label: "Score global",
               value: (
                 <span className="text-xl font-bold tabular">
                   {test
@@ -140,6 +190,18 @@ export function PlacementTestSummaryCard({
                 </span>
               ),
             },
+            ...(vocabScore
+              ? [
+                  {
+                    label: "Vocabulaire ski",
+                    value: (
+                      <span className="text-xl font-bold tabular">
+                        {vocabScore.correct}/{vocabScore.total}
+                      </span>
+                    ),
+                  },
+                ]
+              : []),
           ]}
         />
 
@@ -171,25 +233,104 @@ export function PlacementTestSummaryCard({
           </div>
         )}
 
-        {summary?.slopeResults && summary.slopeResults.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {summary.slopeResults.map((sr) => (
-              <StatusPill
-                key={sr.slope}
-                tone={sr.passed ? SLOPE_TONES[sr.slope as SlopeLevel] ?? "neutral" : "neutral"}
-                size="sm"
-              >
-                {SLOPE_LABELS[sr.slope as SlopeLevel] || sr.slope} : {sr.correct}/{sr.total}
-              </StatusPill>
-            ))}
+        {slopeOnly.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">Scores par piste</p>
+            <div className="flex flex-wrap gap-2">
+              {slopeOnly.map((sr) => (
+                <StatusPill
+                  key={sr.slope}
+                  tone={sr.passed ? SLOPE_TONES[sr.slope as SlopeLevel] ?? "neutral" : "neutral"}
+                  size="sm"
+                >
+                  {SLOPE_LABELS[sr.slope as SlopeLevel] || sr.slope} : {sr.correct}/{sr.total}
+                </StatusPill>
+              ))}
+            </div>
           </div>
         )}
 
-        {summary?.endedAtVocab && (
-          <p className="text-sm text-muted-foreground">
-            Parcours terminé par le vocabulaire ski après une piste non validée.
-          </p>
+        {(summary?.vocabAnswers?.length || vocabScore) && (
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">
+              Vocabulaire ski
+              {vocabScore ? ` · ${vocabScore.correct}/${vocabScore.total}` : ""}
+            </p>
+            {summary?.vocabAnswers && summary.vocabAnswers.length > 0 ? (
+              <ul className="space-y-2 text-sm">
+                {summary.vocabAnswers.map((v) => (
+                  <li
+                    key={v.questionId}
+                    className="rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))] px-3 py-2"
+                  >
+                    <p className="text-muted-foreground">{v.questionText}</p>
+                    <p className="mt-1">
+                      Réponse : <span className="font-medium">{v.selected || "—"}</span>
+                      {v.isCorrect ? (
+                        <StatusPill tone="success" size="sm" className="ml-2">
+                          OK
+                        </StatusPill>
+                      ) : (
+                        <StatusPill tone="danger" size="sm" className="ml-2">
+                          Incorrect
+                        </StatusPill>
+                      )}
+                    </p>
+                    {!v.isCorrect && (
+                      <p className="text-xs text-muted-foreground">
+                        Attendu : {v.correctAnswer}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
         )}
+
+        {typeof summary?.presentationText === "string" && (
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-foreground">Présentation</p>
+            {summary.presentationText.trim() ? (
+              <p className="whitespace-pre-wrap rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))] px-3 py-2 text-sm">
+                {summary.presentationText}
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">Non renseignée</p>
+            )}
+          </div>
+        )}
+
+        {autoAnswers && Object.keys(autoAnswers).length > 0 && (
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">Auto-diagnostic</p>
+            <ul className="space-y-2 text-sm">
+              {AUTO_DIAGNOSTIC_QUESTIONS.map((q) => {
+                const raw = autoAnswers[String(q.order_index)];
+                if (raw == null || raw === "" || (Array.isArray(raw) && !raw.length)) {
+                  return null;
+                }
+                return (
+                  <li key={q.order_index} className="border-b border-border pb-2 last:border-0">
+                    <p className="text-muted-foreground">
+                      {substituteLanguagePlaceholder(q.question, test?.language)}
+                    </p>
+                    <p className="font-medium">
+                      {Array.isArray(raw) ? raw.join(" · ") : raw}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+            <details className="text-xs text-muted-foreground">
+              <summary>Résumé texte</summary>
+              <pre className="mt-1 whitespace-pre-wrap">
+                {formatAutoDiagnosticSummary(autoAnswers, test?.language)}
+              </pre>
+            </details>
+          </div>
+        )}
+
       {confirmDialog}
     </SurfaceCard>
   );

@@ -475,26 +475,11 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                       ? studentFacingPisteLabel({
                           passedSlopes: data.testSummary.passedSlopes,
                           highestSlopeReached: data.testSummary.highestSlopeReached,
-                          endedAtVocab: data.testSummary.endedAtVocab,
                         })
                       : studentFacingPisteFromCecrl(data.currentLevel)}
                   </StatusPill>
                 }
               />
-              {data.correctAnswers !== undefined && (
-                <SummaryRow
-                  label="Score test"
-                  value={
-                    <>
-                      {data.correctAnswers}/
-                      {data.totalAnswered ??
-                        data.testSummary?.slopeResults.reduce((sum, sr) => sum + sr.total, 0) ??
-                        "—"}{" "}
-                      bonnes réponses
-                    </>
-                  }
-                />
-              )}
               {data.profession !== "ski_instructor" && (
                 <SummaryRow
                   label="Certification"

@@ -73,7 +73,17 @@ export interface RegistrationData {
     slopeResults: Array<{ slope: string; correct: number; total: number; passed: boolean }>;
     passedSlopes: string[];
     highestSlopeReached: string;
-    endedAtVocab: boolean;
+    vocabScore: { correct: number; total: number };
+    vocabAnswers: Array<{
+      questionId: string;
+      questionText: string;
+      selected: string;
+      correctAnswer: string;
+      isCorrect: boolean;
+    }>;
+    presentationText: string;
+    startedAt?: string | null;
+    completedAt?: string | null;
   };
   /** Auto-diagnostic (feuille Excel) — avant le QCM pistes. */
   autoDiagnostic?: {
