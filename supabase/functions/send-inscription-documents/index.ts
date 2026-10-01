@@ -3,7 +3,9 @@
  *
  * Traite les rappels `scheduled_reminders` de type DOCUMENT dus (file d'attente
  * remplie par submit-registration à +30 min, payeur stagiaire uniquement).
- * Génère convention + programme PDF personnalisés, joint les critères FIF-PL,
+ * Génère convention + programme PDF personnalisés, joint :
+ * - FIFPL / moniteur : critères FIF-PL + tutoriel
+ * - AGEFICE : demande de prise en charge + pièces justificatives
  * envoie via Resend si le modèle email est actif.
  *
  * Cron inactif par défaut — Paula active depuis /admin/emails.
@@ -28,6 +30,10 @@ import {
   loadSkiMonitorWelcomeDocument,
   SKI_MONITOR_STATIC_PACK_DOCUMENTS,
 } from "../_shared/ski-monitor-welcome-documents.ts";
+import {
+  AGEFICE_DOCUMENT_FILES,
+  isAgeficeFundingOrganization,
+} from "../_shared/agefice-funding.ts";
 import { ORGANIZATION_IDENTITY_KEY } from "../_shared/organization-identity.ts";
 
 const corsHeaders = {
@@ -42,6 +48,17 @@ const CRITERIA_DOC = SKI_MONITOR_STATIC_PACK_DOCUMENTS.find(
 const TUTORIEL_DOC = SKI_MONITOR_STATIC_PACK_DOCUMENTS.find(
   (d) => d.documentType === "LIVRET",
 )!;
+
+const AGEFICE_DEMANDE_DOC = {
+  type: "AGEFICE_DEMANDE" as const,
+  filename: "AGEFICE-Demande-prise-en-charge-2025-2026.pdf",
+  internalFile: AGEFICE_DOCUMENT_FILES.demandePriseEnCharge,
+};
+const AGEFICE_PIECES_DOC = {
+  type: "AGEFICE_PIECES" as const,
+  filename: "AGEFICE-Pieces-justificatives-2026.pdf",
+  internalFile: AGEFICE_DOCUMENT_FILES.piecesJustificatives,
+};
 
 function bytesToBase64(bytes: Uint8Array): string {
   let binary = "";
@@ -275,15 +292,25 @@ Deno.serve(async (req) => {
           throw new Error("en-tête FLI introuvable (PNG vide)");
         }
 
-        const [conventionBytes, programmeBytes, criteriaBytes, tutorielBytes] =
+        const isAgefice = isAgeficeFundingOrganization(
+          inscription.funding_organization as string | null,
+        );
+
+        const [conventionBytes, programmeBytes, staticA, staticB] =
           await Promise.all([
             renderInscriptionDocumentPdf(conventionModel, {
               organismSignaturePng,
               letterheadPng,
             }),
             renderInscriptionDocumentPdf(programmeModel, { letterheadPng }),
-            loadSkiMonitorWelcomeDocument(CRITERIA_DOC.internalFile, supabase),
-            loadSkiMonitorWelcomeDocument(TUTORIEL_DOC.internalFile, supabase),
+            loadSkiMonitorWelcomeDocument(
+              isAgefice ? AGEFICE_DEMANDE_DOC.internalFile : CRITERIA_DOC.internalFile,
+              supabase,
+            ),
+            loadSkiMonitorWelcomeDocument(
+              isAgefice ? AGEFICE_PIECES_DOC.internalFile : TUTORIEL_DOC.internalFile,
+              supabase,
+            ),
           ]);
         if (conventionBytes.byteLength < 20_000) {
           throw new Error(
@@ -294,14 +321,32 @@ Deno.serve(async (req) => {
         const code = inscription.code || "sans-code";
         // PDF personnalisés uniquement — jamais de .dotx Word sans données stagiaire.
         const packFiles: Array<{
-          type: "CONVENTION" | "PROGRAMME" | "REGLEMENT" | "LIVRET";
+          type:
+            | "CONVENTION"
+            | "PROGRAMME"
+            | "REGLEMENT"
+            | "LIVRET"
+            | "AGEFICE_DEMANDE"
+            | "AGEFICE_PIECES";
           filename: string;
           bytes: Uint8Array;
         }> = [
           { type: "CONVENTION", filename: conventionFilename(code), bytes: conventionBytes },
           { type: "PROGRAMME", filename: programmeFilename(code), bytes: programmeBytes },
-          { type: "REGLEMENT", filename: CRITERIA_DOC.filename, bytes: criteriaBytes },
-          { type: "LIVRET", filename: TUTORIEL_DOC.filename, bytes: tutorielBytes },
+          isAgefice
+            ? {
+                type: AGEFICE_DEMANDE_DOC.type,
+                filename: AGEFICE_DEMANDE_DOC.filename,
+                bytes: staticA,
+              }
+            : { type: "REGLEMENT", filename: CRITERIA_DOC.filename, bytes: staticA },
+          isAgefice
+            ? {
+                type: AGEFICE_PIECES_DOC.type,
+                filename: AGEFICE_PIECES_DOC.filename,
+                bytes: staticB,
+              }
+            : { type: "LIVRET", filename: TUTORIEL_DOC.filename, bytes: staticB },
         ];
         for (const file of packFiles) {
           if (file.filename.toLowerCase().endsWith(".dotx")) {
@@ -361,6 +406,8 @@ Deno.serve(async (req) => {
             PROGRAMME: null,
             REGLEMENT: null,
             LIVRET: null,
+            AGEFICE_DEMANDE: null,
+            AGEFICE_PIECES: null,
           };
 
           if (studentId) {
@@ -383,12 +430,19 @@ Deno.serve(async (req) => {
             console.warn("send-inscription-documents: student_id manquant — PDF non stockés");
           }
 
-          // Remplace d'éventuelles lignes sans PDF / anciennes URLs .dotx
+          // Remplace d'éventuelles lignes sans PDF / anciennes URLs .dotx / ancien pack FIFPL
           await supabase
             .from("document_sendings")
             .delete()
             .eq("inscription_id", inscriptionId)
-            .in("document_type", ["CONVENTION", "PROGRAMME", "REGLEMENT", "LIVRET"]);
+            .in("document_type", [
+              "CONVENTION",
+              "PROGRAMME",
+              "REGLEMENT",
+              "LIVRET",
+              "AGEFICE_DEMANDE",
+              "AGEFICE_PIECES",
+            ]);
 
           await supabase.from("document_sendings").insert(
             packFiles.map((f) => ({
