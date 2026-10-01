@@ -10,6 +10,10 @@
  * Règle retenue : on exige toujours une date de début, mais on distingue la
  * session datée du catalogue (dates fermes) de la date souhaitée par le
  * stagiaire (dates à planifier avec FLI). Rien n'est inventé côté serveur.
+ *
+ * Stages en ligne (dates flexibles) : la fin n'est plus calée sur le même jour
+ * que le début. Fenêtre de réalisation selon la durée du pack :
+ * 6 h → 2 mois, 12 h → 4 mois, 18 h → 6 mois (et proportionnel au-delà).
  */
 
 /** Libellé affiché partout où les dates ne sont pas encore fermes. */
@@ -48,6 +52,37 @@ export function isIsoDate(value: unknown): value is string {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T00:00:00Z`);
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+/**
+ * Ajoute des mois calendaires à une date ISO courte (UTC), en rabattant le jour
+ * sur le dernier jour du mois cible si besoin (31 janv. + 1 mois → 28/29 févr.).
+ */
+export function addMonthsIso(iso: string, months: number): string {
+  if (!isIsoDate(iso)) return iso;
+  const [year, month, day] = iso.split("-").map(Number);
+  const anchor = new Date(Date.UTC(year, month - 1 + months, 1));
+  const lastDay = new Date(
+    Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + 1, 0)
+  ).getUTCDate();
+  const clampedDay = Math.min(day, lastDay);
+  return new Date(
+    Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), clampedDay)
+  )
+    .toISOString()
+    .slice(0, 10);
+}
+
+/**
+ * Fenêtre de réalisation (en mois) pour un pack en ligne à dates flexibles.
+ * 6 h → 2 mois, 12 h → 4 mois, 18 h → 6 mois ; sinon `round(heures / 3)`.
+ */
+export function onlineFlexibleWindowMonths(
+  durationHours: number | null | undefined
+): number {
+  const hours = Number(durationHours);
+  if (!Number.isFinite(hours) || hours <= 0) return 2;
+  return Math.max(1, Math.round(hours / 3));
 }
 
 export type RequestedStartDateProblem = "manquante" | "invalide" | "passee";
@@ -96,14 +131,16 @@ export interface ResolvedInscriptionDates {
 
 /**
  * Dates à écrire sur l'inscription. Une session datée du catalogue donne des
- * dates fermes ; sinon on retient la date souhaitée par le stagiaire et on
- * marque l'inscription « à planifier ». Aucune date de saison n'est héritée :
- * sans date exploitable, la fonction renvoie `null` et l'appelant refuse.
+ * dates fermes ; sinon on retient la date souhaitée par le stagiaire, on pose
+ * une fenêtre de réalisation selon la durée du pack, et on marque l'inscription
+ * « à planifier ». Aucune date de saison n'est héritée : sans date exploitable,
+ * la fonction renvoie `null` et l'appelant refuse.
  */
 export function resolveInscriptionDates(input: {
   startDate?: string | null;
   endDate?: string | null;
   requestedStartDate?: string | null;
+  durationHours?: number | null;
 }): ResolvedInscriptionDates | null {
   if (isIsoDate(input.startDate) && isIsoDate(input.endDate)) {
     return {
@@ -121,10 +158,12 @@ export function resolveInscriptionDates(input: {
 
   if (!requested) return null;
 
-  // `end_date` est NOT NULL et doit rester >= `start_date` : on la cale sur le
-  // début souhaité, et `dates_to_confirm` dit à l'interface de ne pas afficher
-  // cette date comme une fin de formation.
-  return { start_date: requested, end_date: requested, dates_to_confirm: true };
+  const months = onlineFlexibleWindowMonths(input.durationHours);
+  return {
+    start_date: requested,
+    end_date: addMonthsIso(requested, months),
+    dates_to_confirm: true,
+  };
 }
 
 export function formatDateFr(iso: string | null | undefined): string {
@@ -151,9 +190,11 @@ export function inscriptionDateRangeLabel(inscription: InscriptionDates): string
   const end = formatDateFr(inscription.end_date);
 
   if (inscription.dates_to_confirm) {
-    return start
-      ? `${DATES_A_PLANIFIER_LABEL} — début souhaité le ${start}`
-      : DATES_A_PLANIFIER_LABEL;
+    if (!start) return DATES_A_PLANIFIER_LABEL;
+    if (end && end !== start) {
+      return `${DATES_A_PLANIFIER_LABEL} — début souhaité le ${start}, à réaliser avant le ${end}`;
+    }
+    return `${DATES_A_PLANIFIER_LABEL} — début souhaité le ${start}`;
   }
 
   if (!start) return DATES_A_PLANIFIER_LABEL;
@@ -170,9 +211,17 @@ export function inscriptionDateRangeLabel(inscription: InscriptionDates): string
 export function inscriptionDatesSentenceFr(inscription: InscriptionDates): string {
   const start = formatDateFr(inscription.start_date);
   const end = formatDateFr(inscription.end_date);
+  const base = "dates à planifier avec l'équipe FLI";
 
-  if (inscription.dates_to_confirm || !start || !end || end === start) {
-    const base = "dates à planifier avec l'équipe FLI";
+  if (inscription.dates_to_confirm) {
+    if (!start) return base;
+    if (end && end !== start) {
+      return `${base} (début souhaité : ${start}, à réaliser avant le ${end})`;
+    }
+    return `${base} (début souhaité : ${start})`;
+  }
+
+  if (!start || !end || end === start) {
     return start ? `${base} (début souhaité : ${start})` : base;
   }
 

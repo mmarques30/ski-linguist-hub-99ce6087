@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   addDaysIso,
+  addMonthsIso,
   DATES_A_PLANIFIER_LABEL,
   formatDateFr,
   inscriptionDateRangeLabel,
@@ -10,6 +11,7 @@ import {
   inscriptionStartDateLabel,
   isIsoDate,
   offeringHasFixedDates,
+  onlineFlexibleWindowMonths,
   REQUESTED_START_DATE_MESSAGES,
   requestedStartDateNotice,
   requestedStartDateProblem,
@@ -53,17 +55,36 @@ describe("dates d'inscription /register", () => {
     });
   });
 
-  it("retient la date souhaitée sans jamais tomber sur la saison", () => {
+  it("retient la date souhaitée et pose une fenêtre selon la durée du pack", () => {
+    expect(onlineFlexibleWindowMonths(6)).toBe(2);
+    expect(onlineFlexibleWindowMonths(12)).toBe(4);
+    expect(onlineFlexibleWindowMonths(18)).toBe(6);
+    expect(addMonthsIso("2026-10-20", 2)).toBe("2026-12-20");
+    expect(addMonthsIso("2026-01-31", 1)).toBe("2026-02-28");
+
     const resolved = resolveInscriptionDates({
       startDate: undefined,
       endDate: undefined,
       requestedStartDate: "2026-10-20",
+      durationHours: 6,
     });
     expect(resolved).toEqual({
       start_date: "2026-10-20",
-      end_date: "2026-10-20",
+      end_date: "2026-12-20",
       dates_to_confirm: true,
     });
+    expect(
+      resolveInscriptionDates({
+        requestedStartDate: "2026-10-20",
+        durationHours: 12,
+      })?.end_date
+    ).toBe("2027-02-20");
+    expect(
+      resolveInscriptionDates({
+        requestedStartDate: "2026-10-20",
+        durationHours: 18,
+      })?.end_date
+    ).toBe("2027-04-20");
     expect(resolved?.start_date).not.toBe(SAISON_COURANTE.start_date);
     expect(resolved?.end_date).not.toBe(SAISON_COURANTE.end_date);
   });
@@ -103,15 +124,24 @@ describe("dates d'inscription /register", () => {
   it("affiche « À planifier » sur la liste, la fiche et le J-10", () => {
     const aPlanifier = {
       start_date: "2026-10-20",
-      end_date: "2026-10-20",
+      end_date: "2026-12-20",
       dates_to_confirm: true,
     };
     expect(inscriptionStartDateLabel(aPlanifier)).toBe(DATES_A_PLANIFIER_LABEL);
     expect(inscriptionDateRangeLabel(aPlanifier)).toBe(
-      "À planifier — début souhaité le 20/10/2026"
+      "À planifier — début souhaité le 20/10/2026, à réaliser avant le 20/12/2026"
     );
     expect(inscriptionDatesSentenceFr(aPlanifier)).toBe(
-      "dates à planifier avec l'équipe FLI (début souhaité : 20/10/2026)"
+      "dates à planifier avec l'équipe FLI (début souhaité : 20/10/2026, à réaliser avant le 20/12/2026)"
+    );
+
+    const legacySameDay = {
+      start_date: "2026-10-20",
+      end_date: "2026-10-20",
+      dates_to_confirm: true,
+    };
+    expect(inscriptionDateRangeLabel(legacySameDay)).toBe(
+      "À planifier — début souhaité le 20/10/2026"
     );
 
     const ferme = {
@@ -162,12 +192,21 @@ describe("dates d'inscription /register", () => {
       const fin = texte.indexOf("\nexport ", debut + 1);
       return texte.slice(debut, fin === -1 ? undefined : fin);
     };
+    expect(extraire(deno, "addMonthsIso")).toBe(extraire(front, "addMonthsIso"));
+    expect(extraire(deno, "onlineFlexibleWindowMonths")).toBe(
+      extraire(front, "onlineFlexibleWindowMonths")
+    );
     expect(extraire(deno, "resolveInscriptionDates")).toBe(
       extraire(front, "resolveInscriptionDates")
     );
     expect(extraire(deno, "inscriptionDatesSentenceFr")).toBe(
       extraire(front, "inscriptionDatesSentenceFr")
     );
+  });
+
+  it("passe durationHours depuis submit-registration", () => {
+    const edge = source("supabase/functions/submit-registration/index.ts");
+    expect(edge).toMatch(/resolveInscriptionDates\(\{[\s\S]*durationHours/);
   });
 
   it("produit la date du jour au format ISO court", () => {
