@@ -30,9 +30,12 @@ describe("PlacementTestStep — UX progressif pistes", () => {
     expect(SLOPE_LABELS.bleue.toLowerCase()).toBe("piste bleue");
   });
 
-  it("remonte le RadioGroup à chaque question sans présélection", () => {
+  it("remonte le RadioGroup à chaque question sans présélection (valeur index)", () => {
     expect(step).toContain("key={currentQuestion.id}");
-    expect(step).toContain("onValueChange={selectAnswer}");
+    expect(step).toContain("value={mcqChoice}");
+    expect(step).toContain("selectAnswer(option)");
+    expect(step).toContain("advancingRef");
+    expect(step).toContain("mcqInputLocked");
   });
 
   it("garde le seuil métier 3/5", () => {

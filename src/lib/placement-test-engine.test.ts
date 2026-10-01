@@ -109,8 +109,16 @@ describe("placement-test-engine", () => {
   it("getNextSlopeAfterSlope envoie toujours vers vocab à la fin de l'adaptatif", () => {
     expect(getNextSlopeAfterSlope("verte", false)).toBe("vocab_ski");
     expect(getNextSlopeAfterSlope("verte", true)).toBe("bleue");
+    expect(getNextSlopeAfterSlope("bleue", false)).toBe("vocab_ski");
+    expect(getNextSlopeAfterSlope("bleue", true)).toBe("rouge");
     expect(getNextSlopeAfterSlope("noire", true)).toBe("vocab_ski");
     expect(getNextSlopeAfterSlope("rouge", false)).toBe("vocab_ski");
+  });
+
+  it("2/5 sur une piste ne valide pas (seuil 3)", () => {
+    expect(evaluateSlope(2)).toBe(false);
+    expect(getNextSlopeAfterSlope("bleue", evaluateSlope(2))).toBe("vocab_ski");
+    expect(getNextSlopeAfterSlope("bleue", evaluateSlope(3))).toBe("rouge");
   });
 
   it("needsAdminCall when verte has <=1 correct", () => {

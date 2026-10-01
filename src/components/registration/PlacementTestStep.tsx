@@ -65,7 +65,17 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
   const [passedSlopes, setPassedSlopes] = useState<SlopeLevel[]>([]);
   const [presentationText, setPresentationText] = useState("");
   const [result, setResult] = useState<AdaptiveTestResult | null>(null);
+  /** Contrôle le RadioGroup : toujours vide jusqu’au clic (évite la sélection fantôme). */
+  const [mcqChoice, setMcqChoice] = useState<string>("");
+  /** Désactive le hover tant que le pointeur n’a pas bougé (évite la ligne « plus foncée » sous le curseur). */
+  const [mcqHoverReady, setMcqHoverReady] = useState(false);
+  /** Bloque les clics brièvement après un changement de question (anti ghost-click). */
+  const [mcqInputLocked, setMcqInputLocked] = useState(false);
   const startedAtRef = useRef<string | null>(null);
+  const answersRef = useRef<Record<string, string>>({});
+  const slopeResultsRef = useRef<SlopeResult[]>([]);
+  const passedSlopesRef = useRef<SlopeLevel[]>([]);
+  const advancingRef = useRef(false);
 
   const { data: allQuestions = [], isLoading } = usePlacementQuestions(data.language);
 
@@ -85,6 +95,26 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
   );
 
   const currentQuestion: PlacementQuestion | undefined = slopeQuestions[questionIndex];
+
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+  useEffect(() => {
+    slopeResultsRef.current = slopeResults;
+  }, [slopeResults]);
+  useEffect(() => {
+    passedSlopesRef.current = passedSlopes;
+  }, [passedSlopes]);
+
+  /** Nouvelle question : reset sélection + anti-hover sticky + anti ghost-click. */
+  useEffect(() => {
+    setMcqChoice("");
+    setMcqHoverReady(false);
+    advancingRef.current = false;
+    setMcqInputLocked(true);
+    const unlock = window.setTimeout(() => setMcqInputLocked(false), 150);
+    return () => window.clearTimeout(unlock);
+  }, [currentQuestion?.id]);
 
   useEffect(() => {
     if (phase === "mcq" && !startedAtRef.current) {
@@ -153,6 +183,11 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
     setPresentationText("");
     setResult(null);
     startedAtRef.current = null;
+    answersRef.current = {};
+    slopeResultsRef.current = [];
+    passedSlopesRef.current = [];
+    advancingRef.current = false;
+    setMcqChoice("");
   };
 
   const startMcq = () => {
@@ -170,6 +205,11 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
     setPresentationText("");
     setResult(null);
     startedAtRef.current = null;
+    answersRef.current = {};
+    slopeResultsRef.current = [];
+    passedSlopesRef.current = [];
+    advancingRef.current = false;
+    setMcqChoice("");
   };
 
   const finishTest = (
@@ -234,51 +274,63 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
     const newPassedSlopes = passed ? [...prevPassedSlopes, slope] : prevPassedSlopes;
     const next = getNextSlopeAfterSlope(slope, passed);
 
-    if (next === "vocab_ski") {
-      setSlopeResults(newSlopeResults);
-      setPassedSlopes(newPassedSlopes);
-      setAnswers(slopeAnswers);
-      setCurrentSlope("vocab_ski");
-      setQuestionIndex(0);
-      return;
-    }
-
+    slopeResultsRef.current = newSlopeResults;
+    passedSlopesRef.current = newPassedSlopes;
+    answersRef.current = slopeAnswers;
     setSlopeResults(newSlopeResults);
     setPassedSlopes(newPassedSlopes);
     setAnswers(slopeAnswers);
-    setCurrentSlope(next);
+
+    // Échec (ou noire validée) → vocab ; sinon piste suivante.
+    setCurrentSlope(next === "vocab_ski" ? "vocab_ski" : next);
     setQuestionIndex(0);
   };
 
   const selectAnswer = (answer: string) => {
-    if (!currentQuestion) return;
+    if (!currentQuestion || advancingRef.current) return;
+    // Verrouille immédiatement : le même clic ne doit pas retomber sur la question suivante.
+    advancingRef.current = true;
 
-    const newAnswers = { ...answers, [currentQuestion.id]: answer };
-
-    if (questionIndex < slopeQuestions.length - 1) {
-      setAnswers(newAnswers);
-      setQuestionIndex(questionIndex + 1);
-      return;
-    }
-
+    const questionId = currentQuestion.id;
+    const slopeAtClick = currentSlope;
+    const indexAtClick = questionIndex;
+    const questionsAtClick = slopeQuestions;
+    const newAnswers = { ...answersRef.current, [questionId]: answer };
+    answersRef.current = newAnswers;
     setAnswers(newAnswers);
+    setMcqChoice(""); // aucune option sélectionnée pendant la transition
 
-    if (currentSlope === "vocab_ski") {
-      const vocabQuestions = getQuestionsForSlope(allQuestions, "vocab_ski");
-      const correct = vocabQuestions.filter(
-        (q) => newAnswers[q.id] === q.correct_answer
-      ).length;
-      const vocabResult: SlopeResult = {
-        slope: "vocab_ski",
-        correct,
-        total: vocabQuestions.length,
-        passed: evaluateSlope(correct),
-      };
-      goToPresentation(newAnswers, [...slopeResults, vocabResult], passedSlopes);
-      return;
-    }
+    // Différer le changement d’écran après la fin du geste pointeur (anti ghost-click).
+    window.setTimeout(() => {
+      if (indexAtClick < questionsAtClick.length - 1) {
+        setQuestionIndex(indexAtClick + 1);
+        return;
+      }
 
-    completeSlope(currentSlope, newAnswers, slopeResults, passedSlopes);
+      if (slopeAtClick === "vocab_ski") {
+        const vocabQuestions = getQuestionsForSlope(allQuestions, "vocab_ski");
+        const correct = vocabQuestions.filter(
+          (q) => newAnswers[q.id] === q.correct_answer
+        ).length;
+        const vocabResult: SlopeResult = {
+          slope: "vocab_ski",
+          correct,
+          total: vocabQuestions.length,
+          passed: evaluateSlope(correct),
+        };
+        const nextResults = [...slopeResultsRef.current, vocabResult];
+        slopeResultsRef.current = nextResults;
+        goToPresentation(newAnswers, nextResults, passedSlopesRef.current);
+        return;
+      }
+
+      completeSlope(
+        slopeAtClick,
+        newAnswers,
+        slopeResultsRef.current,
+        passedSlopesRef.current
+      );
+    }, 0);
   };
 
   const submitPresentation = () => {
@@ -432,25 +484,49 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
           />
         }
       >
-        <div className="space-y-5">
+        <div
+          className="space-y-5"
+          onPointerMove={() => {
+            if (!mcqHoverReady) setMcqHoverReady(true);
+            if (mcqInputLocked) setMcqInputLocked(false);
+          }}
+        >
           <div className="rounded-[var(--radius-card)] bg-[hsl(var(--surface-sunken))] p-4 sm:p-5">
             <p className="text-lg font-medium leading-snug text-balance text-foreground">
               {currentQuestion.question_text}
             </p>
           </div>
 
-          <RadioGroup key={currentQuestion.id} onValueChange={selectAnswer} className="space-y-3">
+          {/* value = index (pas le texte) : « je ne sais pas » ne reste plus coché d’une question à l’autre.
+              Délai d’avance + lock 150ms : le clic ne retombe pas sur la même ligne de la question suivante. */}
+          <RadioGroup
+            key={currentQuestion.id}
+            value={mcqChoice}
+            onValueChange={(value) => {
+              if (mcqInputLocked || advancingRef.current) return;
+              const option = options[Number(value)];
+              if (!option) return;
+              setMcqChoice(value);
+              selectAnswer(option);
+            }}
+            className={`space-y-3 ${mcqInputLocked ? "pointer-events-none" : ""}`}
+            aria-label={currentQuestion.question_text}
+          >
             {options.map((option, index) => (
               <div
-                key={index}
-                className="rounded-[var(--radius-card)] border border-border bg-card transition-colors hover:bg-[hsl(var(--surface-sunken))]"
+                key={`${currentQuestion.id}-${index}`}
+                className={
+                  mcqHoverReady
+                    ? "rounded-[var(--radius-card)] border border-border bg-card transition-colors hover:bg-[hsl(var(--surface-sunken))]"
+                    : "rounded-[var(--radius-card)] border border-border bg-card"
+                }
               >
                 <Label
                   htmlFor={`option-${currentQuestion.id}-${index}`}
                   className="flex min-h-14 cursor-pointer items-center gap-3 p-4 text-base font-normal leading-snug"
                 >
                   <RadioGroupItem
-                    value={option}
+                    value={String(index)}
                     id={`option-${currentQuestion.id}-${index}`}
                     className="shrink-0"
                   />
