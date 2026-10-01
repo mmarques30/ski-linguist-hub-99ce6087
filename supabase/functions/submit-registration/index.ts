@@ -14,6 +14,7 @@ import {
   resolveInscriptionDates,
 } from "../_shared/registration-dates.ts";
 import { isStudentPayer } from "../_shared/inscription-payer.ts";
+import { buildAgeficeObservation } from "../_shared/agefice-funding.ts";
 import {
   buildRegistrationAdminNotifyHtml,
   buildRegistrationAdminNotifyMessage,
@@ -73,6 +74,7 @@ const COURSE_TYPE_MAP: Record<string, string> = {
 
 const FUNDING_MAP: Record<string, string> = {
   fifpl: "FIFPL",
+  agefice: "AGEFICE",
   opco: "OPCO",
   company: "Entreprise",
   self: "Autofinancement",
@@ -84,6 +86,10 @@ function isOpcoFunding(type: string): boolean {
 
 function isFifplFunding(type: string): boolean {
   return type === "fifpl";
+}
+
+function isAgeficeFunding(type: string): boolean {
+  return type === "agefice";
 }
 
 const LOCATION_LABELS: Record<string, string> = {
@@ -362,6 +368,10 @@ function formatOpcoObservation(registration: RegistrationPayload): string {
   return lines.join("\n");
 }
 
+function formatAgeficeObservation(registration: RegistrationPayload): string {
+  return buildAgeficeObservation({ startDate: registration.startDate ?? null });
+}
+
 function parseDurationHours(duration?: string): number | null {
   if (!duration) return null;
   const match = duration.match(/(\d+)/);
@@ -441,6 +451,7 @@ Deno.serve(async (req) => {
 
     const isOpco = isOpcoFunding(registration.fundingType);
     const isFifpl = isFifplFunding(registration.fundingType);
+    const isAgefice = isAgeficeFunding(registration.fundingType);
 
     if (isOpco) {
       if (registration.opcoKnowsOpco !== true && registration.opcoKnowsOpco !== false) {
@@ -770,6 +781,7 @@ Deno.serve(async (req) => {
             : null,
           isOpco ? formatOpcoObservation(registration) : null,
           isFifpl ? formatFifplObservation(registration) : null,
+          isAgefice ? formatAgeficeObservation(registration) : null,
           registration.paymentOption
             ? `Paiement: ${paymentLabels[registration.paymentOption] || registration.paymentOption}`
             : null,
@@ -1001,6 +1013,8 @@ Deno.serve(async (req) => {
         opcoObservation: isOpco ? formatOpcoObservation(registration) : null,
         isFifpl,
         fifplObservation: isFifpl ? formatFifplObservation(registration) : null,
+        isAgefice,
+        ageficeObservation: isAgefice ? formatAgeficeObservation(registration) : null,
         hasHandicap: Boolean(registration.hasHandicap),
         isOtherProfession: registration.profession === "other",
         price,
