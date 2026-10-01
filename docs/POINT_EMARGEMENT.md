@@ -1,6 +1,6 @@
-# Émargement — fiche produit & schéma (proposition)
+# Émargement — fiche produit & schéma
 
-Statut : **proposition** (pas encore au backlog officiel ni implémenté).  
+Statut : **décisions validées** (Paula, 2026-10-01) — prêt pour implémentation, pas encore au backlog officiel.  
 Objectif : une feuille d’émargement numérique par demi-journée, pour **présentiel** et **visio / individuel en ligne**, source de vérité pour l’attestation et le taux d’assiduité.
 
 Contexte actuel :
@@ -14,28 +14,49 @@ Contexte actuel :
 ## 1. Principes
 
 1. **Un seul modèle** pour tous les formats (présentiel station, visio collective, individuel en ligne).
-2. **Granularité = créneau** (demi-journée matin / après-midi, ou créneau horaire pour l’individuel).
-3. Le stagiaire **signe** (ou le formateur coche) ; le formateur **valide** le créneau.
+2. **Granularité = créneau** (demi-journée matin / après-midi, ou créneau à la volée pour l’individuel).
+3. Le stagiaire **signe** (ou le formateur coche) ; le formateur **valide** le créneau ; l’admin **contre-signe**.
 4. Le taux d’assiduité du pack de fin / attestation se **calcule** depuis les signatures, plus de saisie manuelle.
-5. Export PDF feuille d’émargement (horodatages + canal) pour dossier FIF-PL / Qualiopi.
+5. Export PDF **type feuille papier** (grille signatures) pour dossier FIF-PL / Qualiopi.
 
 ---
 
-## 2. MVP vs V2
+## 2. Décisions validées (Paula)
 
-### MVP (livrable utile dès la saison)
+| # | Question | Décision |
+|---|----------|----------|
+| 1 | Excuse dans le % d’assiduité | **Excuse = présent** (compte comme présent dans le numérateur) |
+| 2 | Individuel en ligne | Créneaux **à la volée** : le formateur « démarre le cours » → 1 créneau |
+| 3 | Collectif | Créneaux **au fil de l’eau** (ouvert le jour J / à l’ouverture du créneau), pas de génération massive à la confirmation |
+| 4 | Contre-signature admin | **Oui dès le MVP** (`validated_by_admin`) |
+| 5 | PDF | **Mise en page type feuille papier** (grille signatures) |
+
+Formule assiduité (créneaux contre-signés admin) :
+
+```
+taux = (present + excuse) / (present + excuse + absent)
+```
+
+Les `pending` n’entrent pas dans le calcul. Un créneau non contre-signé n’entre pas non plus.
+
+---
+
+## 3. MVP vs V2
+
+### MVP
 
 | # | Périmètre |
 |---|-----------|
 | M1 | Tables `attendance_slots` + `attendance_records` + RLS |
-| M2 | Génération des créneaux à partir du planning (session collective ou dates d’inscription individuelle) |
+| M2 | Ouverture créneau **au fil de l’eau** (collectif : matin/après-midi du jour ; individuel : « Démarrer le cours ») |
 | M3 | Écran formateur « Émarger ce créneau » : liste stagiaires, coche présent / absent / excusé |
 | M4 | Signature stagiaire via **lien magique** court (e-mail / chat) — même flux présentiel & distant |
-| M5 | Validation formateur du créneau (verrouille les lignes) |
-| M6 | Calcul auto `attendance_rate` ; affichage BO + préremplissage pack de fin |
-| M7 | Export PDF feuille d’émargement (une page par créneau ou récap session) |
+| M5 | Validation formateur du créneau (verrouille les lignes stagiaires) |
+| M6 | **Contre-signature admin** (verrouille définitivement le créneau) |
+| M7 | Calcul auto `attendance_rate` ; affichage BO + préremplissage pack de fin (lecture seule) |
+| M8 | Export PDF **feuille papier** (grille stagiaires × signatures / horodatages) |
 
-Hors MVP volontairement : QR physique, géoloc, présence Zoom auto, signature manuscrite canvas.
+Hors MVP : QR physique, géoloc, présence Zoom auto, signature manuscrite canvas, relances auto.
 
 ### V2
 
@@ -44,28 +65,38 @@ Hors MVP volontairement : QR physique, géoloc, présence Zoom auto, signature m
 | V1 | QR de séance (réemploi pattern survey) pour présentiel tablette |
 | V2 | Fenêtre temporelle stricte (lien / QR valides ±15–30 min autour du créneau) |
 | V3 | Relance auto « n’a pas émargé » (cron + notif BO / e-mail) |
-| V4 | Contre-signature responsable de formation (statut `validated_by_admin`) |
-| V5 | Signature manuscrite (canvas) si un financeur l’exige encore |
-| V6 | Présence indicative Zoom (manuel « tous présents en ligne ») en un clic |
+| V4 | Signature manuscrite (canvas) si un financeur l’exige encore |
+| V5 | Présence indicative Zoom (manuel « tous présents en ligne ») en un clic |
 
 ---
 
-## 3. Ancrage métier FLI
+## 4. Ancrage métier FLI
 
-| Format | Source des créneaux | Canal MVP |
+| Format | Création du créneau | Canal MVP |
 |--------|---------------------|-----------|
-| Collectif présentiel (station) | Dates session × `matin` / `apres-midi` (`SCHEDULE_SLOTS`, plages `FLI_SCHEDULE_HOURS`) | Lien magique + coche formateur |
-| Collectif visio | Liste des dates de séance × demi-journée | Lien magique (chat Zoom) |
-| Individuel en ligne | Pack d’heures planifiées sur l’inscription (`schedule` / dates séances) | Lien magique à l’ouverture |
+| Collectif présentiel (station) | Formateur ouvre `matin` ou `apres-midi` du jour (`SCHEDULE_SLOTS` / `FLI_SCHEDULE_HOURS`) | Lien magique + coche formateur |
+| Collectif visio | Idem, au fil de l’eau sur la date de séance | Lien magique (chat Zoom) |
+| Individuel en ligne | Formateur « Démarrer le cours » → 1 créneau `custom` horodaté | Lien magique à l’ouverture |
 
 `session_enrollments.attendance_status` reste un **agrégat dérivé** (ou est déprécié au profit du calcul créneau). Ne pas s’en servir comme source de vérité.
 
+### Cycle de vie d’un créneau
+
+```
+draft → open → instructor_validated → admin_validated
+                 ↘ closed (annulé / non tenu)
+```
+
+- `open` : signatures stagiaires + coches formateur autorisées.
+- `instructor_validated` : lignes figées ; admin peut encore corriger puis contre-signer.
+- `admin_validated` : définitif ; entre dans le calcul d’assiduité et le PDF « officiel ».
+
 ---
 
-## 4. Schéma SQL proposé
+## 5. Schéma SQL proposé
 
 ```sql
--- Créneau d'émargement (demi-journée ou plage horaire)
+-- Créneau d'émargement (demi-journée ou plage à la volée)
 CREATE TABLE public.attendance_slots (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   -- Au moins un des deux : session collective OU inscription individuelle
@@ -77,13 +108,15 @@ CREATE TABLE public.attendance_slots (
     CHECK (day_part IN ('matin', 'apres-midi', 'custom')),
   starts_at timestamptz NOT NULL,
   ends_at timestamptz NOT NULL,
-  -- open | closed | validated
-  status text NOT NULL DEFAULT 'open'
-    CHECK (status IN ('open', 'closed', 'validated')),
+  -- draft | open | instructor_validated | admin_validated | closed
+  status text NOT NULL DEFAULT 'draft'
+    CHECK (status IN ('draft', 'open', 'instructor_validated', 'admin_validated', 'closed')),
   opened_at timestamptz,
   closed_at timestamptz,
-  validated_at timestamptz,
-  validated_by uuid REFERENCES auth.users(id),
+  instructor_validated_at timestamptz,
+  instructor_validated_by uuid REFERENCES auth.users(id),
+  admin_validated_at timestamptz,
+  admin_validated_by uuid REFERENCES auth.users(id),
   sign_token text UNIQUE,          -- token court pour lien / QR (régénérable)
   sign_token_expires_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
@@ -116,7 +149,7 @@ CREATE TABLE public.attendance_records (
   signed_via text
     CHECK (signed_via IS NULL OR signed_via IN ('self_link', 'qr', 'instructor', 'admin')),
   signed_at timestamptz,
-  signed_by uuid REFERENCES auth.users(id),  -- user qui a posé le statut
+  signed_by uuid REFERENCES auth.users(id),
   note text,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
@@ -128,44 +161,34 @@ CREATE INDEX attendance_records_inscription_idx
 CREATE INDEX attendance_records_slot_idx
   ON public.attendance_records (slot_id);
 
--- Vue / fonction : taux d'assiduité
--- present / (present + absent + excuse) sur créneaux validated
--- (pending ignorés ; excuse compte comme non-présent pour le % FIF-PL — à confirmer Paula)
+-- Taux d'assiduité (créneaux admin_validated uniquement) :
+-- (present + excuse) / (present + excuse + absent)
 ```
 
 ### RLS (esquisse)
 
 | Rôle | `attendance_slots` | `attendance_records` |
 |------|--------------------|----------------------|
-| Staff / admin | CRUD | CRUD |
-| Formateur (session / inscription assignée) | SELECT + ouvrir/valider | SELECT + UPDATE statut si slot `open` |
-| Stagiaire | SELECT de ses créneaux | SELECT siens ; UPDATE `present` via Edge Function token (pas de write direct anon) |
+| Staff / admin | CRUD + contre-signature | CRUD |
+| Formateur (session / inscription assignée) | SELECT + ouvrir + valider formateur | SELECT + UPDATE statut si slot `open` |
+| Stagiaire | SELECT de ses créneaux | SELECT siens ; UPDATE `present` via Edge Function token |
 
-Signature self-service : Edge Function `sign-attendance` (token créneau + identité stagiaire / magic link), pour ne pas exposer le write RLS large.
-
----
-
-## 5. UI cible (MVP)
-
-1. **Portail formateur** — sur une session / inscription en cours : onglet Émargement → créneaux du jour → « Ouvrir » → liste → coche / attendre signatures → « Valider le créneau ».
-2. **Page publique** `/emarger/:token` — nom du créneau, bouton « Je suis présent·e » (auth stagiaire ou token inscription).
-3. **BO admin** — lecture seule + correction ; export PDF ; taux affiché sur dossier.
-4. **Pack de fin** — champ assiduité en lecture seule (calculé), override admin exceptionnel avec motif.
+Signature self-service : Edge Function `sign-attendance` (token créneau + identité stagiaire / magic link).
 
 ---
 
-## 6. Décisions à trancher avant code
+## 6. UI cible (MVP)
 
-1. **Excuse** : compte-t-elle dans le dénominateur du % d’assiduité ? (proposition : oui, comme non-présent).
-2. **Individuel en ligne** : créneaux créés à la planification des heures, ou à la volée par le formateur (« démarrer le cours » → 1 créneau) ?
-3. **Collectif** : générer tous les créneaux à la confirmation de session, ou la veille / au matin J ?
-4. Faut-il la **contre-signature admin** dès le MVP, ou seulement V2 ?
-5. Le PDF doit-il reprendre la mise en page « feuille papier » (grille signatures) ou un récap moderne horodaté suffit pour FIF-PL ?
+1. **Portail formateur** — « Ouvrir le créneau » (matin / après-midi ou Démarrer le cours) → liste → coche / lien magique → « Valider ».
+2. **Page publique** `/emarger/:token` — nom du créneau, bouton « Je suis présent·e ».
+3. **BO admin** — file « À contre-signer » ; correction éventuelle ; contre-signature ; export PDF feuille papier ; taux sur dossier.
+4. **Pack de fin** — assiduité en lecture seule (calculée), override admin exceptionnel avec motif.
+5. **PDF** — en-tête organisme / session / date / demi-journée ; grille nominative ; colonnes signature stagiaire + horodatage + canal ; zone signature formateur + responsable de formation.
 
 ---
 
 ## 7. Hors scope
 
-- Modification de `docs/BACKLOG.md` / `ETAT_APP_*` (commit dédié sur `main` après validation Paula).
+- Modification de `docs/BACKLOG.md` / `ETAT_APP_*` (commit dédié sur `main` après merge).
 - Intégration Zoom API, géolocalisation, biométrie.
 - Remplacement rétroactif des feuilles papier déjà signées cette saison.
