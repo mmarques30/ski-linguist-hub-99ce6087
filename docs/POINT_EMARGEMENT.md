@@ -24,6 +24,8 @@ Champs : `Langue`, `Date_début`, `Date_fin`, `Durée_en_heures`, `Nom_et_Préno
 | Élément | Détail |
 |---------|--------|
 | Génération PDF | `src/lib/presence-fiches-pdf.ts` — 2 variantes FORMATEUR / STAGIAIRE |
+| En-tête | Logo FLI (`public/presence-fiches/fli-header-logo.png`, modèle Word) |
+| Pied de page | Mentions légales FLI (Formation Professionnelle Continue / SIRET / n° OF) |
 | UI | `PresenceFichesCard` sur `/inscriptions/:id` → Documents |
 | Tests | `src/lib/presence-fiches-pdf.test.ts` |
 

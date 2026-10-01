@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  FLI_PRESENCE_FOOTER_LINES,
   formatPresenceDate,
   presenceFicheFilename,
   presenceFormationTitle,
@@ -39,5 +40,15 @@ describe("presenceFicheFilename", () => {
     expect(presenceFicheFilename("stagiaire", "Clara Brimmer", null)).toContain(
       "Fiche_presence_STAGIAIRE_"
     );
+  });
+});
+
+describe("FLI_PRESENCE_FOOTER_LINES", () => {
+  it("reprend le pied de page FLI (capture Paula)", () => {
+    expect(FLI_PRESENCE_FOOTER_LINES[0]).toContain("Formation Professionnelle Continue");
+    expect(FLI_PRESENCE_FOOTER_LINES[1]).toContain("F.L.I.");
+    expect(FLI_PRESENCE_FOOTER_LINES[1]).toContain("Montmélian");
+    expect(FLI_PRESENCE_FOOTER_LINES[2]).toContain("484 772 041 00048");
+    expect(FLI_PRESENCE_FOOTER_LINES[2]).toContain("82 73 01 366 73");
   });
 });
