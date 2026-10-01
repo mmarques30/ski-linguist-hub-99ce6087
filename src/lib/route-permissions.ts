@@ -81,6 +81,7 @@ export const PATH_TO_ROUTE_KEY: Record<string, string> = {
   "/inscriptions": "inscriptions",
   "/formation/sessions": "inscriptions",
   "/classes": "inscriptions",
+  "/emargement": "inscriptions",
   "/documents": "inscriptions",
   "/inscriptions/schedule-validation": "inscriptions.schedule",
   "/invoices": "invoices",
