@@ -1161,6 +1161,7 @@ export default function InscriptionDetails() {
             modality={inscription.modality}
             courseLocation={inscription.course_location}
             observations={inscription.observations}
+            fundingOrganization={opsFields?.funding_organization ?? inscription.funding_organization ?? null}
             studentEmail={inscription.student_email}
             inscriptionCode={inscription.code}
             courseLanguage={inscription.language}

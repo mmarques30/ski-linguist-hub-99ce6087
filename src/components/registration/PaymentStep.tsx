@@ -19,7 +19,7 @@ import {
   type RegistrationPaymentOption,
 } from "@/lib/registration-payments";
 import { formatPriceEUR, isCustomFormatDuration } from "@/lib/registration-offerings";
-import { isFifplFunding, isOpcoFunding } from "@/lib/registration-utils";
+import { isAgeficeFundingType, isFifplFunding, isOpcoFunding } from "@/lib/registration-utils";
 import {
   OPCO_REGISTER_COPY,
   validateOpcoQuestionnaire,
@@ -30,6 +30,10 @@ import {
   validateFifplQuestionnaire,
   type FifplQuestionnaire,
 } from "@/lib/fifpl-funding";
+import {
+  AGEFICE_CEILINGS_URL,
+  AGEFICE_REGISTER_COPY,
+} from "@/lib/agefice-funding";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -56,6 +60,7 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
   const isCustomFormat = data.isCustomFormat || isCustomFormatDuration(data.duration);
   const isOpco = isOpcoFunding(data.fundingType ?? "");
   const isFifpl = isFifplFunding(data.fundingType ?? "");
+  const isAgefice = isAgeficeFundingType(data.fundingType ?? "");
   const coursePrice = data.price ?? 0;
   const hasPrice = coursePrice > 0;
 
@@ -289,6 +294,30 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {isAgefice && (
+        <StepCard
+          title={AGEFICE_REGISTER_COPY.paymentTitle}
+          description={AGEFICE_REGISTER_COPY.paymentDescription}
+          icon={FileText}
+        >
+          <div className="space-y-3">
+            <Alert>
+              <AlertDescription>{AGEFICE_REGISTER_COPY.paymentAlert}</AlertDescription>
+            </Alert>
+            <p className="text-sm">
+              <a
+                href={AGEFICE_CEILINGS_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-primary underline underline-offset-2"
+              >
+                {AGEFICE_REGISTER_COPY.ceilingsLinkLabel}
+              </a>
+            </p>
+          </div>
+        </StepCard>
+      )}
+
       {isFifpl && (
         <StepCard
           title={FIFPL_REGISTER_COPY.sectionTitle}

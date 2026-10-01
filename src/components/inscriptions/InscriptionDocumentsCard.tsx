@@ -15,9 +15,8 @@ import {
 import { DOCUMENTS_BUCKET } from "@/lib/certificateStorage";
 import {
   DOCUMENT_TYPE_LABELS,
-  expectsSkiMonitorWelcomePack,
   getRegistrationDocumentPublicUrl,
-  REGISTRATION_WELCOME_DOCUMENTS,
+  resolveWelcomePackDocuments,
 } from "@/lib/registration-welcome-documents";
 import {
   isEntryFormComplete,
@@ -31,6 +30,7 @@ interface InscriptionDocumentsCardProps {
   modality?: string | null;
   courseLocation?: string | null;
   observations?: string | null;
+  fundingOrganization?: string | null;
   studentEmail?: string | null;
   inscriptionCode?: string | null;
   courseLanguage?: string | null;
@@ -48,6 +48,7 @@ export function InscriptionDocumentsCard({
   modality,
   courseLocation,
   observations,
+  fundingOrganization,
   studentEmail,
   inscriptionCode,
   courseLanguage,
@@ -93,11 +94,16 @@ export function InscriptionDocumentsCard({
     }
   };
 
-  const showWelcomePack = expectsSkiMonitorWelcomePack({
+  const welcomePack = resolveWelcomePackDocuments({
+    fundingOrganization,
     modality,
     courseLocation,
     observations,
   });
+  const isAgeficePack = Boolean(
+    fundingOrganization?.toLowerCase().includes("agefice") ||
+      observations?.toLowerCase().includes("agefice"),
+  );
 
   const sentTypes = new Set(sendings.map((s) => s.document_type));
 
@@ -208,14 +214,22 @@ export function InscriptionDocumentsCard({
         )}
       </SurfaceCard>
 
-      {showWelcomePack && (
+      {welcomePack && (
         <SurfaceCard
-          title={"Pack moniteur de ski — documents d’inscription"}
-          description="Convention et programme en PDF personnalisé (données du stagiaire). Critères FIF-PL et tutoriel en PDF statiques. Aucun modèle Word vide."
+          title={
+            isAgeficePack
+              ? "Pack AGEFICE — documents d’inscription"
+              : "Pack moniteur de ski — documents d’inscription"
+          }
+          description={
+            isAgeficePack
+              ? "Convention et programme en PDF personnalisé. Formulaire de demande AGEFICE et liste des pièces. Pas de critères FIF-PL."
+              : "Convention et programme en PDF personnalisé (données du stagiaire). Critères FIF-PL et tutoriel en PDF statiques. Aucun modèle Word vide."
+          }
           icon={FileText}
         >
           <ul className="space-y-3">
-            {REGISTRATION_WELCOME_DOCUMENTS.map((doc) => {
+            {welcomePack.map((doc) => {
               const wasSent = sentTypes.has(doc.documentType);
               const sentRow = sendings.find((s) => s.document_type === doc.documentType);
               const isGenerated = doc.delivery === "generated_pdf";

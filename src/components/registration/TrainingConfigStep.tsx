@@ -72,6 +72,21 @@ export function TrainingConfigStep({ data, onUpdate, onNext }: TrainingConfigSte
                   FIFPL (Financé par le FIFPL)
                 </Label>
               </OptionCard>
+              <OptionCard selected={data.fundingType === "agefice"}>
+                <Label
+                  htmlFor="agefice"
+                  className="flex cursor-pointer flex-col gap-1 px-4 py-3 font-normal"
+                >
+                  <span className="flex min-h-6 items-center gap-3">
+                    <RadioGroupItem value="agefice" id="agefice" />
+                    AGEFICE (Fonds commerçants)
+                  </span>
+                  <span className="block pl-7 text-xs text-muted-foreground">
+                    Demande Point d&apos;accueil ≥ 15 j avant le début. Aucun frais AGEFICE ;
+                    vous réglez FLI puis êtes remboursé selon vos plafonds.
+                  </span>
+                </Label>
+              </OptionCard>
               <OptionCard selected={data.fundingType === "opco"}>
                 <Label htmlFor="opco" className="flex cursor-pointer flex-col gap-1 px-4 py-3 font-normal">
                   <span className="flex min-h-6 items-center gap-3">
