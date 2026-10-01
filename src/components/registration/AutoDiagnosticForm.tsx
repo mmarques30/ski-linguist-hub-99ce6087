@@ -1,18 +1,19 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ChevronDown, ChevronUp, ClipboardList } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import {
   AUTO_DIAGNOSTIC_QUESTIONS,
-  DIFFICULTY_RANKING_ITEMS,
   type AutoDiagnosticAnswers,
   isAutoDiagnosticQuestionVisible,
   substituteLanguagePlaceholder,
+  toggleMultiChoice,
   validateAutoDiagnostic,
 } from "@/lib/auto-diagnostic";
 import { OptionCard, StepActions, StepCard } from "./StepLayout";
@@ -27,6 +28,8 @@ function keyOf(orderIndex: number): string {
   return String(orderIndex);
 }
 
+const SHORT_TEXT_ORDERS = new Set([2, 4, 6, 8, 12, 13]);
+
 export function AutoDiagnosticForm({
   languageKey,
   initialAnswers,
@@ -34,9 +37,7 @@ export function AutoDiagnosticForm({
 }: AutoDiagnosticFormProps) {
   const [answers, setAnswers] = useState<AutoDiagnosticAnswers>(() => {
     if (initialAnswers && Object.keys(initialAnswers).length) return initialAnswers;
-    return {
-      [keyOf(5)]: [...DIFFICULTY_RANKING_ITEMS],
-    };
+    return {};
   });
 
   const visibleQuestions = useMemo(
@@ -48,14 +49,22 @@ export function AutoDiagnosticForm({
     setAnswers((prev) => ({ ...prev, [keyOf(orderIndex)]: value }));
   };
 
-  const ranking = (answers[keyOf(5)] as string[] | undefined) ?? [...DIFFICULTY_RANKING_ITEMS];
-
-  const moveRank = (index: number, direction: -1 | 1) => {
-    const next = index + direction;
-    if (next < 0 || next >= ranking.length) return;
-    const copy = [...ranking];
-    [copy[index], copy[next]] = [copy[next], copy[index]];
-    setAnswer(5, copy);
+  const handleMultiToggle = (
+    orderIndex: number,
+    option: string,
+    maxSelections?: number
+  ) => {
+    const current = answers[keyOf(orderIndex)];
+    const { next, error } = toggleMultiChoice(
+      Array.isArray(current) ? current : undefined,
+      option,
+      maxSelections
+    );
+    if (error) {
+      toast.error(error);
+      return;
+    }
+    setAnswer(orderIndex, next);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -91,6 +100,10 @@ export function AutoDiagnosticForm({
             lastSection = q.section;
             const label = substituteLanguagePlaceholder(q.question, languageKey);
             const value = answers[keyOf(q.order_index)];
+            const isMulti =
+              q.response_type === "Choix multiple" ||
+              q.response_type === "Choix multiple (max 3)";
+            const selectedMulti = Array.isArray(value) ? value : [];
 
             return (
               <div key={q.order_index} className="space-y-3">
@@ -105,6 +118,13 @@ export function AutoDiagnosticForm({
                     {label}
                     {q.required ? " *" : ""}
                   </Label>
+                  {isMulti && (
+                    <p className="text-xs text-muted-foreground">
+                      {q.maxSelections != null
+                        ? `Plusieurs réponses possibles — ${q.maxSelections} maximum.`
+                        : "Plusieurs réponses possibles."}
+                    </p>
+                  )}
 
                   {q.response_type === "Oui/Non" && q.options && (
                     <RadioGroup
@@ -113,10 +133,7 @@ export function AutoDiagnosticForm({
                       className="grid gap-2 sm:grid-cols-2"
                     >
                       {q.options.map((opt) => (
-                        <OptionCard
-                          key={opt}
-                          selected={value === opt}
-                        >
+                        <OptionCard key={opt} selected={value === opt}>
                           <Label
                             htmlFor={`ad-${q.order_index}-${opt}`}
                             className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
@@ -155,8 +172,34 @@ export function AutoDiagnosticForm({
                     </RadioGroup>
                   )}
 
-                  {q.response_type === "Texte libre" && (
-                    q.order_index === 2 || q.order_index === 4 || q.order_index === 6 || q.order_index === 11 || q.order_index === 13 ? (
+                  {isMulti && q.options && (
+                    <div className="space-y-2">
+                      {q.options.map((opt) => {
+                        const checked = selectedMulti.includes(opt);
+                        const id = `ad-multi-${q.order_index}-${opt}`;
+                        return (
+                          <OptionCard key={opt} selected={checked}>
+                            <Label
+                              htmlFor={id}
+                              className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
+                            >
+                              <Checkbox
+                                id={id}
+                                checked={checked}
+                                onCheckedChange={() =>
+                                  handleMultiToggle(q.order_index, opt, q.maxSelections)
+                                }
+                              />
+                              <span className="min-w-0">{opt}</span>
+                            </Label>
+                          </OptionCard>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {q.response_type === "Texte libre" &&
+                    (SHORT_TEXT_ORDERS.has(q.order_index) ? (
                       <Input
                         value={typeof value === "string" ? value : ""}
                         onChange={(e) => setAnswer(q.order_index, e.target.value)}
@@ -168,53 +211,7 @@ export function AutoDiagnosticForm({
                         onChange={(e) => setAnswer(q.order_index, e.target.value)}
                         className="min-h-[96px]"
                       />
-                    )
-                  )}
-
-                  {q.response_type === "Ranking" && (
-                    <div className="space-y-2">
-                      <p className="text-xs text-muted-foreground">
-                        1 = difficulté la plus importante. Utilisez les flèches pour réordonner.
-                      </p>
-                      <ul className="space-y-2">
-                        {ranking.map((item, index) => (
-                          <li
-                            key={item}
-                            className="flex items-center gap-2 rounded-[var(--radius-card)] border border-border bg-card px-3 py-2"
-                          >
-                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--surface-sunken))] text-xs font-semibold tabular-nums">
-                              {index + 1}
-                            </span>
-                            <span className="min-w-0 flex-1 text-sm">{item}</span>
-                            <div className="flex shrink-0 flex-col gap-0.5">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                disabled={index === 0}
-                                onClick={() => moveRank(index, -1)}
-                                aria-label={`Monter ${item}`}
-                              >
-                                <ChevronUp className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                disabled={index === ranking.length - 1}
-                                onClick={() => moveRank(index, 1)}
-                                aria-label={`Descendre ${item}`}
-                              >
-                                <ChevronDown className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                    ))}
                 </div>
               </div>
             );

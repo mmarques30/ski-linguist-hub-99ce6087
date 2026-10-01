@@ -1,8 +1,39 @@
 export type SlopeLevel = "verte" | "bleue" | "rouge" | "noire" | "vocab_ski";
 
+/** Question category codes (normalized from Excel Type column). */
+export type PlacementCategory =
+  | "comprehension"
+  | "guided_production"
+  | "translation"
+  | "grammar"
+  | "vocabulary"
+  | "free_text";
+
 export const SLOPE_ORDER: SlopeLevel[] = ["verte", "bleue", "rouge", "noire"];
 export const PASS_THRESHOLD = 3;
 export const QUESTIONS_PER_SLOPE = 5;
+export const PRESENTATION_MAX_CHARS = 1000;
+
+/** Languages whose piste scale is not comparable to EN/ES/… (verte = traduction). */
+export const ADAPTED_SCALE_BANK_KEYS = new Set([
+  "allemand",
+  "neerlandais",
+  "russe",
+  "chinois",
+]);
+
+export const ADAPTED_SCALE_LANGUAGE_KEYS = new Set([
+  "german",
+  "dutch",
+  "russian",
+  "chinese",
+]);
+
+export function hasAdaptedScale(languageOrBankKey?: string | null): boolean {
+  if (!languageOrBankKey) return false;
+  const k = languageOrBankKey.trim().toLowerCase();
+  return ADAPTED_SCALE_BANK_KEYS.has(k) || ADAPTED_SCALE_LANGUAGE_KEYS.has(k);
+}
 
 export const SLOPE_LABELS: Record<SlopeLevel, string> = {
   verte: "Piste verte",
@@ -23,10 +54,12 @@ export const SLOPE_COLORS: Record<SlopeLevel, string> = {
 export interface PlacementQuestion {
   id: string;
   question_text: string;
-  options: string[];
-  correct_answer: string;
-  slope: SlopeLevel;
-  category: string;
+  options: string[] | null;
+  correct_answer: string | null;
+  slope: SlopeLevel | "presentation";
+  category: PlacementCategory | string;
+  vocabulary_level?: SlopeLevel | null;
+  teacher_notes?: string | null;
   order_index: number;
 }
 
@@ -37,6 +70,14 @@ export interface SlopeResult {
   passed: boolean;
 }
 
+export interface VocabAnswerDetail {
+  questionId: string;
+  questionText: string;
+  selected: string;
+  correctAnswer: string;
+  isCorrect: boolean;
+}
+
 export interface AdaptiveTestResult {
   answers: Record<string, string>;
   slopeResults: SlopeResult[];
@@ -45,24 +86,31 @@ export interface AdaptiveTestResult {
   determinedLevel: string;
   correctAnswers: number;
   totalAnswered: number;
+  vocabScore: { correct: number; total: number };
+  vocabAnswers: VocabAnswerDetail[];
+  presentationText: string;
   needsAdminCall: boolean;
-  endedAtVocab: boolean;
 }
 
 export function evaluateSlope(correct: number, total: number = QUESTIONS_PER_SLOPE): boolean {
   return correct >= PASS_THRESHOLD;
 }
 
+/**
+ * Next step after a piste (not vocab / presentation).
+ * Fail or pass-noire → vocabulaire (toujours).
+ * Pass verte/bleue/rouge → piste suivante.
+ */
 export function getNextSlopeAfterSlope(
   currentSlope: SlopeLevel,
   passed: boolean
-): SlopeLevel | "done" {
-  if (currentSlope === "vocab_ski") return "done";
+): SlopeLevel | "vocab_ski" {
+  if (currentSlope === "vocab_ski") return "vocab_ski";
 
   if (!passed) return "vocab_ski";
 
   const idx = SLOPE_ORDER.indexOf(currentSlope);
-  if (idx === -1 || idx === SLOPE_ORDER.length - 1) return "done";
+  if (idx === -1 || idx === SLOPE_ORDER.length - 1) return "vocab_ski";
   return SLOPE_ORDER[idx + 1];
 }
 
@@ -77,9 +125,7 @@ export function determineLevelFromSlopes(passedSlopes: SlopeLevel[]): string {
 /**
  * BL-026 — décision Paula : un·e stagiaire qui ne valide pas la piste verte
  * commence sur la piste verte. Côté stagiaire on annonce donc « Piste verte »,
- * jamais « Vocabulaire ski » ni « Début de parcours » : le bloc vocabulaire est
- * un complément du test, pas une piste, et « Début de parcours » n'existe pas
- * sur le domaine. Le détail par bloc reste visible côté administration.
+ * jamais « Vocabulaire ski » ni « Début de parcours ».
  */
 export const PISTE_STAGIAIRE_PAR_DEFAUT = SLOPE_LABELS.verte;
 
@@ -90,7 +136,6 @@ export const PISTE_STAGIAIRE_PAR_DEFAUT = SLOPE_LABELS.verte;
 export function studentFacingPisteLabel(input: {
   passedSlopes?: SlopeLevel[] | string[] | null;
   highestSlopeReached?: SlopeLevel | string | null;
-  endedAtVocab?: boolean | null;
 }): string {
   const passed = (input.passedSlopes || []).filter((s): s is SlopeLevel =>
     ["verte", "bleue", "rouge", "noire"].includes(String(s))
@@ -142,7 +187,6 @@ export function pisteLabelFromPlacementAnswers(answers: unknown): string | null 
   return studentFacingPisteLabel({
     passedSlopes: summary.passedSlopes as string[] | undefined,
     highestSlopeReached: summary.highestSlopeReached as string | undefined,
-    endedAtVocab: summary.endedAtVocab as boolean | undefined,
   });
 }
 
@@ -151,16 +195,35 @@ export function needsAdminCallFromResults(slopeResults: SlopeResult[]): boolean 
   return !!verte && !verte.passed && verte.correct <= 1;
 }
 
+export function buildVocabDetails(
+  questions: PlacementQuestion[],
+  answers: Record<string, string>
+): VocabAnswerDetail[] {
+  return getQuestionsForSlope(questions, "vocab_ski").map((q) => {
+    const selected = answers[q.id] ?? "";
+    const correctAnswer = q.correct_answer ?? "";
+    return {
+      questionId: q.id,
+      questionText: q.question_text,
+      selected,
+      correctAnswer,
+      isCorrect: selected === correctAnswer,
+    };
+  });
+}
+
 export function buildAdaptiveTestResult(
   questions: PlacementQuestion[],
   answers: Record<string, string>,
   slopeResults: SlopeResult[],
   passedSlopes: SlopeLevel[],
-  endedAtVocab: boolean
+  presentationText: string
 ): AdaptiveTestResult {
-  const answeredQuestions = questions.filter((q) => answers[q.id] !== undefined);
-  const correctAnswers = answeredQuestions.filter(
-    (q) => answers[q.id] === q.correct_answer
+  const scoredQuestions = questions.filter(
+    (q) => q.slope !== "presentation" && answers[q.id] !== undefined
+  );
+  const correctAnswers = scoredQuestions.filter(
+    (q) => q.correct_answer != null && answers[q.id] === q.correct_answer
   ).length;
 
   const grammarSlopes = slopeResults.filter((r) => r.slope !== "vocab_ski");
@@ -169,6 +232,9 @@ export function buildAdaptiveTestResult(
       ? grammarSlopes[grammarSlopes.length - 1].slope
       : "verte";
 
+  const vocabAnswers = buildVocabDetails(questions, answers);
+  const vocabCorrect = vocabAnswers.filter((v) => v.isCorrect).length;
+
   return {
     answers,
     slopeResults,
@@ -176,19 +242,27 @@ export function buildAdaptiveTestResult(
     highestSlopeReached,
     determinedLevel: determineLevelFromSlopes(passedSlopes),
     correctAnswers,
-    totalAnswered: answeredQuestions.length,
+    totalAnswered: scoredQuestions.length,
+    vocabScore: { correct: vocabCorrect, total: vocabAnswers.length },
+    vocabAnswers,
+    presentationText: presentationText.slice(0, PRESENTATION_MAX_CHARS),
     needsAdminCall: needsAdminCallFromResults(slopeResults),
-    endedAtVocab,
   };
 }
 
 export function getQuestionsForSlope(
   questions: PlacementQuestion[],
-  slope: SlopeLevel
+  slope: SlopeLevel | "presentation"
 ): PlacementQuestion[] {
   return questions
     .filter((q) => q.slope === slope)
     .sort((a, b) => a.order_index - b.order_index);
+}
+
+export function getPresentationQuestion(
+  questions: PlacementQuestion[]
+): PlacementQuestion | undefined {
+  return getQuestionsForSlope(questions, "presentation")[0];
 }
 
 /** Days before course start when schedule assignment should be reviewed. */

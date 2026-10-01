@@ -10,14 +10,14 @@ function source(relatif: string): string {
 describe("PlacementTestStep — UX progressif pistes", () => {
   const step = source("src/components/registration/PlacementTestStep.tsx");
 
-  it("explique le parcours comme les pistes de ski + vocabulaire commun", () => {
+  it("explique le parcours comme les pistes de ski + vocabulaire pour tous", () => {
     expect(step).toContain("Comment ça fonctionne");
     expect(step).toContain("piste verte");
     expect(step).toContain("bleue");
     expect(step).toContain("rouge");
     expect(step).toContain("noire");
     expect(step).toContain("Vocabulaire du ski");
-    expect(step).toContain("commune");
+    expect(step).toContain("tous les stagiaires");
     expect(step).toContain("PASS_THRESHOLD");
     expect(step).toContain("QUESTIONS_PER_SLOPE");
     expect(step).toContain("Auto-diagnostic");

@@ -113,7 +113,7 @@ const SLOPE_LABELS: Record<string, string> = {
 function studentFacingSlopeLabel(summary?: {
   passedSlopes: string[];
   highestSlopeReached: string;
-  endedAtVocab: boolean;
+  vocabScore?: { correct: number; total: number };
 }): string {
   if (!summary) return "À déterminer";
   const order = ["verte", "bleue", "rouge", "noire"];
@@ -171,7 +171,17 @@ interface RegistrationPayload {
     slopeResults: Array<{ slope: string; correct: number; total: number; passed: boolean }>;
     passedSlopes: string[];
     highestSlopeReached: string;
-    endedAtVocab: boolean;
+    vocabScore?: { correct: number; total: number };
+    vocabAnswers?: Array<{
+      questionId: string;
+      questionText: string;
+      selected: string;
+      correctAnswer: string;
+      isCorrect: boolean;
+    }>;
+    presentationText?: string;
+    startedAt?: string | null;
+    completedAt?: string | null;
   };
   /** Auto-diagnostic (avant QCM) — feuille Excel Auto-diagnostic */
   autoDiagnostic?: {
@@ -756,7 +766,7 @@ Deno.serve(async (req) => {
           registration.profession === "ski_instructor" ? "Moniteur de ski" : "Autre profession",
           registration.hasHandicap ? "Situation de handicap signalée" : null,
           registration.testSummary
-            ? `Test adaptatif: ${registration.testSummary.passedSlopes.join(" → ") || "vocab ski"}`
+            ? `Test adaptatif: ${registration.testSummary.passedSlopes.join(" → ") || "aucune piste validée"} · vocab ${registration.testSummary.vocabScore?.correct ?? "?"}/${registration.testSummary.vocabScore?.total ?? 5}`
             : null,
           isOpco ? formatOpcoObservation(registration) : null,
           isFifpl ? formatFifplObservation(registration) : null,

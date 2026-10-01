@@ -2,351 +2,411 @@
   {
     "order_index": 1,
     "slope": "verte",
-    "category": "grammaire",
-    "question_text": "Votre client arrive à l'école de ski. Vous dites :",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un client vous demande : « On se retrouve où demain ? » Il veut savoir :",
     "options": [
-      "Bonjour ! Comment allez-vous ?",
-      "Bonjour ! Comment êtes-vous ?",
-      "Bonjour ! Comment avez-vous ?",
-      "Bonjour ! Comment vas-tu ?",
+      "l'heure du rendez-vous",
+      "le lieu du rendez-vous",
+      "si le cours a lieu demain",
+      "le nom de son moniteur",
       "je ne sais pas"
     ],
-    "correct_answer": "Bonjour ! Comment allez-vous ?"
+    "correct_answer": "le lieu du rendez-vous",
+    "teacher_notes": null
   },
   {
     "order_index": 2,
     "slope": "verte",
-    "category": "grammaire",
-    "question_text": "La famille a 5 personnes. Vous dites : \"Il y _____ cinq personnes dans votre groupe.\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Le groupe doit vous attendre en bas de la piste. Vous dites :",
     "options": [
-      "est",
-      "a",
-      "ont",
-      "sont",
+      "Attendez-moi en haut de la piste.",
+      "Suivez-moi jusqu'en bas.",
+      "Attendez-moi en bas de la piste.",
+      "Rendez-vous à l'école de ski.",
       "je ne sais pas"
     ],
-    "correct_answer": "a"
+    "correct_answer": "Attendez-moi en bas de la piste.",
+    "teacher_notes": null
   },
   {
     "order_index": 3,
     "slope": "verte",
-    "category": "grammaire",
-    "question_text": "Vous demandez l'âge de l'enfant : \"Quel âge _____-t-elle ?\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Une cliente vous dit : « Ma fille a six ans et elle n'a jamais skié. » Qu'apprenez-vous ?",
     "options": [
-      "est",
-      "a",
-      "fait",
-      "va",
+      "La petite fille a six ans et skie un peu.",
+      "La jeune fille a seize ans et elle est débutante.",
+      "La petite fille a six ans et a peur de la neige.",
+      "La petite fille a six ans et ce sera sa première fois sur des skis.",
       "je ne sais pas"
     ],
-    "correct_answer": "a"
+    "correct_answer": "La petite fille a six ans et ce sera sa première fois sur des skis.",
+    "teacher_notes": null
   },
   {
     "order_index": 4,
     "slope": "verte",
-    "category": "grammaire",
-    "question_text": "Il fait très froid aujourd'hui. Vous dites : \"Aujourd'hui, il _____ moins 10 degrés.\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Vous annoncez que le cours se termine à midi. Vous dites :",
     "options": [
-      "est",
-      "a",
-      "fait",
-      "va",
+      "Le cours se termine à midi.",
+      "Le cours commence à midi.",
+      "Le cours se termine à deux heures.",
+      "On fait une pause à midi.",
       "je ne sais pas"
     ],
-    "correct_answer": "fait"
+    "correct_answer": "Le cours se termine à midi.",
+    "teacher_notes": null
   },
   {
     "order_index": 5,
     "slope": "verte",
-    "category": "grammaire",
-    "question_text": "Vous vous présentez : \"Je _____ moniteur de ski depuis 5 ans.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un enfant vous dit : « J'ai les mains gelées. » Que se passe-t-il ?",
     "options": [
-      "ai",
-      "suis",
-      "fais",
-      "travaille",
+      "Il a mal aux mains.",
+      "Il a perdu ses gants.",
+      "Il a très froid aux mains.",
+      "Il a froid aux pieds.",
       "je ne sais pas"
     ],
-    "correct_answer": "suis"
+    "correct_answer": "Il a très froid aux mains.",
+    "teacher_notes": null
   },
   {
     "order_index": 6,
     "slope": "bleue",
-    "category": "grammaire",
-    "question_text": "Vous demandez à propos du cours d'hier : \"Comment _____ le cours de ski hier ?\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Vous recevez ce message : « Le cours de cet après-midi est annulé à cause du vent, mais celui de demain est maintenu. » Qu'est-ce que cela veut dire ?",
     "options": [
-      "était",
-      "a été",
-      "fut",
-      "A ou B",
+      "Pas de cours cet après-midi ; demain, le cours a lieu.",
+      "Pas de cours, ni aujourd'hui ni demain.",
+      "Le cours de cet après-midi est déplacé à demain.",
+      "Le cours de demain est supprimé.",
       "je ne sais pas"
     ],
-    "correct_answer": "A ou B"
+    "correct_answer": "Pas de cours cet après-midi ; demain, le cours a lieu.",
+    "teacher_notes": null
   },
   {
     "order_index": 7,
     "slope": "bleue",
-    "category": "grammaire",
-    "question_text": "Vous expliquez où se retrouver : \"On se retrouve _____ l'école de ski, à côté du télésiège.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un client vous dit : « J'ai un peu skié l'hiver dernier, mais seulement sur des pistes vertes. » Qu'apprenez-vous ?",
     "options": [
-      "devant",
-      "avant",
-      "en face",
-      "au devant de",
+      "Il n'a jamais skié sur une piste verte.",
+      "Cet hiver, il veut skier seulement sur les vertes.",
+      "Il a skié tout l'hiver dernier.",
+      "Il a peu d'expérience : l'an dernier, il est resté sur les vertes.",
       "je ne sais pas"
     ],
-    "correct_answer": "devant"
+    "correct_answer": "Il a peu d'expérience : l'an dernier, il est resté sur les vertes.",
+    "teacher_notes": null
   },
   {
     "order_index": 8,
     "slope": "bleue",
-    "category": "grammaire",
-    "question_text": "Le temps a changé. Vous dites : \"Hier, il _____ du soleil, mais aujourd'hui il neige.\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Le télésiège est fermé, le groupe prendra la télécabine. Vous dites :",
     "options": [
-      "faisait",
-      "a fait",
-      "fit",
-      "A ou B",
+      "La télécabine est fermée, donc on prend le télésiège.",
+      "Le télésiège est fermé, donc on va prendre la télécabine.",
+      "Il y a du monde au télésiège, donc on attend.",
+      "Le télésiège a rouvert, donc pas besoin de la télécabine.",
       "je ne sais pas"
     ],
-    "correct_answer": "A ou B"
+    "correct_answer": "Le télésiège est fermé, donc on va prendre la télécabine.",
+    "teacher_notes": null
   },
   {
     "order_index": 9,
     "slope": "bleue",
-    "category": "grammaire",
-    "question_text": "Le client raconte son passé : \"Quand j'_____ enfant, je n'avais jamais vu la neige.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un parent vous demande : « Je peux venir le chercher à trois heures et demie au lieu de quatre heures ? » Que veut-il ?",
     "options": [
-      "ai été",
-      "étais",
-      "suis",
-      "fus",
+      "Il veut récupérer son fils à 16 h 30 au lieu de 15 h.",
+      "Il veut que le cours dure jusqu'à 16 h.",
+      "Il veut récupérer son fils à 15 h 30 au lieu de 16 h.",
+      "Il demande s'il peut assister au cours de 15 h 30.",
       "je ne sais pas"
     ],
-    "correct_answer": "étais"
+    "correct_answer": "Il veut récupérer son fils à 15 h 30 au lieu de 16 h.",
+    "teacher_notes": null
   },
   {
     "order_index": 10,
     "slope": "bleue",
-    "category": "grammaire",
-    "question_text": "Vous décrivez la piste : \"Cette piste est beaucoup _____ que l'autre.\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Vous demandez au client d'apporter son forfait demain et d'arriver 15 minutes en avance. Vous dites :",
     "options": [
-      "facile",
-      "plus facile",
-      "la plus facile",
-      "plus facilement",
+      "Apportez votre forfait et arrivez un quart d'heure en avance.",
+      "Achetez votre forfait et arrivez un quart d'heure en retard.",
+      "Apportez votre forfait et attendez un quart d'heure dans la queue.",
+      "Montrez-moi votre forfait après le cours.",
       "je ne sais pas"
     ],
-    "correct_answer": "plus facile"
+    "correct_answer": "Apportez votre forfait et arrivez un quart d'heure en avance.",
+    "teacher_notes": null
   },
   {
     "order_index": 11,
     "slope": "rouge",
-    "category": "grammaire",
-    "question_text": "Le client veut aller sur une piste noire. Vous dites : \"Vous _____ vous échauffer avant de skier sur cette piste.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un parent vous dit : « Il a fait une mauvaise chute l'année dernière. Vous pourriez garder un œil sur lui, sans en faire toute une histoire ? » Que vous demande-t-il ?",
     "options": [
-      "pouvez",
-      "devez",
-      "voulez",
-      "allez",
+      "le mettre dans un groupe plus facile",
+      "le surveiller discrètement",
+      "l'appeler après le cours",
+      "éviter les pistes raides",
       "je ne sais pas"
     ],
-    "correct_answer": "devez"
+    "correct_answer": "le surveiller discrètement",
+    "teacher_notes": null
   },
   {
     "order_index": 12,
     "slope": "rouge",
-    "category": "grammaire",
-    "question_text": "Vous demandez les habitudes du client : \"Quand vous _____ en France, vous faisiez du sport d'hiver ?\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Un élève est tombé et se tient le genou. Que lui dites-vous en premier ?",
     "options": [
-      "avez habité",
-      "habitiez",
-      "habitez",
-      "avez vécu",
+      "Vous pouvez vous relever et descendre jusqu'au télésiège ?",
+      "Ne vous inquiétez pas, ce n'est rien.",
+      "Vous auriez dû faire plus attention.",
+      "Où avez-vous mal ? Vous pouvez bouger la jambe ?",
       "je ne sais pas"
     ],
-    "correct_answer": "habitiez"
+    "correct_answer": "Où avez-vous mal ? Vous pouvez bouger la jambe ?",
+    "teacher_notes": null
   },
   {
     "order_index": 13,
     "slope": "rouge",
-    "category": "grammaire",
-    "question_text": "Le temps change. Vous prévenez : \"La visibilité _____ moins bonne cet après-midi. On ferait mieux de descendre tôt.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un client vous dit : « Aujourd'hui, je préférerais éviter la noire, j'ai encore mal aux jambes d'hier. » Qu'apprenez-vous ?",
     "options": [
-      "sera",
-      "va être",
-      "est",
-      "A ou B",
+      "Il ne veut pas faire la noire aujourd'hui, à cause de douleurs aux jambes.",
+      "La noire lui fait peur.",
+      "Il s'est blessé hier sur la noire.",
+      "Il veut faire la noire demain.",
       "je ne sais pas"
     ],
-    "correct_answer": "A ou B"
+    "correct_answer": "Il ne veut pas faire la noire aujourd'hui, à cause de douleurs aux jambes.",
+    "teacher_notes": null
   },
   {
     "order_index": 14,
     "slope": "rouge",
-    "category": "grammaire",
-    "question_text": "Le client raconte : \"Quand j'étais jeune, j'_____ à la montagne chaque hiver avec mes parents.\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Le brouillard arrive. Vous voulez redescendre maintenant, calmement, sans inquiéter le groupe. Vous dites :",
     "options": [
-      "allais",
-      "suis allé",
-      "irais",
-      "vais",
+      "C'est très dangereux, tout le monde descend le plus vite possible !",
+      "Le brouillard arrive, on remonte une dernière fois avant que ça se gâte.",
+      "Le brouillard arrive, alors on descend maintenant et on reste bien groupés.",
+      "Le brouillard va vite passer, on attend ici.",
       "je ne sais pas"
     ],
-    "correct_answer": "allais"
+    "correct_answer": "Le brouillard arrive, alors on descend maintenant et on reste bien groupés.",
+    "teacher_notes": null
   },
   {
     "order_index": 15,
     "slope": "rouge",
-    "category": "grammaire",
-    "question_text": "Vous expliquez quoi faire : \"Quand vous _____ le panneau rouge, vous vous arrêtez tout de suite.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un client vous dit : « L'an dernier, notre moniteur nous faisait poireauter en haut pendant des heures. Cette fois, on veut juste skier davantage. » Que demande-t-il ?",
     "options": [
-      "voyez",
-      "verrez",
-      "avez vu",
-      "voyiez",
+      "changer de moniteur",
+      "moins d'attente et plus de temps sur les skis",
+      "des pauses plus longues en haut des pistes",
+      "un cours plus difficile",
       "je ne sais pas"
     ],
-    "correct_answer": "voyez"
+    "correct_answer": "moins d'attente et plus de temps sur les skis",
+    "teacher_notes": null
   },
   {
     "order_index": 16,
     "slope": "noire",
-    "category": "grammaire",
-    "question_text": "Explication technique : \"Si vous _____ plus de pression sur le ski aval, vous tourneriez plus facilement.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un client dit : « Si on était partis dix minutes plus tôt, on aurait eu le dernier télésiège. » Que s'est-il passé ?",
     "options": [
-      "mettez",
-      "mettiez",
-      "mettriez",
-      "avez mis",
+      "Ils ont eu le dernier télésiège de justesse.",
+      "Ils partiront plus tôt demain.",
+      "Ils ont raté le dernier télésiège.",
+      "Le télésiège a fermé dix minutes en avance.",
       "je ne sais pas"
     ],
-    "correct_answer": "mettiez"
+    "correct_answer": "Ils ont raté le dernier télésiège.",
+    "teacher_notes": null
   },
   {
     "order_index": 17,
     "slope": "noire",
-    "category": "grammaire",
-    "question_text": "Un client demande le risque d'avalanche. Vous expliquez : \"S'il _____ de la neige fraîche cette nuit, la station _____ certaines pistes demain.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Après le cours, un client dit : « C'était bien, je suppose... même si j'espérais faire un peu plus que du chasse-neige. » Comment se sent-il ?",
     "options": [
-      "tombe / ferme",
-      "tombait / fermerait",
-      "y a / fermera",
-      "y avait / fermerait",
+      "Déçu : il attendait un travail plus avancé.",
+      "Ravi du rythme.",
+      "Il a trouvé le cours trop dur.",
+      "Il veut arrêter les cours.",
       "je ne sais pas"
     ],
-    "correct_answer": "tombe / ferme"
+    "correct_answer": "Déçu : il attendait un travail plus avancé.",
+    "teacher_notes": null
   },
   {
     "order_index": 18,
     "slope": "noire",
-    "category": "grammaire",
-    "question_text": "Décrivant ce qui s'est passé : \"Le client ne se _____ pas blessé s'il _____ les consignes de sécurité.\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Un père en colère vous dit que son fils a été mis dans le mauvais groupe. Quelle est la meilleure réponse ?",
     "options": [
-      "serait / avait suivi",
-      "aurait / suivait",
-      "était / avait suivi",
-      "serait / suivait",
+      "Ce n'est pas moi qui décide, voyez avec le bureau.",
+      "De toute façon, tous les groupes ont le même niveau.",
+      "Ne vous inquiétez pas, on vous rembourse le cours tout de suite.",
+      "Je comprends. Je l'observe sur la première descente et, si besoin, je le change de groupe.",
       "je ne sais pas"
     ],
-    "correct_answer": "serait / avait suivi"
+    "correct_answer": "Je comprends. Je l'observe sur la première descente et, si besoin, je le change de groupe.",
+    "teacher_notes": null
   },
   {
     "order_index": 19,
     "slope": "noire",
-    "category": "grammaire",
-    "question_text": "Vous demandez sur le passé : \"Avant de venir ici, vous _____ une idée de ce qu'était le ski ?\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Vous entendez : « À moins que le vent ne faiblisse d'ici midi, les remontées du haut ne rouvriront pas aujourd'hui. » Qu'est-ce que cela veut dire ?",
     "options": [
-      "avez",
-      "avez eu",
-      "aviez",
-      "ayez",
+      "Les remontées du haut rouvriront à midi.",
+      "Les remontées du haut ne rouvriront aujourd'hui que si le vent faiblit avant midi.",
+      "Les remontées du haut restent fermées jusqu'à midi, quoi qu'il arrive.",
+      "On prévoit que le vent faiblira à midi.",
       "je ne sais pas"
     ],
-    "correct_answer": "aviez"
+    "correct_answer": "Les remontées du haut ne rouvriront aujourd'hui que si le vent faiblit avant midi.",
+    "teacher_notes": null
   },
   {
     "order_index": 20,
     "slope": "noire",
-    "category": "grammaire",
-    "question_text": "Explication d'une situation : \"Bien que la piste _____ difficile, je pense que vous pouvez y arriver si vous _____ calme.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un client dit : « Sur les rouges, je me débrouille bien ; c'est seulement quand ça devient plus raide que je commence à me mettre en arrière. » Que veut-il dire ?",
     "options": [
-      "soit / restez",
-      "est / restez",
-      "soit / restiez",
-      "serait / resteriez",
+      "Il se met en arrière sur toutes les pistes.",
+      "Il a des difficultés sur les rouges.",
+      "Il préfère les pentes raides aux rouges.",
+      "Il est à l'aise sur les rouges, mais se met en arrière quand la pente devient plus raide.",
       "je ne sais pas"
     ],
-    "correct_answer": "soit / restez"
+    "correct_answer": "Il est à l'aise sur les rouges, mais se met en arrière quand la pente devient plus raide.",
+    "teacher_notes": null
   },
   {
     "order_index": 21,
     "slope": "vocab_ski",
-    "category": "vocabulaire",
-    "question_text": "Le ski de votre client se détache. Vous vérifiez l'équipement et dites : \"Je crois que vos _____ sont trop lâches. Je vais les régler.\"",
+    "category": "vocabulary",
+    "vocabulary_level": "verte",
+    "question_text": "Votre élève a oublié en haut ce qu'il tient dans les mains pour pousser et garder l'équilibre. Complétez : « Vous avez oublié vos ___ en haut. »",
     "options": [
       "bâtons",
-      "fixations",
-      "carres",
       "chaussures",
+      "gants",
+      "lunettes",
       "je ne sais pas"
     ],
-    "correct_answer": "fixations"
+    "correct_answer": "bâtons",
+    "teacher_notes": null
   },
   {
     "order_index": 22,
     "slope": "vocab_ski",
-    "category": "vocabulaire",
-    "question_text": "Vous enseignez le chasse-neige. Vous dites : \"Fléchissez plus les _____ et gardez votre poids vers l'avant.\"",
+    "category": "vocabulary",
+    "vocabulary_level": "verte",
+    "question_text": "Le ski de votre élève se détache à chaque virage. Complétez : « Je vais régler vos ___. »",
     "options": [
-      "chevilles",
-      "épaules",
-      "hanches",
-      "genoux",
+      "boucles",
+      "carres",
+      "fixations",
+      "bâtons",
       "je ne sais pas"
     ],
-    "correct_answer": "genoux"
+    "correct_answer": "fixations",
+    "teacher_notes": null
   },
   {
     "order_index": 23,
     "slope": "vocab_ski",
-    "category": "vocabulaire",
-    "question_text": "Votre client tombe souvent dans les virages. Vous expliquez : \"Vous devez mettre plus de pression sur le _____ — c'est le ski le plus proche de la vallée.\"",
+    "category": "vocabulary",
+    "vocabulary_level": "bleue",
+    "question_text": "La machine est passée cette nuit et la piste est bien lisse. Complétez : « Ce matin, la piste est ___. »",
     "options": [
-      "ski amont",
-      "ski intérieur",
-      "ski aval",
-      "ski extérieur",
+      "bosselée",
+      "verglacée",
+      "bondée",
+      "damée",
       "je ne sais pas"
     ],
-    "correct_answer": "ski aval"
+    "correct_answer": "damée",
+    "teacher_notes": null
   },
   {
     "order_index": 24,
     "slope": "vocab_ski",
-    "category": "vocabulaire",
-    "question_text": "Il a neigé 30cm pendant la nuit. Vous dites au client enthousiaste : \"Bonne nouvelle ! On a de la _____ fraîche aujourd'hui — parfait pour le hors-piste !\"",
+    "category": "vocabulary",
+    "vocabulary_level": "rouge",
+    "question_text": "Les bords métalliques des skis n'accrochent plus la neige. Complétez : « Il faut affûter vos ___. »",
     "options": [
-      "glace",
-      "poudreuse",
-      "neige dure",
-      "brouillard",
+      "spatules",
+      "carres",
+      "talons",
+      "semelles",
       "je ne sais pas"
     ],
-    "correct_answer": "poudreuse"
+    "correct_answer": "carres",
+    "teacher_notes": null
   },
   {
     "order_index": 25,
     "slope": "vocab_ski",
-    "category": "vocabulaire",
-    "question_text": "Un enfant arrive sans protection sur la tête. Vous dites aux parents : \"Pour la sécurité, votre enfant doit porter un _____ sur les pistes.\"",
+    "category": "vocabulary",
+    "vocabulary_level": "noire",
+    "question_text": "En fin d'après-midi, le soleil a rendu la neige lourde et mouillée. Complétez : « Attention, c'est de la ___. »",
     "options": [
-      "forfait",
-      "masque",
-      "casque",
-      "gants",
+      "poudreuse",
+      "croûte",
+      "soupe",
+      "glace",
       "je ne sais pas"
     ],
-    "correct_answer": "casque"
+    "correct_answer": "soupe",
+    "teacher_notes": null
+  },
+  {
+    "order_index": 26,
+    "slope": "presentation",
+    "category": "free_text",
+    "vocabulary_level": null,
+    "question_text": "Si vous le pouvez, présentez-vous en quelques phrases dans la langue du test : votre parcours de moniteur, votre station, ce que vous aimeriez mieux savoir faire avec vos clients.",
+    "options": null,
+    "correct_answer": null,
+    "teacher_notes": "Non notée, sans effet sur la piste. Lue par le formateur avant la 1re séance. Facultative, 1 000 caractères max."
   }
 ]

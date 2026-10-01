@@ -56,9 +56,9 @@ const translations = {
     en: "Public links (adaptive test)",
   },
   publicLinksDesc: {
-    fr: "Chaque lien pré-sélectionne la langue. Parcours progressif (verte → bleue → rouge → noire, ≥3/5 pour avancer) + vocabulaire ski commun.",
-    "pt-BR": "Cada link pré-seleciona o idioma. Percurso progressivo (verde → azul → vermelha → preta) + vocabulário de esqui comum.",
-    en: "Each link pre-selects the language. Progressive slopes (green → blue → red → black, ≥3/5 to advance) + shared ski vocab.",
+    fr: "Chaque lien pré-sélectionne la langue. Parcours progressif (verte → bleue → rouge → noire, ≥3/5 pour avancer) puis vocabulaire ski pour tous + présentation facultative.",
+    "pt-BR": "Cada link pré-seleciona o idioma. Percurso progressivo (verde → azul → vermelha → preta) depois vocabulário de esqui para todos + apresentação opcional.",
+    en: "Each link pre-selects the language. Progressive slopes (green → blue → red → black, ≥3/5 to advance) then ski vocab for everyone + optional presentation.",
   },
   copyLink: {
     fr: "Copier le lien",

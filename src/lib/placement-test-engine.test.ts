@@ -4,6 +4,7 @@ import {
   determineLevelFromSlopes,
   evaluateSlope,
   getNextSlopeAfterSlope,
+  hasAdaptedScale,
   needsAdminCallFromResults,
   pisteLabelFromPlacementAnswers,
   PISTE_STAGIAIRE_PAR_DEFAUT,
@@ -13,25 +14,36 @@ import {
   type PlacementQuestion,
   type SlopeResult,
 } from "./placement-test-engine";
+import { getPlacementQuestions } from "./placement-questions-data";
 
 const sampleQuestions: PlacementQuestion[] = [
   {
     id: "q1",
     question_text: "Q1",
-    options: ["a", "b"],
+    options: ["a", "b", "je ne sais pas"],
     correct_answer: "a",
     slope: "verte",
-    category: "grammaire",
+    category: "comprehension",
     order_index: 1,
   },
   {
     id: "q2",
     question_text: "Q2",
-    options: ["a", "b"],
+    options: ["a", "b", "je ne sais pas"],
     correct_answer: "b",
     slope: "verte",
-    category: "grammaire",
+    category: "comprehension",
     order_index: 2,
+  },
+  {
+    id: "v1",
+    question_text: "Vocab",
+    options: ["x", "y", "je ne sais pas"],
+    correct_answer: "x",
+    slope: "vocab_ski",
+    category: "vocabulary",
+    vocabulary_level: "verte",
+    order_index: 21,
   },
 ];
 
@@ -56,7 +68,6 @@ describe("placement-test-engine", () => {
         passedSlopes: ["verte", "bleue"],
         highestSlopeReached: "bleue",
       }),
-      studentFacingPisteLabel({ endedAtVocab: true, passedSlopes: [] }),
       studentFacingPisteLabel({ passedSlopes: [] }),
       studentFacingPisteFromCecrl("B1"),
       studentFacingPisteFromCecrl("A1"),
@@ -65,28 +76,25 @@ describe("placement-test-engine", () => {
     ];
     expect(samples[0]).toBe("Piste bleue");
     expect(samples[1]).toBe("Piste verte");
-    expect(samples[2]).toBe("Piste verte");
-    expect(samples[3]).toBe("Piste bleue");
-    expect(samples[4]).toBe("Piste verte");
+    expect(samples[2]).toBe("Piste bleue");
+    expect(samples[3]).toBe("Piste verte");
     for (const label of samples) {
       expect(label).not.toMatch(cecrl);
     }
   });
 
-  // BL-026 : la verte non validée reste « Piste verte » côté stagiaire.
   it("annonce la piste verte quand aucune piste n'est validée", () => {
     expect(PISTE_STAGIAIRE_PAR_DEFAUT).toBe("Piste verte");
     expect(
       studentFacingPisteLabel({
         passedSlopes: [],
         highestSlopeReached: "verte",
-        endedAtVocab: true,
       })
     ).toBe("Piste verte");
     expect(studentFacingPisteFromCecrl("a1")).toBe("Piste verte");
     expect(
       pisteLabelFromPlacementAnswers({
-        summary: { passedSlopes: [], highestSlopeReached: "verte", endedAtVocab: true },
+        summary: { passedSlopes: [], highestSlopeReached: "verte" },
       })
     ).toBe("Piste verte");
   });
@@ -98,10 +106,11 @@ describe("placement-test-engine", () => {
     expect(studentFacingCertificateLabel(null)).toBeNull();
   });
 
-  it("getNextSlopeAfterSlope routes failed slope to vocab", () => {
+  it("getNextSlopeAfterSlope envoie toujours vers vocab à la fin de l'adaptatif", () => {
     expect(getNextSlopeAfterSlope("verte", false)).toBe("vocab_ski");
     expect(getNextSlopeAfterSlope("verte", true)).toBe("bleue");
-    expect(getNextSlopeAfterSlope("noire", true)).toBe("done");
+    expect(getNextSlopeAfterSlope("noire", true)).toBe("vocab_ski");
+    expect(getNextSlopeAfterSlope("rouge", false)).toBe("vocab_ski");
   });
 
   it("needsAdminCall when verte has <=1 correct", () => {
@@ -109,19 +118,68 @@ describe("placement-test-engine", () => {
     expect(needsAdminCallFromResults(results)).toBe(true);
   });
 
-  it("buildAdaptiveTestResult aggregates answers", () => {
+  it("buildAdaptiveTestResult expose vocabScore et presentationText", () => {
     const slopeResults: SlopeResult[] = [
       { slope: "verte", correct: 4, total: 5, passed: true },
+      { slope: "vocab_ski", correct: 1, total: 1, passed: false },
     ];
     const result = buildAdaptiveTestResult(
       sampleQuestions,
-      { q1: "a", q2: "b" },
+      { q1: "a", q2: "b", v1: "y" },
       slopeResults,
       ["verte"],
-      false
+      "Bonjour, je suis moniteur."
     );
     expect(result.determinedLevel).toBe("A2");
-    expect(result.correctAnswers).toBe(2);
-    expect(result.totalAnswered).toBe(2);
+    expect(result.vocabScore).toEqual({ correct: 0, total: 1 });
+    expect(result.vocabAnswers[0].selected).toBe("y");
+    expect(result.presentationText).toBe("Bonjour, je suis moniteur.");
+    expect(result).not.toHaveProperty("endedAtVocab");
+  });
+
+  it("hasAdaptedScale pour DE/NL/RU/ZH", () => {
+    expect(hasAdaptedScale("german")).toBe(true);
+    expect(hasAdaptedScale("allemand")).toBe(true);
+    expect(hasAdaptedScale("english")).toBe(false);
+    expect(hasAdaptedScale("chinois")).toBe(true);
+  });
+});
+
+describe("banque 2026", () => {
+  it("anglais : 26 questions, présentation free_text, options non mélangées", () => {
+    const qs = getPlacementQuestions("english");
+    expect(qs).toHaveLength(26);
+    expect(qs.filter((q) => q.slope === "verte")).toHaveLength(5);
+    expect(qs.filter((q) => q.slope === "vocab_ski")).toHaveLength(5);
+    const presentation = qs.find((q) => q.slope === "presentation");
+    expect(presentation?.category).toBe("free_text");
+    expect(presentation?.options).toBeNull();
+    const q1 = qs[0];
+    expect(q1.options?.[4]).toBe("je ne sais pas");
+    expect(q1.category).toBe("comprehension");
+  });
+
+  it("russe et chinois : caractères non ASCII dans les questions", () => {
+    const ru = getPlacementQuestions("russian");
+    const zh = getPlacementQuestions("chinese");
+    expect(ru.some((q) => /[а-яА-ЯёЁ]/.test(q.question_text + (q.options || []).join("")))).toBe(
+      true
+    );
+    expect(zh.some((q) => /[\u4e00-\u9fff]/.test(q.question_text + (q.options || []).join("")))).toBe(
+      true
+    );
+  });
+
+  it("cas recette moteur : verte 2/5 → piste verte ; 20/20 → noire puis vocab", () => {
+    expect(studentFacingPisteLabel({ passedSlopes: [] })).toBe("Piste verte");
+    expect(
+      studentFacingPisteLabel({ passedSlopes: ["verte", "bleue"] })
+    ).toBe("Piste bleue");
+    expect(
+      studentFacingPisteLabel({
+        passedSlopes: ["verte", "bleue", "rouge", "noire"],
+      })
+    ).toBe("Piste noire");
+    expect(getNextSlopeAfterSlope("noire", true)).toBe("vocab_ski");
   });
 });

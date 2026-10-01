@@ -2,351 +2,411 @@
   {
     "order_index": 1,
     "slope": "verte",
-    "category": "grammaire",
-    "question_text": "Your client arrives at the ski school. You say:",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un client vous demande : « Where do we meet tomorrow? » Que veut-il savoir ?",
     "options": [
-      "Good morning! How is you?",
-      "Good morning! How are you?",
-      "Good morning! How be you?",
-      "Good morning! How you are?",
+      "l'heure du rendez-vous",
+      "le lieu du rendez-vous",
+      "si le cours a lieu demain",
+      "le nom de son moniteur",
       "je ne sais pas"
     ],
-    "correct_answer": "Good morning! How are you?"
+    "correct_answer": "le lieu du rendez-vous",
+    "teacher_notes": null
   },
   {
     "order_index": 2,
     "slope": "verte",
-    "category": "grammaire",
-    "question_text": "The family has 4 people. You say: \"There _____ four people in your group.\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Vous voulez que votre groupe vous attende en bas de la piste. Vous dites :",
     "options": [
-      "is",
-      "are",
-      "have",
-      "has",
+      "Wait for me at the top of the slope.",
+      "Follow me down the slope.",
+      "Wait for me at the bottom of the slope.",
+      "Meet me at the ski school.",
       "je ne sais pas"
     ],
-    "correct_answer": "are"
+    "correct_answer": "Wait for me at the bottom of the slope.",
+    "teacher_notes": null
   },
   {
     "order_index": 3,
     "slope": "verte",
-    "category": "grammaire",
-    "question_text": "It's very cold this morning. You tell your client: \"Today it _____ minus 10 degrees.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Une cliente vous dit : « My daughter is six and she has never skied. » Qu'apprenez-vous ?",
     "options": [
-      "has",
-      "have",
-      "is",
-      "are",
+      "Sa fille a 6 ans et skie depuis peu.",
+      "Sa fille a 16 ans et n'a jamais skié.",
+      "Sa fille a 6 ans et a peur de skier.",
+      "Sa fille a 6 ans et n'a jamais skié.",
       "je ne sais pas"
     ],
-    "correct_answer": "is"
+    "correct_answer": "Sa fille a 6 ans et n'a jamais skié.",
+    "teacher_notes": null
   },
   {
     "order_index": 4,
     "slope": "verte",
-    "category": "grammaire",
-    "question_text": "You introduce yourself: \"I _____ a ski instructor.\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Vous annoncez que le cours se termine à midi. Vous dites :",
     "options": [
-      "am",
-      "is",
-      "are",
-      "be",
+      "The lesson finishes at twelve.",
+      "The lesson starts at twelve.",
+      "The lesson finishes at two.",
+      "We have a break at twelve.",
       "je ne sais pas"
     ],
-    "correct_answer": "am"
+    "correct_answer": "The lesson finishes at twelve.",
+    "teacher_notes": null
   },
   {
     "order_index": 5,
     "slope": "verte",
-    "category": "grammaire",
-    "question_text": "The child is 8 years old. You say: \"She _____ 8 years old.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un enfant vous dit : « My hands are cold. » Que se passe-t-il ?",
     "options": [
-      "has",
-      "have",
-      "is",
-      "are",
+      "Il a mal aux mains.",
+      "Il a perdu ses gants.",
+      "Il a froid aux mains.",
+      "Il a froid aux pieds.",
       "je ne sais pas"
     ],
-    "correct_answer": "is"
+    "correct_answer": "Il a froid aux mains.",
+    "teacher_notes": null
   },
   {
     "order_index": 6,
     "slope": "bleue",
-    "category": "grammaire",
-    "question_text": "You ask about yesterday's lesson: \"How _____ your ski lesson yesterday?\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Vous recevez ce message : « This afternoon's lesson is cancelled because of the wind, but tomorrow's lesson is still on. » Qu'est-ce que cela veut dire ?",
     "options": [
-      "is",
-      "was",
-      "were",
-      "been",
+      "Le cours de cet après-midi est annulé, celui de demain est maintenu.",
+      "Les deux cours sont annulés.",
+      "Le cours de cet après-midi est reporté à demain.",
+      "Le cours de demain est annulé.",
       "je ne sais pas"
     ],
-    "correct_answer": "was"
+    "correct_answer": "Le cours de cet après-midi est annulé, celui de demain est maintenu.",
+    "teacher_notes": null
   },
   {
     "order_index": 7,
     "slope": "bleue",
-    "category": "grammaire",
-    "question_text": "You explain where to meet: \"We meet _____ the ski school, next to the chairlift.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un client vous dit : « I skied a bit last winter, but only on green runs. » Qu'apprenez-vous ?",
     "options": [
-      "on",
-      "to",
-      "in front of",
-      "under",
+      "Il n'a jamais skié sur une piste verte.",
+      "Il veut skier uniquement sur des pistes vertes cet hiver.",
+      "Il a skié tout l'hiver dernier.",
+      "Il a un peu skié l'hiver dernier, seulement sur des pistes vertes.",
       "je ne sais pas"
     ],
-    "correct_answer": "in front of"
+    "correct_answer": "Il a un peu skié l'hiver dernier, seulement sur des pistes vertes.",
+    "teacher_notes": null
   },
   {
     "order_index": 8,
     "slope": "bleue",
-    "category": "grammaire",
-    "question_text": "The weather changed. You say: \"Yesterday it was sunny, but today it _____ all morning.\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Le télésiège est fermé, le groupe prendra la télécabine. Vous dites :",
     "options": [
-      "snowed",
-      "is snowing",
-      "snow",
-      "snowing",
+      "The gondola is closed, so we're going to take the chairlift.",
+      "The chairlift is closed, so we're going to take the gondola.",
+      "The chairlift is busy, so we're going to wait.",
+      "The chairlift is open again, so we don't need the gondola.",
       "je ne sais pas"
     ],
-    "correct_answer": "snowed"
+    "correct_answer": "The chairlift is closed, so we're going to take the gondola.",
+    "teacher_notes": null
   },
   {
     "order_index": 9,
     "slope": "bleue",
-    "category": "grammaire",
-    "question_text": "The client tells you: \"When I _____ a child, I never saw snow.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un parent vous demande : « Can I pick him up at half past three instead of four? » Que veut-il ?",
     "options": [
-      "am",
-      "was",
-      "were",
-      "been",
+      "Il veut récupérer son fils à 16 h 30 au lieu de 15 h.",
+      "Il veut que le cours dure jusqu'à 16 h.",
+      "Il veut récupérer son fils à 15 h 30 au lieu de 16 h.",
+      "Il demande s'il peut assister au cours de 15 h 30.",
       "je ne sais pas"
     ],
-    "correct_answer": "was"
+    "correct_answer": "Il veut récupérer son fils à 15 h 30 au lieu de 16 h.",
+    "teacher_notes": null
   },
   {
     "order_index": 10,
     "slope": "bleue",
-    "category": "grammaire",
-    "question_text": "You describe the slope: \"This slope is much _____ than the other ones.\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Vous demandez au client d'apporter son forfait demain et d'arriver 15 minutes en avance. Vous dites :",
     "options": [
-      "more easy",
-      "easily",
-      "easiest",
-      "easier",
+      "Bring your ski pass and come fifteen minutes early.",
+      "Buy your ski pass and come fifteen minutes late.",
+      "Bring your ski pass and come at quarter past.",
+      "Show me your ski pass after the lesson.",
       "je ne sais pas"
     ],
-    "correct_answer": "easier"
+    "correct_answer": "Bring your ski pass and come fifteen minutes early.",
+    "teacher_notes": null
   },
   {
     "order_index": 11,
     "slope": "rouge",
-    "category": "grammaire",
-    "question_text": "A client wants to go on a black slope. You say: \"You _____ warm up before skiing this slope.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un parent vous dit : « He had a bad fall last year. Could you keep an eye on him without making a fuss? » Que vous demande-t-il ?",
     "options": [
-      "can",
-      "should",
-      "would",
-      "may",
+      "le mettre dans un groupe plus facile",
+      "le surveiller discrètement",
+      "l'appeler après le cours",
+      "éviter les pistes raides",
       "je ne sais pas"
     ],
-    "correct_answer": "should"
+    "correct_answer": "le surveiller discrètement",
+    "teacher_notes": null
   },
   {
     "order_index": 12,
     "slope": "rouge",
-    "category": "grammaire",
-    "question_text": "Giving safety instructions: \"If you fall, _____ your arms to protect your head.\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Un élève est tombé et se tient le genou. Que lui dites-vous en premier ?",
     "options": [
-      "you use",
-      "using",
-      "use",
-      "to use",
+      "Can you get up and ski down to the lift?",
+      "Don't worry, it's nothing.",
+      "You should have been more careful.",
+      "Where does it hurt? Can you move your leg?",
       "je ne sais pas"
     ],
-    "correct_answer": "use"
+    "correct_answer": "Where does it hurt? Can you move your leg?",
+    "teacher_notes": null
   },
   {
     "order_index": 13,
     "slope": "rouge",
-    "category": "grammaire",
-    "question_text": "The weather is changing. You warn: \"The visibility _____ worse this afternoon. We should go down early.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un client vous dit : « I'd rather not do the black run today, my legs are still sore from yesterday. » Qu'apprenez-vous ?",
     "options": [
-      "will get",
-      "is going to get",
-      "gets",
-      "A or B",
+      "Il préfère éviter la noire aujourd'hui, car il a encore mal aux jambes.",
+      "Il a peur de la piste noire.",
+      "Il s'est blessé hier sur la piste noire.",
+      "Il veut faire la noire demain.",
       "je ne sais pas"
     ],
-    "correct_answer": "A or B"
+    "correct_answer": "Il préfère éviter la noire aujourd'hui, car il a encore mal aux jambes.",
+    "teacher_notes": null
   },
   {
     "order_index": 14,
     "slope": "rouge",
-    "category": "grammaire",
-    "question_text": "The client tells you: \"When I was young, I _____ to the mountains every winter with my parents.\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Le brouillard arrive. Vous voulez redescendre maintenant, calmement, sans inquiéter le groupe. Vous dites :",
     "options": [
-      "went",
-      "was going",
-      "go",
-      "gone",
+      "It's very dangerous now, everybody go down as fast as you can!",
+      "The fog is coming in, let's go up one more time before it gets worse.",
+      "The fog is coming in, so we'll head down now and stay close together.",
+      "The fog will be gone soon, let's wait here.",
       "je ne sais pas"
     ],
-    "correct_answer": "went"
+    "correct_answer": "The fog is coming in, so we'll head down now and stay close together.",
+    "teacher_notes": null
   },
   {
     "order_index": 15,
     "slope": "rouge",
-    "category": "grammaire",
-    "question_text": "You explain what to do: \"When you _____ the red sign, stop immediately.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un client vous dit : « Last year our instructor kept us waiting at the top for ages. This time we'd just like to ski more. » Que demande-t-il ?",
     "options": [
-      "see",
-      "will see",
-      "saw",
-      "seeing",
+      "changer de moniteur",
+      "moins d'attente et plus de temps sur les skis",
+      "des pauses plus longues en haut des pistes",
+      "un cours plus difficile",
       "je ne sais pas"
     ],
-    "correct_answer": "see"
+    "correct_answer": "moins d'attente et plus de temps sur les skis",
+    "teacher_notes": null
   },
   {
     "order_index": 16,
     "slope": "noire",
-    "category": "grammaire",
-    "question_text": "Explaining technique: \"If you _____ more pressure on your downhill ski, you would turn more easily.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "A client says: \"Had we left ten minutes earlier, we'd have caught the last lift.\" What happened?",
     "options": [
-      "put",
-      "would put",
-      "had put",
-      "putting",
+      "They caught the last lift just in time.",
+      "They will leave earlier tomorrow.",
+      "They missed the last lift.",
+      "The lift closed ten minutes early.",
       "je ne sais pas"
     ],
-    "correct_answer": "put"
+    "correct_answer": "They missed the last lift.",
+    "teacher_notes": null
   },
   {
     "order_index": 17,
     "slope": "noire",
-    "category": "grammaire",
-    "question_text": "A client asks about avalanche risk. You explain: \"If there _____ fresh snow overnight, the resort _____ some slopes tomorrow.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "After the lesson, a client says: \"It was fine, I guess... though I'd hoped we'd do a bit more than snowploughing.\" How does he feel?",
     "options": [
-      "will be / closes",
-      "is / will close",
-      "would be / closed",
-      "has been / would close",
+      "Disappointed: he wanted more advanced work.",
+      "Very happy with the pace.",
+      "He found the lesson too difficult.",
+      "He wants to stop the lessons.",
       "je ne sais pas"
     ],
-    "correct_answer": "is / will close"
+    "correct_answer": "Disappointed: he wanted more advanced work.",
+    "teacher_notes": null
   },
   {
     "order_index": 18,
     "slope": "noire",
-    "category": "grammaire",
-    "question_text": "Describing what happened: \"The client _____ hurt if he _____ the safety instructions.\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "An angry father tells you his son has been put in the wrong group. What is the best reply?",
     "options": [
-      "wouldn't have got / had followed",
-      "didn't get / followed",
-      "won't get / follows",
-      "hadn't got / would follow",
+      "That's not my decision, you'll have to ask the office.",
+      "All the groups are the same level anyway.",
+      "Don't worry, we'll refund the lesson straight away.",
+      "I understand. Let me watch him on the first run, and I'll move him if needed.",
       "je ne sais pas"
     ],
-    "correct_answer": "wouldn't have got / had followed"
+    "correct_answer": "I understand. Let me watch him on the first run, and I'll move him if needed.",
+    "teacher_notes": null
   },
   {
     "order_index": 19,
     "slope": "noire",
-    "category": "grammaire",
-    "question_text": "You ask: \"Before coming here, _____ you have any idea what skiing was like?\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "You hear: \"Unless the wind drops by noon, the top lifts won't reopen today.\" What does it mean?",
     "options": [
-      "do",
-      "did",
-      "have",
-      "had",
+      "The top lifts will reopen at noon.",
+      "The top lifts will only reopen today if the wind drops by noon.",
+      "The top lifts are closed until noon, whatever happens.",
+      "The wind is expected to drop at noon.",
       "je ne sais pas"
     ],
-    "correct_answer": "did"
+    "correct_answer": "The top lifts will only reopen today if the wind drops by noon.",
+    "teacher_notes": null
   },
   {
     "order_index": 20,
     "slope": "noire",
-    "category": "grammaire",
-    "question_text": "Explaining a situation: \"Although the slope _____ difficult, I think you can do it if you _____ calm.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "A client says: \"I'm fine on red runs, it's only when it gets steeper that I start leaning back.\" What does he mean?",
     "options": [
-      "is / stay",
-      "be / stayed",
-      "were / stay",
-      "is / will stay",
+      "He leans back on every slope.",
+      "He has trouble on red runs.",
+      "He prefers steep slopes to red runs.",
+      "He's comfortable on red runs, but leans back when it gets steeper.",
       "je ne sais pas"
     ],
-    "correct_answer": "is / stay"
+    "correct_answer": "He's comfortable on red runs, but leans back when it gets steeper.",
+    "teacher_notes": null
   },
   {
     "order_index": 21,
     "slope": "vocab_ski",
-    "category": "vocabulaire",
-    "question_text": "Your client's ski keeps detaching. You check the equipment and say: \"I think your _____ are too loose. Let me adjust them.\"",
+    "category": "vocabulary",
+    "vocabulary_level": "verte",
+    "question_text": "Votre élève a laissé ses bâtons au départ. Complétez : « You forgot your ___ at the top. »",
     "options": [
       "poles",
-      "bindings",
-      "edges",
       "boots",
+      "gloves",
+      "goggles",
       "je ne sais pas"
     ],
-    "correct_answer": "bindings"
+    "correct_answer": "poles",
+    "teacher_notes": null
   },
   {
     "order_index": 22,
     "slope": "vocab_ski",
-    "category": "vocabulaire",
-    "question_text": "You're teaching the snowplough. You tell your client: \"Bend your _____ more and keep your weight forward.\"",
+    "category": "vocabulary",
+    "vocabulary_level": "verte",
+    "question_text": "Les fixations de votre élève sont trop lâches. Complétez : « Your ___ are too loose, I'll adjust them. »",
     "options": [
-      "ankles",
-      "shoulders",
-      "hips",
-      "knees",
+      "buckles",
+      "edges",
+      "bindings",
+      "poles",
       "je ne sais pas"
     ],
-    "correct_answer": "knees"
+    "correct_answer": "bindings",
+    "teacher_notes": null
   },
   {
     "order_index": 23,
     "slope": "vocab_ski",
-    "category": "vocabulaire",
-    "question_text": "Your client keeps falling on turns. You explain: \"You need to put more pressure on your _____ - that's the ski closest to the valley.\"",
+    "category": "vocabulary",
+    "vocabulary_level": "bleue",
+    "question_text": "La piste a été damée ce matin. Complétez : « This morning the run is ___. »",
     "options": [
-      "uphill ski",
-      "inside ski",
-      "downhill ski",
-      "outside ski",
+      "bumpy",
+      "icy",
+      "off-piste",
+      "groomed",
       "je ne sais pas"
     ],
-    "correct_answer": "downhill ski"
+    "correct_answer": "groomed",
+    "teacher_notes": null
   },
   {
     "order_index": 24,
     "slope": "vocab_ski",
-    "category": "vocabulaire",
-    "question_text": "It snowed 30cm overnight. You tell your excited client: \"Great news! We have fresh _____ today - perfect for off-piste!\"",
+    "category": "vocabulary",
+    "vocabulary_level": "rouge",
+    "question_text": "Les carres des skis de votre élève sont émoussées. Complétez : « Your ___ need sharpening. »",
     "options": [
-      "ice",
-      "powder",
-      "groomed snow",
-      "fog",
+      "tips",
+      "edges",
+      "tails",
+      "bases",
       "je ne sais pas"
     ],
-    "correct_answer": "powder"
+    "correct_answer": "edges",
+    "teacher_notes": null
   },
   {
     "order_index": 25,
     "slope": "vocab_ski",
-    "category": "vocabulaire",
-    "question_text": "A child arrives without head protection. You tell the parents: \"For safety, your child needs to wear a _____ on the slopes.\"",
+    "category": "vocabulary",
+    "vocabulary_level": "noire",
+    "question_text": "En fin d'après-midi, la neige devient lourde et mouillée. Complétez : « Careful, the snow is turning to ___. »",
     "options": [
-      "ski pass",
-      "goggles",
-      "helmet",
-      "gloves",
+      "powder",
+      "crust",
+      "slush",
+      "ice",
       "je ne sais pas"
     ],
-    "correct_answer": "helmet"
+    "correct_answer": "slush",
+    "teacher_notes": null
+  },
+  {
+    "order_index": 26,
+    "slope": "presentation",
+    "category": "free_text",
+    "vocabulary_level": null,
+    "question_text": "Si vous le pouvez, présentez-vous en quelques phrases dans la langue du test : votre parcours de moniteur, votre station, ce que vous aimeriez mieux savoir faire avec vos clients.",
+    "options": null,
+    "correct_answer": null,
+    "teacher_notes": "Non notée, sans effet sur la piste. Lue par le formateur avant la 1re séance. Facultative, 1 000 caractères max."
   }
 ]

@@ -1,0 +1,352 @@
+[
+  {
+    "order_index": 1,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "Your client arrives at the ski school. You say:",
+    "options": [
+      "Good morning! How is you?",
+      "Good morning! How are you?",
+      "Good morning! How be you?",
+      "Good morning! How you are?",
+      "je ne sais pas"
+    ],
+    "correct_answer": "Good morning! How are you?"
+  },
+  {
+    "order_index": 2,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "The family has 4 people. You say: \"There _____ four people in your group.\"",
+    "options": [
+      "is",
+      "are",
+      "have",
+      "has",
+      "je ne sais pas"
+    ],
+    "correct_answer": "are"
+  },
+  {
+    "order_index": 3,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "It's very cold this morning. You tell your client: \"Today it _____ minus 10 degrees.\"",
+    "options": [
+      "has",
+      "have",
+      "is",
+      "are",
+      "je ne sais pas"
+    ],
+    "correct_answer": "is"
+  },
+  {
+    "order_index": 4,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "You introduce yourself: \"I _____ a ski instructor.\"",
+    "options": [
+      "am",
+      "is",
+      "are",
+      "be",
+      "je ne sais pas"
+    ],
+    "correct_answer": "am"
+  },
+  {
+    "order_index": 5,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "The child is 8 years old. You say: \"She _____ 8 years old.\"",
+    "options": [
+      "has",
+      "have",
+      "is",
+      "are",
+      "je ne sais pas"
+    ],
+    "correct_answer": "is"
+  },
+  {
+    "order_index": 6,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "You ask about yesterday's lesson: \"How _____ your ski lesson yesterday?\"",
+    "options": [
+      "is",
+      "was",
+      "were",
+      "been",
+      "je ne sais pas"
+    ],
+    "correct_answer": "was"
+  },
+  {
+    "order_index": 7,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "You explain where to meet: \"We meet _____ the ski school, next to the chairlift.\"",
+    "options": [
+      "on",
+      "to",
+      "in front of",
+      "under",
+      "je ne sais pas"
+    ],
+    "correct_answer": "in front of"
+  },
+  {
+    "order_index": 8,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "The weather changed. You say: \"Yesterday it was sunny, but today it _____ all morning.\"",
+    "options": [
+      "snowed",
+      "is snowing",
+      "snow",
+      "snowing",
+      "je ne sais pas"
+    ],
+    "correct_answer": "snowed"
+  },
+  {
+    "order_index": 9,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "The client tells you: \"When I _____ a child, I never saw snow.\"",
+    "options": [
+      "am",
+      "was",
+      "were",
+      "been",
+      "je ne sais pas"
+    ],
+    "correct_answer": "was"
+  },
+  {
+    "order_index": 10,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "You describe the slope: \"This slope is much _____ than the other ones.\"",
+    "options": [
+      "more easy",
+      "easily",
+      "easiest",
+      "easier",
+      "je ne sais pas"
+    ],
+    "correct_answer": "easier"
+  },
+  {
+    "order_index": 11,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "A client wants to go on a black slope. You say: \"You _____ warm up before skiing this slope.\"",
+    "options": [
+      "can",
+      "should",
+      "would",
+      "may",
+      "je ne sais pas"
+    ],
+    "correct_answer": "should"
+  },
+  {
+    "order_index": 12,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "Giving safety instructions: \"If you fall, _____ your arms to protect your head.\"",
+    "options": [
+      "you use",
+      "using",
+      "use",
+      "to use",
+      "je ne sais pas"
+    ],
+    "correct_answer": "use"
+  },
+  {
+    "order_index": 13,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "The weather is changing. You warn: \"The visibility _____ worse this afternoon. We should go down early.\"",
+    "options": [
+      "will get",
+      "is going to get",
+      "gets",
+      "A or B",
+      "je ne sais pas"
+    ],
+    "correct_answer": "A or B"
+  },
+  {
+    "order_index": 14,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "The client tells you: \"When I was young, I _____ to the mountains every winter with my parents.\"",
+    "options": [
+      "went",
+      "was going",
+      "go",
+      "gone",
+      "je ne sais pas"
+    ],
+    "correct_answer": "went"
+  },
+  {
+    "order_index": 15,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "You explain what to do: \"When you _____ the red sign, stop immediately.\"",
+    "options": [
+      "see",
+      "will see",
+      "saw",
+      "seeing",
+      "je ne sais pas"
+    ],
+    "correct_answer": "see"
+  },
+  {
+    "order_index": 16,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "Explaining technique: \"If you _____ more pressure on your downhill ski, you would turn more easily.\"",
+    "options": [
+      "put",
+      "would put",
+      "had put",
+      "putting",
+      "je ne sais pas"
+    ],
+    "correct_answer": "put"
+  },
+  {
+    "order_index": 17,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "A client asks about avalanche risk. You explain: \"If there _____ fresh snow overnight, the resort _____ some slopes tomorrow.\"",
+    "options": [
+      "will be / closes",
+      "is / will close",
+      "would be / closed",
+      "has been / would close",
+      "je ne sais pas"
+    ],
+    "correct_answer": "is / will close"
+  },
+  {
+    "order_index": 18,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "Describing what happened: \"The client _____ hurt if he _____ the safety instructions.\"",
+    "options": [
+      "wouldn't have got / had followed",
+      "didn't get / followed",
+      "won't get / follows",
+      "hadn't got / would follow",
+      "je ne sais pas"
+    ],
+    "correct_answer": "wouldn't have got / had followed"
+  },
+  {
+    "order_index": 19,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "You ask: \"Before coming here, _____ you have any idea what skiing was like?\"",
+    "options": [
+      "do",
+      "did",
+      "have",
+      "had",
+      "je ne sais pas"
+    ],
+    "correct_answer": "did"
+  },
+  {
+    "order_index": 20,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "Explaining a situation: \"Although the slope _____ difficult, I think you can do it if you _____ calm.\"",
+    "options": [
+      "is / stay",
+      "be / stayed",
+      "were / stay",
+      "is / will stay",
+      "je ne sais pas"
+    ],
+    "correct_answer": "is / stay"
+  },
+  {
+    "order_index": 21,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Your client's ski keeps detaching. You check the equipment and say: \"I think your _____ are too loose. Let me adjust them.\"",
+    "options": [
+      "poles",
+      "bindings",
+      "edges",
+      "boots",
+      "je ne sais pas"
+    ],
+    "correct_answer": "bindings"
+  },
+  {
+    "order_index": 22,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "You're teaching the snowplough. You tell your client: \"Bend your _____ more and keep your weight forward.\"",
+    "options": [
+      "ankles",
+      "shoulders",
+      "hips",
+      "knees",
+      "je ne sais pas"
+    ],
+    "correct_answer": "knees"
+  },
+  {
+    "order_index": 23,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Your client keeps falling on turns. You explain: \"You need to put more pressure on your _____ - that's the ski closest to the valley.\"",
+    "options": [
+      "uphill ski",
+      "inside ski",
+      "downhill ski",
+      "outside ski",
+      "je ne sais pas"
+    ],
+    "correct_answer": "downhill ski"
+  },
+  {
+    "order_index": 24,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "It snowed 30cm overnight. You tell your excited client: \"Great news! We have fresh _____ today - perfect for off-piste!\"",
+    "options": [
+      "ice",
+      "powder",
+      "groomed snow",
+      "fog",
+      "je ne sais pas"
+    ],
+    "correct_answer": "powder"
+  },
+  {
+    "order_index": 25,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "A child arrives without head protection. You tell the parents: \"For safety, your child needs to wear a _____ on the slopes.\"",
+    "options": [
+      "ski pass",
+      "goggles",
+      "helmet",
+      "gloves",
+      "je ne sais pas"
+    ],
+    "correct_answer": "helmet"
+  }
+]
