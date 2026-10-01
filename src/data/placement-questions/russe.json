@@ -2,351 +2,411 @@
   {
     "order_index": 1,
     "slope": "verte",
-    "category": "grammaire",
-    "question_text": "Votre client arrive à l'école de ski. Quelle salutation est correcte ?",
+    "category": "translation",
+    "vocabulary_level": null,
+    "question_text": "Comment dites-vous « Bonjour » à un client à 9 h ?",
     "options": [
-      "Доброе утро! Как вы?",
-      "Доброе утро! Как дела?",
-      "Доброе утро! Как ты есть?",
-      "Доброе утро! Какой вы?",
+      "Доброе утро (dobraïe outra)",
+      "Спокойной ночи (spakoïnaï notchi)",
+      "До свидания (da svidania)",
+      "Спасибо (spassiba)",
       "je ne sais pas"
     ],
-    "correct_answer": "Доброе утро! Как дела?"
+    "correct_answer": "Доброе утро (dobraïe outra)",
+    "teacher_notes": "Verte : prononciation entre parenthèses. Cyrillique seul à partir de la bleue. Échelle adaptée : verte = traduction, bleue = grammaire simple."
   },
   {
     "order_index": 2,
     "slope": "verte",
-    "category": "grammaire",
-    "question_text": "La famille a 5 personnes. Complétez : \"В вашей группе _____ человек.\"",
+    "category": "translation",
+    "vocabulary_level": null,
+    "question_text": "Comment dites-vous « Merci beaucoup » ?",
     "options": [
-      "пять",
-      "пяти",
-      "пятеро",
-      "пятью",
+      "Пожалуйста (pajalousta)",
+      "Большое спасибо (balchoïe spassiba)",
+      "Извините (izvinitie)",
+      "Не за что (nié za chto)",
       "je ne sais pas"
     ],
-    "correct_answer": "пять"
+    "correct_answer": "Большое спасибо (balchoïe spassiba)",
+    "teacher_notes": null
   },
   {
     "order_index": 3,
     "slope": "verte",
-    "category": "grammaire",
-    "question_text": "Vous demandez l'âge de l'enfant. Complétez : \"Сколько _____ лет?\"",
+    "category": "translation",
+    "vocabulary_level": null,
+    "question_text": "Comment dites-vous « Suivez-moi » ?",
     "options": [
-      "она",
-      "ей",
-      "её",
-      "ею",
+      "Подождите (padajditie)",
+      "Стоп (stop)",
+      "Езжайте за мной (iejjaïtie za mnoï)",
+      "Медленнее (miedliennieïe)",
       "je ne sais pas"
     ],
-    "correct_answer": "ей"
+    "correct_answer": "Езжайте за мной (iejjaïtie za mnoï)",
+    "teacher_notes": null
   },
   {
     "order_index": 4,
     "slope": "verte",
-    "category": "grammaire",
-    "question_text": "Il fait -10 degrés. Complétez : \"Сегодня минус 10 _____.\"",
+    "category": "translation",
+    "vocabulary_level": null,
+    "question_text": "Comment dites-vous « à gauche » ?",
     "options": [
-      "градус",
-      "градуса",
-      "градусов",
-      "градусы",
+      "направо (naprava)",
+      "прямо (priama)",
+      "наверху (naviérkhou)",
+      "налево (naliéva)",
       "je ne sais pas"
     ],
-    "correct_answer": "градусов"
+    "correct_answer": "налево (naliéva)",
+    "teacher_notes": null
   },
   {
     "order_index": 5,
     "slope": "verte",
-    "category": "grammaire",
-    "question_text": "Vous vous présentez. Le verbe \"être\" au présent en russe est :",
+    "category": "translation",
+    "vocabulary_level": null,
+    "question_text": "Comment dites-vous « Attention ! » ?",
     "options": [
-      "есть",
-      "быть",
-      "— (rien, on l'omet)",
-      "был",
+      "Осторожно! (astarojna)",
+      "Отлично! (atlitchna)",
+      "Поехали! (païékhali)",
+      "Стоп! (stop)",
       "je ne sais pas"
     ],
-    "correct_answer": "— (rien, on l'omet)"
+    "correct_answer": "Осторожно! (astarojna)",
+    "teacher_notes": null
   },
   {
     "order_index": 6,
     "slope": "bleue",
-    "category": "grammaire",
-    "question_text": "Vous demandez comment était le cours hier. Complétez : \"Как _____ урок вчера?\"",
+    "category": "grammar",
+    "vocabulary_level": null,
+    "question_text": "Un client dit : « Я катался на лыжах вчера. » Quand a-t-il skié ?",
     "options": [
-      "был",
-      "было",
-      "прошёл",
-      "A ou C",
+      "aujourd'hui",
+      "hier",
+      "demain",
+      "jamais",
       "je ne sais pas"
     ],
-    "correct_answer": "A ou C"
+    "correct_answer": "hier",
+    "teacher_notes": null
   },
   {
     "order_index": 7,
     "slope": "bleue",
-    "category": "grammaire",
-    "question_text": "Vous expliquez le point de rencontre : \"Devant l'école de ski.\" Quelle préposition ?",
+    "category": "grammar",
+    "vocabulary_level": null,
+    "question_text": "Vous voulez demander au client où sont ses chaussures. Vous dites :",
     "options": [
-      "перед",
-      "напротив",
-      "около",
-      "возле",
+      "Когда ваши ботинки?",
+      "Кто ваши ботинки?",
+      "Где ваши ботинки?",
+      "Как ваши ботинки?",
       "je ne sais pas"
     ],
-    "correct_answer": "перед"
+    "correct_answer": "Где ваши ботинки?",
+    "teacher_notes": null
   },
   {
     "order_index": 8,
     "slope": "bleue",
-    "category": "grammaire",
-    "question_text": "Hier il y avait du soleil. Complétez : \"Вчера _____ солнце, а сегодня идёт снег.\"",
+    "category": "grammar",
+    "vocabulary_level": null,
+    "question_text": "Une mère vous dit : « Мой сын не умеет кататься на лыжах. » Qu'apprenez-vous ?",
     "options": [
-      "было",
-      "был",
-      "светило",
-      "A ou C",
+      "Son fils sait skier.",
+      "Son fils veut skier.",
+      "Son fils skie demain.",
+      "Son fils ne sait pas skier.",
       "je ne sais pas"
     ],
-    "correct_answer": "A ou C"
+    "correct_answer": "Son fils ne sait pas skier.",
+    "teacher_notes": null
   },
   {
     "order_index": 9,
     "slope": "bleue",
-    "category": "grammaire",
-    "question_text": "Le client dit : \"Quand j'étais enfant...\" Complétez : \"Когда я _____ ребёнком...\"",
+    "category": "grammar",
+    "vocabulary_level": null,
+    "question_text": "Vous voulez dire « Nous commençons à 9 heures ». Vous dites :",
     "options": [
-      "был",
-      "была",
-      "были",
-      "A ou B",
+      "Мы начинаем в девять часов.",
+      "Вы начинаете в девять часов.",
+      "Мы начинаем в десять часов.",
+      "Мы заканчиваем в девять часов.",
       "je ne sais pas"
     ],
-    "correct_answer": "A ou B"
+    "correct_answer": "Мы начинаем в девять часов.",
+    "teacher_notes": null
   },
   {
     "order_index": 10,
     "slope": "bleue",
-    "category": "grammaire",
-    "question_text": "Vous dites : \"Cette piste est beaucoup plus facile.\" Comment dit-on \"plus facile\" ?",
+    "category": "grammar",
+    "vocabulary_level": null,
+    "question_text": "On vous dit : « Есть три группы: одна для детей и две для взрослых. » Combien y a-t-il de groupes d'adultes ?",
     "options": [
-      "лёгкая",
-      "легче",
-      "более лёгкая",
-      "B ou C",
+      "un",
+      "deux",
+      "trois",
+      "aucun",
       "je ne sais pas"
     ],
-    "correct_answer": "B ou C"
+    "correct_answer": "deux",
+    "teacher_notes": null
   },
   {
     "order_index": 11,
     "slope": "rouge",
-    "category": "grammaire",
-    "question_text": "Клиент хочет на чёрную трассу. Вы говорите: \"Вам _____ разогреться перед катанием на этой трассе.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Vous recevez ce message : « Занятие сегодня после обеда отменили из-за ветра. Завтра занятие как обычно. » Qu'est-ce que cela veut dire ?",
     "options": [
-      "можно",
-      "нужно",
-      "хочется",
-      "будет",
+      "Les deux cours sont annulés.",
+      "Le cours de cet après-midi est reporté à demain.",
+      "Le cours de cet après-midi est annulé, celui de demain est maintenu.",
+      "Le cours de demain est annulé.",
       "je ne sais pas"
     ],
-    "correct_answer": "нужно"
+    "correct_answer": "Le cours de cet après-midi est annulé, celui de demain est maintenu.",
+    "teacher_notes": null
   },
   {
     "order_index": 12,
     "slope": "rouge",
-    "category": "grammaire",
-    "question_text": "Вы спрашиваете о привычках клиента: \"Когда вы _____ в России, вы занимались зимними видами спорта?\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un parent vous demande : « Можно забрать его в половине четвёртого? » À quelle heure veut-il venir ?",
     "options": [
-      "жили",
-      "прожили",
-      "живёте",
-      "проживали",
+      "à 16 h 30",
+      "à 14 h 30",
+      "à 16 h",
+      "à 15 h 30",
       "je ne sais pas"
     ],
-    "correct_answer": "жили"
+    "correct_answer": "à 15 h 30",
+    "teacher_notes": "« в половине четвёртого » = 15 h 30."
   },
   {
     "order_index": 13,
     "slope": "rouge",
-    "category": "grammaire",
-    "question_text": "Погода меняется. Вы предупреждаете: \"Видимость _____ хуже днём. Лучше спуститься пораньше.\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Vous demandez au client d'apporter son forfait demain et d'arriver 15 minutes en avance. Vous dites :",
     "options": [
-      "будет",
-      "станет",
-      "есть",
-      "A ou B",
+      "Возьмите с собой ски-пасс и приходите на пятнадцать минут раньше.",
+      "Купите ски-пасс и приходите на пятнадцать минут позже.",
+      "Возьмите с собой ски-пасс и подождите пятнадцать минут в очереди.",
+      "Покажите мне ски-пасс после занятия.",
       "je ne sais pas"
     ],
-    "correct_answer": "A ou B"
+    "correct_answer": "Возьмите с собой ски-пасс и приходите на пятнадцать минут раньше.",
+    "teacher_notes": null
   },
   {
     "order_index": 14,
     "slope": "rouge",
-    "category": "grammaire",
-    "question_text": "Клиент рассказывает: \"Когда я был молодым, я _____ в горы каждую зиму с родителями.\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Un élève est tombé et se tient le genou. Que lui dites-vous en premier ?",
     "options": [
-      "ездил",
-      "поехал",
-      "еду",
-      "поеду",
+      "Вы можете встать и доехать до подъёмника?",
+      "Где болит? Вы можете пошевелить ногой?",
+      "Не волнуйтесь, ничего страшного.",
+      "Надо было быть осторожнее.",
       "je ne sais pas"
     ],
-    "correct_answer": "ездил"
+    "correct_answer": "Где болит? Вы можете пошевелить ногой?",
+    "teacher_notes": null
   },
   {
     "order_index": 15,
     "slope": "rouge",
-    "category": "grammaire",
-    "question_text": "Вы объясняете, что делать: \"Когда _____ красный знак, сразу остановись.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un client vous dit : « Сегодня я лучше не поеду на чёрную трассу. У меня ещё болят ноги. » Qu'apprenez-vous ?",
     "options": [
-      "видишь",
-      "увидишь",
-      "видел",
-      "A ou B",
+      "Il a peur de la piste noire.",
+      "Il s'est blessé hier sur la piste noire.",
+      "Il préfère éviter la noire aujourd'hui, car il a encore mal aux jambes.",
+      "Il veut faire la noire demain.",
       "je ne sais pas"
     ],
-    "correct_answer": "A ou B"
+    "correct_answer": "Il préfère éviter la noire aujourd'hui, car il a encore mal aux jambes.",
+    "teacher_notes": null
   },
   {
     "order_index": 16,
     "slope": "noire",
-    "category": "grammaire",
-    "question_text": "Объясняя технику: \"Если бы вы _____ больше давления на нижнюю лыжу, поворот был бы легче.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un parent vous dit : « В прошлом году он сильно упал. Можете за ним немного присмотреть, но так, чтобы он не заметил? » Que vous demande-t-il ?",
     "options": [
-      "давали",
-      "дали",
-      "дадите",
-      "даёте",
+      "le mettre dans un groupe plus facile",
+      "l'appeler après le cours",
+      "éviter les pistes raides",
+      "le surveiller discrètement",
       "je ne sais pas"
     ],
-    "correct_answer": "давали"
+    "correct_answer": "le surveiller discrètement",
+    "teacher_notes": null
   },
   {
     "order_index": 17,
     "slope": "noire",
-    "category": "grammaire",
-    "question_text": "Клиент спрашивает о риске лавин. Вы объясняете: \"Если ночью _____ свежий снег, станция _____ некоторые трассы завтра.\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Le brouillard arrive. Vous voulez redescendre maintenant, calmement, sans inquiéter le groupe. Vous dites :",
     "options": [
-      "выпадет / закроет",
-      "выпал бы / закрыла бы",
-      "выпадает / закрывает",
-      "выпал / закрыла",
+      "Идёт туман, поэтому мы сейчас спускаемся и держимся все вместе.",
+      "Идёт туман, давайте поднимемся ещё раз, пока не стало хуже.",
+      "Очень опасно, все вниз как можно быстрее!",
+      "Туман скоро пройдёт, давайте подождём здесь.",
       "je ne sais pas"
     ],
-    "correct_answer": "выпадет / закроет"
+    "correct_answer": "Идёт туман, поэтому мы сейчас спускаемся и держимся все вместе.",
+    "teacher_notes": null
   },
   {
     "order_index": 18,
     "slope": "noire",
-    "category": "grammaire",
-    "question_text": "Описывая, что произошло: \"Клиент не _____ бы, если бы _____ инструкции по безопасности.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un client dit : « Если бы мы выехали на десять минут раньше, мы бы успели на последний подъёмник. » Que s'est-il passé ?",
     "options": [
-      "пострадал / следовал",
-      "пострадает / следует",
-      "пострадал / последовал",
-      "пострадал бы / соблюдал",
+      "Ils ont pris la dernière remontée de justesse.",
+      "Ils ont raté la dernière remontée.",
+      "Ils partiront plus tôt demain.",
+      "La remontée a fermé en avance.",
       "je ne sais pas"
     ],
-    "correct_answer": "пострадал бы / соблюдал"
+    "correct_answer": "Ils ont raté la dernière remontée.",
+    "teacher_notes": null
   },
   {
     "order_index": 19,
     "slope": "noire",
-    "category": "grammaire",
-    "question_text": "Вы спрашиваете о прошлом: \"До приезда сюда у вас _____ представление о том, как кататься на лыжах?\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Vous entendez : « Если ветер не стихнет до полудня, верхние подъёмники сегодня не откроются. » Qu'est-ce que cela veut dire ?",
     "options": [
-      "есть",
-      "было",
-      "будет",
-      "бывает",
+      "Les remontées du haut ouvriront à midi.",
+      "Les remontées du haut restent fermées jusqu'à midi, quoi qu'il arrive.",
+      "Les remontées du haut ne rouvriront aujourd'hui que si le vent faiblit d'ici midi.",
+      "Le vent doit faiblir à midi.",
       "je ne sais pas"
     ],
-    "correct_answer": "было"
+    "correct_answer": "Les remontées du haut ne rouvriront aujourd'hui que si le vent faiblit d'ici midi.",
+    "teacher_notes": null
   },
   {
     "order_index": 20,
     "slope": "noire",
-    "category": "grammaire",
-    "question_text": "Объясняя ситуацию: \"Хотя трасса _____ сложной, я думаю, вы справитесь, если _____ спокойно.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Après le cours, un client dit : « Было нормально... но я надеялся, что мы сделаем больше, чем просто зелёная трасса. » Comment se sent-il ?",
     "options": [
-      "является / будете ехать",
-      "была / ехали",
-      "кажется / поедете",
-      "A ou C",
+      "Très satisfait du rythme.",
+      "Il a trouvé le cours trop difficile.",
+      "Il veut arrêter les cours.",
+      "Déçu : il voulait travailler quelque chose de plus avancé.",
       "je ne sais pas"
     ],
-    "correct_answer": "A ou C"
+    "correct_answer": "Déçu : il voulait travailler quelque chose de plus avancé.",
+    "teacher_notes": null
   },
   {
     "order_index": 21,
     "slope": "vocab_ski",
-    "category": "vocabulaire",
-    "question_text": "Le ski de votre client se détache. Comment dit-on \"fixations\" ?",
+    "category": "vocabulary",
+    "vocabulary_level": "verte",
+    "question_text": "Votre élève a laissé ses bâtons au départ. Complétez : « Вы забыли ___ наверху. » (vy zabyli ... naviérkhou)",
     "options": [
-      "палки",
-      "крепления",
-      "канты",
-      "ботинки",
+      "палки (palki)",
+      "ботинки (batinki)",
+      "перчатки (piertchatki)",
+      "очки (atchki)",
       "je ne sais pas"
     ],
-    "correct_answer": "крепления"
+    "correct_answer": "палки (palki)",
+    "teacher_notes": null
   },
   {
     "order_index": 22,
     "slope": "vocab_ski",
-    "category": "vocabulaire",
-    "question_text": "Vous enseignez le chasse-neige et demandez de plier les \"genoux\". Comment dit-on \"genoux\" ?",
+    "category": "vocabulary",
+    "vocabulary_level": "verte",
+    "question_text": "Les fixations de votre élève sont trop lâches. Complétez : « ___ слабо отрегулированы, я их подтяну. » (... slaba atriegoulirovany, ia ikh padtianou)",
     "options": [
-      "лодыжки",
-      "плечи",
-      "бёдра",
-      "колени",
+      "Застёжки (zastiojki)",
+      "Ботинки (batinki)",
+      "Крепления (krieplienia)",
+      "Палки (palki)",
       "je ne sais pas"
     ],
-    "correct_answer": "колени"
+    "correct_answer": "Крепления (krieplienia)",
+    "teacher_notes": null
   },
   {
     "order_index": 23,
     "slope": "vocab_ski",
-    "category": "vocabulaire",
-    "question_text": "Comment dit-on \"ski aval\" (le ski le plus proche de la vallée) ?",
+    "category": "vocabulary",
+    "vocabulary_level": "bleue",
+    "question_text": "La piste a été damée ce matin. Complétez : « Сегодня утром трасса ___. »",
     "options": [
-      "верхняя лыжа",
-      "внутренняя лыжа",
-      "нижняя лыжа",
-      "внешняя лыжа",
+      "в буграх",
+      "обледенела",
+      "переполнена",
+      "подготовлена",
       "je ne sais pas"
     ],
-    "correct_answer": "нижняя лыжа"
+    "correct_answer": "подготовлена",
+    "teacher_notes": null
   },
   {
     "order_index": 24,
     "slope": "vocab_ski",
-    "category": "vocabulaire",
-    "question_text": "Il a neigé 30cm. Comment dit-on \"poudreuse\" ?",
+    "category": "vocabulary",
+    "vocabulary_level": "rouge",
+    "question_text": "Les carres des skis de votre élève sont émoussées. Complétez : « Нужно заточить ___ ваших лыж. »",
     "options": [
-      "лёд",
-      "пухляк",
-      "жёсткий снег",
-      "туман",
+      "носки",
+      "канты",
+      "пятки",
+      "крепления",
       "je ne sais pas"
     ],
-    "correct_answer": "пухляк"
+    "correct_answer": "канты",
+    "teacher_notes": null
   },
   {
     "order_index": 25,
     "slope": "vocab_ski",
-    "category": "vocabulaire",
-    "question_text": "Un enfant arrive sans protection. Comment dit-on \"casque\" ?",
+    "category": "vocabulary",
+    "vocabulary_level": "noire",
+    "question_text": "En fin d'après-midi, la neige devient lourde et mouillée. Complétez : « Осторожно, в это время снег уже ___. »",
     "options": [
-      "ски-пасс",
-      "очки",
-      "шлем",
-      "перчатки",
+      "пушистый",
+      "покрыт настом",
+      "раскисший",
+      "ледяной",
       "je ne sais pas"
     ],
-    "correct_answer": "шлем"
+    "correct_answer": "раскисший",
+    "teacher_notes": null
+  },
+  {
+    "order_index": 26,
+    "slope": "presentation",
+    "category": "free_text",
+    "vocabulary_level": null,
+    "question_text": "Si vous le pouvez, présentez-vous en quelques phrases dans la langue du test : votre parcours de moniteur, votre station, ce que vous aimeriez mieux savoir faire avec vos clients.",
+    "options": null,
+    "correct_answer": null,
+    "teacher_notes": "Non notée, sans effet sur la piste. Lue par le formateur avant la 1re séance. Facultative, 1 000 caractères max."
   }
 ]

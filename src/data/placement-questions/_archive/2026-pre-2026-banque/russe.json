@@ -1,0 +1,352 @@
+[
+  {
+    "order_index": 1,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "Votre client arrive à l'école de ski. Quelle salutation est correcte ?",
+    "options": [
+      "Доброе утро! Как вы?",
+      "Доброе утро! Как дела?",
+      "Доброе утро! Как ты есть?",
+      "Доброе утро! Какой вы?",
+      "je ne sais pas"
+    ],
+    "correct_answer": "Доброе утро! Как дела?"
+  },
+  {
+    "order_index": 2,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "La famille a 5 personnes. Complétez : \"В вашей группе _____ человек.\"",
+    "options": [
+      "пять",
+      "пяти",
+      "пятеро",
+      "пятью",
+      "je ne sais pas"
+    ],
+    "correct_answer": "пять"
+  },
+  {
+    "order_index": 3,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "Vous demandez l'âge de l'enfant. Complétez : \"Сколько _____ лет?\"",
+    "options": [
+      "она",
+      "ей",
+      "её",
+      "ею",
+      "je ne sais pas"
+    ],
+    "correct_answer": "ей"
+  },
+  {
+    "order_index": 4,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "Il fait -10 degrés. Complétez : \"Сегодня минус 10 _____.\"",
+    "options": [
+      "градус",
+      "градуса",
+      "градусов",
+      "градусы",
+      "je ne sais pas"
+    ],
+    "correct_answer": "градусов"
+  },
+  {
+    "order_index": 5,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "Vous vous présentez. Le verbe \"être\" au présent en russe est :",
+    "options": [
+      "есть",
+      "быть",
+      "— (rien, on l'omet)",
+      "был",
+      "je ne sais pas"
+    ],
+    "correct_answer": "— (rien, on l'omet)"
+  },
+  {
+    "order_index": 6,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "Vous demandez comment était le cours hier. Complétez : \"Как _____ урок вчера?\"",
+    "options": [
+      "был",
+      "было",
+      "прошёл",
+      "A ou C",
+      "je ne sais pas"
+    ],
+    "correct_answer": "A ou C"
+  },
+  {
+    "order_index": 7,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "Vous expliquez le point de rencontre : \"Devant l'école de ski.\" Quelle préposition ?",
+    "options": [
+      "перед",
+      "напротив",
+      "около",
+      "возле",
+      "je ne sais pas"
+    ],
+    "correct_answer": "перед"
+  },
+  {
+    "order_index": 8,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "Hier il y avait du soleil. Complétez : \"Вчера _____ солнце, а сегодня идёт снег.\"",
+    "options": [
+      "было",
+      "был",
+      "светило",
+      "A ou C",
+      "je ne sais pas"
+    ],
+    "correct_answer": "A ou C"
+  },
+  {
+    "order_index": 9,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "Le client dit : \"Quand j'étais enfant...\" Complétez : \"Когда я _____ ребёнком...\"",
+    "options": [
+      "был",
+      "была",
+      "были",
+      "A ou B",
+      "je ne sais pas"
+    ],
+    "correct_answer": "A ou B"
+  },
+  {
+    "order_index": 10,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "Vous dites : \"Cette piste est beaucoup plus facile.\" Comment dit-on \"plus facile\" ?",
+    "options": [
+      "лёгкая",
+      "легче",
+      "более лёгкая",
+      "B ou C",
+      "je ne sais pas"
+    ],
+    "correct_answer": "B ou C"
+  },
+  {
+    "order_index": 11,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "Клиент хочет на чёрную трассу. Вы говорите: \"Вам _____ разогреться перед катанием на этой трассе.\"",
+    "options": [
+      "можно",
+      "нужно",
+      "хочется",
+      "будет",
+      "je ne sais pas"
+    ],
+    "correct_answer": "нужно"
+  },
+  {
+    "order_index": 12,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "Вы спрашиваете о привычках клиента: \"Когда вы _____ в России, вы занимались зимними видами спорта?\"",
+    "options": [
+      "жили",
+      "прожили",
+      "живёте",
+      "проживали",
+      "je ne sais pas"
+    ],
+    "correct_answer": "жили"
+  },
+  {
+    "order_index": 13,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "Погода меняется. Вы предупреждаете: \"Видимость _____ хуже днём. Лучше спуститься пораньше.\"",
+    "options": [
+      "будет",
+      "станет",
+      "есть",
+      "A ou B",
+      "je ne sais pas"
+    ],
+    "correct_answer": "A ou B"
+  },
+  {
+    "order_index": 14,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "Клиент рассказывает: \"Когда я был молодым, я _____ в горы каждую зиму с родителями.\"",
+    "options": [
+      "ездил",
+      "поехал",
+      "еду",
+      "поеду",
+      "je ne sais pas"
+    ],
+    "correct_answer": "ездил"
+  },
+  {
+    "order_index": 15,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "Вы объясняете, что делать: \"Когда _____ красный знак, сразу остановись.\"",
+    "options": [
+      "видишь",
+      "увидишь",
+      "видел",
+      "A ou B",
+      "je ne sais pas"
+    ],
+    "correct_answer": "A ou B"
+  },
+  {
+    "order_index": 16,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "Объясняя технику: \"Если бы вы _____ больше давления на нижнюю лыжу, поворот был бы легче.\"",
+    "options": [
+      "давали",
+      "дали",
+      "дадите",
+      "даёте",
+      "je ne sais pas"
+    ],
+    "correct_answer": "давали"
+  },
+  {
+    "order_index": 17,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "Клиент спрашивает о риске лавин. Вы объясняете: \"Если ночью _____ свежий снег, станция _____ некоторые трассы завтра.\"",
+    "options": [
+      "выпадет / закроет",
+      "выпал бы / закрыла бы",
+      "выпадает / закрывает",
+      "выпал / закрыла",
+      "je ne sais pas"
+    ],
+    "correct_answer": "выпадет / закроет"
+  },
+  {
+    "order_index": 18,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "Описывая, что произошло: \"Клиент не _____ бы, если бы _____ инструкции по безопасности.\"",
+    "options": [
+      "пострадал / следовал",
+      "пострадает / следует",
+      "пострадал / последовал",
+      "пострадал бы / соблюдал",
+      "je ne sais pas"
+    ],
+    "correct_answer": "пострадал бы / соблюдал"
+  },
+  {
+    "order_index": 19,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "Вы спрашиваете о прошлом: \"До приезда сюда у вас _____ представление о том, как кататься на лыжах?\"",
+    "options": [
+      "есть",
+      "было",
+      "будет",
+      "бывает",
+      "je ne sais pas"
+    ],
+    "correct_answer": "было"
+  },
+  {
+    "order_index": 20,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "Объясняя ситуацию: \"Хотя трасса _____ сложной, я думаю, вы справитесь, если _____ спокойно.\"",
+    "options": [
+      "является / будете ехать",
+      "была / ехали",
+      "кажется / поедете",
+      "A ou C",
+      "je ne sais pas"
+    ],
+    "correct_answer": "A ou C"
+  },
+  {
+    "order_index": 21,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Le ski de votre client se détache. Comment dit-on \"fixations\" ?",
+    "options": [
+      "палки",
+      "крепления",
+      "канты",
+      "ботинки",
+      "je ne sais pas"
+    ],
+    "correct_answer": "крепления"
+  },
+  {
+    "order_index": 22,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Vous enseignez le chasse-neige et demandez de plier les \"genoux\". Comment dit-on \"genoux\" ?",
+    "options": [
+      "лодыжки",
+      "плечи",
+      "бёдра",
+      "колени",
+      "je ne sais pas"
+    ],
+    "correct_answer": "колени"
+  },
+  {
+    "order_index": 23,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Comment dit-on \"ski aval\" (le ski le plus proche de la vallée) ?",
+    "options": [
+      "верхняя лыжа",
+      "внутренняя лыжа",
+      "нижняя лыжа",
+      "внешняя лыжа",
+      "je ne sais pas"
+    ],
+    "correct_answer": "нижняя лыжа"
+  },
+  {
+    "order_index": 24,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Il a neigé 30cm. Comment dit-on \"poudreuse\" ?",
+    "options": [
+      "лёд",
+      "пухляк",
+      "жёсткий снег",
+      "туман",
+      "je ne sais pas"
+    ],
+    "correct_answer": "пухляк"
+  },
+  {
+    "order_index": 25,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Un enfant arrive sans protection. Comment dit-on \"casque\" ?",
+    "options": [
+      "ски-пасс",
+      "очки",
+      "шлем",
+      "перчатки",
+      "je ne sais pas"
+    ],
+    "correct_answer": "шлем"
+  }
+]
