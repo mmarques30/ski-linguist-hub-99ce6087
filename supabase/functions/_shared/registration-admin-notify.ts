@@ -24,6 +24,8 @@ export type RegistrationAdminSummaryInput = {
   opcoObservation?: string | null;
   isFifpl?: boolean;
   fifplObservation?: string | null;
+  isAgefice?: boolean;
+  ageficeObservation?: string | null;
   /** Candidat·e a coché le besoin d'aménagements (accessibilité handicap). */
   hasHandicap?: boolean;
   /** Profession « autre » (hors moniteur de ski) — à recontacter. */
@@ -92,6 +94,9 @@ export function registrationAdminSummaryLines(
   if (input.isFifpl && input.fifplObservation?.trim()) {
     rows.push({ label: "FIFPL", value: input.fifplObservation.trim() });
   }
+  if (input.isAgefice && input.ageficeObservation?.trim()) {
+    rows.push({ label: "AGEFICE", value: input.ageficeObservation.trim() });
+  }
   if (input.hasHandicap) {
     rows.push({
       label: "Accessibilité",
@@ -121,6 +126,7 @@ export function buildRegistrationAdminNotifySubject(
   }
   if (input.isOpco) return `[FLI] Nouvelle inscription OPCO — ${name}`;
   if (input.isFifpl) return `[FLI] Nouvelle inscription FIFPL — ${name}`;
+  if (input.isAgefice) return `[FLI] Nouvelle inscription AGEFICE — ${name}`;
   if (input.isCustomFormat) return `[FLI] Nouvelle inscription (devis) — ${name}`;
   return `[FLI] Nouvelle inscription — ${name}`;
 }
@@ -179,6 +185,7 @@ export function buildRegistrationAdminNotifyTitle(
   if (input.isOtherProfession) return `Autre profession — à recontacter — ${name}`;
   if (input.isOpco) return `OPCO à analyser — ${name}`;
   if (input.isFifpl) return `FIFPL — attestation CFP — ${name}`;
+  if (input.isAgefice) return `AGEFICE — dossier demande — ${name}`;
   if (input.isCustomFormat) return `Devis à préparer — ${name}`;
   return `Nouvelle inscription — ${name}`;
 }

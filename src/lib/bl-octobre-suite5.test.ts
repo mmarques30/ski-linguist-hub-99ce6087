@@ -12,8 +12,9 @@ function source(relatif: string): string {
 }
 
 describe("BL-027 — FIFPL et OPCO séparés", () => {
-  it("REGISTRATION_FUNDING_MAP distingue fifpl et opco", () => {
+  it("REGISTRATION_FUNDING_MAP distingue fifpl, agefice et opco", () => {
     expect(REGISTRATION_FUNDING_MAP.fifpl).toBe("FIFPL");
+    expect(REGISTRATION_FUNDING_MAP.agefice).toBe("AGEFICE");
     expect(REGISTRATION_FUNDING_MAP.opco).toBe("OPCO");
     expect(REGISTRATION_FUNDING_MAP.company).toBe("Entreprise");
     expect(REGISTRATION_FUNDING_MAP.self).toBe("Autofinancement");
@@ -59,15 +60,19 @@ describe("BL-027 — FIFPL et OPCO séparés", () => {
   it("submit-registration ignore paiement et inserts pour OPCO", () => {
     const edge = source("supabase/functions/submit-registration/index.ts");
     expect(edge).toContain('fifpl: "FIFPL"');
+    expect(edge).toContain('agefice: "AGEFICE"');
     expect(edge).toContain('opco: "OPCO"');
     expect(edge).toContain("isOpcoFunding");
     expect(edge).toMatch(/!isOpco &&/);
     expect(edge).toContain("funding_details");
     expect(edge).toContain("formatOpcoObservation");
     expect(edge).toContain("formatFifplObservation");
+    expect(edge).toContain("formatAgeficeObservation");
     expect(edge).toContain("isFifplFunding");
+    expect(edge).toContain("isAgeficeFunding");
     const notify = source("supabase/functions/_shared/registration-admin-notify.ts");
     expect(notify).toContain("OPCO à analyser");
+    expect(notify).toContain("AGEFICE — dossier demande");
   });
 
   it("CourseSelectionStep affiche le texte OPCO validé", () => {

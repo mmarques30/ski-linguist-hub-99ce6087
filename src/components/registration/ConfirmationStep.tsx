@@ -64,6 +64,7 @@ import {
   type RegistrationFailureNotice,
 } from "@/lib/registration-error-message";
 import {
+  isAgeficeFundingType,
   isFifplFunding,
   isOpcoFunding,
   REGISTRATION_FUNDING_MAP,
@@ -73,6 +74,10 @@ import {
   estimateFifplRights,
   FIFPL_REGISTER_COPY,
 } from "@/lib/fifpl-funding";
+import {
+  AGEFICE_CEILINGS_URL,
+  AGEFICE_REGISTER_COPY,
+} from "@/lib/agefice-funding";
 import { StepActions, StepCard, SummaryPanel, SummaryRow } from "./StepLayout";
 
 interface ConfirmationStepProps {
@@ -124,6 +129,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
   const isCustomFormat = data.isCustomFormat || isCustomFormatDuration(data.duration);
   const isOpco = isOpcoFunding(data.fundingType);
   const isFifpl = isFifplFunding(data.fundingType);
+  const isAgefice = isAgeficeFundingType(data.fundingType);
   const coursePrice = data.price ?? 0;
   const hasPaymentStep = !isCustomFormat && coursePrice > 0 && !isOpco;
   // Décision Paula : aucun mode de règlement coché par défaut, donc aucun repli ici.
@@ -245,7 +251,11 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             <p className="max-w-md text-sm text-muted-foreground">
               Merci de vous être inscrit chez France Langues International.
               {result.documentsSent
-                ? " Les documents d'inscription (convention, programme et critères FIF-PL) vous seront envoyés par email."
+                ? isAgefice
+                  ? " Les documents d'inscription (convention, programme et formulaire AGEFICE) vous seront envoyés par email."
+                  : isFifpl
+                    ? " Les documents d'inscription (convention, programme et critères FIF-PL) vous seront envoyés par email."
+                    : " Les documents d'inscription (convention et programme) vous seront envoyés par email."
                 : result.emailSent
                   ? " Un email de confirmation vous a été envoyé."
                   : " Notre équipe vous contactera prochainement."}
@@ -389,6 +399,22 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             </Alert>
           )}
 
+          {isAgefice && (
+            <Alert>
+              <AlertDescription>
+                {AGEFICE_REGISTER_COPY.confirmationAlert(data.startDate)}{" "}
+                <a
+                  href={AGEFICE_CEILINGS_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium underline underline-offset-2"
+                >
+                  {AGEFICE_REGISTER_COPY.ceilingsLinkLabel}
+                </a>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {isStationGroup && (
             <Alert>
               <Mountain className="h-4 w-4" />
@@ -511,6 +537,22 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                     coursePriceEur: data.price ?? null,
                   })?.remainingRightsEur ?? null
                 )}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isAgefice && (
+            <Alert>
+              <AlertDescription>
+                {AGEFICE_REGISTER_COPY.confirmationAlert(data.startDate)}{" "}
+                <a
+                  href={AGEFICE_CEILINGS_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium underline underline-offset-2"
+                >
+                  {AGEFICE_REGISTER_COPY.ceilingsLinkLabel}
+                </a>
               </AlertDescription>
             </Alert>
           )}

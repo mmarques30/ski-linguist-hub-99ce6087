@@ -80,6 +80,12 @@ describe("registration-admin-notify", () => {
       buildRegistrationAdminNotifySubject({ ...sample, isFifpl: true })
     ).toContain("FIFPL");
     expect(
+      buildRegistrationAdminNotifySubject({ ...sample, isAgefice: true })
+    ).toContain("AGEFICE");
+    expect(
+      buildRegistrationAdminNotifyTitle({ ...sample, isAgefice: true })
+    ).toContain("AGEFICE");
+    expect(
       buildRegistrationAdminNotifySubject({
         ...sample,
         isCustomFormat: true,

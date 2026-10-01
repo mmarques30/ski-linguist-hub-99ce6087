@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+  AGEFICE_WELCOME_DOCUMENTS,
   LEGACY_WORD_REGISTRATION_TEMPLATES,
   REGISTRATION_TEMPLATE_STORAGE_PREFIX,
   REGISTRATION_WELCOME_DOCUMENTS,
   REPLACEABLE_REGISTRATION_TEMPLATES,
+  expectsAgeficeWelcomePack,
   isKnownRegistrationTemplate,
   isReplaceableRegistrationTemplate,
   registrationTemplateStoragePath,
+  resolveWelcomePackDocuments,
 } from "./registration-welcome-documents";
 
 describe("registration welcome document templates", () => {
@@ -33,12 +36,36 @@ describe("registration welcome document templates", () => {
     ).toEqual(["CONVENTION", "PROGRAMME"]);
   });
 
+  it("expose le pack AGEFICE (demande + pièces, sans critères FIF-PL)", () => {
+    expect(AGEFICE_WELCOME_DOCUMENTS.map((d) => d.documentType)).toEqual([
+      "CONVENTION",
+      "PROGRAMME",
+      "AGEFICE_DEMANDE",
+      "AGEFICE_PIECES",
+    ]);
+    expect(expectsAgeficeWelcomePack({ fundingOrganization: "AGEFICE" })).toBe(true);
+    expect(
+      resolveWelcomePackDocuments({ fundingOrganization: "AGEFICE" }),
+    ).toBe(AGEFICE_WELCOME_DOCUMENTS);
+    expect(
+      resolveWelcomePackDocuments({
+        fundingOrganization: "FIFPL",
+        observations: "Moniteur de ski",
+      }),
+    ).toBe(REGISTRATION_WELCOME_DOCUMENTS);
+  });
+
   it("ne permet de remplacer que les PDF statiques (pas les .dotx)", () => {
     expect(REPLACEABLE_REGISTRATION_TEMPLATES.map((d) => d.internalFile)).toEqual([
       "criteres-prise-en-charge-2026.pdf",
       "tutoriel-fif-pl-fli.pdf",
+      "agefice-demande-prise-en-charge-2025-2026.pdf",
+      "agefice-pieces-justificatives-2026.pdf",
     ]);
     expect(isReplaceableRegistrationTemplate("criteres-prise-en-charge-2026.pdf")).toBe(true);
+    expect(
+      isReplaceableRegistrationTemplate("agefice-demande-prise-en-charge-2025-2026.pdf"),
+    ).toBe(true);
     expect(
       isReplaceableRegistrationTemplate("convention-stage-langues-station-2022.dotx"),
     ).toBe(false);

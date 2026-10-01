@@ -49,6 +49,41 @@ export const REGISTRATION_WELCOME_DOCUMENTS: RegistrationWelcomeDocument[] = [
 ];
 
 /**
+ * Pack d'inscription AGEFICE : convention + programme personnalisés +
+ * formulaire de demande + liste des pièces (pas les critères FIF-PL).
+ */
+export const AGEFICE_WELCOME_DOCUMENTS: RegistrationWelcomeDocument[] = [
+  {
+    documentType: "CONVENTION",
+    filename: "Convention-formation-{code}.pdf",
+    internalFile: null,
+    label: "Convention de formation (PDF personnalisé)",
+    delivery: "generated_pdf",
+  },
+  {
+    documentType: "PROGRAMME",
+    filename: "Programme-formation-{code}.pdf",
+    internalFile: null,
+    label: "Programme de formation (PDF personnalisé)",
+    delivery: "generated_pdf",
+  },
+  {
+    documentType: "AGEFICE_DEMANDE",
+    filename: "AGEFICE-Demande-prise-en-charge-2025-2026.pdf",
+    internalFile: "agefice-demande-prise-en-charge-2025-2026.pdf",
+    label: "Demande préalable de financement AGEFICE (à compléter / signer)",
+    delivery: "static_pdf",
+  },
+  {
+    documentType: "AGEFICE_PIECES",
+    filename: "AGEFICE-Pieces-justificatives-2026.pdf",
+    internalFile: "agefice-pieces-justificatives-2026.pdf",
+    label: "Liste des pièces justificatives AGEFICE 2026",
+    delivery: "static_pdf",
+  },
+];
+
+/**
  * Anciens modèles Word (MERGEFIELD) — référence admin uniquement.
  * Ne jamais les joindre au pack ni les exposer comme documents du stagiaire.
  */
@@ -72,8 +107,11 @@ export const LEGACY_WORD_REGISTRATION_TEMPLATES: Array<{
   },
 ];
 
-/** PDF statiques remplaçables depuis /admin (critères + tutoriel). */
-export const REPLACEABLE_REGISTRATION_TEMPLATES = REGISTRATION_WELCOME_DOCUMENTS.filter(
+/** PDF statiques remplaçables depuis /admin (critères + tutoriel + AGEFICE). */
+export const REPLACEABLE_REGISTRATION_TEMPLATES = [
+  ...REGISTRATION_WELCOME_DOCUMENTS,
+  ...AGEFICE_WELCOME_DOCUMENTS,
+].filter(
   (d): d is RegistrationWelcomeDocument & { internalFile: string } =>
     d.delivery === "static_pdf" && Boolean(d.internalFile),
 );
@@ -86,6 +124,9 @@ export const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   CONVENTION: "Convention de formation",
   PROGRAMME: "Programme de formation",
   LIVRET: "Tutoriel FIF-PL",
+  AGEFICE_DEMANDE: "Demande AGEFICE",
+  AGEFICE_PIECES: "Pièces justificatives AGEFICE",
+  AGEFICE_ASSIDUITE: "Attestation d'assiduité AGEFICE",
   CONVOCATION: "Convocation",
   ATTESTATION_PRESENCE: "Attestation de présence",
   CERTIFICAT: "Certificat de fin de formation",
@@ -140,4 +181,25 @@ export function expectsSkiMonitorWelcomePack(params: {
 }): boolean {
   // The welcome pack goes to every ski instructor registration (all modalities).
   return params.observations?.includes("Moniteur de ski") ?? false;
+}
+
+export function expectsAgeficeWelcomePack(params: {
+  fundingOrganization?: string | null;
+  observations?: string | null;
+}): boolean {
+  const org = (params.fundingOrganization || "").toLowerCase();
+  if (org.includes("agefice")) return true;
+  return params.observations?.toLowerCase().includes("agefice") ?? false;
+}
+
+/** Pack à afficher / envoyer selon le financement. */
+export function resolveWelcomePackDocuments(params: {
+  fundingOrganization?: string | null;
+  observations?: string | null;
+  modality?: string | null;
+  courseLocation?: string | null;
+}): RegistrationWelcomeDocument[] | null {
+  if (expectsAgeficeWelcomePack(params)) return AGEFICE_WELCOME_DOCUMENTS;
+  if (expectsSkiMonitorWelcomePack(params)) return REGISTRATION_WELCOME_DOCUMENTS;
+  return null;
 }

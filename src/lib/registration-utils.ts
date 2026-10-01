@@ -19,6 +19,7 @@ export const REGISTRATION_MODALITY_MAP: Record<string, string> = {
 
 export const REGISTRATION_FUNDING_MAP: Record<string, string> = {
   fifpl: "FIFPL",
+  agefice: "AGEFICE",
   opco: "OPCO",
   company: "Entreprise",
   self: "Autofinancement",
@@ -32,6 +33,11 @@ export function isOpcoFunding(type: string): boolean {
 /** Financement FIFPL : frais de dossier + attestation CFP URSSAF. */
 export function isFifplFunding(type: string): boolean {
   return type === "fifpl";
+}
+
+/** Financement AGEFICE : dossier Point d'accueil + plafonds CFP commerçants. */
+export function isAgeficeFundingType(type: string): boolean {
+  return type === "agefice";
 }
 
 export const LOCATION_LABELS: Record<string, string> = {

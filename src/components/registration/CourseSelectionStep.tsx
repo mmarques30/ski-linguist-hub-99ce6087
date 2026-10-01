@@ -709,6 +709,21 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                     </span>
                   </Label>
                 </OptionCard>
+                <OptionCard selected={data.fundingType === "agefice"}>
+                  <Label
+                    htmlFor="agefice"
+                    className="flex cursor-pointer flex-col gap-1 px-4 py-3 font-normal"
+                  >
+                    <span className="flex min-h-6 items-center gap-3">
+                      <RadioGroupItem value="agefice" id="agefice" />
+                      AGEFICE
+                    </span>
+                    <span className="block pl-7 text-xs text-muted-foreground">
+                      Fonds commerçants — demande Point d&apos;accueil ≥ 15 j avant le début.
+                      Consultez les plafonds financiers 2026.
+                    </span>
+                  </Label>
+                </OptionCard>
                 <OptionCard selected={data.fundingType === "opco"}>
                   <Label
                     htmlFor="opco"
@@ -754,7 +769,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                 onValueChange={(value) => onUpdate({ fundingType: value })}
                 className="space-y-2"
               >
-                {(["fifpl", "opco", "company", "self"] as const).map((key) => (
+                {(["fifpl", "agefice", "opco", "company", "self"] as const).map((key) => (
                   <OptionCard key={key} selected={data.fundingType === key}>
                     <Label
                       htmlFor={`cf-${key}`}
@@ -763,11 +778,13 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                       <RadioGroupItem value={key} id={`cf-${key}`} />
                       {key === "fifpl"
                         ? "FIFPL"
-                        : key === "opco"
-                          ? "OPCO"
-                          : key === "company"
-                            ? "Entreprise (école de ski)"
-                            : "Autofinancement"}
+                        : key === "agefice"
+                          ? "AGEFICE"
+                          : key === "opco"
+                            ? "OPCO"
+                            : key === "company"
+                              ? "Entreprise (école de ski)"
+                              : "Autofinancement"}
                     </Label>
                   </OptionCard>
                 ))}
