@@ -1162,6 +1162,17 @@ export default function InscriptionDetails() {
             courseLocation={inscription.course_location}
             observations={inscription.observations}
             studentEmail={inscription.student_email}
+            inscriptionCode={inscription.code}
+            courseLanguage={inscription.language}
+            startDate={inscription.start_date}
+            endDate={inscription.end_date}
+            durationHours={inscription.duration_hours}
+            studentName={inscription.student_name}
+            studentId={inscription.student_id}
+            studentCity={inscription.student_city}
+            formateurName={
+              inscription.instructor_name || inscription.formateur || null
+            }
           />
         )}
       </PageShell>

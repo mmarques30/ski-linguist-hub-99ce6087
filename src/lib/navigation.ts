@@ -8,7 +8,6 @@ import {
   CalendarDays,
   ClipboardCheck,
   ClipboardList,
-  ClipboardPen,
   Cog,
   Database,
   DoorOpen,
@@ -108,13 +107,6 @@ export const NAV_SECTIONS: NavSection[] = [
         label: G.planning,
         icon: CalendarDays,
         href: "/formation/sessions",
-        routeKey: "inscriptions",
-      },
-      {
-        id: "emargement",
-        label: L["/emargement"],
-        icon: ClipboardPen,
-        href: "/emargement",
         routeKey: "inscriptions",
       },
       {
@@ -398,13 +390,6 @@ export const FORMATEUR_SECTIONS: NavSection[] = [
         routeKey: "evaluations",
       },
       {
-        id: "formateur-emargement",
-        label: L["/formateur/emargement"],
-        icon: ClipboardPen,
-        href: "/formateur/emargement",
-        routeKey: "evaluations",
-      },
-      {
         id: "formateur-stagiaires",
         label: {
           fr: "Stagiaires",
@@ -495,9 +480,6 @@ export function isPathActive(pathname: string, path: string): boolean {
   }
   if (path === "/formation/sessions") {
     return pathname.startsWith("/formation/sessions") || pathname === "/classes";
-  }
-  if (path === "/formateur/emargement") {
-    return pathname === "/formateur/emargement" || pathname.endsWith("/emargement");
   }
   return pathname === path || pathname.startsWith(`${path}/`);
 }
