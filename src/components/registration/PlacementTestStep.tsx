@@ -341,7 +341,9 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
 
         <StepActions>
           <Button type="submit" className="h-12 w-full text-base sm:w-auto">
-            Continuer vers les attentes
+            {data.profession === "ski_instructor"
+              ? "Continuer vers le paiement"
+              : "Continuer vers la certification"}
           </Button>
         </StepActions>
       </form>

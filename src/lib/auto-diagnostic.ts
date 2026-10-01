@@ -126,7 +126,7 @@ export function validateAutoDiagnostic(answers: AutoDiagnosticAnswers): string |
   return null;
 }
 
-/** Q10 Excel → préremplit l’étape Attentes. */
+/** Q10 Excel → champ `expectations` de l’inscription (plus d’étape Attentes dédiée). */
 export function expectationsFromAutoDiagnostic(answers: AutoDiagnosticAnswers): string {
   const v = answers[answerKey(10)];
   return typeof v === "string" ? v.trim() : "";

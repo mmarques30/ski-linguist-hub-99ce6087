@@ -117,15 +117,16 @@ export interface RegistrationData {
   fifplParseWarnings?: string[];
 }
 
-const steps = [
+const ALL_STEPS = [
   { id: 1, name: "Formation" },
   { id: 2, name: "Informations personnelles" },
   { id: 3, name: "Profil professionnel" },
   { id: 4, name: "Test de niveau" },
-  { id: 5, name: "Attentes" },
+  /** Attentes = auto-diagnostic Q10 ; cette étape ne porte plus que la certification. */
+  { id: 5, name: "Certification" },
   { id: 6, name: "Paiement" },
   { id: 7, name: "Confirmation" },
-];
+] as const;
 
 export default function Register() {
   const [searchParams] = useSearchParams();
@@ -143,19 +144,33 @@ export default function Register() {
     }
   }, [searchParams]);
 
-  const progress = (currentStep / steps.length) * 100;
+  /** Moniteurs : pas de certification → on saute l’étape 5 (attentes déjà dans l’auto-diag). */
+  const skipCertificationStep = formData.profession === "ski_instructor";
+  const steps = ALL_STEPS.filter((s) => !(skipCertificationStep && s.id === 5));
+  const progress = (steps.findIndex((s) => s.id === currentStep) + 1) / steps.length * 100;
 
   const updateFormData = (data: Partial<RegistrationData>) => {
     setFormData((prev) => ({ ...prev, ...data }));
   };
 
   const nextStep = () => {
-    if (currentStep < steps.length) {
+    if (currentStep === 4 && skipCertificationStep) {
+      if (formData.certification !== "none") {
+        updateFormData({ certification: "none" });
+      }
+      setCurrentStep(6);
+      return;
+    }
+    if (currentStep < ALL_STEPS.length) {
       setCurrentStep(currentStep + 1);
     }
   };
 
   const prevStep = () => {
+    if (currentStep === 6 && skipCertificationStep) {
+      setCurrentStep(4);
+      return;
+    }
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
@@ -218,7 +233,8 @@ export default function Register() {
     }
   };
 
-  const currentStepName = steps[currentStep - 1].name;
+  const stepIndex = Math.max(0, steps.findIndex((s) => s.id === currentStep));
+  const currentStepName = steps[stepIndex]?.name ?? "";
   const programmeLabel =
     formData.profession === "other"
       ? "Formation linguistique"
@@ -243,14 +259,14 @@ export default function Register() {
               label={
                 <span className="flex items-center gap-2">
                   <span className="font-medium text-foreground">
-                    Étape {currentStep} sur {steps.length}
+                    Étape {stepIndex + 1} sur {steps.length}
                   </span>
                   <span className="hidden truncate text-muted-foreground xs:inline">
                     · {currentStepName}
                   </span>
                 </span>
               }
-              value={currentStep}
+              value={stepIndex + 1}
               max={steps.length}
               display={`${Math.round(progress)} %`}
             />
@@ -263,9 +279,12 @@ export default function Register() {
       <div className="border-b border-border bg-[hsl(var(--surface-sunken))]">
         <div className="container mx-auto max-w-3xl px-4">
           <ol className="flex gap-2 overflow-x-auto py-2 scrollbar-thin">
-            {steps.map((step) => {
+            {steps.map((step, index) => {
               const isCurrent = step.id === currentStep;
-              const isDone = step.id < currentStep;
+              const visuallyDone =
+                skipCertificationStep && currentStep >= 6
+                  ? step.id <= 4 || step.id < currentStep
+                  : step.id < currentStep;
               return (
                 <li key={step.id}>
                   <button
@@ -274,8 +293,8 @@ export default function Register() {
                     className={cn(
                       "flex items-center gap-2 whitespace-nowrap rounded-pill px-3 py-2 text-sm font-medium transition-colors",
                       isCurrent && "bg-primary text-primary-foreground shadow-sm",
-                      isDone && "bg-card text-foreground shadow-sm hover:bg-[hsl(var(--surface-raised))]",
-                      !isCurrent && !isDone && "text-muted-foreground"
+                      visuallyDone && !isCurrent && "bg-card text-foreground shadow-sm hover:bg-[hsl(var(--surface-raised))]",
+                      !isCurrent && !visuallyDone && "text-muted-foreground"
                     )}
                     disabled={step.id > currentStep}
                     onClick={() => step.id < currentStep && setCurrentStep(step.id)}
@@ -284,11 +303,15 @@ export default function Register() {
                       className={cn(
                         "flex h-6 w-6 shrink-0 items-center justify-center rounded-pill text-2xs font-bold tabular",
                         isCurrent && "bg-primary-foreground/15",
-                        isDone && "bg-[hsl(var(--tint-teal-bg))] text-[hsl(var(--tint-teal-fg))]",
-                        !isCurrent && !isDone && "bg-muted"
+                        visuallyDone && !isCurrent && "bg-[hsl(var(--tint-teal-bg))] text-[hsl(var(--tint-teal-fg))]",
+                        !isCurrent && !visuallyDone && "bg-muted"
                       )}
                     >
-                      {isDone ? <Check className="h-3.5 w-3.5" aria-hidden /> : step.id}
+                      {visuallyDone && !isCurrent ? (
+                        <Check className="h-3.5 w-3.5" aria-hidden />
+                      ) : (
+                        index + 1
+                      )}
                     </span>
                     <span className="hidden md:inline">{step.name}</span>
                     <span className="sr-only md:hidden">{step.name}</span>
