@@ -211,13 +211,21 @@ export function InscriptionDocumentsCard({
       {showWelcomePack && (
         <SurfaceCard
           title={"Pack moniteur de ski — documents d’inscription"}
-          description="Envoyés automatiquement à toute inscription moniteur de ski (hors devis / format personnalisé) — ou à renvoyer manuellement"
+          description="Convention et programme en PDF personnalisé (données du stagiaire). Critères FIF-PL et tutoriel en PDF statiques. Aucun modèle Word vide."
           icon={FileText}
         >
           <ul className="space-y-3">
             {REGISTRATION_WELCOME_DOCUMENTS.map((doc) => {
               const wasSent = sentTypes.has(doc.documentType);
-              const publicUrl = getRegistrationDocumentPublicUrl(doc.internalFile);
+              const sentRow = sendings.find((s) => s.document_type === doc.documentType);
+              const isGenerated = doc.delivery === "generated_pdf";
+              const publicUrl =
+                doc.internalFile != null
+                  ? getRegistrationDocumentPublicUrl(doc.internalFile)
+                  : null;
+              const displayName = inscriptionCode
+                ? doc.filename.replace("{code}", inscriptionCode)
+                : doc.filename.replace("-{code}", "").replace("{code}", "…");
 
               return (
                 <li
@@ -230,15 +238,34 @@ export function InscriptionDocumentsCard({
                       <StatusPill tone={wasSent ? "success" : "warning"} size="sm">
                         {wasSent ? "Envoyé" : "En attente"}
                       </StatusPill>
+                      {isGenerated && (
+                        <StatusPill tone="info" size="sm">
+                          Données stagiaire
+                        </StatusPill>
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground">{doc.filename}</p>
+                    <p className="text-sm text-muted-foreground">{displayName}</p>
                   </div>
-                  <Button variant="outline" size="sm" asChild>
-                    <a href={publicUrl} target="_blank" rel="noreferrer">
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      Ouvrir
-                    </a>
-                  </Button>
+                  {wasSent && sentRow?.pdf_url ? (
+                    <CertificatePdfButton
+                      pathOrUrl={sentRow.pdf_url}
+                      bucket={DOCUMENTS_BUCKET}
+                      label="PDF"
+                    />
+                  ) : publicUrl ? (
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={publicUrl} target="_blank" rel="noreferrer">
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        Ouvrir
+                      </a>
+                    </Button>
+                  ) : (
+                    <p className="text-xs text-muted-foreground sm:max-w-[14rem] sm:text-right">
+                      {wasSent
+                        ? "PDF joint à l’e-mail (pas encore stocké côté portail)."
+                        : "Généré à l’envoi du dossier (+30 min)."}
+                    </p>
+                  )}
                 </li>
               );
             })}

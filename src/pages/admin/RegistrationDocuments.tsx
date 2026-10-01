@@ -112,9 +112,10 @@ export default function AdminRegistrationDocuments() {
           tone="teal"
           description={
             <>
-              Fichiers du dossier d&apos;inscription (critères FIF-PL, tutoriel, modèles
-              convention / programme).
-              Les textes d&apos;email se gèrent à part sur{" "}
+              Pack moniteur : convention et programme en PDF personnalisé (données du
+              stagiaire) ; critères FIF-PL et tutoriel en PDF. Les anciens modèles Word
+              ne sont plus envoyés.
+              Textes d&apos;email :{" "}
               <Link to="/admin/emails" className="underline underline-offset-2">
                 /admin/emails
               </Link>
@@ -127,16 +128,15 @@ export default function AdminRegistrationDocuments() {
           <AlertTitle>Comment ça fonctionne</AlertTitle>
           <AlertDescription className="space-y-1">
             <p>
-              Par défaut, l&apos;app utilise les fichiers livrés avec le code pour les
-              pièces jointes statiques (critères FIF-PL et tutoriel). Les modèles Word
-              restent téléchargeables ici ; la convention et le programme du dossier de
-              formation sont générés automatiquement en PDF à partir de chaque
-              inscription (envoi +30 min, modèle email « Dossier de formation »,
-              payeur stagiaire uniquement).
+              L&apos;e-mail « Dossier de formation » (+30 min, payeur stagiaire) joint
+              une convention et un programme <strong>PDF remplis</strong> avec les
+              données de l&apos;inscription, plus les critères FIF-PL et le tutoriel.
+              Les fichiers Word (.dotx) ci-dessous sont une référence legacy — ils ne
+              partent plus dans le pack.
             </p>
             <p>
-              Si vous déposez une nouvelle version des critères ou du tutoriel ici, elle
-              est stockée de façon privée et utilisée pour les prochains envois.
+              Seuls les PDF critères / tutoriel sont remplaçables ici ; la version
+              déposée est utilisée pour les prochains envois.
             </p>
           </AlertDescription>
         </Alert>
@@ -169,6 +169,7 @@ export default function AdminRegistrationDocuments() {
         <CardGrid cols={2}>
           {(templates ?? []).map((doc) => {
             const busy = busyFile === doc.internalFile;
+            const isLegacyWord = doc.kind === "legacy_word";
             return (
               <SurfaceCard
                 key={doc.internalFile}
@@ -176,7 +177,9 @@ export default function AdminRegistrationDocuments() {
                 icon={FileText}
                 description={<span className="font-mono text-xs">{doc.filename}</span>}
                 actions={
-                  doc.hasOverride ? (
+                  isLegacyWord ? (
+                    <StatusPill tone="warning">Legacy — non envoyé</StatusPill>
+                  ) : doc.hasOverride ? (
                     <StatusPill tone="info" dot>Version déposée</StatusPill>
                   ) : (
                     <StatusPill tone="neutral">Version livrée</StatusPill>
@@ -206,45 +209,45 @@ export default function AdminRegistrationDocuments() {
                     )}
                     Télécharger
                   </Button>
-                  <input
-                    ref={(el) => {
-                      inputRefs.current[doc.internalFile] = el;
-                    }}
-                    type="file"
-                    className="hidden"
-                    accept={
-                      doc.internalFile.endsWith(".pdf")
-                        ? "application/pdf,.pdf"
-                        : ".dotx,application/vnd.openxmlformats-officedocument.wordprocessingml.template"
-                    }
-                    onChange={(e) =>
-                      void handleReplace(doc.internalFile, e.target.files?.[0])
-                    }
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={busy}
-                    onClick={() => inputRefs.current[doc.internalFile]?.click()}
-                  >
-                    {busy && replace.isPending ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Upload className="mr-2 h-4 w-4" />
-                    )}
-                    Remplacer
-                  </Button>
-                  {doc.hasOverride && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      disabled={busy}
-                      onClick={() => void handleClear(doc.internalFile)}
-                    >
-                      <RotateCcw className="mr-2 h-4 w-4" />
-                      Revenir à la version livrée
-                    </Button>
+                  {!isLegacyWord && (
+                    <>
+                      <input
+                        ref={(el) => {
+                          inputRefs.current[doc.internalFile] = el;
+                        }}
+                        type="file"
+                        className="hidden"
+                        accept="application/pdf,.pdf"
+                        onChange={(e) =>
+                          void handleReplace(doc.internalFile, e.target.files?.[0])
+                        }
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={busy}
+                        onClick={() => inputRefs.current[doc.internalFile]?.click()}
+                      >
+                        {busy && replace.isPending ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Upload className="mr-2 h-4 w-4" />
+                        )}
+                        Remplacer
+                      </Button>
+                      {doc.hasOverride && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          disabled={busy}
+                          onClick={() => void handleClear(doc.internalFile)}
+                        >
+                          <RotateCcw className="mr-2 h-4 w-4" />
+                          Revenir à la version livrée
+                        </Button>
+                      )}
+                    </>
                   )}
                 </div>
               </SurfaceCard>

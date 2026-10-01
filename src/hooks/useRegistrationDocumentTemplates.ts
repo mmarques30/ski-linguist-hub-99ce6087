@@ -2,14 +2,19 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DOCUMENTS_BUCKET } from "@/lib/certificateStorage";
 import {
-  REGISTRATION_WELCOME_DOCUMENTS,
+  LEGACY_WORD_REGISTRATION_TEMPLATES,
+  REPLACEABLE_REGISTRATION_TEMPLATES,
   acceptMimeForTemplate,
-  isKnownRegistrationTemplate,
+  isReplaceableRegistrationTemplate,
   registrationTemplateStoragePath,
-  type RegistrationWelcomeDocument,
 } from "@/lib/registration-welcome-documents";
 
-export type RegistrationTemplateStatus = RegistrationWelcomeDocument & {
+export type RegistrationTemplateStatus = {
+  documentType: string;
+  filename: string;
+  internalFile: string;
+  label: string;
+  kind: "static_pdf" | "legacy_word";
   hasOverride: boolean;
   updatedAt: string | null;
 };
@@ -35,14 +40,33 @@ export function useRegistrationDocumentTemplates() {
         (data ?? []).map((obj) => [obj.name, obj] as const),
       );
 
-      return REGISTRATION_WELCOME_DOCUMENTS.map((doc) => {
+      const staticDocs = REPLACEABLE_REGISTRATION_TEMPLATES.map((doc) => {
         const obj = byName.get(doc.internalFile);
         return {
-          ...doc,
+          documentType: doc.documentType,
+          filename: doc.filename,
+          internalFile: doc.internalFile,
+          label: doc.label,
+          kind: "static_pdf" as const,
           hasOverride: Boolean(obj),
           updatedAt: obj?.updated_at ?? obj?.created_at ?? null,
         };
       });
+
+      const legacyDocs = LEGACY_WORD_REGISTRATION_TEMPLATES.map((doc) => {
+        const obj = byName.get(doc.internalFile);
+        return {
+          documentType: doc.documentType,
+          filename: doc.filename,
+          internalFile: doc.internalFile,
+          label: doc.label,
+          kind: "legacy_word" as const,
+          hasOverride: Boolean(obj),
+          updatedAt: obj?.updated_at ?? obj?.created_at ?? null,
+        };
+      });
+
+      return [...staticDocs, ...legacyDocs];
     },
   });
 }
@@ -50,7 +74,10 @@ export function useRegistrationDocumentTemplates() {
 export function useDownloadRegistrationTemplate() {
   return useMutation({
     mutationFn: async (internalFile: string) => {
-      if (!isKnownRegistrationTemplate(internalFile)) {
+      if (
+        !REPLACEABLE_REGISTRATION_TEMPLATES.some((d) => d.internalFile === internalFile) &&
+        !LEGACY_WORD_REGISTRATION_TEMPLATES.some((d) => d.internalFile === internalFile)
+      ) {
         throw new Error("Modèle inconnu");
       }
       const path = registrationTemplateStoragePath(internalFile);
@@ -82,8 +109,10 @@ export function useReplaceRegistrationTemplate() {
       internalFile: string;
       file: File;
     }) => {
-      if (!isKnownRegistrationTemplate(internalFile)) {
-        throw new Error("Modèle inconnu");
+      if (!isReplaceableRegistrationTemplate(internalFile)) {
+        throw new Error(
+          "Seuls les PDF statiques (critères, tutoriel) sont remplaçables. Convention et programme sont générés automatiquement.",
+        );
       }
       const expected = acceptMimeForTemplate(internalFile);
       const extOk = file.name.toLowerCase().endsWith(
@@ -125,8 +154,8 @@ export function useClearRegistrationTemplateOverride() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (internalFile: string) => {
-      if (!isKnownRegistrationTemplate(internalFile)) {
-        throw new Error("Modèle inconnu");
+      if (!isReplaceableRegistrationTemplate(internalFile)) {
+        throw new Error("Seuls les PDF statiques sont gérables ici");
       }
       const path = registrationTemplateStoragePath(internalFile);
       const { error } = await supabase.storage.from(DOCUMENTS_BUCKET).remove([path]);
