@@ -553,6 +553,7 @@ Deno.serve(async (req) => {
       startDate: registration.startDate,
       endDate: registration.endDate,
       requestedStartDate: registration.requestedStartDate,
+      durationHours,
     });
 
     if (!dates) {
