@@ -2,6 +2,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { notifyAdmins } from "@/lib/notify-admins";
 import { INVOICE_ORIGIN_APP } from "@/lib/invoice-origin";
+import {
+  confirmDepositAndEnqueueDocuments,
+  qualifiesAsDepositConfirmation,
+} from "@/lib/enqueue-inscription-documents";
 
 export interface Payment {
   id: string;
@@ -293,6 +297,21 @@ export function useCreatePayment() {
         .single();
       if (error) throw error;
 
+      if (
+        payment.inscription_id &&
+        qualifiesAsDepositConfirmation({
+          status: payment.status,
+          amount: payment.amount,
+          payment_type: payment.payment_type ?? "total",
+        })
+      ) {
+        await confirmDepositAndEnqueueDocuments({
+          supabase,
+          inscriptionId: payment.inscription_id,
+          paymentDate: payment.payment_date,
+        });
+      }
+
       if (payment.status === "recu") {
         const amountLabel = `${payment.amount} €`;
         await notifyAdmins({
@@ -315,6 +334,72 @@ export function useCreatePayment() {
       queryClient.invalidateQueries({ queryKey: ["financial-kpis"] });
       queryClient.invalidateQueries({ queryKey: ["pending-invoices"] });
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["inscription-client-access"] });
+      queryClient.invalidateQueries({ queryKey: ["inscriptions"] });
+    },
+  });
+}
+
+/** Passe un paiement en_attente → reçu et déclenche l'envoi du dossier si acompte/total. */
+export function useMarkPaymentReceived() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      paymentId: string;
+      inscriptionId: string;
+      amount: number;
+      paymentType: string | null;
+      paymentDate?: string;
+      paymentMethod?: string;
+      payerName?: string | null;
+    }) => {
+      const paymentDate =
+        params.paymentDate || new Date().toISOString().split("T")[0];
+      const { data, error } = await supabase
+        .from("payments")
+        .update({
+          status: "recu",
+          payment_date: paymentDate,
+        })
+        .eq("id", params.paymentId)
+        .select()
+        .single();
+      if (error) throw error;
+
+      if (
+        qualifiesAsDepositConfirmation({
+          status: "recu",
+          amount: params.amount,
+          payment_type: params.paymentType,
+        })
+      ) {
+        await confirmDepositAndEnqueueDocuments({
+          supabase,
+          inscriptionId: params.inscriptionId,
+          paymentDate,
+        });
+      }
+
+      const amountLabel = `${params.amount} €`;
+      await notifyAdmins({
+        type: "paiement",
+        title: `Paiement reçu — ${amountLabel}`,
+        message: params.payerName
+          ? `${params.payerName} · ${params.paymentMethod || "paiement"}`
+          : `Méthode : ${params.paymentMethod || "paiement"}`,
+        link: `/inscriptions/${params.inscriptionId}?tab=financial`,
+      });
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
+      queryClient.invalidateQueries({ queryKey: ["payment-kpis"] });
+      queryClient.invalidateQueries({ queryKey: ["financial-kpis"] });
+      queryClient.invalidateQueries({ queryKey: ["pending-invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["inscription-client-access"] });
+      queryClient.invalidateQueries({ queryKey: ["inscriptions"] });
     },
   });
 }

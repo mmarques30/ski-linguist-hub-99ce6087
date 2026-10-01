@@ -26,6 +26,7 @@ import {
 import {
   useCreatePayment,
   useCreatePaymentReminder,
+  useMarkPaymentReceived,
   usePaymentReminders,
 } from "@/hooks/usePayments";
 import { useInscriptionClientAccess } from "@/hooks/useInscriptionClientAccess";
@@ -63,6 +64,7 @@ export function InscriptionFinancialPayments({
   const { data: reminders = [], isLoading: remindersLoading } =
     usePaymentReminders(inscriptionId);
   const createPayment = useCreatePayment();
+  const markPaymentReceived = useMarkPaymentReceived();
   const createReminder = useCreatePaymentReminder();
 
   const [open, setOpen] = useState(false);
@@ -120,6 +122,29 @@ export function InscriptionFinancialPayments({
       toast.success("Relance enregistrée");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Impossible d'enregistrer la relance");
+    }
+  };
+
+  const handleMarkReceived = async (payment: (typeof payments)[number]) => {
+    try {
+      await markPaymentReceived.mutateAsync({
+        paymentId: payment.id,
+        inscriptionId,
+        amount: Number(payment.amount),
+        paymentType: payment.payment_type ?? null,
+        paymentDate: payment.payment_date || new Date().toISOString().slice(0, 10),
+        paymentMethod: payment.payment_method,
+        payerName: studentName || null,
+      });
+      queryClient.invalidateQueries({ queryKey: ["inscription-client-access", inscriptionId] });
+      await refetch();
+      toast.success(
+        payment.payment_type === "acompte" || payment.payment_type === "total"
+          ? "Paiement confirmé — dossier programmé"
+          : "Paiement confirmé"
+      );
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Confirmation impossible");
     }
   };
 
@@ -283,9 +308,26 @@ export function InscriptionFinancialPayments({
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-medium tabular">{payment.amount} €</span>
-                  <StatusPill tone={toneForStatus(payment.status)} size="sm">
-                    {paymentStatusLabel(payment.status)}
-                  </StatusPill>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusPill tone={toneForStatus(payment.status)} size="sm">
+                      {paymentStatusLabel(payment.status)}
+                    </StatusPill>
+                    {editable && payment.status === "en_attente" && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={markPaymentReceived.isPending}
+                        onClick={() => handleMarkReceived(payment)}
+                      >
+                        {markPaymentReceived.isPending ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          "Marquer reçu"
+                        )}
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <p className="text-muted-foreground mt-1">
                   {paymentMethodLabel(payment.payment_method)} ·{" "}

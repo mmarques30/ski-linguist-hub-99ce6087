@@ -256,9 +256,11 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                   : isFifpl
                     ? " Les documents d'inscription (convention, programme et critères FIF-PL) vous seront envoyés par email."
                     : " Les documents d'inscription (convention et programme) vous seront envoyés par email."
-                : result.emailSent
-                  ? " Un email de confirmation vous a été envoyé."
-                  : " Notre équipe vous contactera prochainement."}
+                : result.paymentFlow === "virement" || result.paymentFlow === "stripe"
+                  ? " Les documents d'inscription vous seront envoyés par email après confirmation du règlement des frais de dossier (150 €)."
+                  : result.emailSent
+                    ? " Un email de confirmation vous a été envoyé."
+                    : " Notre équipe vous contactera prochainement."}
             </p>
             <StatusPill tone="warning" className="px-4 py-1.5 text-base">
               Code : {result.inscriptionCode}
