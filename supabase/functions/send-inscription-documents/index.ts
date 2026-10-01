@@ -26,7 +26,7 @@ import {
 } from "../_shared/inscription-documents-assets.ts";
 import {
   loadSkiMonitorWelcomeDocument,
-  SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS,
+  SKI_MONITOR_STATIC_PACK_DOCUMENTS,
 } from "../_shared/ski-monitor-welcome-documents.ts";
 import { ORGANIZATION_IDENTITY_KEY } from "../_shared/organization-identity.ts";
 
@@ -36,11 +36,11 @@ const corsHeaders = {
 };
 
 const TEMPLATE_SLUG = "inscription_documents";
-const CRITERIA_DOC = SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS.find(
-  (d) => d.documentType === "REGLEMENT"
+const CRITERIA_DOC = SKI_MONITOR_STATIC_PACK_DOCUMENTS.find(
+  (d) => d.documentType === "REGLEMENT",
 )!;
-const TUTORIEL_DOC = SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS.find(
-  (d) => d.documentType === "LIVRET"
+const TUTORIEL_DOC = SKI_MONITOR_STATIC_PACK_DOCUMENTS.find(
+  (d) => d.documentType === "LIVRET",
 )!;
 
 function bytesToBase64(bytes: Uint8Array): string {
@@ -140,7 +140,9 @@ Deno.serve(async (req) => {
             group_size,
             funding_organization,
             documents_sent_at,
+            student_id,
             students!inscriptions_student_id_fkey (
+              id,
               civility,
               first_name,
               last_name,
@@ -290,19 +292,34 @@ Deno.serve(async (req) => {
         }
 
         const code = inscription.code || "sans-code";
-        const attachments = [
-          { filename: conventionFilename(code), content: bytesToBase64(conventionBytes) },
-          { filename: programmeFilename(code), content: bytesToBase64(programmeBytes) },
-          { filename: CRITERIA_DOC.filename, content: bytesToBase64(criteriaBytes) },
-          { filename: TUTORIEL_DOC.filename, content: bytesToBase64(tutorielBytes) },
+        // PDF personnalisés uniquement — jamais de .dotx Word sans données stagiaire.
+        const packFiles: Array<{
+          type: "CONVENTION" | "PROGRAMME" | "REGLEMENT" | "LIVRET";
+          filename: string;
+          bytes: Uint8Array;
+        }> = [
+          { type: "CONVENTION", filename: conventionFilename(code), bytes: conventionBytes },
+          { type: "PROGRAMME", filename: programmeFilename(code), bytes: programmeBytes },
+          { type: "REGLEMENT", filename: CRITERIA_DOC.filename, bytes: criteriaBytes },
+          { type: "LIVRET", filename: TUTORIEL_DOC.filename, bytes: tutorielBytes },
         ];
+        for (const file of packFiles) {
+          if (file.filename.toLowerCase().endsWith(".dotx")) {
+            throw new Error(`refus PJ Word : ${file.filename}`);
+          }
+        }
+
+        const attachments = packFiles.map((f) => ({
+          filename: f.filename,
+          content: bytesToBase64(f.bytes),
+        }));
 
         if (dryRun) {
           results.sent++;
           results.details.push({
             reminderId: reminder.id,
             inscriptionId,
-            action: `DRY_RUN - ${email} (${attachments.length} PJ)`,
+            action: `DRY_RUN - ${email} (${attachments.length} PJ PDF)`,
           });
           continue;
         }
@@ -332,32 +349,55 @@ Deno.serve(async (req) => {
         });
 
         if (sent) {
-          await supabase.from("document_sendings").insert([
-            {
+          const studentId =
+            (typeof student.id === "string" && student.id) ||
+            (typeof (inscription as { student_id?: string }).student_id === "string"
+              ? (inscription as { student_id?: string }).student_id
+              : "") ||
+            "";
+
+          const storagePaths: Record<string, string | null> = {
+            CONVENTION: null,
+            PROGRAMME: null,
+            REGLEMENT: null,
+            LIVRET: null,
+          };
+
+          if (studentId) {
+            const basePath = `${studentId}/${inscriptionId}`;
+            for (const file of packFiles) {
+              const path = `${basePath}/${file.filename.replace(/\s+/g, "-")}`;
+              const { error: upErr } = await supabase.storage
+                .from("documents")
+                .upload(path, file.bytes, {
+                  contentType: "application/pdf",
+                  upsert: true,
+                });
+              if (upErr) {
+                console.warn("upload pack PDF:", file.filename, upErr);
+              } else {
+                storagePaths[file.type] = path;
+              }
+            }
+          } else {
+            console.warn("send-inscription-documents: student_id manquant — PDF non stockés");
+          }
+
+          // Remplace d'éventuelles lignes sans PDF / anciennes URLs .dotx
+          await supabase
+            .from("document_sendings")
+            .delete()
+            .eq("inscription_id", inscriptionId)
+            .in("document_type", ["CONVENTION", "PROGRAMME", "REGLEMENT", "LIVRET"]);
+
+          await supabase.from("document_sendings").insert(
+            packFiles.map((f) => ({
               inscription_id: inscriptionId,
-              document_type: "CONVENTION",
+              document_type: f.type,
               sent_to: email,
-              pdf_url: null,
-            },
-            {
-              inscription_id: inscriptionId,
-              document_type: "PROGRAMME",
-              sent_to: email,
-              pdf_url: null,
-            },
-            {
-              inscription_id: inscriptionId,
-              document_type: "REGLEMENT",
-              sent_to: email,
-              pdf_url: null,
-            },
-            {
-              inscription_id: inscriptionId,
-              document_type: "LIVRET",
-              sent_to: email,
-              pdf_url: null,
-            },
-          ]);
+              pdf_url: storagePaths[f.type],
+            })),
+          );
 
           await supabase
             .from("inscriptions")

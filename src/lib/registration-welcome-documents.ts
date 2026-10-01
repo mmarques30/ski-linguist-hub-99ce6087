@@ -1,44 +1,90 @@
+export type RegistrationDocumentDelivery = "static_pdf" | "generated_pdf";
+
 export interface RegistrationWelcomeDocument {
   documentType: string;
+  /** Nom affiché / joint à l'e-mail (peut contenir un placeholder {code}). */
   filename: string;
-  internalFile: string;
+  /**
+   * Fichier livré avec l'app (critères / tutoriel). Null pour convention /
+   * programme : PDF généré à l'envoi avec les données du stagiaire.
+   */
+  internalFile: string | null;
   label: string;
+  delivery: RegistrationDocumentDelivery;
 }
 
+/**
+ * Contenu du pack d'inscription moniteur (ce qui part réellement au stagiaire).
+ * Convention et programme = PDF personnalisés — jamais les modèles Word vides.
+ */
 export const REGISTRATION_WELCOME_DOCUMENTS: RegistrationWelcomeDocument[] = [
   {
     documentType: "REGLEMENT",
     filename: "Criteres de prise en charge Moniteurs de ski 2026.pdf",
     internalFile: "criteres-prise-en-charge-2026.pdf",
     label: "Critères de prise en charge Moniteurs de ski 2026",
+    delivery: "static_pdf",
   },
   {
     documentType: "CONVENTION",
-    filename: "Convention Stage langues Station 2022.dotx",
-    internalFile: "convention-stage-langues-station-2022.dotx",
-    label: "Convention Stage langues Station 2022",
+    filename: "Convention-formation-{code}.pdf",
+    internalFile: null,
+    label: "Convention de formation (PDF personnalisé)",
+    delivery: "generated_pdf",
   },
   {
     documentType: "PROGRAMME",
-    filename: "Contenu pedagogique Station 2022.dotx",
-    internalFile: "contenu-pedagogique-station-2022.dotx",
-    label: "Contenu pédagogique Station 2022",
+    filename: "Programme-formation-{code}.pdf",
+    internalFile: null,
+    label: "Programme de formation (PDF personnalisé)",
+    delivery: "generated_pdf",
   },
   {
     documentType: "LIVRET",
     filename: "Tutoriel FIF-PL FLI.pdf",
     internalFile: "tutoriel-fif-pl-fli.pdf",
     label: "Tutoriel pour la demande de prise en charge FIF-PL",
+    delivery: "static_pdf",
   },
 ];
+
+/**
+ * Anciens modèles Word (MERGEFIELD) — référence admin uniquement.
+ * Ne jamais les joindre au pack ni les exposer comme documents du stagiaire.
+ */
+export const LEGACY_WORD_REGISTRATION_TEMPLATES: Array<{
+  documentType: "CONVENTION" | "PROGRAMME";
+  filename: string;
+  internalFile: string;
+  label: string;
+}> = [
+  {
+    documentType: "CONVENTION",
+    filename: "Convention Stage langues Station 2022.dotx",
+    internalFile: "convention-stage-langues-station-2022.dotx",
+    label: "Ancien modèle Word — Convention (ne plus envoyer)",
+  },
+  {
+    documentType: "PROGRAMME",
+    filename: "Contenu pedagogique Station 2022.dotx",
+    internalFile: "contenu-pedagogique-station-2022.dotx",
+    label: "Ancien modèle Word — Programme (ne plus envoyer)",
+  },
+];
+
+/** PDF statiques remplaçables depuis /admin (critères + tutoriel). */
+export const REPLACEABLE_REGISTRATION_TEMPLATES = REGISTRATION_WELCOME_DOCUMENTS.filter(
+  (d): d is RegistrationWelcomeDocument & { internalFile: string } =>
+    d.delivery === "static_pdf" && Boolean(d.internalFile),
+);
 
 /** Préfixe storage (bucket `documents`, objets staff) pour les modèles remplaçables. */
 export const REGISTRATION_TEMPLATE_STORAGE_PREFIX = "staff/registration-templates";
 
 export const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   REGLEMENT: "Critères de prise en charge",
-  CONVENTION: "Convention Stage langues Station",
-  PROGRAMME: "Contenu pédagogique Station",
+  CONVENTION: "Convention de formation",
+  PROGRAMME: "Programme de formation",
   LIVRET: "Tutoriel FIF-PL",
   CONVOCATION: "Convocation",
   ATTESTATION_PRESENCE: "Attestation de présence",
@@ -59,7 +105,14 @@ export function registrationTemplateStoragePath(internalFile: string): string {
 }
 
 export function isKnownRegistrationTemplate(internalFile: string): boolean {
-  return REGISTRATION_WELCOME_DOCUMENTS.some((d) => d.internalFile === internalFile);
+  return (
+    REPLACEABLE_REGISTRATION_TEMPLATES.some((d) => d.internalFile === internalFile) ||
+    LEGACY_WORD_REGISTRATION_TEMPLATES.some((d) => d.internalFile === internalFile)
+  );
+}
+
+export function isReplaceableRegistrationTemplate(internalFile: string): boolean {
+  return REPLACEABLE_REGISTRATION_TEMPLATES.some((d) => d.internalFile === internalFile);
 }
 
 export function acceptMimeForTemplate(internalFile: string): string {
