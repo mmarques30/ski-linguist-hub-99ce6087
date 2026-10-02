@@ -8,6 +8,21 @@ export const adminCorsHeaders = {
 export async function requireAdmin(
   req: Request
 ): Promise<{ adminClient: SupabaseClient; userId: string } | Response> {
+  return requireRole(req, ["admin"], "Forbidden: admin only");
+}
+
+/** Staff back-office (admin ou user) — exclut formateur / stagiaire. */
+export async function requireStaff(
+  req: Request
+): Promise<{ adminClient: SupabaseClient; userId: string } | Response> {
+  return requireRole(req, ["admin", "user"], "Forbidden: staff only");
+}
+
+async function requireRole(
+  req: Request,
+  roles: Array<"admin" | "user">,
+  forbiddenMessage: string
+): Promise<{ adminClient: SupabaseClient; userId: string } | Response> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -47,13 +62,20 @@ export async function requireAdmin(
   }
 
   const adminClient = createClient(supabaseUrl, serviceRoleKey);
-  const { data: isAdmin } = await adminClient.rpc("has_role", {
-    _user_id: userId,
-    _role: "admin",
-  });
+  let allowed = false;
+  for (const role of roles) {
+    const { data } = await adminClient.rpc("has_role", {
+      _user_id: userId,
+      _role: role,
+    });
+    if (data) {
+      allowed = true;
+      break;
+    }
+  }
 
-  if (!isAdmin) {
-    return new Response(JSON.stringify({ success: false, error: "Forbidden: admin only" }), {
+  if (!allowed) {
+    return new Response(JSON.stringify({ success: false, error: forbiddenMessage }), {
       status: 403,
       headers: { ...adminCorsHeaders, "Content-Type": "application/json" },
     });
