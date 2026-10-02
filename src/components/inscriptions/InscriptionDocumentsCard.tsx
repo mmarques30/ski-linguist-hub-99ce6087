@@ -5,14 +5,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ExternalLink, FileText, Mail, AlertTriangle } from "lucide-react";
-import { CertificatePdfButton } from "@/components/certificates/CertificatePdfButton";
+import { useQueryClient } from "@tanstack/react-query";
+import { FormationDocumentDownloadButton } from "@/components/documents/FormationDocumentDownloadButton";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useInscriptionDocuments } from "@/hooks/useInscriptionDocuments";
 import {
   useInscriptionCertificates,
   useInscriptionProgression,
 } from "@/hooks/useInscriptionProgression";
-import { DOCUMENTS_BUCKET } from "@/lib/certificateStorage";
 import {
   DOCUMENT_TYPE_LABELS,
   getRegistrationDocumentPublicUrl,
@@ -61,9 +61,16 @@ export function InscriptionDocumentsCard({
   formateurName,
 }: InscriptionDocumentsCardProps) {
   const { language } = useLanguage();
+  const queryClient = useQueryClient();
   const { data: sendings = [], isLoading } = useInscriptionDocuments(inscriptionId);
   const { data: progression } = useInscriptionProgression(inscriptionId);
   const { data: certificates = [] } = useInscriptionCertificates(inscriptionId);
+
+  const invalidateDocuments = () => {
+    void queryClient.invalidateQueries({
+      queryKey: ["inscription-documents", inscriptionId],
+    });
+  };
 
   const dateLocale = language === "pt-BR" ? ptBR : language === "en" ? enUS : fr;
   const latestSentAt = sendings[0]?.sent_at ?? null;
@@ -202,12 +209,10 @@ export function InscriptionDocumentsCard({
                     {formatSentAt(doc.sent_at)} · {doc.sent_to}
                   </p>
                 </div>
-                {doc.pdf_url && (
-                  <CertificatePdfButton
-                    pathOrUrl={doc.pdf_url}
-                    bucket={DOCUMENTS_BUCKET}
-                  />
-                )}
+                <FormationDocumentDownloadButton
+                  documentSending={doc}
+                  onPublished={invalidateDocuments}
+                />
               </li>
             ))}
           </ul>
@@ -260,11 +265,11 @@ export function InscriptionDocumentsCard({
                     </div>
                     <p className="text-sm text-muted-foreground">{displayName}</p>
                   </div>
-                  {wasSent && sentRow?.pdf_url ? (
-                    <CertificatePdfButton
-                      pathOrUrl={sentRow.pdf_url}
-                      bucket={DOCUMENTS_BUCKET}
+                  {wasSent && sentRow ? (
+                    <FormationDocumentDownloadButton
+                      documentSending={sentRow}
                       label="PDF"
+                      onPublished={invalidateDocuments}
                     />
                   ) : publicUrl ? (
                     <Button variant="outline" size="sm" asChild>
@@ -275,9 +280,7 @@ export function InscriptionDocumentsCard({
                     </Button>
                   ) : (
                     <p className="text-xs text-muted-foreground sm:max-w-[14rem] sm:text-right">
-                      {wasSent
-                        ? "PDF joint à l’e-mail (pas encore stocké côté portail)."
-                        : "Généré à l’envoi du dossier (+30 min)."}
+                      Généré à l’envoi du dossier (après acompte).
                     </p>
                   )}
                 </li>

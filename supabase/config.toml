@@ -68,7 +68,7 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.publish-inscription-documents]
-verify_jwt = false
+verify_jwt = true
 
 [functions.invite-formateur-portal]
 verify_jwt = true
