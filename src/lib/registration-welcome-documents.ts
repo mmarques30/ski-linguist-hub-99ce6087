@@ -19,14 +19,26 @@ export interface RegistrationWelcomeDocument {
  * Contenu du pack d'inscription moniteur (ce qui part réellement au stagiaire).
  * Convention et programme = PDF personnalisés — jamais les modèles Word vides.
  */
+/** Critères FIF-PL Moniteurs de ski (8551 Z) — défaut du pack FIFPL. */
+export const FIFPL_REGLEMENT_SKI_MONITOR: RegistrationWelcomeDocument = {
+  documentType: "REGLEMENT",
+  filename: "Criteres de prise en charge Moniteurs de ski 2026.pdf",
+  internalFile: "criteres-prise-en-charge-2026.pdf",
+  label: "Critères de prise en charge Moniteurs de ski 2026",
+  delivery: "static_pdf",
+};
+
+/** Critères FIF-PL Guides de montagne (8551 ZG) 2026. */
+export const FIFPL_REGLEMENT_MOUNTAIN_GUIDE: RegistrationWelcomeDocument = {
+  documentType: "REGLEMENT",
+  filename: "Criteres de prise en charge Guides de montagne 2026.pdf",
+  internalFile: "criteres-prise-en-charge-guides-montagne-2026.pdf",
+  label: "Critères de prise en charge Guides de montagne 2026",
+  delivery: "static_pdf",
+};
+
 export const REGISTRATION_WELCOME_DOCUMENTS: RegistrationWelcomeDocument[] = [
-  {
-    documentType: "REGLEMENT",
-    filename: "Criteres de prise en charge Moniteurs de ski 2026.pdf",
-    internalFile: "criteres-prise-en-charge-2026.pdf",
-    label: "Critères de prise en charge Moniteurs de ski 2026",
-    delivery: "static_pdf",
-  },
+  FIFPL_REGLEMENT_SKI_MONITOR,
   {
     documentType: "CONVENTION",
     filename: "Convention-formation-{code}.pdf",
@@ -133,6 +145,7 @@ export const LEGACY_WORD_REGISTRATION_TEMPLATES: Array<{
 /** PDF statiques remplaçables depuis /admin (critères + tutoriel + AGEFICE). */
 export const REPLACEABLE_REGISTRATION_TEMPLATES = [
   ...REGISTRATION_WELCOME_DOCUMENTS,
+  FIFPL_REGLEMENT_MOUNTAIN_GUIDE,
   ...AGEFICE_WELCOME_DOCUMENTS,
 ].filter(
   (d): d is RegistrationWelcomeDocument & { internalFile: string } =>
@@ -206,6 +219,41 @@ export function expectsSkiMonitorWelcomePack(params: {
   return params.observations?.includes("Moniteur de ski") ?? false;
 }
 
+/** Guide de montagne (FIF-PL 8551 ZG) — détecté via observations / funding_details. */
+export function expectsMountainGuideFifplPack(params: {
+  observations?: string | null;
+  fundingDetails?: string | null;
+}): boolean {
+  const obs = (params.observations || "").toLowerCase();
+  if (obs.includes("guide de montagne")) return true;
+  const details = (params.fundingDetails || "").toLowerCase();
+  return (
+    details.includes("guide_montagne") ||
+    details.includes("guide de montagne") ||
+    details.includes("8551zg")
+  );
+}
+
+export function resolveFifplReglementDocument(params: {
+  observations?: string | null;
+  fundingDetails?: string | null;
+}): RegistrationWelcomeDocument {
+  return expectsMountainGuideFifplPack(params)
+    ? FIFPL_REGLEMENT_MOUNTAIN_GUIDE
+    : FIFPL_REGLEMENT_SKI_MONITOR;
+}
+
+/** Pack FIFPL avec le bon PDF de critères (moniteur vs guide). */
+export function resolveFifplWelcomeDocuments(params: {
+  observations?: string | null;
+  fundingDetails?: string | null;
+}): RegistrationWelcomeDocument[] {
+  const reglement = resolveFifplReglementDocument(params);
+  return REGISTRATION_WELCOME_DOCUMENTS.map((doc) =>
+    doc.documentType === "REGLEMENT" ? reglement : doc,
+  );
+}
+
 export function expectsAgeficeWelcomePack(params: {
   fundingOrganization?: string | null;
   observations?: string | null;
@@ -219,17 +267,20 @@ export function expectsAgeficeWelcomePack(params: {
 export function resolveWelcomePackDocuments(params: {
   fundingOrganization?: string | null;
   observations?: string | null;
+  fundingDetails?: string | null;
   modality?: string | null;
   courseLocation?: string | null;
 }): RegistrationWelcomeDocument[] | null {
   const flow = getFundingFlow(params.fundingOrganization);
   if (flow) {
     if (flow.packId === "agefice") return AGEFICE_WELCOME_DOCUMENTS;
-    if (flow.packId === "fifpl") return REGISTRATION_WELCOME_DOCUMENTS;
+    if (flow.packId === "fifpl") return resolveFifplWelcomeDocuments(params);
     if (flow.packId === "convention_programme") return SELF_WELCOME_DOCUMENTS;
     return null; // opco / company : pas de pack auto
   }
   if (expectsAgeficeWelcomePack(params)) return AGEFICE_WELCOME_DOCUMENTS;
-  if (expectsSkiMonitorWelcomePack(params)) return REGISTRATION_WELCOME_DOCUMENTS;
+  if (expectsSkiMonitorWelcomePack(params) || expectsMountainGuideFifplPack(params)) {
+    return resolveFifplWelcomeDocuments(params);
+  }
   return null;
 }

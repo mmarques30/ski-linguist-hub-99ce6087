@@ -47,12 +47,28 @@ describe("registration welcome document templates", () => {
     expect(
       resolveWelcomePackDocuments({ fundingOrganization: "AGEFICE" }),
     ).toBe(AGEFICE_WELCOME_DOCUMENTS);
-    expect(
-      resolveWelcomePackDocuments({
-        fundingOrganization: "FIFPL",
-        observations: "Moniteur de ski",
-      }),
-    ).toBe(REGISTRATION_WELCOME_DOCUMENTS);
+    const skiPack = resolveWelcomePackDocuments({
+      fundingOrganization: "FIFPL",
+      observations: "Moniteur de ski",
+    });
+    expect(skiPack?.map((d) => d.documentType)).toEqual([
+      "REGLEMENT",
+      "CONVENTION",
+      "PROGRAMME",
+      "LIVRET",
+    ]);
+    expect(skiPack?.[0]?.internalFile).toBe("criteres-prise-en-charge-2026.pdf");
+  });
+
+  it("choisit les critères Guides de montagne pour un FIFPL guide", () => {
+    const pack = resolveWelcomePackDocuments({
+      fundingOrganization: "FIFPL",
+      observations: "Guide de montagne\nFinancement FIFPL",
+    });
+    expect(pack?.[0]?.internalFile).toBe(
+      "criteres-prise-en-charge-guides-montagne-2026.pdf",
+    );
+    expect(pack?.[0]?.filename).toContain("Guides de montagne");
   });
 
   it("route un pack distinct par flux financement (funding-flows)", async () => {
@@ -68,15 +84,21 @@ describe("registration welcome document templates", () => {
     expect(
       resolveWelcomePackDocuments({ fundingOrganization: "Entreprise" }),
     ).toBeNull();
-    expect(
-      resolveWelcomePackDocuments({ fundingOrganization: "FIFPL" }),
-    ).toBe(REGISTRATION_WELCOME_DOCUMENTS);
+    const fifplDefault = resolveWelcomePackDocuments({ fundingOrganization: "FIFPL" });
+    expect(fifplDefault?.map((d) => d.documentType)).toEqual([
+      "REGLEMENT",
+      "CONVENTION",
+      "PROGRAMME",
+      "LIVRET",
+    ]);
+    expect(fifplDefault?.[0]?.internalFile).toBe("criteres-prise-en-charge-2026.pdf");
   });
 
   it("ne permet de remplacer que les PDF statiques (pas les .dotx)", () => {
     expect(REPLACEABLE_REGISTRATION_TEMPLATES.map((d) => d.internalFile)).toEqual([
       "criteres-prise-en-charge-2026.pdf",
       "tutoriel-fif-pl-fli.pdf",
+      "criteres-prise-en-charge-guides-montagne-2026.pdf",
       "agefice-demande-prise-en-charge-2025-2026.pdf",
       "agefice-pieces-justificatives-2026.pdf",
     ]);
@@ -126,6 +148,8 @@ describe("registration welcome document templates", () => {
     expect(deno).toContain('delivery: "generated_pdf"');
     expect(deno).toContain("Refus de charger un modèle Word");
     expect(deno).toContain("SKI_MONITOR_STATIC_PACK_DOCUMENTS");
+    expect(deno).toContain("FIFPL_REGLEMENT_MOUNTAIN_GUIDE");
+    expect(deno).toContain("criteres-prise-en-charge-guides-montagne-2026.pdf");
     expect(deno).not.toMatch(
       /buildSkiMonitorWelcomeAttachments[\s\S]*\.dotx/,
     );

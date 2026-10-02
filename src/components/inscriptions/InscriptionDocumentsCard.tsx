@@ -111,6 +111,19 @@ export function InscriptionDocumentsCard({
     fundingOrganization?.toLowerCase().includes("agefice") ||
       observations?.toLowerCase().includes("agefice"),
   );
+  const isGuidePack = Boolean(
+    observations?.toLowerCase().includes("guide de montagne"),
+  );
+  const packTitle = isAgeficePack
+    ? "Pack AGEFICE — documents d’inscription"
+    : isGuidePack
+      ? "Pack FIF-PL guide de montagne — documents d’inscription"
+      : "Pack FIF-PL — documents d’inscription";
+  const packDescription = isAgeficePack
+    ? "Convention et programme en PDF personnalisé. Formulaire de demande AGEFICE et liste des pièces. Pas de critères FIF-PL."
+    : isGuidePack
+      ? "Convention et programme en PDF personnalisé. Critères Guides de montagne 8551ZG et tutoriel FIF-PL."
+      : "Convention et programme en PDF personnalisé (données du stagiaire). Critères FIF-PL et tutoriel en PDF statiques.";
 
   const sentTypes = new Set(sendings.map((s) => s.document_type));
 
@@ -212,6 +225,7 @@ export function InscriptionDocumentsCard({
                 <FormationDocumentDownloadButton
                   documentSending={doc}
                   onPublished={invalidateDocuments}
+                  observations={observations}
                 />
               </li>
             ))}
@@ -221,16 +235,8 @@ export function InscriptionDocumentsCard({
 
       {welcomePack && (
         <SurfaceCard
-          title={
-            isAgeficePack
-              ? "Pack AGEFICE — documents d’inscription"
-              : "Pack moniteur de ski — documents d’inscription"
-          }
-          description={
-            isAgeficePack
-              ? "Convention et programme en PDF personnalisé. Formulaire de demande AGEFICE et liste des pièces. Pas de critères FIF-PL."
-              : "Convention et programme en PDF personnalisé (données du stagiaire). Critères FIF-PL et tutoriel en PDF statiques. Aucun modèle Word vide."
-          }
+          title={packTitle}
+          description={packDescription}
           icon={FileText}
         >
           <ul className="space-y-3">
@@ -270,6 +276,7 @@ export function InscriptionDocumentsCard({
                       documentSending={sentRow}
                       label="PDF"
                       onPublished={invalidateDocuments}
+                      observations={observations}
                     />
                   ) : publicUrl ? (
                     <Button variant="outline" size="sm" asChild>
