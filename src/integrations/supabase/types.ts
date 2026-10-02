@@ -2764,6 +2764,7 @@ export type Database = {
           end_date: string | null
           enrollment_status: string
           format_label: string | null
+          funding_mode: string
           id: string
           instructor_label: string | null
           is_active: boolean
@@ -2774,6 +2775,8 @@ export type Database = {
           modality_key: string
           modality_label: string
           partner_price: number | null
+          partner_price_alt: number | null
+          partner_price_pending: boolean
           partner_school_codes: string[]
           season_id: string | null
           session_code: string | null
@@ -2789,6 +2792,7 @@ export type Database = {
           end_date?: string | null
           enrollment_status?: string
           format_label?: string | null
+          funding_mode?: string
           id?: string
           instructor_label?: string | null
           is_active?: boolean
@@ -2799,6 +2803,8 @@ export type Database = {
           modality_key: string
           modality_label: string
           partner_price?: number | null
+          partner_price_alt?: number | null
+          partner_price_pending?: boolean
           partner_school_codes?: string[]
           season_id?: string | null
           session_code?: string | null
@@ -2814,6 +2820,7 @@ export type Database = {
           end_date?: string | null
           enrollment_status?: string
           format_label?: string | null
+          funding_mode?: string
           id?: string
           instructor_label?: string | null
           is_active?: boolean
@@ -2824,6 +2831,8 @@ export type Database = {
           modality_key?: string
           modality_label?: string
           partner_price?: number | null
+          partner_price_alt?: number | null
+          partner_price_pending?: boolean
           partner_school_codes?: string[]
           season_id?: string | null
           session_code?: string | null

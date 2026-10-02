@@ -1,5 +1,11 @@
 export type EnrollmentStatus = "open" | "waitlist";
 
+/** Mode de financement session (SESSIONS §3). */
+export type SessionFundingMode =
+  | "individuel"
+  | "forfait_ecole"
+  | "fifpl_stagiaire_solde_ecole";
+
 export interface RegistrationOffering {
   id: string;
   season_id: string | null;
@@ -18,7 +24,12 @@ export interface RegistrationOffering {
   instructor_label?: string | null;
   base_price: number;
   partner_price?: number | null;
+  /** Second tarif partenaire (ex. Châtel 800 sans studio). */
+  partner_price_alt?: number | null;
+  /** Tarif partenaire non définitif → inscription sans paiement. */
+  partner_price_pending?: boolean | null;
   partner_school_codes?: string[] | null;
+  funding_mode?: SessionFundingMode | null;
   enrollment_status?: EnrollmentStatus | null;
   sort_order: number;
 }
@@ -38,17 +49,25 @@ export interface DateOption {
 
 /** Tarif appliqué selon l'école (SESSIONS §3.1). */
 export function resolveOfferingPrice(
-  offering: Pick<RegistrationOffering, "base_price" | "partner_price" | "partner_school_codes">,
+  offering: Pick<
+    RegistrationOffering,
+    "base_price" | "partner_price" | "partner_school_codes" | "partner_price_pending"
+  >,
   skiSchoolCode?: string | null
-): number {
-  const partner = offering.partner_price;
+): number | null {
   const codes = offering.partner_school_codes ?? [];
-  if (
-    partner != null &&
-    skiSchoolCode &&
+  const isPartner =
+    Boolean(skiSchoolCode) &&
     skiSchoolCode !== "__autre__" &&
-    codes.includes(skiSchoolCode)
-  ) {
+    codes.includes(skiSchoolCode as string);
+
+  // Châtel §3.6 : partenaire sans tarif définitif → pas de montant unique.
+  if (isPartner && offering.partner_price_pending) {
+    return null;
+  }
+
+  const partner = offering.partner_price;
+  if (isPartner && partner != null) {
     return Number(partner);
   }
   return Number(offering.base_price);
@@ -62,6 +81,51 @@ export function isPartnerSchool(
   return Boolean(
     skiSchoolCode && skiSchoolCode !== "__autre__" && codes.includes(skiSchoolCode)
   );
+}
+
+/** Inscription partenaire sans paiement tant que le tarif n'est pas fixé (Châtel). */
+export function isPartnerPricePending(
+  offering: Pick<
+    RegistrationOffering,
+    "partner_price_pending" | "partner_school_codes" | "partner_price" | "partner_price_alt"
+  >,
+  skiSchoolCode?: string | null
+): boolean {
+  return Boolean(offering.partner_price_pending) && isPartnerSchool(offering, skiSchoolCode);
+}
+
+export function getSessionFundingMode(
+  offering: Pick<RegistrationOffering, "funding_mode"> | null | undefined
+): SessionFundingMode {
+  const mode = offering?.funding_mode;
+  if (mode === "forfait_ecole" || mode === "fifpl_stagiaire_solde_ecole") return mode;
+  return "individuel";
+}
+
+/** Méribel / La Rosière : pas d'option acompte 150 € (décision 02/10). */
+export function hidesDepositPaymentOptions(fundingMode: SessionFundingMode): boolean {
+  return fundingMode === "forfait_ecole" || fundingMode === "fifpl_stagiaire_solde_ecole";
+}
+
+/** La Rosière : calculatrice FIF-PL obligatoire (sert de base part moniteur / solde ESF). */
+export function requiresMandatoryFifplEstimate(fundingMode: SessionFundingMode): boolean {
+  return fundingMode === "fifpl_stagiaire_solde_ecole";
+}
+
+export const CHATEL_PENDING_PRICE_MESSAGE =
+  "Nous attendons la décision de la direction de l'ESF Châtel sur les moyens logistiques. Vos documents de formation (convention, programme, dossier FIF-PL) vous seront envoyés dès que cette décision nous est communiquée.";
+
+export function formatPartnerConditionalPriceHint(
+  offering: Pick<RegistrationOffering, "partner_price" | "partner_price_alt">
+): string {
+  const low = offering.partner_price != null ? Number(offering.partner_price) : null;
+  const high = offering.partner_price_alt != null ? Number(offering.partner_price_alt) : null;
+  if (low != null && high != null && low !== high) {
+    return `${formatPriceEUR(low)} si l'ESF fournit le logement de l'intervenant·e, ${formatPriceEUR(high)} sinon`;
+  }
+  if (low != null) return formatPriceEUR(low);
+  if (high != null) return formatPriceEUR(high);
+  return "tarif à confirmer";
 }
 
 export function isWaitlistOffering(
@@ -78,11 +142,21 @@ export function isOpenOffering(
 
 /** Libellé tarif avant connaissance de l'école. */
 export function formatOfferingPriceHint(
-  offering: Pick<RegistrationOffering, "base_price" | "partner_price" | "partner_school_codes">
+  offering: Pick<
+    RegistrationOffering,
+    | "base_price"
+    | "partner_price"
+    | "partner_price_alt"
+    | "partner_price_pending"
+    | "partner_school_codes"
+  >
 ): string {
   const base = Number(offering.base_price);
   const partner = offering.partner_price != null ? Number(offering.partner_price) : base;
   const hasPartnerList = (offering.partner_school_codes ?? []).length > 0;
+  if (offering.partner_price_pending && hasPartnerList) {
+    return `${formatPartnerConditionalPriceHint(offering)} · ${formatPriceEUR(base)} autres`;
+  }
   if (hasPartnerList && partner !== base) {
     return `${formatPriceEUR(partner)} école partenaire · ${formatPriceEUR(base)} autres`;
   }

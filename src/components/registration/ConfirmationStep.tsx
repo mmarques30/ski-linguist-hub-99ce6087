@@ -135,7 +135,8 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
     REGISTRATION_FUNDING_MAP[data.fundingType] || data.fundingType,
   );
   const coursePrice = data.price ?? 0;
-  const hasPaymentStep = !isCustomFormat && coursePrice > 0 && !isOpco;
+  const pricePending = Boolean(data.pricePending);
+  const hasPaymentStep = !isCustomFormat && coursePrice > 0 && !isOpco && !pricePending;
   // Décision Paula : aucun mode de règlement coché par défaut, donc aucun repli ici.
   const paymentOption = data.paymentOption ?? null;
   const paymentMissing = hasPaymentStep && !paymentOption;
@@ -270,9 +271,11 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                       : " Un email de confirmation vous a été envoyé."
                   : isOpco
                     ? " Aucun règlement n'est demandé pour l'instant : nous analysons votre dossier OPCO et vous recontacterons."
-                    : result.emailSent
-                      ? " Un email de confirmation vous a été envoyé."
-                      : " Notre équipe vous contactera prochainement."}
+                    : pricePending
+                      ? " Votre inscription est enregistrée hors paiement : le tarif partenaire sera confirmé dès la décision de l'ESF Châtel, puis nous vous enverrons le lien de règlement et vos documents."
+                      : result.emailSent
+                        ? " Un email de confirmation vous a été envoyé."
+                        : " Notre équipe vous contactera prochainement."}
             </p>
             <StatusPill tone="warning" className="px-4 py-1.5 text-base">
               Code : {result.inscriptionCode}
@@ -391,6 +394,15 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             <Alert>
               <Phone className="h-4 w-4" />
               <AlertDescription>{OPCO_REGISTER_COPY.confirmationAlert}</AlertDescription>
+            </Alert>
+          )}
+
+          {pricePending && (
+            <Alert>
+              <AlertDescription>
+                En attente tarif (Châtel) : aucun paiement ni convention à l&apos;inscription. Le
+                lien de paiement et vos documents suivront dès fixation du tarif (750 € ou 800 €).
+              </AlertDescription>
             </Alert>
           )}
 

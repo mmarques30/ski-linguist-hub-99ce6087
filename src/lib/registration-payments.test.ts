@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  getAvailablePaymentOptions,
   getRegistrationPaymentSummary,
   hasChequeBalance,
   PAYMENT_OPTION_LABELS,
@@ -86,7 +87,26 @@ describe("modes de règlement /register", () => {
       ...deno.matchAll(/depositAmount:\s*([^,\n]+)/g),
     ].map((m) => m[1].trim());
     expect(matches.filter((v) => v === "FRAIS_DOSSIER_EUR")).toHaveLength(2);
-    expect(matches.filter((v) => v === "null")).toHaveLength(2); // totaux Stripe / virement
+    // totaux Stripe / virement + school_fifpl_cheque
+    expect(matches.filter((v) => v === "null")).toHaveLength(3);
+  });
+
+  it("masque l'acompte 150 € pour Méribel / La Rosière et ajoute le chèque école", () => {
+    const schoolModes = getAvailablePaymentOptions("forfait_ecole");
+    expect(schoolModes).toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL);
+    expect(schoolModes).toContain(REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE);
+    expect(schoolModes).not.toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE);
+
+    const individual = getAvailablePaymentOptions("individuel");
+    expect(individual).toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE);
+    expect(individual).not.toContain(REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE);
+
+    const cheque = getRegistrationPaymentSummary(
+      900,
+      REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE
+    );
+    expect(cheque.amountDueNow).toBe(0);
+    expect(cheque.balanceAfterDossier).toBe(900);
   });
 
   it("écrit deposit_amount à la création d'inscription", () => {

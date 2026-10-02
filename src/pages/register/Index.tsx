@@ -58,6 +58,10 @@ export interface RegistrationData {
   /** BL-029 : date souhaitée quand l'offre choisie n'a pas de session datée. */
   requestedStartDate?: string;
   price?: number;
+  /** Châtel partenaire : tarif non définitif (§3.6). */
+  pricePending?: boolean;
+  /** Mode financement de la session catalogue. */
+  sessionFundingMode?: import("@/lib/registration-offerings").SessionFundingMode;
   isCustomFormat?: boolean;
   customFormatDetails?: string;
 
@@ -106,6 +110,8 @@ export interface RegistrationData {
   opcoCaseNotes?: string;
 
   /** FIFPL — estimation des droits (critères Moniteurs de ski) ; attestation CFP facultative */
+  /** null = pas encore répondu ; true/false = choix « estimer vos droits ? » (sauf La Rosière). */
+  fifplEstimateWanted?: boolean | null;
   fifplStatus?: "independant" | "micro_entrepreneur" | null;
   fifplCfpAttestationYear?: number | null;
   fifplCfpContributionEur?: number | null;

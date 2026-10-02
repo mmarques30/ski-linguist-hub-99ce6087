@@ -144,6 +144,8 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
     onUpdate({
       offeringId: offering.id,
       price: undefined,
+      pricePending: false,
+      sessionFundingMode: offering.funding_mode ?? "individuel",
       duration: String(offering.duration_hours),
       dates: offering.date_label || undefined,
       startDate: offering.start_date || undefined,
@@ -165,6 +167,8 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
     onUpdate({
       offeringId: undefined,
       price: undefined,
+      pricePending: false,
+      sessionFundingMode: undefined,
       duration: "",
       dateKey: "",
       dates: undefined,
