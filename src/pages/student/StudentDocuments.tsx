@@ -1,12 +1,13 @@
 import { StudentLayout } from "@/components/layout/StudentLayout";
 import { FileText, Award } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { CertificatePdfButton } from "@/components/certificates/CertificatePdfButton";
+import { FormationDocumentDownloadButton } from "@/components/documents/FormationDocumentDownloadButton";
 import {
   useStudentProfile,
   useStudentDocuments,
   useStudentCertificates,
 } from "@/hooks/useStudentPortal";
-import { DOCUMENTS_BUCKET } from "@/lib/certificateStorage";
 import { format } from "date-fns";
 import {
   PageHeader,
@@ -31,6 +32,8 @@ const docTypeLabels: Record<string, string> = {
   REGLEMENT: "Critères de prise en charge FIF-PL",
   LIVRET: "Tutoriel FIF-PL",
   FACTURE: "Facture",
+  AGEFICE_DEMANDE: "Demande AGEFICE",
+  AGEFICE_PIECES: "Pièces justificatives AGEFICE",
 };
 
 function isCertificateDoc(type: string | null | undefined): boolean {
@@ -38,10 +41,17 @@ function isCertificateDoc(type: string | null | undefined): boolean {
 }
 
 export default function StudentDocuments() {
+  const queryClient = useQueryClient();
   const { data: student } = useStudentProfile();
   const { data: documents, isLoading } = useStudentDocuments(student?.id);
   const { data: certificates } = useStudentCertificates(student?.id);
   const otherDocuments = (documents || []).filter((d) => !isCertificateDoc(d.document_type));
+
+  const invalidateDocuments = () => {
+    void queryClient.invalidateQueries({
+      queryKey: ["student-documents", student?.id],
+    });
+  };
 
   return (
     <StudentLayout>
@@ -59,7 +69,6 @@ export default function StudentDocuments() {
           </SurfaceCard>
         ) : (
           <div className="space-y-4">
-            {/* Certificates */}
             {certificates && certificates.length > 0 && (
               <SurfaceCard icon={Award} title="Certificats">
                 <ul className="space-y-2">
@@ -84,7 +93,6 @@ export default function StudentDocuments() {
               </SurfaceCard>
             )}
 
-            {/* Documents */}
             <SurfaceCard
               icon={FileText}
               title="Documents de formation"
@@ -111,13 +119,11 @@ export default function StudentDocuments() {
                             Consulté
                           </StatusPill>
                         )}
-                        {d.pdf_url && (
-                          <CertificatePdfButton
-                            pathOrUrl={d.pdf_url}
-                            label="PDF"
-                            bucket={DOCUMENTS_BUCKET}
-                          />
-                        )}
+                        <FormationDocumentDownloadButton
+                          documentSending={d}
+                          label="PDF"
+                          onPublished={invalidateDocuments}
+                        />
                       </div>
                     </li>
                   ))}

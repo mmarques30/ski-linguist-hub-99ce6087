@@ -28,6 +28,7 @@ import { buildSurveyUrl } from "@/lib/client-links";
 import { CopyLinkRow } from "@/components/shared/CopyLinkRow";
 import { getStatusLabel } from "@/lib/inscription-status";
 import { DOCUMENT_TYPE_LABELS } from "@/lib/registration-welcome-documents";
+import { FormationDocumentDownloadButton } from "@/components/documents/FormationDocumentDownloadButton";
 import {
   pisteLabelFromPlacementAnswers,
   studentFacingPisteFromCecrl,
@@ -240,14 +241,20 @@ export default function StudentPortalPreview() {
                   .map((doc) => (
                     <div
                       key={doc.id}
-                      className="rounded-[var(--radius)] border border-border p-3 text-sm"
+                      className="flex flex-col gap-2 rounded-[var(--radius)] border border-border p-3 text-sm sm:flex-row sm:items-center sm:justify-between"
                     >
-                      <p className="font-medium">
-                        {DOCUMENT_TYPE_LABELS[doc.document_type] || doc.document_type}
-                      </p>
-                      <p className="text-muted-foreground tabular">
-                        Envoyé le {format(new Date(doc.sent_at), "dd/MM/yyyy")}
-                      </p>
+                      <div className="min-w-0">
+                        <p className="font-medium">
+                          {DOCUMENT_TYPE_LABELS[doc.document_type] || doc.document_type}
+                        </p>
+                        <p className="text-muted-foreground tabular">
+                          Envoyé le {format(new Date(doc.sent_at), "dd/MM/yyyy")}
+                        </p>
+                      </div>
+                      <FormationDocumentDownloadButton
+                        documentSending={doc}
+                        label="PDF"
+                      />
                     </div>
                   ))}
                 {certificates?.map((cert) => (
