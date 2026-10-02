@@ -26,7 +26,10 @@ import {
   loadInscriptionLetterhead,
   loadInscriptionOrganismSignature,
 } from "../_shared/inscription-documents-assets.ts";
-import { loadSkiMonitorWelcomeDocument } from "../_shared/ski-monitor-welcome-documents.ts";
+import {
+  loadSkiMonitorWelcomeDocument,
+  resolveFifplReglementDocument,
+} from "../_shared/ski-monitor-welcome-documents.ts";
 import { AGEFICE_DOCUMENT_FILES } from "../_shared/agefice-funding.ts";
 import { ORGANIZATION_IDENTITY_KEY } from "../_shared/organization-identity.ts";
 import {
@@ -180,6 +183,8 @@ Deno.serve(async (req) => {
             balance_after_deposit,
             group_size,
             funding_organization,
+            funding_details,
+            observations,
             documents_sent_at,
             student_id,
             students!inscriptions_student_id_fkey (
@@ -358,6 +363,25 @@ Deno.serve(async (req) => {
         const code = inscription.code || "sans-code";
         const neededTypes = PACK_DOCUMENT_TYPES[packId];
         const needsStatic = neededTypes.filter((t) => STATIC_BY_TYPE[t]);
+        const fifplReglement = resolveFifplReglementDocument({
+          observations:
+            typeof (inscription as { observations?: string | null }).observations ===
+            "string"
+              ? (inscription as { observations?: string | null }).observations
+              : null,
+          fundingDetails:
+            typeof (inscription as { funding_details?: string | null }).funding_details ===
+            "string"
+              ? (inscription as { funding_details?: string | null }).funding_details
+              : null,
+        });
+        const staticMetaFor = (type: string) =>
+          type === "REGLEMENT"
+            ? {
+                filename: fifplReglement.filename,
+                internalFile: fifplReglement.internalFile,
+              }
+            : STATIC_BY_TYPE[type];
 
         const [conventionBytes, programmeBytes, ...staticBytes] = await Promise.all([
           renderInscriptionDocumentPdf(conventionModel, {
@@ -366,7 +390,7 @@ Deno.serve(async (req) => {
           }),
           renderInscriptionDocumentPdf(programmeModel, { letterheadPng }),
           ...needsStatic.map((t) =>
-            loadSkiMonitorWelcomeDocument(STATIC_BY_TYPE[t].internalFile, supabase),
+            loadSkiMonitorWelcomeDocument(staticMetaFor(t).internalFile, supabase),
           ),
         ]);
         if (conventionBytes.byteLength < 20_000) {
@@ -394,7 +418,7 @@ Deno.serve(async (req) => {
               bytes: programmeBytes,
             });
           } else {
-            const meta = STATIC_BY_TYPE[type];
+            const meta = staticMetaFor(type);
             const idx = needsStatic.indexOf(type);
             packFiles.push({
               type,

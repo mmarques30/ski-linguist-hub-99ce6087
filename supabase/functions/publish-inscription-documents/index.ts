@@ -19,6 +19,7 @@ import {
 } from "../_shared/inscription-documents-assets.ts";
 import {
   loadSkiMonitorWelcomeDocument,
+  resolveFifplReglementDocument,
   SKI_MONITOR_STATIC_PACK_DOCUMENTS,
 } from "../_shared/ski-monitor-welcome-documents.ts";
 import {
@@ -143,6 +144,8 @@ Deno.serve(async (req) => {
         balance_after_deposit,
         group_size,
         funding_organization,
+        funding_details,
+        observations,
         student_id,
         students!inscriptions_student_id_fkey (
           id,
@@ -262,7 +265,21 @@ Deno.serve(async (req) => {
         filename = programmeFilename(code);
       }
     } else if (STATIC_DOCS[docType]) {
-      const meta = STATIC_DOCS[docType];
+      const meta =
+        docType === "REGLEMENT"
+          ? resolveFifplReglementDocument({
+              observations:
+                typeof (inscription as { observations?: string | null }).observations ===
+                "string"
+                  ? (inscription as { observations?: string | null }).observations
+                  : null,
+              fundingDetails:
+                typeof (inscription as { funding_details?: string | null })
+                  .funding_details === "string"
+                  ? (inscription as { funding_details?: string | null }).funding_details
+                  : null,
+            })
+          : STATIC_DOCS[docType];
       bytes = await loadSkiMonitorWelcomeDocument(meta.internalFile, admin);
       filename = meta.filename;
     } else {
