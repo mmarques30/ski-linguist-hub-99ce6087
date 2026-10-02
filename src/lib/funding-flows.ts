@@ -18,10 +18,15 @@ export type FundingPackId = "fifpl" | "agefice" | "convention_programme";
 /**
  * Quand envoyer le dossier de formation au stagiaire.
  * - after_deposit : après 150 € / paiement intégral confirmé
+ * - after_full_payment : seulement après paiement intégral (pas l'acompte 150 €)
  * - manual : staff / proposition BO (pas d'auto à la soumission)
  * - none : pas de dossier stagiaire (payeur entreprise)
  */
-export type FundingDocumentTrigger = "after_deposit" | "manual" | "none";
+export type FundingDocumentTrigger =
+  | "after_deposit"
+  | "after_full_payment"
+  | "manual"
+  | "none";
 
 export type FundingFlowDefinition = {
   key: FundingFlowKey;
@@ -51,7 +56,7 @@ const CONFIRMATION_OPCO = `Prochaines étapes : aucun règlement n'est demandé 
 
 const CONFIRMATION_COMPANY = `Prochaines étapes : le règlement est pris en charge par votre entreprise / école. Les documents contractuels seront transmis à l'organisme payeur. Vous serez informé·e dès que le planning pourra être organisé.`;
 
-const CONFIRMATION_SELF = `Prochaines étapes : dès confirmation du règlement des frais de dossier de 150&nbsp;€ (ou du paiement intégral), nous vous enverrons votre convention et votre programme de formation à signer et nous retourner.`;
+const CONFIRMATION_SELF = `Prochaines étapes : dès confirmation du règlement de la totalité de la formation, nous vous enverrons votre convention et votre programme de formation à signer et nous retourner.`;
 
 export const FUNDING_FLOWS: Record<FundingFlowKey, FundingFlowDefinition> = {
   fifpl: {
@@ -99,7 +104,7 @@ export const FUNDING_FLOWS: Record<FundingFlowKey, FundingFlowDefinition> = {
     organizationLabel: "Autofinancement",
     packId: "convention_programme",
     dossierEmailSlug: "inscription_documents_self",
-    documentTrigger: "after_deposit",
+    documentTrigger: "after_full_payment",
     autoEnqueueAtSubmitWithoutPayment: false,
     confirmationNextStepsHtml: CONFIRMATION_SELF,
     shortLabel: "Autofinancement",
@@ -161,7 +166,38 @@ export function canAutoEnqueueInscriptionDocuments(
     // Legacy sans libellé : conserver le comportement payeur stagiaire + dépôt.
     return true;
   }
-  return flow.documentTrigger === "after_deposit";
+  return (
+    flow.documentTrigger === "after_deposit" ||
+    flow.documentTrigger === "after_full_payment"
+  );
+}
+
+/**
+ * Le paiement reçu autorise-t-il l'envoi du dossier pour ce financement ?
+ * - after_deposit : acompte ou total
+ * - after_full_payment (autofinancement) : total uniquement
+ */
+export function paymentTriggersDocumentEnqueue(
+  fundingOrganization: string | null | undefined,
+  payment: { status: string; amount: number; payment_type?: string | null },
+): boolean {
+  const status = (payment.status || "").toLowerCase();
+  if (status !== "recu" && status !== "valide") return false;
+  if (!(Number(payment.amount) > 0)) return false;
+
+  const type = (payment.payment_type || "").toLowerCase();
+  const flow = getFundingFlow(fundingOrganization);
+
+  if (!flow) {
+    return type === "acompte" || type === "total";
+  }
+  if (flow.documentTrigger === "after_full_payment") {
+    return type === "total";
+  }
+  if (flow.documentTrigger === "after_deposit") {
+    return type === "acompte" || type === "total";
+  }
+  return false;
 }
 
 /**

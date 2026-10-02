@@ -26,7 +26,7 @@ Le payeur d'une inscription (stagiaire lui-même, école de ski, partenaire) con
 | 2 | inscription_documents | Stagiaire payeur | Repli générique ; préférer 2a/2b/2c | Pack selon financement |
 | 2a | inscription_documents_fifpl | Stagiaire FIFPL | Après 150 € / intégral (+30 min) | Convention, programme, critères FIF-PL, tutoriel |
 | 2b | inscription_documents_agefice | Stagiaire AGEFICE | Après 150 € / intégral (+30 min) | Convention, programme, demande AGEFICE, pièces |
-| 2c | inscription_documents_self | Stagiaire autofinancement | Après 150 € / intégral (+30 min) | Convention, programme |
+| 2c | inscription_documents_self | Stagiaire autofinancement | Après paiement intégral uniquement (+30 min) | Convention, programme |
 | 3 | student_portal_invite | Stagiaire | Manuel (fiche ou masse) ; inactif cette saison | — |
 | 4 | schedule_validation_reminder | info@fli.fr | J-11 à 7 h 15, puis dès J-10 toutes les 2 h de 8 h à 20 h tant que non réparti | — |
 | 5a | invoice_reminder_1 | Payeur | Cron 9 h, échéance + 7 j | — |

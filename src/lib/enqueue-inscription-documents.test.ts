@@ -5,7 +5,10 @@ import {
   DOCUMENT_REMINDER_DELAY_MINUTES,
   qualifiesAsDepositConfirmation,
 } from "./enqueue-inscription-documents";
-import { canAutoEnqueueInscriptionDocuments } from "./funding-flows";
+import {
+  canAutoEnqueueInscriptionDocuments,
+  paymentTriggersDocumentEnqueue,
+} from "./funding-flows";
 
 function source(relatif: string): string {
   return readFileSync(join(process.cwd(), relatif), "utf8");
@@ -52,6 +55,23 @@ describe("enqueue-inscription-documents — règles métier", () => {
     expect(canAutoEnqueueInscriptionDocuments("Entreprise")).toBe(false);
     expect(canAutoEnqueueInscriptionDocuments("FIFPL")).toBe(true);
   });
+
+  it("n'enfile pas le dossier autofinancement sur un acompte 150 €", () => {
+    expect(
+      paymentTriggersDocumentEnqueue("Autofinancement", {
+        status: "recu",
+        amount: 150,
+        payment_type: "acompte",
+      }),
+    ).toBe(false);
+    expect(
+      paymentTriggersDocumentEnqueue("Autofinancement", {
+        status: "recu",
+        amount: 1200,
+        payment_type: "total",
+      }),
+    ).toBe(true);
+  });
 });
 
 describe("enqueue-inscription-documents — copie Deno", () => {
@@ -67,6 +87,7 @@ describe("enqueue-inscription-documents — copie Deno", () => {
       "enqueueInscriptionDocuments",
       "confirmDepositAndEnqueueDocuments",
       "canAutoEnqueueInscriptionDocuments",
+      "paymentTriggersDocumentEnqueue",
     ]) {
       expect(front).toContain(symbol);
       expect(deno).toContain(symbol);
@@ -78,7 +99,7 @@ describe("enqueue-inscription-documents — copie Deno", () => {
     expect(deno).toContain('type !== "acompte"');
     expect(front).toContain('.in("status", ["PENDING", "SENT"])');
     expect(deno).toContain('.in("status", ["PENDING", "SENT"])');
-    expect(front).toContain("canAutoEnqueueInscriptionDocuments");
+    expect(front).toContain("paymentTriggersDocumentEnqueue");
     expect(deno).toContain('from "./funding-flows.ts"');
   });
 });
@@ -92,11 +113,12 @@ describe("dossier après acompte — points d'accroche", () => {
     expect(submit).toContain("confirmationNextStepsHtmlForFunding");
   });
 
-  it("enfile le dossier après confirmation Stripe", () => {
+  it("enfile le dossier après confirmation Stripe seulement si le paiement qualifie", () => {
     const stripe = source(
       "supabase/functions/_shared/record-stripe-checkout-payment.ts"
     );
     expect(stripe).toContain("enqueueInscriptionDocuments");
+    expect(stripe).toContain("paymentTriggersDocumentEnqueue");
     expect(stripe).toContain("after Stripe");
   });
 

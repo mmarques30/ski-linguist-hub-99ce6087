@@ -80,7 +80,7 @@
   "titre": "Dossier de formation — Autofinancement",
   "subject": "Votre dossier de formation {{language}} — {{inscription_code}}",
   "to": "Stagiaire autofinancement",
-  "trig": "Après 150 € / intégral (+30 min). Convention + programme uniquement.",
+  "trig": "Après paiement intégral uniquement (+30 min). Convention + programme uniquement. Pas sur acompte 150 €.",
   "vars": [
    "language",
    "inscription_code",

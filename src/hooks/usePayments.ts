@@ -309,6 +309,11 @@ export function useCreatePayment() {
           supabase,
           inscriptionId: payment.inscription_id,
           paymentDate: payment.payment_date,
+          payment: {
+            status: payment.status,
+            amount: payment.amount,
+            payment_type: payment.payment_type ?? "total",
+          },
         });
       }
 
@@ -377,6 +382,11 @@ export function useMarkPaymentReceived() {
           supabase,
           inscriptionId: params.inscriptionId,
           paymentDate,
+          payment: {
+            status: "recu",
+            amount: params.amount,
+            payment_type: params.paymentType,
+          },
         });
       }
 

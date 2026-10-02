@@ -265,7 +265,9 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                 : result.paymentFlow === "virement" || result.paymentFlow === "stripe"
                   ? fundingFlow?.documentTrigger === "after_deposit"
                     ? " Les documents d'inscription vous seront envoyés par email après confirmation du règlement des frais de dossier (150 €)."
-                    : " Un email de confirmation vous a été envoyé."
+                    : fundingFlow?.documentTrigger === "after_full_payment"
+                      ? " Votre convention et votre programme vous seront envoyés par email après confirmation du règlement de la totalité de la formation."
+                      : " Un email de confirmation vous a été envoyé."
                   : isOpco
                     ? " Aucun règlement n'est demandé pour l'instant : nous analysons votre dossier OPCO et vous recontacterons."
                     : result.emailSent
