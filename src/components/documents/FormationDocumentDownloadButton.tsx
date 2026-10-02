@@ -20,6 +20,9 @@ interface FormationDocumentDownloadButtonProps {
   label?: string;
   /** Après publication réussie (ex. invalider le cache React Query). */
   onPublished?: (pdfPath: string) => void;
+  /** Pour choisir les critères FIF-PL moniteur vs guide quand pdf_url est null. */
+  observations?: string | null;
+  fundingDetails?: string | null;
 }
 
 function openUrl(url: string) {
@@ -43,9 +46,14 @@ export function FormationDocumentDownloadButton({
   documentSending,
   label = "Télécharger",
   onPublished,
+  observations,
+  fundingDetails,
 }: FormationDocumentDownloadButtonProps) {
   const [loading, setLoading] = useState(false);
-  const source = resolveFormationDocumentDownload(documentSending);
+  const source = resolveFormationDocumentDownload(documentSending, {
+    observations,
+    fundingDetails,
+  });
 
   if (source.kind === "stored") {
     return (

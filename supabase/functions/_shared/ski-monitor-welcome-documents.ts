@@ -15,14 +15,24 @@ export interface SkiMonitorWelcomeDocument {
   delivery: SkiMonitorDocumentDelivery;
 }
 
+export const FIFPL_REGLEMENT_SKI_MONITOR: SkiMonitorWelcomeDocument = {
+  documentType: "REGLEMENT",
+  filename: "Criteres de prise en charge Moniteurs de ski 2026.pdf",
+  internalFile: "criteres-prise-en-charge-2026.pdf",
+  label: "Critères de prise en charge Moniteurs de ski 2026",
+  delivery: "static_pdf",
+};
+
+export const FIFPL_REGLEMENT_MOUNTAIN_GUIDE: SkiMonitorWelcomeDocument = {
+  documentType: "REGLEMENT",
+  filename: "Criteres de prise en charge Guides de montagne 2026.pdf",
+  internalFile: "criteres-prise-en-charge-guides-montagne-2026.pdf",
+  label: "Critères de prise en charge Guides de montagne 2026",
+  delivery: "static_pdf",
+};
+
 export const SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS: SkiMonitorWelcomeDocument[] = [
-  {
-    documentType: "REGLEMENT",
-    filename: "Criteres de prise en charge Moniteurs de ski 2026.pdf",
-    internalFile: "criteres-prise-en-charge-2026.pdf",
-    label: "Critères de prise en charge Moniteurs de ski 2026",
-    delivery: "static_pdf",
-  },
+  FIFPL_REGLEMENT_SKI_MONITOR,
   {
     documentType: "CONVENTION",
     filename: "Convention-formation-{code}.pdf",
@@ -45,6 +55,30 @@ export const SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS: SkiMonitorWelcomeDocument[] =
     delivery: "static_pdf",
   },
 ];
+
+export function isMountainGuideFifplContext(params: {
+  observations?: string | null;
+  fundingDetails?: string | null;
+}): boolean {
+  const obs = (params.observations || "").toLowerCase();
+  if (obs.includes("guide de montagne")) return true;
+  const details = (params.fundingDetails || "").toLowerCase();
+  return (
+    details.includes("guide_montagne") ||
+    details.includes("guide de montagne") ||
+    details.includes("8551zg")
+  );
+}
+
+export function resolveFifplReglementDocument(params: {
+  observations?: string | null;
+  fundingDetails?: string | null;
+}): SkiMonitorWelcomeDocument & { internalFile: string } {
+  const doc = isMountainGuideFifplContext(params)
+    ? FIFPL_REGLEMENT_MOUNTAIN_GUIDE
+    : FIFPL_REGLEMENT_SKI_MONITOR;
+  return doc as SkiMonitorWelcomeDocument & { internalFile: string };
+}
 
 /** PDF statiques du pack (critères + tutoriel) — seuls fichiers chargeables depuis le disque. */
 export const SKI_MONITOR_STATIC_PACK_DOCUMENTS = SKI_MONITOR_ONLINE_WELCOME_DOCUMENTS.filter(
