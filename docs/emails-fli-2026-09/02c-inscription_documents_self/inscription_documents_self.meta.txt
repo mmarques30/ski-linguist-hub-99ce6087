@@ -1,0 +1,9 @@
+slug: inscription_documents_self
+titre: Dossier de formation — Autofinancement
+sujet: Votre dossier de formation {{language}} — {{inscription_code}}
+destinataire: Stagiaire (autofinancement)
+declencheur: Après confirmation des 150 € / paiement intégral (+30 min). Pack PJ : convention + programme uniquement (pas de critères / tutoriel organisme).
+variables: language, inscription_code, student_name
+syntaxe: {{variable}}
+expediteur: FLI — France Langues International <noreply@fli.fr>
+reply_to: info@fli.fr

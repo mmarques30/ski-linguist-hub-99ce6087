@@ -11,6 +11,7 @@ import type { FifplQuestionnaire } from "@/lib/fifpl-funding";
 
 export const FUNDING_ORGANIZATION_OPTIONS = [
   { value: "FIFPL", label: "FIFPL" },
+  { value: "AGEFICE", label: "AGEFICE" },
   { value: "OPCO", label: "OPCO" },
   { value: "Entreprise", label: "Entreprise (école de ski)" },
   { value: "Autofinancement", label: "Autofinancement" },

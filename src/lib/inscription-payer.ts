@@ -1,9 +1,9 @@
 /**
  * Payeur d'une inscription — modèle email « Dossier de formation » (inscription_documents).
  *
- * Le dossier FIF-PL ne part que si le stagiaire est lui-même le payeur.
+ * Le dossier de formation ne part que si le stagiaire est lui-même le destinataire
+ * du pack (FIFPL / AGEFICE / Autofinancement / OPCO selon funding-flows).
  * Financement « Entreprise » → l'école / l'employeur paie (modèle 8 plus tard).
- * OPCO / FIFPL / AGEFICE et Autofinancement → le stagiaire reçoit le dossier.
  *
  * `funding_organization` est le libellé stocké sur `inscriptions`
  * (voir REGISTRATION_FUNDING_MAP).

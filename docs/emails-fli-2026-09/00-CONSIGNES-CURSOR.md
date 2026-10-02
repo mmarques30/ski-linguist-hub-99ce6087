@@ -21,9 +21,12 @@ Le payeur d'une inscription (stagiaire lui-même, école de ski, partenaire) con
 
 | # | Slug | Destinataire | Déclencheur | PJ générées par l'app |
 |---|---|---|---|---|
-| 1a | inscription_confirmation_individual | Stagiaire | Inscription soumise, immédiat (synchrone), type individuel | — |
-| 1b | inscription_confirmation_group | Stagiaire | Inscription soumise, immédiat, type collectif | — |
-| 2 | inscription_documents | Stagiaire payeur | 30 min après confirmation du règlement des frais de dossier (150 €) ou du paiement intégral (Stripe / virement BO) ; immédiat à l'inscription seulement si aucun flux de paiement (devis) | Convention, programme (données stagiaire + formation), critères FIF-PL / pack AGEFICE |
+| 1a | inscription_confirmation_individual | Stagiaire | Inscription soumise, immédiat (synchrone), type individuel. Corps « prochaines étapes » via `{{funding_next_steps}}` | — |
+| 1b | inscription_confirmation_group | Stagiaire | Idem, collectif + `{{funding_next_steps}}` | — |
+| 2 | inscription_documents | Stagiaire payeur | Repli générique ; préférer 2a/2b/2c | Pack selon financement |
+| 2a | inscription_documents_fifpl | Stagiaire FIFPL | Après 150 € / intégral (+30 min) | Convention, programme, critères FIF-PL, tutoriel |
+| 2b | inscription_documents_agefice | Stagiaire AGEFICE | Après 150 € / intégral (+30 min) | Convention, programme, demande AGEFICE, pièces |
+| 2c | inscription_documents_self | Stagiaire autofinancement | Après 150 € / intégral (+30 min) | Convention, programme |
 | 3 | student_portal_invite | Stagiaire | Manuel (fiche ou masse) ; inactif cette saison | — |
 | 4 | schedule_validation_reminder | info@fli.fr | J-11 à 7 h 15, puis dès J-10 toutes les 2 h de 8 h à 20 h tant que non réparti | — |
 | 5a | invoice_reminder_1 | Payeur | Cron 9 h, échéance + 7 j | — |

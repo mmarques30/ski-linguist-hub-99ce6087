@@ -1,0 +1,9 @@
+slug: inscription_documents_agefice
+titre: Dossier de formation — AGEFICE
+sujet: Votre dossier de formation {{language}} (AGEFICE) — {{inscription_code}}
+destinataire: Stagiaire (financement AGEFICE)
+declencheur: Après confirmation des 150 € / paiement intégral (+30 min). Pack PJ : convention, programme, formulaire demande AGEFICE, liste des pièces.
+variables: language, inscription_code, student_name
+syntaxe: {{variable}}
+expediteur: FLI — France Langues International <noreply@fli.fr>
+reply_to: info@fli.fr

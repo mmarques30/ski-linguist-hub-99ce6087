@@ -1,15 +1,17 @@
 /**
- * File d'attente modèle 2 (`inscription_documents`).
+ * File d'attente modèle 2 (`inscription_documents` + variantes par financement).
  *
  * Règle Paula : pour les flux avec règlement (Stripe / virement), le dossier
  * part seulement après confirmation du paiement des frais de dossier (150 €)
  * ou du paiement intégral — pas à la soumission d'inscription.
  *
+ * OPCO / Entreprise : pas d'enfilement auto (voir funding-flows).
+ *
  * Miroir front : `src/lib/enqueue-inscription-documents.ts`.
  */
 
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { isStudentPayer } from "./inscription-payer.ts";
+import { canAutoEnqueueInscriptionDocuments } from "./funding-flows.ts";
 
 export const DOCUMENT_REMINDER_DELAY_MINUTES = 30;
 
@@ -34,18 +36,25 @@ export function qualifiesAsDepositConfirmation(
   return Number(payment.amount) > 0;
 }
 
-/**
- * Enfile un rappel DOCUMENT (+30 min) si le payeur est le stagiaire et qu'aucun
- * rappel PENDING/SENT n'existe déjà (idempotent). Un CANCELLED n'empêche pas
- * un nouvel enfilement après confirmation de paiement.
- */
-export async function enqueueInscriptionDocuments(params: {
-  supabase: SupabaseClient;
+export type EnqueueInscriptionDocumentsParams = {
+  /** Client Supabase (service role côté Edge, session staff côté app). */
+  supabase: { from: (table: string) => any };
   inscriptionId: string;
   fundingOrganization?: string | null;
   delayMinutes?: number;
-}): Promise<boolean> {
+};
+
+/**
+ * Enfile un rappel DOCUMENT (+30 min) si le flux financement l'autorise,
+ * le payeur est le stagiaire, et qu'aucun rappel PENDING/SENT n'existe déjà.
+ */
+export async function enqueueInscriptionDocuments(
+  params: EnqueueInscriptionDocumentsParams
+): Promise<boolean> {
   if (!isStudentPayer({ funding_organization: params.fundingOrganization })) {
+    return false;
+  }
+  if (!canAutoEnqueueInscriptionDocuments(params.fundingOrganization)) {
     return false;
   }
 
@@ -87,7 +96,7 @@ export async function enqueueInscriptionDocuments(params: {
  * si besoin, puis enfile le dossier.
  */
 export async function confirmDepositAndEnqueueDocuments(params: {
-  supabase: SupabaseClient;
+  supabase: { from: (table: string) => any };
   inscriptionId: string;
   paymentDate: string;
   fundingOrganization?: string | null;

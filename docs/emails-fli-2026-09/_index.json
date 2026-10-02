@@ -5,7 +5,7 @@
   "titre": "Confirmation d'inscription — dossier individuel",
   "subject": "Votre inscription à la formation {{language}} est confirmée — {{inscription_code}}",
   "to": "Stagiaire",
-  "trig": "Inscription soumise sur /register ; envoi immédiat (synchrone). Variante choisie par le type d'inscription : individuel.",
+  "trig": "Inscription soumise sur /register ; envoi immédiat (synchrone). Variante choisie par le type d'inscription : individuel. Prochaines étapes injectées via funding_next_steps.",
   "vars": [
    "language",
    "inscription_code",
@@ -13,7 +13,8 @@
    "dates_label",
    "course_location",
    "modality_label",
-   "slope_label"
+   "slope_label",
+   "funding_next_steps"
   ]
  },
  {
@@ -22,7 +23,7 @@
   "titre": "Confirmation d'inscription — formation collective",
   "subject": "Votre inscription à la formation {{language}} est confirmée — {{inscription_code}}",
   "to": "Stagiaire",
-  "trig": "Inscription soumise sur /register ; envoi immédiat (synchrone). Variante choisie par le type d'inscription : collectif.",
+  "trig": "Inscription soumise sur /register ; envoi immédiat (synchrone). Variante choisie par le type d'inscription : collectif. Prochaines étapes injectées via funding_next_steps.",
   "vars": [
    "language",
    "inscription_code",
@@ -30,16 +31,56 @@
    "dates_label",
    "course_location",
    "modality_label",
-   "slope_label"
+   "slope_label",
+   "funding_next_steps"
   ]
  },
  {
   "num": "02",
   "slug": "inscription_documents",
-  "titre": "Dossier de formation (documents FIF-PL)",
+  "titre": "Dossier de formation (repli générique)",
   "subject": "Votre dossier de formation {{language}} — {{inscription_code}}",
-  "to": "Stagiaire payeur (uniquement si le payeur de l'inscription est le stagiaire lui-même)",
-  "trig": "Tâche planifiée 30 minutes après l'inscription ; un seul envoi par inscription. Pièces jointes générées par l'app : convention de formation, programme (avec les données du stagiaire et de la formation), critères FIF-PL, tutoriel de demande de prise en charge.",
+  "to": "Stagiaire payeur (fallback)",
+  "trig": "Repli si variante financement inactive. Préférer 02a/02b/02c. OPCO / Entreprise : pas d'envoi auto.",
+  "vars": [
+   "language",
+   "inscription_code",
+   "student_name"
+  ]
+ },
+ {
+  "num": "02a",
+  "slug": "inscription_documents_fifpl",
+  "titre": "Dossier de formation — FIF-PL",
+  "subject": "Votre dossier de formation {{language}} (FIF-PL) — {{inscription_code}}",
+  "to": "Stagiaire FIFPL",
+  "trig": "Après 150 € / intégral (+30 min). Pack critères + tutoriel + convention + programme.",
+  "vars": [
+   "language",
+   "inscription_code",
+   "student_name"
+  ]
+ },
+ {
+  "num": "02b",
+  "slug": "inscription_documents_agefice",
+  "titre": "Dossier de formation — AGEFICE",
+  "subject": "Votre dossier de formation {{language}} (AGEFICE) — {{inscription_code}}",
+  "to": "Stagiaire AGEFICE",
+  "trig": "Après 150 € / intégral (+30 min). Pack demande + pièces + convention + programme.",
+  "vars": [
+   "language",
+   "inscription_code",
+   "student_name"
+  ]
+ },
+ {
+  "num": "02c",
+  "slug": "inscription_documents_self",
+  "titre": "Dossier de formation — Autofinancement",
+  "subject": "Votre dossier de formation {{language}} — {{inscription_code}}",
+  "to": "Stagiaire autofinancement",
+  "trig": "Après 150 € / intégral (+30 min). Convention + programme uniquement.",
   "vars": [
    "language",
    "inscription_code",

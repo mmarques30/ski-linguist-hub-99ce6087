@@ -69,6 +69,7 @@ import {
   isOpcoFunding,
   REGISTRATION_FUNDING_MAP,
 } from "@/lib/registration-utils";
+import { getFundingFlow } from "@/lib/funding-flows";
 import { OPCO_REGISTER_COPY } from "@/lib/opco-funding";
 import {
   estimateFifplRights,
@@ -130,6 +131,9 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
   const isOpco = isOpcoFunding(data.fundingType);
   const isFifpl = isFifplFunding(data.fundingType);
   const isAgefice = isAgeficeFundingType(data.fundingType);
+  const fundingFlow = getFundingFlow(
+    REGISTRATION_FUNDING_MAP[data.fundingType] || data.fundingType,
+  );
   const coursePrice = data.price ?? 0;
   const hasPaymentStep = !isCustomFormat && coursePrice > 0 && !isOpco;
   // Décision Paula : aucun mode de règlement coché par défaut, donc aucun repli ici.
@@ -251,16 +255,22 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             <p className="max-w-md text-sm text-muted-foreground">
               Merci de vous être inscrit chez France Langues International.
               {result.documentsSent
-                ? isAgefice
+                ? fundingFlow?.packId === "agefice"
                   ? " Les documents d'inscription (convention, programme et formulaire AGEFICE) vous seront envoyés par email."
-                  : isFifpl
+                  : fundingFlow?.packId === "fifpl"
                     ? " Les documents d'inscription (convention, programme et critères FIF-PL) vous seront envoyés par email."
-                    : " Les documents d'inscription (convention et programme) vous seront envoyés par email."
+                    : fundingFlow?.packId === "convention_programme"
+                      ? " Votre convention et votre programme de formation vous seront envoyés par email."
+                      : " Les documents d'inscription vous seront envoyés par email."
                 : result.paymentFlow === "virement" || result.paymentFlow === "stripe"
-                  ? " Les documents d'inscription vous seront envoyés par email après confirmation du règlement des frais de dossier (150 €)."
-                  : result.emailSent
-                    ? " Un email de confirmation vous a été envoyé."
-                    : " Notre équipe vous contactera prochainement."}
+                  ? fundingFlow?.documentTrigger === "after_deposit"
+                    ? " Les documents d'inscription vous seront envoyés par email après confirmation du règlement des frais de dossier (150 €)."
+                    : " Un email de confirmation vous a été envoyé."
+                  : isOpco
+                    ? " Aucun règlement n'est demandé pour l'instant : nous analysons votre dossier OPCO et vous recontacterons."
+                    : result.emailSent
+                      ? " Un email de confirmation vous a été envoyé."
+                      : " Notre équipe vous contactera prochainement."}
             </p>
             <StatusPill tone="warning" className="px-4 py-1.5 text-base">
               Code : {result.inscriptionCode}

@@ -1,8 +1,8 @@
 slug: inscription_documents
-titre: Dossier de formation (documents FIF-PL)
+titre: Dossier de formation (repli générique)
 sujet: Votre dossier de formation {{language}} — {{inscription_code}}
-destinataire: Stagiaire payeur (uniquement si le payeur de l'inscription est le stagiaire lui-même)
-declencheur: Tâche planifiée 30 minutes après l'inscription ; un seul envoi par inscription. Pièces jointes générées par l'app : convention de formation, programme (avec les données du stagiaire et de la formation), critères FIF-PL, tutoriel de demande de prise en charge.
+destinataire: Stagiaire payeur (fallback si la variante par financement n'est pas active)
+declencheur: Tâche planifiée +30 min après confirmation 150 € / intégral. Préférer les variantes 02a FIF-PL, 02b AGEFICE, 02c Autofinancement. OPCO / Entreprise : pas d'envoi auto.
 variables: language, inscription_code, student_name
 syntaxe: {{variable}} (option A, substitution dans l'app avant envoi)
 expediteur: FLI — France Langues International <noreply@fli.fr>

@@ -5,6 +5,7 @@ import {
   DOCUMENT_REMINDER_DELAY_MINUTES,
   qualifiesAsDepositConfirmation,
 } from "./enqueue-inscription-documents";
+import { canAutoEnqueueInscriptionDocuments } from "./funding-flows";
 
 function source(relatif: string): string {
   return readFileSync(join(process.cwd(), relatif), "utf8");
@@ -45,6 +46,12 @@ describe("enqueue-inscription-documents — règles métier", () => {
   it("garde le délai +30 min aligné avec le cron", () => {
     expect(DOCUMENT_REMINDER_DELAY_MINUTES).toBe(30);
   });
+
+  it("bloque l'enfilement auto pour OPCO et Entreprise", () => {
+    expect(canAutoEnqueueInscriptionDocuments("OPCO")).toBe(false);
+    expect(canAutoEnqueueInscriptionDocuments("Entreprise")).toBe(false);
+    expect(canAutoEnqueueInscriptionDocuments("FIFPL")).toBe(true);
+  });
 });
 
 describe("enqueue-inscription-documents — copie Deno", () => {
@@ -59,6 +66,7 @@ describe("enqueue-inscription-documents — copie Deno", () => {
       "qualifiesAsDepositConfirmation",
       "enqueueInscriptionDocuments",
       "confirmDepositAndEnqueueDocuments",
+      "canAutoEnqueueInscriptionDocuments",
     ]) {
       expect(front).toContain(symbol);
       expect(deno).toContain(symbol);
@@ -70,15 +78,18 @@ describe("enqueue-inscription-documents — copie Deno", () => {
     expect(deno).toContain('type !== "acompte"');
     expect(front).toContain('.in("status", ["PENDING", "SENT"])');
     expect(deno).toContain('.in("status", ["PENDING", "SENT"])');
+    expect(front).toContain("canAutoEnqueueInscriptionDocuments");
+    expect(deno).toContain('from "./funding-flows.ts"');
   });
 });
 
 describe("dossier après acompte — points d'accroche", () => {
   it("n'envoie plus le dossier à la soumission quand un flux de paiement existe", () => {
     const submit = source("supabase/functions/submit-registration/index.ts");
-    expect(submit).toContain("if (!paymentFields)");
+    expect(submit).toContain("shouldEnqueueDocumentsAtSubmitWithoutPayment");
     expect(submit).toContain("enqueueInscriptionDocuments");
-    expect(submit).toContain("part seulement après confirmation des 150 €");
+    expect(submit).toContain("funding_next_steps");
+    expect(submit).toContain("confirmationNextStepsHtmlForFunding");
   });
 
   it("enfile le dossier après confirmation Stripe", () => {
