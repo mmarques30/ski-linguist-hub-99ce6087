@@ -1,14 +1,19 @@
 /**
- * File d'attente modèle 2 (`inscription_documents`).
+ * File d'attente modèle 2 (`inscription_documents` + variantes par financement).
  *
- * Règle Paula : pour les flux avec règlement (Stripe / virement), le dossier
- * part seulement après confirmation du paiement des frais de dossier (150 €)
- * ou du paiement intégral — pas à la soumission d'inscription.
+ * Règle Paula : pour FIFPL / AGEFICE, le dossier part après confirmation du
+ * paiement des frais de dossier (150 €) ou du paiement intégral.
+ * Autofinancement : seulement après paiement intégral (`total`).
+ * OPCO / Entreprise : pas d'enfilement auto (voir funding-flows).
  *
  * Miroir Edge : `supabase/functions/_shared/enqueue-inscription-documents.ts`.
  */
 
 import { isStudentPayer } from "@/lib/inscription-payer";
+import {
+  canAutoEnqueueInscriptionDocuments,
+  paymentTriggersDocumentEnqueue,
+} from "@/lib/funding-flows";
 
 export const DOCUMENT_REMINDER_DELAY_MINUTES = 30;
 
@@ -19,9 +24,10 @@ export type DepositConfirmingPayment = {
 };
 
 /**
- * Un paiement « reçu » de type acompte ou total confirme le règlement
- * qui autorise l'envoi du dossier (150 € ou intégral).
- * Le solde chèque (`partial`) ne déclenche pas l'envoi.
+ * Un paiement « reçu » de type acompte ou total confirme un règlement
+ * (dépôt 150 € ou intégral). Le solde chèque (`partial`) ne compte pas.
+ * Pour décider d'enfiler le dossier selon le financement, utiliser
+ * `paymentTriggersDocumentEnqueue`.
  */
 export function qualifiesAsDepositConfirmation(
   payment: DepositConfirmingPayment
@@ -43,14 +49,16 @@ export type EnqueueInscriptionDocumentsParams = {
 };
 
 /**
- * Enfile un rappel DOCUMENT (+30 min) si le payeur est le stagiaire et qu'aucun
- * rappel PENDING/SENT n'existe déjà (idempotent). Un CANCELLED n'empêche pas
- * un nouvel enfilement après confirmation de paiement.
+ * Enfile un rappel DOCUMENT (+30 min) si le flux financement l'autorise,
+ * le payeur est le stagiaire, et qu'aucun rappel PENDING/SENT n'existe déjà.
  */
 export async function enqueueInscriptionDocuments(
   params: EnqueueInscriptionDocumentsParams
 ): Promise<boolean> {
   if (!isStudentPayer({ funding_organization: params.fundingOrganization })) {
+    return false;
+  }
+  if (!canAutoEnqueueInscriptionDocuments(params.fundingOrganization)) {
     return false;
   }
 
@@ -89,7 +97,8 @@ export async function enqueueInscriptionDocuments(
 
 /**
  * Après confirmation d'un acompte / paiement intégral : pose `deposit_date`
- * si besoin, puis enfile le dossier.
+ * si besoin, puis enfile le dossier seulement si le paiement déclenche
+ * l'envoi pour ce financement (autofinancement = total uniquement).
  */
 export async function confirmDepositAndEnqueueDocuments(params: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -97,6 +106,7 @@ export async function confirmDepositAndEnqueueDocuments(params: {
   inscriptionId: string;
   paymentDate: string;
   fundingOrganization?: string | null;
+  payment?: DepositConfirmingPayment;
 }): Promise<{ depositDateSet: boolean; documentsEnqueued: boolean }> {
   const { data: inscription } = await params.supabase
     .from("inscriptions")
@@ -119,6 +129,14 @@ export async function confirmDepositAndEnqueueDocuments(params: {
 
   const fundingOrganization =
     params.fundingOrganization ?? inscription.funding_organization ?? null;
+
+  if (
+    params.payment &&
+    !paymentTriggersDocumentEnqueue(fundingOrganization, params.payment)
+  ) {
+    return { depositDateSet, documentsEnqueued: false };
+  }
+
   const documentsEnqueued = await enqueueInscriptionDocuments({
     supabase: params.supabase,
     inscriptionId: params.inscriptionId,

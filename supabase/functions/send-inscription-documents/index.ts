@@ -1,12 +1,12 @@
 /**
- * Modèle 2 — Dossier de formation (inscription_documents).
+ * Modèle 2 — Dossier de formation (variantes par financement).
  *
- * Traite les rappels `scheduled_reminders` de type DOCUMENT dus (file d'attente
- * remplie par submit-registration à +30 min, payeur stagiaire uniquement).
- * Génère convention + programme PDF personnalisés, joint :
- * - FIFPL / moniteur : critères FIF-PL + tutoriel
- * - AGEFICE : demande de prise en charge + pièces justificatives
- * envoie via Resend si le modèle email est actif.
+ * Traite les rappels `scheduled_reminders` de type DOCUMENT dus.
+ * Pack + texte e-mail selon `funding-flows` :
+ * - FIFPL : critères + tutoriel + convention + programme
+ * - AGEFICE : demande + pièces + convention + programme
+ * - Autofinancement : convention + programme seulement
+ * - OPCO / Entreprise : pas d'envoi auto (rappel annulé si présent)
  *
  * Cron inactif par défaut — Paula active depuis /admin/emails.
  */
@@ -26,38 +26,46 @@ import {
   loadInscriptionLetterhead,
   loadInscriptionOrganismSignature,
 } from "../_shared/inscription-documents-assets.ts";
-import {
-  loadSkiMonitorWelcomeDocument,
-  SKI_MONITOR_STATIC_PACK_DOCUMENTS,
-} from "../_shared/ski-monitor-welcome-documents.ts";
-import {
-  AGEFICE_DOCUMENT_FILES,
-  isAgeficeFundingOrganization,
-} from "../_shared/agefice-funding.ts";
+import { loadSkiMonitorWelcomeDocument } from "../_shared/ski-monitor-welcome-documents.ts";
+import { AGEFICE_DOCUMENT_FILES } from "../_shared/agefice-funding.ts";
 import { ORGANIZATION_IDENTITY_KEY } from "../_shared/organization-identity.ts";
+import {
+  dossierEmailSlugsForFunding,
+  getFundingFlow,
+  FUNDING_DOSSIER_EMAIL_FALLBACK_SLUG,
+} from "../_shared/funding-flows.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const TEMPLATE_SLUG = "inscription_documents";
-const CRITERIA_DOC = SKI_MONITOR_STATIC_PACK_DOCUMENTS.find(
-  (d) => d.documentType === "REGLEMENT",
-)!;
-const TUTORIEL_DOC = SKI_MONITOR_STATIC_PACK_DOCUMENTS.find(
-  (d) => d.documentType === "LIVRET",
-)!;
-
-const AGEFICE_DEMANDE_DOC = {
-  type: "AGEFICE_DEMANDE" as const,
-  filename: "AGEFICE-Demande-prise-en-charge-2025-2026.pdf",
-  internalFile: AGEFICE_DOCUMENT_FILES.demandePriseEnCharge,
+const STATIC_BY_TYPE: Record<string, { filename: string; internalFile: string }> = {
+  REGLEMENT: {
+    filename: "Criteres de prise en charge Moniteurs de ski 2026.pdf",
+    internalFile: "criteres-prise-en-charge-2026.pdf",
+  },
+  LIVRET: {
+    filename: "Tutoriel FIF-PL FLI.pdf",
+    internalFile: "tutoriel-fif-pl-fli.pdf",
+  },
+  AGEFICE_DEMANDE: {
+    filename: "AGEFICE-Demande-prise-en-charge-2025-2026.pdf",
+    internalFile: AGEFICE_DOCUMENT_FILES.demandePriseEnCharge,
+  },
+  AGEFICE_PIECES: {
+    filename: "AGEFICE-Pieces-justificatives-2026.pdf",
+    internalFile: AGEFICE_DOCUMENT_FILES.piecesJustificatives,
+  },
 };
-const AGEFICE_PIECES_DOC = {
-  type: "AGEFICE_PIECES" as const,
-  filename: "AGEFICE-Pieces-justificatives-2026.pdf",
-  internalFile: AGEFICE_DOCUMENT_FILES.piecesJustificatives,
+
+const PACK_DOCUMENT_TYPES: Record<
+  "fifpl" | "agefice" | "convention_programme",
+  string[]
+> = {
+  fifpl: ["CONVENTION", "PROGRAMME", "REGLEMENT", "LIVRET"],
+  agefice: ["CONVENTION", "PROGRAMME", "AGEFICE_DEMANDE", "AGEFICE_PIECES"],
+  convention_programme: ["CONVENTION", "PROGRAMME"],
 };
 
 function bytesToBase64(bytes: Uint8Array): string {
@@ -67,6 +75,18 @@ function bytesToBase64(bytes: Uint8Array): string {
     binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
   }
   return btoa(binary);
+}
+
+async function loadDossierTemplate(
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
+  fundingOrganization: string | null,
+) {
+  for (const slug of dossierEmailSlugsForFunding(fundingOrganization)) {
+    const template = await loadEmailTemplate(supabase, slug);
+    if (template) return template;
+  }
+  return null;
 }
 
 Deno.serve(async (req) => {
@@ -93,7 +113,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    const template = await loadEmailTemplate(supabase, TEMPLATE_SLUG);
+    // Au moins un modèle dossier doit être actif (variante ou fallback).
+    const anyTemplate = await loadEmailTemplate(
+      supabase,
+      FUNDING_DOSSIER_EMAIL_FALLBACK_SLUG,
+    );
 
     const nowIso = new Date().toISOString();
     const { data: reminders, error: remError } = await supabase
@@ -110,7 +134,7 @@ Deno.serve(async (req) => {
 
     const results = {
       dryRun,
-      templateActive: Boolean(template),
+      templateActive: Boolean(anyTemplate),
       due: reminders?.length || 0,
       sent: 0,
       skipped: 0,
@@ -119,12 +143,12 @@ Deno.serve(async (req) => {
       errors: [] as string[],
     };
 
-    if (!template) {
+    if (!anyTemplate) {
       results.skipped = results.due;
       return new Response(
         JSON.stringify({
           ...results,
-          message: "Modèle inscription_documents inactif — aucun envoi.",
+          message: "Aucun modèle dossier actif — aucun envoi.",
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -204,10 +228,49 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        const fundingOrg =
+          typeof inscription.funding_organization === "string"
+            ? inscription.funding_organization
+            : null;
+        const flow = getFundingFlow(fundingOrg);
+        const packId = flow?.packId ?? (fundingOrg ? null : "fifpl");
+
+        if (!packId) {
+          await supabase
+            .from("scheduled_reminders")
+            .update({ status: "CANCELLED" })
+            .eq("id", reminder.id);
+          results.cancelled++;
+          results.details.push({
+            reminderId: reminder.id,
+            inscriptionId,
+            action: `ANNULEE - flux ${flow?.key ?? "inconnu"} sans pack auto`,
+          });
+          continue;
+        }
+
+        const template = await loadDossierTemplate(supabase, fundingOrg);
+        if (!template) {
+          results.skipped++;
+          results.details.push({
+            reminderId: reminder.id,
+            inscriptionId,
+            action: "IGNORE - modèle e-mail dossier inactif",
+          });
+          continue;
+        }
+
         const { data: prior } = await supabase
           .from("email_log")
           .select("id")
-          .eq("template_slug", TEMPLATE_SLUG)
+          .in("template_slug", [
+            template.slug,
+            FUNDING_DOSSIER_EMAIL_FALLBACK_SLUG,
+            "inscription_documents_fifpl",
+            "inscription_documents_agefice",
+            "inscription_documents_self",
+            "inscription_documents_opco",
+          ])
           .eq("inscription_id", inscriptionId)
           .eq("status", "sent")
           .limit(1)
@@ -292,62 +355,54 @@ Deno.serve(async (req) => {
           throw new Error("en-tête FLI introuvable (PNG vide)");
         }
 
-        const isAgefice = isAgeficeFundingOrganization(
-          inscription.funding_organization as string | null,
-        );
+        const code = inscription.code || "sans-code";
+        const neededTypes = PACK_DOCUMENT_TYPES[packId];
+        const needsStatic = neededTypes.filter((t) => STATIC_BY_TYPE[t]);
 
-        const [conventionBytes, programmeBytes, staticA, staticB] =
-          await Promise.all([
-            renderInscriptionDocumentPdf(conventionModel, {
-              organismSignaturePng,
-              letterheadPng,
-            }),
-            renderInscriptionDocumentPdf(programmeModel, { letterheadPng }),
-            loadSkiMonitorWelcomeDocument(
-              isAgefice ? AGEFICE_DEMANDE_DOC.internalFile : CRITERIA_DOC.internalFile,
-              supabase,
-            ),
-            loadSkiMonitorWelcomeDocument(
-              isAgefice ? AGEFICE_PIECES_DOC.internalFile : TUTORIEL_DOC.internalFile,
-              supabase,
-            ),
-          ]);
+        const [conventionBytes, programmeBytes, ...staticBytes] = await Promise.all([
+          renderInscriptionDocumentPdf(conventionModel, {
+            organismSignaturePng,
+            letterheadPng,
+          }),
+          renderInscriptionDocumentPdf(programmeModel, { letterheadPng }),
+          ...needsStatic.map((t) =>
+            loadSkiMonitorWelcomeDocument(STATIC_BY_TYPE[t].internalFile, supabase),
+          ),
+        ]);
         if (conventionBytes.byteLength < 20_000) {
           throw new Error(
             `convention trop petite (${conventionBytes.byteLength} o) — signature probablement absente`,
           );
         }
 
-        const code = inscription.code || "sans-code";
-        // PDF personnalisés uniquement — jamais de .dotx Word sans données stagiaire.
         const packFiles: Array<{
-          type:
-            | "CONVENTION"
-            | "PROGRAMME"
-            | "REGLEMENT"
-            | "LIVRET"
-            | "AGEFICE_DEMANDE"
-            | "AGEFICE_PIECES";
+          type: string;
           filename: string;
           bytes: Uint8Array;
-        }> = [
-          { type: "CONVENTION", filename: conventionFilename(code), bytes: conventionBytes },
-          { type: "PROGRAMME", filename: programmeFilename(code), bytes: programmeBytes },
-          isAgefice
-            ? {
-                type: AGEFICE_DEMANDE_DOC.type,
-                filename: AGEFICE_DEMANDE_DOC.filename,
-                bytes: staticA,
-              }
-            : { type: "REGLEMENT", filename: CRITERIA_DOC.filename, bytes: staticA },
-          isAgefice
-            ? {
-                type: AGEFICE_PIECES_DOC.type,
-                filename: AGEFICE_PIECES_DOC.filename,
-                bytes: staticB,
-              }
-            : { type: "LIVRET", filename: TUTORIEL_DOC.filename, bytes: staticB },
-        ];
+        }> = [];
+        for (const type of neededTypes) {
+          if (type === "CONVENTION") {
+            packFiles.push({
+              type,
+              filename: conventionFilename(code),
+              bytes: conventionBytes,
+            });
+          } else if (type === "PROGRAMME") {
+            packFiles.push({
+              type,
+              filename: programmeFilename(code),
+              bytes: programmeBytes,
+            });
+          } else {
+            const meta = STATIC_BY_TYPE[type];
+            const idx = needsStatic.indexOf(type);
+            packFiles.push({
+              type,
+              filename: meta.filename,
+              bytes: staticBytes[idx],
+            });
+          }
+        }
         for (const file of packFiles) {
           if (file.filename.toLowerCase().endsWith(".dotx")) {
             throw new Error(`refus PJ Word : ${file.filename}`);
@@ -364,7 +419,7 @@ Deno.serve(async (req) => {
           results.details.push({
             reminderId: reminder.id,
             inscriptionId,
-            action: `DRY_RUN - ${email} (${attachments.length} PJ PDF)`,
+            action: `DRY_RUN - ${email} (${attachments.length} PJ PDF, ${packId})`,
           });
           continue;
         }
@@ -381,13 +436,15 @@ Deno.serve(async (req) => {
         ).ok;
 
         await supabase.from("email_log").insert({
-          template_slug: TEMPLATE_SLUG,
+          template_slug: template.slug,
           recipient_email: email,
           recipient_name: studentName || null,
           status: sent ? "sent" : "failed",
           inscription_id: inscriptionId,
           variables_used: {
             ...variables,
+            funding_flow: flow?.key ?? "legacy",
+            pack_id: packId,
             attachments: attachments.map((a) => a.filename),
           },
           error_message: sent ? null : "envoi Resend échoué",
@@ -401,14 +458,8 @@ Deno.serve(async (req) => {
               : "") ||
             "";
 
-          const storagePaths: Record<string, string | null> = {
-            CONVENTION: null,
-            PROGRAMME: null,
-            REGLEMENT: null,
-            LIVRET: null,
-            AGEFICE_DEMANDE: null,
-            AGEFICE_PIECES: null,
-          };
+          const storagePaths: Record<string, string | null> = {};
+          for (const t of neededTypes) storagePaths[t] = null;
 
           if (studentId) {
             const basePath = `${studentId}/${inscriptionId}`;
@@ -430,7 +481,6 @@ Deno.serve(async (req) => {
             console.warn("send-inscription-documents: student_id manquant — PDF non stockés");
           }
 
-          // Remplace d'éventuelles lignes sans PDF / anciennes URLs .dotx / ancien pack FIFPL
           await supabase
             .from("document_sendings")
             .delete()
@@ -467,7 +517,7 @@ Deno.serve(async (req) => {
           results.details.push({
             reminderId: reminder.id,
             inscriptionId,
-            action: `ENVOYE - ${email}`,
+            action: `ENVOYE - ${email} (${packId})`,
           });
         } else {
           results.errors.push(`${inscriptionId}: envoi échoué`);

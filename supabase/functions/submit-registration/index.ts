@@ -14,6 +14,10 @@ import {
   resolveInscriptionDates,
 } from "../_shared/registration-dates.ts";
 import { enqueueInscriptionDocuments } from "../_shared/enqueue-inscription-documents.ts";
+import {
+  confirmationNextStepsHtmlForFunding,
+  shouldEnqueueDocumentsAtSubmitWithoutPayment,
+} from "../_shared/funding-flows.ts";
 import { buildAgeficeObservation } from "../_shared/agefice-funding.ts";
 import {
   buildRegistrationAdminNotifyHtml,
@@ -912,6 +916,9 @@ Deno.serve(async (req) => {
           ? paymentLabels[registration.paymentOption] || registration.paymentOption
           : "Devis à établir",
         suivi_url: suiviUrl,
+        funding_next_steps: confirmationNextStepsHtmlForFunding(
+          FUNDING_MAP[registration.fundingType] || registration.fundingType,
+        ),
       };
 
       if (template) {
@@ -943,13 +950,15 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Règle Paula : si un règlement est attendu (Stripe / virement), le dossier
-      // part seulement après confirmation des 150 € (ou du paiement intégral) —
-      // via recordStripeCheckoutPayment ou le BO finance. Sans flux de paiement
-      // (devis OPCO / format personnalisé), on conserve l'enfilement immédiat.
+      // Règle Paula : flux avec règlement → dossier après 150 € / intégral.
+      // OPCO / Entreprise : pas d'enfilement auto (funding-flows).
+      // Autres sans paiement (devis legacy) : enfilement seulement si le flux le permet.
       const fundingOrganization =
         FUNDING_MAP[registration.fundingType] || registration.fundingType || null;
-      if (!paymentFields) {
+      if (
+        !paymentFields &&
+        shouldEnqueueDocumentsAtSubmitWithoutPayment(fundingOrganization)
+      ) {
         try {
           documentsSent = await enqueueInscriptionDocuments({
             supabase,

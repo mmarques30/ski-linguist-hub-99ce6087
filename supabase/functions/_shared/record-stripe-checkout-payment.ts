@@ -6,6 +6,7 @@ import {
   type RegistrationPaymentOption,
 } from "./registration-payments.ts";
 import { enqueueInscriptionDocuments } from "./enqueue-inscription-documents.ts";
+import { paymentTriggersDocumentEnqueue } from "./funding-flows.ts";
 
 export interface StripeCheckoutSessionLike {
   id: string;
@@ -95,13 +96,22 @@ export async function recordStripeCheckoutPayment(
     })
     .eq("id", inscriptionId);
 
-  // Dossier de formation : +30 min après confirmation du règlement (150 € ou intégral).
+  // Dossier : FIFPL/AGEFICE après 150 € ou total ; Autofinancement après total seulement.
   try {
-    await enqueueInscriptionDocuments({
-      supabase,
-      inscriptionId,
-      fundingOrganization: inscription.funding_organization ?? null,
-    });
+    const fundingOrganization = inscription.funding_organization ?? null;
+    if (
+      paymentTriggersDocumentEnqueue(fundingOrganization, {
+        status: "recu",
+        amount: amountPaid,
+        payment_type: resolvedPaymentType,
+      })
+    ) {
+      await enqueueInscriptionDocuments({
+        supabase,
+        inscriptionId,
+        fundingOrganization,
+      });
+    }
   } catch (docError) {
     console.error("enqueue inscription_documents after Stripe:", docError);
   }

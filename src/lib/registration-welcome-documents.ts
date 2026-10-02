@@ -1,3 +1,5 @@
+import { getFundingFlow } from "./funding-flows";
+
 export type RegistrationDocumentDelivery = "static_pdf" | "generated_pdf";
 
 export interface RegistrationWelcomeDocument {
@@ -45,6 +47,27 @@ export const REGISTRATION_WELCOME_DOCUMENTS: RegistrationWelcomeDocument[] = [
     internalFile: "tutoriel-fif-pl-fli.pdf",
     label: "Tutoriel pour la demande de prise en charge FIF-PL",
     delivery: "static_pdf",
+  },
+];
+
+/**
+ * Pack autofinancement : convention + programme uniquement
+ * (pas de critères FIF-PL / tutoriel / formulaire organisme).
+ */
+export const SELF_WELCOME_DOCUMENTS: RegistrationWelcomeDocument[] = [
+  {
+    documentType: "CONVENTION",
+    filename: "Convention-formation-{code}.pdf",
+    internalFile: null,
+    label: "Convention de formation (PDF personnalisé)",
+    delivery: "generated_pdf",
+  },
+  {
+    documentType: "PROGRAMME",
+    filename: "Programme-formation-{code}.pdf",
+    internalFile: null,
+    label: "Programme de formation (PDF personnalisé)",
+    delivery: "generated_pdf",
   },
 ];
 
@@ -192,13 +215,20 @@ export function expectsAgeficeWelcomePack(params: {
   return params.observations?.toLowerCase().includes("agefice") ?? false;
 }
 
-/** Pack à afficher / envoyer selon le financement. */
+/** Pack à afficher / envoyer selon le financement (flux produit). */
 export function resolveWelcomePackDocuments(params: {
   fundingOrganization?: string | null;
   observations?: string | null;
   modality?: string | null;
   courseLocation?: string | null;
 }): RegistrationWelcomeDocument[] | null {
+  const flow = getFundingFlow(params.fundingOrganization);
+  if (flow) {
+    if (flow.packId === "agefice") return AGEFICE_WELCOME_DOCUMENTS;
+    if (flow.packId === "fifpl") return REGISTRATION_WELCOME_DOCUMENTS;
+    if (flow.packId === "convention_programme") return SELF_WELCOME_DOCUMENTS;
+    return null; // opco / company : pas de pack auto
+  }
   if (expectsAgeficeWelcomePack(params)) return AGEFICE_WELCOME_DOCUMENTS;
   if (expectsSkiMonitorWelcomePack(params)) return REGISTRATION_WELCOME_DOCUMENTS;
   return null;

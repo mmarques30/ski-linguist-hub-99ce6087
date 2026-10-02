@@ -9,7 +9,7 @@ Lieu : {{course_location}}
 Modalité : {{modality_label}}
 Votre piste de départ au test de placement : {{slope_label}}
 
-Prochaines étapes : dès confirmation du règlement des frais de dossier de 150 € (ou du paiement intégral), nous vous enverrons les documents de la formation pour que vous puissiez faire votre demande de prise en charge.
+{{funding_next_steps}}
 
 Vous recevrez une convocation 10 jours avant le début de la formation, avec votre groupe, vos horaires et toutes les informations pratiques.
 

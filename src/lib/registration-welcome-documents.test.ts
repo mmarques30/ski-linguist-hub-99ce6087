@@ -55,6 +55,24 @@ describe("registration welcome document templates", () => {
     ).toBe(REGISTRATION_WELCOME_DOCUMENTS);
   });
 
+  it("route un pack distinct par flux financement (funding-flows)", async () => {
+    const { SELF_WELCOME_DOCUMENTS } = await import("./registration-welcome-documents");
+    expect(
+      resolveWelcomePackDocuments({ fundingOrganization: "Autofinancement" }),
+    ).toBe(SELF_WELCOME_DOCUMENTS);
+    expect(SELF_WELCOME_DOCUMENTS.map((d) => d.documentType)).toEqual([
+      "CONVENTION",
+      "PROGRAMME",
+    ]);
+    expect(resolveWelcomePackDocuments({ fundingOrganization: "OPCO" })).toBeNull();
+    expect(
+      resolveWelcomePackDocuments({ fundingOrganization: "Entreprise" }),
+    ).toBeNull();
+    expect(
+      resolveWelcomePackDocuments({ fundingOrganization: "FIFPL" }),
+    ).toBe(REGISTRATION_WELCOME_DOCUMENTS);
+  });
+
   it("ne permet de remplacer que les PDF statiques (pas les .dotx)", () => {
     expect(REPLACEABLE_REGISTRATION_TEMPLATES.map((d) => d.internalFile)).toEqual([
       "criteres-prise-en-charge-2026.pdf",
