@@ -21,6 +21,7 @@ import { format } from "date-fns";
 import { fr, enUS, ptBR } from "date-fns/locale";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { StudentFormDialog } from "@/components/students/StudentFormDialog";
+import { SendStudentEmailDialog } from "@/components/students/SendStudentEmailDialog";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { PortalInvitesBulkCard } from "@/components/students/PortalInvitesBulkCard";
 import {
@@ -232,6 +233,7 @@ export default function Students() {
   const [search, setSearch] = useState(() => searchParams.get("q") || "");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [emailStudent, setEmailStudent] = useState<any>(null);
   const { language, t } = useLanguage();
   const { canEdit } = useUserPermissions();
   const editable = canEdit("students");
@@ -362,10 +364,15 @@ export default function Students() {
         </Button>
       )}
       {studentEmailForSend(student.email) && (
-        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-          <a href={`mailto:${student.email}`} aria-label="Envoyer un e-mail">
-            <Mail className="h-4 w-4" />
-          </a>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => setEmailStudent(student)}
+          aria-label="Envoyer un e-mail"
+          title="Envoyer un e-mail"
+        >
+          <Mail className="h-4 w-4" />
         </Button>
       )}
       {student.phone && (
@@ -583,10 +590,15 @@ export default function Students() {
                   </Button>
                 )}
                 {studentEmailForSend(student.email) && (
-                  <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                    <a href={`mailto:${student.email}`} aria-label="Envoyer un e-mail">
-                      <Mail className="h-4 w-4" />
-                    </a>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setEmailStudent(student)}
+                    aria-label="Envoyer un e-mail"
+                    title="Envoyer un e-mail"
+                  >
+                    <Mail className="h-4 w-4" />
                   </Button>
                 )}
                 {student.phone && (
@@ -786,6 +798,17 @@ export default function Students() {
         onOpenChange={setDialogOpen}
         student={selectedStudent}
       />
+      {emailStudent && studentEmailForSend(emailStudent.email) ? (
+        <SendStudentEmailDialog
+          open={Boolean(emailStudent)}
+          onOpenChange={(open) => {
+            if (!open) setEmailStudent(null);
+          }}
+          to={studentEmailForSend(emailStudent.email)!}
+          recipientName={`${emailStudent.first_name} ${emailStudent.last_name}`.trim()}
+          studentId={emailStudent.id}
+        />
+      ) : null}
     </MainLayout>
   );
 }

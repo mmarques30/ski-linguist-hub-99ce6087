@@ -22,6 +22,7 @@ import type { ReactNode } from "react";
 import { useStudentDetails } from "@/hooks/useStudentDetails";
 import { StudentPortalAccessCard } from "@/components/students/StudentPortalAccessCard";
 import { StudentFormDialog } from "@/components/students/StudentFormDialog";
+import { SendStudentEmailDialog } from "@/components/students/SendStudentEmailDialog";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import {
   studentEmailForSend,
@@ -93,6 +94,7 @@ export default function StudentDetails() {
   const { data: student, isLoading, error } = useStudentDetails(id);
   const { canEdit } = useUserPermissions();
   const [editOpen, setEditOpen] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
   const [historyTab, setHistoryTab] = useState<HistoryTab>("all");
 
   const getInitials = (firstName: string, lastName: string) => {
@@ -322,16 +324,24 @@ export default function StudentDetails() {
                 </Button>
               )}
               {studentEmailForSend(student.email) ? (
-                <Button variant="outline" size="sm" asChild>
-                  <a href={`mailto:${student.email}`}>
-                    <Mail className="mr-2 h-4 w-4" />
-                    Envoyer un email
-                  </a>
+                <Button variant="outline" size="sm" onClick={() => setEmailOpen(true)}>
+                  <Mail className="mr-2 h-4 w-4" />
+                  Envoyer un email
                 </Button>
               ) : null}
             </>
           }
         />
+
+        {studentEmailForSend(student.email) ? (
+          <SendStudentEmailDialog
+            open={emailOpen}
+            onOpenChange={setEmailOpen}
+            to={studentEmailForSend(student.email)!}
+            recipientName={`${student.first_name} ${student.last_name}`.trim()}
+            studentId={student.id}
+          />
+        ) : null}
 
         <StudentPortalAccessCard
           studentId={student.id}
