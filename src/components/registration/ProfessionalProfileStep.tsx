@@ -27,7 +27,12 @@ import {
   resolveSkiSchoolLabel,
 } from "@/lib/ski-school-directory";
 import {
+  CHATEL_PENDING_PRICE_MESSAGE,
+  formatOfferingPriceHint,
+  formatPartnerConditionalPriceHint,
   formatPriceEUR,
+  getSessionFundingMode,
+  isPartnerPricePending,
   isPartnerSchool,
   resolveOfferingPrice,
 } from "@/lib/registration-offerings";
@@ -84,16 +89,34 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
   useEffect(() => {
     if (!selectedOffering || data.isCustomFormat) return;
     if (!schoolReadyForPrice) {
-      if (data.price != null) onUpdate({ price: undefined });
+      if (data.price != null || data.pricePending) {
+        onUpdate({ price: undefined, pricePending: false });
+      }
       return;
     }
     const code =
       data.skiSchoolCode && data.skiSchoolCode !== OTHER_SCHOOL_OPTION
         ? data.skiSchoolCode
         : null;
+    const pending = isPartnerPricePending(selectedOffering, code);
+    if (pending) {
+      if (data.price != null || !data.pricePending) {
+        onUpdate({
+          price: undefined,
+          pricePending: true,
+          sessionFundingMode: getSessionFundingMode(selectedOffering),
+        });
+      }
+      return;
+    }
     const nextPrice = resolveOfferingPrice(selectedOffering, code);
-    if (data.price !== nextPrice) {
-      onUpdate({ price: nextPrice });
+    if (nextPrice == null) return;
+    if (data.price !== nextPrice || data.pricePending) {
+      onUpdate({
+        price: nextPrice,
+        pricePending: false,
+        sessionFundingMode: getSessionFundingMode(selectedOffering),
+      });
     }
   }, [
     selectedOffering,
@@ -140,11 +163,22 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
       stationOrValley: data.stationOrValley,
     });
     const code = isOtherSchool ? null : data.skiSchoolCode;
+    const pending =
+      !!selectedOffering && !data.isCustomFormat && isPartnerPricePending(selectedOffering, code);
     const price =
-      selectedOffering && !data.isCustomFormat
-        ? resolveOfferingPrice(selectedOffering, code)
-        : data.price;
-    onUpdate({ skiSchool: label, price });
+      selectedOffering && !data.isCustomFormat && !pending
+        ? resolveOfferingPrice(selectedOffering, code) ?? undefined
+        : pending
+          ? undefined
+          : data.price;
+    onUpdate({
+      skiSchool: label,
+      price,
+      pricePending: pending,
+      sessionFundingMode: selectedOffering
+        ? getSessionFundingMode(selectedOffering)
+        : data.sessionFundingMode,
+    });
     onNext();
   };
 
@@ -155,6 +189,13 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
           data.skiSchoolCode === OTHER_SCHOOL_OPTION ? null : data.skiSchoolCode
         )
       : undefined;
+  const partnerPending =
+    schoolReadyForPrice &&
+    !!selectedOffering &&
+    isPartnerPricePending(
+      selectedOffering,
+      data.skiSchoolCode === OTHER_SCHOOL_OPTION ? null : data.skiSchoolCode
+    );
   const partnerApplied =
     schoolReadyForPrice &&
     !!selectedOffering &&
@@ -422,7 +463,23 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
         </p>
       )}
 
-      {resolvedPrice != null && selectedOffering && !data.isCustomFormat && (
+      {partnerPending && selectedOffering && (
+        <Alert className="border-primary/20 bg-[hsl(var(--surface-sunken))]">
+          <Euro className="h-4 w-4" />
+          <AlertDescription className="space-y-2">
+            <p>
+              Tarif partenaire (à confirmer) :{" "}
+              <strong>{formatPartnerConditionalPriceHint(selectedOffering)}</strong>
+            </p>
+            <p className="text-sm text-muted-foreground">{CHATEL_PENDING_PRICE_MESSAGE}</p>
+            <p className="text-sm text-muted-foreground">
+              Tarif catalogue : {formatOfferingPriceHint(selectedOffering)}
+            </p>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {resolvedPrice != null && selectedOffering && !data.isCustomFormat && !partnerPending && (
         <Alert className="border-primary/20 bg-[hsl(var(--surface-sunken))]">
           <Euro className="h-4 w-4" />
           <AlertDescription className="flex flex-wrap items-center gap-2">

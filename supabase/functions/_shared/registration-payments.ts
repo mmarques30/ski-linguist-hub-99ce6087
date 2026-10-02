@@ -5,6 +5,7 @@ export const REGISTRATION_PAYMENT_OPTIONS = {
   VIREMENT_DEPOSIT: "virement_deposit",
   STRIPE_FULL: "stripe_full",
   VIREMENT_FULL: "virement_full",
+  SCHOOL_FIFPL_CHEQUE: "school_fifpl_cheque",
 } as const;
 
 export type RegistrationPaymentOption =
@@ -33,12 +34,24 @@ export function getInscriptionPaymentFields(
   paymentMethod: string;
   balanceAfterDeposit: number;
   depositAmount: number | null;
-  paymentFlow: "stripe" | "virement";
+  paymentFlow: "stripe" | "virement" | "none";
   paymentType: "acompte" | "total";
   stripeAmount: number;
   virementAmount: number;
 } {
   const option = normalizePaymentOption(paymentOption);
+
+  if (option === REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE) {
+    return {
+      paymentMethod: "cheque_fifpl_ecole",
+      balanceAfterDeposit: coursePrice,
+      depositAmount: null,
+      paymentFlow: "none",
+      paymentType: "total",
+      stripeAmount: 0,
+      virementAmount: 0,
+    };
+  }
 
   if (option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL) {
     return {

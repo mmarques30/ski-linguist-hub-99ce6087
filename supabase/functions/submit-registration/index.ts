@@ -202,6 +202,8 @@ interface RegistrationPayload {
   expectations: string;
   certification: string;
   paymentOption?: string;
+  /** Châtel partenaire : tarif non définitif (§3.6). */
+  pricePending?: boolean;
   /** BL-027 questionnaire OPCO */
   opcoKnowsOpco?: boolean | null;
   opcoName?: string;
@@ -536,7 +538,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (!isCustomFormat && !isOpco && (registration.price ?? 0) > 0) {
+    if (!isCustomFormat && !isOpco && !registration.pricePending && (registration.price ?? 0) > 0) {
       if (!registration.paymentOption || !isValidPaymentOption(registration.paymentOption)) {
         return new Response(
           JSON.stringify({ success: false, error: "Veuillez choisir un mode de paiement" }),
@@ -574,11 +576,14 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     let price: number | null = registration.price ?? null;
+    let pricePending = Boolean(registration.pricePending);
 
     if (registration.offeringId) {
       const { data: offering } = await supabase
         .from("registration_offerings")
-        .select("base_price, partner_price, partner_school_codes, enrollment_status, is_active")
+        .select(
+          "base_price, partner_price, partner_price_alt, partner_price_pending, partner_school_codes, enrollment_status, is_active, funding_mode"
+        )
         .eq("id", registration.offeringId)
         .maybeSingle();
 
@@ -598,7 +603,14 @@ Deno.serve(async (req) => {
           registration.skiSchoolCode && registration.skiSchoolCode !== "__autre__"
             ? registration.skiSchoolCode
             : null;
-        price = resolveOfferingPrice(offering, skiCode);
+        const resolved = resolveOfferingPrice(offering, skiCode);
+        if (resolved == null) {
+          pricePending = true;
+          price = null;
+        } else {
+          price = resolved;
+          pricePending = false;
+        }
       } else if (price == null) {
         price = null;
       }
@@ -698,6 +710,7 @@ Deno.serve(async (req) => {
     const paymentFields =
       !isCustomFormat &&
       !isOpco &&
+      !pricePending &&
       price != null &&
       price > 0 &&
       registration.paymentOption &&
@@ -715,6 +728,8 @@ Deno.serve(async (req) => {
       [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]:
         "Paiement sécurisé en ligne — montant total",
       [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]: "Paiement intégral virement",
+      [REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE]:
+        "Prise en charge par mon école de ski, chèque FIF-PL à remettre",
       virement:
         "150 € virement + solde chèque avant le début de la formation",
     };
@@ -746,6 +761,9 @@ Deno.serve(async (req) => {
         observations: [
           isCustomFormat
             ? `📋 DEVIS DEMANDÉ — Format personnalisé:\n${registration.customFormatDetails || "(non renseigné)"}`
+            : null,
+          pricePending
+            ? "⏳ EN ATTENTE TARIF — partenaire Châtel (750 € si studio ESF, 800 € sinon). Pas de paiement ni convention tant que le tarif n'est pas fixé."
             : null,
           registration.dateLabel || registration.dates
             ? `Dates: ${registration.dateLabel || registration.dates}`

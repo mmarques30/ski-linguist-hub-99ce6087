@@ -23,6 +23,8 @@ interface FifplCfpSectionProps {
   modality?: string;
   /** Tarif formation (€) — pour estimer la prise en charge sur ce stage. */
   coursePriceEur?: number | null;
+  /** Afficher le bloc reste à charge (calculatrice). false = statut/CFP seulement. */
+  showEstimate?: boolean;
   onChange: (patch: Partial<FifplQuestionnaire>) => void;
 }
 
@@ -30,6 +32,7 @@ export function FifplCfpSection({
   questionnaire,
   modality,
   coursePriceEur,
+  showEstimate = true,
   onChange,
 }: FifplCfpSectionProps) {
   const [analyzing, setAnalyzing] = useState(false);
@@ -297,7 +300,7 @@ export function FifplCfpSection({
         )}
       </div>
 
-      {rights && (
+      {showEstimate && rights && (
         <SummaryPanel>
           <SummaryRow
             label={`Plafond annuel ${FIFPL_CRITERIA_YEAR}`}

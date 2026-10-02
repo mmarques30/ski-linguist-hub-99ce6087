@@ -10,15 +10,24 @@ import {
   CHEQUE_BALANCE_SUMMARY_LABEL,
   FRAIS_DOSSIER_EUR,
   FLI_BANK_DETAILS,
+  getAvailablePaymentOptions,
   getRegistrationPaymentSummary,
   hasChequeBalance,
+  isSchoolFifplCheque,
   PAYMENT_OPTION_DESCRIPTIONS,
   PAYMENT_OPTION_LABELS,
   REGISTRATION_PAYMENT_OPTIONS,
   requiresVirementInstructions,
   type RegistrationPaymentOption,
 } from "@/lib/registration-payments";
-import { formatPriceEUR, isCustomFormatDuration } from "@/lib/registration-offerings";
+import {
+  CHATEL_PENDING_PRICE_MESSAGE,
+  formatPriceEUR,
+  hidesDepositPaymentOptions,
+  isCustomFormatDuration,
+  requiresMandatoryFifplEstimate,
+  type SessionFundingMode,
+} from "@/lib/registration-offerings";
 import { isAgeficeFundingType, isFifplFunding, isOpcoFunding } from "@/lib/registration-utils";
 import {
   OPCO_REGISTER_COPY,
@@ -26,6 +35,7 @@ import {
   type OpcoQuestionnaire,
 } from "@/lib/opco-funding";
 import {
+  estimateFifplRights,
   FIFPL_REGISTER_COPY,
   validateFifplQuestionnaire,
   type FifplQuestionnaire,
@@ -46,26 +56,36 @@ interface PaymentStepProps {
   onNext: () => void;
 }
 
-const paymentOptions: Array<{
-  value: RegistrationPaymentOption;
-  icon: typeof CreditCard;
-}> = [
-  { value: REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE, icon: CreditCard },
-  { value: REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT, icon: Landmark },
-  { value: REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL, icon: Receipt },
-  { value: REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL, icon: Landmark },
-];
+const PAYMENT_OPTION_ICONS: Record<
+  RegistrationPaymentOption,
+  typeof CreditCard
+> = {
+  [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]: CreditCard,
+  [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]: Landmark,
+  [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]: Receipt,
+  [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]: Landmark,
+  [REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE]: FileText,
+};
 
 export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
   const isCustomFormat = data.isCustomFormat || isCustomFormatDuration(data.duration);
   const isOpco = isOpcoFunding(data.fundingType ?? "");
   const isFifpl = isFifplFunding(data.fundingType ?? "");
   const isAgefice = isAgeficeFundingType(data.fundingType ?? "");
+  const fundingMode: SessionFundingMode = data.sessionFundingMode ?? "individuel";
+  const noDepositSession = hidesDepositPaymentOptions(fundingMode);
+  const mandatoryFifplEstimate = requiresMandatoryFifplEstimate(fundingMode);
+  const pricePending = Boolean(data.pricePending);
   const coursePrice = data.price ?? 0;
   const hasPrice = coursePrice > 0;
 
   // Décision Paula : aucun mode de règlement coché par défaut.
   const selectedOption: RegistrationPaymentOption | null = data.paymentOption ?? null;
+
+  const availableOptions = useMemo(
+    () => getAvailablePaymentOptions(fundingMode),
+    [fundingMode]
+  );
 
   const fifplQuestionnaire: FifplQuestionnaire = {
     status: data.fifplStatus ?? null,
@@ -77,6 +97,36 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
     otherFifplAmountAlreadyCoveredEur: data.fifplOtherAmountAlreadyCoveredEur ?? null,
     parseWarnings: data.fifplParseWarnings ?? [],
   };
+
+  const showFifplEstimate =
+    isFifpl &&
+    (mandatoryFifplEstimate || data.fifplEstimateWanted === true);
+
+  const payableAmount = useMemo(() => {
+    if (!isFifpl || !noDepositSession || !showFifplEstimate) return coursePrice;
+    const rights = estimateFifplRights({
+      status: fifplQuestionnaire.status,
+      cfpContributionEur: fifplQuestionnaire.cfpContributionEur,
+      modality: data.modality,
+      alreadyCoveredEur:
+        fifplQuestionnaire.hadOtherFifplTrainingThisYear === true
+          ? fifplQuestionnaire.otherFifplAmountAlreadyCoveredEur
+          : 0,
+      coursePriceEur: coursePrice,
+    });
+    // Part moniteur = montant accord FIF-PL estimé (SESSIONS §3.3 / §3.4).
+    return rights?.coveredOnCourseEur ?? coursePrice;
+  }, [
+    isFifpl,
+    noDepositSession,
+    showFifplEstimate,
+    coursePrice,
+    fifplQuestionnaire.status,
+    fifplQuestionnaire.cfpContributionEur,
+    fifplQuestionnaire.hadOtherFifplTrainingThisYear,
+    fifplQuestionnaire.otherFifplAmountAlreadyCoveredEur,
+    data.modality,
+  ]);
 
   const patchFifpl = (patch: Partial<FifplQuestionnaire>) => {
     const next = { ...fifplQuestionnaire, ...patch };
@@ -93,17 +143,27 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
   };
 
   useEffect(() => {
-    if (isOpco && data.paymentOption) {
+    if ((isOpco || pricePending) && data.paymentOption) {
       onUpdate({ paymentOption: undefined });
     }
-  }, [isOpco, data.paymentOption, onUpdate]);
+  }, [isOpco, pricePending, data.paymentOption, onUpdate]);
+
+  // Si le mode de session change, retire une option devenue invalide (ex. acompte sur Méribel).
+  useEffect(() => {
+    if (
+      selectedOption &&
+      !availableOptions.includes(selectedOption)
+    ) {
+      onUpdate({ paymentOption: undefined });
+    }
+  }, [availableOptions, selectedOption, onUpdate]);
 
   const summary = useMemo(
     () =>
       hasPrice && selectedOption
-        ? getRegistrationPaymentSummary(coursePrice, selectedOption)
+        ? getRegistrationPaymentSummary(payableAmount, selectedOption)
         : null,
-    [coursePrice, hasPrice, selectedOption]
+    [payableAmount, hasPrice, selectedOption]
   );
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -114,8 +174,15 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
         toast.error(error);
         return;
       }
+      if (
+        !mandatoryFifplEstimate &&
+        data.fifplEstimateWanted == null
+      ) {
+        toast.error("Indiquez si vous souhaitez estimer vos droits FIF-PL.");
+        return;
+      }
     }
-    if (!isCustomFormat && hasPrice && !selectedOption) {
+    if (!isCustomFormat && hasPrice && !selectedOption && !pricePending) {
       toast.error("Veuillez choisir un mode de règlement pour continuer.");
       return;
     }
@@ -242,12 +309,16 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
     );
   }
 
-  if (isCustomFormat || !hasPrice) {
+  if (isCustomFormat || !hasPrice || pricePending) {
     const handleContinueWithoutPrice = () => {
       if (isFifpl) {
         const error = validateFifplQuestionnaire(fifplQuestionnaire);
         if (error) {
           toast.error(error);
+          return;
+        }
+        if (!mandatoryFifplEstimate && data.fifplEstimateWanted == null && !pricePending) {
+          toast.error("Indiquez si vous souhaitez estimer vos droits FIF-PL.");
           return;
         }
       }
@@ -262,10 +333,48 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
             description={FIFPL_REGISTER_COPY.sectionDescription}
             icon={FileText}
           >
+            {!mandatoryFifplEstimate && (
+              <div className="mb-4 space-y-3">
+                <Label>Souhaitez-vous estimer vos droits FIF-PL ?</Label>
+                <RadioGroup
+                  value={
+                    data.fifplEstimateWanted === true
+                      ? "yes"
+                      : data.fifplEstimateWanted === false
+                        ? "no"
+                        : ""
+                  }
+                  onValueChange={(value) =>
+                    onUpdate({ fifplEstimateWanted: value === "yes" })
+                  }
+                  className="grid gap-2 xs:grid-cols-2"
+                >
+                  <OptionCard selected={data.fifplEstimateWanted === true}>
+                    <Label
+                      htmlFor="fifpl-est-yes-pending"
+                      className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
+                    >
+                      <RadioGroupItem value="yes" id="fifpl-est-yes-pending" />
+                      Oui
+                    </Label>
+                  </OptionCard>
+                  <OptionCard selected={data.fifplEstimateWanted === false}>
+                    <Label
+                      htmlFor="fifpl-est-no-pending"
+                      className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
+                    >
+                      <RadioGroupItem value="no" id="fifpl-est-no-pending" />
+                      Non
+                    </Label>
+                  </OptionCard>
+                </RadioGroup>
+              </div>
+            )}
             <FifplCfpSection
               questionnaire={fifplQuestionnaire}
               modality={data.modality}
               coursePriceEur={hasPrice ? coursePrice : null}
+              showEstimate={showFifplEstimate}
               onChange={patchFifpl}
             />
           </StepCard>
@@ -273,10 +382,24 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
 
         <StepCard
           title="Paiement"
-          description="Format sur devis — les modalités de paiement vous seront communiquées avec la proposition commerciale."
+          description={
+            pricePending
+              ? "Inscription enregistrée sans paiement — tarif partenaire en attente de décision ESF."
+              : "Format sur devis — les modalités de paiement vous seront communiquées avec la proposition commerciale."
+          }
           icon={Wallet}
         >
-          {null}
+          {pricePending ? (
+            <Alert>
+              <AlertDescription className="space-y-2 text-sm">
+                <p>{CHATEL_PENDING_PRICE_MESSAGE}</p>
+                <p className="text-muted-foreground">
+                  Statut : en attente tarif. Le lien de paiement et vos documents vous seront
+                  envoyés dès que le tarif définitif est fixé.
+                </p>
+              </AlertDescription>
+            </Alert>
+          ) : null}
         </StepCard>
 
         <StepActions>
@@ -324,31 +447,89 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
           description={FIFPL_REGISTER_COPY.sectionDescription}
           icon={FileText}
         >
-          <FifplCfpSection
-            questionnaire={fifplQuestionnaire}
-            modality={data.modality}
-            coursePriceEur={coursePrice}
-            onChange={patchFifpl}
-          />
+          {!mandatoryFifplEstimate && (
+            <div className="mb-4 space-y-3">
+              <Label>Souhaitez-vous estimer vos droits FIF-PL ?</Label>
+              <RadioGroup
+                value={
+                  data.fifplEstimateWanted === true
+                    ? "yes"
+                    : data.fifplEstimateWanted === false
+                      ? "no"
+                      : ""
+                }
+                onValueChange={(value) =>
+                  onUpdate({ fifplEstimateWanted: value === "yes" })
+                }
+                className="grid gap-2 xs:grid-cols-2"
+              >
+                <OptionCard selected={data.fifplEstimateWanted === true}>
+                  <Label
+                    htmlFor="fifpl-est-yes"
+                    className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
+                  >
+                    <RadioGroupItem value="yes" id="fifpl-est-yes" />
+                    Oui
+                  </Label>
+                </OptionCard>
+                <OptionCard selected={data.fifplEstimateWanted === false}>
+                  <Label
+                    htmlFor="fifpl-est-no"
+                    className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
+                  >
+                    <RadioGroupItem value="no" id="fifpl-est-no" />
+                    Non
+                  </Label>
+                </OptionCard>
+              </RadioGroup>
+            </div>
+          )}
+          {(mandatoryFifplEstimate || data.fifplEstimateWanted != null) && (
+            <FifplCfpSection
+              questionnaire={fifplQuestionnaire}
+              modality={data.modality}
+              coursePriceEur={coursePrice}
+              showEstimate={showFifplEstimate}
+              onChange={patchFifpl}
+            />
+          )}
         </StepCard>
       )}
 
       <StepCard
-        title="Frais de dossier et paiement"
-        description={`Les frais de dossier de ${formatPriceEUR(FRAIS_DOSSIER_EUR)} sont déduits du tarif total de la formation (${formatPriceEUR(coursePrice)}).`}
+        title={noDepositSession ? "Paiement de votre part" : "Frais de dossier et paiement"}
+        description={
+          noDepositSession
+            ? `Aucun acompte demandé. Réglez votre part (${formatPriceEUR(payableAmount)}) — montant de l'accord préalable FIF-PL — ou remettez le chèque FIF-PL à votre école.`
+            : `Les frais de dossier de ${formatPriceEUR(FRAIS_DOSSIER_EUR)} sont déduits du tarif total de la formation (${formatPriceEUR(coursePrice)}).`
+        }
         icon={Wallet}
       >
         <div className="space-y-6">
           <SummaryPanel>
-            <SummaryRow label="Tarif formation" value={formatPriceEUR(coursePrice)} />
             <SummaryRow
-              label="Frais de dossier (déduits)"
-              value={`− ${formatPriceEUR(FRAIS_DOSSIER_EUR)}`}
+              label={noDepositSession ? "Votre part (estimée)" : "Tarif formation"}
+              value={formatPriceEUR(payableAmount)}
             />
-            {summary && summary.balanceAfterDossier > 0 && hasChequeBalance(selectedOption) && (
+            {!noDepositSession && (
               <SummaryRow
-                label={CHEQUE_BALANCE_SUMMARY_LABEL}
-                value={formatPriceEUR(summary.balanceAfterDossier)}
+                label="Frais de dossier (déduits)"
+                value={`− ${formatPriceEUR(FRAIS_DOSSIER_EUR)}`}
+              />
+            )}
+            {summary &&
+              summary.balanceAfterDossier > 0 &&
+              hasChequeBalance(selectedOption) &&
+              !isSchoolFifplCheque(selectedOption) && (
+                <SummaryRow
+                  label={CHEQUE_BALANCE_SUMMARY_LABEL}
+                  value={formatPriceEUR(summary.balanceAfterDossier)}
+                />
+              )}
+            {isSchoolFifplCheque(selectedOption) && (
+              <SummaryRow
+                label="Chèque FIF-PL via l'école"
+                value={formatPriceEUR(payableAmount)}
               />
             )}
             <SummaryRow
@@ -367,26 +548,38 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
               }
               className="space-y-3"
             >
-              {paymentOptions.map(({ value, icon: Icon }) => (
-                <OptionCard key={value} selected={selectedOption === value}>
-                  <Label htmlFor={value} className="flex cursor-pointer items-start gap-3 p-4 font-normal">
-                    <RadioGroupItem value={value} id={value} className="mt-1" />
-                    <span className="min-w-0 flex-1 space-y-1">
-                      <span className="flex items-center gap-2 font-medium text-foreground">
-                        <Icon className="h-4 w-4 shrink-0 text-[hsl(var(--tint-gold-fg))]" aria-hidden />
-                        {PAYMENT_OPTION_LABELS[value]}
+              {availableOptions.map((value) => {
+                const Icon = PAYMENT_OPTION_ICONS[value];
+                return (
+                  <OptionCard key={value} selected={selectedOption === value}>
+                    <Label
+                      htmlFor={value}
+                      className="flex cursor-pointer items-start gap-3 p-4 font-normal"
+                    >
+                      <RadioGroupItem value={value} id={value} className="mt-1" />
+                      <span className="min-w-0 flex-1 space-y-1">
+                        <span className="flex items-center gap-2 font-medium text-foreground">
+                          <Icon
+                            className="h-4 w-4 shrink-0 text-[hsl(var(--tint-gold-fg))]"
+                            aria-hidden
+                          />
+                          {PAYMENT_OPTION_LABELS[value]}
+                        </span>
+                        <span className="block text-sm font-normal text-muted-foreground">
+                          {PAYMENT_OPTION_DESCRIPTIONS[value]}
+                        </span>
                       </span>
-                      <span className="block text-sm font-normal text-muted-foreground">
-                        {PAYMENT_OPTION_DESCRIPTIONS[value]}
-                      </span>
-                    </span>
-                  </Label>
-                </OptionCard>
-              ))}
+                    </Label>
+                  </OptionCard>
+                );
+              })}
             </RadioGroup>
           </div>
 
-          {summary && summary.balanceAfterDossier > 0 && hasChequeBalance(selectedOption) && (
+          {summary &&
+            summary.balanceAfterDossier > 0 &&
+            hasChequeBalance(selectedOption) &&
+            !isSchoolFifplCheque(selectedOption) && (
             <Alert>
               <Receipt className="h-4 w-4" />
               <AlertDescription className="space-y-1 text-sm">
@@ -394,6 +587,15 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
                   Chèque de {formatPriceEUR(summary.balanceAfterDossier)} à envoyer avant le début de la formation
                 </p>
                 <p className="text-muted-foreground">{CHEQUE_BALANCE_INSTRUCTION}</p>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isSchoolFifplCheque(selectedOption) && (
+            <Alert>
+              <FileText className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                {PAYMENT_OPTION_DESCRIPTIONS[REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE]}
               </AlertDescription>
             </Alert>
           )}

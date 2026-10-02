@@ -1,4 +1,8 @@
-import { formatPriceEUR } from "@/lib/registration-offerings";
+import {
+  formatPriceEUR,
+  hidesDepositPaymentOptions,
+  type SessionFundingMode,
+} from "@/lib/registration-offerings";
 
 export const FRAIS_DOSSIER_EUR = 150;
 
@@ -7,6 +11,8 @@ export const REGISTRATION_PAYMENT_OPTIONS = {
   VIREMENT_DEPOSIT: "virement_deposit",
   STRIPE_FULL: "stripe_full",
   VIREMENT_FULL: "virement_full",
+  /** Méribel / La Rosière : chèque FIF-PL via l'école, encaissé après la formation. */
+  SCHOOL_FIFPL_CHEQUE: "school_fifpl_cheque",
 } as const;
 
 export type RegistrationPaymentOption =
@@ -27,10 +33,39 @@ export interface RegistrationPaymentSummary {
   amountDueNowLabel: string;
 }
 
+/** Options affichées selon le mode de financement session (SESSIONS §3.3 / §3.4 / §4.8). */
+export function getAvailablePaymentOptions(
+  fundingMode: SessionFundingMode = "individuel"
+): RegistrationPaymentOption[] {
+  if (hidesDepositPaymentOptions(fundingMode)) {
+    return [
+      REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL,
+      REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL,
+      REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE,
+    ];
+  }
+  return [
+    REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE,
+    REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT,
+    REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL,
+    REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL,
+  ];
+}
+
 export function getRegistrationPaymentSummary(
   coursePrice: number,
   option: RegistrationPaymentOption
 ): RegistrationPaymentSummary {
+  if (option === REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE) {
+    return {
+      coursePrice,
+      dossierFee: 0,
+      balanceAfterDossier: coursePrice,
+      amountDueNow: 0,
+      amountDueNowLabel: "Aucun acompte — chèque FIF-PL via l'école",
+    };
+  }
+
   const dossierFee = FRAIS_DOSSIER_EUR;
   const balanceAfterDossier = Math.max(coursePrice - dossierFee, 0);
 
@@ -64,6 +99,9 @@ export const CHEQUE_BALANCE_SUMMARY_LABEL =
 export const CHEQUE_BALANCE_INSTRUCTION =
   "Le chèque pour le solde est à envoyer avant le début de la formation.";
 
+export const SCHOOL_FIFPL_CHEQUE_INSTRUCTION =
+  "Remettez le chèque FIF-PL (montant de l'accord préalable) à votre école de ski. Il sera encaissé après la formation ; l'ESF règle le solde.";
+
 export const PAYMENT_OPTION_LABELS: Record<RegistrationPaymentOption, string> = {
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]:
     "150 € paiement sécurisé en ligne + solde par chèque avant le début de la formation",
@@ -72,6 +110,8 @@ export const PAYMENT_OPTION_LABELS: Record<RegistrationPaymentOption, string> = 
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]:
     "Paiement sécurisé en ligne — montant total",
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]: "Paiement intégral par virement bancaire",
+  [REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE]:
+    "Prise en charge par mon école de ski, chèque FIF-PL à remettre",
 };
 
 export const PAYMENT_OPTION_DESCRIPTIONS: Record<RegistrationPaymentOption, string> = {
@@ -80,16 +120,18 @@ export const PAYMENT_OPTION_DESCRIPTIONS: Record<RegistrationPaymentOption, stri
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]:
     `Effectuez un virement de 150 € pour les frais de dossier. ${CHEQUE_BALANCE_INSTRUCTION}`,
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]:
-    "Réglez la totalité du tarif formation par paiement sécurisé en ligne (plusieurs fois si éligible).",
+    "Réglez la totalité de votre part (montant de l'accord préalable FIF-PL ou tarif formation) par paiement sécurisé en ligne (plusieurs fois si éligible).",
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]:
-    "Effectuez un virement bancaire pour le montant total de la formation.",
+    "Effectuez un virement bancaire pour le montant total de votre part.",
+  [REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE]: SCHOOL_FIFPL_CHEQUE_INSTRUCTION,
 };
 
 export function formatPaymentBreakdown(summary: RegistrationPaymentSummary): string {
-  const lines = [
-    `Tarif formation : ${formatPriceEUR(summary.coursePrice)}`,
-    `Frais de dossier (déduits du total) : ${formatPriceEUR(summary.dossierFee)}`,
-  ];
+  const lines = [`Tarif / part formation : ${formatPriceEUR(summary.coursePrice)}`];
+
+  if (summary.dossierFee > 0) {
+    lines.push(`Frais de dossier (déduits du total) : ${formatPriceEUR(summary.dossierFee)}`);
+  }
 
   if (summary.balanceAfterDossier > 0) {
     lines.push(
@@ -124,6 +166,11 @@ export function requiresVirementInstructions(option: MaybePaymentOption): boolea
 export function hasChequeBalance(option: MaybePaymentOption): boolean {
   return (
     option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE ||
-    option === REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT
+    option === REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT ||
+    option === REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE
   );
+}
+
+export function isSchoolFifplCheque(option: MaybePaymentOption): boolean {
+  return option === REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE;
 }
