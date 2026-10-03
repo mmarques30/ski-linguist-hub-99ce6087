@@ -51,6 +51,16 @@ This is a single-package **Vite + React 18 + TypeScript** SPA (Lovable-generated
   with an `ENOENT` on that temp file. Run them separately.
 - Bun lockfiles (`bun.lock`, `bun.lockb`) are also committed, but this environment uses npm.
 
+### E-mails opérationnels (Paula, 2026-10-03)
+- **Aucun envoi sans validation préalable explicite de Paula** (brouillon montré dans le
+  chat, puis OK clair). Exception : aucun — y compris « tests » Resend.
+- **Paula doit être informée de TOUT mail qui part** :
+  - BCC technique `info@fli.fr` via `sendFliEmail` (`FLI_NOTIFY_BCC`) et tout autre
+    appel Resend ;
+  - et confirmation écrite dans le chat (destinataire, objet, id Resend / journal).
+- **Jamais d’adresse client pour un contrôle technique** — uniquement `info@fli.fr`.
+  Interdit d’envoyer subject/body « test » (ou équivalent) à un destinataire hors FLI.
+
 ### Git / docs (Paula, 2026-09-11)
 - Do **not** modify `docs/BACKLOG.md` or `docs/ETAT_APP_*.md` on working branches.
   Those files are updated in a **separate commit on `main`** after each point is

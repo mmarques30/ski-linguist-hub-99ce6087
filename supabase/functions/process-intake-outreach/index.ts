@@ -57,18 +57,25 @@ async function sendEmail(
     console.error("Adresse @fli.placeholder exclue de tout envoi:", to);
     return false;
   }
+  const toNormalized = to.trim().toLowerCase();
+  const payload: Record<string, unknown> = {
+    from: "FLI Formation <noreply@fli.fr>",
+    to: [to],
+    reply_to: ["info@fli.fr"],
+    subject,
+    html,
+  };
+  // Même règle que sendFliEmail : Paula en BCC sur tout envoi.
+  if (toNormalized !== "info@fli.fr") {
+    payload.bcc = ["info@fli.fr"];
+  }
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${resendApiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      from: "FLI Formation <noreply@fli.fr>",
-      to: [to],
-      subject,
-      html,
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
