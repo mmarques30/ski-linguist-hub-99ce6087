@@ -188,7 +188,7 @@ function buildPaymentTermsLabel(input: {
       input.balanceLabel !== "—" ? input.balanceLabel : input.depositLabel;
     const parts = [
       `Coût pédagogique total : ${input.priceLabel}.`,
-      `Votre part (montant de l'accord préalable FIF-PL) : ${moniteurShare} — chèque FIF-PL à remettre à FLI via votre école de ski (encaissé après la formation).`,
+      `Votre part (montant de l'accord préalable FIF-PL) : ${moniteurShare} — chèque FIF-PL à l'ordre de France Langues International, à envoyer à : France Langues International — 25 avenue de la Gare, 73800 Montmélian (ou à remettre via votre école de ski ; encaissé après la formation).`,
     ];
     if (input.schoolShareLabel && input.schoolShareLabel !== "—") {
       parts.push(
@@ -198,9 +198,6 @@ function buildPaymentTermsLabel(input: {
     if (input.fundingLabel && input.fundingLabel !== "—") {
       parts.push(`Financement : ${input.fundingLabel}.`);
     }
-    parts.push(
-      "En cas de refus ou de réduction ultérieure du FIF-PL, la différence reste à votre charge, jamais à celle de l'ESF."
-    );
     return parts.join(" ");
   }
 

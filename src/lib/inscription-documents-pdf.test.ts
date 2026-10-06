@@ -340,9 +340,12 @@ describe("PDF dossier inscription", () => {
     expect(model.balanceLabel).toContain("900");
     expect(model.paymentTermsLabel).toMatch(/900/);
     expect(model.paymentTermsLabel).toMatch(/600/);
+    expect(model.paymentTermsLabel).toMatch(/1\s?500|1500/);
     expect(model.paymentTermsLabel).toMatch(/chèque FIF-PL/i);
+    expect(model.paymentTermsLabel).toMatch(/25 avenue de la Gare/);
+    expect(model.paymentTermsLabel).toMatch(/73800 Montmélian/);
     expect(model.paymentTermsLabel).toMatch(/ESF/);
-    expect(model.paymentTermsLabel).toMatch(/jamais à celle de l'ESF/);
+    expect(model.paymentTermsLabel).not.toMatch(/jamais à celle de l'ESF/);
   });
 
   it("construit le programme en ligne Version 2 (texte Paula)", async () => {
