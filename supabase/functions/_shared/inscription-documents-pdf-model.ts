@@ -232,7 +232,7 @@ function buildPaymentTermsLabel(input: {
       input.balanceLabel !== "—" ? input.balanceLabel : input.priceLabel;
     const parts = [
       `Coût pédagogique total : ${input.priceLabel}.`,
-      `Votre part (montant de l'accord préalable FIF-PL) : ${moniteurShare} — règlement au choix : (1) règlement intégral en ligne ; (2) chèque FIF-PL à l'ordre de France Langues International, à envoyer à : France Langues International — 25 avenue de la Gare, 73800 Montmélian (encaissé après la formation).`,
+      `Votre part : ${moniteurShare} — règlement au choix : (1) règlement intégral en ligne ; (2) chèque FIF-PL à l'ordre de France Langues International, à envoyer à : France Langues International — 25 avenue de la Gare, 73800 Montmélian (encaissé après la formation).`,
     ];
     if (input.schoolShareLabel && input.schoolShareLabel !== "—") {
       parts.push(

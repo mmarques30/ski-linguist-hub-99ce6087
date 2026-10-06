@@ -511,7 +511,7 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
         title={noDepositSession ? "Paiement de votre part" : "Frais de dossier et paiement"}
         description={
           noDepositSession
-            ? `Aucun acompte demandé. Réglez votre part (${formatPriceEUR(payableAmount)}) — montant de l'accord préalable FIF-PL — en ligne, ou envoyez le chèque FIF-PL à FLI (Montmélian).`
+            ? `Aucun acompte demandé. Réglez votre part (${formatPriceEUR(payableAmount)}) en ligne, ou envoyez le chèque FIF-PL à FLI (Montmélian).`
             : `Les frais de dossier de ${formatPriceEUR(FRAIS_DOSSIER_EUR)} sont déduits du tarif total de la formation (${formatPriceEUR(coursePrice)}).`
         }
         icon={Wallet}

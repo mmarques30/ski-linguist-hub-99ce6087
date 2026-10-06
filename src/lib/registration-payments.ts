@@ -146,7 +146,7 @@ export const CHEQUE_BALANCE_INSTRUCTION =
   "Le chèque pour le solde est à envoyer avant le début de la formation.";
 
 export const SCHOOL_FIFPL_CHEQUE_INSTRUCTION =
-  "Envoyez le chèque FIF-PL (montant de l'accord préalable) à l'ordre de France Langues International, à : France Langues International — 25 avenue de la Gare, 73800 Montmélian. Il sera encaissé après la formation ; l'ESF règle le solde de son côté.";
+  "Envoyez le chèque FIF-PL (votre part) à l'ordre de France Langues International, à : France Langues International — 25 avenue de la Gare, 73800 Montmélian. Il sera encaissé après la formation ; l'ESF règle le solde de son côté.";
 
 export const PAYMENT_OPTION_LABELS: Record<RegistrationPaymentOption, string> = {
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]:
@@ -168,7 +168,7 @@ export const PAYMENT_OPTION_DESCRIPTIONS: Record<RegistrationPaymentOption, stri
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]:
     `Effectuez un virement de 150 € pour les frais de dossier. ${CHEQUE_BALANCE_INSTRUCTION}`,
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]:
-    "Réglez la totalité de votre part (montant de l'accord préalable FIF-PL ou tarif formation) par paiement sécurisé en ligne — carte ou Klarna si éligible.",
+    "Réglez la totalité de votre part par paiement sécurisé en ligne — carte ou Klarna si éligible.",
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X]:
     `Même prix qu'en une fois — 3 échéances via Klarna (à partir de ${formatPriceEUR(STRIPE_KLARNA_3X_MIN_EUR)}). Réservé aux particuliers ; pas pour une entreprise ou une ESF.`,
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]:
