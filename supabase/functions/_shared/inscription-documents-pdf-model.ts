@@ -176,7 +176,31 @@ function buildPaymentTermsLabel(input: {
   balanceLabel: string;
   payment_method?: string | null;
   fundingLabel: string;
+  /** Part moniteur (chèque FIF-PL) quand le solde est facturé à l'école. */
+  schoolShareLabel?: string | null;
 }): string {
+  const methodRaw = (input.payment_method || "").toLowerCase();
+  const schoolFifplCheque =
+    methodRaw.includes("cheque_fifpl_ecole") || methodRaw.includes("school_fifpl");
+
+  if (schoolFifplCheque) {
+    const moniteurShare =
+      input.balanceLabel !== "—" ? input.balanceLabel : input.depositLabel;
+    const parts = [
+      `Coût pédagogique total : ${input.priceLabel}.`,
+      `Votre part (montant de l'accord préalable FIF-PL) : ${moniteurShare} — chèque FIF-PL à l'ordre de France Langues International, à envoyer à : France Langues International — 25 avenue de la Gare, 73800 Montmélian (ou à remettre via votre école de ski ; encaissé après la formation).`,
+    ];
+    if (input.schoolShareLabel && input.schoolShareLabel !== "—") {
+      parts.push(
+        `Solde école : ${input.schoolShareLabel} — facturé à l'ESF (convention école).`
+      );
+    }
+    if (input.fundingLabel && input.fundingLabel !== "—") {
+      parts.push(`Financement : ${input.fundingLabel}.`);
+    }
+    return parts.join(" ");
+  }
+
   const method = paymentMethodLabelFr(input.payment_method);
   const parts = [
     `Coût pédagogique total : ${input.priceLabel}.`,
@@ -186,7 +210,7 @@ function buildPaymentTermsLabel(input: {
   if (input.fundingLabel && input.fundingLabel !== "—") {
     parts.push(`Financement : ${input.fundingLabel}.`);
   }
-  if ((input.payment_method || "").toLowerCase().includes("virement")) {
+  if (methodRaw.includes("virement")) {
     parts.push(
       "Le solde peut être réglé par chèque avant le début de la formation, sauf paiement intégral."
     );
@@ -361,6 +385,18 @@ function balanceAmount(row: InscriptionDocumentsRow): number | null {
   return price - deposit;
 }
 
+/** Solde facturé à l'école = tarif − part moniteur (chèque FIF-PL école). */
+function schoolShareAmount(row: InscriptionDocumentsRow): number | null {
+  const method = (row.payment_method || "").toLowerCase();
+  if (!method.includes("cheque_fifpl_ecole") && !method.includes("school_fifpl")) {
+    return null;
+  }
+  const price = asNumber(row.price);
+  const moniteurShare = balanceAmount(row);
+  if (price == null || moniteurShare == null) return null;
+  return Math.max(0, price - moniteurShare);
+}
+
 const PROGRAMME_SECTIONS: Array<{ title: string; paragraphs: string[] }> = [
   {
     title: "Objectifs",
@@ -486,6 +522,7 @@ export function buildConventionPdfModel(input: {
     balanceLabel,
     payment_method: input.inscription.payment_method,
     fundingLabel,
+    schoolShareLabel: formatEuros(schoolShareAmount(input.inscription)),
   });
 
   const sections = online
@@ -637,6 +674,7 @@ export function buildProgrammePdfModel(input: {
       balanceLabel,
       payment_method: input.inscription.payment_method,
       fundingLabel,
+      schoolShareLabel: formatEuros(schoolShareAmount(input.inscription)),
     }),
     organization,
     organizationAddress: formatOrganizationAddress(organization),
