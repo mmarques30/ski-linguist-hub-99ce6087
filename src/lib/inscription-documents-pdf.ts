@@ -5,8 +5,8 @@
 
 import {
   CONDITIONS_GENERALES_PROVENANCE,
-  CONDITIONS_GENERALES_SECTIONS,
   CONDITIONS_GENERALES_TITLE,
+  conditionsGeneralesSectionsForConvention,
 } from "./conditions-generales-content";
 import {
   fliDocumentFooterLines,
@@ -69,6 +69,12 @@ export type InscriptionDocumentPdfModel = {
   balanceLabel: string;
   fundingLabel: string;
   paymentTermsLabel: string;
+  /** Masque la ligne Acompte et les CGV « 150 € » (Méribel / La Rosière). */
+  hideDepositFee?: boolean;
+  /** Libellé de la ligne solde / part moniteur. */
+  balanceRowLabel?: string;
+  /** La Rosière : montant facturé à l'ESF (ligne Conditions financières). */
+  schoolCoverageLabel?: string | null;
   organization: OrganizationIdentity;
   organizationAddress: string;
   organizationLegalLines: string[];
@@ -170,6 +176,42 @@ function buildDatesLabel(input: {
   };
 }
 
+function foldLocationKey(value: string | null | undefined): string {
+  return (value || "")
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase();
+}
+
+/** Stations partenaire sans acompte 150 € (SESSIONS §3.3 / §3.4). */
+export function isPartnerSchoolStationLocation(
+  location: string | null | undefined
+): boolean {
+  const loc = foldLocationKey(location);
+  return loc.includes("rosiere") || loc.includes("meribel");
+}
+
+export function isLaRosiereStationLocation(
+  location: string | null | undefined
+): boolean {
+  return foldLocationKey(location).includes("rosiere");
+}
+
+export function isSchoolFifplChequeMethod(
+  paymentMethod: string | null | undefined
+): boolean {
+  const method = (paymentMethod || "").toLowerCase();
+  return method.includes("cheque_fifpl_ecole") || method.includes("school_fifpl");
+}
+
+/** Convention moniteur ESF Méribel / La Rosière : pas de frais de dossier 150 €. */
+export function isSchoolStationConvention(row: InscriptionDocumentsRow): boolean {
+  return (
+    isSchoolFifplChequeMethod(row.payment_method) ||
+    isPartnerSchoolStationLocation(row.course_location)
+  );
+}
+
 function buildPaymentTermsLabel(input: {
   priceLabel: string;
   depositLabel: string;
@@ -178,10 +220,11 @@ function buildPaymentTermsLabel(input: {
   fundingLabel: string;
   /** Part moniteur (chèque FIF-PL) quand le solde est facturé à l'école. */
   schoolShareLabel?: string | null;
+  /** Méribel / La Rosière : ne pas mentionner les 150 €. */
+  omitDossierFee?: boolean;
 }): string {
   const methodRaw = (input.payment_method || "").toLowerCase();
-  const schoolFifplCheque =
-    methodRaw.includes("cheque_fifpl_ecole") || methodRaw.includes("school_fifpl");
+  const schoolFifplCheque = isSchoolFifplChequeMethod(input.payment_method);
 
   if (schoolFifplCheque) {
     const moniteurShare =
@@ -192,7 +235,7 @@ function buildPaymentTermsLabel(input: {
     ];
     if (input.schoolShareLabel && input.schoolShareLabel !== "—") {
       parts.push(
-        `Solde école : ${input.schoolShareLabel} — facturé à l'ESF (convention école).`
+        `Prise en charge ESF : ${input.schoolShareLabel} — facturé à l'ESF (convention école).`
       );
     }
     if (input.fundingLabel && input.fundingLabel !== "—") {
@@ -202,6 +245,20 @@ function buildPaymentTermsLabel(input: {
   }
 
   const method = paymentMethodLabelFr(input.payment_method);
+
+  if (input.omitDossierFee) {
+    const parts = [`Coût pédagogique total : ${input.priceLabel}.`];
+    if (input.balanceLabel !== "—" && input.balanceLabel !== input.priceLabel) {
+      parts.push(`Votre part : ${input.balanceLabel} (mode : ${method}).`);
+    } else {
+      parts.push(`Règlement : ${method} — aucun frais de dossier.`);
+    }
+    if (input.fundingLabel && input.fundingLabel !== "—") {
+      parts.push(`Financement : ${input.fundingLabel}.`);
+    }
+    return parts.join(" ");
+  }
+
   const parts = [
     `Coût pédagogique total : ${input.priceLabel}.`,
     `Frais de dossier / acompte : ${input.depositLabel} (mode : ${method}).`,
@@ -387,8 +444,7 @@ function balanceAmount(row: InscriptionDocumentsRow): number | null {
 
 /** Solde facturé à l'école = tarif − part moniteur (chèque FIF-PL école). */
 function schoolShareAmount(row: InscriptionDocumentsRow): number | null {
-  const method = (row.payment_method || "").toLowerCase();
-  if (!method.includes("cheque_fifpl_ecole") && !method.includes("school_fifpl")) {
+  if (!isSchoolFifplChequeMethod(row.payment_method)) {
     return null;
   }
   const price = asNumber(row.price);
@@ -516,13 +572,20 @@ export function buildConventionPdfModel(input: {
   const depositLabel = formatEuros(input.inscription.deposit_amount);
   const balanceLabel = formatEuros(balanceAmount(input.inscription));
   const fundingLabel = texte(input.inscription.funding_organization) || "—";
+  const schoolStation = isSchoolStationConvention(input.inscription);
+  const laRosiere = isLaRosiereStationLocation(input.inscription.course_location);
+  const schoolShareLabel = formatEuros(schoolShareAmount(input.inscription));
   const paymentTermsLabel = buildPaymentTermsLabel({
     priceLabel,
     depositLabel,
     balanceLabel,
     payment_method: input.inscription.payment_method,
     fundingLabel,
-    schoolShareLabel: formatEuros(schoolShareAmount(input.inscription)),
+    schoolShareLabel,
+    omitDossierFee: schoolStation,
+  });
+  const cgvSections = conditionsGeneralesSectionsForConvention({
+    omitDossierFee: schoolStation,
   });
 
   const sections = online
@@ -560,7 +623,7 @@ export function buildConventionPdfModel(input: {
           title: CONDITIONS_GENERALES_TITLE,
           paragraphs: [CONDITIONS_GENERALES_PROVENANCE],
         },
-        ...CONDITIONS_GENERALES_SECTIONS.map((s) => ({
+        ...cgvSections.map((s) => ({
           title: s.title,
           paragraphs: s.paragraphs,
         })),
@@ -594,6 +657,10 @@ export function buildConventionPdfModel(input: {
     balanceLabel,
     fundingLabel,
     paymentTermsLabel,
+    hideDepositFee: schoolStation,
+    balanceRowLabel: schoolStation ? "Votre part" : "Solde",
+    schoolCoverageLabel:
+      laRosiere && schoolShareLabel !== "—" ? schoolShareLabel : null,
     organization,
     organizationAddress: formatOrganizationAddress(organization),
     organizationLegalLines: organizationLegalMentions(organization),

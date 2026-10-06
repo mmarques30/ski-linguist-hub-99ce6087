@@ -345,7 +345,64 @@ describe("PDF dossier inscription", () => {
     expect(model.paymentTermsLabel).toMatch(/25 avenue de la Gare/);
     expect(model.paymentTermsLabel).toMatch(/73800 Montmélian/);
     expect(model.paymentTermsLabel).toMatch(/ESF/);
+    expect(model.paymentTermsLabel).toMatch(/Prise en charge ESF/);
     expect(model.paymentTermsLabel).not.toMatch(/jamais à celle de l'ESF/);
+    expect(model.paymentTermsLabel).not.toMatch(/150/);
+    expect(model.paymentTermsLabel).not.toMatch(/frais de dossier/i);
+    expect(model.hideDepositFee).toBe(true);
+    expect(model.balanceRowLabel).toBe("Votre part");
+    expect(model.schoolCoverageLabel).toMatch(/600/);
+    expect(
+      model.sections.some(
+        (s) =>
+          s.title === "Tarif et règlement" &&
+          s.paragraphs.some((p) => p.includes("Aucun frais de dossier"))
+      )
+    ).toBe(true);
+    expect(
+      model.sections.some(
+        (s) =>
+          s.title === "Tarif et règlement" &&
+          s.paragraphs.some((p) => p.includes("150 €"))
+      )
+    ).toBe(false);
+  });
+
+  it("masque les 150 € sur convention Méribel (forfait école)", () => {
+    const model = buildConventionPdfModel({
+      inscription: {
+        code: "FLI-260099",
+        language: "Anglais",
+        start_date: "2026-11-30",
+        end_date: "2026-12-04",
+        duration_hours: 24,
+        course_location: "ESF Méribel",
+        modality: "presentiel",
+        price: 900,
+        deposit_amount: null,
+        balance_after_deposit: 900,
+        group_size: 8,
+        funding_organization: "FIFPL",
+        payment_method: "stripe",
+      },
+      student: {
+        first_name: "Test",
+        last_name: "Meribel",
+        company: "ESF Méribel",
+      },
+      identity: IDENTITY,
+    });
+    expect(model.hideDepositFee).toBe(true);
+    expect(model.schoolCoverageLabel).toBeNull();
+    expect(model.paymentTermsLabel).not.toMatch(/150/);
+    expect(model.paymentTermsLabel).toMatch(/aucun frais de dossier/i);
+    expect(
+      model.sections.some(
+        (s) =>
+          s.title === "Tarif et règlement" &&
+          s.paragraphs.some((p) => p.includes("150 €"))
+      )
+    ).toBe(false);
   });
 
   it("construit le programme en ligne Version 2 (texte Paula)", async () => {
@@ -433,6 +490,15 @@ describe("PDF dossier inscription", () => {
     expect(extraire(deno, "buildProgrammePdfModel")).toBe(
       extraire(front, "buildProgrammePdfModel")
     );
+    expect(extraire(deno, "isSchoolStationConvention")).toBe(
+      extraire(front, "isSchoolStationConvention")
+    );
+
+    const frontCgv = source("src/lib/conditions-generales-content.ts");
+    const denoCgv = source(
+      "supabase/functions/_shared/conditions-generales-content.ts"
+    );
+    expect(denoCgv).toBe(frontCgv);
 
     const frontAssets = source("src/lib/inscription-documents-assets.ts");
     const denoAssets = source(

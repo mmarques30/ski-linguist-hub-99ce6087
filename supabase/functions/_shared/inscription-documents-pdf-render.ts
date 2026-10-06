@@ -401,8 +401,13 @@ export async function renderInscriptionDocumentPdf(
   if (model.kind === "convention") {
     cursor.heading("Conditions financières");
     cursor.kv("Coût pédagogique", model.priceLabel);
-    cursor.kv("Acompte", model.depositLabel);
-    cursor.kv("Solde", model.balanceLabel);
+    if (!model.hideDepositFee) {
+      cursor.kv("Acompte", model.depositLabel);
+    }
+    cursor.kv(model.balanceRowLabel || "Solde", model.balanceLabel);
+    if (model.schoolCoverageLabel) {
+      cursor.kv("Prise en charge ESF", model.schoolCoverageLabel);
+    }
     cursor.kv("Financement", model.fundingLabel);
     if (model.paymentTermsLabel) {
       cursor.gap(4);

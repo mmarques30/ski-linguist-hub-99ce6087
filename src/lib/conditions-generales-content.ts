@@ -9,6 +9,8 @@
  *
  * L'identité de l'organisme vient de `app_settings.fli_identity`, saisie dans
  * `/settings` (BL-036) : elle n'est pas recopiée ici.
+ *
+ * Miroir Deno : `supabase/functions/_shared/conditions-generales-content.ts`.
  */
 
 export const CONDITIONS_GENERALES_TITLE = "Conditions générales de formation";
@@ -26,6 +28,31 @@ export interface ConditionsGeneralesSection {
   paragraphs: string[];
 }
 
+/** Tarif standard (sessions avec acompte 150 € possible). */
+export const CONDITIONS_GENERALES_TARIF_STANDARD: ConditionsGeneralesSection = {
+  id: "tarif",
+  title: "Tarif et règlement",
+  paragraphs: [
+    "Le tarif de la formation est celui affiché dans le récapitulatif de votre inscription.",
+    "Le règlement s'effectue selon le mode que vous choisissez à l'étape « Paiement » : soit des frais de dossier de 150 €, déduits du tarif total, puis le solde par chèque avant le début de la formation ; soit le paiement intégral, en ligne ou par virement.",
+    "Organisme exonéré de TVA (formulaire 3511).",
+  ],
+};
+
+/**
+ * Tarif Méribel / La Rosière (forfait école) : aucun frais de dossier 150 €
+ * (décision Paula — conventions moniteurs ESF).
+ */
+export const CONDITIONS_GENERALES_TARIF_SCHOOL_STATION: ConditionsGeneralesSection = {
+  id: "tarif",
+  title: "Tarif et règlement",
+  paragraphs: [
+    "Le tarif de la formation est celui affiché dans le récapitulatif de votre inscription.",
+    "Aucun frais de dossier n'est demandé. Le règlement s'effectue selon les modalités indiquées dans les conditions financières de la présente convention (part stagiaire et, le cas échéant, prise en charge de l'école de ski).",
+    "Organisme exonéré de TVA (formulaire 3511).",
+  ],
+};
+
 export const CONDITIONS_GENERALES_SECTIONS: ConditionsGeneralesSection[] = [
   {
     id: "objet",
@@ -36,15 +63,7 @@ export const CONDITIONS_GENERALES_SECTIONS: ConditionsGeneralesSection[] = [
       "À l'issue de la formation, une attestation de stage vous est délivrée.",
     ],
   },
-  {
-    id: "tarif",
-    title: "Tarif et règlement",
-    paragraphs: [
-      "Le tarif de la formation est celui affiché dans le récapitulatif de votre inscription.",
-      "Le règlement s'effectue selon le mode que vous choisissez à l'étape « Paiement » : soit des frais de dossier de 150 €, déduits du tarif total, puis le solde par chèque avant le début de la formation ; soit le paiement intégral, en ligne ou par virement.",
-      "Organisme exonéré de TVA (formulaire 3511).",
-    ],
-  },
+  CONDITIONS_GENERALES_TARIF_STANDARD,
   {
     id: "retractation",
     title: "Délai de rétractation",
@@ -94,6 +113,16 @@ export const CONDITIONS_GENERALES_SECTIONS: ConditionsGeneralesSection[] = [
     ],
   },
 ];
+
+/** Sections CGV pour une convention, avec ou sans paragraphe frais de dossier 150 €. */
+export function conditionsGeneralesSectionsForConvention(options?: {
+  omitDossierFee?: boolean;
+}): ConditionsGeneralesSection[] {
+  const tarif = options?.omitDossierFee
+    ? CONDITIONS_GENERALES_TARIF_SCHOOL_STATION
+    : CONDITIONS_GENERALES_TARIF_STANDARD;
+  return CONDITIONS_GENERALES_SECTIONS.map((s) => (s.id === "tarif" ? tarif : s));
+}
 
 export const REGLEMENT_INTERIEUR_ON_REQUEST =
   "Le règlement intérieur de l'organisme de formation vous est remis avec vos " +
