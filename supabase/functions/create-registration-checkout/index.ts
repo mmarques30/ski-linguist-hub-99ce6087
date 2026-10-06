@@ -6,6 +6,7 @@ import {
   isValidPaymentOption,
   normalizePaymentOption,
   REGISTRATION_PAYMENT_OPTIONS,
+  resolveStripeCheckoutAmountEur,
   STRIPE_KLARNA_3X_MIN_EUR,
 } from "../_shared/registration-payments.ts";
 
@@ -64,7 +65,7 @@ Deno.serve(async (req) => {
 
     const { data: inscription, error: inscriptionError } = await supabase
       .from("inscriptions")
-      .select("id, code, price, student_id")
+      .select("id, code, price, student_id, balance_after_deposit")
       .eq("id", inscriptionId)
       .maybeSingle();
 
@@ -98,10 +99,15 @@ Deno.serve(async (req) => {
     }
 
     const paymentFields = getInscriptionPaymentFields(coursePrice, normalizedOption);
+    const stripeAmount = resolveStripeCheckoutAmountEur({
+      coursePrice,
+      balanceAfterDeposit: inscription.balance_after_deposit,
+      paymentOption: normalizedOption,
+    });
 
     if (
       normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X &&
-      !isStripeKlarna3xEligibleAmount(paymentFields.stripeAmount)
+      !isStripeKlarna3xEligibleAmount(stripeAmount)
     ) {
       return new Response(
         JSON.stringify({
@@ -121,7 +127,7 @@ Deno.serve(async (req) => {
 
     const session = await createStripeCheckoutSession({
       stripeSecretKey,
-      amountEur: paymentFields.stripeAmount,
+      amountEur: stripeAmount,
       productName,
       customerEmail: email,
       successUrl,
@@ -135,6 +141,7 @@ Deno.serve(async (req) => {
         payment_option: normalizedOption,
         payment_type: paymentFields.paymentType,
         inscription_code: inscription.code || "",
+        stripe_amount_eur: String(stripeAmount),
       },
     });
 

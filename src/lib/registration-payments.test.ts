@@ -12,6 +12,7 @@ import {
   REGISTRATION_PAYMENT_OPTIONS,
   requiresStripeCheckout,
   requiresVirementInstructions,
+  resolveStripeCheckoutAmountEur,
   STRIPE_KLARNA_3X_MIN_EUR,
   stripeKlarna3xInstallmentEur,
 } from "./registration-payments";
@@ -133,6 +134,37 @@ describe("modes de règlement /register", () => {
     expect(isStripeTotalSettlement(REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X)).toBe(
       true
     );
+  });
+
+  it("facture la part stagiaire (balance) et non le tarif école pour Stripe intégral / Klarna", () => {
+    expect(
+      resolveStripeCheckoutAmountEur({
+        coursePrice: 1500,
+        balanceAfterDeposit: 900,
+        paymentOption: REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL,
+      })
+    ).toBe(900);
+    expect(
+      resolveStripeCheckoutAmountEur({
+        coursePrice: 1500,
+        balanceAfterDeposit: 900,
+        paymentOption: REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X,
+      })
+    ).toBe(900);
+    expect(
+      resolveStripeCheckoutAmountEur({
+        coursePrice: 1500,
+        balanceAfterDeposit: null,
+        paymentOption: REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL,
+      })
+    ).toBe(1500);
+    expect(
+      resolveStripeCheckoutAmountEur({
+        coursePrice: 1500,
+        balanceAfterDeposit: 1500,
+        paymentOption: REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL,
+      })
+    ).toBe(1500);
   });
 
   it("renseigne depositAmount = 150 € sur les flux acompte (copie Deno)", () => {
