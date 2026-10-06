@@ -100,7 +100,7 @@ export function getRegistrationPaymentSummary(
     const installment = stripe4xInstallmentEur(coursePrice);
     return {
       coursePrice,
-      dossierFee,
+      dossierFee: 0,
       balanceAfterDossier: 0,
       amountDueNow: coursePrice,
       amountDueNowLabel: `4 × ${formatPriceEUR(installment)}`,
@@ -113,7 +113,7 @@ export function getRegistrationPaymentSummary(
   ) {
     return {
       coursePrice,
-      dossierFee,
+      dossierFee: 0,
       balanceAfterDossier: 0,
       amountDueNow: coursePrice,
       amountDueNowLabel: "Paiement intégral",

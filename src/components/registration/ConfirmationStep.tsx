@@ -590,10 +590,12 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                 <p className="text-sm font-medium">Paiement</p>
                 <SummaryPanel>
                   <SummaryRow label="Mode choisi" value={PAYMENT_OPTION_LABELS[paymentOption]} />
-                  <SummaryRow
-                    label="Frais de dossier"
-                    value={formatPriceEUR(paymentSummary.dossierFee)}
-                  />
+                  {paymentSummary.dossierFee > 0 && (
+                    <SummaryRow
+                      label="Frais de dossier"
+                      value={formatPriceEUR(paymentSummary.dossierFee)}
+                    />
+                  )}
                   {paymentSummary.balanceAfterDossier > 0 && hasChequeBalance(paymentOption) && (
                     <SummaryRow
                       label={CHEQUE_BALANCE_SUMMARY_LABEL}

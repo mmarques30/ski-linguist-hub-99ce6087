@@ -522,7 +522,10 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
               label={noDepositSession ? "Votre part (estimée)" : "Tarif formation"}
               value={formatPriceEUR(payableAmount)}
             />
-            {!noDepositSession && (
+            {!noDepositSession &&
+              (!selectedOption ||
+                selectedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE ||
+                selectedOption === REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT) && (
               <SummaryRow
                 label="Frais de dossier (déduits)"
                 value={`− ${formatPriceEUR(FRAIS_DOSSIER_EUR)}`}
