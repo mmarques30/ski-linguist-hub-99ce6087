@@ -225,13 +225,14 @@ function buildPaymentTermsLabel(input: {
 }): string {
   const methodRaw = (input.payment_method || "").toLowerCase();
   const schoolFifplCheque = isSchoolFifplChequeMethod(input.payment_method);
+  const schoolStationTerms = schoolFifplCheque || Boolean(input.omitDossierFee);
 
-  if (schoolFifplCheque) {
+  if (schoolStationTerms) {
     const moniteurShare =
-      input.balanceLabel !== "—" ? input.balanceLabel : input.depositLabel;
+      input.balanceLabel !== "—" ? input.balanceLabel : input.priceLabel;
     const parts = [
       `Coût pédagogique total : ${input.priceLabel}.`,
-      `Votre part (montant de l'accord préalable FIF-PL) : ${moniteurShare} — chèque FIF-PL à l'ordre de France Langues International, à envoyer à : France Langues International — 25 avenue de la Gare, 73800 Montmélian (encaissé après la formation).`,
+      `Votre part (montant de l'accord préalable FIF-PL) : ${moniteurShare} — règlement au choix : (1) règlement intégral en ligne ; (2) chèque FIF-PL à l'ordre de France Langues International, à envoyer à : France Langues International — 25 avenue de la Gare, 73800 Montmélian (encaissé après la formation).`,
     ];
     if (input.schoolShareLabel && input.schoolShareLabel !== "—") {
       parts.push(
@@ -245,19 +246,6 @@ function buildPaymentTermsLabel(input: {
   }
 
   const method = paymentMethodLabelFr(input.payment_method);
-
-  if (input.omitDossierFee) {
-    const parts = [`Coût pédagogique total : ${input.priceLabel}.`];
-    if (input.balanceLabel !== "—" && input.balanceLabel !== input.priceLabel) {
-      parts.push(`Votre part : ${input.balanceLabel} (mode : ${method}).`);
-    } else {
-      parts.push(`Règlement : ${method} — aucun frais de dossier.`);
-    }
-    if (input.fundingLabel && input.fundingLabel !== "—") {
-      parts.push(`Financement : ${input.fundingLabel}.`);
-    }
-    return parts.join(" ");
-  }
 
   const parts = [
     `Coût pédagogique total : ${input.priceLabel}.`,

@@ -341,6 +341,7 @@ describe("PDF dossier inscription", () => {
     expect(model.paymentTermsLabel).toMatch(/900/);
     expect(model.paymentTermsLabel).toMatch(/600/);
     expect(model.paymentTermsLabel).toMatch(/1\s?500|1500/);
+    expect(model.paymentTermsLabel).toMatch(/règlement intégral en ligne/i);
     expect(model.paymentTermsLabel).toMatch(/chèque FIF-PL/i);
     expect(model.paymentTermsLabel).toMatch(/25 avenue de la Gare/);
     expect(model.paymentTermsLabel).toMatch(/73800 Montmélian/);
@@ -396,7 +397,9 @@ describe("PDF dossier inscription", () => {
     expect(model.hideDepositFee).toBe(true);
     expect(model.schoolCoverageLabel).toBeNull();
     expect(model.paymentTermsLabel).not.toMatch(/150/);
-    expect(model.paymentTermsLabel).toMatch(/aucun frais de dossier/i);
+    expect(model.paymentTermsLabel).toMatch(/règlement intégral en ligne/i);
+    expect(model.paymentTermsLabel).toMatch(/chèque FIF-PL/i);
+    expect(model.paymentTermsLabel).not.toMatch(/remettre via|votre école de ski/i);
     expect(
       model.sections.some(
         (s) =>
