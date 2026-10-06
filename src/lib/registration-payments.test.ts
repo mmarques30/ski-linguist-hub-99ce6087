@@ -7,6 +7,7 @@ import {
   hasChequeBalance,
   isStripeKlarna3xEligible,
   isStripeTotalSettlement,
+  PAYMENT_OPTION_DESCRIPTIONS,
   PAYMENT_OPTION_LABELS,
   REGISTRATION_PAYMENT_OPTIONS,
   requiresStripeCheckout,
@@ -54,7 +55,7 @@ describe("modes de règlement /register", () => {
     expect(isStripeTotalSettlement(null)).toBe(false);
   });
 
-  it("affiche « paiement sécurisé en ligne » / Klarna et non Stripe sur /register", () => {
+  it("affiche « paiement sécurisé en ligne » / Klarna / règlement intégral et non Stripe sur /register", () => {
     for (const label of Object.values(PAYMENT_OPTION_LABELS)) {
       expect(label.toLowerCase()).not.toContain("stripe");
     }
@@ -63,13 +64,23 @@ describe("modes de règlement /register", () => {
     ).toMatch(/paiement sécurisé en ligne/i);
     expect(
       PAYMENT_OPTION_LABELS[REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]
-    ).toMatch(/paiement sécurisé en ligne/i);
+    ).toBe("Règlement intégral en ligne");
     expect(
       PAYMENT_OPTION_LABELS[REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X]
     ).toBe("Payez en 3 fois avec Klarna");
     expect(
       PAYMENT_OPTION_LABELS[REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X].toLowerCase()
     ).not.toContain("4 fois");
+    expect(
+      PAYMENT_OPTION_LABELS[REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE]
+    ).toMatch(/envoyer à FLI/i);
+    expect(
+      PAYMENT_OPTION_LABELS[REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE].toLowerCase()
+    ).not.toMatch(/remettre|via l'école|à votre école/);
+    expect(PAYMENT_OPTION_DESCRIPTIONS[REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE])
+      .not.toMatch(/remettre|à votre école de ski/i);
+    expect(PAYMENT_OPTION_DESCRIPTIONS[REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE])
+      .toMatch(/Montmélian/);
   });
 
   it("garde le détail du règlement une fois le mode choisi", () => {
@@ -157,10 +168,11 @@ describe("modes de règlement /register", () => {
     expect(deno).toContain('LEGACY_STRIPE_4X = "stripe_4x"');
   });
 
-  it("masque l'acompte 150 € pour Méribel / La Rosière et ajoute le chèque école", () => {
+  it("masque l'acompte 150 € pour Méribel / La Rosière et propose intégral en ligne + chèque FLI", () => {
     const schoolModes = getAvailablePaymentOptions("forfait_ecole");
     expect(schoolModes).toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL);
     expect(schoolModes).toContain(REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE);
+    expect(schoolModes).toContain(REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL);
     expect(schoolModes).not.toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE);
     expect(schoolModes).not.toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X);
 
@@ -174,6 +186,7 @@ describe("modes de règlement /register", () => {
     );
     expect(cheque.amountDueNow).toBe(0);
     expect(cheque.balanceAfterDossier).toBe(900);
+    expect(cheque.amountDueNowLabel).toMatch(/envoyer à FLI/i);
   });
 
   it("écrit deposit_amount à la création d'inscription", () => {

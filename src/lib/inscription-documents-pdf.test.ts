@@ -349,6 +349,7 @@ describe("PDF dossier inscription", () => {
     expect(model.paymentTermsLabel).not.toMatch(/jamais à celle de l'ESF/);
     expect(model.paymentTermsLabel).not.toMatch(/150/);
     expect(model.paymentTermsLabel).not.toMatch(/frais de dossier/i);
+    expect(model.paymentTermsLabel).not.toMatch(/remettre via|votre école de ski/i);
     expect(model.hideDepositFee).toBe(true);
     expect(model.balanceRowLabel).toBe("Votre part");
     expect(model.schoolCoverageLabel).toMatch(/600/);
