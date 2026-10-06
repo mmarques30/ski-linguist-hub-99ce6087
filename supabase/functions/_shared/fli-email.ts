@@ -12,6 +12,7 @@ import {
  * Affichage : « FLI — France Langues International »
  * Adresse d'envoi : noreply@fli.fr (domaine à vérifier chez Resend)
  * Réponse : info@fli.fr
+ * BCC systématique : info@fli.fr (FLI_NOTIFY_BCC) — Paula doit voir chaque envoi.
  *
  * RESEND_API_KEY n'est pas dans le dépôt. Sans elle, aucun appel réseau
  * n'est tenté : sendFliEmail renvoie { ok: false, skipped: true }.
@@ -20,6 +21,8 @@ import {
 export const FLI_FROM = "FLI — France Langues International <noreply@fli.fr>";
 export const FLI_REPLY_TO = "info@fli.fr";
 export const FLI_TEST_RECIPIENT = "info@fli.fr";
+/** Copie systématique de tout envoi Resend — Paula doit être informée de chaque mail. */
+export const FLI_NOTIFY_BCC = "info@fli.fr";
 
 export const FLI_FOOTER_HTML = `<p style="margin-top:24px">Cordialement,</p>
 <p>
@@ -116,6 +119,7 @@ export async function sendFliEmail(
     };
   }
 
+  const toNormalized = input.to.trim().toLowerCase();
   const body: Record<string, unknown> = {
     from: FLI_FROM,
     to: [input.to],
@@ -123,6 +127,10 @@ export async function sendFliEmail(
     subject: input.subject,
     html: input.html,
   };
+  // BCC Paula (info@fli.fr) sauf si elle est déjà destinataire principale.
+  if (toNormalized !== FLI_NOTIFY_BCC.toLowerCase()) {
+    body.bcc = [FLI_NOTIFY_BCC];
+  }
   if (input.attachments?.length) {
     body.attachments = input.attachments;
   }
