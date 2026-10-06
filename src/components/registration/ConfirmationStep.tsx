@@ -272,7 +272,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                   : isOpco
                     ? " Aucun règlement n'est demandé pour l'instant : nous analysons votre dossier OPCO et vous recontacterons."
                     : pricePending
-                      ? " Votre inscription est enregistrée hors paiement : le tarif partenaire sera confirmé dès la décision de l'ESF Châtel, puis nous vous enverrons le lien de règlement et vos documents."
+                      ? " Votre inscription est enregistrée hors paiement : le tarif partenaire sera confirmé, puis nous vous enverrons le lien de règlement et vos documents."
                       : result.emailSent
                         ? " Un email de confirmation vous a été envoyé."
                         : " Notre équipe vous contactera prochainement."}
@@ -400,8 +400,8 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
           {pricePending && (
             <Alert>
               <AlertDescription>
-                En attente tarif (Châtel) : aucun paiement ni convention à l&apos;inscription. Le
-                lien de paiement et vos documents suivront dès fixation du tarif (750 € ou 800 €).
+                En attente tarif : aucun paiement ni convention à l&apos;inscription. Le lien de
+                paiement et vos documents suivront dès fixation du tarif.
               </AlertDescription>
             </Alert>
           )}

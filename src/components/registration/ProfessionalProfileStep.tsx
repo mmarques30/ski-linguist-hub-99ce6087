@@ -27,7 +27,7 @@ import {
   resolveSkiSchoolLabel,
 } from "@/lib/ski-school-directory";
 import {
-  CHATEL_PENDING_PRICE_MESSAGE,
+  PENDING_PARTNER_PRICE_MESSAGE,
   formatOfferingPriceHint,
   formatPartnerConditionalPriceHint,
   formatPriceEUR,
@@ -471,7 +471,7 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
               Tarif partenaire (à confirmer) :{" "}
               <strong>{formatPartnerConditionalPriceHint(selectedOffering)}</strong>
             </p>
-            <p className="text-sm text-muted-foreground">{CHATEL_PENDING_PRICE_MESSAGE}</p>
+            <p className="text-sm text-muted-foreground">{PENDING_PARTNER_PRICE_MESSAGE}</p>
             <p className="text-sm text-muted-foreground">
               Tarif catalogue : {formatOfferingPriceHint(selectedOffering)}
             </p>

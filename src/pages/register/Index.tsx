@@ -58,7 +58,7 @@ export interface RegistrationData {
   /** BL-029 : date souhaitée quand l'offre choisie n'a pas de session datée. */
   requestedStartDate?: string;
   price?: number;
-  /** Châtel partenaire : tarif non définitif (§3.6). */
+  /** Tarif partenaire non définitif → inscription sans paiement. */
   pricePending?: boolean;
   /** Mode financement de la session catalogue. */
   sessionFundingMode?: import("@/lib/registration-offerings").SessionFundingMode;

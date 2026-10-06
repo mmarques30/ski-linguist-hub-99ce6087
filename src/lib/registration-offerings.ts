@@ -24,7 +24,7 @@ export interface RegistrationOffering {
   instructor_label?: string | null;
   base_price: number;
   partner_price?: number | null;
-  /** Second tarif partenaire (ex. Châtel 800 sans studio). */
+  /** Second tarif partenaire si logistique non tranchée. */
   partner_price_alt?: number | null;
   /** Tarif partenaire non définitif → inscription sans paiement. */
   partner_price_pending?: boolean | null;
@@ -61,7 +61,7 @@ export function resolveOfferingPrice(
     skiSchoolCode !== "__autre__" &&
     codes.includes(skiSchoolCode as string);
 
-  // Châtel §3.6 : partenaire sans tarif définitif → pas de montant unique.
+  // Partenaire sans tarif définitif → pas de montant unique.
   if (isPartner && offering.partner_price_pending) {
     return null;
   }
@@ -83,7 +83,7 @@ export function isPartnerSchool(
   );
 }
 
-/** Inscription partenaire sans paiement tant que le tarif n'est pas fixé (Châtel). */
+/** Inscription partenaire sans paiement tant que le tarif n'est pas fixé. */
 export function isPartnerPricePending(
   offering: Pick<
     RegistrationOffering,
@@ -112,8 +112,10 @@ export function requiresMandatoryFifplEstimate(fundingMode: SessionFundingMode):
   return fundingMode === "fifpl_stagiaire_solde_ecole";
 }
 
-export const CHATEL_PENDING_PRICE_MESSAGE =
-  "Nous attendons la décision de la direction de l'ESF Châtel sur les moyens logistiques. Vos documents de formation (convention, programme, dossier FIF-PL) vous seront envoyés dès que cette décision nous est communiquée.";
+export const PENDING_PARTNER_PRICE_MESSAGE =
+  "Nous attendons la confirmation du tarif partenaire pour cette session. Vos documents de formation (convention, programme, dossier FIF-PL) vous seront envoyés dès que le tarif est fixé.";
+/** @deprecated Châtel S12 n'est plus en attente (800 € unique, 06/10). Alias conservé. */
+export const CHATEL_PENDING_PRICE_MESSAGE = PENDING_PARTNER_PRICE_MESSAGE;
 
 export function formatPartnerConditionalPriceHint(
   offering: Pick<RegistrationOffering, "partner_price" | "partner_price_alt">
