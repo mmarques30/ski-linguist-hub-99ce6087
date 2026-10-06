@@ -5,10 +5,14 @@ import {
   getAvailablePaymentOptions,
   getRegistrationPaymentSummary,
   hasChequeBalance,
+  isStripe4xEligible,
+  isStripeTotalSettlement,
   PAYMENT_OPTION_LABELS,
   REGISTRATION_PAYMENT_OPTIONS,
   requiresStripeCheckout,
   requiresVirementInstructions,
+  STRIPE_4X_MIN_EUR,
+  stripe4xInstallmentEur,
 } from "./registration-payments";
 
 /**
@@ -47,6 +51,7 @@ describe("modes de règlement /register", () => {
     expect(requiresVirementInstructions(null)).toBe(false);
     expect(hasChequeBalance(null)).toBe(false);
     expect(requiresStripeCheckout(undefined)).toBe(false);
+    expect(isStripeTotalSettlement(null)).toBe(false);
   });
 
   it("affiche « paiement sécurisé en ligne » et non Stripe sur /register", () => {
@@ -59,6 +64,9 @@ describe("modes de règlement /register", () => {
     expect(
       PAYMENT_OPTION_LABELS[REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]
     ).toMatch(/paiement sécurisé en ligne/i);
+    expect(
+      PAYMENT_OPTION_LABELS[REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X]
+    ).toMatch(/paiement sécurisé en ligne en 4 fois/i);
   });
 
   it("garde le détail du règlement une fois le mode choisi", () => {
@@ -75,6 +83,35 @@ describe("modes de règlement /register", () => {
     );
     expect(total.amountDueNow).toBe(600);
     expect(total.balanceAfterDossier).toBe(0);
+
+    const fourTimes = getRegistrationPaymentSummary(
+      900,
+      REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X
+    );
+    expect(fourTimes.amountDueNow).toBe(900);
+    expect(fourTimes.balanceAfterDossier).toBe(0);
+    expect(fourTimes.amountDueNowLabel).toMatch(/4\s*×/);
+  });
+
+  it("propose le 4× seulement à partir de 500 €", () => {
+    expect(STRIPE_4X_MIN_EUR).toBe(500);
+    expect(isStripe4xEligible(499.99)).toBe(false);
+    expect(isStripe4xEligible(500)).toBe(true);
+    expect(stripe4xInstallmentEur(900)).toBe(225);
+
+    const below = getAvailablePaymentOptions("individuel", 300);
+    expect(below).not.toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X);
+
+    const above = getAvailablePaymentOptions("individuel", 500);
+    expect(above).toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X);
+    expect(above.indexOf(REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X)).toBeGreaterThan(
+      above.indexOf(REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL)
+    );
+
+    const school = getAvailablePaymentOptions("forfait_ecole", 900);
+    expect(school).toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X);
+    expect(requiresStripeCheckout(REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X)).toBe(true);
+    expect(isStripeTotalSettlement(REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X)).toBe(true);
   });
 
   it("renseigne depositAmount = 150 € sur les flux acompte (copie Deno)", () => {
@@ -87,8 +124,26 @@ describe("modes de règlement /register", () => {
       ...deno.matchAll(/depositAmount:\s*([^,\n]+)/g),
     ].map((m) => m[1].trim());
     expect(matches.filter((v) => v === "FRAIS_DOSSIER_EUR")).toHaveLength(2);
-    // totaux Stripe / virement + school_fifpl_cheque
+    // totaux Stripe (FULL + 4× via isStripeTotalSettlement) / virement + school_fifpl_cheque
     expect(matches.filter((v) => v === "null")).toHaveLength(3);
+  });
+
+  it("garde la copie Deno d'accord avec le seuil et l'option 4×", () => {
+    const front = readFileSync(
+      join(process.cwd(), "src/lib/registration-payments.ts"),
+      "utf8"
+    );
+    const deno = readFileSync(
+      join(process.cwd(), "supabase/functions/_shared/registration-payments.ts"),
+      "utf8"
+    );
+    expect(front).toContain('STRIPE_4X: "stripe_4x"');
+    expect(deno).toContain('STRIPE_4X: "stripe_4x"');
+    expect(front).toContain("export const STRIPE_4X_MIN_EUR = 500");
+    expect(deno).toContain("export const STRIPE_4X_MIN_EUR = 500");
+    expect(deno).toContain('paymentMethodTypes ?? ["card", "klarna"]');
+    expect(deno).toContain('"alma"');
+    expect(deno).toContain("isStripeTotalSettlement");
   });
 
   it("masque l'acompte 150 € pour Méribel / La Rosière et ajoute le chèque école", () => {
@@ -96,6 +151,7 @@ describe("modes de règlement /register", () => {
     expect(schoolModes).toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL);
     expect(schoolModes).toContain(REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE);
     expect(schoolModes).not.toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE);
+    expect(schoolModes).not.toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X);
 
     const individual = getAvailablePaymentOptions("individuel");
     expect(individual).toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE);
@@ -115,5 +171,11 @@ describe("modes de règlement /register", () => {
       "utf8"
     );
     expect(submit).toContain("deposit_amount: paymentFields?.depositAmount ?? null");
+    expect(submit).toContain("STRIPE_4X");
+  });
+
+  it("passe le montant payable à getAvailablePaymentOptions dans PaymentStep", () => {
+    const etape = source("components/registration/PaymentStep.tsx");
+    expect(etape).toContain("getAvailablePaymentOptions(fundingMode, payableAmount)");
   });
 });

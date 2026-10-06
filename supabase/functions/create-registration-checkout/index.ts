@@ -2,9 +2,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   createStripeCheckoutSession,
   getInscriptionPaymentFields,
+  isStripe4xEligible,
   isValidPaymentOption,
   normalizePaymentOption,
   REGISTRATION_PAYMENT_OPTIONS,
+  STRIPE_4X_MIN_EUR,
 } from "../_shared/registration-payments.ts";
 
 const corsHeaders = {
@@ -38,7 +40,8 @@ Deno.serve(async (req) => {
 
     if (
       normalizedOption !== REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE &&
-      normalizedOption !== REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL
+      normalizedOption !== REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL &&
+      normalizedOption !== REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X
     ) {
       return new Response(
         JSON.stringify({ success: false, error: "Ce mode de paiement ne nécessite pas Stripe" }),
@@ -95,10 +98,26 @@ Deno.serve(async (req) => {
     }
 
     const paymentFields = getInscriptionPaymentFields(coursePrice, normalizedOption);
+
+    if (
+      normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X &&
+      !isStripe4xEligible(paymentFields.stripeAmount)
+    ) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Le paiement en 4 fois est disponible à partir de ${STRIPE_4X_MIN_EUR} €`,
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const productName =
-      normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL
-        ? `Formation FLI — ${inscription.code}`
-        : `Frais de dossier FLI — ${inscription.code}`;
+      normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X
+        ? `Formation FLI (4× Alma) — ${inscription.code}`
+        : normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL
+          ? `Formation FLI — ${inscription.code}`
+          : `Frais de dossier FLI — ${inscription.code}`;
 
     const session = await createStripeCheckoutSession({
       stripeSecretKey,
@@ -107,6 +126,10 @@ Deno.serve(async (req) => {
       customerEmail: email,
       successUrl,
       cancelUrl,
+      paymentMethodTypes:
+        normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X
+          ? ["alma"]
+          : ["card", "klarna"],
       metadata: {
         inscription_id: inscriptionId,
         payment_option: normalizedOption,

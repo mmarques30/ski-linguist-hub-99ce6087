@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CreditCard, Landmark, Receipt, Wallet, FileText } from "lucide-react";
+import { CalendarClock, CreditCard, Landmark, Receipt, Wallet, FileText } from "lucide-react";
 import type { RegistrationData } from "@/pages/register/Index";
 import {
   CHEQUE_BALANCE_INSTRUCTION,
@@ -63,6 +63,7 @@ const PAYMENT_OPTION_ICONS: Record<
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]: CreditCard,
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]: Landmark,
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]: Receipt,
+  [REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X]: CalendarClock,
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]: Landmark,
   [REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE]: FileText,
 };
@@ -84,11 +85,6 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
 
   // Décision Paula : aucun mode de règlement coché par défaut.
   const selectedOption: RegistrationPaymentOption | null = data.paymentOption ?? null;
-
-  const availableOptions = useMemo(
-    () => getAvailablePaymentOptions(fundingMode),
-    [fundingMode]
-  );
 
   const fifplQuestionnaire: FifplQuestionnaire = {
     status: data.fifplStatus ?? null,
@@ -129,6 +125,11 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
     fifplQuestionnaire.otherFifplAmountAlreadyCoveredEur,
     data.modality,
   ]);
+
+  const availableOptions = useMemo(
+    () => getAvailablePaymentOptions(fundingMode, payableAmount),
+    [fundingMode, payableAmount]
+  );
 
   const patchFifpl = (patch: Partial<FifplQuestionnaire>) => {
     const next = { ...fifplQuestionnaire, ...patch };
@@ -544,7 +545,13 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
             )}
             <SummaryRow
               label="À régler maintenant"
-              value={summary ? formatPriceEUR(summary.amountDueNow) : "selon le mode choisi"}
+              value={
+                summary
+                  ? selectedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X
+                    ? summary.amountDueNowLabel
+                    : formatPriceEUR(summary.amountDueNow)
+                  : "selon le mode choisi"
+              }
               emphasis
             />
           </SummaryPanel>

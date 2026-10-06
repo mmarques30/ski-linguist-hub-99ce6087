@@ -119,8 +119,11 @@ LIMIT 5;
 | Option | Montant Stripe | Solde |
 |--------|----------------|-------|
 | Acompte Stripe + chèque | 150 € | Solde chèque à envoyer à l'inscription (encaissement après clôture du dossier) |
-| Paiement intégral Stripe | Prix total | 0 € |
+| Paiement intégral Stripe | Prix total (carte / Klarna) | 0 € |
+| Paiement en 4 fois (Alma) | Prix total si ≥ 500 € | 0 € (FLI payé immédiatement ; Alma gère les échéances) |
 | Virement | — | Pas de Stripe |
+
+Alma doit être **activé** dans le [Dashboard Stripe → Payment methods](https://dashboard.stripe.com/settings/payment_methods) (France). Sans Alma, le Checkout `stripe_4x` échoue.
 
 ---
 

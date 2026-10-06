@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   getInscriptionPaymentFields,
+  isStripeTotalSettlement,
   normalizePaymentOption,
   REGISTRATION_PAYMENT_OPTIONS,
   type RegistrationPaymentOption,
@@ -54,12 +55,20 @@ export async function recordStripeCheckoutPayment(
   const paymentFields = getInscriptionPaymentFields(coursePrice, normalizedOption);
   const amountPaid = (session.amount_total || 0) / 100;
   const today = new Date().toISOString().split("T")[0];
+  const settledTotal = isStripeTotalSettlement(normalizedOption);
   const resolvedPaymentType =
     paymentType === "acompte" || paymentType === "total"
       ? paymentType
-      : normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL
+      : settledTotal
         ? "total"
         : "acompte";
+
+  const paymentNotes =
+    normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X
+      ? "Paiement en 4 fois (Alma) — inscription en ligne"
+      : settledTotal
+        ? "Paiement intégral inscription en ligne"
+        : "Frais de dossier inscription en ligne";
 
   await supabase.from("payments").insert({
     inscription_id: inscriptionId,
@@ -72,17 +81,11 @@ export async function recordStripeCheckoutPayment(
     stripe_payment_intent_id: session.payment_intent,
     reference: inscription.code,
     payer_type: "stagiaire",
-    notes:
-      normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL
-        ? "Paiement intégral inscription en ligne"
-        : "Frais de dossier inscription en ligne",
+    notes: paymentNotes,
   });
 
   const depositAmount = amountPaid;
-  const balanceAfterDeposit =
-    normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL
-      ? 0
-      : paymentFields.balanceAfterDeposit;
+  const balanceAfterDeposit = settledTotal ? 0 : paymentFields.balanceAfterDeposit;
 
   await supabase
     .from("inscriptions")
@@ -91,8 +94,7 @@ export async function recordStripeCheckoutPayment(
       deposit_amount: depositAmount,
       deposit_date: today,
       balance_after_deposit: balanceAfterDeposit,
-      status:
-        normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL ? "confirmee" : undefined,
+      status: settledTotal ? "confirmee" : undefined,
     })
     .eq("id", inscriptionId);
 

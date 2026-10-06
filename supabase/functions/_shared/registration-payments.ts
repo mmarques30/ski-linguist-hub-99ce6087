@@ -1,9 +1,15 @@
 export const FRAIS_DOSSIER_EUR = 150;
 
+/** Seuil Paula : option « 4 fois » proposée à partir de 500 € (part / tarif à régler). */
+export const STRIPE_4X_MIN_EUR = 500;
+export const STRIPE_4X_INSTALLMENTS = 4;
+
 export const REGISTRATION_PAYMENT_OPTIONS = {
   STRIPE_DEPOSIT_CHEQUE: "stripe_deposit_cheque",
   VIREMENT_DEPOSIT: "virement_deposit",
   STRIPE_FULL: "stripe_full",
+  /** Paiement en 4 fois via Alma (Checkout Stripe), montants ≥ STRIPE_4X_MIN_EUR. */
+  STRIPE_4X: "stripe_4x",
   VIREMENT_FULL: "virement_full",
   SCHOOL_FIFPL_CHEQUE: "school_fifpl_cheque",
 } as const;
@@ -12,6 +18,15 @@ export type RegistrationPaymentOption =
   (typeof REGISTRATION_PAYMENT_OPTIONS)[keyof typeof REGISTRATION_PAYMENT_OPTIONS];
 
 const LEGACY_VIREMENT = "virement";
+
+export function isStripe4xEligible(amountEur: number): boolean {
+  return Number.isFinite(amountEur) && amountEur >= STRIPE_4X_MIN_EUR;
+}
+
+/** Échéance indicative (affichage) — Alma peut ajuster le 1er prélèvement. */
+export function stripe4xInstallmentEur(totalEur: number): number {
+  return Math.round((totalEur / STRIPE_4X_INSTALLMENTS) * 100) / 100;
+}
 
 export function isValidPaymentOption(value: string): value is RegistrationPaymentOption {
   return (
@@ -25,6 +40,16 @@ export function normalizePaymentOption(value: string): RegistrationPaymentOption
     return REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT;
   }
   return value as RegistrationPaymentOption;
+}
+
+/** Paiement en ligne qui solde la part stagiaire (intégral ou 4× Alma). */
+export function isStripeTotalSettlement(
+  option: RegistrationPaymentOption | null | undefined
+): boolean {
+  return (
+    option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL ||
+    option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X
+  );
 }
 
 export function getInscriptionPaymentFields(
@@ -53,7 +78,7 @@ export function getInscriptionPaymentFields(
     };
   }
 
-  if (option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL) {
+  if (isStripeTotalSettlement(option)) {
     return {
       paymentMethod: "stripe",
       balanceAfterDeposit: 0,
@@ -102,6 +127,8 @@ export function getInscriptionPaymentFields(
   };
 }
 
+export type StripeCheckoutPaymentMethodType = "card" | "klarna" | "alma";
+
 export async function createStripeCheckoutSession(params: {
   stripeSecretKey: string;
   amountEur: number;
@@ -110,6 +137,8 @@ export async function createStripeCheckoutSession(params: {
   successUrl: string;
   cancelUrl: string;
   metadata: Record<string, string>;
+  /** Carte + Klarna par défaut ; Alma seul pour le parcours 4×. */
+  paymentMethodTypes?: StripeCheckoutPaymentMethodType[];
 }): Promise<{ id: string; url: string }> {
   const body = new URLSearchParams({
     mode: "payment",
@@ -117,7 +146,7 @@ export async function createStripeCheckoutSession(params: {
     cancel_url: params.cancelUrl,
     customer_email: params.customerEmail,
     locale: "fr",
-    // Adresse de facturation : utile pour Klarna (éligibilité / pays acheteur).
+    // Adresse de facturation : utile pour Klarna / Alma (éligibilité / pays acheteur).
     billing_address_collection: "required",
     // Empêche Stripe de proposer une conversion USD selon le navigateur.
     "adaptive_pricing[enabled]": "false",
@@ -127,9 +156,10 @@ export async function createStripeCheckoutSession(params: {
     "line_items[0][quantity]": "1",
   });
 
-  // Klarna est activé sur le compte Stripe FLI — proposé au Checkout avec la carte.
-  body.append("payment_method_types[]", "card");
-  body.append("payment_method_types[]", "klarna");
+  const paymentMethodTypes = params.paymentMethodTypes ?? ["card", "klarna"];
+  for (const type of paymentMethodTypes) {
+    body.append("payment_method_types[]", type);
+  }
 
   for (const [key, value] of Object.entries(params.metadata)) {
     body.set(`metadata[${key}]`, value);

@@ -6,10 +6,16 @@ import {
 
 export const FRAIS_DOSSIER_EUR = 150;
 
+/** Seuil Paula : option « 4 fois » proposée à partir de 500 € (part / tarif à régler). */
+export const STRIPE_4X_MIN_EUR = 500;
+export const STRIPE_4X_INSTALLMENTS = 4;
+
 export const REGISTRATION_PAYMENT_OPTIONS = {
   STRIPE_DEPOSIT_CHEQUE: "stripe_deposit_cheque",
   VIREMENT_DEPOSIT: "virement_deposit",
   STRIPE_FULL: "stripe_full",
+  /** Paiement en 4 fois via Alma (Checkout Stripe), montants ≥ STRIPE_4X_MIN_EUR. */
+  STRIPE_4X: "stripe_4x",
   VIREMENT_FULL: "virement_full",
   /** Méribel / La Rosière : chèque FIF-PL via l'école, encaissé après la formation. */
   SCHOOL_FIFPL_CHEQUE: "school_fifpl_cheque",
@@ -33,23 +39,44 @@ export interface RegistrationPaymentSummary {
   amountDueNowLabel: string;
 }
 
+export function isStripe4xEligible(amountEur: number): boolean {
+  return Number.isFinite(amountEur) && amountEur >= STRIPE_4X_MIN_EUR;
+}
+
+/** Échéance indicative (affichage) — Alma peut ajuster le 1er prélèvement. */
+export function stripe4xInstallmentEur(totalEur: number): number {
+  return Math.round((totalEur / STRIPE_4X_INSTALLMENTS) * 100) / 100;
+}
+
 /** Options affichées selon le mode de financement session (SESSIONS §3.3 / §3.4 / §4.8). */
 export function getAvailablePaymentOptions(
-  fundingMode: SessionFundingMode = "individuel"
+  fundingMode: SessionFundingMode = "individuel",
+  payableAmountEur = 0
 ): RegistrationPaymentOption[] {
-  if (hidesDepositPaymentOptions(fundingMode)) {
+  const withFourTimes = (options: RegistrationPaymentOption[]): RegistrationPaymentOption[] => {
+    if (!isStripe4xEligible(payableAmountEur)) return options;
+    const fullIdx = options.indexOf(REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL);
+    if (fullIdx < 0) return [...options, REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X];
     return [
+      ...options.slice(0, fullIdx + 1),
+      REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X,
+      ...options.slice(fullIdx + 1),
+    ];
+  };
+
+  if (hidesDepositPaymentOptions(fundingMode)) {
+    return withFourTimes([
       REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL,
       REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL,
       REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE,
-    ];
+    ]);
   }
-  return [
+  return withFourTimes([
     REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE,
     REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT,
     REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL,
     REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL,
-  ];
+  ]);
 }
 
 export function getRegistrationPaymentSummary(
@@ -68,6 +95,17 @@ export function getRegistrationPaymentSummary(
 
   const dossierFee = FRAIS_DOSSIER_EUR;
   const balanceAfterDossier = Math.max(coursePrice - dossierFee, 0);
+
+  if (option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X) {
+    const installment = stripe4xInstallmentEur(coursePrice);
+    return {
+      coursePrice,
+      dossierFee,
+      balanceAfterDossier: 0,
+      amountDueNow: coursePrice,
+      amountDueNowLabel: `4 × ${formatPriceEUR(installment)}`,
+    };
+  }
 
   if (
     option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL ||
@@ -109,6 +147,8 @@ export const PAYMENT_OPTION_LABELS: Record<RegistrationPaymentOption, string> = 
     "150 € par virement bancaire + solde par chèque avant le début de la formation",
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]:
     "Paiement sécurisé en ligne — montant total",
+  [REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X]:
+    "Paiement sécurisé en ligne en 4 fois",
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]: "Paiement intégral par virement bancaire",
   [REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE]:
     "Prise en charge par mon école de ski, chèque FIF-PL à remettre",
@@ -121,6 +161,8 @@ export const PAYMENT_OPTION_DESCRIPTIONS: Record<RegistrationPaymentOption, stri
     `Effectuez un virement de 150 € pour les frais de dossier. ${CHEQUE_BALANCE_INSTRUCTION}`,
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]:
     "Réglez la totalité de votre part (montant de l'accord préalable FIF-PL ou tarif formation) par paiement sécurisé en ligne (plusieurs fois si éligible).",
+  [REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X]:
+    `Répartissez le montant en 4 échéances via Alma (à partir de ${formatPriceEUR(STRIPE_4X_MIN_EUR)}). FLI est payé immédiatement ; Alma prélève ensuite les échéances.`,
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]:
     "Effectuez un virement bancaire pour le montant total de votre part.",
   [REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE]: SCHOOL_FIFPL_CHEQUE_INSTRUCTION,
@@ -152,7 +194,16 @@ export type MaybePaymentOption = RegistrationPaymentOption | null | undefined;
 export function requiresStripeCheckout(option: MaybePaymentOption): boolean {
   return (
     option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE ||
-    option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL
+    option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL ||
+    option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X
+  );
+}
+
+/** Paiement en ligne qui solde la part stagiaire (intégral ou 4× Alma). */
+export function isStripeTotalSettlement(option: MaybePaymentOption): boolean {
+  return (
+    option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL ||
+    option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X
   );
 }
 
