@@ -72,3 +72,6 @@ verify_jwt = true
 
 [functions.invite-formateur-portal]
 verify_jwt = true
+
+[functions.send-rosiere-cfp-request]
+verify_jwt = true

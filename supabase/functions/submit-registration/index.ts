@@ -30,6 +30,11 @@ import {
   isWaitlistOffering,
   resolveOfferingPrice,
 } from "../_shared/registration-offerings.ts";
+import {
+  renderRosiereCfpRequestEmail,
+  ROSIERE_CFP_EMAIL_SLUG,
+  shouldSendRosiereCfpRequest,
+} from "../_shared/rosiere-cfp-request.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -235,8 +240,20 @@ function buildOpcoFundingDetails(registration: RegistrationPayload): string | nu
   });
 }
 
+function hasFifplAnswers(registration: RegistrationPayload): boolean {
+  return Boolean(
+    registration.fifplStatus ||
+      registration.fifplCfpAttestationPath ||
+      registration.fifplCfpAttestationFileName ||
+      registration.fifplHadOtherTrainingThisYear === true ||
+      registration.fifplHadOtherTrainingThisYear === false
+  );
+}
+
 function buildFifplFundingDetails(registration: RegistrationPayload): string | null {
-  if (!isFifplFunding(registration.fundingType)) return null;
+  if (!isFifplFunding(registration.fundingType) && !hasFifplAnswers(registration)) {
+    return null;
+  }
   const status = registration.fifplStatus ?? null;
   const contribution = registration.fifplCfpContributionEur ?? null;
   const already =
@@ -577,12 +594,14 @@ Deno.serve(async (req) => {
 
     let price: number | null = registration.price ?? null;
     let pricePending = Boolean(registration.pricePending);
+    let offeringFundingMode: string | null = null;
+    let offeringLocationKey: string | null = registration.location || null;
 
     if (registration.offeringId) {
       const { data: offering } = await supabase
         .from("registration_offerings")
         .select(
-          "base_price, partner_price, partner_price_alt, partner_price_pending, partner_school_codes, enrollment_status, is_active, funding_mode"
+          "base_price, partner_price, partner_price_alt, partner_price_pending, partner_school_codes, enrollment_status, is_active, funding_mode, location_key, location_label"
         )
         .eq("id", registration.offeringId)
         .maybeSingle();
@@ -599,6 +618,10 @@ Deno.serve(async (req) => {
       }
 
       if (offering) {
+        offeringFundingMode =
+          typeof offering.funding_mode === "string" ? offering.funding_mode : null;
+        offeringLocationKey =
+          typeof offering.location_key === "string" ? offering.location_key : offeringLocationKey;
         const skiCode =
           registration.skiSchoolCode && registration.skiSchoolCode !== "__autre__"
             ? registration.skiSchoolCode
@@ -778,7 +801,9 @@ Deno.serve(async (req) => {
             ? `Test adaptatif: ${registration.testSummary.passedSlopes.join(" → ") || "aucune piste validée"} · vocab ${registration.testSummary.vocabScore?.correct ?? "?"}/${registration.testSummary.vocabScore?.total ?? 5}`
             : null,
           isOpco ? formatOpcoObservation(registration) : null,
-          isFifpl ? formatFifplObservation(registration) : null,
+          isFifpl || hasFifplAnswers(registration)
+            ? formatFifplObservation(registration)
+            : null,
           isAgefice ? formatAgeficeObservation(registration) : null,
           registration.paymentOption
             ? `Paiement: ${paymentLabels[registration.paymentOption] || registration.paymentOption}`
@@ -968,6 +993,70 @@ Deno.serve(async (req) => {
         }
       }
 
+      if (
+        shouldSendRosiereCfpRequest({
+          profession: registration.profession,
+          locationKey: offeringLocationKey || registration.location,
+          locationLabel: courseLocation,
+          fundingMode: offeringFundingMode,
+          status: registration.fifplStatus,
+          cfpAttestationPath: registration.fifplCfpAttestationPath,
+          cfpAttestationFileName: registration.fifplCfpAttestationFileName,
+          cfpAttestationYear: registration.fifplCfpAttestationYear,
+          hadOtherFifplTrainingThisYear: registration.fifplHadOtherTrainingThisYear,
+          otherFifplAmountAlreadyCoveredEur:
+            registration.fifplOtherAmountAlreadyCoveredEur,
+        })
+      ) {
+        try {
+          const { data: priorCfp } = await supabase
+            .from("email_log")
+            .select("id")
+            .eq("template_slug", ROSIERE_CFP_EMAIL_SLUG)
+            .eq("inscription_id", inscription.id)
+            .eq("status", "sent")
+            .maybeSingle();
+
+          if (!priorCfp) {
+            let subject: string;
+            let html: string;
+            const { data: cfpTemplate } = await supabase
+              .from("email_templates")
+              .select("subject_fr, body_fr")
+              .eq("slug", ROSIERE_CFP_EMAIL_SLUG)
+              .eq("is_active", true)
+              .maybeSingle();
+            const cfpVars = {
+              student_name: studentName,
+              inscription_code: inscription.code || "",
+            };
+            if (cfpTemplate?.subject_fr && cfpTemplate?.body_fr) {
+              subject = applyEmailTemplate(cfpTemplate.subject_fr, cfpVars);
+              html = applyEmailTemplate(cfpTemplate.body_fr, cfpVars);
+            } else {
+              const rendered = renderRosiereCfpRequestEmail({
+                studentName,
+                inscriptionCode: inscription.code || "",
+              });
+              subject = rendered.subject;
+              html = rendered.html;
+            }
+            const cfpSend = await sendFliEmail({ resendApiKey, to: email, subject, html });
+            await supabase.from("email_log").insert({
+              template_slug: ROSIERE_CFP_EMAIL_SLUG,
+              recipient_email: email,
+              recipient_name: studentName,
+              status: cfpSend.ok ? "sent" : cfpSend.skipped ? "skipped" : "failed",
+              error_message: cfpSend.error ?? null,
+              inscription_id: inscription.id,
+              variables_used: cfpVars,
+            });
+          }
+        } catch (cfpEmailError) {
+          console.error("rosiere CFP request email error:", cfpEmailError);
+        }
+      }
+
       // Règle Paula : flux avec règlement → dossier après 150 € / intégral.
       // OPCO / Entreprise : pas d'enfilement auto (funding-flows).
       // Autres sans paiement (devis legacy) : enfilement seulement si le flux le permet.
@@ -1021,7 +1110,10 @@ Deno.serve(async (req) => {
         isOpco,
         opcoObservation: isOpco ? formatOpcoObservation(registration) : null,
         isFifpl,
-        fifplObservation: isFifpl ? formatFifplObservation(registration) : null,
+        fifplObservation:
+          isFifpl || hasFifplAnswers(registration)
+            ? formatFifplObservation(registration)
+            : null,
         isAgefice,
         ageficeObservation: isAgefice ? formatAgeficeObservation(registration) : null,
         hasHandicap: Boolean(registration.hasHandicap),
