@@ -749,12 +749,12 @@ Deno.serve(async (req) => {
       [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]:
         "150 € virement + solde chèque avant le début de la formation",
       [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]:
-        "Paiement sécurisé en ligne — montant total",
+        "Règlement intégral en ligne",
       [REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X]:
         "Payez en 3 fois avec Klarna",
       [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]: "Paiement intégral virement",
       [REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE]:
-        "Prise en charge par mon école de ski, chèque FIF-PL à remettre",
+        "Chèque FIF-PL à envoyer à FLI (Montmélian)",
       virement:
         "150 € virement + solde chèque avant le début de la formation",
     };

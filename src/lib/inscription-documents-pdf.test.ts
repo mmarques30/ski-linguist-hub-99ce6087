@@ -307,6 +307,108 @@ describe("PDF dossier inscription", () => {
     expect(text).toMatch(/Formation Professionnelle Continue/);
   });
 
+  it("détaille chèque FIF-PL moniteur + solde ESF (La Rosière)", () => {
+    const model = buildConventionPdfModel({
+      inscription: {
+        code: "FLI-260027",
+        language: "Portugais",
+        start_date: "2026-11-30",
+        end_date: "2026-12-11",
+        duration_hours: 40,
+        course_location: "ESF La Rosière",
+        modality: "presentiel",
+        price: 1500,
+        deposit_amount: null,
+        balance_after_deposit: 900,
+        group_size: 8,
+        funding_organization: "FIFPL",
+        payment_method: "cheque_fifpl_ecole",
+      },
+      student: {
+        first_name: "Christelle",
+        last_name: "Gaidet",
+        street_address: "447 toute des Etaves",
+        postal_code: "73700",
+        city: "Montvalezan",
+        email: "chrisg73@orange.fr",
+        phone: "0685923468",
+        company: "ESF La Rosière",
+      },
+      identity: IDENTITY,
+    });
+    expect(model.priceLabel).toContain("1");
+    expect(model.balanceLabel).toContain("900");
+    expect(model.paymentTermsLabel).toMatch(/900/);
+    expect(model.paymentTermsLabel).toMatch(/600/);
+    expect(model.paymentTermsLabel).toMatch(/1\s?500|1500/);
+    expect(model.paymentTermsLabel).toMatch(/règlement intégral en ligne/i);
+    expect(model.paymentTermsLabel).toMatch(/chèque FIF-PL/i);
+    expect(model.paymentTermsLabel).toMatch(/25 avenue de la Gare/);
+    expect(model.paymentTermsLabel).toMatch(/73800 Montmélian/);
+    expect(model.paymentTermsLabel).toMatch(/ESF/);
+    expect(model.paymentTermsLabel).toMatch(/Prise en charge ESF/);
+    expect(model.paymentTermsLabel).not.toMatch(/jamais à celle de l'ESF/);
+    expect(model.paymentTermsLabel).not.toMatch(/150/);
+    expect(model.paymentTermsLabel).not.toMatch(/frais de dossier/i);
+    expect(model.paymentTermsLabel).not.toMatch(/remettre via|votre école de ski/i);
+    expect(model.hideDepositFee).toBe(true);
+    expect(model.balanceRowLabel).toBe("Votre part");
+    expect(model.schoolCoverageLabel).toMatch(/600/);
+    expect(
+      model.sections.some(
+        (s) =>
+          s.title === "Tarif et règlement" &&
+          s.paragraphs.some((p) => p.includes("Aucun frais de dossier"))
+      )
+    ).toBe(true);
+    expect(
+      model.sections.some(
+        (s) =>
+          s.title === "Tarif et règlement" &&
+          s.paragraphs.some((p) => p.includes("150 €"))
+      )
+    ).toBe(false);
+  });
+
+  it("masque les 150 € sur convention Méribel (forfait école)", () => {
+    const model = buildConventionPdfModel({
+      inscription: {
+        code: "FLI-260099",
+        language: "Anglais",
+        start_date: "2026-11-30",
+        end_date: "2026-12-04",
+        duration_hours: 24,
+        course_location: "ESF Méribel",
+        modality: "presentiel",
+        price: 900,
+        deposit_amount: null,
+        balance_after_deposit: 900,
+        group_size: 8,
+        funding_organization: "FIFPL",
+        payment_method: "stripe",
+      },
+      student: {
+        first_name: "Test",
+        last_name: "Meribel",
+        company: "ESF Méribel",
+      },
+      identity: IDENTITY,
+    });
+    expect(model.hideDepositFee).toBe(true);
+    expect(model.schoolCoverageLabel).toBeNull();
+    expect(model.paymentTermsLabel).not.toMatch(/150/);
+    expect(model.paymentTermsLabel).toMatch(/règlement intégral en ligne/i);
+    expect(model.paymentTermsLabel).toMatch(/chèque FIF-PL/i);
+    expect(model.paymentTermsLabel).not.toMatch(/remettre via|votre école de ski/i);
+    expect(
+      model.sections.some(
+        (s) =>
+          s.title === "Tarif et règlement" &&
+          s.paragraphs.some((p) => p.includes("150 €"))
+      )
+    ).toBe(false);
+  });
+
   it("construit le programme en ligne Version 2 (texte Paula)", async () => {
     const model = buildProgrammePdfModel({
       inscription: {
@@ -392,6 +494,15 @@ describe("PDF dossier inscription", () => {
     expect(extraire(deno, "buildProgrammePdfModel")).toBe(
       extraire(front, "buildProgrammePdfModel")
     );
+    expect(extraire(deno, "isSchoolStationConvention")).toBe(
+      extraire(front, "isSchoolStationConvention")
+    );
+
+    const frontCgv = source("src/lib/conditions-generales-content.ts");
+    const denoCgv = source(
+      "supabase/functions/_shared/conditions-generales-content.ts"
+    );
+    expect(denoCgv).toBe(frontCgv);
 
     const frontAssets = source("src/lib/inscription-documents-assets.ts");
     const denoAssets = source(

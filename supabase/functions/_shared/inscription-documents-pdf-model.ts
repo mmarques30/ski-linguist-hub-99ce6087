@@ -5,8 +5,8 @@
 
 import {
   CONDITIONS_GENERALES_PROVENANCE,
-  CONDITIONS_GENERALES_SECTIONS,
   CONDITIONS_GENERALES_TITLE,
+  conditionsGeneralesSectionsForConvention,
 } from "./conditions-generales-content.ts";
 import {
   fliDocumentFooterLines,
@@ -69,6 +69,12 @@ export type InscriptionDocumentPdfModel = {
   balanceLabel: string;
   fundingLabel: string;
   paymentTermsLabel: string;
+  /** Masque la ligne Acompte et les CGV « 150 € » (Méribel / La Rosière). */
+  hideDepositFee?: boolean;
+  /** Libellé de la ligne solde / part moniteur. */
+  balanceRowLabel?: string;
+  /** La Rosière : montant facturé à l'ESF (ligne Conditions financières). */
+  schoolCoverageLabel?: string | null;
   organization: OrganizationIdentity;
   organizationAddress: string;
   organizationLegalLines: string[];
@@ -170,14 +176,77 @@ function buildDatesLabel(input: {
   };
 }
 
+function foldLocationKey(value: string | null | undefined): string {
+  return (value || "")
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase();
+}
+
+/** Stations partenaire sans acompte 150 € (SESSIONS §3.3 / §3.4). */
+export function isPartnerSchoolStationLocation(
+  location: string | null | undefined
+): boolean {
+  const loc = foldLocationKey(location);
+  return loc.includes("rosiere") || loc.includes("meribel");
+}
+
+export function isLaRosiereStationLocation(
+  location: string | null | undefined
+): boolean {
+  return foldLocationKey(location).includes("rosiere");
+}
+
+export function isSchoolFifplChequeMethod(
+  paymentMethod: string | null | undefined
+): boolean {
+  const method = (paymentMethod || "").toLowerCase();
+  return method.includes("cheque_fifpl_ecole") || method.includes("school_fifpl");
+}
+
+/** Convention moniteur ESF Méribel / La Rosière : pas de frais de dossier 150 €. */
+export function isSchoolStationConvention(row: InscriptionDocumentsRow): boolean {
+  return (
+    isSchoolFifplChequeMethod(row.payment_method) ||
+    isPartnerSchoolStationLocation(row.course_location)
+  );
+}
+
 function buildPaymentTermsLabel(input: {
   priceLabel: string;
   depositLabel: string;
   balanceLabel: string;
   payment_method?: string | null;
   fundingLabel: string;
+  /** Part moniteur (chèque FIF-PL) quand le solde est facturé à l'école. */
+  schoolShareLabel?: string | null;
+  /** Méribel / La Rosière : ne pas mentionner les 150 €. */
+  omitDossierFee?: boolean;
 }): string {
+  const methodRaw = (input.payment_method || "").toLowerCase();
+  const schoolFifplCheque = isSchoolFifplChequeMethod(input.payment_method);
+  const schoolStationTerms = schoolFifplCheque || Boolean(input.omitDossierFee);
+
+  if (schoolStationTerms) {
+    const moniteurShare =
+      input.balanceLabel !== "—" ? input.balanceLabel : input.priceLabel;
+    const parts = [
+      `Coût pédagogique total : ${input.priceLabel}.`,
+      `Votre part : ${moniteurShare} — règlement au choix : (1) règlement intégral en ligne ; (2) chèque FIF-PL à l'ordre de France Langues International, à envoyer à : France Langues International — 25 avenue de la Gare, 73800 Montmélian (encaissé après la formation).`,
+    ];
+    if (input.schoolShareLabel && input.schoolShareLabel !== "—") {
+      parts.push(
+        `Prise en charge ESF : ${input.schoolShareLabel} — facturé à l'ESF (convention école).`
+      );
+    }
+    if (input.fundingLabel && input.fundingLabel !== "—") {
+      parts.push(`Financement : ${input.fundingLabel}.`);
+    }
+    return parts.join(" ");
+  }
+
   const method = paymentMethodLabelFr(input.payment_method);
+
   const parts = [
     `Coût pédagogique total : ${input.priceLabel}.`,
     `Frais de dossier / acompte : ${input.depositLabel} (mode : ${method}).`,
@@ -186,7 +255,7 @@ function buildPaymentTermsLabel(input: {
   if (input.fundingLabel && input.fundingLabel !== "—") {
     parts.push(`Financement : ${input.fundingLabel}.`);
   }
-  if ((input.payment_method || "").toLowerCase().includes("virement")) {
+  if (methodRaw.includes("virement")) {
     parts.push(
       "Le solde peut être réglé par chèque avant le début de la formation, sauf paiement intégral."
     );
@@ -361,6 +430,17 @@ function balanceAmount(row: InscriptionDocumentsRow): number | null {
   return price - deposit;
 }
 
+/** Solde facturé à l'école = tarif − part moniteur (chèque FIF-PL école). */
+function schoolShareAmount(row: InscriptionDocumentsRow): number | null {
+  if (!isSchoolFifplChequeMethod(row.payment_method)) {
+    return null;
+  }
+  const price = asNumber(row.price);
+  const moniteurShare = balanceAmount(row);
+  if (price == null || moniteurShare == null) return null;
+  return Math.max(0, price - moniteurShare);
+}
+
 const PROGRAMME_SECTIONS: Array<{ title: string; paragraphs: string[] }> = [
   {
     title: "Objectifs",
@@ -480,12 +560,20 @@ export function buildConventionPdfModel(input: {
   const depositLabel = formatEuros(input.inscription.deposit_amount);
   const balanceLabel = formatEuros(balanceAmount(input.inscription));
   const fundingLabel = texte(input.inscription.funding_organization) || "—";
+  const schoolStation = isSchoolStationConvention(input.inscription);
+  const laRosiere = isLaRosiereStationLocation(input.inscription.course_location);
+  const schoolShareLabel = formatEuros(schoolShareAmount(input.inscription));
   const paymentTermsLabel = buildPaymentTermsLabel({
     priceLabel,
     depositLabel,
     balanceLabel,
     payment_method: input.inscription.payment_method,
     fundingLabel,
+    schoolShareLabel,
+    omitDossierFee: schoolStation,
+  });
+  const cgvSections = conditionsGeneralesSectionsForConvention({
+    omitDossierFee: schoolStation,
   });
 
   const sections = online
@@ -523,7 +611,7 @@ export function buildConventionPdfModel(input: {
           title: CONDITIONS_GENERALES_TITLE,
           paragraphs: [CONDITIONS_GENERALES_PROVENANCE],
         },
-        ...CONDITIONS_GENERALES_SECTIONS.map((s) => ({
+        ...cgvSections.map((s) => ({
           title: s.title,
           paragraphs: s.paragraphs,
         })),
@@ -557,6 +645,10 @@ export function buildConventionPdfModel(input: {
     balanceLabel,
     fundingLabel,
     paymentTermsLabel,
+    hideDepositFee: schoolStation,
+    balanceRowLabel: schoolStation ? "Votre part" : "Solde",
+    schoolCoverageLabel:
+      laRosiere && schoolShareLabel !== "—" ? schoolShareLabel : null,
     organization,
     organizationAddress: formatOrganizationAddress(organization),
     organizationLegalLines: organizationLegalMentions(organization),
@@ -637,6 +729,7 @@ export function buildProgrammePdfModel(input: {
       balanceLabel,
       payment_method: input.inscription.payment_method,
       fundingLabel,
+      schoolShareLabel: formatEuros(schoolShareAmount(input.inscription)),
     }),
     organization,
     organizationAddress: formatOrganizationAddress(organization),

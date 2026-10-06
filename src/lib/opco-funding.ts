@@ -41,7 +41,7 @@ export const PROPOSAL_PAYMENT_FORMULAS = [
   },
   {
     value: REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL,
-    label: "Paiement intégral carte bancaire en ligne",
+    label: "Règlement intégral en ligne",
   },
   {
     value: REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X,

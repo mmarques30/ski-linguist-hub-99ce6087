@@ -145,6 +145,7 @@ Deno.serve(async (req) => {
         group_size,
         funding_organization,
         funding_details,
+        payment_method,
         observations,
         student_id,
         students!inscriptions_student_id_fkey (

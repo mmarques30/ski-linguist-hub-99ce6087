@@ -20,7 +20,7 @@ export const REGISTRATION_PAYMENT_OPTIONS = {
   /** Payez en 3 fois avec Klarna — stagiaire individuel, montant ≥ 500 €. */
   STRIPE_KLARNA_3X: "stripe_klarna_3x",
   VIREMENT_FULL: "virement_full",
-  /** Méribel / La Rosière : chèque FIF-PL via l'école, encaissé après la formation. */
+  /** Méribel / La Rosière : chèque FIF-PL envoyé à FLI (Montmélian), encaissé après la formation. */
   SCHOOL_FIFPL_CHEQUE: "school_fifpl_cheque",
 } as const;
 
@@ -98,7 +98,7 @@ export function getRegistrationPaymentSummary(
       dossierFee: 0,
       balanceAfterDossier: coursePrice,
       amountDueNow: 0,
-      amountDueNowLabel: "Aucun acompte — chèque FIF-PL via l'école",
+      amountDueNowLabel: "Aucun acompte — chèque FIF-PL à envoyer à FLI",
     };
   }
 
@@ -146,7 +146,7 @@ export const CHEQUE_BALANCE_INSTRUCTION =
   "Le chèque pour le solde est à envoyer avant le début de la formation.";
 
 export const SCHOOL_FIFPL_CHEQUE_INSTRUCTION =
-  "Remettez le chèque FIF-PL (montant de l'accord préalable) à votre école de ski. Il sera encaissé après la formation ; l'ESF règle le solde.";
+  "Envoyez le chèque FIF-PL (votre part) à l'ordre de France Langues International, à : France Langues International — 25 avenue de la Gare, 73800 Montmélian. Il sera encaissé après la formation ; l'ESF règle le solde de son côté.";
 
 export const PAYMENT_OPTION_LABELS: Record<RegistrationPaymentOption, string> = {
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]:
@@ -154,12 +154,12 @@ export const PAYMENT_OPTION_LABELS: Record<RegistrationPaymentOption, string> = 
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]:
     "150 € par virement bancaire + solde par chèque avant le début de la formation",
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]:
-    "Paiement sécurisé en ligne — montant total",
+    "Règlement intégral en ligne",
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X]:
     "Payez en 3 fois avec Klarna",
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]: "Paiement intégral par virement bancaire",
   [REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE]:
-    "Prise en charge par mon école de ski, chèque FIF-PL à remettre",
+    "Chèque FIF-PL à envoyer à FLI (Montmélian)",
 };
 
 export const PAYMENT_OPTION_DESCRIPTIONS: Record<RegistrationPaymentOption, string> = {
@@ -168,7 +168,7 @@ export const PAYMENT_OPTION_DESCRIPTIONS: Record<RegistrationPaymentOption, stri
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]:
     `Effectuez un virement de 150 € pour les frais de dossier. ${CHEQUE_BALANCE_INSTRUCTION}`,
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]:
-    "Réglez la totalité de votre part (montant de l'accord préalable FIF-PL ou tarif formation) par paiement sécurisé en ligne (carte ou Klarna si éligible).",
+    "Réglez la totalité de votre part par paiement sécurisé en ligne — carte ou Klarna si éligible.",
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X]:
     `Même prix qu'en une fois — 3 échéances via Klarna (à partir de ${formatPriceEUR(STRIPE_KLARNA_3X_MIN_EUR)}). Réservé aux particuliers ; pas pour une entreprise ou une ESF.`,
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]:
