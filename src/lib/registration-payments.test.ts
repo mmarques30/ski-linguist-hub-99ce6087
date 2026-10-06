@@ -5,14 +5,14 @@ import {
   getAvailablePaymentOptions,
   getRegistrationPaymentSummary,
   hasChequeBalance,
-  isStripe4xEligible,
+  isStripeKlarna3xEligible,
   isStripeTotalSettlement,
   PAYMENT_OPTION_LABELS,
   REGISTRATION_PAYMENT_OPTIONS,
   requiresStripeCheckout,
   requiresVirementInstructions,
-  STRIPE_4X_MIN_EUR,
-  stripe4xInstallmentEur,
+  STRIPE_KLARNA_3X_MIN_EUR,
+  stripeKlarna3xInstallmentEur,
 } from "./registration-payments";
 
 /**
@@ -54,7 +54,7 @@ describe("modes de règlement /register", () => {
     expect(isStripeTotalSettlement(null)).toBe(false);
   });
 
-  it("affiche « paiement sécurisé en ligne » et non Stripe sur /register", () => {
+  it("affiche « paiement sécurisé en ligne » / Klarna et non Stripe sur /register", () => {
     for (const label of Object.values(PAYMENT_OPTION_LABELS)) {
       expect(label.toLowerCase()).not.toContain("stripe");
     }
@@ -65,8 +65,11 @@ describe("modes de règlement /register", () => {
       PAYMENT_OPTION_LABELS[REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]
     ).toMatch(/paiement sécurisé en ligne/i);
     expect(
-      PAYMENT_OPTION_LABELS[REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X]
-    ).toMatch(/paiement sécurisé en ligne en 4 fois/i);
+      PAYMENT_OPTION_LABELS[REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X]
+    ).toBe("Payez en 3 fois avec Klarna");
+    expect(
+      PAYMENT_OPTION_LABELS[REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X].toLowerCase()
+    ).not.toContain("4 fois");
   });
 
   it("garde le détail du règlement une fois le mode choisi", () => {
@@ -84,34 +87,41 @@ describe("modes de règlement /register", () => {
     expect(total.amountDueNow).toBe(600);
     expect(total.balanceAfterDossier).toBe(0);
 
-    const fourTimes = getRegistrationPaymentSummary(
+    const threeTimes = getRegistrationPaymentSummary(
       900,
-      REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X
+      REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X
     );
-    expect(fourTimes.amountDueNow).toBe(900);
-    expect(fourTimes.balanceAfterDossier).toBe(0);
-    expect(fourTimes.amountDueNowLabel).toMatch(/4\s*×/);
+    expect(threeTimes.amountDueNow).toBe(900);
+    expect(threeTimes.balanceAfterDossier).toBe(0);
+    expect(threeTimes.amountDueNowLabel).toMatch(/3 échéances Klarna/i);
+    expect(threeTimes.amountDueNowLabel).toMatch(/Klarna/i);
   });
 
-  it("propose le 4× seulement à partir de 500 €", () => {
-    expect(STRIPE_4X_MIN_EUR).toBe(500);
-    expect(isStripe4xEligible(499.99)).toBe(false);
-    expect(isStripe4xEligible(500)).toBe(true);
-    expect(stripe4xInstallmentEur(900)).toBe(225);
+  it("propose Klarna 3× dès 500 € pour un particulier, jamais pour forfait école", () => {
+    expect(STRIPE_KLARNA_3X_MIN_EUR).toBe(500);
+    expect(isStripeKlarna3xEligible(499.99, "individuel")).toBe(false);
+    expect(isStripeKlarna3xEligible(500, "individuel")).toBe(true);
+    expect(isStripeKlarna3xEligible(900, "forfait_ecole")).toBe(false);
+    expect(isStripeKlarna3xEligible(900, "fifpl_stagiaire_solde_ecole")).toBe(false);
+    expect(stripeKlarna3xInstallmentEur(900)).toBe(300);
 
     const below = getAvailablePaymentOptions("individuel", 300);
-    expect(below).not.toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X);
+    expect(below).not.toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X);
 
     const above = getAvailablePaymentOptions("individuel", 500);
-    expect(above).toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X);
-    expect(above.indexOf(REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X)).toBeGreaterThan(
-      above.indexOf(REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL)
-    );
+    expect(above).toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X);
+    expect(
+      above.indexOf(REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X)
+    ).toBeGreaterThan(above.indexOf(REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL));
 
     const school = getAvailablePaymentOptions("forfait_ecole", 900);
-    expect(school).toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X);
-    expect(requiresStripeCheckout(REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X)).toBe(true);
-    expect(isStripeTotalSettlement(REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X)).toBe(true);
+    expect(school).not.toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X);
+    expect(requiresStripeCheckout(REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X)).toBe(
+      true
+    );
+    expect(isStripeTotalSettlement(REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X)).toBe(
+      true
+    );
   });
 
   it("renseigne depositAmount = 150 € sur les flux acompte (copie Deno)", () => {
@@ -119,16 +129,14 @@ describe("modes de règlement /register", () => {
       join(process.cwd(), "supabase/functions/_shared/registration-payments.ts"),
       "utf8"
     );
-    // Les deux retours acompte (virement + stripe) doivent poser depositAmount.
     const matches = [
       ...deno.matchAll(/depositAmount:\s*([^,\n]+)/g),
     ].map((m) => m[1].trim());
     expect(matches.filter((v) => v === "FRAIS_DOSSIER_EUR")).toHaveLength(2);
-    // totaux Stripe (FULL + 4× via isStripeTotalSettlement) / virement + school_fifpl_cheque
     expect(matches.filter((v) => v === "null")).toHaveLength(3);
   });
 
-  it("garde la copie Deno d'accord avec le seuil et l'option 4×", () => {
+  it("garde la copie Deno d'accord avec Klarna 3× (pas Alma)", () => {
     const front = readFileSync(
       join(process.cwd(), "src/lib/registration-payments.ts"),
       "utf8"
@@ -137,13 +145,16 @@ describe("modes de règlement /register", () => {
       join(process.cwd(), "supabase/functions/_shared/registration-payments.ts"),
       "utf8"
     );
-    expect(front).toContain('STRIPE_4X: "stripe_4x"');
-    expect(deno).toContain('STRIPE_4X: "stripe_4x"');
-    expect(front).toContain("export const STRIPE_4X_MIN_EUR = 500");
-    expect(deno).toContain("export const STRIPE_4X_MIN_EUR = 500");
+    expect(front).toContain('STRIPE_KLARNA_3X: "stripe_klarna_3x"');
+    expect(deno).toContain('STRIPE_KLARNA_3X: "stripe_klarna_3x"');
+    expect(front).toContain("export const STRIPE_KLARNA_3X_MIN_EUR = 500");
+    expect(deno).toContain("export const STRIPE_KLARNA_3X_MIN_EUR = 500");
     expect(deno).toContain('paymentMethodTypes ?? ["card", "klarna"]');
-    expect(deno).toContain('"alma"');
+    expect(deno).not.toContain('"alma"');
+    expect(front).toMatch(/Alma est inéligible/);
+    expect(front.toLowerCase()).not.toContain("4 fois");
     expect(deno).toContain("isStripeTotalSettlement");
+    expect(deno).toContain('LEGACY_STRIPE_4X = "stripe_4x"');
   });
 
   it("masque l'acompte 150 € pour Méribel / La Rosière et ajoute le chèque école", () => {
@@ -151,7 +162,7 @@ describe("modes de règlement /register", () => {
     expect(schoolModes).toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL);
     expect(schoolModes).toContain(REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE);
     expect(schoolModes).not.toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE);
-    expect(schoolModes).not.toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X);
+    expect(schoolModes).not.toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X);
 
     const individual = getAvailablePaymentOptions("individuel");
     expect(individual).toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE);
@@ -171,7 +182,8 @@ describe("modes de règlement /register", () => {
       "utf8"
     );
     expect(submit).toContain("deposit_amount: paymentFields?.depositAmount ?? null");
-    expect(submit).toContain("STRIPE_4X");
+    expect(submit).toContain("STRIPE_KLARNA_3X");
+    expect(submit).toContain("Payez en 3 fois avec Klarna");
   });
 
   it("passe le montant payable à getAvailablePaymentOptions dans PaymentStep", () => {

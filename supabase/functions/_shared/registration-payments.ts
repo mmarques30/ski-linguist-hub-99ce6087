@@ -1,15 +1,18 @@
 export const FRAIS_DOSSIER_EUR = 150;
 
-/** Seuil Paula : option « 4 fois » proposée à partir de 500 € (part / tarif à régler). */
-export const STRIPE_4X_MIN_EUR = 500;
-export const STRIPE_4X_INSTALLMENTS = 4;
+/**
+ * Seuil Paula : option « 3 fois avec Klarna » à partir de 500 € (part / tarif).
+ * Alma est inéligible (secteur éducation) — Klarna seul BNPL Stripe pour FLI.
+ */
+export const STRIPE_KLARNA_3X_MIN_EUR = 500;
+export const STRIPE_KLARNA_3X_INSTALLMENTS = 3;
 
 export const REGISTRATION_PAYMENT_OPTIONS = {
   STRIPE_DEPOSIT_CHEQUE: "stripe_deposit_cheque",
   VIREMENT_DEPOSIT: "virement_deposit",
   STRIPE_FULL: "stripe_full",
-  /** Paiement en 4 fois via Alma (Checkout Stripe), montants ≥ STRIPE_4X_MIN_EUR. */
-  STRIPE_4X: "stripe_4x",
+  /** Payez en 3 fois avec Klarna — stagiaire individuel, montant ≥ 500 €. */
+  STRIPE_KLARNA_3X: "stripe_klarna_3x",
   VIREMENT_FULL: "virement_full",
   SCHOOL_FIFPL_CHEQUE: "school_fifpl_cheque",
 } as const;
@@ -18,20 +21,23 @@ export type RegistrationPaymentOption =
   (typeof REGISTRATION_PAYMENT_OPTIONS)[keyof typeof REGISTRATION_PAYMENT_OPTIONS];
 
 const LEGACY_VIREMENT = "virement";
+/** Ancien code Alma 4× (jamais déployé en prod utile) → Klarna 3×. */
+const LEGACY_STRIPE_4X = "stripe_4x";
 
-export function isStripe4xEligible(amountEur: number): boolean {
-  return Number.isFinite(amountEur) && amountEur >= STRIPE_4X_MIN_EUR;
+export function isStripeKlarna3xEligibleAmount(amountEur: number): boolean {
+  return Number.isFinite(amountEur) && amountEur >= STRIPE_KLARNA_3X_MIN_EUR;
 }
 
-/** Échéance indicative (affichage) — Alma peut ajuster le 1er prélèvement. */
-export function stripe4xInstallmentEur(totalEur: number): number {
-  return Math.round((totalEur / STRIPE_4X_INSTALLMENTS) * 100) / 100;
+/** Échéance indicative (affichage). */
+export function stripeKlarna3xInstallmentEur(totalEur: number): number {
+  return Math.round((totalEur / STRIPE_KLARNA_3X_INSTALLMENTS) * 100) / 100;
 }
 
 export function isValidPaymentOption(value: string): value is RegistrationPaymentOption {
   return (
     Object.values(REGISTRATION_PAYMENT_OPTIONS).includes(value as RegistrationPaymentOption) ||
-    value === LEGACY_VIREMENT
+    value === LEGACY_VIREMENT ||
+    value === LEGACY_STRIPE_4X
   );
 }
 
@@ -39,16 +45,19 @@ export function normalizePaymentOption(value: string): RegistrationPaymentOption
   if (value === LEGACY_VIREMENT) {
     return REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT;
   }
+  if (value === LEGACY_STRIPE_4X) {
+    return REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X;
+  }
   return value as RegistrationPaymentOption;
 }
 
-/** Paiement en ligne qui solde la part stagiaire (intégral ou 4× Alma). */
+/** Paiement en ligne qui solde la part stagiaire (intégral ou 3× Klarna). */
 export function isStripeTotalSettlement(
   option: RegistrationPaymentOption | null | undefined
 ): boolean {
   return (
     option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL ||
-    option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X
+    option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X
   );
 }
 
@@ -127,7 +136,7 @@ export function getInscriptionPaymentFields(
   };
 }
 
-export type StripeCheckoutPaymentMethodType = "card" | "klarna" | "alma";
+export type StripeCheckoutPaymentMethodType = "card" | "klarna";
 
 export async function createStripeCheckoutSession(params: {
   stripeSecretKey: string;
@@ -137,7 +146,7 @@ export async function createStripeCheckoutSession(params: {
   successUrl: string;
   cancelUrl: string;
   metadata: Record<string, string>;
-  /** Carte + Klarna par défaut ; Alma seul pour le parcours 4×. */
+  /** Carte + Klarna par défaut ; Klarna seul pour le parcours « 3 fois ». */
   paymentMethodTypes?: StripeCheckoutPaymentMethodType[];
 }): Promise<{ id: string; url: string }> {
   const body = new URLSearchParams({
@@ -146,7 +155,7 @@ export async function createStripeCheckoutSession(params: {
     cancel_url: params.cancelUrl,
     customer_email: params.customerEmail,
     locale: "fr",
-    // Adresse de facturation : utile pour Klarna / Alma (éligibilité / pays acheteur).
+    // Adresse de facturation : utile pour Klarna (éligibilité / pays acheteur).
     billing_address_collection: "required",
     // Empêche Stripe de proposer une conversion USD selon le navigateur.
     "adaptive_pricing[enabled]": "false",

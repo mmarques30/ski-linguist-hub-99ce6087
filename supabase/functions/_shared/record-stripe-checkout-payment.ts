@@ -64,8 +64,8 @@ export async function recordStripeCheckoutPayment(
         : "acompte";
 
   const paymentNotes =
-    normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X
-      ? "Paiement en 4 fois (Alma) — inscription en ligne"
+    normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X
+      ? "Paiement en 3 fois (Klarna) — inscription en ligne"
       : settledTotal
         ? "Paiement intégral inscription en ligne"
         : "Frais de dossier inscription en ligne";

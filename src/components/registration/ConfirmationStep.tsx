@@ -605,7 +605,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                   <SummaryRow
                     label="À régler maintenant"
                     value={
-                      paymentOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X
+                      paymentOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X
                         ? paymentSummary.amountDueNowLabel
                         : formatPriceEUR(paymentSummary.amountDueNow)
                     }

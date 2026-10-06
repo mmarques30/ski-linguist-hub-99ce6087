@@ -120,10 +120,10 @@ LIMIT 5;
 |--------|----------------|-------|
 | Acompte Stripe + chèque | 150 € | Solde chèque à envoyer à l'inscription (encaissement après clôture du dossier) |
 | Paiement intégral Stripe | Prix total (carte / Klarna) | 0 € |
-| Paiement en 4 fois (Alma) | Prix total si ≥ 500 € | 0 € (FLI payé immédiatement ; Alma gère les échéances) |
+| Payez en 3 fois avec Klarna | Prix total si ≥ 500 € (particulier uniquement) | 0 € — même prix qu'en une fois (pas de surcoût) |
 | Virement | — | Pas de Stripe |
 
-Alma doit être **activé** dans le [Dashboard Stripe → Payment methods](https://dashboard.stripe.com/settings/payment_methods) (France). Sans Alma, le Checkout `stripe_4x` échoue.
+**Alma** n'est pas disponible pour FLI (secteur éducation / B2B refusé par Alma). Le BNPL Stripe utilisable est **Klarna** (3 fois en France). Ne pas proposer Klarna aux entreprises / ESF — pour elles : OPCO ou échéancier virement.
 
 ---
 

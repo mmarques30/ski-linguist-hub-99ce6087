@@ -63,7 +63,7 @@ const PAYMENT_OPTION_ICONS: Record<
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]: CreditCard,
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]: Landmark,
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]: Receipt,
-  [REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X]: CalendarClock,
+  [REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X]: CalendarClock,
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]: Landmark,
   [REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE]: FileText,
 };
@@ -550,7 +550,7 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
               label="À régler maintenant"
               value={
                 summary
-                  ? selectedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X
+                  ? selectedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X
                     ? summary.amountDueNowLabel
                     : formatPriceEUR(summary.amountDueNow)
                   : "selon le mode choisi"

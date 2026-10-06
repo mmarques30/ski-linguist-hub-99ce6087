@@ -44,8 +44,8 @@ export const PROPOSAL_PAYMENT_FORMULAS = [
     label: "Paiement intégral carte bancaire en ligne",
   },
   {
-    value: REGISTRATION_PAYMENT_OPTIONS.STRIPE_4X,
-    label: "Paiement en 4 fois en ligne (Alma, ≥ 500 €)",
+    value: REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X,
+    label: "Payez en 3 fois avec Klarna (≥ 500 €, particulier)",
   },
   {
     value: REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL,
