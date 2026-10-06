@@ -9,6 +9,10 @@
  * - OPCO / Entreprise : pas d'envoi auto (rappel annulé si présent)
  *
  * Cron inactif par défaut — Paula active depuis /admin/emails.
+ *
+ * Renvoi manuel (après changement de durée/tarif) : POST JSON
+ * `{ "inscriptionId": "uuid", "force": true, "customSubject"?: "…", "customHtml"?: "…" }`.
+ * `force` ignore le journal « déjà envoyé » et régénère les PDF depuis l'inscription.
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -100,6 +104,20 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
     const dryRun = url.searchParams.get("dry_run") === "true";
+    const payload = (await req.json().catch(() => ({}))) as {
+      inscriptionId?: string;
+      force?: boolean;
+      customSubject?: string;
+      customHtml?: string;
+    };
+    const forceInscriptionId =
+      payload.force === true && typeof payload.inscriptionId === "string"
+        ? payload.inscriptionId.trim()
+        : "";
+    const customSubject =
+      typeof payload.customSubject === "string" ? payload.customSubject.trim() : "";
+    const customHtml =
+      typeof payload.customHtml === "string" ? payload.customHtml.trim() : "";
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -123,17 +141,46 @@ Deno.serve(async (req) => {
     );
 
     const nowIso = new Date().toISOString();
-    const { data: reminders, error: remError } = await supabase
-      .from("scheduled_reminders")
-      .select("id, related_id, scheduled_for, status")
-      .eq("type", "DOCUMENT")
-      .eq("related_table", "inscriptions")
-      .eq("status", "PENDING")
-      .lte("scheduled_for", nowIso)
-      .order("scheduled_for", { ascending: true })
-      .limit(50);
+    let reminders: Array<{
+      id: string;
+      related_id: string;
+      scheduled_for: string;
+      status: string;
+    }> | null = null;
+    let remError: { message: string } | null = null;
+
+    if (forceInscriptionId) {
+      reminders = [
+        {
+          id: `force-${forceInscriptionId}`,
+          related_id: forceInscriptionId,
+          scheduled_for: nowIso,
+          status: "PENDING",
+        },
+      ];
+    } else {
+      const queued = await supabase
+        .from("scheduled_reminders")
+        .select("id, related_id, scheduled_for, status")
+        .eq("type", "DOCUMENT")
+        .eq("related_table", "inscriptions")
+        .eq("status", "PENDING")
+        .lte("scheduled_for", nowIso)
+        .order("scheduled_for", { ascending: true })
+        .limit(50);
+      reminders = queued.data;
+      remError = queued.error;
+    }
 
     if (remError) throw remError;
+
+    const persistReminder = async (
+      reminderId: string,
+      patch: Record<string, unknown>,
+    ) => {
+      if (String(reminderId).startsWith("force-")) return;
+      await supabase.from("scheduled_reminders").update(patch).eq("id", reminderId);
+    };
 
     const results = {
       dryRun,
@@ -206,10 +253,7 @@ Deno.serve(async (req) => {
 
         if (insError) throw insError;
         if (!inscription) {
-          await supabase
-            .from("scheduled_reminders")
-            .update({ status: "CANCELLED" })
-            .eq("id", reminder.id);
+          await persistReminder(reminder.id, { status: "CANCELLED" });
           results.cancelled++;
           results.details.push({
             reminderId: reminder.id,
@@ -220,10 +264,7 @@ Deno.serve(async (req) => {
         }
 
         if (!isStudentPayer({ funding_organization: inscription.funding_organization })) {
-          await supabase
-            .from("scheduled_reminders")
-            .update({ status: "CANCELLED" })
-            .eq("id", reminder.id);
+          await persistReminder(reminder.id, { status: "CANCELLED" });
           results.cancelled++;
           results.details.push({
             reminderId: reminder.id,
@@ -241,10 +282,7 @@ Deno.serve(async (req) => {
         const packId = flow?.packId ?? (fundingOrg ? null : "fifpl");
 
         if (!packId) {
-          await supabase
-            .from("scheduled_reminders")
-            .update({ status: "CANCELLED" })
-            .eq("id", reminder.id);
+          await persistReminder(reminder.id, { status: "CANCELLED" });
           results.cancelled++;
           results.details.push({
             reminderId: reminder.id,
@@ -264,35 +302,39 @@ Deno.serve(async (req) => {
           });
           continue;
         }
+        if (customSubject) template.subject_fr = customSubject;
+        if (customHtml) template.body_fr = customHtml;
 
-        const { data: prior } = await supabase
-          .from("email_log")
-          .select("id")
-          .in("template_slug", [
-            template.slug,
-            FUNDING_DOSSIER_EMAIL_FALLBACK_SLUG,
-            "inscription_documents_fifpl",
-            "inscription_documents_agefice",
-            "inscription_documents_self",
-            "inscription_documents_opco",
-          ])
-          .eq("inscription_id", inscriptionId)
-          .eq("status", "sent")
-          .limit(1)
-          .maybeSingle();
+        if (!forceInscriptionId) {
+          const { data: prior } = await supabase
+            .from("email_log")
+            .select("id")
+            .in("template_slug", [
+              template.slug,
+              FUNDING_DOSSIER_EMAIL_FALLBACK_SLUG,
+              "inscription_documents_fifpl",
+              "inscription_documents_agefice",
+              "inscription_documents_self",
+              "inscription_documents_opco",
+            ])
+            .eq("inscription_id", inscriptionId)
+            .eq("status", "sent")
+            .limit(1)
+            .maybeSingle();
 
-        if (prior) {
-          await supabase
-            .from("scheduled_reminders")
-            .update({ status: "SENT", sent_at: nowIso })
-            .eq("id", reminder.id);
-          results.skipped++;
-          results.details.push({
-            reminderId: reminder.id,
-            inscriptionId,
-            action: "IGNORE - déjà envoyé",
-          });
-          continue;
+          if (prior) {
+            await supabase
+              .from("scheduled_reminders")
+              .update({ status: "SENT", sent_at: nowIso })
+              .eq("id", reminder.id);
+            results.skipped++;
+            results.details.push({
+              reminderId: reminder.id,
+              inscriptionId,
+              action: "IGNORE - déjà envoyé",
+            });
+            continue;
+          }
         }
 
         const student = (inscription as { students?: Record<string, unknown> }).students || {};
@@ -532,10 +574,10 @@ Deno.serve(async (req) => {
             .update({ documents_sent_at: new Date().toISOString() })
             .eq("id", inscriptionId);
 
-          await supabase
-            .from("scheduled_reminders")
-            .update({ status: "SENT", sent_at: new Date().toISOString() })
-            .eq("id", reminder.id);
+          await persistReminder(reminder.id, {
+            status: "SENT",
+            sent_at: new Date().toISOString(),
+          });
 
           results.sent++;
           results.details.push({

@@ -1,8 +1,10 @@
 /**
- * Génère convention + programme PDF pour Didier (FLI-260021) et Michael (FLI-260022).
+ * Génère convention + programme PDF pour Didier Angelloz (FLI-260021, 12 h italien en ligne).
  * Usage : npx tsx scripts/generate-fifpl-docs-angelloz-colonna.mts
+ *
+ * 06/10/2026 : Didier passe de 18 h / 900 € à 12 h / 600 € (droits FIF-PL non complets).
  */
-import { readFileSync, writeFileSync, mkdirSync, copyFileSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -17,8 +19,6 @@ import { INSCRIPTION_DOCUMENT_ASSET_FILES } from "../src/lib/inscription-documen
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 const outDir = "/opt/cursor/artifacts";
-const mediaDir =
-  "/cursor/stores/bc-1cf2a5ab-578b-4128-bafa-64d1c93e977b/media/inscriptions-angelloz-colonna";
 
 const letterheadPng = new Uint8Array(
   readFileSync(
@@ -68,12 +68,12 @@ const rows: Row[] = [
     language: "Italien",
     start_date: "2026-10-12",
     end_date: "2026-12-20",
-    duration_hours: 18,
+    duration_hours: 12,
     course_location: "Google Meet",
     modality: "en_ligne",
-    price: 900,
+    price: 600,
     deposit_amount: 150,
-    balance_after_deposit: 750,
+    balance_after_deposit: 450,
     group_size: null,
     funding_organization: "FIFPL",
     payment_method: null,
@@ -89,36 +89,9 @@ const rows: Row[] = [
       company: null,
     },
   },
-  {
-    code: "FLI-260022",
-    language: "Russe",
-    start_date: "2026-10-12",
-    end_date: "2027-03-31",
-    duration_hours: 12,
-    course_location: "Google Meet",
-    modality: "en_ligne",
-    price: 600,
-    deposit_amount: 150,
-    balance_after_deposit: 450,
-    group_size: null,
-    funding_organization: "FIFPL",
-    payment_method: null,
-    student: {
-      civility: "Monsieur",
-      first_name: "Michael",
-      last_name: "colonna cesari",
-      street_address: "195 chemin de beaumont",
-      postal_code: "31600",
-      city: "eaunes",
-      email: "colonna.michael@hotmail.fr",
-      phone: "06 16 01 48 55",
-      company: null,
-    },
-  },
 ];
 
 mkdirSync(outDir, { recursive: true });
-mkdirSync(mediaDir, { recursive: true });
 
 const written: string[] = [];
 
@@ -149,9 +122,7 @@ for (const row of rows) {
     [pName, programmeBytes],
   ] as const) {
     const artifactPath = join(outDir, name);
-    const mediaPath = join(mediaDir, name);
     writeFileSync(artifactPath, bytes);
-    copyFileSync(artifactPath, mediaPath);
     written.push(`${name} ${bytes.byteLength}`);
     console.log("wrote", artifactPath, bytes.byteLength);
   }
