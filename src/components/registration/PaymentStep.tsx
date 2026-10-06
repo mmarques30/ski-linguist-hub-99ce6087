@@ -75,6 +75,9 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
   const fundingMode: SessionFundingMode = data.sessionFundingMode ?? "individuel";
   const noDepositSession = hidesDepositPaymentOptions(fundingMode);
   const mandatoryFifplEstimate = requiresMandatoryFifplEstimate(fundingMode);
+  const rosiereInstructor =
+    data.profession === "ski_instructor" && mandatoryFifplEstimate;
+  const showFifplQuestionnaire = isFifpl || rosiereInstructor;
   const pricePending = Boolean(data.pricePending);
   const coursePrice = data.price ?? 0;
   const hasPrice = coursePrice > 0;
@@ -99,11 +102,11 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
   };
 
   const showFifplEstimate =
-    isFifpl &&
-    (mandatoryFifplEstimate || data.fifplEstimateWanted === true);
+    (isFifpl && (mandatoryFifplEstimate || data.fifplEstimateWanted === true)) ||
+    rosiereInstructor;
 
   const payableAmount = useMemo(() => {
-    if (!isFifpl || !noDepositSession || !showFifplEstimate) return coursePrice;
+    if (!showFifplEstimate || !noDepositSession) return coursePrice;
     const rights = estimateFifplRights({
       status: fifplQuestionnaire.status,
       cfpContributionEur: fifplQuestionnaire.cfpContributionEur,
@@ -117,7 +120,6 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
     // Part moniteur = montant accord FIF-PL estimé (SESSIONS §3.3 / §3.4).
     return rights?.coveredOnCourseEur ?? coursePrice;
   }, [
-    isFifpl,
     noDepositSession,
     showFifplEstimate,
     coursePrice,
@@ -327,13 +329,17 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
 
     return (
       <div className="space-y-4">
-        {isFifpl && (
+        {showFifplQuestionnaire && (
           <StepCard
             title={FIFPL_REGISTER_COPY.sectionTitle}
-            description={FIFPL_REGISTER_COPY.sectionDescription}
+            description={
+              rosiereInstructor
+                ? "Ces informations servent à constituer votre dossier FIF-PL et à calculer le reste à charge de l'ESF La Rosière."
+                : FIFPL_REGISTER_COPY.sectionDescription
+            }
             icon={FileText}
           >
-            {!mandatoryFifplEstimate && (
+            {!mandatoryFifplEstimate && !rosiereInstructor && (
               <div className="mb-4 space-y-3">
                 <Label>Souhaitez-vous estimer vos droits FIF-PL ?</Label>
                 <RadioGroup
@@ -441,13 +447,17 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
         </StepCard>
       )}
 
-      {isFifpl && (
+      {showFifplQuestionnaire && (
         <StepCard
           title={FIFPL_REGISTER_COPY.sectionTitle}
-          description={FIFPL_REGISTER_COPY.sectionDescription}
+          description={
+            rosiereInstructor
+              ? "Ces informations servent à constituer votre dossier FIF-PL et à calculer le reste à charge de l'ESF La Rosière."
+              : FIFPL_REGISTER_COPY.sectionDescription
+          }
           icon={FileText}
         >
-          {!mandatoryFifplEstimate && (
+          {!mandatoryFifplEstimate && !rosiereInstructor && (
             <div className="mb-4 space-y-3">
               <Label>Souhaitez-vous estimer vos droits FIF-PL ?</Label>
               <RadioGroup
