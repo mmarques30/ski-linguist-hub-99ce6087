@@ -13,13 +13,26 @@ describe("Stripe Checkout EUR", () => {
     expect(source).toContain('"line_items[0][price_data][currency]": "eur"');
   });
 
-  it("propose carte et Klarna au Checkout", () => {
+  it("propose carte et Klarna au Checkout (intégral / acompte)", () => {
     const source = readFileSync(
       join(process.cwd(), "supabase/functions/_shared/registration-payments.ts"),
       "utf8"
     );
-    expect(source).toContain('body.append("payment_method_types[]", "card")');
-    expect(source).toContain('body.append("payment_method_types[]", "klarna")');
+    expect(source).toContain('paymentMethodTypes ?? ["card", "klarna"]');
     expect(source).toContain('billing_address_collection: "required"');
+    expect(source).not.toContain('"alma"');
+  });
+
+  it("réserve Klarna seul au parcours 3× dans create-registration-checkout", () => {
+    const checkout = readFileSync(
+      join(process.cwd(), "supabase/functions/create-registration-checkout/index.ts"),
+      "utf8"
+    );
+    expect(checkout).toContain('? ["klarna"]');
+    expect(checkout).toContain(': ["card", "klarna"]');
+    expect(checkout).toContain("STRIPE_KLARNA_3X");
+    expect(checkout).toContain("isStripeKlarna3xEligibleAmount");
+    expect(checkout).not.toContain("alma");
+    expect(checkout).not.toContain("4× Alma");
   });
 });
