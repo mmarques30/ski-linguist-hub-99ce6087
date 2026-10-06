@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  CHATEL_PENDING_PRICE_MESSAGE,
+  PENDING_PARTNER_PRICE_MESSAGE,
   WAITLIST_MESSAGE,
   formatOfferingPriceHint,
   formatPartnerConditionalPriceHint,
@@ -32,11 +34,20 @@ const sample = {
 
 const chatel = {
   base_price: 900,
+  partner_price: 800,
+  partner_price_alt: null,
+  partner_price_pending: false,
+  partner_school_codes: ["esf-260", "esf-254"],
+  funding_mode: "individuel" as const,
+  enrollment_status: "open" as const,
+};
+
+const pendingPartner = {
+  base_price: 900,
   partner_price: 750,
   partner_price_alt: 800,
   partner_price_pending: true,
-  partner_school_codes: ["esf-260", "esf-254"],
-  funding_mode: "individuel" as const,
+  partner_school_codes: ["esf-260"],
   enrollment_status: "open" as const,
 };
 
@@ -73,13 +84,23 @@ describe("resolveOfferingPrice — tarif selon école", () => {
     expect(formatOfferingPriceHint(valCenis)).not.toContain("900");
   });
 
-  it("Châtel partenaire : tarif en attente (null) + libellé 750/800", () => {
-    expect(isPartnerPricePending(chatel, "esf-260")).toBe(true);
-    expect(resolveOfferingPrice(chatel, "esf-260")).toBeNull();
+  it("Châtel partenaire : 800 € unique, plus d'attente 750/800", () => {
+    expect(isPartnerPricePending(chatel, "esf-260")).toBe(false);
+    expect(resolveOfferingPrice(chatel, "esf-260")).toBe(800);
+    expect(resolveOfferingPrice(chatel, "esf-254")).toBe(800);
     expect(resolveOfferingPrice(chatel, "esf-101")).toBe(900);
-    expect(formatPartnerConditionalPriceHint(chatel)).toMatch(/750/);
-    expect(formatPartnerConditionalPriceHint(chatel)).toMatch(/800/);
-    expect(formatOfferingPriceHint(chatel)).toContain("autres");
+    expect(formatOfferingPriceHint(chatel)).toContain("800");
+    expect(formatOfferingPriceHint(chatel)).toContain("900");
+    expect(formatOfferingPriceHint(chatel)).not.toMatch(/si l'ESF fournit/);
+    expect(PENDING_PARTNER_PRICE_MESSAGE).not.toMatch(/Châtel/);
+    expect(CHATEL_PENDING_PRICE_MESSAGE).toBe(PENDING_PARTNER_PRICE_MESSAGE);
+  });
+
+  it("garde le mécanisme d'attente tarif si partner_price_pending", () => {
+    expect(isPartnerPricePending(pendingPartner, "esf-260")).toBe(true);
+    expect(resolveOfferingPrice(pendingPartner, "esf-260")).toBeNull();
+    expect(formatPartnerConditionalPriceHint(pendingPartner)).toMatch(/750/);
+    expect(formatPartnerConditionalPriceHint(pendingPartner)).toMatch(/800/);
   });
 
   it("reconnaît waitlist vs open", () => {

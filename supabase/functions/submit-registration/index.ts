@@ -202,7 +202,7 @@ interface RegistrationPayload {
   expectations: string;
   certification: string;
   paymentOption?: string;
-  /** Châtel partenaire : tarif non définitif (§3.6). */
+  /** Tarif partenaire non définitif → inscription sans paiement. */
   pricePending?: boolean;
   /** BL-027 questionnaire OPCO */
   opcoKnowsOpco?: boolean | null;
@@ -763,7 +763,7 @@ Deno.serve(async (req) => {
             ? `📋 DEVIS DEMANDÉ — Format personnalisé:\n${registration.customFormatDetails || "(non renseigné)"}`
             : null,
           pricePending
-            ? "⏳ EN ATTENTE TARIF — partenaire Châtel (750 € si studio ESF, 800 € sinon). Pas de paiement ni convention tant que le tarif n'est pas fixé."
+            ? "⏳ EN ATTENTE TARIF — partenaire (tarif à confirmer). Pas de paiement ni convention tant que le tarif n'est pas fixé."
             : null,
           registration.dateLabel || registration.dates
             ? `Dates: ${registration.dateLabel || registration.dates}`

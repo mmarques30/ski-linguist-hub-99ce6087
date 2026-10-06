@@ -21,7 +21,7 @@ import {
   type RegistrationPaymentOption,
 } from "@/lib/registration-payments";
 import {
-  CHATEL_PENDING_PRICE_MESSAGE,
+  PENDING_PARTNER_PRICE_MESSAGE,
   formatPriceEUR,
   hidesDepositPaymentOptions,
   isCustomFormatDuration,
@@ -392,7 +392,7 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
           {pricePending ? (
             <Alert>
               <AlertDescription className="space-y-2 text-sm">
-                <p>{CHATEL_PENDING_PRICE_MESSAGE}</p>
+                <p>{PENDING_PARTNER_PRICE_MESSAGE}</p>
                 <p className="text-muted-foreground">
                   Statut : en attente tarif. Le lien de paiement et vos documents vous seront
                   envoyés dès que le tarif définitif est fixé.
