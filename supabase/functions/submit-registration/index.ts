@@ -489,7 +489,8 @@ Deno.serve(async (req) => {
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      // Attestation CFP facultative : ne pas bloquer sur l'année (scan, 2025, parse).
+      // Attestation CFP facultative : ne pas bloquer sur l'année (scan / extraction incertaine).
+      // L'équipe FLI vérifie le fichier.
       if (
         registration.fifplStatus === "micro_entrepreneur" &&
         !(Number(registration.fifplCfpContributionEur) >= 1)

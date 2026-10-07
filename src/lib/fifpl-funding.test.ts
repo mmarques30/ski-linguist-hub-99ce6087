@@ -171,7 +171,7 @@ describe("fifpl-funding — validation (pas de dépôt « plus tard »)", () => 
     ).toBeNull();
   });
 
-  it("ne bloque jamais sur l'année d'attestation (2025, scan, mauvaise lecture)", () => {
+  it("ne bloque jamais sur l'année de l'attestation (null, 2024, 2025, 2026)", () => {
     expect(FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS).toEqual([2025, 2026]);
     const base = {
       ...EMPTY_FIFPL_QUESTIONNAIRE,
@@ -180,10 +180,9 @@ describe("fifpl-funding — validation (pas de dépôt « plus tard »)", () => 
       status: "independant" as const,
       hadOtherFifplTrainingThisYear: false,
     };
-    expect(validateFifplQuestionnaire({ ...base, cfpAttestationYear: 2025 })).toBeNull();
-    expect(validateFifplQuestionnaire({ ...base, cfpAttestationYear: 2026 })).toBeNull();
-    expect(validateFifplQuestionnaire({ ...base, cfpAttestationYear: 2024 })).toBeNull();
-    expect(validateFifplQuestionnaire({ ...base, cfpAttestationYear: null })).toBeNull();
+    for (const y of [null, 2024, 2025, 2026]) {
+      expect(validateFifplQuestionnaire({ ...base, cfpAttestationYear: y })).toBeNull();
+    }
   });
 
   it("préfère l'année d'exercice à une date d'émission dans le PDF", () => {
