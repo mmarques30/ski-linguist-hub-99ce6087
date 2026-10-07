@@ -8,8 +8,10 @@ Expéditeur : `FLI` (alphanumérique, 11 car. max)
 
 1. Compte Brevo avec crédits SMS.
 2. Enregistrer le **Sender ID** `FLI` pour la France (transactionnel).
-3. Créer une clé API (droits SMS transactionnels).
-4. Coller la clé dans les **secrets Edge** Supabase / Lovable : nom exact `BREVO_API_KEY`.
+3. Créer une clé API **v3** (SMTP & API → API keys) : elle commence par `xkeysib-`.
+   - Ne pas utiliser la clé SMTP (`xsmtpsib-…`) — Brevo répond alors `Key not found`.
+   - Copier la clé **complète** à la création (Brevo la masque ensuite).
+4. Coller la clé dans les **secrets Edge** Lovable / Supabase : nom exact `BREVO_API_KEY` (sans espace, sans préfixe `Bearer`).
 
 Ne jamais committer la clé.
 
