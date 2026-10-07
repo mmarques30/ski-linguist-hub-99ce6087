@@ -41,13 +41,14 @@ export function FormateurEntryFormDialog({
 
   useEffect(() => {
     if (!open) return;
+    // Jamais de préremplissage depuis le test de placement : le niveau d'entrée
+    // est un constat formateur en début de formation.
     setFields({
-      niveau_general_entree:
-        initial?.niveau_general_entree || suggestedGeneralEntry || "",
+      niveau_general_entree: initial?.niveau_general_entree || "",
       niveau_technique_entree: initial?.niveau_technique_entree || "",
       remarques_entree: initial?.remarques_entree || "",
     });
-  }, [open, initial, suggestedGeneralEntry]);
+  }, [open, initial]);
 
   const persistEntry = async () => {
     await save.mutateAsync({ inscriptionId, fields });
@@ -69,9 +70,9 @@ export function FormateurEntryFormDialog({
         <DialogHeader>
           <DialogTitle>Formulaire d&apos;entrée formateur</DialogTitle>
           <DialogDescription>
-            Niveau général = piste du test de placement, ou constat au premier
-            cours s&apos;il n&apos;y a pas de placement. Niveau technique =
-            observation métier au premier cours.
+            Niveau général = couleur de piste constatée au premier cours (pas le
+            résultat du test de placement). Niveau technique = observation métier
+            au premier cours.
           </DialogDescription>
         </DialogHeader>
 
@@ -88,7 +89,7 @@ export function FormateurEntryFormDialog({
             />
             {suggestedGeneralEntry && (
               <p className="text-xs text-muted-foreground">
-                Suggestion placement : {suggestedGeneralEntry}
+                Indicatif test (ne pas recopier tel quel) : {suggestedGeneralEntry}
               </p>
             )}
           </div>
