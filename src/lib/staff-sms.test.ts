@@ -56,6 +56,10 @@ describe("staff-sms", () => {
     expect(edge).toContain("requireStaff");
     expect(edge).toContain("sendBrevoSms");
     expect(edge).toContain("BREVO_API_KEY");
+    expect(edge).toContain('channel: "brevo_sms"');
+    // Journal : sent_at toujours renseigné (colonne NOT NULL)
+    expect(edge).toMatch(/sent_at:\s*new Date\(\)\.toISOString\(\)/);
+    expect(edge).not.toMatch(/sent_at:\s*send\.ok\s*\?/);
     const shared = readFileSync(
       join(process.cwd(), "supabase/functions/_shared/brevo-sms.ts"),
       "utf8"

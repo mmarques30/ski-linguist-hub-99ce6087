@@ -119,7 +119,7 @@ export function EmailSendJournal() {
         <TableEmpty
           icon={Mail}
           title="Aucun envoi"
-          description="Les e-mails transactionnels (inscription, documents, invitations…) apparaîtront ici."
+          description="Les e-mails transactionnels et SMS Brevo (staff_sms_*) apparaîtront ici."
         />
       ) : (
         <>

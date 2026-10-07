@@ -104,6 +104,7 @@ Deno.serve(async (req) => {
       tag: templateSlug,
     });
 
+    // email_log.sent_at est NOT NULL (default now()) — toujours une date, même en échec.
     await adminClient.from("email_log").insert({
       template_slug: templateSlug,
       recipient_email: to,
@@ -111,7 +112,7 @@ Deno.serve(async (req) => {
       status: send.ok ? "sent" : "failed",
       error_message: send.error ?? null,
       inscription_id: inscriptionId,
-      sent_at: send.ok ? new Date().toISOString() : null,
+      sent_at: new Date().toISOString(),
       variables_used: {
         channel: "brevo_sms",
         sender: BREVO_SMS_SENDER,
