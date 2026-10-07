@@ -11,7 +11,10 @@ import { Loader2, Sun, Sunset, ExternalLink, Clock, AlertTriangle, Users } from 
 import { toast } from "sonner";
 import { usePendingSchedules } from "@/hooks/usePendingSchedules";
 import { useBulkApproveSchedule } from "@/hooks/useApproveSchedule";
-import { SCHEDULE_ASSIGNMENT_DAYS_BEFORE } from "@/lib/placement-test-engine";
+import {
+  displayPisteLabel,
+  SCHEDULE_ASSIGNMENT_DAYS_BEFORE,
+} from "@/lib/placement-test-engine";
 import { getStatusLabel } from "@/lib/inscription-status";
 import { DATES_A_PLANIFIER_LABEL } from "@/lib/registration-dates";
 import { scheduleButtonLabel, scheduleLabelForSlot } from "@/lib/fli-schedule-slots";
@@ -215,7 +218,8 @@ export default function ScheduleValidation() {
                         <p className="font-medium">{inscription.student_name}</p>
                       )}
                       <p className="text-muted-foreground text-xs">
-                        {inscription.code || "—"} · Niveau {inscription.entry_level || "—"} ·{" "}
+                        {inscription.code || "—"} · Niveau{" "}
+                        {displayPisteLabel(inscription.entry_level, "—")} ·{" "}
                         {getStatusLabel(inscription.status, "fr")}
                       </p>
                       {inscription.schedule && (

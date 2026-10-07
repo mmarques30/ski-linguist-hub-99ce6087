@@ -50,6 +50,16 @@ describe("Vague A fin — Assister formateur, portail, pistes", () => {
     expect(source("src/pages/PlacementTests.tsx")).toContain("Répartition par piste");
   });
 
+  it("affiche la liste Admin inscriptions en couleur de piste (pas CECRL brut)", () => {
+    const inscriptions = source("src/pages/Inscriptions.tsx");
+    expect(inscriptions).toContain("displayPisteLabel");
+    expect(inscriptions).toContain("pistePillTone");
+    expect(inscriptions).not.toMatch(
+      /<Badge[^>]*>\{inscription\.entry_level/
+    );
+    expect(pisteBucketFromDeterminedLevel("B1a")).toBe("Piste bleue");
+  });
+
   it("conserve Assister stagiaire", () => {
     expect(studentAssistPath("s1")).toBe("/portails/stagiaire/s1/dashboard");
   });

@@ -13,6 +13,7 @@ import { Sun, Sunset, Loader2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useApproveSchedule } from "@/hooks/useApproveSchedule";
 import {
+  displayPisteLabel,
   isScheduleAssignmentDue,
   SCHEDULE_ASSIGNMENT_DAYS_BEFORE,
   type ScheduleStatus,
@@ -98,7 +99,12 @@ export function ScheduleApprovalDialog({
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2 text-sm">
             <StatusPill tone="info">{inscription.language}</StatusPill>
-            <StatusPill tone="neutral">Niveau: {inscription.entry_level || "—"}</StatusPill>
+            <StatusPill tone="neutral">
+              Niveau:{" "}
+              {inscription.entry_level
+                ? displayPisteLabel(inscription.entry_level)
+                : "—"}
+            </StatusPill>
             {inscription.start_date && (
               <StatusPill tone="neutral">
                 Début: {format(new Date(inscription.start_date), "dd MMM yyyy", { locale: fr })}

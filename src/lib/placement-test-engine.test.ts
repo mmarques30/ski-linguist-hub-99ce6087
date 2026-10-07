@@ -2,11 +2,14 @@ import { describe, expect, it } from "vitest";
 import {
   buildAdaptiveTestResult,
   determineLevelFromSlopes,
+  displayPisteLabel,
   evaluateSlope,
   getNextSlopeAfterSlope,
   hasAdaptedScale,
   needsAdminCallFromResults,
+  pisteEntrySelectValue,
   pisteLabelFromPlacementAnswers,
+  pistePillTone,
   PISTE_STAGIAIRE_PAR_DEFAUT,
   studentFacingPisteFromCecrl,
   studentFacingCertificateLabel,
@@ -104,6 +107,26 @@ describe("placement-test-engine", () => {
     expect(studentFacingCertificateLabel("A1")).toBe("Piste verte");
     expect(studentFacingCertificateLabel("unknown")).toBeNull();
     expect(studentFacingCertificateLabel(null)).toBeNull();
+  });
+
+  it("displayPisteLabel convertit le CECRL (y compris B1a) en couleur de piste", () => {
+    expect(displayPisteLabel("A1")).toBe("Piste verte");
+    expect(displayPisteLabel("A2")).toBe("Piste verte");
+    expect(displayPisteLabel("B1")).toBe("Piste bleue");
+    expect(displayPisteLabel("B1a")).toBe("Piste bleue");
+    expect(displayPisteLabel("B2+")).toBe("Piste rouge");
+    expect(displayPisteLabel("C1")).toBe("Piste noire");
+    expect(displayPisteLabel("Piste rouge")).toBe("Piste rouge");
+    expect(displayPisteLabel(null, "-")).toBe("-");
+    expect(displayPisteLabel("")).toBe("À déterminer");
+  });
+
+  it("pisteEntrySelectValue normalise A2/C2 vers les options piste", () => {
+    expect(pisteEntrySelectValue("A2")).toBe("A1");
+    expect(pisteEntrySelectValue("C2")).toBe("C1");
+    expect(pisteEntrySelectValue("B1a")).toBe("B1");
+    expect(pistePillTone("Piste bleue")).toBe("info");
+    expect(pistePillTone("Piste noire")).toBe("neutral");
   });
 
   it("getNextSlopeAfterSlope envoie toujours vers vocab à la fin de l'adaptatif", () => {

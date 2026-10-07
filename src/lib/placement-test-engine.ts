@@ -154,7 +154,8 @@ export function studentFacingPisteLabel(input: {
 /** Reverse CECRL → libellé piste (portail, si pas de résumé pistes). */
 export function studentFacingPisteFromCecrl(cecrl: string | null | undefined): string {
   if (!cecrl) return "À déterminer";
-  const key = cecrl.trim().toUpperCase();
+  const key = normalizeCecrlCode(cecrl);
+  if (!key) return "À déterminer";
   const map: Record<string, string> = {
     A1: PISTE_STAGIAIRE_PAR_DEFAUT,
     A2: SLOPE_LABELS.verte,
@@ -164,6 +165,65 @@ export function studentFacingPisteFromCecrl(cecrl: string | null | undefined): s
     C2: SLOPE_LABELS.noire,
   };
   return map[key] || "À déterminer";
+}
+
+/**
+ * Extrait un code CECRL de base (A1…C2) depuis une valeur stockée, y compris
+ * des variantes du type B1a / B1+ / A2.1. Retourne null si ce n'est pas du CECRL.
+ */
+export function normalizeCecrlCode(raw: string | null | undefined): string | null {
+  if (!raw || !String(raw).trim()) return null;
+  const upper = String(raw).trim().toUpperCase();
+  // Préfixe volontaire : B1a / B1+ / A2.1 → code de base (pas de \b : « 1 » et « a »
+  // sont tous deux des word chars en JS, donc B1a ne matcherait pas).
+  const match = upper.match(/^(A1|A2|B1|B2|C1|C2)/);
+  return match ? match[1] : null;
+}
+
+/**
+ * Libellé piste pour l'UI admin (et tout affichage hors certificat SNMSF).
+ * Le test de placement est trop basique pour présenter l'échelle européenne :
+ * on affiche systématiquement la couleur de piste. La base reste en CECRL.
+ */
+export function displayPisteLabel(
+  stored: string | null | undefined,
+  emptyLabel = "À déterminer"
+): string {
+  if (!stored || !String(stored).trim()) return emptyLabel;
+  const trimmed = String(stored).trim();
+  if (/^piste\s/i.test(trimmed)) return trimmed;
+  return studentFacingPisteFromCecrl(trimmed);
+}
+
+/** Teinte StatusPill alignée sur la piste (jamais sur un rang CECRL). */
+export type PistePillTone = "success" | "info" | "danger" | "neutral";
+
+export function pistePillTone(label: string | null | undefined): PistePillTone {
+  const key = String(label || "").trim().toLowerCase();
+  if (key.includes("verte")) return "success";
+  if (key.includes("bleue")) return "info";
+  if (key.includes("rouge")) return "danger";
+  if (key.includes("noire")) return "neutral";
+  return "neutral";
+}
+
+/**
+ * Options admin pour choisir une piste tout en écrivant du CECRL
+ * (BL-002 : jamais de libellé piste en base).
+ * A1/A2 → verte, B1 → bleue, B2 → rouge, C1/C2 → noire.
+ */
+export const PISTE_ENTRY_OPTIONS = [
+  { cecrl: "A1", label: SLOPE_LABELS.verte },
+  { cecrl: "B1", label: SLOPE_LABELS.bleue },
+  { cecrl: "B2", label: SLOPE_LABELS.rouge },
+  { cecrl: "C1", label: SLOPE_LABELS.noire },
+] as const;
+
+/** Normalise un CECRL stocké vers la valeur d'option piste (A2→A1, C2→C1). */
+export function pisteEntrySelectValue(cecrl: string | null | undefined): string {
+  const piste = displayPisteLabel(cecrl, "");
+  const found = PISTE_ENTRY_OPTIONS.find((o) => o.label === piste);
+  return found?.cecrl ?? "A1";
 }
 
 /**

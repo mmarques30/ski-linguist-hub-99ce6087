@@ -21,12 +21,15 @@ import {
   type AutoDiagnosticAnswers,
 } from "@/lib/auto-diagnostic";
 import {
+  displayPisteLabel,
   hasAdaptedScale,
+  PISTE_ENTRY_OPTIONS,
+  pisteEntrySelectValue,
+  pistePillTone,
   SLOPE_LABELS,
   studentFacingPisteLabel,
   type SlopeLevel,
 } from "@/lib/placement-test-engine";
-import { CECRL_LEVELS } from "@/lib/certificate-progression";
 import { supabase } from "@/integrations/supabase/client";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
 
@@ -88,14 +91,8 @@ export function PlacementTestSummaryCard({
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const current =
-      test?.determined_level ||
-      inscriptionEntryLevel ||
-      "A1";
-    const normalized = CECRL_LEVELS.includes(current as (typeof CECRL_LEVELS)[number])
-      ? current
-      : "A1";
-    setLevel(normalized);
+    const current = test?.determined_level || inscriptionEntryLevel || "A1";
+    setLevel(pisteEntrySelectValue(current));
   }, [test?.determined_level, inscriptionEntryLevel]);
 
   if (!testId && !fallbackScore) return null;
@@ -145,9 +142,10 @@ export function PlacementTestSummaryCard({
   };
 
   const handleSaveLevel = () => {
+    const piste = displayPisteLabel(level);
     confirm({
       title: "Enregistrer le niveau déterminé ?",
-      description: `Le niveau du test de placement sera fixé à ${level}.`,
+      description: `Le niveau du test de placement sera fixé à ${piste}.`,
       actionLabel: "Enregistrer",
       run: () => persistLevel(),
     });
@@ -173,11 +171,16 @@ export function PlacementTestSummaryCard({
               value: <span className="text-xl font-bold">{pisteLabel}</span>,
             },
             {
-              label: "Niveau déterminé",
-              value: (
-                <span className="text-xl font-bold tabular">
-                  {test?.determined_level || "-"}
-                </span>
+              label: "Piste déterminée",
+              value: test?.determined_level ? (
+                <StatusPill
+                  tone={pistePillTone(displayPisteLabel(test.determined_level))}
+                  size="sm"
+                >
+                  {displayPisteLabel(test.determined_level)}
+                </StatusPill>
+              ) : (
+                <span className="text-xl font-bold tabular">-</span>
               ),
             },
             {
@@ -208,15 +211,15 @@ export function PlacementTestSummaryCard({
         {editable && testId && (
           <div className="flex flex-wrap items-end gap-3 pt-1">
             <div className="space-y-1.5">
-              <p className="text-sm text-muted-foreground">Override admin (CECRL)</p>
+              <p className="text-sm text-muted-foreground">Override admin (piste)</p>
               <Select value={level} onValueChange={setLevel}>
-                <SelectTrigger className="w-[120px]">
+                <SelectTrigger className="w-[160px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {CECRL_LEVELS.map((l) => (
-                    <SelectItem key={l} value={l}>
-                      {l}
+                  {PISTE_ENTRY_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.cecrl} value={opt.cecrl}>
+                      {opt.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -225,7 +228,10 @@ export function PlacementTestSummaryCard({
             <Button
               size="sm"
               onClick={handleSaveLevel}
-              disabled={saving || level === (test?.determined_level || "")}
+              disabled={
+                saving ||
+                level === pisteEntrySelectValue(test?.determined_level || "A1")
+              }
             >
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Enregistrer
