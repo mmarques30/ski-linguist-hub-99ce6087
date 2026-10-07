@@ -163,7 +163,7 @@ export function FifplCfpSection({
             </p>
           )}
           {questionnaire.parseWarnings.length > 0 && (
-            <Alert variant="destructive">
+            <Alert>
               <AlertDescription className="space-y-1 text-sm">
                 {questionnaire.parseWarnings.map((w) => (
                   <p key={w}>{w}</p>
@@ -176,7 +176,10 @@ export function FifplCfpSection({
         <div className="grid gap-4 sm:grid-cols-2">
           {hasAttestation && (
             <div className="space-y-2">
-              <Label htmlFor="cfp-year">Année de l&apos;attestation *</Label>
+              <Label htmlFor="cfp-year">Année de l&apos;attestation (facultatif)</Label>
+              <p className="text-xs text-muted-foreground">
+                2025 ou 2026 — ne bloque pas l&apos;inscription.
+              </p>
               <Input
                 id="cfp-year"
                 type="number"
