@@ -215,6 +215,31 @@ export function isStripeTotalSettlement(option: MaybePaymentOption): boolean {
   );
 }
 
+/**
+ * Montant Stripe pour un règlement intégral / Klarna 3×.
+ * Si `balance_after_deposit` est une part stagiaire strictement inférieure au
+ * tarif formation (ex. La Rosière : 900 € / 1 500 €), on facture cette part
+ * — jamais le forfait école.
+ */
+export function resolveStripeCheckoutAmountEur(input: {
+  coursePrice: number;
+  balanceAfterDeposit?: number | null;
+  paymentOption: RegistrationPaymentOption;
+}): number {
+  const summary = getRegistrationPaymentSummary(
+    input.coursePrice,
+    input.paymentOption
+  );
+  if (!isStripeTotalSettlement(input.paymentOption)) {
+    return summary.amountDueNow;
+  }
+  const share = Number(input.balanceAfterDeposit);
+  if (Number.isFinite(share) && share > 0 && share < input.coursePrice) {
+    return share;
+  }
+  return summary.amountDueNow;
+}
+
 export function requiresVirementInstructions(option: MaybePaymentOption): boolean {
   return (
     option === REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT ||
