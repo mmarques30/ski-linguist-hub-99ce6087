@@ -232,11 +232,12 @@ export function parseCfpAttestationText(text: string): {
   const lower = normalized.toLowerCase();
 
   let year: number | null = null;
+  // Préférer « exercice / année de cotisation » — éviter la 1re date du PDF (émission, etc.).
   const yearPatterns = [
     /exercice\s*(?:de\s*)?(?:l['’]année\s*)?(20\d{2})/i,
-    /ann[ée]e\s*(?:de\s*)?(?:cotisation|contribution)?\s*:?\s*(20\d{2})/i,
-    /attestation[^\d]{0,40}(20\d{2})/i,
-    /\b(20\d{2})\b/,
+    /ann[ée]e\s*(?:de\s*)?(?:cotisation|contribution)\s*:?\s*(20\d{2})/i,
+    /contribution\s+à\s+la\s+formation\s+professionnelle[^\d]{0,80}(20\d{2})/i,
+    /cotisation\s+CFP[^\d]{0,40}(20\d{2})/i,
   ];
   for (const re of yearPatterns) {
     const m = normalized.match(re);
@@ -246,10 +247,12 @@ export function parseCfpAttestationText(text: string): {
     }
   }
   if (year == null) {
-    warnings.push("Année de l’attestation introuvable dans le PDF — saisissez-la manuellement.");
+    warnings.push(
+      "Année de l’attestation introuvable dans le PDF — vous pouvez la saisir manuellement (facultatif)."
+    );
   } else if (!isAcceptedCfpAttestationYear(year)) {
     warnings.push(
-      `L’attestation semble dater de ${year}. Téléchargez une attestation CFP ${formatAcceptedCfpAttestationYears()} depuis votre espace URSSAF.`
+      `L’attestation semble dater de ${year} (attendu ${formatAcceptedCfpAttestationYears()}). Vous pouvez quand même continuer : l’équipe FLI vérifiera le fichier.`
     );
   }
 
@@ -287,16 +290,8 @@ export function validateFifplQuestionnaire(q: FifplQuestionnaire): string | null
   if (!q.status) {
     return "Indiquez si vous êtes indépendant ou micro-entrepreneur.";
   }
-  // Attestation facultative : si un fichier est joint, l'année doit être acceptée (critères ou N-1).
-  const hasAttestation = Boolean(q.cfpAttestationPath || q.cfpAttestationFileName);
-  if (hasAttestation) {
-    if (q.cfpAttestationYear == null) {
-      return `Indiquez l’année de l’attestation CFP (attendu : ${formatAcceptedCfpAttestationYears()}).`;
-    }
-    if (!isAcceptedCfpAttestationYear(q.cfpAttestationYear)) {
-      return `L’attestation doit dater de ${formatAcceptedCfpAttestationYears()}. Téléchargez-la depuis votre espace URSSAF.`;
-    }
-  }
+  // Attestation CFP facultative : ne jamais bloquer l'inscription sur l'année
+  // (PDF scanné sans année, N-1 2025, mauvaise extraction). Soft-warn via parseWarnings.
   if (q.status === "micro_entrepreneur") {
     if (q.cfpContributionEur == null || !(q.cfpContributionEur >= 1)) {
       return "Indiquez le montant de votre cotisation CFP (micro-entrepreneur) pour estimer vos droits.";

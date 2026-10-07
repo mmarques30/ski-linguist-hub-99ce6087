@@ -108,13 +108,11 @@ describe("fifpl-funding — parse attestation", () => {
     expect(parsed.warnings).toHaveLength(0);
   });
 
-  it("alerte si l'année est hors 2025/2026", () => {
+  it("alerte sans bloquer si l'année est hors 2025/2026", () => {
     const parsed = parseCfpAttestationText("Attestation CFP exercice 2024 cotisation 120 €");
     expect(parsed.year).toBe(2024);
     expect(parsed.warnings.some((w) => w.includes("2024"))).toBe(true);
-    expect(parsed.warnings.some((w) => w.includes(formatAcceptedCfpAttestationYears()))).toBe(
-      true
-    );
+    expect(parsed.warnings.some((w) => /continuer/i.test(w))).toBe(true);
   });
 });
 
@@ -173,7 +171,7 @@ describe("fifpl-funding — validation (pas de dépôt « plus tard »)", () => 
     ).toBeNull();
   });
 
-  it("accepte 2025 et refuse 2024 si attestation déposée", () => {
+  it("ne bloque jamais sur l'année d'attestation (2025, scan, mauvaise lecture)", () => {
     expect(FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS).toEqual([2025, 2026]);
     const base = {
       ...EMPTY_FIFPL_QUESTIONNAIRE,
@@ -184,7 +182,16 @@ describe("fifpl-funding — validation (pas de dépôt « plus tard »)", () => 
     };
     expect(validateFifplQuestionnaire({ ...base, cfpAttestationYear: 2025 })).toBeNull();
     expect(validateFifplQuestionnaire({ ...base, cfpAttestationYear: 2026 })).toBeNull();
-    expect(validateFifplQuestionnaire({ ...base, cfpAttestationYear: 2024 })).toMatch(/2025 ou 2026/);
+    expect(validateFifplQuestionnaire({ ...base, cfpAttestationYear: 2024 })).toBeNull();
+    expect(validateFifplQuestionnaire({ ...base, cfpAttestationYear: null })).toBeNull();
+  });
+
+  it("préfère l'année d'exercice à une date d'émission dans le PDF", () => {
+    const parsed = parseCfpAttestationText(
+      "Document émis le 12/03/2026\nAttestation de contribution à la formation professionnelle\nExercice 2025\nCotisation CFP : 87,50 €"
+    );
+    expect(parsed.year).toBe(2025);
+    expect(parsed.warnings).toHaveLength(0);
   });
 
   it("rappelle que l'attestation est facultative et demande le montant autre formation", () => {
