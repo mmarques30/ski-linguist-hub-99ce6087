@@ -1,42 +1,36 @@
+# Analyse des findings Security (scan du 7 oct. 2026, 14:58 UTC) — aucun correctif appliqué
 
-# Plano — Recuperar acesso de teste
+## Finding 1 — Critical « Access control & authorization »
+1. **Concerné** : deux tables techniques de l'import accents BL033, `public._bl033_dedup_map` et `public._bl033_log`. Le contrôle est `LOV.DB.RLS_DISABLED.V1` (ids `lov_db_rls_disabled_v1_51d3ea868b32f425` et `..._b7a353bc65671534`). Lovable les affiche comme un seul finding.
+2. **Pourquoi Critical** : la RLS est désactivée sur ces deux tables. Elles sont dans `public`, donc toute personne qui a la clé publique de l'app peut les lire, les modifier ou les vider, à condition que les droits par défaut ne leur aient pas été retirés.
+3. **Correctif minimal recommandé** :
+   - Option A (la plus simple) : si l'import BL033 est terminé, supprimer les deux tables.
+   - Option B : les garder, mais seulement pour les admins.
+   ```sql
+   ALTER TABLE public._bl033_dedup_map ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE public._bl033_log       ENABLE ROW LEVEL SECURITY;
+   REVOKE ALL ON public._bl033_dedup_map, public._bl033_log FROM anon, authenticated;
+   GRANT ALL ON public._bl033_dedup_map, public._bl033_log TO service_role;
+   -- (facultatif) lecture admin :
+   -- GRANT SELECT ... TO authenticated; CREATE POLICY ... USING (public.is_admin());
+   ```
+   Aucun impact sur l'app : aucun écran ne lit ces tables.
 
-## Diagnóstico (já verificado)
+## Finding 2 — Warning « Exposed personal & sensitive data »
+1. **Concerné** : la règle d'accès `rls_registration_waitlist_anon_insert` sur la table `public.registration_waitlist_requests`. Le contrôle est `LOV.DB.RLS_TAUTOLOGY_PERMISSIVE.V1`.
+2. **Pourquoi Warning** : la règle accepte tout ajout anonyme sans aucun contrôle sur le contenu (`WITH CHECK (true)`). Personne ne peut lire les données, mais n'importe qui peut ajouter des lignes de spam ou mal formées. C'est un Warning et non un Critical parce que c'est le comportement voulu pour un formulaire de liste d'attente public, conforme à la règle « Anon = insert-only ».
+3. **Correctif minimal recommandé** : remplacer `true` par une vraie vérification. Exemple :
+   ```sql
+   WITH CHECK (
+     status = 'pending'            -- ou la valeur par défaut réelle
+     AND email ~* '^[^@\s]+@[^@\s]+\.[^@\s]+$'
+     AND length(coalesce(message,'')) < 2000
+   )
+   ```
+   Il faut adapter cette vérification aux vraies colonnes de la table, que je n'ai pas encore vérifiées. Autre option : ignorer ce finding en le justifiant (formulaire public voulu).
 
-Consultei o backend agora:
+## 43 issues de dépendances
+Le dernier scan des dépendances (29 sept.) ne contient aucune ligne et n'est plus à jour. Je n'ai pas encore listé les 43 issues ; il faut lancer un scan des dépendances pour les détailler.
 
-- `info@fli.fr` **existe** e **já está confirmado** (`email_confirmed_at = 2026-04-06`).
-- Último login bem-sucedido: 12/abr/2026.
-- Os erros recentes são `invalid_credentials` (HTTP 400) — ou seja, **senha errada**, não problema de confirmação nem de proxy. As senhas tentadas (`fli2025`, `Fli2025`, `Senha@2670`, `aplica2025`) não batem com a que está no banco.
-- `teste@fli.fr` **não existe**.
-
-Portanto o problema real é: senha esquecida. Nada a "confirmar".
-
-## O que farei ao entrar em build mode
-
-1. **Desativar exigência de confirmação de email para novos cadastros** (ambiente de teste)
-   - `configure_auth` com `auto_confirm_email: true`, mantendo `disable_signup: true` (registro público continua fechado conforme regra do projeto — só admin cria usuários; a mudança afeta usuários criados via admin/edge function, que já entram confirmados).
-
-2. **Resetar a senha de `info@fli.fr` E criar `teste@fli.fr`** — via edge function descartável
-   - Como não há tool direto para "set password", criarei uma edge function temporária `admin-bootstrap` que usa `SUPABASE_SERVICE_ROLE_KEY` para:
-     - `auth.admin.updateUserById(<info-id>, { password: "<nova-senha>", email_confirm: true })`
-     - `auth.admin.createUser({ email: "teste@fli.fr", password: "<senha>", email_confirm: true })` + inserir role `admin` em `user_roles` + `profiles`
-   - Protegida por um `BOOTSTRAP_TOKEN` (secret gerado) para não ficar aberta.
-   - Chamo a função uma vez via `curl_edge_functions`, confirmo sucesso, e **apago a função** logo em seguida com `delete_edge_functions` (não fica resíduo no projeto).
-
-3. **Devolver as credenciais no chat**
-   - `info@fli.fr` → nova senha
-   - `teste@fli.fr` → senha (usuário admin, já confirmado)
-   - As senhas serão geradas pelo próprio agente (fortes, ~16 chars) e mostradas uma única vez aqui.
-
-## O que NÃO farei
-
-- Não vou reabrir cadastro público (fere regra do projeto).
-- Não vou tocar em `auth.users` direto por SQL (proibido tocar schema `auth`).
-- Não vou expor `SERVICE_ROLE_KEY` — ela fica só dentro da edge function temporária.
-
-## Riscos
-
-- A edge function temporária existe por ~1 turno; se algo falhar entre criação e deleção, aviso e removo manualmente. Só aceita chamadas com o token de bootstrap.
-
-Aprove para eu executar.
+## Remarque
+Le scan base de données n'est plus à jour (`up_to_date: false`). Il faudra le relancer après correctif pour fermer les findings.
