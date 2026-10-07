@@ -173,31 +173,18 @@ describe("fifpl-funding — validation (pas de dépôt « plus tard »)", () => 
     ).toBeNull();
   });
 
-  it("accepte une attestation 2025 (N-1) si déposée", () => {
+  it("accepte 2025 et refuse 2024 si attestation déposée", () => {
     expect(FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS).toEqual([2025, 2026]);
-    expect(
-      validateFifplQuestionnaire({
-        ...EMPTY_FIFPL_QUESTIONNAIRE,
-        cfpAttestationFileName: "cfp.pdf",
-        cfpAttestationPath: "register/cfp/x.pdf",
-        cfpAttestationYear: 2025,
-        status: "independant",
-        hadOtherFifplTrainingThisYear: false,
-      })
-    ).toBeNull();
-  });
-
-  it("refuse une attestation hors 2025/2026 si déposée", () => {
-    expect(
-      validateFifplQuestionnaire({
-        ...EMPTY_FIFPL_QUESTIONNAIRE,
-        cfpAttestationFileName: "cfp.pdf",
-        cfpAttestationPath: "register/cfp/x.pdf",
-        cfpAttestationYear: 2024,
-        status: "independant",
-        hadOtherFifplTrainingThisYear: false,
-      })
-    ).toMatch(/2025 ou 2026/);
+    const base = {
+      ...EMPTY_FIFPL_QUESTIONNAIRE,
+      cfpAttestationFileName: "cfp.pdf",
+      cfpAttestationPath: "register/cfp/x.pdf",
+      status: "independant" as const,
+      hadOtherFifplTrainingThisYear: false,
+    };
+    expect(validateFifplQuestionnaire({ ...base, cfpAttestationYear: 2025 })).toBeNull();
+    expect(validateFifplQuestionnaire({ ...base, cfpAttestationYear: 2026 })).toBeNull();
+    expect(validateFifplQuestionnaire({ ...base, cfpAttestationYear: 2024 })).toMatch(/2025 ou 2026/);
   });
 
   it("rappelle que l'attestation est facultative et demande le montant autre formation", () => {

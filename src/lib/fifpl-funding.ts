@@ -28,7 +28,7 @@ export function isAcceptedCfpAttestationYear(
 ): year is (typeof FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS)[number] {
   return (
     year != null &&
-    (FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS as readonly number[]).includes(year)
+    (FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS as readonly number[]).includes(Number(year))
   );
 }
 
@@ -249,7 +249,7 @@ export function parseCfpAttestationText(text: string): {
     warnings.push("Année de l’attestation introuvable dans le PDF — saisissez-la manuellement.");
   } else if (!isAcceptedCfpAttestationYear(year)) {
     warnings.push(
-      `L’attestation semble dater de ${year}. Attendu : ${formatAcceptedCfpAttestationYears()} — téléchargez l’attestation CFP depuis votre espace URSSAF.`
+      `L’attestation semble dater de ${year}. Téléchargez une attestation CFP ${formatAcceptedCfpAttestationYears()} depuis votre espace URSSAF.`
     );
   }
 
