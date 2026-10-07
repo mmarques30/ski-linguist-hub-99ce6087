@@ -191,23 +191,42 @@ export default function Settings() {
             <SurfaceCard
               title="Communication"
               icon={Send}
-              description="Service d'email transactionnel."
+              description="E-mail (Resend) et SMS (Brevo)."
             >
-              <div className="flex flex-col gap-3 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))] p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex min-w-0 items-center gap-4">
-                  <span className="fli-icon-chip h-10 w-10 shrink-0 bg-[hsl(var(--tint-neutral-bg))] font-bold text-primary">
-                    R
-                  </span>
-                  <div className="min-w-0">
-                    <p className="font-medium">Resend</p>
-                    <p className="text-sm text-muted-foreground">
-                      Clé <code>RESEND_API_KEY</code> côté fonctions Edge
-                    </p>
+              <div className="space-y-3">
+                <div className="flex flex-col gap-3 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))] p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-4">
+                    <span className="fli-icon-chip h-10 w-10 shrink-0 bg-[hsl(var(--tint-neutral-bg))] font-bold text-primary">
+                      R
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-medium">Resend</p>
+                      <p className="text-sm text-muted-foreground">
+                        Clé <code>RESEND_API_KEY</code> côté fonctions Edge
+                      </p>
+                    </div>
                   </div>
+                  <Button asChild variant="outline" className="shrink-0">
+                    <Link to="/admin/emails">Voir les envois</Link>
+                  </Button>
                 </div>
-                <Button asChild variant="outline" className="shrink-0">
-                  <Link to="/admin/emails">Voir les envois</Link>
-                </Button>
+                <div className="flex flex-col gap-3 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))] p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-4">
+                    <span className="fli-icon-chip h-10 w-10 shrink-0 bg-[hsl(var(--tint-neutral-bg))] font-bold text-primary">
+                      B
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-medium">Brevo SMS</p>
+                      <p className="text-sm text-muted-foreground">
+                        Clé <code>BREVO_API_KEY</code> · expéditeur{" "}
+                        <code>FLI</code> · envoi depuis la fiche stagiaire
+                      </p>
+                    </div>
+                  </div>
+                  <Button asChild variant="outline" className="shrink-0">
+                    <Link to="/admin/emails">Journal</Link>
+                  </Button>
+                </div>
               </div>
             </SurfaceCard>
           </div>

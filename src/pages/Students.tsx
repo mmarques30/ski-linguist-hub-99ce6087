@@ -7,6 +7,7 @@ import {
   Eye,
   Mail,
   Phone,
+  MessageSquare,
   Grid,
   List,
   Users,
@@ -22,6 +23,8 @@ import { fr, enUS, ptBR } from "date-fns/locale";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { StudentFormDialog } from "@/components/students/StudentFormDialog";
 import { SendStudentEmailDialog } from "@/components/students/SendStudentEmailDialog";
+import { SendStudentSmsDialog } from "@/components/students/SendStudentSmsDialog";
+import { normalizePhoneForSms } from "@/lib/staff-sms";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { PortalInvitesBulkCard } from "@/components/students/PortalInvitesBulkCard";
 import {
@@ -234,6 +237,7 @@ export default function Students() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [emailStudent, setEmailStudent] = useState<any>(null);
+  const [smsStudent, setSmsStudent] = useState<any>(null);
   const { language, t } = useLanguage();
   const { canEdit } = useUserPermissions();
   const editable = canEdit("students");
@@ -373,6 +377,18 @@ export default function Students() {
           title="Envoyer un e-mail"
         >
           <Mail className="h-4 w-4" />
+        </Button>
+      )}
+      {normalizePhoneForSms(student.phone) && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => setSmsStudent(student)}
+          aria-label="Envoyer un SMS"
+          title="Envoyer un SMS"
+        >
+          <MessageSquare className="h-4 w-4" />
         </Button>
       )}
       {student.phone && (
@@ -601,6 +617,18 @@ export default function Students() {
                     <Mail className="h-4 w-4" />
                   </Button>
                 )}
+                {normalizePhoneForSms(student.phone) && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setSmsStudent(student)}
+                    aria-label="Envoyer un SMS"
+                    title="Envoyer un SMS"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                  </Button>
+                )}
                 {student.phone && (
                   <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                     <a href={`tel:${student.phone}`} aria-label="Appeler">
@@ -807,6 +835,17 @@ export default function Students() {
           to={studentEmailForSend(emailStudent.email)!}
           recipientName={`${emailStudent.first_name} ${emailStudent.last_name}`.trim()}
           studentId={emailStudent.id}
+        />
+      ) : null}
+      {smsStudent && normalizePhoneForSms(smsStudent.phone) ? (
+        <SendStudentSmsDialog
+          open={Boolean(smsStudent)}
+          onOpenChange={(open) => {
+            if (!open) setSmsStudent(null);
+          }}
+          phone={smsStudent.phone}
+          recipientName={`${smsStudent.first_name} ${smsStudent.last_name}`.trim()}
+          studentId={smsStudent.id}
         />
       ) : null}
     </MainLayout>
