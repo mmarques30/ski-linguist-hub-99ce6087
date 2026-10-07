@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   Mail,
   Phone,
+  MessageSquare,
   MapPin,
   Building2,
   Calendar,
@@ -23,6 +24,8 @@ import { useStudentDetails } from "@/hooks/useStudentDetails";
 import { StudentPortalAccessCard } from "@/components/students/StudentPortalAccessCard";
 import { StudentFormDialog } from "@/components/students/StudentFormDialog";
 import { SendStudentEmailDialog } from "@/components/students/SendStudentEmailDialog";
+import { SendStudentSmsDialog } from "@/components/students/SendStudentSmsDialog";
+import { normalizePhoneForSms } from "@/lib/staff-sms";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import {
   studentEmailForSend,
@@ -109,6 +112,7 @@ export default function StudentDetails() {
   const { canEdit } = useUserPermissions();
   const [editOpen, setEditOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
+  const [smsOpen, setSmsOpen] = useState(false);
   const [historyTab, setHistoryTab] = useState<HistoryTab>("all");
 
   const getInitials = (firstName: string, lastName: string) => {
@@ -343,6 +347,12 @@ export default function StudentDetails() {
                   Envoyer un email
                 </Button>
               ) : null}
+              {normalizePhoneForSms(student.phone) ? (
+                <Button variant="outline" size="sm" onClick={() => setSmsOpen(true)}>
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Envoyer un SMS
+                </Button>
+              ) : null}
             </>
           }
         />
@@ -352,6 +362,15 @@ export default function StudentDetails() {
             open={emailOpen}
             onOpenChange={setEmailOpen}
             to={studentEmailForSend(student.email)!}
+            recipientName={`${student.first_name} ${student.last_name}`.trim()}
+            studentId={student.id}
+          />
+        ) : null}
+        {normalizePhoneForSms(student.phone) ? (
+          <SendStudentSmsDialog
+            open={smsOpen}
+            onOpenChange={setSmsOpen}
+            phone={student.phone}
             recipientName={`${student.first_name} ${student.last_name}`.trim()}
             studentId={student.id}
           />

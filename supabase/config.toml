@@ -58,6 +58,9 @@ verify_jwt = true
 [functions.send-staff-email]
 verify_jwt = true
 
+[functions.send-staff-sms]
+verify_jwt = true
+
 [functions.generate-evaluation-pdf]
 verify_jwt = true
 
