@@ -55,10 +55,14 @@ import {
 import type { PillTone } from "@/components/ui-kit";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import {
+  displayPisteLabel,
+  pistePillTone,
+} from "@/lib/placement-test-engine";
 
 type HistoryTab = "all" | "completed" | "certifications";
 
-/** Teinte CECRL : A (découverte), B (intermédiaire), C (avancé). */
+/** Teinte CECRL (certificat SNMSF uniquement). */
 function toneForLevel(level: string | null | undefined): PillTone {
   if (!level) return "neutral";
   if (level.startsWith("A")) return "accent";
@@ -77,6 +81,16 @@ function getLevelProgress(level: string | null | undefined) {
     C2: 100,
   };
   return levelMap[level || ""] || 0;
+}
+
+function getPisteProgress(piste: string | null | undefined) {
+  const map: Record<string, number> = {
+    "Piste verte": 25,
+    "Piste bleue": 50,
+    "Piste rouge": 75,
+    "Piste noire": 100,
+  };
+  return map[piste || ""] || 0;
 }
 
 function formatDate(dateStr: string | null) {
@@ -469,17 +483,29 @@ export default function StudentDetails() {
                     const lastCert = langInscriptions.find(
                       (i) => i.certification_result && i.certification_result !== "N/A"
                     );
-                    const level = lastCert?.certification_result || langInscriptions[0]?.entry_level;
+                    const hasCert = Boolean(lastCert?.certification_result);
+                    const certLevel = lastCert?.certification_result ?? null;
+                    const pisteLevel = displayPisteLabel(
+                      langInscriptions[0]?.entry_level,
+                      ""
+                    );
+                    const displayLevel = hasCert ? certLevel : pisteLevel || null;
+                    const progress = hasCert
+                      ? getLevelProgress(certLevel)
+                      : getPisteProgress(pisteLevel);
+                    const tone = hasCert
+                      ? toneForLevel(certLevel)
+                      : pistePillTone(pisteLevel);
 
                     return (
                       <div key={language} className="space-y-1.5">
                         <MeterRow
                           label={language}
-                          value={getLevelProgress(level)}
+                          value={progress}
                           display={
-                            level ? (
-                              <StatusPill tone={toneForLevel(level)} size="sm">
-                                {level}
+                            displayLevel ? (
+                              <StatusPill tone={tone} size="sm">
+                                {displayLevel}
                               </StatusPill>
                             ) : (
                               <></>

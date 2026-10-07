@@ -95,6 +95,7 @@ import { InscriptionTimelineCard } from "@/components/inscriptions/InscriptionTi
 import { FormateurEntryFormDialog } from "@/components/inscriptions/FormateurEntryFormDialog";
 import { FormateurExitFormDialog } from "@/components/inscriptions/FormateurExitFormDialog";
 import {
+  displayPisteLabel,
   pisteLabelFromPlacementAnswers,
   SLOPE_LABELS,
   type SlopeLevel,
@@ -949,9 +950,10 @@ export default function InscriptionDetails() {
                     <TableRow>
                       <TableCell className="font-medium">Niveau général</TableCell>
                       <TableCell>
-                        {progression?.niveau_general_entree ||
-                          inscription.entry_level ||
-                          "—"}
+                        {displayPisteLabel(
+                          progression?.niveau_general_entree || inscription.entry_level,
+                          "—"
+                        )}
                       </TableCell>
                       <TableCell>{progression?.niveau_general_sortie || "—"}</TableCell>
                     </TableRow>
@@ -970,14 +972,14 @@ export default function InscriptionDetails() {
                   <div className="space-y-3">
                     <p className="text-sm font-medium">Niveau général</p>
                     <MeterRow
-                      label="Entrée"
+                      label="Entrée (piste)"
                       value={cecrlRank(entryGeneralLevel)}
                       max={CECRL_LEVELS.length}
-                      display={entryGeneralLevel || "—"}
+                      display={displayPisteLabel(entryGeneralLevel, "—")}
                       color={seriesColor(0)}
                     />
                     <MeterRow
-                      label="Sortie"
+                      label="Sortie (CECRL)"
                       value={cecrlRank(exitGeneralLevel)}
                       max={CECRL_LEVELS.length}
                       display={exitGeneralLevel || "—"}
@@ -1002,8 +1004,9 @@ export default function InscriptionDetails() {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground sm:col-span-2">
-                    Échelle A1 → C2 ({CECRL_LEVELS.join(" · ")}). Une valeur hors échelle reste
-                    affichée telle quelle, sans remplir la barre.
+                    Entrée : couleur de piste (test de placement). Sortie : CECRL A1 → C2
+                    ({CECRL_LEVELS.join(" · ")}) pour le certificat SNMSF. Une valeur hors
+                    échelle reste affichée telle quelle, sans remplir la barre.
                   </p>
                 </div>
               ) : (

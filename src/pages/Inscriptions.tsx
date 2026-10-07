@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -9,6 +8,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  displayPisteLabel,
+  pistePillTone,
+} from "@/lib/placement-test-engine";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -610,7 +613,16 @@ export default function Inscriptions() {
                 <TableCell hideBelow="lg">{inscription.ski_school_name || "-"}</TableCell>
                 <TableCell hideBelow="md">{inscription.language}</TableCell>
                 <TableCell hideBelow="xl">
-                  <Badge variant="outline">{inscription.entry_level || "-"}</Badge>
+                  {inscription.entry_level ? (
+                    <StatusPill
+                      tone={pistePillTone(displayPisteLabel(inscription.entry_level))}
+                      size="sm"
+                    >
+                      {displayPisteLabel(inscription.entry_level)}
+                    </StatusPill>
+                  ) : (
+                    <span className="text-muted-foreground">-</span>
+                  )}
                 </TableCell>
                 <TableCell hideBelow="lg">{renderPeriod(inscription)}</TableCell>
                 <TableCell align="right" hideBelow="md" className="tabular">
@@ -666,7 +678,7 @@ export default function Inscriptions() {
               },
               {
                 label: t(translations.level),
-                value: inscription.entry_level || "-",
+                value: displayPisteLabel(inscription.entry_level, "-"),
               },
               { label: t(translations.period), value: renderPeriod(inscription) },
               { label: t(translations.amount), value: formatPrice(inscription.price) },
