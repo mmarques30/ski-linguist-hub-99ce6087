@@ -204,6 +204,17 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (!forceInscriptionId && results.due === 0) {
+      return new Response(
+        JSON.stringify({
+          ...results,
+          message:
+            "Aucun rappel DOCUMENT en attente. Pour un envoi manuel, POST { inscriptionId, force: true }.",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { data: identityRow } = await supabase
       .from("app_settings")
       .select("value")
@@ -605,9 +616,23 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ success: true, ...results }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const forceFailed =
+      Boolean(forceInscriptionId) && results.sent === 0 && results.errors.length === 0;
+    const message = forceFailed
+      ? results.details[0]?.action ||
+        "Envoi forcé sans e-mail — vérifier modèle dossier et e-mail stagiaire."
+      : results.sent === 0 && results.due === 0
+        ? "Aucun rappel DOCUMENT à traiter."
+        : undefined;
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        ...results,
+        ...(message ? { message } : {}),
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("send-inscription-documents:", message);
