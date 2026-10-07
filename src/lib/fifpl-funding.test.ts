@@ -98,10 +98,16 @@ describe("fifpl-funding — parse attestation", () => {
     expect(parsed.warnings).toHaveLength(0);
   });
 
-  it("alerte si l'année n'est pas 2026", () => {
+  it("accepte une attestation 2025 sans alerte", () => {
     const parsed = parseCfpAttestationText("Attestation CFP exercice 2025 cotisation 120 €");
     expect(parsed.year).toBe(2025);
-    expect(parsed.warnings.some((w) => w.includes("2025"))).toBe(true);
+    expect(parsed.warnings).toHaveLength(0);
+  });
+
+  it("alerte si l'année n'est ni 2025 ni 2026", () => {
+    const parsed = parseCfpAttestationText("Attestation CFP exercice 2024 cotisation 120 €");
+    expect(parsed.year).toBe(2024);
+    expect(parsed.warnings.some((w) => w.includes("2024"))).toBe(true);
   });
 });
 
@@ -160,17 +166,17 @@ describe("fifpl-funding — validation (pas de dépôt « plus tard »)", () => 
     ).toBeNull();
   });
 
-  it("refuse une attestation hors année critères si déposée", () => {
-    expect(
-      validateFifplQuestionnaire({
-        ...EMPTY_FIFPL_QUESTIONNAIRE,
-        cfpAttestationFileName: "cfp.pdf",
-        cfpAttestationPath: "register/cfp/x.pdf",
-        cfpAttestationYear: 2025,
-        status: "independant",
-        hadOtherFifplTrainingThisYear: false,
-      })
-    ).toMatch(/2026/);
+  it("accepte 2025 et refuse 2024 si attestation déposée", () => {
+    const base = {
+      ...EMPTY_FIFPL_QUESTIONNAIRE,
+      cfpAttestationFileName: "cfp.pdf",
+      cfpAttestationPath: "register/cfp/x.pdf",
+      status: "independant" as const,
+      hadOtherFifplTrainingThisYear: false,
+    };
+    expect(validateFifplQuestionnaire({ ...base, cfpAttestationYear: 2025 })).toBeNull();
+    expect(validateFifplQuestionnaire({ ...base, cfpAttestationYear: 2026 })).toBeNull();
+    expect(validateFifplQuestionnaire({ ...base, cfpAttestationYear: 2024 })).toMatch(/2025 ou 2026/);
   });
 
   it("rappelle que l'attestation est facultative et demande le montant autre formation", () => {

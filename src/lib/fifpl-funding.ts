@@ -14,6 +14,20 @@
 
 export const FIFPL_CRITERIA_YEAR = 2026;
 
+/** Années d'attestation CFP acceptées (N-1 et N). */
+export const FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS: readonly number[] = [
+  FIFPL_CRITERIA_YEAR - 1,
+  FIFPL_CRITERIA_YEAR,
+];
+
+export function isAcceptedCfpAttestationYear(year: number | null | undefined): boolean {
+  return year != null && FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS.includes(Number(year));
+}
+
+export function formatAcceptedCfpAttestationYears(): string {
+  return FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS.join(" ou ");
+}
+
 /** Plafond annuel formations cœur de métier (langues = cœur de métier). */
 export const FIFPL_ANNUAL_CEILING_EUR = 900;
 
@@ -225,9 +239,9 @@ export function parseCfpAttestationText(text: string): {
   }
   if (year == null) {
     warnings.push("Année de l’attestation introuvable dans le PDF — saisissez-la manuellement.");
-  } else if (year !== FIFPL_CRITERIA_YEAR) {
+  } else if (!isAcceptedCfpAttestationYear(year)) {
     warnings.push(
-      `L’attestation semble dater de ${year}. Pour ${FIFPL_CRITERIA_YEAR}, téléchargez l’attestation CFP ${FIFPL_CRITERIA_YEAR} depuis votre espace URSSAF.`
+      `L’attestation semble dater de ${year}. Téléchargez une attestation CFP ${formatAcceptedCfpAttestationYears()} depuis votre espace URSSAF.`
     );
   }
 
@@ -269,10 +283,10 @@ export function validateFifplQuestionnaire(q: FifplQuestionnaire): string | null
   const hasAttestation = Boolean(q.cfpAttestationPath || q.cfpAttestationFileName);
   if (hasAttestation) {
     if (q.cfpAttestationYear == null) {
-      return `Indiquez l’année de l’attestation CFP (attendu : ${FIFPL_CRITERIA_YEAR}).`;
+      return `Indiquez l’année de l’attestation CFP (attendu : ${formatAcceptedCfpAttestationYears()}).`;
     }
-    if (q.cfpAttestationYear !== FIFPL_CRITERIA_YEAR) {
-      return `L’attestation doit dater de ${FIFPL_CRITERIA_YEAR}. Téléchargez-la depuis votre espace URSSAF.`;
+    if (!isAcceptedCfpAttestationYear(q.cfpAttestationYear)) {
+      return `L’attestation doit dater de ${formatAcceptedCfpAttestationYears()}. Téléchargez-la depuis votre espace URSSAF.`;
     }
   }
   if (q.status === "micro_entrepreneur") {
