@@ -476,13 +476,14 @@ export default function InscriptionDetails() {
   }
 
   /**
-   * Niveaux affichés : bilan formateur d'abord, à défaut les niveaux portés
-   * par la fiche inscription. Aucune valeur n'est déduite d'une autre.
+   * Bilan de progression = saisie formateur uniquement.
+   * Jamais de repli sur entry_level / exit_level (issus du test ou d'imports) :
+   * le niveau d'entrée est constaté en début de formation, pas déduit du test.
    */
-  const entryGeneralLevel = progression?.niveau_general_entree || inscription.entry_level || null;
-  const exitGeneralLevel = progression?.niveau_general_sortie || inscription.exit_level || null;
-  const entryTechnicalLevel = progression?.niveau_technique_entree || null;
-  const exitTechnicalLevel = progression?.niveau_technique_sortie || null;
+  const entryGeneralLevel = progression?.niveau_general_entree?.trim() || null;
+  const exitGeneralLevel = progression?.niveau_general_sortie?.trim() || null;
+  const entryTechnicalLevel = progression?.niveau_technique_entree?.trim() || null;
+  const exitTechnicalLevel = progression?.niveau_technique_sortie?.trim() || null;
   const hasAnyLevel = Boolean(
     entryGeneralLevel || exitGeneralLevel || entryTechnicalLevel || exitTechnicalLevel
   );
@@ -590,9 +591,11 @@ export default function InscriptionDetails() {
         {/* Bandeau d'indicateurs — chaque tuile ouvre l'onglet qui porte le détail. */}
         <StatTileGrid cols={4}>
           <StatTile
-            label="Progression CECRL"
-            value={`${entryGeneralLevel || "—"} → ${exitGeneralLevel || "—"}`}
-            hint="Niveau général : entrée → sortie"
+            label="Progression"
+            value={`${
+              entryGeneralLevel ? displayPisteLabel(entryGeneralLevel) : "—"
+            } → ${exitGeneralLevel || "—"}`}
+            hint="Saisi par le formateur : entrée → sortie"
             icon={TrendingUp}
             tone="purple"
             onClick={() => setActiveTab("training")}
@@ -922,7 +925,7 @@ export default function InscriptionDetails() {
             <SurfaceCard
               title="Bilan de progression"
               icon={GraduationCap}
-              description="Entrée = piste / observation formateur · Sortie = CECRL formateur (jamais SNMSF/DSF sur le certificat)"
+              description="Entrée = piste constatée par le formateur en début de formation (pas le test) · Sortie = CECRL formateur (jamais SNMSF/DSF sur le certificat)"
               bodyClassName="space-y-4"
               actions={
                 editable && (
@@ -950,10 +953,9 @@ export default function InscriptionDetails() {
                     <TableRow>
                       <TableCell className="font-medium">Niveau général</TableCell>
                       <TableCell>
-                        {displayPisteLabel(
-                          progression?.niveau_general_entree || inscription.entry_level,
-                          "—"
-                        )}
+                        {entryGeneralLevel
+                          ? displayPisteLabel(entryGeneralLevel)
+                          : "—"}
                       </TableCell>
                       <TableCell>{progression?.niveau_general_sortie || "—"}</TableCell>
                     </TableRow>
@@ -1004,7 +1006,8 @@ export default function InscriptionDetails() {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground sm:col-span-2">
-                    Entrée : couleur de piste (test de placement). Sortie : CECRL A1 → C2
+                    Entrée : couleur de piste saisie par le formateur en début de formation
+                    (indépendante du test de placement). Sortie : CECRL A1 → C2
                     ({CECRL_LEVELS.join(" · ")}) pour le certificat SNMSF. Une valeur hors
                     échelle reste affichée telle quelle, sans remplir la barre.
                   </p>

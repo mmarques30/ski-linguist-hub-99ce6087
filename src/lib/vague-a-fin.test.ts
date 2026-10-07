@@ -60,6 +60,25 @@ describe("Vague A fin — Assister formateur, portail, pistes", () => {
     expect(pisteBucketFromDeterminedLevel("B1a")).toBe("Piste bleue");
   });
 
+  it("bilan progression fiche : saisie formateur, jamais le niveau du test", () => {
+    const fiche = source("src/pages/inscriptions/InscriptionDetails.tsx");
+    expect(fiche).toContain("progression?.niveau_general_entree?.trim()");
+    expect(fiche).not.toContain(
+      "progression?.niveau_general_entree || inscription.entry_level"
+    );
+    expect(fiche).toContain('label="Progression"');
+    expect(fiche).not.toContain('label="Progression CECRL"');
+    const entryForm = source(
+      "src/components/inscriptions/FormateurEntryFormDialog.tsx"
+    );
+    expect(entryForm).toContain(
+      "Jamais de préremplissage depuis le test de placement"
+    );
+    expect(entryForm).not.toContain(
+      "initial?.niveau_general_entree || suggestedGeneralEntry"
+    );
+  });
+
   it("conserve Assister stagiaire", () => {
     expect(studentAssistPath("s1")).toBe("/portails/stagiaire/s1/dashboard");
   });
