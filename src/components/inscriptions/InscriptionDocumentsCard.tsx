@@ -1,14 +1,27 @@
+import { useState } from "react";
 import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ExternalLink, FileText, Mail, AlertTriangle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ExternalLink, FileText, Mail, AlertTriangle, Send } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { FormationDocumentDownloadButton } from "@/components/documents/FormationDocumentDownloadButton";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useInscriptionDocuments } from "@/hooks/useInscriptionDocuments";
+import { useSendInscriptionDocuments } from "@/hooks/useSendInscriptionDocuments";
 import {
   useInscriptionCertificates,
   useInscriptionProgression,
@@ -65,6 +78,8 @@ export function InscriptionDocumentsCard({
   const { data: sendings = [], isLoading } = useInscriptionDocuments(inscriptionId);
   const { data: progression } = useInscriptionProgression(inscriptionId);
   const { data: certificates = [] } = useInscriptionCertificates(inscriptionId);
+  const sendDossier = useSendInscriptionDocuments();
+  const [confirmSendOpen, setConfirmSendOpen] = useState(false);
 
   const invalidateDocuments = () => {
     void queryClient.invalidateQueries({
@@ -74,6 +89,23 @@ export function InscriptionDocumentsCard({
 
   const dateLocale = language === "pt-BR" ? ptBR : language === "en" ? enUS : fr;
   const latestSentAt = sendings[0]?.sent_at ?? null;
+  const canSendDossier = Boolean(studentEmail?.trim());
+  const sendLabel = latestSentAt ? "Renvoyer le dossier" : "Envoyer le dossier";
+
+  const handleConfirmSend = async () => {
+    try {
+      await sendDossier.mutateAsync({ inscriptionId, force: true });
+      toast.success(
+        latestSentAt
+          ? `Dossier renvoyé${studentEmail ? ` à ${studentEmail}` : ""}.`
+          : `Dossier envoyé${studentEmail ? ` à ${studentEmail}` : ""}.`
+      );
+      setConfirmSendOpen(false);
+      invalidateDocuments();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Envoi du dossier impossible");
+    }
+  };
 
   const expectExitDocuments = (() => {
     if (!progression) return false;
@@ -196,7 +228,22 @@ export function InscriptionDocumentsCard({
         title="Documents envoyés au stagiaire"
         description="Historique des envois automatiques liés à cette inscription"
         icon={FileText}
+        actions={
+          <Button
+            size="sm"
+            disabled={!canSendDossier || sendDossier.isPending}
+            onClick={() => setConfirmSendOpen(true)}
+          >
+            <Send className="mr-1.5 h-3.5 w-3.5" />
+            {sendDossier.isPending ? "Envoi…" : sendLabel}
+          </Button>
+        }
       >
+        {!canSendDossier && (
+          <p className="mb-3 text-sm text-muted-foreground">
+            E-mail stagiaire manquant — impossible d’envoyer le dossier.
+          </p>
+        )}
         {sendings.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Aucun document envoyé pour le moment.
@@ -232,6 +279,33 @@ export function InscriptionDocumentsCard({
           </ul>
         )}
       </SurfaceCard>
+
+      <AlertDialog open={confirmSendOpen} onOpenChange={setConfirmSendOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{sendLabel} ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {latestSentAt
+                ? "Un nouveau pack (convention, programme, critères / tutoriel selon le financement) sera régénéré et renvoyé."
+                : "Le pack dossier (convention, programme, critères / tutoriel selon le financement) sera généré et envoyé."}{" "}
+              Destinataire : <strong>{studentEmail}</strong>
+              {inscriptionCode ? ` (${inscriptionCode})` : ""}. BCC technique info@fli.fr.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={sendDossier.isPending}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={sendDossier.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                void handleConfirmSend();
+              }}
+            >
+              {sendDossier.isPending ? "Envoi…" : "Confirmer l’envoi"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {welcomePack && (
         <SurfaceCard
