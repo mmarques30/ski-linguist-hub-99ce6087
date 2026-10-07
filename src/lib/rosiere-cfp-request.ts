@@ -140,11 +140,11 @@ export function renderRosiereCfpRequestEmail(vars: {
   const studentName = vars.studentName.trim() || "Madame, Monsieur";
   const inscriptionCode = vars.inscriptionCode.trim() || "votre inscription";
   return {
-    subject: ROSIERE_CFP_EMAIL_SUBJECT.replaceAll("{{inscription_code}}", inscriptionCode),
-    html: ROSIERE_CFP_EMAIL_HTML.replaceAll("{{student_name}}", studentName).replaceAll(
-      "{{inscription_code}}",
-      inscriptionCode
-    ),
+    subject: ROSIERE_CFP_EMAIL_SUBJECT.split("{{inscription_code}}").join(inscriptionCode),
+    html: ROSIERE_CFP_EMAIL_HTML.split("{{student_name}}")
+      .join(studentName)
+      .split("{{inscription_code}}")
+      .join(inscriptionCode),
   };
 }
 
