@@ -1,5 +1,9 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
+  FLI_PLACEHOLDER_EMAIL_DOMAIN,
+  isFliPlaceholderEmail,
+} from "./email-guards.ts";
+import {
   buildOrganizationEmailFooterHtml,
   ORGANIZATION_IDENTITY_KEY,
   parseOrganizationIdentity,
@@ -71,7 +75,29 @@ export interface SendFliEmailInput {
   to: string;
   subject: string;
   html: string;
+  /** Copies visibles (ex. secrétaire ESF). Dédupliquées vs `to` ; hors placeholder. */
+  cc?: string[];
   attachments?: Array<{ filename: string; content: string }>;
+}
+
+/** Normalise une liste CC : trim, minuscules pour dédup, exclut `to` et placeholders. */
+export function normalizeFliEmailCc(
+  cc: string[] | undefined,
+  to: string
+): string[] {
+  if (!cc?.length) return [];
+  const toNorm = to.trim().toLowerCase();
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of cc) {
+    const trimmed = (raw ?? "").trim();
+    if (!trimmed || isFliPlaceholderEmail(trimmed)) continue;
+    const key = trimmed.toLowerCase();
+    if (key === toNorm || seen.has(key)) continue;
+    seen.add(key);
+    out.push(trimmed);
+  }
+  return out;
 }
 
 /**
@@ -95,11 +121,6 @@ export function applyEmailTemplate(
   return rendered;
 }
 
-import {
-  FLI_PLACEHOLDER_EMAIL_DOMAIN,
-  isFliPlaceholderEmail,
-} from "./email-guards.ts";
-
 export async function sendFliEmail(
   input: SendFliEmailInput
 ): Promise<SendFliEmailResult> {
@@ -120,6 +141,7 @@ export async function sendFliEmail(
   }
 
   const toNormalized = input.to.trim().toLowerCase();
+  const ccList = normalizeFliEmailCc(input.cc, input.to);
   const body: Record<string, unknown> = {
     from: FLI_FROM,
     to: [input.to],
@@ -127,6 +149,9 @@ export async function sendFliEmail(
     subject: input.subject,
     html: input.html,
   };
+  if (ccList.length) {
+    body.cc = ccList;
+  }
   // BCC Paula (info@fli.fr) sauf si elle est déjà destinataire principale.
   if (toNormalized !== FLI_NOTIFY_BCC.toLowerCase()) {
     body.bcc = [FLI_NOTIFY_BCC];

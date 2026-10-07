@@ -2257,6 +2257,7 @@ export type Database = {
           contract_start_date: string | null
           created_at: string
           esf_code: string | null
+          evaluation_results_cc: string[] | null
           id: string
           name: string
           notes: string | null
@@ -2274,6 +2275,7 @@ export type Database = {
           contract_start_date?: string | null
           created_at?: string
           esf_code?: string | null
+          evaluation_results_cc?: string[] | null
           id?: string
           name: string
           notes?: string | null
@@ -2288,6 +2290,7 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           contract_end_date?: string | null
+          evaluation_results_cc?: string[] | null
           contract_start_date?: string | null
           created_at?: string
           esf_code?: string | null
@@ -3306,6 +3309,7 @@ export type Database = {
           code: string
           courriel_direction: string | null
           courriel_ecole: string | null
+          courriel_resultats_cc: string | null
           cp: string | null
           created_at: string
           departement: string | null
@@ -3328,6 +3332,7 @@ export type Database = {
           code: string
           courriel_direction?: string | null
           courriel_ecole?: string | null
+          courriel_resultats_cc?: string | null
           cp?: string | null
           created_at?: string
           departement?: string | null
@@ -3350,6 +3355,7 @@ export type Database = {
           code?: string
           courriel_direction?: string | null
           courriel_ecole?: string | null
+          courriel_resultats_cc?: string | null
           cp?: string | null
           created_at?: string
           departement?: string | null
