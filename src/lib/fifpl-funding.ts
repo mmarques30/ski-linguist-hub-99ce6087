@@ -14,6 +14,28 @@
 
 export const FIFPL_CRITERIA_YEAR = 2026;
 
+/**
+ * Années d'attestation CFP URSSAF acceptées à l'inscription.
+ * Année des critères + N-1 (ex. début de saison, attestation 2025 encore en circulation).
+ */
+export const FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS = [
+  FIFPL_CRITERIA_YEAR - 1,
+  FIFPL_CRITERIA_YEAR,
+] as const;
+
+export function isAcceptedCfpAttestationYear(
+  year: number | null | undefined
+): year is (typeof FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS)[number] {
+  return (
+    year != null &&
+    (FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS as readonly number[]).includes(year)
+  );
+}
+
+export function formatAcceptedCfpAttestationYears(): string {
+  return FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS.join(" ou ");
+}
+
 /** Plafond annuel formations cœur de métier (langues = cœur de métier). */
 export const FIFPL_ANNUAL_CEILING_EUR = 900;
 
@@ -225,9 +247,9 @@ export function parseCfpAttestationText(text: string): {
   }
   if (year == null) {
     warnings.push("Année de l’attestation introuvable dans le PDF — saisissez-la manuellement.");
-  } else if (year !== FIFPL_CRITERIA_YEAR) {
+  } else if (!isAcceptedCfpAttestationYear(year)) {
     warnings.push(
-      `L’attestation semble dater de ${year}. Pour ${FIFPL_CRITERIA_YEAR}, téléchargez l’attestation CFP ${FIFPL_CRITERIA_YEAR} depuis votre espace URSSAF.`
+      `L’attestation semble dater de ${year}. Attendu : ${formatAcceptedCfpAttestationYears()} — téléchargez l’attestation CFP depuis votre espace URSSAF.`
     );
   }
 
@@ -265,14 +287,14 @@ export function validateFifplQuestionnaire(q: FifplQuestionnaire): string | null
   if (!q.status) {
     return "Indiquez si vous êtes indépendant ou micro-entrepreneur.";
   }
-  // Attestation facultative : si un fichier est joint, l'année doit coller aux critères.
+  // Attestation facultative : si un fichier est joint, l'année doit être acceptée (critères ou N-1).
   const hasAttestation = Boolean(q.cfpAttestationPath || q.cfpAttestationFileName);
   if (hasAttestation) {
     if (q.cfpAttestationYear == null) {
-      return `Indiquez l’année de l’attestation CFP (attendu : ${FIFPL_CRITERIA_YEAR}).`;
+      return `Indiquez l’année de l’attestation CFP (attendu : ${formatAcceptedCfpAttestationYears()}).`;
     }
-    if (q.cfpAttestationYear !== FIFPL_CRITERIA_YEAR) {
-      return `L’attestation doit dater de ${FIFPL_CRITERIA_YEAR}. Téléchargez-la depuis votre espace URSSAF.`;
+    if (!isAcceptedCfpAttestationYear(q.cfpAttestationYear)) {
+      return `L’attestation doit dater de ${formatAcceptedCfpAttestationYears()}. Téléchargez-la depuis votre espace URSSAF.`;
     }
   }
   if (q.status === "micro_entrepreneur") {

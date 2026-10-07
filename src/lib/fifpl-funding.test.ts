@@ -2,10 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   EMPTY_FIFPL_QUESTIONNAIRE,
   estimateFifplRights,
+  FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS,
   FIFPL_ANNUAL_CEILING_EUR,
   FIFPL_CRITERIA_YEAR,
   FIFPL_REGISTER_COPY,
+  formatAcceptedCfpAttestationYears,
   formatFifplQuestionnaireSummary,
+  isAcceptedCfpAttestationYear,
   microPercentFromCfpContribution,
   parseCfpAttestationText,
   validateFifplQuestionnaire,
@@ -98,10 +101,20 @@ describe("fifpl-funding — parse attestation", () => {
     expect(parsed.warnings).toHaveLength(0);
   });
 
-  it("alerte si l'année n'est pas 2026", () => {
+  it("accepte 2025 sans alerte (N-1 des critères)", () => {
     const parsed = parseCfpAttestationText("Attestation CFP exercice 2025 cotisation 120 €");
     expect(parsed.year).toBe(2025);
-    expect(parsed.warnings.some((w) => w.includes("2025"))).toBe(true);
+    expect(isAcceptedCfpAttestationYear(2025)).toBe(true);
+    expect(parsed.warnings).toHaveLength(0);
+  });
+
+  it("alerte si l'année est hors 2025/2026", () => {
+    const parsed = parseCfpAttestationText("Attestation CFP exercice 2024 cotisation 120 €");
+    expect(parsed.year).toBe(2024);
+    expect(parsed.warnings.some((w) => w.includes("2024"))).toBe(true);
+    expect(parsed.warnings.some((w) => w.includes(formatAcceptedCfpAttestationYears()))).toBe(
+      true
+    );
   });
 });
 
@@ -160,7 +173,8 @@ describe("fifpl-funding — validation (pas de dépôt « plus tard »)", () => 
     ).toBeNull();
   });
 
-  it("refuse une attestation hors année critères si déposée", () => {
+  it("accepte une attestation 2025 (N-1) si déposée", () => {
+    expect(FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS).toEqual([2025, 2026]);
     expect(
       validateFifplQuestionnaire({
         ...EMPTY_FIFPL_QUESTIONNAIRE,
@@ -170,7 +184,20 @@ describe("fifpl-funding — validation (pas de dépôt « plus tard »)", () => 
         status: "independant",
         hadOtherFifplTrainingThisYear: false,
       })
-    ).toMatch(/2026/);
+    ).toBeNull();
+  });
+
+  it("refuse une attestation hors 2025/2026 si déposée", () => {
+    expect(
+      validateFifplQuestionnaire({
+        ...EMPTY_FIFPL_QUESTIONNAIRE,
+        cfpAttestationFileName: "cfp.pdf",
+        cfpAttestationPath: "register/cfp/x.pdf",
+        cfpAttestationYear: 2024,
+        status: "independant",
+        hadOtherFifplTrainingThisYear: false,
+      })
+    ).toMatch(/2025 ou 2026/);
   });
 
   it("rappelle que l'attestation est facultative et demande le montant autre formation", () => {
