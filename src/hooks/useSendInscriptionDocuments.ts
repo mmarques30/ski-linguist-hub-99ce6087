@@ -14,6 +14,7 @@ export type SendInscriptionDocumentsResult = {
   sent?: number;
   skipped?: number;
   cancelled?: number;
+  due?: number;
   errors?: string[];
   details?: Array<{ inscriptionId: string; action: string }>;
   message?: string;
@@ -45,14 +46,20 @@ export function useSendInscriptionDocuments() {
         throw new Error(result.error || result.message || "Envoi du dossier échoué");
       }
       if ((result?.errors?.length ?? 0) > 0 && !(result?.sent && result.sent > 0)) {
-        throw new Error(result.errors!.join(" · "));
+        const action = result?.details?.[0]?.action;
+        const parts = [...(result.errors ?? [])];
+        if (action && !parts.some((p) => p.includes(action))) parts.push(action);
+        throw new Error(parts.join(" · "));
       }
       if (!(result?.sent && result.sent > 0)) {
         const action = result?.details?.[0]?.action;
+        const due = typeof result?.due === "number" ? result.due : undefined;
         throw new Error(
           action ||
             result?.message ||
-            "Aucun e-mail envoyé — vérifier le modèle dossier et l'e-mail du stagiaire."
+            (due === 0
+              ? "Aucun envoi : la fonction Edge n’a traité aucune inscription (force non déployé ou rappel DOCUMENT absent)."
+              : "Aucun e-mail envoyé — vérifier le modèle dossier et l'e-mail du stagiaire.")
         );
       }
       return result;

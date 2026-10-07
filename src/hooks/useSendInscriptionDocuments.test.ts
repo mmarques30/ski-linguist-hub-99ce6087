@@ -19,6 +19,12 @@ describe("useSendInscriptionDocuments — bouton admin", () => {
     expect(hook).toContain("inscriptionId");
   });
 
+  it("surface due=0 et details.action dans le toast d'échec", () => {
+    expect(hook).toContain("due === 0");
+    expect(hook).toContain("details?.[0]?.action");
+    expect(hook).toContain("force non déployé");
+  });
+
   it("expose Envoyer / Renvoyer le dossier sur la fiche Documents", () => {
     expect(card).toContain("useSendInscriptionDocuments");
     expect(card).toContain("Envoyer le dossier");
