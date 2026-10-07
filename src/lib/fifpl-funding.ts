@@ -14,11 +14,22 @@
 
 export const FIFPL_CRITERIA_YEAR = 2026;
 
-/** Années d'attestation CFP acceptées (N-1 et N). */
-export const FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS = [FIFPL_CRITERIA_YEAR - 1, FIFPL_CRITERIA_YEAR] as const;
+/**
+ * Années d'attestation CFP URSSAF acceptées à l'inscription.
+ * Année des critères + N-1 (ex. début de saison, attestation 2025 encore en circulation).
+ */
+export const FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS = [
+  FIFPL_CRITERIA_YEAR - 1,
+  FIFPL_CRITERIA_YEAR,
+] as const;
 
-export function isAcceptedCfpAttestationYear(year: number | null | undefined): boolean {
-  return year != null && (FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS as readonly number[]).includes(Number(year));
+export function isAcceptedCfpAttestationYear(
+  year: number | null | undefined
+): year is (typeof FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS)[number] {
+  return (
+    year != null &&
+    (FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS as readonly number[]).includes(Number(year))
+  );
 }
 
 export function formatAcceptedCfpAttestationYears(): string {
@@ -276,7 +287,7 @@ export function validateFifplQuestionnaire(q: FifplQuestionnaire): string | null
   if (!q.status) {
     return "Indiquez si vous êtes indépendant ou micro-entrepreneur.";
   }
-  // Attestation facultative : si un fichier est joint, l'année doit coller aux critères.
+  // Attestation facultative : si un fichier est joint, l'année doit être acceptée (critères ou N-1).
   const hasAttestation = Boolean(q.cfpAttestationPath || q.cfpAttestationFileName);
   if (hasAttestation) {
     if (q.cfpAttestationYear == null) {

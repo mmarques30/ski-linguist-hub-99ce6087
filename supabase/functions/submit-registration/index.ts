@@ -493,6 +493,8 @@ Deno.serve(async (req) => {
         registration.fifplCfpAttestationPath || registration.fifplCfpAttestationFileName
       );
       if (hasAttestation) {
+        // Année critères (2026) ou N-1 (2025) — attestation encore en circulation en début de saison.
+        const acceptedCfpYears = [2025, 2026];
         if (registration.fifplCfpAttestationYear == null) {
           return new Response(
             JSON.stringify({
@@ -502,7 +504,7 @@ Deno.serve(async (req) => {
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
-        if (![2025, 2026].includes(Number(registration.fifplCfpAttestationYear))) {
+        if (!acceptedCfpYears.includes(Number(registration.fifplCfpAttestationYear))) {
           return new Response(
             JSON.stringify({
               success: false,

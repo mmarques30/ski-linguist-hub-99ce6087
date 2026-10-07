@@ -2,10 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   EMPTY_FIFPL_QUESTIONNAIRE,
   estimateFifplRights,
+  FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS,
   FIFPL_ANNUAL_CEILING_EUR,
   FIFPL_CRITERIA_YEAR,
   FIFPL_REGISTER_COPY,
+  formatAcceptedCfpAttestationYears,
   formatFifplQuestionnaireSummary,
+  isAcceptedCfpAttestationYear,
   microPercentFromCfpContribution,
   parseCfpAttestationText,
   validateFifplQuestionnaire,
@@ -98,16 +101,20 @@ describe("fifpl-funding — parse attestation", () => {
     expect(parsed.warnings).toHaveLength(0);
   });
 
-  it("accepte une attestation 2025 sans alerte", () => {
+  it("accepte 2025 sans alerte (N-1 des critères)", () => {
     const parsed = parseCfpAttestationText("Attestation CFP exercice 2025 cotisation 120 €");
     expect(parsed.year).toBe(2025);
+    expect(isAcceptedCfpAttestationYear(2025)).toBe(true);
     expect(parsed.warnings).toHaveLength(0);
   });
 
-  it("alerte si l'année n'est ni 2025 ni 2026", () => {
+  it("alerte si l'année est hors 2025/2026", () => {
     const parsed = parseCfpAttestationText("Attestation CFP exercice 2024 cotisation 120 €");
     expect(parsed.year).toBe(2024);
     expect(parsed.warnings.some((w) => w.includes("2024"))).toBe(true);
+    expect(parsed.warnings.some((w) => w.includes(formatAcceptedCfpAttestationYears()))).toBe(
+      true
+    );
   });
 });
 
@@ -167,6 +174,7 @@ describe("fifpl-funding — validation (pas de dépôt « plus tard »)", () => 
   });
 
   it("accepte 2025 et refuse 2024 si attestation déposée", () => {
+    expect(FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS).toEqual([2025, 2026]);
     const base = {
       ...EMPTY_FIFPL_QUESTIONNAIRE,
       cfpAttestationFileName: "cfp.pdf",
