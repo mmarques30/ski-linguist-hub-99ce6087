@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { MainLayout } from "@/components/layout/MainLayout";

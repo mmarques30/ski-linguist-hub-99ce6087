@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router";
 import { GraduationCap, ShieldCheck, ClipboardList } from "lucide-react";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { StudentAuthCard } from "@/components/auth/StudentAuthCard";

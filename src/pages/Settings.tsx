@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTabParam } from "@/hooks/useTabParam";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {

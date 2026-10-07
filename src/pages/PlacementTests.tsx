@@ -17,7 +17,7 @@ import { useMemo, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { REGISTRATION_LANGUAGES } from "@/lib/registration-languages";
 import { NIVEAU_NON_RENSEIGNE, usePlacementTestStats } from "@/hooks/usePlacementTestStats";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import {
   CardGrid,
   DonutChart,

@@ -2,7 +2,7 @@ import { ExternalLink, KeyRound, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import { MONITORING_SECRET_CATALOG, type MonitoringConfigStatus } from "@/lib/monitoramento";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 const SUPABASE_SECRETS_URL =
   "https://supabase.com/dashboard/project/nghkrmvakjomzmfwdhbo/settings/functions";

@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
