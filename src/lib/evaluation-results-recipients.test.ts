@@ -11,8 +11,8 @@ const PARTNER_ID = "b475774d-e0c4-4651-9f7f-0be03c560de8";
 describe("resolveEvaluationResultsRecipients", () => {
   const settings = {
     [PARTNER_ID]: {
-      emails: ["contact@esf-courchevel.com"],
-      label: "Stéphanie Sarratea — secrétaire ESF Courchevel 1550",
+      emails: ["contact@esf-courchevel.com", "direction@esf-courchevel.com"],
+      label: "Stéphanie Sarratea + Lucas Dyen — ESF Courchevel 1550",
     },
   };
   const partner = {
@@ -29,7 +29,7 @@ describe("resolveEvaluationResultsRecipients", () => {
     });
   });
 
-  it("n'ajoute pas de CC si le TO est déjà la secrétaire", () => {
+  it("met Lucas en CC quand le TO est la secrétaire", () => {
     expect(
       resolveEvaluationResultsRecipients({
         partner,
@@ -38,7 +38,7 @@ describe("resolveEvaluationResultsRecipients", () => {
       })
     ).toEqual({
       to: "contact@esf-courchevel.com",
-      cc: [],
+      cc: ["direction@esf-courchevel.com"],
     });
   });
 

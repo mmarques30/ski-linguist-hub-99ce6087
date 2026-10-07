@@ -27,8 +27,11 @@ VALUES (
   jsonb_build_object(
     'b475774d-e0c4-4651-9f7f-0be03c560de8',
     jsonb_build_object(
-      'emails', jsonb_build_array('contact@esf-courchevel.com'),
-      'label', 'Stéphanie Sarratea — secrétaire ESF Courchevel 1550',
+      'emails', jsonb_build_array(
+        'contact@esf-courchevel.com',
+        'direction@esf-courchevel.com'
+      ),
+      'label', 'Stéphanie Sarratea (secrétaire) + Lucas Dyen (direction) — ESF Courchevel 1550',
       'partner_name', 'ESF COURCHEVEL 1550',
       'ski_school_code', 'esf-302',
       'set_by', 'Paula',
@@ -51,8 +54,8 @@ VALUES (
     'partner_id', 'b475774d-e0c4-4651-9f7f-0be03c560de8',
     'partner_name', 'ESF COURCHEVEL 1550',
     'ski_school_code', 'esf-302',
-    'cc', ARRAY['contact@esf-courchevel.com'],
-    'contact', 'Stéphanie Sarratea',
+    'emails', ARRAY['contact@esf-courchevel.com', 'direction@esf-courchevel.com'],
+    'contacts', 'Stéphanie Sarratea + Lucas Dyen',
     'note', 'partners gelé — config dans app_settings + ski_school_directory'
   )
 );
