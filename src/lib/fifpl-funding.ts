@@ -232,11 +232,12 @@ export function parseCfpAttestationText(text: string): {
   const lower = normalized.toLowerCase();
 
   let year: number | null = null;
+  // Préférer « exercice / année de cotisation » — éviter la 1re date du PDF (émission, etc.).
   const yearPatterns = [
     /exercice\s*(?:de\s*)?(?:l['’]année\s*)?(20\d{2})/i,
-    /ann[ée]e\s*(?:de\s*)?cotisation\s*:?\s*(20\d{2})/i,
-    /contribution\s*(?:à\s*la\s*)?formation[^\d]{0,60}(20\d{2})/i,
-    /cotisation\s*CFP[^\d]{0,40}(20\d{2})/i,
+    /ann[ée]e\s*(?:de\s*)?(?:cotisation|contribution)\s*:?\s*(20\d{2})/i,
+    /contribution\s+à\s+la\s+formation\s+professionnelle[^\d]{0,80}(20\d{2})/i,
+    /cotisation\s+CFP[^\d]{0,40}(20\d{2})/i,
   ];
   for (const re of yearPatterns) {
     const m = normalized.match(re);
@@ -289,7 +290,8 @@ export function validateFifplQuestionnaire(q: FifplQuestionnaire): string | null
   if (!q.status) {
     return "Indiquez si vous êtes indépendant ou micro-entrepreneur.";
   }
-  // Attestation facultative : l'année ne bloque jamais l'inscription (vérification par l'équipe FLI).
+  // Attestation CFP facultative : ne jamais bloquer l'inscription sur l'année
+  // (PDF scanné, N-1 2025, mauvaise extraction). Soft-warn via parseWarnings.
   if (q.status === "micro_entrepreneur") {
     if (q.cfpContributionEur == null || !(q.cfpContributionEur >= 1)) {
       return "Indiquez le montant de votre cotisation CFP (micro-entrepreneur) pour estimer vos droits.";

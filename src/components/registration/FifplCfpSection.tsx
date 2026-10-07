@@ -177,9 +177,6 @@ export function FifplCfpSection({
           {hasAttestation && (
             <div className="space-y-2">
               <Label htmlFor="cfp-year">Année de l&apos;attestation (facultatif)</Label>
-              <p className="text-xs text-muted-foreground">
-                2025 ou 2026 — ne bloque pas l&apos;inscription.
-              </p>
               <Input
                 id="cfp-year"
                 type="number"
@@ -193,6 +190,9 @@ export function FifplCfpSection({
                 placeholder={String(FIFPL_CRITERIA_YEAR)}
                 className="h-11"
               />
+              <p className="text-xs text-muted-foreground">
+                {FIFPL_CRITERIA_YEAR - 1} ou {FIFPL_CRITERIA_YEAR} — ne bloque pas l&apos;inscription.
+              </p>
             </div>
           )}
           <div className="space-y-2">

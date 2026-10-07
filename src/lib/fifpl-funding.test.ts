@@ -108,13 +108,11 @@ describe("fifpl-funding — parse attestation", () => {
     expect(parsed.warnings).toHaveLength(0);
   });
 
-  it("alerte si l'année est hors 2025/2026", () => {
+  it("alerte sans bloquer si l'année est hors 2025/2026", () => {
     const parsed = parseCfpAttestationText("Attestation CFP exercice 2024 cotisation 120 €");
     expect(parsed.year).toBe(2024);
     expect(parsed.warnings.some((w) => w.includes("2024"))).toBe(true);
-    expect(parsed.warnings.some((w) => w.includes(formatAcceptedCfpAttestationYears()))).toBe(
-      true
-    );
+    expect(parsed.warnings.some((w) => /continuer/i.test(w))).toBe(true);
   });
 });
 
@@ -185,6 +183,14 @@ describe("fifpl-funding — validation (pas de dépôt « plus tard »)", () => 
     for (const y of [null, 2024, 2025, 2026]) {
       expect(validateFifplQuestionnaire({ ...base, cfpAttestationYear: y })).toBeNull();
     }
+  });
+
+  it("préfère l'année d'exercice à une date d'émission dans le PDF", () => {
+    const parsed = parseCfpAttestationText(
+      "Document émis le 12/03/2026\nAttestation de contribution à la formation professionnelle\nExercice 2025\nCotisation CFP : 87,50 €"
+    );
+    expect(parsed.year).toBe(2025);
+    expect(parsed.warnings).toHaveLength(0);
   });
 
   it("rappelle que l'attestation est facultative et demande le montant autre formation", () => {
