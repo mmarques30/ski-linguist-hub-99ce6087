@@ -497,16 +497,16 @@ Deno.serve(async (req) => {
           return new Response(
             JSON.stringify({
               success: false,
-              error: "Indiquez l’année de l’attestation CFP (attendu : 2026).",
+              error: "Indiquez l’année de l’attestation CFP (attendu : 2025 ou 2026).",
             }),
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
-        if (registration.fifplCfpAttestationYear !== 2026) {
+        if (![2025, 2026].includes(Number(registration.fifplCfpAttestationYear))) {
           return new Response(
             JSON.stringify({
               success: false,
-              error: "L’attestation CFP doit dater de 2026.",
+              error: "L’attestation CFP doit dater de 2025 ou 2026.",
             }),
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
