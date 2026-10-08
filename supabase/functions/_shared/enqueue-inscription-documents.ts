@@ -1,9 +1,8 @@
 /**
  * File d'attente modèle 2 (`inscription_documents` + variantes par financement).
  *
- * Règle Paula : pour FIFPL / AGEFICE, le dossier part après confirmation du
- * paiement des frais de dossier (150 €) ou du paiement intégral.
- * Autofinancement : seulement après paiement intégral (`total`).
+ * Règle Paula : pour FIFPL / AGEFICE / Autofinancement, le dossier part après
+ * confirmation du paiement des frais de dossier (150 €) ou du paiement intégral.
  * OPCO / Entreprise : pas d'enfilement auto (voir funding-flows).
  *
  * Miroir front : `src/lib/enqueue-inscription-documents.ts`.
@@ -97,7 +96,7 @@ export async function enqueueInscriptionDocuments(
 /**
  * Après confirmation d'un acompte / paiement intégral : pose `deposit_date`
  * si besoin, puis enfile le dossier seulement si le paiement déclenche
- * l'envoi pour ce financement (autofinancement = total uniquement).
+ * l'envoi pour ce financement (voir `paymentTriggersDocumentEnqueue`).
  */
 export async function confirmDepositAndEnqueueDocuments(params: {
   supabase: { from: (table: string) => any };

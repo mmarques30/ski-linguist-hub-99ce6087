@@ -98,7 +98,7 @@ export async function recordStripeCheckoutPayment(
     })
     .eq("id", inscriptionId);
 
-  // Dossier : FIFPL/AGEFICE après 150 € ou total ; Autofinancement après total seulement.
+  // Dossier : FIFPL / AGEFICE / Autofinancement après 150 € ou total.
   try {
     const fundingOrganization = inscription.funding_organization ?? null;
     if (
