@@ -34,6 +34,50 @@ export const FLI_BANK_DETAILS = {
   bank: "Crédit Agricole",
 };
 
+/**
+ * Bloc HTML RIB FLI pour les e-mails.
+ * Règle Paula (08/10/2026) : dès qu'un lien de paiement part, joindre aussi
+ * ces coordonnées bancaires (alternative virement).
+ */
+export function buildFliBankDetailsEmailHtml(reference?: string | null): string {
+  const ref = (reference || "").trim();
+  const refLine = ref
+    ? `<p style="margin:0 0 4px">Référence à indiquer&nbsp;: <strong>${ref}</strong></p>`
+    : "";
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 16px;font-size:15px;background:#f9f9f9;width:100%">
+<tr><td style="padding:12px 14px">
+<p style="margin:0 0 6px"><strong>Coordonnées bancaires FLI</strong></p>
+<p style="margin:0 0 4px">Bénéficiaire&nbsp;: ${FLI_BANK_DETAILS.beneficiary}</p>
+<p style="margin:0 0 4px">IBAN&nbsp;: ${FLI_BANK_DETAILS.iban}</p>
+<p style="margin:0 0 4px">BIC&nbsp;: ${FLI_BANK_DETAILS.bic}</p>
+<p style="margin:0 0 4px">Banque&nbsp;: ${FLI_BANK_DETAILS.bank}</p>
+${refLine}
+</td></tr>
+</table>`;
+}
+
+/**
+ * Lien de paiement Stripe + RIB (toujours les deux).
+ * À utiliser pour tout e-mail qui propose un checkout en ligne.
+ */
+export function buildPaymentLinkWithBankDetailsEmailHtml(input: {
+  checkoutUrl: string;
+  amountLabel: string;
+  reference?: string | null;
+  onlineIntroHtml?: string;
+}): string {
+  const url = input.checkoutUrl.trim();
+  if (!url) {
+    throw new Error("buildPaymentLinkWithBankDetailsEmailHtml: checkoutUrl requis");
+  }
+  const intro =
+    input.onlineIntroHtml?.trim() ||
+    `Pour régler <strong>${input.amountLabel}</strong> en ligne (carte ou Klarna), utilisez ce lien sécurisé&nbsp;:`;
+  return `<p style="margin:0 0 12px">${intro}<br/><a href="${url}" style="color:#111">${url}</a></p>
+<p style="margin:0 0 12px">Vous pouvez aussi régler par virement&nbsp;:</p>
+${buildFliBankDetailsEmailHtml(input.reference)}`;
+}
+
 export interface RegistrationPaymentSummary {
   coursePrice: number;
   dossierFee: number;

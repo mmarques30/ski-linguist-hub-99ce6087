@@ -60,6 +60,10 @@ This is a single-package **Vite + React 18 + TypeScript** SPA (Lovable-generated
   - et confirmation écrite dans le chat (destinataire, objet, id Resend / journal).
 - **Jamais d’adresse client pour un contrôle technique** — uniquement `info@fli.fr`.
   Interdit d’envoyer subject/body « test » (ou équivalent) à un destinataire hors FLI.
+- **Lien de paiement → toujours joindre le RIB FLI** (Paula, 2026-10-08) : tout e-mail
+  qui contient un lien Stripe/checkout doit aussi afficher les coordonnées bancaires
+  (`FLI_BANK_DETAILS` / `buildPaymentLinkWithBankDetailsEmailHtml` dans
+  `registration-payments.ts`). Alternative virement avec la référence d’inscription.
 
 ### Git / docs (Paula, 2026-09-11)
 - Do **not** modify `docs/BACKLOG.md` or `docs/ETAT_APP_*.md` on working branches.
