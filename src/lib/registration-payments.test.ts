@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  buildFliBankDetailsEmailHtml,
+  buildPaymentLinkWithBankDetailsEmailHtml,
+  FLI_BANK_DETAILS,
   getAvailablePaymentOptions,
   getRegistrationPaymentSummary,
   hasChequeBalance,
@@ -198,6 +201,47 @@ describe("modes de règlement /register", () => {
     expect(front.toLowerCase()).not.toContain("4 fois");
     expect(deno).toContain("isStripeTotalSettlement");
     expect(deno).toContain('LEGACY_STRIPE_4X = "stripe_4x"');
+  });
+
+  it("expose le RIB FLI et l'exige avec tout lien de paiement (copie Deno)", () => {
+    const rib = buildFliBankDetailsEmailHtml("FLI-260036");
+    expect(rib).toContain(FLI_BANK_DETAILS.iban);
+    expect(rib).toContain(FLI_BANK_DETAILS.bic);
+    expect(rib).toContain("FLI-260036");
+
+    const block = buildPaymentLinkWithBankDetailsEmailHtml({
+      checkoutUrl: "https://checkout.stripe.com/c/pay/cs_test_example",
+      amountLabel: "150&nbsp;€",
+      reference: "FLI-260036",
+    });
+    expect(block).toContain("checkout.stripe.com");
+    expect(block).toContain(FLI_BANK_DETAILS.iban);
+    expect(block).toContain("virement");
+
+    expect(() =>
+      buildPaymentLinkWithBankDetailsEmailHtml({
+        checkoutUrl: "  ",
+        amountLabel: "150 €",
+      }),
+    ).toThrow(/checkoutUrl/);
+
+    const front = readFileSync(
+      join(process.cwd(), "src/lib/registration-payments.ts"),
+      "utf8",
+    );
+    const deno = readFileSync(
+      join(process.cwd(), "supabase/functions/_shared/registration-payments.ts"),
+      "utf8",
+    );
+    for (const symbol of [
+      "FLI_BANK_DETAILS",
+      "buildFliBankDetailsEmailHtml",
+      "buildPaymentLinkWithBankDetailsEmailHtml",
+      'iban: "FR76 1820 6004 4339 5412 7300 144"',
+    ]) {
+      expect(front).toContain(symbol);
+      expect(deno).toContain(symbol);
+    }
   });
 
   it("masque l'acompte 150 € pour Méribel / La Rosière et propose intégral en ligne + chèque FLI", () => {
