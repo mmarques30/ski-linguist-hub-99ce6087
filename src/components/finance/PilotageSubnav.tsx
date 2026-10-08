@@ -1,4 +1,4 @@
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router";
 import { BarChart3, LayoutDashboard, Percent } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SubNav, type SubNavItem } from "@/components/ui-kit";

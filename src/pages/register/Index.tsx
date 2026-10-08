@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Check, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";

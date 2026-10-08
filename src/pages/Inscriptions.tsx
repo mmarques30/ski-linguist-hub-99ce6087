@@ -53,7 +53,7 @@ import {
 import { DATES_A_PLANIFIER_LABEL } from "@/lib/registration-dates";
 import { DueStatusAdvanceCard } from "@/components/inscriptions/DueStatusAdvanceCard";
 import { InscriptionStatusMenu } from "@/components/inscriptions/InscriptionStatusMenu";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router";
 import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
 import { useLanguage } from "@/contexts/LanguageContext";

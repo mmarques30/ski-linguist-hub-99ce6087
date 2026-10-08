@@ -3,7 +3,7 @@ import { Sparkline, StatusPill, SurfaceCard } from "@/components/ui-kit";
 import { loadBandColor, type HourlyBucket, type LoadBand } from "@/lib/monitoramento";
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 /** KPI dense façon SmartHR : chiffre + sparkline. */
 export function MonitoringKpiCard({

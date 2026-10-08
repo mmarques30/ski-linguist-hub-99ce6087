@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { ChevronLeft, ChevronRight, ChevronsUpDown, ArrowDown, ArrowUp, Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";

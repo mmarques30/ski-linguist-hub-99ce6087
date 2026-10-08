@@ -12,7 +12,7 @@ import {
   ShieldAlert,
   Wrench,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoramentoSubnav } from "@/components/monitoramento/MonitoramentoSubnav";
 import { SecretsSetupCard } from "@/components/monitoramento/SecretsSetupCard";

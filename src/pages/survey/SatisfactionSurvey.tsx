@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams } from "react-router";
 import { useSurveyByToken, useSubmitSurvey } from "@/hooks/useSatisfactionSurvey";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
