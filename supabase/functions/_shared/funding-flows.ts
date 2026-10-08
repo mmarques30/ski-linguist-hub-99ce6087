@@ -56,7 +56,7 @@ const CONFIRMATION_OPCO = `Prochaines étapes : aucun règlement n'est demandé 
 
 const CONFIRMATION_COMPANY = `Prochaines étapes : le règlement est pris en charge par votre entreprise / école. Les documents contractuels seront transmis à l'organisme payeur. Vous serez informé·e dès que le planning pourra être organisé.`;
 
-const CONFIRMATION_SELF = `Prochaines étapes : dès confirmation du règlement de la totalité de la formation, nous vous enverrons votre convention et votre programme de formation à signer et nous retourner.`;
+const CONFIRMATION_SELF = `Prochaines étapes : dès confirmation du règlement des frais de dossier de 150&nbsp;€ (ou du paiement intégral), nous vous enverrons votre convention et votre programme de formation à signer et nous retourner.`;
 
 export const FUNDING_FLOWS: Record<FundingFlowKey, FundingFlowDefinition> = {
   fifpl: {
@@ -104,7 +104,9 @@ export const FUNDING_FLOWS: Record<FundingFlowKey, FundingFlowDefinition> = {
     organizationLabel: "Autofinancement",
     packId: "convention_programme",
     dossierEmailSlug: "inscription_documents_self",
-    documentTrigger: "after_full_payment",
+    // Même règle que FIFPL/AGEFICE : acompte 150 € ou paiement intégral
+    // (Paula 08/10/2026 — corrige le mail « totalité » pour les 150 € + solde).
+    documentTrigger: "after_deposit",
     autoEnqueueAtSubmitWithoutPayment: false,
     confirmationNextStepsHtml: CONFIRMATION_SELF,
     shortLabel: "Autofinancement",
@@ -174,8 +176,8 @@ export function canAutoEnqueueInscriptionDocuments(
 
 /**
  * Le paiement reçu autorise-t-il l'envoi du dossier pour ce financement ?
- * - after_deposit : acompte ou total
- * - after_full_payment (autofinancement) : total uniquement
+ * - after_deposit : acompte ou total (FIFPL, AGEFICE, Autofinancement)
+ * - after_full_payment : total uniquement (réservé ; aucun flux actif)
  */
 export function paymentTriggersDocumentEnqueue(
   fundingOrganization: string | null | undefined,

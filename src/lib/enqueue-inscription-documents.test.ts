@@ -56,14 +56,14 @@ describe("enqueue-inscription-documents — règles métier", () => {
     expect(canAutoEnqueueInscriptionDocuments("FIFPL")).toBe(true);
   });
 
-  it("n'enfile pas le dossier autofinancement sur un acompte 150 €", () => {
+  it("enfile le dossier autofinancement dès l'acompte 150 €", () => {
     expect(
       paymentTriggersDocumentEnqueue("Autofinancement", {
         status: "recu",
         amount: 150,
         payment_type: "acompte",
       }),
-    ).toBe(false);
+    ).toBe(true);
     expect(
       paymentTriggersDocumentEnqueue("Autofinancement", {
         status: "recu",

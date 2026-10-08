@@ -46,7 +46,7 @@ describe("funding-flows — résolution des modalités", () => {
     expect(FUNDING_FLOWS.company.packId).toBeNull();
   });
 
-  it("n'enfile le dossier auto qu'après dépôt (FIFPL/AGEFICE) ou total (self)", () => {
+  it("n'enfile le dossier auto qu'après dépôt (FIFPL/AGEFICE/Autofinancement)", () => {
     expect(canAutoEnqueueInscriptionDocuments("FIFPL")).toBe(true);
     expect(canAutoEnqueueInscriptionDocuments("AGEFICE")).toBe(true);
     expect(canAutoEnqueueInscriptionDocuments("Autofinancement")).toBe(true);
@@ -54,9 +54,9 @@ describe("funding-flows — résolution des modalités", () => {
     expect(canAutoEnqueueInscriptionDocuments("Entreprise")).toBe(false);
   });
 
-  it("attend le paiement intégral pour l'autofinancement, pas les 150 €", () => {
+  it("envoie le dossier autofinancement dès l'acompte 150 € (comme FIFPL)", () => {
     expect(getFundingFlow("Autofinancement")?.documentTrigger).toBe(
-      "after_full_payment",
+      "after_deposit",
     );
     expect(
       paymentTriggersDocumentEnqueue("Autofinancement", {
@@ -64,7 +64,7 @@ describe("funding-flows — résolution des modalités", () => {
         amount: 150,
         payment_type: "acompte",
       }),
-    ).toBe(false);
+    ).toBe(true);
     expect(
       paymentTriggersDocumentEnqueue("Autofinancement", {
         status: "recu",
@@ -131,8 +131,8 @@ describe("funding-flows — résolution des modalités", () => {
     expect(opco).not.toContain("150");
     expect(company).toContain("entreprise");
     expect(self).toContain("convention");
-    expect(self).toContain("totalité");
-    expect(self).not.toContain("150");
+    expect(self).toContain("150");
+    expect(self).not.toContain("totalité");
     expect(self).not.toContain("FIF-PL");
     expect(self).not.toContain("AGEFICE");
   });
@@ -141,7 +141,7 @@ describe("funding-flows — résolution des modalités", () => {
     expect(getFundingFlow("AGEFICE")?.shortLabel).toBe("AGEFICE");
     expect(getFundingFlow("FIFPL")?.documentTrigger).toBe("after_deposit");
     expect(getFundingFlow("Autofinancement")?.documentTrigger).toBe(
-      "after_full_payment",
+      "after_deposit",
     );
     expect(getFundingFlow("OPCO")?.documentTrigger).toBe("manual");
     expect(getFundingFlow("Entreprise")?.documentTrigger).toBe("none");
@@ -174,8 +174,17 @@ describe("funding-flows — copie Deno", () => {
     expect(deno).toContain('dossierEmailSlug: "inscription_documents_agefice"');
     expect(front).toContain('packId: "convention_programme"');
     expect(deno).toContain('packId: "convention_programme"');
-    expect(front).toContain('documentTrigger: "after_full_payment"');
-    expect(deno).toContain('documentTrigger: "after_full_payment"');
+    // Autofinancement : même déclencheur acompte que FIFPL/AGEFICE.
+    expect(front).toMatch(
+      /organizationLabel: "Autofinancement"[\s\S]*?documentTrigger: "after_deposit"/,
+    );
+    expect(deno).toMatch(
+      /organizationLabel: "Autofinancement"[\s\S]*?documentTrigger: "after_deposit"/,
+    );
+    expect(front).toContain("frais de dossier de 150");
+    expect(deno).toContain("frais de dossier de 150");
+    expect(front).not.toContain("totalité de la formation");
+    expect(deno).not.toContain("totalité de la formation");
     expect(front).toContain("autoEnqueueAtSubmitWithoutPayment: false");
     expect(deno).toContain("autoEnqueueAtSubmitWithoutPayment: false");
   });
