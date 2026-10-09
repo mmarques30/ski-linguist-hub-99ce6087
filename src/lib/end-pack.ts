@@ -372,7 +372,7 @@ export async function generateEndPack(
 
         step = "pdf";
         const pdfBlob =
-          data.certificatePdfBlob || buildCertificatePdfBlob(bilan);
+          data.certificatePdfBlob || (await buildCertificatePdfBlob(bilan));
         const storagePath = buildCertificatePath(
           data.studentId,
           data.inscriptionId,

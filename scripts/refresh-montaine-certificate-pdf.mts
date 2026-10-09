@@ -14,13 +14,13 @@ async function main() {
   });
   if (authError) throw authError;
 
-  const blob = buildCertificatePdfBlob({
+  const blob = await buildCertificatePdfBlob({
     studentName: "Montaine Gros-Deleglise",
     language: "Anglais",
     startDate: "2026-09-16",
     endDate: "2026-10-07",
-    durationHoursPlanned: null,
-    hoursFollowed: null,
+    durationHoursPlanned: 18,
+    hoursFollowed: 18,
     locationOrModality: "en_ligne",
     formateurName: "Maxime Goy",
     niveauGeneralEntree: "B1+",

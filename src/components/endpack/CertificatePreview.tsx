@@ -4,20 +4,24 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Printer, Download, Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
-import fliLogo from "@/assets/fli-logo.png";
 import {
   CERTIFICATE_SNMSF_DISCLAIMER,
   OBJECTIF_ATTEINT_LABELS,
   type CertificateBilanData,
   type ObjectifAtteint,
 } from "@/lib/certificate-progression";
+import {
+  buildCertificatePdfBlob,
+  CERTIFICATE_FLI_FOOTER_LINES,
+} from "@/lib/certificate-pdf";
+import { INSCRIPTION_DOCUMENT_ASSET_FILES } from "@/lib/inscription-documents-assets";
 
 interface CertificatePreviewProps {
   data: CertificateBilanData;
   onPdfBlob?: (blob: Blob) => void | Promise<void>;
 }
+
+const LETTERHEAD_SRC = `/inscription-documents/${INSCRIPTION_DOCUMENT_ASSET_FILES.letterhead}`;
 
 export function CertificatePreview({ data, onPdfBlob }: CertificatePreviewProps) {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -25,45 +29,18 @@ export function CertificatePreview({ data, onPdfBlob }: CertificatePreviewProps)
 
   const handlePrint = () => window.print();
 
-  const buildPdf = async (): Promise<{ blob: Blob; fileName: string } | null> => {
-    if (!certificateRef.current) return null;
-    const canvas = await html2canvas(certificateRef.current, {
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: "#ffffff",
-    } as Parameters<typeof html2canvas>[1]);
-
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    const ratio = Math.min(pdfWidth / canvas.width, pdfHeight / canvas.height);
-    const imgX = (pdfWidth - canvas.width * ratio) / 2;
-    pdf.addImage(
-      imgData,
-      "PNG",
-      imgX,
-      8,
-      canvas.width * ratio,
-      canvas.height * ratio
-    );
-
-    const fileName = `certificat-${data.studentName
-      .replace(/\s+/g, "-")
-      .toLowerCase()}-${data.inscriptionCode || "formation"}.pdf`;
-    return { blob: pdf.output("blob"), fileName };
-  };
-
   const handleDownloadPDF = async () => {
     setIsGenerating(true);
     try {
-      const result = await buildPdf();
-      if (!result) return;
-      if (onPdfBlob) await onPdfBlob(result.blob);
-      const url = URL.createObjectURL(result.blob);
+      const blob = await buildCertificatePdfBlob(data);
+      if (onPdfBlob) await onPdfBlob(blob);
+      const fileName = `certificat-${data.studentName
+        .replace(/\s+/g, "-")
+        .toLowerCase()}-${data.inscriptionCode || "formation"}.pdf`;
+      const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = result.fileName;
+      a.download = fileName;
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -78,9 +55,7 @@ export function CertificatePreview({ data, onPdfBlob }: CertificatePreviewProps)
     data.objectifAtteint;
 
   const locationLine = data.locationOrModality || "—";
-  const hoursLine = `${data.hoursFollowed ?? "—"} h suivies / ${
-    data.durationHoursPlanned ?? "—"
-  } h prévues`;
+  const hoursLine = `${data.hoursFollowed ?? data.durationHoursPlanned ?? "—"} heures`;
 
   return (
     <div className="space-y-4">
@@ -104,42 +79,51 @@ export function CertificatePreview({ data, onPdfBlob }: CertificatePreviewProps)
         className="bg-white border border-primary/20 rounded-lg p-10 print:border-none print:p-6 min-h-[700px] flex flex-col text-left"
         id="certificate-pdf"
       >
-        <div className="text-center mb-6">
-          <img src={fliLogo} alt="FLI" className="h-16 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-primary tracking-wide uppercase">
-            Certificat de fin de formation
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">FLI — Foreign Language Immersion</p>
+        <div className="flex justify-end mb-6">
+          <img
+            src={LETTERHEAD_SRC}
+            alt="France Langues International"
+            className="h-14 w-auto object-contain"
+          />
         </div>
 
-        <Separator className="my-4" />
+        <h1 className="text-xl font-bold text-center tracking-wide mb-6">
+          Certificat d&apos;assiduité et de fin de formation
+        </h1>
 
-        <div className="space-y-2 text-sm">
+        <div className="space-y-3 text-sm leading-relaxed">
+          <p>Pour servir ce que de droit,</p>
           <p>
-            <span className="text-muted-foreground">Stagiaire :</span>{" "}
-            <span className="font-semibold text-base">{data.studentName}</span>
+            Je soussignée Paula Rangel Halbwachs, responsable de France Langues
+            International, atteste que&nbsp;:
+          </p>
+          <p className="font-semibold text-base">
+            {data.studentName} a suivi une formation individualisée en{" "}
+            {data.language}.
           </p>
           <p>
-            <span className="text-muted-foreground">Formation :</span>{" "}
-            {data.language}
-            {" · "}
-            {format(new Date(data.startDate), "d MMM yyyy", { locale: fr })}
-            {" → "}
-            {format(new Date(data.endDate), "d MMM yyyy", { locale: fr })}
-            {" · "}
-            {data.durationHoursPlanned != null
-              ? `${data.durationHoursPlanned} h`
-              : "durée n/c"}
-            {" · "}
-            {locationLine}
+            Dates de la formation : du{" "}
+            {format(new Date(data.startDate), "dd/MM/yyyy")} au{" "}
+            {format(new Date(data.endDate), "dd/MM/yyyy")}.
           </p>
-          <p>
-            <span className="text-muted-foreground">Formateur·rice :</span>{" "}
-            {data.formateurName || "—"}
-          </p>
+          <p>Durée de la formation : {hoursLine}.</p>
+          <p>Lieu de la formation : {locationLine}.</p>
+          {data.formateurName ? (
+            <p>Formateur·rice : {data.formateurName}.</p>
+          ) : null}
         </div>
 
-        <h2 className="text-lg font-semibold mt-8 mb-3">Bilan de progression</h2>
+        <Separator className="my-5" />
+
+        <div className="space-y-2 text-sm mb-4">
+          <p className="font-semibold">Niveaux atteints à la fin de la formation :</p>
+          <p className="pl-4">Langue générale : {data.niveauGeneralSortie}.</p>
+          <p className="pl-4">Langage technique : {data.niveauTechniqueSortie}.</p>
+        </div>
+
+        <h2 className="text-sm font-semibold mb-2">
+          {"Bilan de progression (entrée -> sortie)"}
+        </h2>
         <table className="w-full border-collapse text-sm mb-4">
           <thead>
             <tr className="bg-muted/50">
@@ -178,27 +162,38 @@ export function CertificatePreview({ data, onPdfBlob }: CertificatePreviewProps)
           {CERTIFICATE_SNMSF_DISCLAIMER}
         </p>
 
-        <div className="mt-auto space-y-4 text-sm">
+        <p className="text-sm mb-4">
+          En conséquence de quoi le présent certificat lui est délivré pour servir
+          ce que de droit.
+        </p>
+
+        <div className="mt-auto space-y-6 text-sm">
           <p>
-            <span className="font-medium">Heures :</span> {hoursLine}
+            Fait à Montmélian, le{" "}
+            {format(new Date(data.issueDate), "d MMMM yyyy", { locale: fr })}.
           </p>
-          <div className="flex justify-between items-end pt-4">
+          {data.inscriptionCode ? (
+            <p className="text-xs text-muted-foreground">
+              Réf. {data.inscriptionCode}
+            </p>
+          ) : null}
+          <div className="grid grid-cols-2 gap-8 pt-2">
             <div>
-              <p>
-                Date :{" "}
-                {format(new Date(data.issueDate), "d MMMM yyyy", { locale: fr })}
-              </p>
-              {data.inscriptionCode ? (
-                <p className="text-xs text-muted-foreground">
-                  Réf. {data.inscriptionCode}
-                </p>
-              ) : null}
+              <p>La stagiaire</p>
             </div>
-            <div className="text-right">
-              <p className="font-medium mb-1">Signature FLI</p>
-              <div className="w-36 h-14 border-b border-dashed border-muted-foreground/40" />
+            <div>
+              <p>F.L.I.</p>
+              <p className="font-semibold mt-2">Paula RANGEL-HALBWACHS</p>
             </div>
           </div>
+        </div>
+
+        <div className="mt-10 pt-3 border-t border-muted-foreground/40 text-center text-[10px] text-muted-foreground leading-snug">
+          {CERTIFICATE_FLI_FOOTER_LINES.map((line) => (
+            <p key={line} className={line.startsWith("Formation") ? "font-semibold" : undefined}>
+              {line}
+            </p>
+          ))}
         </div>
       </div>
     </div>
@@ -207,23 +202,7 @@ export function CertificatePreview({ data, onPdfBlob }: CertificatePreviewProps)
 
 /** Exposed for end-pack PDF upload without mounting the full preview UI. */
 export async function renderCertificatePdfBlob(
-  element: HTMLElement
+  data: CertificateBilanData
 ): Promise<Blob> {
-  const canvas = await html2canvas(element, {
-    useCORS: true,
-    allowTaint: true,
-    backgroundColor: "#ffffff",
-  } as Parameters<typeof html2canvas>[1]);
-  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  const pdfWidth = pdf.internal.pageSize.getWidth();
-  const ratio = Math.min(pdfWidth / canvas.width, pdf.internal.pageSize.getHeight() / canvas.height);
-  pdf.addImage(
-    canvas.toDataURL("image/png"),
-    "PNG",
-    (pdfWidth - canvas.width * ratio) / 2,
-    8,
-    canvas.width * ratio,
-    canvas.height * ratio
-  );
-  return pdf.output("blob");
+  return buildCertificatePdfBlob(data);
 }
