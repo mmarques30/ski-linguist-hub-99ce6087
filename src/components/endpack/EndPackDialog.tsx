@@ -65,6 +65,7 @@ interface EndPackDialogProps {
     commentaire_sortie?: string | null;
     status?: string | null;
     end_pack_sent_at?: string | null;
+    funding_organization?: string | null;
   };
   onSuccess?: () => void;
 }
@@ -79,11 +80,13 @@ export function EndPackDialog({
   const [attendanceOverride, setAttendanceOverride] = useState(false);
   const [generateInvoice, setGenerateInvoice] = useState(true);
   const [generateCertificate, setGenerateCertificate] = useState(true);
+  const [generateAttestation, setGenerateAttestation] = useState(true);
   const [sendSurvey, setSendSurvey] = useState(true);
   const [result, setResult] = useState<{
     invoiceId?: string;
     invoiceNumber?: string | null;
     certificateId?: string;
+    attestationPath?: string;
     surveyToken?: string;
   } | null>(null);
 
@@ -190,7 +193,9 @@ export function EndPackDialog({
       attendanceRate,
       generateInvoice,
       generateCertificate: generateCertificate && exitReady,
+      generateAttestation,
       sendSurvey,
+      fundingOrganization: inscription.funding_organization ?? "FIFPL",
     });
     setResult(res);
     onSuccess?.();
@@ -358,6 +363,28 @@ export function EndPackDialog({
 
                 <div className="flex items-center space-x-3 p-3 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))]">
                   <Checkbox
+                    id="attestation"
+                    checked={generateAttestation}
+                    onCheckedChange={(checked) =>
+                      setGenerateAttestation(!!checked)
+                    }
+                  />
+                  <div className="flex-1">
+                    <label
+                      htmlFor="attestation"
+                      className="flex items-center gap-2 font-medium cursor-pointer"
+                    >
+                      <ClipboardCheck className="h-4 w-4 text-[hsl(var(--tint-blue-fg))]" />
+                      Attestation de présence (FIF-PL)
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      Heures suivies / prévues — dossier de remboursement
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3 p-3 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))]">
+                  <Checkbox
                     id="survey"
                     checked={sendSurvey}
                     onCheckedChange={(checked) => setSendSurvey(!!checked)}
@@ -387,6 +414,7 @@ export function EndPackDialog({
                   clotureFermee ||
                   (!generateInvoice &&
                     !(generateCertificate && exitReady) &&
+                    !generateAttestation &&
                     !sendSurvey)
                 }
               >
@@ -425,6 +453,14 @@ export function EndPackDialog({
                     <Award className="h-5 w-5 text-[hsl(var(--tint-gold-fg))]" />
                     <p className="font-medium text-sm">
                       Certificat créé (bilan de progression)
+                    </p>
+                  </div>
+                )}
+                {result.attestationPath && (
+                  <div className="flex items-center gap-3 p-3 rounded-[var(--radius)] bg-[hsl(var(--tint-blue-bg))] border border-[hsl(var(--tint-blue-ring))]">
+                    <ClipboardCheck className="h-5 w-5 text-[hsl(var(--tint-blue-fg))]" />
+                    <p className="font-medium text-sm">
+                      Attestation de présence créée
                     </p>
                   </div>
                 )}
