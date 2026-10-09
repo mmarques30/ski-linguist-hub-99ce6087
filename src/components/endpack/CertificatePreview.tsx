@@ -12,18 +12,18 @@ import {
 } from "@/lib/certificate-progression";
 import {
   buildCertificatePdfBlob,
+  CERTIFICATE_ASSET_FILES,
   CERTIFICATE_FLI_FOOTER_LINES,
   CERTIFICATE_ORG,
 } from "@/lib/certificate-pdf";
-import { INSCRIPTION_DOCUMENT_ASSET_FILES } from "@/lib/inscription-documents-assets";
 
 interface CertificatePreviewProps {
   data: CertificateBilanData;
   onPdfBlob?: (blob: Blob) => void | Promise<void>;
 }
 
-const LETTERHEAD_SRC = `/inscription-documents/${INSCRIPTION_DOCUMENT_ASSET_FILES.letterhead}`;
-const CACHET_SRC = `/inscription-documents/${INSCRIPTION_DOCUMENT_ASSET_FILES.organismSignature}`;
+const LETTERHEAD_SRC = `/inscription-documents/${CERTIFICATE_ASSET_FILES.letterhead}`;
+const CACHET_SRC = `/inscription-documents/${CERTIFICATE_ASSET_FILES.cachet}`;
 
 export function CertificatePreview({ data, onPdfBlob }: CertificatePreviewProps) {
   const [isGenerating, setIsGenerating] = useState(false);

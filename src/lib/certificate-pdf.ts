@@ -1,21 +1,24 @@
 /**
- * Certificat d'assiduité et de fin de formation — calqué sur
- * « Certificat 2024.docx », avec en-tête organisme type facture FLI
- * (logo + coordonnées + SIRET / NDA) et pied Version 2.
+ * Certificat d'assiduité et de fin de formation — modèle Word 2024.
+ * Rendu pdf-lib (comme conventions) pour que logo / cachet s'affichent
+ * correctement dans Chrome / Acrobat (PNG RGB, pas indexé jsPDF).
  */
-import { jsPDF } from "jspdf";
+import { PDFDocument, StandardFonts, rgb, type PDFPage, type PDFFont } from "pdf-lib";
 import {
   CERTIFICATE_SNMSF_DISCLAIMER,
   OBJECTIF_ATTEINT_LABELS,
   type CertificateBilanData,
   type ObjectifAtteint,
 } from "@/lib/certificate-progression";
-import { INSCRIPTION_DOCUMENT_ASSET_FILES } from "@/lib/inscription-documents-assets";
 
-const MARGIN = 18;
+const PAGE = { width: 595.28, height: 841.89 };
+const MARGIN = 48;
 
-const LETTERHEAD_PUBLIC_PATH = `inscription-documents/${INSCRIPTION_DOCUMENT_ASSET_FILES.letterhead}`;
-const CACHET_PUBLIC_PATH = `inscription-documents/${INSCRIPTION_DOCUMENT_ASSET_FILES.organismSignature}`;
+/** Assets RGB dédiés certificat (évite PNG indexé illisible dans certains lecteurs). */
+export const CERTIFICATE_ASSET_FILES = {
+  letterhead: "fli-entete-cert.png",
+  cachet: "fli-signature-cachet-cert.png",
+} as const;
 
 /** Bloc organisme — mêmes coordonnées que les factures FLI. */
 export const CERTIFICATE_ORG = {
@@ -41,7 +44,20 @@ export const CERTIFICATE_FLI_FOOTER_LINES = [
   "Version 2 du 8 septembre 2021",
 ] as const;
 
-const FOOTER_H = 22;
+const FOOTER_H = 56;
+const FLI_YELLOW = rgb(252 / 255, 175 / 255, 23 / 255);
+const INK = rgb(0.12, 0.12, 0.12);
+const MUTED = rgb(0.35, 0.35, 0.35);
+const FOOTER_GREY = rgb(0.5, 0.5, 0.5);
+
+function pdfSafe(text: string): string {
+  return text
+    .replace(/\u2192/g, "->")
+    .replace(/\u2019/g, "'")
+    .replace(/\u2018/g, "'")
+    .replace(/\u00A0/g, " ")
+    .replace(/\u00B7/g, "·");
+}
 
 function formatFrDate(isoOrFr: string | null | undefined): string {
   if (!isoOrFr) return "…";
@@ -84,7 +100,7 @@ function formatLieu(locationOrModality: string | null): string {
   return raw.replace(/_/g, " ");
 }
 
-async function loadPublicPngBytes(
+async function loadPublicBytes(
   publicRelativePath: string,
   override?: Uint8Array | null
 ): Promise<Uint8Array | null> {
@@ -95,7 +111,7 @@ async function loadPublicPngBytes(
       const res = await fetch(`/${publicRelativePath}`);
       if (res.ok) return new Uint8Array(await res.arrayBuffer());
     } catch {
-      /* Node / hors Vite */
+      /* Node */
     }
   }
 
@@ -113,80 +129,34 @@ async function loadPublicPngBytes(
 export async function loadCertificateLetterheadBytes(
   override?: Uint8Array | null
 ): Promise<Uint8Array | null> {
-  return loadPublicPngBytes(LETTERHEAD_PUBLIC_PATH, override);
+  return loadPublicBytes(
+    `inscription-documents/${CERTIFICATE_ASSET_FILES.letterhead}`,
+    override
+  );
 }
 
-function drawFliFooter(pdf: jsPDF) {
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
-  let y = pageHeight - FOOTER_H;
-  pdf.setDrawColor(128, 128, 128);
-  pdf.setLineWidth(0.3);
-  pdf.line(MARGIN, y - 3, pageWidth - MARGIN, y - 3);
-  pdf.setTextColor(127, 127, 127);
-  CERTIFICATE_FLI_FOOTER_LINES.forEach((text, i) => {
-    pdf.setFont("helvetica", i === 0 ? "bold" : "normal");
-    pdf.setFontSize(7);
-    pdf.text(text, pageWidth / 2, y, { align: "center" });
-    y += 3.4;
-  });
-  pdf.setTextColor(0, 0, 0);
-}
-
-/**
- * En-tête type facture : logo à gauche + coordonnées organisme.
- * Retourne le y sous le bloc.
- */
-function drawOrgHeader(
-  pdf: jsPDF,
-  letterhead: Uint8Array | null,
-  pageWidth: number
-): number {
-  const top = 10;
-  let logoBottom = top;
-
-  if (letterhead?.byteLength) {
-    try {
-      const logoW = 58;
-      const logoH = 25;
-      pdf.addImage(letterhead, "PNG", MARGIN, top, logoW, logoH);
-      logoBottom = top + logoH;
-    } catch {
-      /* texte seul */
+function wrapText(
+  font: PDFFont,
+  text: string,
+  size: number,
+  maxWidth: number
+): string[] {
+  const normalized = pdfSafe(text).replace(/\s+/g, " ").trim();
+  if (!normalized) return [];
+  const words = normalized.split(" ");
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    const trial = current ? `${current} ${word}` : word;
+    if (font.widthOfTextAtSize(trial, size) <= maxWidth) {
+      current = trial;
+    } else {
+      if (current) lines.push(current);
+      current = word;
     }
   }
-
-  const textX = MARGIN;
-  let ty = logoBottom + 3;
-  pdf.setTextColor(40, 40, 40);
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(11);
-  pdf.text(CERTIFICATE_ORG.name, textX, ty);
-  ty += 4.2;
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(8.5);
-  pdf.setTextColor(70, 70, 70);
-  for (const line of [
-    CERTIFICATE_ORG.address,
-    CERTIFICATE_ORG.cityLine,
-    `Tél. ${CERTIFICATE_ORG.phone}  ·  ${CERTIFICATE_ORG.email}`,
-    `SIRET ${CERTIFICATE_ORG.siret}`,
-    `Organisme de formation n° ${CERTIFICATE_ORG.activityNumber}`,
-  ]) {
-    pdf.text(line, textX, ty);
-    ty += 3.6;
-  }
-  pdf.setTextColor(0, 0, 0);
-
-  // Filet sous l'en-tête
-  const ruleY = Math.max(ty, logoBottom) + 3;
-  pdf.setDrawColor(252, 175, 23); // jaune FLI
-  pdf.setLineWidth(0.8);
-  pdf.line(MARGIN, ruleY, pageWidth - MARGIN, ruleY);
-  pdf.setDrawColor(0, 0, 0);
-  pdf.setLineWidth(0.2);
-
-  return ruleY + 8;
+  if (current) lines.push(current);
+  return lines;
 }
 
 export type BuildCertificatePdfOptions = {
@@ -194,135 +164,266 @@ export type BuildCertificatePdfOptions = {
   cachetPng?: Uint8Array | null;
 };
 
-/** Génère le PDF certificat (modèle Word 2024) pour end pack / stockage. */
+/** Génère le PDF certificat pour end pack / stockage. */
 export async function buildCertificatePdfBlob(
   data: CertificateBilanData,
   options?: BuildCertificatePdfOptions
 ): Promise<Blob> {
-  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const maxWidth = pageWidth - MARGIN * 2;
+  const bytes = await buildCertificatePdfBytes(data, options);
+  return new Blob([bytes], { type: "application/pdf" });
+}
 
-  const [letterhead, cachet] = await Promise.all([
+export async function buildCertificatePdfBytes(
+  data: CertificateBilanData,
+  options?: BuildCertificatePdfOptions
+): Promise<Uint8Array> {
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([PAGE.width, PAGE.height]);
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const fontItalic = await doc.embedFont(StandardFonts.HelveticaOblique);
+
+  const [letterheadBytes, cachetBytes] = await Promise.all([
     loadCertificateLetterheadBytes(options?.letterheadPng),
-    loadPublicPngBytes(CACHET_PUBLIC_PATH, options?.cachetPng),
+    loadPublicBytes(
+      `inscription-documents/${CERTIFICATE_ASSET_FILES.cachet}`,
+      options?.cachetPng
+    ),
   ]);
 
-  let y = drawOrgHeader(pdf, letterhead, pageWidth);
+  let letterhead = null;
+  let cachet = null;
+  if (letterheadBytes?.byteLength) {
+    try {
+      letterhead = await doc.embedPng(letterheadBytes);
+    } catch {
+      letterhead = null;
+    }
+  }
+  if (cachetBytes?.byteLength) {
+    try {
+      cachet = await doc.embedPng(cachetBytes);
+    } catch {
+      cachet = null;
+    }
+  }
 
-  const line = (
-    text: string,
-    opts?: { bold?: boolean; size?: number; indent?: number }
-  ) => {
-    const size = opts?.size ?? 10;
-    pdf.setFont("helvetica", opts?.bold ? "bold" : "normal");
-    pdf.setFontSize(size);
-    const x = MARGIN + (opts?.indent ?? 0);
-    const width = maxWidth - (opts?.indent ?? 0);
-    const lines = pdf.splitTextToSize(text, width);
-    pdf.text(lines, x, y);
-    y += lines.length * (size * 0.42) + 2.2;
+  let y = PAGE.height - 28;
+
+  // Logo à gauche
+  if (letterhead) {
+    const logoW = 150;
+    const scale = logoW / letterhead.width;
+    const logoH = letterhead.height * scale;
+    page.drawImage(letterhead, {
+      x: MARGIN,
+      y: y - logoH,
+      width: logoW,
+      height: logoH,
+    });
+    y -= logoH + 10;
+  }
+
+  // Bloc infos organisme
+  const orgLines: { text: string; bold?: boolean; size?: number }[] = [
+    { text: CERTIFICATE_ORG.name, bold: true, size: 11 },
+    { text: CERTIFICATE_ORG.address, size: 9 },
+    { text: CERTIFICATE_ORG.cityLine, size: 9 },
+    {
+      text: `Tél. ${CERTIFICATE_ORG.phone}  ·  ${CERTIFICATE_ORG.email}`,
+      size: 9,
+    },
+    { text: `SIRET ${CERTIFICATE_ORG.siret}`, size: 9 },
+    {
+      text: `Organisme de formation n° ${CERTIFICATE_ORG.activityNumber}`,
+      size: 9,
+    },
+  ];
+  for (const row of orgLines) {
+    const size = row.size ?? 9;
+    const f = row.bold ? fontBold : font;
+    page.drawText(pdfSafe(row.text), {
+      x: MARGIN,
+      y: y - size,
+      size,
+      font: f,
+      color: row.bold ? INK : MUTED,
+    });
+    y -= size + 3;
+  }
+
+  // Filet jaune FLI
+  y -= 6;
+  page.drawRectangle({
+    x: MARGIN,
+    y: y - 2.5,
+    width: PAGE.width - MARGIN * 2,
+    height: 2.5,
+    color: FLI_YELLOW,
+  });
+  y -= 22;
+
+  const contentWidth = PAGE.width - MARGIN * 2;
+  const drawCentered = (text: string, size: number, bold = false) => {
+    const f = bold ? fontBold : font;
+    const w = f.widthOfTextAtSize(pdfSafe(text), size);
+    page.drawText(pdfSafe(text), {
+      x: (PAGE.width - w) / 2,
+      y: y - size,
+      size,
+      font: f,
+      color: INK,
+    });
+    y -= size + 10;
   };
 
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(15);
-  pdf.text("Certificat d'assiduité et de fin de formation", pageWidth / 2, y, {
-    align: "center",
-  });
-  y += 9;
+  const drawPara = (
+    text: string,
+    opts?: { bold?: boolean; italic?: boolean; size?: number; indent?: number }
+  ) => {
+    const size = opts?.size ?? 10;
+    const f = opts?.bold ? fontBold : opts?.italic ? fontItalic : font;
+    const indent = opts?.indent ?? 0;
+    const lines = wrapText(f, text, size, contentWidth - indent);
+    for (const ln of lines) {
+      if (y < FOOTER_H + 40) break;
+      page.drawText(ln, {
+        x: MARGIN + indent,
+        y: y - size,
+        size,
+        font: f,
+        color: INK,
+      });
+      y -= size + 3.5;
+    }
+    y -= 4;
+  };
 
-  line("Pour servir ce que de droit,", { size: 10 });
-  y += 1;
-  line(
-    `Je soussignée ${CERTIFICATE_ORG.representative}, responsable de ${CERTIFICATE_ORG.name}, atteste que :`,
-    { size: 10 }
+  drawCentered("Certificat d'assiduité et de fin de formation", 15, true);
+
+  drawPara("Pour servir ce que de droit,");
+  drawPara(
+    `Je soussignée ${CERTIFICATE_ORG.representative}, responsable de ${CERTIFICATE_ORG.name}, atteste que :`
   );
-  y += 2;
-
-  line(
+  drawPara(
     `${data.studentName} a suivi ${formationPhrase(
       data.language,
       data.locationOrModality
     )}.`,
     { bold: true, size: 11 }
   );
-  y += 2;
 
-  const start = formatFrDate(data.startDate);
-  const end = formatFrDate(data.endDate);
-  line(`Dates de la formation : du ${start} au ${end}.`);
   const hours = data.hoursFollowed ?? data.durationHoursPlanned;
-  line(
+  drawPara(
+    `Dates de la formation : du ${formatFrDate(data.startDate)} au ${formatFrDate(data.endDate)}.`
+  );
+  drawPara(
     `Durée de la formation : ${hours != null ? `${hours} heures` : "…"}.`
   );
-  line(`Lieu de la formation : ${formatLieu(data.locationOrModality)}.`);
+  drawPara(`Lieu de la formation : ${formatLieu(data.locationOrModality)}.`);
   if (data.formateurName) {
-    line(`Formateur·rice : ${data.formateurName}.`);
+    drawPara(`Formateur·rice : ${data.formateurName}.`);
   }
-  y += 3;
 
-  line("Niveaux atteints à la fin de la formation :", { bold: true });
-  line(`Langue générale : ${data.niveauGeneralSortie}.`, { indent: 6 });
-  line(`Langage technique : ${data.niveauTechniqueSortie}.`, { indent: 6 });
-  y += 2;
+  drawPara("Niveaux atteints à la fin de la formation :", { bold: true });
+  drawPara(`Langue générale : ${data.niveauGeneralSortie}.`, { indent: 16 });
+  drawPara(`Langage technique : ${data.niveauTechniqueSortie}.`, {
+    indent: 16,
+  });
 
-  line("Bilan de progression (entrée -> sortie)", { bold: true, size: 10 });
-  line(
+  drawPara("Bilan de progression (entrée -> sortie)", { bold: true });
+  drawPara(
     `Niveau général — Entrée : ${data.niveauGeneralEntree}  |  Sortie : ${data.niveauGeneralSortie}`,
-    { size: 9, indent: 4 }
+    { size: 9, indent: 12 }
   );
-  line(
+  drawPara(
     `Niveau technique — Entrée : ${data.niveauTechniqueEntree}  |  Sortie : ${data.niveauTechniqueSortie}`,
-    { size: 9, indent: 4 }
+    { size: 9, indent: 12 }
   );
   const objectif =
     OBJECTIF_ATTEINT_LABELS[data.objectifAtteint as ObjectifAtteint] ||
     data.objectifAtteint;
-  line(`Objectif pédagogique atteint : ${objectif}`, { size: 9, indent: 4 });
+  drawPara(`Objectif pédagogique atteint : ${objectif}`, {
+    size: 9,
+    indent: 12,
+  });
   if (data.commentaire?.trim()) {
-    y += 1;
-    line(data.commentaire.trim(), { size: 9, indent: 4 });
+    drawPara(data.commentaire.trim(), { size: 9, indent: 12 });
   }
-  y += 3;
 
-  pdf.setFont("helvetica", "italic");
-  pdf.setFontSize(8);
-  const disclaimer = pdf.splitTextToSize(CERTIFICATE_SNMSF_DISCLAIMER, maxWidth);
-  pdf.text(disclaimer, MARGIN, y);
-  y += disclaimer.length * 3.3 + 5;
-
-  line(
+  drawPara(CERTIFICATE_SNMSF_DISCLAIMER, { italic: true, size: 8 });
+  drawPara(
     "En conséquence de quoi le présent certificat lui est délivré pour servir ce que de droit."
   );
-  y += 3;
-  line(`Fait à Montmélian, le ${formatFrDate(data.issueDate)}.`);
+  drawPara(`Fait à Montmélian, le ${formatFrDate(data.issueDate)}.`);
   if (data.inscriptionCode) {
-    line(`Réf. inscription : ${data.inscriptionCode}`, { size: 8 });
-  }
-  y += 8;
-
-  const colLeft = MARGIN + 8;
-  const colRight = pageWidth / 2 + 8;
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(10);
-  pdf.text("La stagiaire", colLeft, y);
-  pdf.text("F.L.I.", colRight, y);
-  y += 5;
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(9);
-  pdf.text(CERTIFICATE_ORG.signatory, colRight, y);
-
-  if (cachet?.byteLength) {
-    try {
-      const cachetW = 42;
-      const cachetH = 25;
-      pdf.addImage(cachet, "PNG", colRight, y + 2, cachetW, cachetH);
-    } catch {
-      /* cachet optionnel */
-    }
+    drawPara(`Réf. inscription : ${data.inscriptionCode}`, { size: 8 });
   }
 
-  drawFliFooter(pdf);
+  y -= 10;
+  const colLeft = MARGIN + 10;
+  const colRight = PAGE.width / 2 + 10;
+  page.drawText("La stagiaire", {
+    x: colLeft,
+    y: y - 10,
+    size: 10,
+    font,
+    color: INK,
+  });
+  page.drawText("F.L.I.", {
+    x: colRight,
+    y: y - 10,
+    size: 10,
+    font,
+    color: INK,
+  });
+  y -= 22;
+  page.drawText(CERTIFICATE_ORG.signatory, {
+    x: colRight,
+    y: y - 9,
+    size: 9,
+    font: fontBold,
+    color: INK,
+  });
+  y -= 14;
 
-  return pdf.output("blob");
+  if (cachet) {
+    const cachetW = 120;
+    const scale = cachetW / cachet.width;
+    const cachetH = cachet.height * scale;
+    page.drawImage(cachet, {
+      x: colRight,
+      y: Math.max(FOOTER_H + 8, y - cachetH),
+      width: cachetW,
+      height: cachetH,
+    });
+  }
+
+  drawFooter(page, font, fontBold);
+
+  return doc.save();
+}
+
+function drawFooter(page: PDFPage, font: PDFFont, fontBold: PDFFont) {
+  let fy = FOOTER_H - 4;
+  page.drawLine({
+    start: { x: MARGIN, y: fy + 14 },
+    end: { x: PAGE.width - MARGIN, y: fy + 14 },
+    thickness: 0.6,
+    color: rgb(0.6, 0.6, 0.6),
+  });
+  for (let i = 0; i < CERTIFICATE_FLI_FOOTER_LINES.length; i += 1) {
+    const text = CERTIFICATE_FLI_FOOTER_LINES[i];
+    const f = i === 0 ? fontBold : font;
+    const size = 7;
+    const w = f.widthOfTextAtSize(text, size);
+    page.drawText(text, {
+      x: (PAGE.width - w) / 2,
+      y: fy,
+      size,
+      font: f,
+      color: FOOTER_GREY,
+    });
+    fy -= 9;
+  }
 }

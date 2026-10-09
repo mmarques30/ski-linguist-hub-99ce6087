@@ -1,5 +1,10 @@
+/**
+ * Régénère le PDF certificat Montaine (pdf-lib + assets RGB) et l'uploade.
+ *
+ *   ./node_modules/.bin/tsx scripts/refresh-montaine-certificate-pdf.mts
+ */
 import { createClient } from "@supabase/supabase-js";
-import { writeFileSync } from "fs";
+import { writeFileSync } from "node:fs";
 import { buildCertificatePdfBlob } from "../src/lib/certificate-pdf.ts";
 import { ZZTEST_ADMIN_LOGIN } from "../src/lib/zztest-roles-logins.ts";
 
@@ -43,7 +48,21 @@ async function main() {
 
   const buf = Buffer.from(await blob.arrayBuffer());
   writeFileSync("/opt/cursor/artifacts/montaine-certificat.pdf", buf);
-  console.log("updated certificate", buf.length);
+
+  const { data: dl, error: dlErr } = await supabase.storage
+    .from("certificates")
+    .download(path);
+  if (dlErr) throw dlErr;
+  const stored = Buffer.from(await dl.arrayBuffer());
+  writeFileSync("/opt/cursor/artifacts/montaine-certificat-from-storage.pdf", stored);
+
+  console.log(
+    JSON.stringify({
+      uploaded: buf.length,
+      downloaded: stored.length,
+      match: buf.equals(stored),
+    })
+  );
 }
 
 main().catch((e) => {
