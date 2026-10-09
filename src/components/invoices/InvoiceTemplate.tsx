@@ -7,6 +7,8 @@ import {
   EMPTY_ORGANIZATION_IDENTITY,
   organizationInvoiceHeader,
 } from "@/lib/organization-identity";
+import { paymentMethodLabel } from "@/lib/payment-methods";
+import { invoicePaidDisplay } from "@/lib/invoice-paid-display";
 
 export type InvoiceType = "formation" | "test" | "soustraitance";
 
@@ -122,9 +124,14 @@ export function InvoiceTemplate({ data, className = "" }: InvoiceTemplateProps) 
   };
 
   const showStamp = config.showStampWhenPaid && data.status === "paid";
-  const balanceAfterAcompte = data.acompteAmount 
-    ? data.amountTTC - data.acompteAmount 
+  const balanceAfterAcompte = data.acompteAmount
+    ? data.amountTTC - data.acompteAmount
     : data.amountTTC;
+  const paidDisplay = invoicePaidDisplay({
+    status: data.status,
+    acompteAmount: data.acompteAmount,
+    totalTtc: data.amountTTC,
+  });
 
   return (
     <div className={`bg-white text-gray-900 p-8 max-w-[210mm] mx-auto shadow-lg ${className}`}>
@@ -248,20 +255,52 @@ export function InvoiceTemplate({ data, className = "" }: InvoiceTemplateProps) 
             <span className="font-bold text-[#FCAF17]">{formatPrice(data.amountTTC)}</span>
           </div>
 
-          {/* Acompte */}
-          {config.showAcompte && data.acompteAmount && data.acompteAmount > 0 && (
+          {/* Acompte / solde — si payée, ne jamais afficher un « solde à payer » restant */}
+          {config.showAcompte && paidDisplay.showAcompteBlock && (
             <>
               <div className="flex justify-between py-2 border-b border-gray-100 text-sm">
                 <span className="text-gray-600">
-                  Acompte reçu{data.acompteDate && ` le ${formatDate(data.acompteDate)}`}
+                  {paidDisplay.acompteLabel}
+                  {data.acompteDate && ` le ${formatDate(data.acompteDate)}`}
                 </span>
-                <span className="text-green-600">- {formatPrice(data.acompteAmount)}</span>
+                <span className="text-green-600">
+                  - {formatPrice(data.acompteAmount || 0)}
+                </span>
               </div>
-              <div className="flex justify-between py-2 text-lg">
-                <span className="font-semibold">Solde à payer</span>
-                <span className="font-bold">{formatPrice(balanceAfterAcompte)}</span>
-              </div>
+              {paidDisplay.soldeIsOutstanding ? (
+                <div className="flex justify-between py-2 text-lg">
+                  <span className="font-semibold">{paidDisplay.soldeLabel}</span>
+                  <span className="font-bold">{formatPrice(balanceAfterAcompte)}</span>
+                </div>
+              ) : (
+                <>
+                  <div className="flex justify-between py-2 border-b border-gray-100 text-sm">
+                    <span className="text-gray-600">{paidDisplay.soldeLabel}</span>
+                    <span className="text-green-600">
+                      - {formatPrice(balanceAfterAcompte)}
+                    </span>
+                  </div>
+                  {paidDisplay.netLabel && (
+                    <div className="flex justify-between py-2 text-lg">
+                      <span className="font-semibold text-green-700">
+                        {paidDisplay.netLabel}
+                      </span>
+                      <span className="font-bold text-green-700">
+                        {formatPrice(paidDisplay.netAmount)}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
             </>
+          )}
+          {!paidDisplay.showAcompteBlock && paidDisplay.netLabel && (
+            <div className="flex justify-between py-2 text-lg">
+              <span className="font-semibold text-green-700">{paidDisplay.netLabel}</span>
+              <span className="font-bold text-green-700">
+                {formatPrice(paidDisplay.netAmount)} restant
+              </span>
+            </div>
           )}
         </div>
       </div>
@@ -277,14 +316,47 @@ export function InvoiceTemplate({ data, className = "" }: InvoiceTemplateProps) 
       <div className="border-t border-gray-200 pt-6 text-sm">
         <div className="grid grid-cols-2 gap-6">
           <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Coordonnées bancaires</p>
-            <p><span className="text-gray-500">IBAN:</span> {FLI_INFO.iban}</p>
-            <p><span className="text-gray-500">BIC:</span> {FLI_INFO.bic}</p>
+            {data.status === "paid" ? (
+              <>
+                <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">
+                  Règlement
+                </p>
+                <p className="font-semibold text-green-700">Facture acquittée</p>
+                {data.paymentDate && (
+                  <p>
+                    <span className="text-gray-500">Date :</span>{" "}
+                    {formatDate(data.paymentDate)}
+                  </p>
+                )}
+                {data.paymentMethod && (
+                  <p>
+                    <span className="text-gray-500">Moyen :</span>{" "}
+                    {paymentMethodLabel(data.paymentMethod)}
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">
+                  Coordonnées bancaires
+                </p>
+                <p>
+                  <span className="text-gray-500">IBAN:</span> {FLI_INFO.iban}
+                </p>
+                <p>
+                  <span className="text-gray-500">BIC:</span> {FLI_INFO.bic}
+                </p>
+              </>
+            )}
           </div>
           <div className="text-right">
-            <p><span className="text-gray-500">SIRET:</span> {header.siret}</p>
+            <p>
+              <span className="text-gray-500">SIRET:</span> {header.siret}
+            </p>
             {config.showTVANumber && (
-              <p><span className="text-gray-500">N° TVA:</span> {FLI_INFO.tvaNumber}</p>
+              <p>
+                <span className="text-gray-500">N° TVA:</span> {FLI_INFO.tvaNumber}
+              </p>
             )}
           </div>
         </div>

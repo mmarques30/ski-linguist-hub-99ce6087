@@ -157,7 +157,7 @@ async function main() {
   if (certErr) throw certErr;
   const cert = certs?.[0];
   if (cert) {
-    const certBlob = buildCertificatePdfBlob({
+    const certBlob = await buildCertificatePdfBlob({
       studentName,
       language: row.language || "Anglais",
       startDate: row.start_date!,
