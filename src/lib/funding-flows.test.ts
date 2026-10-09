@@ -124,6 +124,7 @@ describe("funding-flows — résolution des modalités", () => {
     const self = confirmationNextStepsHtmlForFunding("Autofinancement");
 
     expect(fifpl).toContain("FIF-PL");
+    expect(fifpl).toContain("150");
     expect(fifpl).not.toContain("AGEFICE");
     expect(agefice).toContain("AGEFICE");
     expect(agefice).not.toContain("FIF-PL");
@@ -135,6 +136,21 @@ describe("funding-flows — résolution des modalités", () => {
     expect(self).not.toContain("totalité");
     expect(self).not.toContain("FIF-PL");
     expect(self).not.toContain("AGEFICE");
+  });
+
+  it("ne demande pas l'acompte 150 € pour Méribel / La Rosière (FIFPL forfait école)", () => {
+    const school = confirmationNextStepsHtmlForFunding("FIFPL", {
+      omitDossierFee: true,
+    });
+    expect(school).toContain("aucun frais de dossier");
+    expect(school).toContain("La Rosière / Méribel");
+    expect(school).toContain("FIF-PL");
+    expect(school).not.toMatch(/dès confirmation du règlement des frais de dossier/);
+
+    const standard = confirmationNextStepsHtmlForFunding("FIFPL", {
+      omitDossierFee: false,
+    });
+    expect(standard).toContain("frais de dossier de 150");
   });
 
   it("expose getFundingFlow pour le BO / resolve pack", () => {
@@ -183,6 +199,12 @@ describe("funding-flows — copie Deno", () => {
     );
     expect(front).toContain("frais de dossier de 150");
     expect(deno).toContain("frais de dossier de 150");
+    expect(front).toContain("CONFIRMATION_FIFPL_NO_DEPOSIT");
+    expect(deno).toContain("CONFIRMATION_FIFPL_NO_DEPOSIT");
+    expect(front).toContain("aucun frais de dossier de 150");
+    expect(deno).toContain("aucun frais de dossier de 150");
+    expect(front).toContain("omitDossierFee");
+    expect(deno).toContain("omitDossierFee");
     expect(front).not.toContain("totalité de la formation");
     expect(deno).not.toContain("totalité de la formation");
     expect(front).toContain("autoEnqueueAtSubmitWithoutPayment: false");

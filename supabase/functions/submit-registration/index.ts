@@ -27,6 +27,8 @@ import {
   type RegistrationAdminSummaryInput,
 } from "../_shared/registration-admin-notify.ts";
 import {
+  getSessionFundingMode,
+  hidesDepositPaymentOptions,
   isWaitlistOffering,
   resolveOfferingPrice,
 } from "../_shared/registration-offerings.ts";
@@ -721,6 +723,10 @@ Deno.serve(async (req) => {
         : null;
 
     const paymentFlow = paymentFields?.paymentFlow ?? "none";
+    const sessionFundingMode = getSessionFundingMode({
+      funding_mode: offeringFundingMode,
+    });
+    const omitDossierFee = hidesDepositPaymentOptions(sessionFundingMode);
 
     const paymentLabels: Record<string, string> = {
       [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]:
@@ -789,11 +795,21 @@ Deno.serve(async (req) => {
           registration.paymentOption
             ? `Paiement: ${paymentLabels[registration.paymentOption] || registration.paymentOption}`
             : null,
-          paymentFields && paymentFields.balanceAfterDeposit > 0
-            ? `Frais de dossier: ${FRAIS_DOSSIER_EUR} € · Solde chèque: ${paymentFields.balanceAfterDeposit} € (avant le début de la formation)`
-            : paymentFields?.paymentType === "total" && paymentFields.paymentFlow === "virement"
-              ? `Paiement intégral par virement: ${price} €`
-              : null,
+          omitDossierFee
+            ? "Aucun acompte 150 € (forfait école Méribel / La Rosière)"
+            : null,
+          paymentFields &&
+          paymentFields.balanceAfterDeposit > 0 &&
+          paymentFields.paymentMethod === "cheque_fifpl_ecole"
+            ? `Chèque FIF-PL à envoyer à FLI (part stagiaire) : ${paymentFields.balanceAfterDeposit} € — encaissement après la formation`
+            : paymentFields &&
+                paymentFields.balanceAfterDeposit > 0 &&
+                paymentFields.depositAmount
+              ? `Frais de dossier: ${FRAIS_DOSSIER_EUR} € · Solde chèque: ${paymentFields.balanceAfterDeposit} € (avant le début de la formation)`
+              : paymentFields?.paymentType === "total" &&
+                  paymentFields.paymentFlow === "virement"
+                ? `Paiement intégral par virement: ${price} €`
+                : null,
         ]
           .filter(Boolean)
           .join("\n"),
@@ -942,6 +958,7 @@ Deno.serve(async (req) => {
         suivi_url: suiviUrl,
         funding_next_steps: confirmationNextStepsHtmlForFunding(
           FUNDING_MAP[registration.fundingType] || registration.fundingType,
+          { omitDossierFee },
         ),
       };
 
@@ -1039,13 +1056,19 @@ Deno.serve(async (req) => {
       }
 
       // Règle Paula : flux avec règlement → dossier après 150 € / intégral.
+      // Forfait école (Méribel / La Rosière) : pas d'acompte — dossier dès la
+      // soumission si chèque FIF-PL école (ou sans flux paiement).
       // OPCO / Entreprise : pas d'enfilement auto (funding-flows).
-      // Autres sans paiement (devis legacy) : enfilement seulement si le flux le permet.
       const fundingOrganization =
         FUNDING_MAP[registration.fundingType] || registration.fundingType || null;
+      const schoolChequeAtSubmit =
+        omitDossierFee &&
+        registration.paymentOption ===
+          REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE;
       if (
-        !paymentFields &&
-        shouldEnqueueDocumentsAtSubmitWithoutPayment(fundingOrganization)
+        schoolChequeAtSubmit ||
+        (!paymentFields &&
+          shouldEnqueueDocumentsAtSubmitWithoutPayment(fundingOrganization))
       ) {
         try {
           documentsSent = await enqueueInscriptionDocuments({

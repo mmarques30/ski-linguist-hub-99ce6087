@@ -50,6 +50,9 @@ export type FundingFlowDefinition = {
 
 const CONFIRMATION_FIFPL = `Prochaines étapes : dès confirmation du règlement des frais de dossier de 150&nbsp;€ (ou du paiement intégral), nous vous enverrons votre dossier FIF-PL (convention, programme, critères et tutoriel) pour votre demande de prise en charge.`;
 
+/** Méribel / La Rosière (forfait école) — pas d'acompte 150 € (décision Paula). */
+const CONFIRMATION_FIFPL_NO_DEPOSIT = `Prochaines étapes : aucun frais de dossier de 150&nbsp;€ n'est demandé pour votre session ESF (La Rosière / Méribel). Nous vous enverrons votre dossier FIF-PL (convention, programme, critères et tutoriel) pour votre demande de prise en charge. Selon votre choix, envoyez le chèque FIF-PL à FLI (Montmélian) ou réglez votre part en ligne&nbsp;; l'ESF règle le solde de son côté.`;
+
 const CONFIRMATION_AGEFICE = `Prochaines étapes : dès confirmation du règlement des frais de dossier de 150&nbsp;€ (ou du paiement intégral), nous vous enverrons votre dossier AGEFICE (convention, programme, formulaire de demande et liste des pièces). Pensez aux plafonds 2026 et au dépôt en Point d'accueil au moins 15 jours avant le début.`;
 
 const CONFIRMATION_OPCO = `Prochaines étapes : aucun règlement n'est demandé pour l'instant. France Langues International analyse votre dossier OPCO et vous recontactera avec une proposition de prise en charge. Les documents de formation vous seront envoyés ensuite, si besoin.`;
@@ -225,10 +228,20 @@ export function dossierEmailSlugsForFunding(
   return [flow.dossierEmailSlug, FUNDING_DOSSIER_EMAIL_FALLBACK_SLUG];
 }
 
+export type ConfirmationNextStepsOptions = {
+  /** Stations forfait école (Méribel / La Rosière) : ne pas demander l'acompte 150 €. */
+  omitDossierFee?: boolean;
+};
+
 export function confirmationNextStepsHtmlForFunding(
   fundingOrganizationOrType?: string | null,
+  options?: ConfirmationNextStepsOptions,
 ): string {
-  const flow = getFundingFlow(fundingOrganizationOrType);
+  const key = resolveFundingFlowKey(fundingOrganizationOrType);
+  if (options?.omitDossierFee && key === "fifpl") {
+    return CONFIRMATION_FIFPL_NO_DEPOSIT;
+  }
+  const flow = key ? FUNDING_FLOWS[key] : null;
   return (
     flow?.confirmationNextStepsHtml ??
     FUNDING_FLOWS.self.confirmationNextStepsHtml
