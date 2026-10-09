@@ -5,12 +5,14 @@
  */
 
 import {
+  CECRL_LEVELS,
   isBlank,
   OBJECTIF_ATTEINT_VALUES,
   type ObjectifAtteint,
   type ProgressionEntryFields,
   type ProgressionExitFields,
 } from "@/lib/certificate-progression";
+import { displayPisteLabel } from "@/lib/placement-test-engine";
 
 /** Échelle utilisée dans les Google Forms (avec demi-niveaux). */
 export const FORMATEUR_CECRL_LEVELS = [
@@ -319,3 +321,23 @@ export const MONTAINE_FORMULAIRE_SORTIE: FormulaireSortieFormateur =
 
 export const MONTAINE_INSCRIPTION_ID =
   "bd253789-d03b-4402-8bbd-ef93366e1c58" as const;
+
+const CECRL_SET = new Set<string>(CECRL_LEVELS);
+
+/**
+ * Affichage des niveaux saisis au formulaire formateur.
+ * Les CECRL (y compris demi-niveaux) restent tels quels ; les anciennes
+ * saisies « Piste … » passent encore par le libellé piste.
+ */
+export function formatFormateurLevelDisplay(
+  level: string | null | undefined,
+  emptyLabel = "—"
+): string {
+  if (isBlank(level)) return emptyLabel;
+  const trimmed = String(level).trim();
+  if (CECRL_SET.has(trimmed)) return trimmed;
+  if (/^(A1|A2|B1|B2|C1|C2)\+?$/i.test(trimmed)) return trimmed;
+  if (/^débutant/i.test(trimmed)) return trimmed;
+  if (/^piste\s/i.test(trimmed)) return trimmed;
+  return displayPisteLabel(trimmed, emptyLabel);
+}

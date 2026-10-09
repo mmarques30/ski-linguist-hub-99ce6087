@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   deriveEntryCertificateFields,
   deriveExitCertificateFields,
+  formatFormateurLevelDisplay,
   isFormulaireEntreeComplete,
   isFormulaireSortieComplete,
   MONTAINE_FORMULAIRE_ENTREE,
@@ -34,5 +35,11 @@ describe("formateur-formation-forms", () => {
     expect(normalizeObjectifAtteint("Oui")).toBe("oui");
     expect(normalizeObjectifAtteint("Non")).toBe("non");
     expect(normalizeObjectifAtteint("Partiellement")).toBe("partiellement");
+  });
+
+  it("keeps CECRL formateur levels visible (no piste remapping)", () => {
+    expect(formatFormateurLevelDisplay("B1+")).toBe("B1+");
+    expect(formatFormateurLevelDisplay("B2")).toBe("B2");
+    expect(formatFormateurLevelDisplay("Piste bleue")).toBe("Piste bleue");
   });
 });
