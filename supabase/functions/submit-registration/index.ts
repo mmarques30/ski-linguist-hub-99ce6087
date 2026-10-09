@@ -711,6 +711,33 @@ Deno.serve(async (req) => {
       registration.location ||
       null;
 
+    // Part moniteur La Rosière / Méribel = droits FIF-PL restants sur la formation
+    // (coveredOnCourseEur), pas le tarif plein — sinon la convention affiche 1 500 €
+    // au lieu de 300 € + 1 200 € ESF (cas Gobert FLI-260039).
+    let schoolFifplStudentShareEur: number | null = null;
+    if (
+      registration.paymentOption &&
+      isValidPaymentOption(registration.paymentOption) &&
+      normalizePaymentOption(registration.paymentOption) ===
+        REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE &&
+      (isFifpl || hasFifplAnswers(registration))
+    ) {
+      try {
+        const details = buildFifplFundingDetails(registration);
+        if (details) {
+          const parsed = JSON.parse(details) as {
+            fifpl?: { estimatedRights?: { coveredOnCourseEur?: number | null } };
+          };
+          const covered = parsed.fifpl?.estimatedRights?.coveredOnCourseEur;
+          if (covered != null && Number.isFinite(Number(covered))) {
+            schoolFifplStudentShareEur = Number(covered);
+          }
+        }
+      } catch {
+        schoolFifplStudentShareEur = null;
+      }
+    }
+
     const paymentFields =
       !isCustomFormat &&
       !isOpco &&
@@ -719,7 +746,11 @@ Deno.serve(async (req) => {
       price > 0 &&
       registration.paymentOption &&
       isValidPaymentOption(registration.paymentOption)
-        ? getInscriptionPaymentFields(price, normalizePaymentOption(registration.paymentOption))
+        ? getInscriptionPaymentFields(
+            price,
+            normalizePaymentOption(registration.paymentOption),
+            { studentShareEur: schoolFifplStudentShareEur }
+          )
         : null;
 
     const paymentFlow = paymentFields?.paymentFlow ?? "none";

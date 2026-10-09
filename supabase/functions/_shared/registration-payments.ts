@@ -138,9 +138,26 @@ export function resolveStripeCheckoutAmountEur(input: {
   return fields.stripeAmount;
 }
 
+/**
+ * Part moniteur (chèque FIF-PL) pour Méribel / La Rosière.
+ * Utilise l'estimation FIF-PL (`coveredOnCourseEur`) quand elle est connue ;
+ * sinon le tarif formation (comportement historique).
+ */
+export function resolveSchoolFifplStudentShareEur(
+  coursePrice: number,
+  studentShareEur?: number | null
+): number {
+  const share = Number(studentShareEur);
+  if (Number.isFinite(share) && share > 0 && share <= coursePrice) {
+    return Math.round(share);
+  }
+  return coursePrice;
+}
+
 export function getInscriptionPaymentFields(
   coursePrice: number,
-  paymentOption: RegistrationPaymentOption
+  paymentOption: RegistrationPaymentOption,
+  options?: { studentShareEur?: number | null }
 ): {
   paymentMethod: string;
   balanceAfterDeposit: number;
@@ -155,7 +172,10 @@ export function getInscriptionPaymentFields(
   if (option === REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE) {
     return {
       paymentMethod: "cheque_fifpl_ecole",
-      balanceAfterDeposit: coursePrice,
+      balanceAfterDeposit: resolveSchoolFifplStudentShareEur(
+        coursePrice,
+        options?.studentShareEur
+      ),
       depositAmount: null,
       paymentFlow: "none",
       paymentType: "total",
