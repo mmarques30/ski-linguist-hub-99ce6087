@@ -6,6 +6,14 @@
  * le stagiaire — la carte « Espace stagiaire » n'offre que le magic link.
  */
 
+export const ZZTEST_ADMIN_LOGIN = {
+  roleLabel: "Admin",
+  email: "zztest.admin@example.invalid",
+  password: "ZZTEST-Admin1!",
+  homePath: "/",
+  howTo: "Sur /auth, carte Administration FLI → email + mot de passe. Accès staff / pack fin de formation.",
+} as const;
+
 export const ZZTEST_FORMATEUR_LOGIN = {
   roleLabel: "Formateur",
   email: "zztest.formateur@example.invalid",
@@ -22,4 +30,8 @@ export const ZZTEST_STAGIAIRE_LOGIN = {
   howTo: "Sur /auth (pas mode student), carte Administration FLI → email + mot de passe. Redirection vers /student/dashboard.",
 } as const;
 
-export const ZZTEST_ROLE_LOGINS = [ZZTEST_FORMATEUR_LOGIN, ZZTEST_STAGIAIRE_LOGIN] as const;
+export const ZZTEST_ROLE_LOGINS = [
+  ZZTEST_ADMIN_LOGIN,
+  ZZTEST_FORMATEUR_LOGIN,
+  ZZTEST_STAGIAIRE_LOGIN,
+] as const;

@@ -1,4 +1,4 @@
-import jsPDF from "jspdf";
+import { jsPDF } from "jspdf";
 import {
   CERTIFICATE_SNMSF_DISCLAIMER,
   OBJECTIF_ATTEINT_LABELS,

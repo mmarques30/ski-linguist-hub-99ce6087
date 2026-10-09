@@ -1293,15 +1293,7 @@ export default function InscriptionDetails() {
             onOpenChange={setEntryFormOpen}
             inscriptionId={inscription.id}
             suggestedGeneralEntry={placementSuggestion}
-            initial={
-              progression
-                ? {
-                    niveau_general_entree: progression.niveau_general_entree,
-                    niveau_technique_entree: progression.niveau_technique_entree,
-                    remarques_entree: progression.remarques_entree,
-                  }
-                : null
-            }
+            initialFormulaire={progression?.formulaire_entree ?? null}
           />
 
           <FormateurExitFormDialog
@@ -1310,16 +1302,7 @@ export default function InscriptionDetails() {
             inscriptionId={inscription.id}
             durationHours={inscription.duration_hours}
             hoursFollowed={progression?.hours_followed}
-            initial={
-              progression
-                ? {
-                    niveau_general_sortie: progression.niveau_general_sortie,
-                    niveau_technique_sortie: progression.niveau_technique_sortie,
-                    objectif_atteint: progression.objectif_atteint,
-                    commentaire_sortie: progression.commentaire_sortie,
-                  }
-                : null
-            }
+            initialFormulaire={progression?.formulaire_sortie ?? null}
             existingEntry={
               progression
                 ? {
