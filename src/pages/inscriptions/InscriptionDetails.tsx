@@ -39,6 +39,7 @@ import {
   OBJECTIF_ATTEINT_LABELS,
   type ObjectifAtteint,
 } from "@/lib/certificate-progression";
+import { formatFormateurLevelDisplay } from "@/lib/formateur-formation-forms";
 import {
   useInscriptionCertificates,
   useInscriptionProgression,
@@ -592,9 +593,9 @@ export default function InscriptionDetails() {
         <StatTileGrid cols={4}>
           <StatTile
             label="Progression"
-            value={`${
-              entryGeneralLevel ? displayPisteLabel(entryGeneralLevel) : "—"
-            } → ${exitGeneralLevel || "—"}`}
+            value={`${formatFormateurLevelDisplay(entryGeneralLevel)} → ${
+              exitGeneralLevel || "—"
+            }`}
             hint="Saisi par le formateur : entrée → sortie"
             icon={TrendingUp}
             tone="purple"
@@ -925,7 +926,7 @@ export default function InscriptionDetails() {
             <SurfaceCard
               title="Bilan de progression"
               icon={GraduationCap}
-              description="Entrée = piste constatée par le formateur en début de formation (pas le test) · Sortie = CECRL formateur (jamais SNMSF/DSF sur le certificat)"
+              description="Entrée / sortie = constat formateur (Google Form / app), échelle CECRL avec demi-niveaux — jamais le test de placement ni SNMSF/DSF sur le certificat"
               bodyClassName="space-y-4"
               actions={
                 editable && (
@@ -953,9 +954,7 @@ export default function InscriptionDetails() {
                     <TableRow>
                       <TableCell className="font-medium">Niveau général</TableCell>
                       <TableCell>
-                        {entryGeneralLevel
-                          ? displayPisteLabel(entryGeneralLevel)
-                          : "—"}
+                        {formatFormateurLevelDisplay(entryGeneralLevel)}
                       </TableCell>
                       <TableCell>{progression?.niveau_general_sortie || "—"}</TableCell>
                     </TableRow>
@@ -974,10 +973,10 @@ export default function InscriptionDetails() {
                   <div className="space-y-3">
                     <p className="text-sm font-medium">Niveau général</p>
                     <MeterRow
-                      label="Entrée (piste)"
+                      label="Entrée (CECRL)"
                       value={cecrlRank(entryGeneralLevel)}
                       max={CECRL_LEVELS.length}
-                      display={displayPisteLabel(entryGeneralLevel, "—")}
+                      display={formatFormateurLevelDisplay(entryGeneralLevel)}
                       color={seriesColor(0)}
                     />
                     <MeterRow
@@ -1006,10 +1005,9 @@ export default function InscriptionDetails() {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground sm:col-span-2">
-                    Entrée : couleur de piste saisie par le formateur en début de formation
-                    (indépendante du test de placement). Sortie : CECRL A1 → C2
-                    ({CECRL_LEVELS.join(" · ")}) pour le certificat SNMSF. Une valeur hors
-                    échelle reste affichée telle quelle, sans remplir la barre.
+                    Niveaux formateur ({CECRL_LEVELS.join(" · ")}). Indépendants du test
+                    de placement. Une ancienne saisie « Piste … » reste affichée telle
+                    quelle. Le certificat reprend la synthèse général / technique.
                   </p>
                 </div>
               ) : (
@@ -1293,15 +1291,7 @@ export default function InscriptionDetails() {
             onOpenChange={setEntryFormOpen}
             inscriptionId={inscription.id}
             suggestedGeneralEntry={placementSuggestion}
-            initial={
-              progression
-                ? {
-                    niveau_general_entree: progression.niveau_general_entree,
-                    niveau_technique_entree: progression.niveau_technique_entree,
-                    remarques_entree: progression.remarques_entree,
-                  }
-                : null
-            }
+            initialFormulaire={progression?.formulaire_entree ?? null}
           />
 
           <FormateurExitFormDialog
@@ -1310,16 +1300,7 @@ export default function InscriptionDetails() {
             inscriptionId={inscription.id}
             durationHours={inscription.duration_hours}
             hoursFollowed={progression?.hours_followed}
-            initial={
-              progression
-                ? {
-                    niveau_general_sortie: progression.niveau_general_sortie,
-                    niveau_technique_sortie: progression.niveau_technique_sortie,
-                    objectif_atteint: progression.objectif_atteint,
-                    commentaire_sortie: progression.commentaire_sortie,
-                  }
-                : null
-            }
+            initialFormulaire={progression?.formulaire_sortie ?? null}
             existingEntry={
               progression
                 ? {

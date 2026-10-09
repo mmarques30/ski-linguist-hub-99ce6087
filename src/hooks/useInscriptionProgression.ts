@@ -2,13 +2,19 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  isEntryFormComplete,
-  isExitFormComplete,
   legacyLevelSyncFromProgression,
   type ObjectifAtteint,
   type ProgressionEntryFields,
   type ProgressionExitFields,
 } from "@/lib/certificate-progression";
+import {
+  deriveEntryCertificateFields,
+  deriveExitCertificateFields,
+  isFormulaireEntreeComplete,
+  isFormulaireSortieComplete,
+  type FormulaireEntreeFormateur,
+  type FormulaireSortieFormateur,
+} from "@/lib/formateur-formation-forms";
 
 export type InscriptionProgressionRow = ProgressionEntryFields &
   ProgressionExitFields & {
@@ -19,6 +25,8 @@ export type InscriptionProgressionRow = ProgressionEntryFields &
     duration_hours: number | null;
     end_date: string;
     status: string;
+    formulaire_entree: FormulaireEntreeFormateur | null;
+    formulaire_sortie: FormulaireSortieFormateur | null;
   };
 
 export function useInscriptionProgression(inscriptionId?: string) {
@@ -38,6 +46,8 @@ export function useInscriptionProgression(inscriptionId?: string) {
             "niveau_technique_sortie",
             "objectif_atteint",
             "commentaire_sortie",
+            "formulaire_entree",
+            "formulaire_sortie",
             "entry_form_completed_at",
             "exit_form_completed_at",
             "hours_followed",
@@ -62,25 +72,35 @@ export function useSaveEntryForm() {
   return useMutation({
     mutationFn: async (input: {
       inscriptionId: string;
-      fields: ProgressionEntryFields;
+      formulaire: FormulaireEntreeFormateur;
     }) => {
-      if (!isEntryFormComplete(input.fields)) {
-        throw new Error("Niveaux général et technique d'entrée obligatoires");
+      if (!isFormulaireEntreeComplete(input.formulaire)) {
+        throw new Error(
+          "Formulaire d'entrée incomplet (5 compétences CECRL obligatoires)"
+        );
       }
+      const derived = deriveEntryCertificateFields(input.formulaire);
       const legacy = legacyLevelSyncFromProgression({
-        ...input.fields,
+        ...derived,
         niveau_general_sortie: null,
         niveau_technique_sortie: null,
         objectif_atteint: null,
         commentaire_sortie: null,
       });
 
+      const payload = {
+        ...input.formulaire,
+        source: "app" as const,
+        submitted_at: new Date().toISOString(),
+      };
+
       const { error } = await supabase
         .from("inscriptions")
         .update({
-          niveau_general_entree: input.fields.niveau_general_entree?.trim() || null,
-          niveau_technique_entree: input.fields.niveau_technique_entree?.trim() || null,
-          remarques_entree: input.fields.remarques_entree?.trim() || null,
+          formulaire_entree: payload,
+          niveau_general_entree: derived.niveau_general_entree,
+          niveau_technique_entree: derived.niveau_technique_entree,
+          remarques_entree: derived.remarques_entree,
           entry_form_completed_at: new Date().toISOString(),
           entry_level: legacy.entry_level,
         } as never)
@@ -106,34 +126,42 @@ export function useSaveExitForm() {
   return useMutation({
     mutationFn: async (input: {
       inscriptionId: string;
-      fields: ProgressionExitFields;
+      formulaire: FormulaireSortieFormateur;
       hoursFollowed?: number | null;
       existingEntry?: ProgressionEntryFields;
     }) => {
-      if (!isExitFormComplete(input.fields)) {
+      if (!isFormulaireSortieComplete(input.formulaire)) {
         throw new Error(
-          "Formulaire de sortie incomplet (niveaux CECRL, objectif, commentaire)"
+          "Formulaire de sortie incomplet (niveaux, objectif, commentaire assiduité)"
         );
       }
 
+      const derived = deriveExitCertificateFields(input.formulaire);
       const legacy = legacyLevelSyncFromProgression({
         niveau_general_entree: input.existingEntry?.niveau_general_entree ?? null,
         niveau_technique_entree: input.existingEntry?.niveau_technique_entree ?? null,
         remarques_entree: input.existingEntry?.remarques_entree ?? null,
-        ...input.fields,
+        ...derived,
       });
 
+      const formulairePayload = {
+        ...input.formulaire,
+        source: "app" as const,
+        submitted_at: new Date().toISOString(),
+      };
+
       const payload: Record<string, unknown> = {
-          niveau_general_sortie: input.fields.niveau_general_sortie?.trim() || null,
-          niveau_technique_sortie: input.fields.niveau_technique_sortie?.trim() || null,
-          objectif_atteint: input.fields.objectif_atteint as ObjectifAtteint,
-          commentaire_sortie: input.fields.commentaire_sortie?.trim() || null,
-          exit_form_completed_at: new Date().toISOString(),
-          exit_level: legacy.exit_level,
-          final_general_level: legacy.final_general_level,
-          final_specific_level: legacy.final_specific_level,
-          progression: legacy.progression,
-        };
+        formulaire_sortie: formulairePayload,
+        niveau_general_sortie: derived.niveau_general_sortie,
+        niveau_technique_sortie: derived.niveau_technique_sortie,
+        objectif_atteint: derived.objectif_atteint as ObjectifAtteint,
+        commentaire_sortie: derived.commentaire_sortie,
+        exit_form_completed_at: new Date().toISOString(),
+        exit_level: legacy.exit_level,
+        final_general_level: legacy.final_general_level,
+        final_specific_level: legacy.final_specific_level,
+        progression: legacy.progression,
+      };
       if (input.hoursFollowed !== undefined) {
         payload.hours_followed = input.hoursFollowed;
       }

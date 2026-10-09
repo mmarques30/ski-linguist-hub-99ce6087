@@ -1,4 +1,4 @@
-import jsPDF from "jspdf";
+import { jsPDF } from "jspdf";
 import {
   CERTIFICATE_SNMSF_DISCLAIMER,
   OBJECTIF_ATTEINT_LABELS,
@@ -33,7 +33,7 @@ export function buildCertificatePdfBlob(data: CertificateBilanData): Blob {
 
   line(`Stagiaire : ${data.studentName}`, { bold: true, size: 12 });
   line(
-    `Formation : ${data.language} · ${data.startDate} → ${data.endDate} · ${
+    `Formation : ${data.language} · ${data.startDate} -> ${data.endDate} · ${
       data.durationHoursPlanned != null ? `${data.durationHoursPlanned} h` : "durée n/c"
     } · ${data.locationOrModality || "—"}`
   );
