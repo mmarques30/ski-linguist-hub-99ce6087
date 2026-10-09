@@ -132,15 +132,37 @@ export function getAvailablePaymentOptions(
   ]);
 }
 
+/**
+ * Part moniteur (chèque FIF-PL) pour Méribel / La Rosière.
+ * Utilise l'estimation FIF-PL (`coveredOnCourseEur`) quand elle est connue ;
+ * sinon le tarif formation (comportement historique).
+ * Aligné sur `supabase/functions/_shared/registration-payments.ts`.
+ */
+export function resolveSchoolFifplStudentShareEur(
+  coursePrice: number,
+  studentShareEur?: number | null
+): number {
+  const share = Number(studentShareEur);
+  if (Number.isFinite(share) && share > 0 && share <= coursePrice) {
+    return Math.round(share);
+  }
+  return coursePrice;
+}
+
 export function getRegistrationPaymentSummary(
   coursePrice: number,
-  option: RegistrationPaymentOption
+  option: RegistrationPaymentOption,
+  options?: { studentShareEur?: number | null }
 ): RegistrationPaymentSummary {
   if (option === REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE) {
+    const studentShare = resolveSchoolFifplStudentShareEur(
+      coursePrice,
+      options?.studentShareEur
+    );
     return {
       coursePrice,
       dossierFee: 0,
-      balanceAfterDossier: coursePrice,
+      balanceAfterDossier: studentShare,
       amountDueNow: 0,
       amountDueNowLabel: "Aucun acompte — chèque FIF-PL à envoyer à FLI",
     };

@@ -15,6 +15,7 @@ import {
   REGISTRATION_PAYMENT_OPTIONS,
   requiresStripeCheckout,
   requiresVirementInstructions,
+  resolveSchoolFifplStudentShareEur,
   resolveStripeCheckoutAmountEur,
   STRIPE_KLARNA_3X_MIN_EUR,
   stripeKlarna3xInstallmentEur,
@@ -263,6 +264,31 @@ describe("modes de règlement /register", () => {
     expect(cheque.amountDueNow).toBe(0);
     expect(cheque.balanceAfterDossier).toBe(900);
     expect(cheque.amountDueNowLabel).toMatch(/envoyer à FLI/i);
+
+    // Cas Gobert FLI-260039 : droits FIF-PL 300 €, solde ESF 1 200 €.
+    expect(resolveSchoolFifplStudentShareEur(1500, 300)).toBe(300);
+    expect(resolveSchoolFifplStudentShareEur(1500, null)).toBe(1500);
+    expect(resolveSchoolFifplStudentShareEur(1500, 0)).toBe(1500);
+    expect(resolveSchoolFifplStudentShareEur(1500, 2000)).toBe(1500);
+    const gobert = getRegistrationPaymentSummary(
+      1500,
+      REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE,
+      { studentShareEur: 300 }
+    );
+    expect(gobert.balanceAfterDossier).toBe(300);
+    expect(gobert.amountDueNow).toBe(0);
+
+    const front = readFileSync(
+      join(process.cwd(), "src/lib/registration-payments.ts"),
+      "utf8"
+    );
+    const deno = readFileSync(
+      join(process.cwd(), "supabase/functions/_shared/registration-payments.ts"),
+      "utf8"
+    );
+    expect(front).toContain("resolveSchoolFifplStudentShareEur");
+    expect(deno).toContain("resolveSchoolFifplStudentShareEur");
+    expect(deno).toContain("options?.studentShareEur");
   });
 
   it("écrit deposit_amount à la création d'inscription", () => {
@@ -273,6 +299,8 @@ describe("modes de règlement /register", () => {
     expect(submit).toContain("deposit_amount: paymentFields?.depositAmount ?? null");
     expect(submit).toContain("STRIPE_KLARNA_3X");
     expect(submit).toContain("Payez en 3 fois avec Klarna");
+    expect(submit).toContain("studentShareEur: schoolFifplStudentShareEur");
+    expect(submit).toContain("coveredOnCourseEur");
   });
 
   it("passe le montant payable à getAvailablePaymentOptions dans PaymentStep", () => {
