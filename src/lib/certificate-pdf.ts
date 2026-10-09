@@ -1,6 +1,7 @@
 /**
  * Certificat d'assiduité et de fin de formation — calqué sur
- * « Certificat 2024.docx » (en-tête fli-entete.png + pied FLI Version 2).
+ * « Certificat 2024.docx », avec en-tête organisme type facture FLI
+ * (logo + coordonnées + SIRET / NDA) et pied Version 2.
  */
 import { jsPDF } from "jspdf";
 import {
@@ -11,8 +12,23 @@ import {
 } from "@/lib/certificate-progression";
 import { INSCRIPTION_DOCUMENT_ASSET_FILES } from "@/lib/inscription-documents-assets";
 
-const MARGIN = 20;
+const MARGIN = 18;
+
 const LETTERHEAD_PUBLIC_PATH = `inscription-documents/${INSCRIPTION_DOCUMENT_ASSET_FILES.letterhead}`;
+const CACHET_PUBLIC_PATH = `inscription-documents/${INSCRIPTION_DOCUMENT_ASSET_FILES.organismSignature}`;
+
+/** Bloc organisme — mêmes coordonnées que les factures FLI. */
+export const CERTIFICATE_ORG = {
+  name: "France Langues International",
+  address: "25 avenue de la gare",
+  cityLine: "73800 Montmélian",
+  phone: "04 79 28 21 09",
+  email: "info@fli.fr",
+  siret: "484 772 041 00048",
+  activityNumber: "82 73 01 366 73",
+  representative: "Paula Rangel Halbwachs",
+  signatory: "Paula RANGEL-HALBWACHS",
+} as const;
 
 /**
  * Pied exact du modèle Word « Certificat 2024 »
@@ -68,14 +84,15 @@ function formatLieu(locationOrModality: string | null): string {
   return raw.replace(/_/g, " ");
 }
 
-export async function loadCertificateLetterheadBytes(
+async function loadPublicPngBytes(
+  publicRelativePath: string,
   override?: Uint8Array | null
 ): Promise<Uint8Array | null> {
   if (override && override.byteLength > 0) return override;
 
   if (typeof globalThis.fetch === "function") {
     try {
-      const res = await fetch(`/${LETTERHEAD_PUBLIC_PATH}`);
+      const res = await fetch(`/${publicRelativePath}`);
       if (res.ok) return new Uint8Array(await res.arrayBuffer());
     } catch {
       /* Node / hors Vite */
@@ -86,11 +103,17 @@ export async function loadCertificateLetterheadBytes(
     const { readFileSync } = await import("node:fs");
     const { join } = await import("node:path");
     return new Uint8Array(
-      readFileSync(join(process.cwd(), "public", LETTERHEAD_PUBLIC_PATH))
+      readFileSync(join(process.cwd(), "public", publicRelativePath))
     );
   } catch {
     return null;
   }
+}
+
+export async function loadCertificateLetterheadBytes(
+  override?: Uint8Array | null
+): Promise<Uint8Array | null> {
+  return loadPublicPngBytes(LETTERHEAD_PUBLIC_PATH, override);
 }
 
 function drawFliFooter(pdf: jsPDF) {
@@ -110,8 +133,65 @@ function drawFliFooter(pdf: jsPDF) {
   pdf.setTextColor(0, 0, 0);
 }
 
+/**
+ * En-tête type facture : logo à gauche + coordonnées organisme.
+ * Retourne le y sous le bloc.
+ */
+function drawOrgHeader(
+  pdf: jsPDF,
+  letterhead: Uint8Array | null,
+  pageWidth: number
+): number {
+  const top = 10;
+  let logoBottom = top;
+
+  if (letterhead?.byteLength) {
+    try {
+      const logoW = 58;
+      const logoH = 25;
+      pdf.addImage(letterhead, "PNG", MARGIN, top, logoW, logoH);
+      logoBottom = top + logoH;
+    } catch {
+      /* texte seul */
+    }
+  }
+
+  const textX = MARGIN;
+  let ty = logoBottom + 3;
+  pdf.setTextColor(40, 40, 40);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(11);
+  pdf.text(CERTIFICATE_ORG.name, textX, ty);
+  ty += 4.2;
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(8.5);
+  pdf.setTextColor(70, 70, 70);
+  for (const line of [
+    CERTIFICATE_ORG.address,
+    CERTIFICATE_ORG.cityLine,
+    `Tél. ${CERTIFICATE_ORG.phone}  ·  ${CERTIFICATE_ORG.email}`,
+    `SIRET ${CERTIFICATE_ORG.siret}`,
+    `Organisme de formation n° ${CERTIFICATE_ORG.activityNumber}`,
+  ]) {
+    pdf.text(line, textX, ty);
+    ty += 3.6;
+  }
+  pdf.setTextColor(0, 0, 0);
+
+  // Filet sous l'en-tête
+  const ruleY = Math.max(ty, logoBottom) + 3;
+  pdf.setDrawColor(252, 175, 23); // jaune FLI
+  pdf.setLineWidth(0.8);
+  pdf.line(MARGIN, ruleY, pageWidth - MARGIN, ruleY);
+  pdf.setDrawColor(0, 0, 0);
+  pdf.setLineWidth(0.2);
+
+  return ruleY + 8;
+}
+
 export type BuildCertificatePdfOptions = {
   letterheadPng?: Uint8Array | null;
+  cachetPng?: Uint8Array | null;
 };
 
 /** Génère le PDF certificat (modèle Word 2024) pour end pack / stockage. */
@@ -122,34 +202,13 @@ export async function buildCertificatePdfBlob(
   const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageWidth = pdf.internal.pageSize.getWidth();
   const maxWidth = pageWidth - MARGIN * 2;
-  let y = 12;
 
-  const letterhead = await loadCertificateLetterheadBytes(options?.letterheadPng);
-  if (letterhead?.byteLength) {
-    try {
-      // Modèle Word : ~51 × 22 mm, aligné à droite.
-      const logoW = 52;
-      const logoH = 22;
-      pdf.addImage(
-        letterhead,
-        "PNG",
-        pageWidth - MARGIN - logoW,
-        y,
-        logoW,
-        logoH
-      );
-      y += logoH + 8;
-    } catch {
-      y += 4;
-    }
-  } else {
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(11);
-    pdf.text("France Langues International", pageWidth - MARGIN, y + 6, {
-      align: "right",
-    });
-    y += 14;
-  }
+  const [letterhead, cachet] = await Promise.all([
+    loadCertificateLetterheadBytes(options?.letterheadPng),
+    loadPublicPngBytes(CACHET_PUBLIC_PATH, options?.cachetPng),
+  ]);
+
+  let y = drawOrgHeader(pdf, letterhead, pageWidth);
 
   const line = (
     text: string,
@@ -166,16 +225,16 @@ export async function buildCertificatePdfBlob(
   };
 
   pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(16);
+  pdf.setFontSize(15);
   pdf.text("Certificat d'assiduité et de fin de formation", pageWidth / 2, y, {
     align: "center",
   });
-  y += 10;
+  y += 9;
 
   line("Pour servir ce que de droit,", { size: 10 });
-  y += 2;
+  y += 1;
   line(
-    "Je soussignée Paula Rangel Halbwachs, responsable de France Langues International, atteste que :",
+    `Je soussignée ${CERTIFICATE_ORG.representative}, responsable de ${CERTIFICATE_ORG.name}, atteste que :`,
     { size: 10 }
   );
   y += 2;
@@ -192,12 +251,9 @@ export async function buildCertificatePdfBlob(
   const start = formatFrDate(data.startDate);
   const end = formatFrDate(data.endDate);
   line(`Dates de la formation : du ${start} au ${end}.`);
-  const hours =
-    data.hoursFollowed ?? data.durationHoursPlanned;
+  const hours = data.hoursFollowed ?? data.durationHoursPlanned;
   line(
-    `Durée de la formation : ${
-      hours != null ? `${hours} heures` : "…"
-    }.`
+    `Durée de la formation : ${hours != null ? `${hours} heures` : "…"}.`
   );
   line(`Lieu de la formation : ${formatLieu(data.locationOrModality)}.`);
   if (data.formateurName) {
@@ -233,28 +289,38 @@ export async function buildCertificatePdfBlob(
   pdf.setFontSize(8);
   const disclaimer = pdf.splitTextToSize(CERTIFICATE_SNMSF_DISCLAIMER, maxWidth);
   pdf.text(disclaimer, MARGIN, y);
-  y += disclaimer.length * 3.3 + 6;
+  y += disclaimer.length * 3.3 + 5;
 
   line(
     "En conséquence de quoi le présent certificat lui est délivré pour servir ce que de droit."
   );
-  y += 4;
+  y += 3;
   line(`Fait à Montmélian, le ${formatFrDate(data.issueDate)}.`);
   if (data.inscriptionCode) {
     line(`Réf. inscription : ${data.inscriptionCode}`, { size: 8 });
   }
-  y += 10;
+  y += 8;
 
-  const colLeft = MARGIN + 10;
-  const colRight = pageWidth / 2 + 10;
+  const colLeft = MARGIN + 8;
+  const colRight = pageWidth / 2 + 8;
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(10);
   pdf.text("La stagiaire", colLeft, y);
   pdf.text("F.L.I.", colRight, y);
-  y += 6;
+  y += 5;
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(9);
-  pdf.text("Paula RANGEL-HALBWACHS", colRight, y);
+  pdf.text(CERTIFICATE_ORG.signatory, colRight, y);
+
+  if (cachet?.byteLength) {
+    try {
+      const cachetW = 42;
+      const cachetH = 25;
+      pdf.addImage(cachet, "PNG", colRight, y + 2, cachetW, cachetH);
+    } catch {
+      /* cachet optionnel */
+    }
+  }
 
   drawFliFooter(pdf);
 

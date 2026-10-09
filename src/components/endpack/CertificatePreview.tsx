@@ -13,6 +13,7 @@ import {
 import {
   buildCertificatePdfBlob,
   CERTIFICATE_FLI_FOOTER_LINES,
+  CERTIFICATE_ORG,
 } from "@/lib/certificate-pdf";
 import { INSCRIPTION_DOCUMENT_ASSET_FILES } from "@/lib/inscription-documents-assets";
 
@@ -22,6 +23,7 @@ interface CertificatePreviewProps {
 }
 
 const LETTERHEAD_SRC = `/inscription-documents/${INSCRIPTION_DOCUMENT_ASSET_FILES.letterhead}`;
+const CACHET_SRC = `/inscription-documents/${INSCRIPTION_DOCUMENT_ASSET_FILES.organismSignature}`;
 
 export function CertificatePreview({ data, onPdfBlob }: CertificatePreviewProps) {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -79,12 +81,23 @@ export function CertificatePreview({ data, onPdfBlob }: CertificatePreviewProps)
         className="bg-white border border-primary/20 rounded-lg p-10 print:border-none print:p-6 min-h-[700px] flex flex-col text-left"
         id="certificate-pdf"
       >
-        <div className="flex justify-end mb-6">
+        <div className="mb-4">
           <img
             src={LETTERHEAD_SRC}
-            alt="France Langues International"
-            className="h-14 w-auto object-contain"
+            alt={CERTIFICATE_ORG.name}
+            className="h-16 w-auto object-contain mb-3"
           />
+          <div className="text-sm text-muted-foreground space-y-0.5">
+            <p className="font-semibold text-foreground">{CERTIFICATE_ORG.name}</p>
+            <p>{CERTIFICATE_ORG.address}</p>
+            <p>{CERTIFICATE_ORG.cityLine}</p>
+            <p>
+              Tél. {CERTIFICATE_ORG.phone} · {CERTIFICATE_ORG.email}
+            </p>
+            <p>SIRET {CERTIFICATE_ORG.siret}</p>
+            <p>Organisme de formation n° {CERTIFICATE_ORG.activityNumber}</p>
+          </div>
+          <div className="mt-3 h-1 w-full bg-[#FCAF17]" />
         </div>
 
         <h1 className="text-xl font-bold text-center tracking-wide mb-6">
@@ -94,8 +107,8 @@ export function CertificatePreview({ data, onPdfBlob }: CertificatePreviewProps)
         <div className="space-y-3 text-sm leading-relaxed">
           <p>Pour servir ce que de droit,</p>
           <p>
-            Je soussignée Paula Rangel Halbwachs, responsable de France Langues
-            International, atteste que&nbsp;:
+            Je soussignée {CERTIFICATE_ORG.representative}, responsable de{" "}
+            {CERTIFICATE_ORG.name}, atteste que&nbsp;:
           </p>
           <p className="font-semibold text-base">
             {data.studentName} a suivi une formation individualisée en{" "}
@@ -183,14 +196,22 @@ export function CertificatePreview({ data, onPdfBlob }: CertificatePreviewProps)
             </div>
             <div>
               <p>F.L.I.</p>
-              <p className="font-semibold mt-2">Paula RANGEL-HALBWACHS</p>
+              <p className="font-semibold mt-2">{CERTIFICATE_ORG.signatory}</p>
+              <img
+                src={CACHET_SRC}
+                alt="Cachet FLI"
+                className="mt-2 h-16 w-auto object-contain"
+              />
             </div>
           </div>
         </div>
 
         <div className="mt-10 pt-3 border-t border-muted-foreground/40 text-center text-[10px] text-muted-foreground leading-snug">
           {CERTIFICATE_FLI_FOOTER_LINES.map((line) => (
-            <p key={line} className={line.startsWith("Formation") ? "font-semibold" : undefined}>
+            <p
+              key={line}
+              className={line.startsWith("Formation") ? "font-semibold" : undefined}
+            >
               {line}
             </p>
           ))}
