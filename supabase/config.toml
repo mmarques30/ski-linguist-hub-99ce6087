@@ -78,3 +78,6 @@ verify_jwt = true
 
 [functions.send-rosiere-cfp-request]
 verify_jwt = true
+
+[functions.send-daily-ops-digest]
+verify_jwt = true
