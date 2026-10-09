@@ -18,6 +18,8 @@ import { buildCertificatePath } from "@/lib/certificateStorage";
 import {
   buildAttestationPresencePath,
   buildAttestationPresencePdfBlob,
+  inferFormationKindFifpl,
+  type FormationKindFifpl,
 } from "@/lib/attestation-presence-pdf";
 
 export type EndPackStep =
@@ -67,6 +69,13 @@ export interface EndPackInput {
   certificatePdfBlob?: Blob | null;
   attestationPdfBlob?: Blob | null;
   fundingOrganization?: string | null;
+  /** Montant pédagogique (sinon lu via getInscriptionAmounts.price). */
+  pedagogicalAmount?: number | null;
+  formationKind?: FormationKindFifpl | null;
+  courseType?: string | null;
+  /** Collective : valeurs convention (ignorées si individuelle). */
+  joursEntiersConvention?: number | null;
+  demiJourneesConvention?: number | null;
 }
 
 export interface EndPackResult {
@@ -393,9 +402,19 @@ export async function generateEndPack(
         result.attestationPath = existingAttestation.pdf_url;
       } else {
         const issueDate = new Date().toISOString().split("T")[0];
+        let amount = data.pedagogicalAmount ?? null;
+        if (amount == null) {
+          const amounts = await store.getInscriptionAmounts(data.inscriptionId);
+          amount = amounts?.price ?? null;
+        }
+        const formationKind = inferFormationKindFifpl({
+          formationKind: data.formationKind,
+          modality: data.modality,
+          courseType: data.courseType,
+        });
         const attestationBlob =
           data.attestationPdfBlob ||
-          buildAttestationPresencePdfBlob({
+          (await buildAttestationPresencePdfBlob({
             studentName: data.studentName,
             language: data.language,
             startDate: data.startDate,
@@ -411,7 +430,12 @@ export async function generateEndPack(
             inscriptionCode: data.code,
             issueDate,
             fundingOrganization: data.fundingOrganization ?? "FIFPL",
-          });
+            amountHt: amount,
+            amountTtc: amount,
+            formationKind,
+            joursEntiersConvention: data.joursEntiersConvention,
+            demiJourneesConvention: data.demiJourneesConvention,
+          }));
         const attestationPath = buildAttestationPresencePath(
           data.studentId,
           data.inscriptionId,

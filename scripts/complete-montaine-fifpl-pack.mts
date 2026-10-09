@@ -8,7 +8,8 @@
  *   ./node_modules/.bin/tsx scripts/complete-montaine-fifpl-pack.mts
  */
 import { createClient } from "@supabase/supabase-js";
-import { writeFileSync } from "fs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { ZZTEST_ADMIN_LOGIN } from "../src/lib/zztest-roles-logins.ts";
 import { MONTAINE_INSCRIPTION_ID } from "../src/lib/formateur-formation-forms.ts";
 import { buildCertificatePdfBlob } from "../src/lib/certificate-pdf.ts";
@@ -103,7 +104,15 @@ async function main() {
       codeOrId
     );
 
-  const attestationBlob = buildAttestationPresencePdfBlob({
+  const templateBytes = new Uint8Array(
+    readFileSync(
+      join(
+        process.cwd(),
+        "public/registration-documents/fifpl-attestation-presence-reglement.pdf"
+      )
+    )
+  );
+  const attestationBlob = await buildAttestationPresencePdfBlob({
     studentName,
     language: row.language || "Anglais",
     startDate: row.start_date!,
@@ -116,6 +125,10 @@ async function main() {
     inscriptionCode: row.code,
     issueDate,
     fundingOrganization: "FIFPL",
+    amountHt: PRICE,
+    amountTtc: PRICE,
+    formationKind: "individuelle",
+    templateBytes,
   });
 
   const { error: attUpErr } = await supabase.storage

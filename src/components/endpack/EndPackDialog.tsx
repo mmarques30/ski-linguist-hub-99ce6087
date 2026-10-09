@@ -66,6 +66,7 @@ interface EndPackDialogProps {
     status?: string | null;
     end_pack_sent_at?: string | null;
     funding_organization?: string | null;
+    course_type?: string | null;
   };
   onSuccess?: () => void;
 }
@@ -196,6 +197,8 @@ export function EndPackDialog({
       generateAttestation,
       sendSurvey,
       fundingOrganization: inscription.funding_organization ?? "FIFPL",
+      pedagogicalAmount: merged.price ?? inscription.price ?? null,
+      courseType: merged.course_type ?? inscription.course_type ?? null,
     });
     setResult(res);
     onSuccess?.();
