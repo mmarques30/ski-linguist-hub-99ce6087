@@ -8,7 +8,10 @@ import {
   type EndPackResult,
   type EndPackStore,
 } from "@/lib/end-pack";
-import { CERTIFICATE_BUCKET } from "@/lib/certificateStorage";
+import {
+  CERTIFICATE_BUCKET,
+  DOCUMENTS_BUCKET,
+} from "@/lib/certificateStorage";
 
 export type { EndPackInput as EndPackData, EndPackResult };
 
@@ -101,6 +104,34 @@ function createSupabaseEndPackStore(): EndPackStore {
       throwIfError(error, "Dépôt du PDF du certificat impossible.");
     },
 
+    async findExistingAttestation(inscriptionId) {
+      const { data, error } = await supabase
+        .from("document_sendings")
+        .select("id, pdf_url")
+        .eq("inscription_id", inscriptionId)
+        .eq("document_type", "ATTESTATION_PRESENCE");
+      throwIfError(error, "Lecture des attestations impossible.");
+      if (!data || data.length === 0) return null;
+      return { id: data[0].id, pdf_url: data[0].pdf_url };
+    },
+
+    async uploadAttestationPdf(path, blob) {
+      const { error } = await supabase.storage
+        .from(DOCUMENTS_BUCKET)
+        .upload(path, blob, {
+          contentType: "application/pdf",
+          upsert: true,
+        });
+      throwIfError(error, "Dépôt du PDF de l'attestation impossible.");
+    },
+
+    async removeAttestationPdf(path) {
+      const { error } = await supabase.storage
+        .from(DOCUMENTS_BUCKET)
+        .remove([path]);
+      throwIfError(error, "Suppression du PDF de l'attestation impossible.");
+    },
+
     async findExistingSurvey(inscriptionId) {
       const { data, error } = await supabase
         .from("satisfaction_surveys")
@@ -182,6 +213,7 @@ export function useGenerateEndPack() {
       const messages = [];
       if (result.invoiceId) messages.push("facture");
       if (result.certificateId) messages.push("certificat");
+      if (result.attestationPath) messages.push("attestation");
       if (result.surveyToken) messages.push("questionnaire");
 
       if (messages.length > 0) {

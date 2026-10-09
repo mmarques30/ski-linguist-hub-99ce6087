@@ -1283,6 +1283,9 @@ export default function InscriptionDetails() {
               status: inscription.status,
               end_pack_sent_at: (inscription as { end_pack_sent_at?: string | null })
                 .end_pack_sent_at ?? null,
+              funding_organization:
+                (inscription as { funding_organization?: string | null })
+                  .funding_organization ?? null,
             }}
           />
 

@@ -1,9 +1,9 @@
 /**
  * Pack de fin de formation — orchestration sûre, sans refonte.
  *
- * Ordre : facture, certificat, enquête, puis seulement le passage à
- * « Terminée ». Si une étape échoue, on annule ce que cette tentative a créé
- * (l'inscription ne change pas de statut).
+ * Ordre : facture, certificat, attestation de présence (FIF-PL), enquête,
+ * puis seulement le passage à « Terminée ». Si une étape échoue, on annule
+ * ce que cette tentative a créé (l'inscription ne change pas de statut).
  */
 
 import {
@@ -15,12 +15,19 @@ import {
 } from "@/lib/certificate-progression";
 import { buildCertificatePdfBlob } from "@/lib/certificate-pdf";
 import { buildCertificatePath } from "@/lib/certificateStorage";
+import {
+  buildAttestationPresencePath,
+  buildAttestationPresencePdfBlob,
+  inferFormationKindFifpl,
+  type FormationKindFifpl,
+} from "@/lib/attestation-presence-pdf";
 
 export type EndPackStep =
   | "invoice"
   | "certificate"
   | "pdf"
   | "sending"
+  | "attestation"
   | "survey"
   | "close";
 
@@ -29,6 +36,7 @@ const STEP_LABELS: Record<EndPackStep, string> = {
   certificate: "certificat",
   pdf: "dépôt du PDF du certificat",
   sending: "enregistrement du certificat",
+  attestation: "attestation de présence",
   survey: "enquête de satisfaction",
   close: "passage au statut Terminée",
 };
@@ -55,14 +63,26 @@ export interface EndPackInput {
   attendanceRate?: number;
   generateInvoice: boolean;
   generateCertificate: boolean;
+  /** Attestation de présence FIF-PL (dossier de remboursement). */
+  generateAttestation: boolean;
   sendSurvey: boolean;
   certificatePdfBlob?: Blob | null;
+  attestationPdfBlob?: Blob | null;
+  fundingOrganization?: string | null;
+  /** Montant pédagogique (sinon lu via getInscriptionAmounts.price). */
+  pedagogicalAmount?: number | null;
+  formationKind?: FormationKindFifpl | null;
+  courseType?: string | null;
+  /** Collective : valeurs convention (ignorées si individuelle). */
+  joursEntiersConvention?: number | null;
+  demiJourneesConvention?: number | null;
 }
 
 export interface EndPackResult {
   invoiceId?: string;
   invoiceNumber?: string | null;
   certificateId?: string;
+  attestationPath?: string;
   surveyToken?: string;
   certificateSkippedReason?: string;
 }
@@ -112,11 +132,16 @@ export interface EndPackStore {
   updateCertificatePdfUrl(id: string, path: string): Promise<void>;
   insertDocumentSending(row: {
     inscription_id: string;
-    document_type: "CERTIFICAT";
+    document_type: "CERTIFICAT" | "ATTESTATION_PRESENCE";
     sent_to: string;
     pdf_url: string;
   }): Promise<{ id: string }>;
   uploadCertificatePdf(path: string, blob: Blob): Promise<void>;
+  findExistingAttestation(
+    inscriptionId: string
+  ): Promise<{ id: string; pdf_url: string | null } | null>;
+  uploadAttestationPdf(path: string, blob: Blob): Promise<void>;
+  removeAttestationPdf(path: string): Promise<void>;
   findExistingSurvey(
     inscriptionId: string
   ): Promise<{ id: string; token: string } | null>;
@@ -138,6 +163,8 @@ export interface EndPackStore {
 type CreatedInRun = {
   invoiceId?: string;
   certificateId?: string;
+  attestationPath?: string;
+  attestationSendingId?: string;
   certificatePath?: string;
   sendingId?: string;
   surveyId?: string;
@@ -186,6 +213,16 @@ async function rollbackCreated(
   if (created.surveyId) {
     await tryUndo("enquête de satisfaction", () =>
       store.deleteSurvey(created.surveyId!)
+    );
+  }
+  if (created.attestationSendingId) {
+    await tryUndo("enregistrement de l'attestation", () =>
+      store.deleteDocumentSending(created.attestationSendingId!)
+    );
+  }
+  if (created.attestationPath) {
+    await tryUndo("fichier PDF de l'attestation", () =>
+      store.removeAttestationPdf(created.attestationPath!)
     );
   }
   if (created.sendingId) {
@@ -353,6 +390,67 @@ export async function generateEndPack(
           pdf_url: storagePath,
         });
         created.sendingId = sending.id;
+      }
+    }
+
+    if (data.generateAttestation) {
+      step = "attestation";
+      const existingAttestation = await store.findExistingAttestation(
+        data.inscriptionId
+      );
+      if (existingAttestation?.pdf_url) {
+        result.attestationPath = existingAttestation.pdf_url;
+      } else {
+        const issueDate = new Date().toISOString().split("T")[0];
+        let amount = data.pedagogicalAmount ?? null;
+        if (amount == null) {
+          const amounts = await store.getInscriptionAmounts(data.inscriptionId);
+          amount = amounts?.price ?? null;
+        }
+        const formationKind = inferFormationKindFifpl({
+          formationKind: data.formationKind,
+          modality: data.modality,
+          courseType: data.courseType,
+        });
+        const attestationBlob =
+          data.attestationPdfBlob ||
+          (await buildAttestationPresencePdfBlob({
+            studentName: data.studentName,
+            language: data.language,
+            startDate: data.startDate,
+            endDate: data.endDate,
+            durationHoursPlanned: data.durationHours,
+            hoursFollowed: data.hoursFollowed,
+            attendanceRate: data.attendanceRate ?? null,
+            locationOrModality: formatLocationOrModality({
+              course_location: data.courseLocation,
+              modality: data.modality,
+            }),
+            formateurName: data.formateurName,
+            inscriptionCode: data.code,
+            issueDate,
+            fundingOrganization: data.fundingOrganization ?? "FIFPL",
+            amountHt: amount,
+            amountTtc: amount,
+            formationKind,
+            joursEntiersConvention: data.joursEntiersConvention,
+            demiJourneesConvention: data.demiJourneesConvention,
+          }));
+        const attestationPath = buildAttestationPresencePath(
+          data.studentId,
+          data.inscriptionId,
+          data.code || data.inscriptionId
+        );
+        await store.uploadAttestationPdf(attestationPath, attestationBlob);
+        created.attestationPath = attestationPath;
+        result.attestationPath = attestationPath;
+        const attestationSending = await store.insertDocumentSending({
+          inscription_id: data.inscriptionId,
+          document_type: "ATTESTATION_PRESENCE",
+          sent_to: "portail-stagiaire",
+          pdf_url: attestationPath,
+        });
+        created.attestationSendingId = attestationSending.id;
       }
     }
 

@@ -56,8 +56,10 @@ function input(overrides: Partial<EndPackInput> = {}): EndPackInput {
     attendanceRate: 100,
     generateInvoice: true,
     generateCertificate: true,
+    generateAttestation: true,
     sendSurvey: true,
     certificatePdfBlob: new Blob(["pdf"], { type: "application/pdf" }),
+    attestationPdfBlob: new Blob(["attestation"], { type: "application/pdf" }),
     ...overrides,
   };
 }
@@ -77,6 +79,7 @@ function createMemoryStore(options?: {
   const surveys: MemorySurvey[] = [...(options?.seed?.surveys ?? [])];
   const sendings: MemorySending[] = [];
   const pdfs = new Set<string>();
+  const attestationPdfs = new Set<string>();
   const inscription: MemoryInscription = {
     id: "ins-1",
     price: 1200,
@@ -148,6 +151,24 @@ function createMemoryStore(options?: {
       fail("uploadCertificatePdf");
       pdfs.add(path);
     },
+    async findExistingAttestation(inscriptionId) {
+      calls.push("findExistingAttestation");
+      const row = sendings.find(
+        (s) => (s as { document_type?: string }).document_type === "ATTESTATION_PRESENCE"
+      );
+      // Memory sendings don't track type — look in attestationPdfs via path convention
+      void inscriptionId;
+      void row;
+      return null;
+    },
+    async uploadAttestationPdf(path) {
+      calls.push("uploadAttestationPdf");
+      attestationPdfs.add(path);
+    },
+    async removeAttestationPdf(path) {
+      calls.push("removeAttestationPdf");
+      attestationPdfs.delete(path);
+    },
     async findExistingSurvey(inscriptionId) {
       calls.push("findExistingSurvey");
       return surveys.find((row) => row.inscription_id === inscriptionId) ?? null;
@@ -196,7 +217,17 @@ function createMemoryStore(options?: {
     },
   };
 
-  return { store, calls, invoices, certificates, surveys, sendings, pdfs, inscription };
+  return {
+    store,
+    calls,
+    invoices,
+    certificates,
+    surveys,
+    sendings,
+    pdfs,
+    attestationPdfs,
+    inscription,
+  };
 }
 
 describe("describeEndPackRollback", () => {
@@ -215,12 +246,13 @@ describe("describeEndPackRollback", () => {
 });
 
 describe("generateEndPack — ordre et compensation", () => {
-  it("crée facture, certificat et enquête avant de passer à Terminée", async () => {
+  it("crée facture, certificat, attestation et enquête avant de passer à Terminée", async () => {
     const memory = createMemoryStore();
     const result = await generateEndPack(memory.store, input());
 
     expect(result.invoiceId).toBeTruthy();
     expect(result.certificateId).toBeTruthy();
+    expect(result.attestationPath).toBeTruthy();
     expect(result.surveyToken).toBeTruthy();
     expect(memory.inscription.status).toBe("terminee");
     expect(memory.inscription.end_pack_sent_at).toBeTruthy();
@@ -231,6 +263,7 @@ describe("generateEndPack — ordre et compensation", () => {
         "insertCertificate",
         "uploadCertificatePdf",
         "insertDocumentSending",
+        "uploadAttestationPdf",
         "insertSurvey",
         "closeInscription",
       ].includes(name)
@@ -239,6 +272,8 @@ describe("generateEndPack — ordre et compensation", () => {
       "insertInvoice",
       "insertCertificate",
       "uploadCertificatePdf",
+      "insertDocumentSending",
+      "uploadAttestationPdf",
       "insertDocumentSending",
       "insertSurvey",
       "closeInscription",
@@ -280,6 +315,7 @@ describe("generateEndPack — ordre et compensation", () => {
     expect(memory.surveys).toHaveLength(0);
     expect(memory.sendings).toHaveLength(0);
     expect(memory.pdfs.size).toBe(0);
+    expect(memory.attestationPdfs.size).toBe(0);
     expect(memory.inscription.status).toBe("en_cours");
     expect(memory.calls).not.toContain("closeInscription");
   });
@@ -346,7 +382,11 @@ describe("generateEndPack — ordre et compensation", () => {
 
     await generateEndPack(
       memory.store,
-      input({ generateCertificate: false, sendSurvey: false })
+      input({
+        generateCertificate: false,
+        generateAttestation: false,
+        sendSurvey: false,
+      })
     );
     expect(inserted).toEqual({ amount_ht: 150, payment_type: "saldo" });
   });
