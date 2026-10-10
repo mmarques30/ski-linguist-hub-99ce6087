@@ -245,6 +245,20 @@ function buildPaymentTermsLabel(input: {
     return parts.join(" ");
   }
 
+  // Option /register « 150 € en ligne + solde chèque » : payment_method stocké = « cheque ».
+  // L'acompte est en paiement sécurisé en ligne ; le solde part par chèque à FLI Montmélian.
+  if (methodRaw === "cheque" || methodRaw === "chèque") {
+    const parts = [
+      `Coût pédagogique total : ${input.priceLabel}.`,
+      `Frais de dossier / acompte : ${input.depositLabel} (mode : paiement sécurisé en ligne).`,
+      `Solde : ${input.balanceLabel} — par chèque à l'ordre de France Langues International, à envoyer à : France Langues International — 25 avenue de la Gare, 73800 Montmélian, avant le début de la formation.`,
+    ];
+    if (input.fundingLabel && input.fundingLabel !== "—") {
+      parts.push(`Financement : ${input.fundingLabel}.`);
+    }
+    return parts.join(" ");
+  }
+
   const method = paymentMethodLabelFr(input.payment_method);
 
   const parts = [
