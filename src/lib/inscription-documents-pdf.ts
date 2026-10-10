@@ -141,8 +141,12 @@ function normalizeCivility(value: string | null | undefined): string {
 function paymentMethodLabelFr(method: string | null | undefined): string {
   const m = (method || "").toLowerCase();
   if (m.includes("virement")) return "virement bancaire";
+  // Avant « cheque » : stripe_deposit_cheque contient les deux tokens.
+  if (m.includes("stripe_deposit") || m === "stripe" || m.includes("carte")) {
+    return "carte bancaire";
+  }
   if (m.includes("cheque") || m.includes("chèque")) return "chèque";
-  if (m.includes("stripe") || m.includes("carte")) return "carte bancaire";
+  if (m.includes("stripe")) return "carte bancaire";
   if (m.includes("especes") || m.includes("espèces")) return "espèces";
   return method?.trim() || "selon les modalités convenues";
 }
@@ -239,6 +243,26 @@ function buildPaymentTermsLabel(input: {
         `Prise en charge ESF : ${input.schoolShareLabel} — facturé à l'ESF (convention école).`
       );
     }
+    if (input.fundingLabel && input.fundingLabel !== "—") {
+      parts.push(`Financement : ${input.fundingLabel}.`);
+    }
+    return parts.join(" ");
+  }
+
+  // Option /register « 150 € en ligne + solde chèque ».
+  // Historique : stocké « cheque » ; désormais « stripe_deposit_cheque ».
+  // L'acompte est en paiement sécurisé en ligne ; le solde part par chèque à FLI Montmélian.
+  if (
+    methodRaw === "cheque" ||
+    methodRaw === "chèque" ||
+    methodRaw.includes("stripe_deposit_cheque") ||
+    methodRaw === "stripe_deposit"
+  ) {
+    const parts = [
+      `Coût pédagogique total : ${input.priceLabel}.`,
+      `Frais de dossier / acompte : ${input.depositLabel} (mode : paiement sécurisé en ligne).`,
+      `Solde : ${input.balanceLabel} — par chèque à l'ordre de France Langues International, à envoyer à : France Langues International — 25 avenue de la Gare, 73800 Montmélian, avant le début de la formation.`,
+    ];
     if (input.fundingLabel && input.fundingLabel !== "—") {
       parts.push(`Financement : ${input.fundingLabel}.`);
     }

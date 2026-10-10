@@ -16,7 +16,7 @@ import {
   FLI_DOCUMENT_FOOTER_V4_LINES,
 } from "./organization-identity";
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 
 const IDENTITY = {
   legal_name: "France Langues International",
@@ -305,6 +305,81 @@ describe("PDF dossier inscription", () => {
     expect(text).toMatch(/Beaufort/);
     expect(text).toMatch(/double exemplaire/);
     expect(text).toMatch(/Formation Professionnelle Continue/);
+  });
+
+  it("détaille acompte en ligne + solde chèque à FLI Montmélian (cas Marmottan)", () => {
+    const model = buildConventionPdfModel({
+      inscription: {
+        code: "FLI-260041",
+        language: "Portugais",
+        start_date: "2026-11-23",
+        end_date: "2026-11-27",
+        duration_hours: 24,
+        course_location: "ESF Val d'Isère",
+        modality: "presentiel",
+        price: 900,
+        deposit_amount: 150,
+        balance_after_deposit: 750,
+        group_size: 1,
+        funding_organization: "FIFPL",
+        payment_method: "cheque",
+      },
+      student: {
+        first_name: "Barbara",
+        last_name: "Marmottan",
+        street_address: "144 route des Moulins",
+        postal_code: "73640",
+        city: "Sainte-Foy",
+        email: "barbaramarmottan@gmail.com",
+        phone: "+33670568664",
+        company: "ESF Val d'Isère",
+      },
+      identity: IDENTITY,
+    });
+    expect(model.paymentTermsLabel).toMatch(/paiement sécurisé en ligne/i);
+    expect(model.paymentTermsLabel).toMatch(/150/);
+    expect(model.paymentTermsLabel).toMatch(/750/);
+    expect(model.paymentTermsLabel).toMatch(/par chèque/i);
+    expect(model.paymentTermsLabel).toMatch(/25 avenue de la Gare/);
+    expect(model.paymentTermsLabel).toMatch(/73800 Montmélian/);
+    expect(model.paymentTermsLabel).not.toMatch(/mode : chèque/i);
+    const front = readFileSync(
+      join(process.cwd(), "src/lib/inscription-documents-pdf.ts"),
+      "utf8"
+    );
+    const deno = readFileSync(
+      join(process.cwd(), "supabase/functions/_shared/inscription-documents-pdf-model.ts"),
+      "utf8"
+    );
+    expect(front).toContain("par chèque à l'ordre de France Langues International");
+    expect(deno).toContain("par chèque à l'ordre de France Langues International");
+
+    const modern = buildConventionPdfModel({
+      inscription: {
+        code: "FLI-260041",
+        language: "Portugais",
+        start_date: "2026-11-23",
+        end_date: "2026-11-27",
+        duration_hours: 24,
+        course_location: "ESF Val d'Isère",
+        modality: "presentiel",
+        price: 900,
+        deposit_amount: 150,
+        balance_after_deposit: 750,
+        group_size: 1,
+        funding_organization: "FIFPL",
+        payment_method: "stripe_deposit_cheque",
+      },
+      student: {
+        first_name: "Barbara",
+        last_name: "Marmottan",
+        company: "ESF Val d'Isère",
+      },
+      identity: IDENTITY,
+    });
+    expect(modern.paymentTermsLabel).toMatch(/paiement sécurisé en ligne/i);
+    expect(modern.paymentTermsLabel).not.toMatch(/mode : chèque/i);
+    expect(modern.paymentTermsLabel).toMatch(/par chèque/i);
   });
 
   it("détaille chèque FIF-PL moniteur + solde ESF (La Rosière)", () => {
