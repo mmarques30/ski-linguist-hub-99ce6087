@@ -223,7 +223,8 @@ export function getInscriptionPaymentFields(
   }
 
   return {
-    paymentMethod: "cheque",
+    // Acompte Stripe + solde chèque — pas « cheque » nu (convention PDF).
+    paymentMethod: "stripe_deposit_cheque",
     balanceAfterDeposit,
     depositAmount: FRAIS_DOSSIER_EUR,
     paymentFlow: "stripe",

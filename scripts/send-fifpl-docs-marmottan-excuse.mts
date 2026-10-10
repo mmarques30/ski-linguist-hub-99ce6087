@@ -56,7 +56,7 @@ const row = {
   balance_after_deposit: 750,
   group_size: 1,
   funding_organization: "FIFPL",
-  payment_method: "cheque",
+  payment_method: "stripe_deposit_cheque",
   student: {
     civility: null as string | null,
     first_name: "Barbara",

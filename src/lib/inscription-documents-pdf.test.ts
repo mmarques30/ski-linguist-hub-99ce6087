@@ -353,6 +353,33 @@ describe("PDF dossier inscription", () => {
     );
     expect(front).toContain("par chèque à l'ordre de France Langues International");
     expect(deno).toContain("par chèque à l'ordre de France Langues International");
+
+    const modern = buildConventionPdfModel({
+      inscription: {
+        code: "FLI-260041",
+        language: "Portugais",
+        start_date: "2026-11-23",
+        end_date: "2026-11-27",
+        duration_hours: 24,
+        course_location: "ESF Val d'Isère",
+        modality: "presentiel",
+        price: 900,
+        deposit_amount: 150,
+        balance_after_deposit: 750,
+        group_size: 1,
+        funding_organization: "FIFPL",
+        payment_method: "stripe_deposit_cheque",
+      },
+      student: {
+        first_name: "Barbara",
+        last_name: "Marmottan",
+        company: "ESF Val d'Isère",
+      },
+      identity: IDENTITY,
+    });
+    expect(modern.paymentTermsLabel).toMatch(/paiement sécurisé en ligne/i);
+    expect(modern.paymentTermsLabel).not.toMatch(/mode : chèque/i);
+    expect(modern.paymentTermsLabel).toMatch(/par chèque/i);
   });
 
   it("détaille chèque FIF-PL moniteur + solde ESF (La Rosière)", () => {

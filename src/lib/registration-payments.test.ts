@@ -291,6 +291,21 @@ describe("modes de règlement /register", () => {
     expect(deno).toContain("options?.studentShareEur");
   });
 
+  it("stocke stripe_deposit_cheque (pas cheque nu) pour l'acompte Stripe + solde chèque", () => {
+    const deno = readFileSync(
+      join(process.cwd(), "supabase/functions/_shared/registration-payments.ts"),
+      "utf8"
+    );
+    expect(deno).toContain('paymentMethod: "stripe_deposit_cheque"');
+    // Le return par défaut (STRIPE_DEPOSIT_CHEQUE) ne doit plus écrire « cheque » seul.
+    expect(deno).toMatch(
+      /paymentMethod:\s*"stripe_deposit_cheque"[\s\S]*?paymentFlow:\s*"stripe"/
+    );
+    expect(deno).not.toMatch(
+      /return \{\s*paymentMethod:\s*"cheque",\s*balanceAfterDeposit/
+    );
+  });
+
   it("écrit deposit_amount à la création d'inscription", () => {
     const submit = readFileSync(
       join(process.cwd(), "supabase/functions/submit-registration/index.ts"),
