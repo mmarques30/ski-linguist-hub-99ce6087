@@ -97,6 +97,15 @@ describe("BL-027 — FIFPL et OPCO séparés", () => {
     expect(details).toContain("depositAmount");
     expect(details).toContain("balanceAfterDeposit");
   });
+
+  it("useUpdateInscriptionFunding invalide inscription-details (montants Financier)", () => {
+    const hook = source("src/hooks/useFundingProposals.ts");
+    expect(hook).toContain("useUpdateInscriptionFunding");
+    expect(hook).toContain('queryKey: ["inscription-details", vars.id]');
+    expect(hook).toContain('queryKey: ["inscription-ops-fields", vars.id]');
+    // Anciennes clés fantômes : la fiche lit inscription-details, pas celles-ci.
+    expect(hook).not.toContain('queryKey: ["inscription-funding"');
+  });
 });
 
 describe("BL-038 — signaux qualité partenaires", () => {
