@@ -58,13 +58,34 @@ import { fr } from "date-fns/locale";
 import { toast } from "sonner";
 
 const TYPE_LABELS: Record<string, string> = {
-  esf: "ESF", hotel: "Hôtel", remontees_mecaniques: "Remontées mécaniques",
-  office_tourisme: "Office de tourisme", autre: "Autre",
+  esf: "ESF",
+  ecole_ski: "École de ski",
+  hotel: "Hôtel",
+  remontees_mecaniques: "Remontées mécaniques",
+  office_tourisme: "Office de tourisme",
+  directeur: "Directeur",
+  magasin: "Magasin",
+  autre: "Autre",
 };
 
 type PartnerTab = "profil" | "contrats" | "inscriptions" | "facturation";
 
 const formatEuros = (value: number) => `${Number(value || 0).toLocaleString("fr-FR")} €`;
+
+/** date-fns `format` throws on Invalid Date — guard every table cell. */
+function formatDate(
+  dateStr: string | null | undefined,
+  pattern = "dd/MM/yyyy"
+): string {
+  if (!dateStr) return "-";
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return "-";
+  try {
+    return format(d, pattern, { locale: fr });
+  } catch {
+    return "-";
+  }
+}
 
 export default function PartnerDetails() {
   const { id } = useParams<{ id: string }>();
@@ -482,9 +503,7 @@ export default function PartnerDetails() {
                           <TableCell>{c.negotiated_rate ? `${c.negotiated_rate} €/h` : "-"}</TableCell>
                           <TableCell>{c.volume_commitment || "-"}</TableCell>
                           <TableCell>{c.payment_terms || "-"}</TableCell>
-                          <TableCell>
-                            {c.signed_date ? format(new Date(c.signed_date), "dd/MM/yyyy") : "-"}
-                          </TableCell>
+                          <TableCell>{formatDate(c.signed_date)}</TableCell>
                           <TableCell align="right">
                             <Button
                               size="icon"
@@ -509,7 +528,7 @@ export default function PartnerDetails() {
                       title={<span className="capitalize">{c.contract_type}</span>}
                       subtitle={
                         c.signed_date
-                          ? `Signé le ${format(new Date(c.signed_date), "dd/MM/yyyy")}`
+                          ? `Signé le ${formatDate(c.signed_date)}`
                           : "Non signé"
                       }
                       fields={[
@@ -583,7 +602,8 @@ export default function PartnerDetails() {
                           </TableCell>
                           <TableCell>{i.language}</TableCell>
                           <TableCell className="tabular">
-                            {format(new Date(i.start_date), "dd/MM/yy")} - {format(new Date(i.end_date), "dd/MM/yy")}
+                            {formatDate(i.start_date, "dd/MM/yy")} -{" "}
+                            {formatDate(i.end_date, "dd/MM/yy")}
                           </TableCell>
                           <TableCell>
                             <StatusPill tone={toneForStatus(i.status)} size="sm">
@@ -611,7 +631,7 @@ export default function PartnerDetails() {
                       fields={[
                         {
                           label: "Période",
-                          value: `${format(new Date(i.start_date), "dd/MM/yy")} - ${format(new Date(i.end_date), "dd/MM/yy")}`,
+                          value: `${formatDate(i.start_date, "dd/MM/yy")} - ${formatDate(i.end_date, "dd/MM/yy")}`,
                         },
                       ]}
                     />
@@ -722,7 +742,7 @@ export default function PartnerDetails() {
                             </span>
                           </TableCell>
                           <TableCell className="tabular">
-                            {format(new Date(inv.invoice_date), "dd/MM/yyyy")}
+                            {formatDate(inv.invoice_date)}
                           </TableCell>
                           <TableCell align="right" className="tabular">
                             {formatEuros(inv.amount_ttc || inv.amount_ht || 0)}
@@ -744,7 +764,7 @@ export default function PartnerDetails() {
                       key={inv.id}
                       to={`/invoices?q=${encodeURIComponent(inv.invoice_number || inv.id)}`}
                       title={inv.invoice_number || "-"}
-                      subtitle={format(new Date(inv.invoice_date), "dd/MM/yyyy")}
+                      subtitle={formatDate(inv.invoice_date)}
                       meta={
                         <StatusPill tone={toneForStatus(inv.status)} size="sm">
                           {inv.status}
