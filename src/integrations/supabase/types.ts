@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
@@ -1177,6 +1177,8 @@ export type Database = {
           formateur: string | null
           formateur_email: string | null
           formateur_telephone: string | null
+          formulaire_entree: Json | null
+          formulaire_sortie: Json | null
           funding_details: string | null
           funding_organization: string | null
           group_name: string | null
@@ -1261,6 +1263,8 @@ export type Database = {
           formateur?: string | null
           formateur_email?: string | null
           formateur_telephone?: string | null
+          formulaire_entree?: Json | null
+          formulaire_sortie?: Json | null
           funding_details?: string | null
           funding_organization?: string | null
           group_name?: string | null
@@ -1345,6 +1349,8 @@ export type Database = {
           formateur?: string | null
           formateur_email?: string | null
           formateur_telephone?: string | null
+          formulaire_entree?: Json | null
+          formulaire_sortie?: Json | null
           funding_details?: string | null
           funding_organization?: string | null
           group_name?: string | null
@@ -3958,6 +3964,8 @@ export type Database = {
           formateur: string | null
           formateur_email: string | null
           formateur_telephone: string | null
+          formulaire_entree: Json | null
+          formulaire_sortie: Json | null
           group_name: string | null
           hours_followed: number | null
           hours_per_day: number | null
