@@ -167,7 +167,7 @@ export function useUpdateInscriptionFunding() {
         if (value !== undefined) payload[key] = value as string | number | null;
       }
       if (Object.keys(payload).length === 0) return;
-      const { error } = await supabase.from("inscriptions").update(payload).eq("id", id);
+      const { error } = await supabase.from("inscriptions").update(payload as never).eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_d, vars) => {
