@@ -170,7 +170,7 @@ export async function buildCertificatePdfBlob(
   options?: BuildCertificatePdfOptions
 ): Promise<Blob> {
   const bytes = await buildCertificatePdfBytes(data, options);
-  return new Blob([bytes], { type: "application/pdf" });
+  return new Blob([bytes as BlobPart], { type: "application/pdf" });
 }
 
 export async function buildCertificatePdfBytes(

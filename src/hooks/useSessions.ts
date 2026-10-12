@@ -131,7 +131,7 @@ export function useUpdateSession() {
     mutationFn: async ({ id, ...updates }: Partial<Session> & { id: string }) => {
       const { data, error } = await supabase
         .from("sessions")
-        .update(updates)
+        .update(updates as never)
         .eq("id", id)
         .select()
         .single();

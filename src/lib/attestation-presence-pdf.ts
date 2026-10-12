@@ -224,7 +224,7 @@ export async function buildAttestationPresencePdfBlob(
   data: AttestationPresenceData
 ): Promise<Blob> {
   const bytes = await buildAttestationPresencePdfBytes(data);
-  return new Blob([bytes], { type: "application/pdf" });
+  return new Blob([bytes as BlobPart], { type: "application/pdf" });
 }
 
 export async function buildAttestationPresencePdfBytes(
