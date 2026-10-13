@@ -109,3 +109,36 @@ describe("activate_season — staff only", () => {
     expect(mig).toContain("GRANT EXECUTE ON FUNCTION public.activate_season(uuid) TO authenticated");
   });
 });
+
+describe("restes faibles sécurité — attendance / stripe / FIF-PL", () => {
+  it("compute_attendance_rate exige staff, stagiaire propriétaire ou formateur du créneau", () => {
+    const mig = source(
+      "supabase/migrations/20261013160000_compute_attendance_rate_auth.sql"
+    );
+    expect(mig).toContain("is_staff()");
+    expect(mig).toContain("get_my_student_id()");
+    expect(mig).toContain("get_my_instructor_id()");
+    expect(mig).toContain("Accès refusé au taux d''assiduité");
+    expect(mig).toContain("REVOKE ALL ON FUNCTION public.compute_attendance_rate");
+  });
+
+  it("check-stripe-config exige staff et verify_jwt", () => {
+    const edge = source("supabase/functions/check-stripe-config/index.ts");
+    expect(edge).toContain("requireStaff");
+    expect(edge).toContain('from "../_shared/admin-auth.ts"');
+    const cfg = source("supabase/config.toml");
+    expect(cfg).toMatch(
+      /\[functions\.check-stripe-config\]\s*\nverify_jwt\s*=\s*true/
+    );
+  });
+
+  it("coveredOnCourseEur utilise le prix serveur, pas registration.price", () => {
+    const edge = source("supabase/functions/submit-registration/index.ts");
+    expect(edge).toContain("serverCoursePrice");
+    expect(edge).toContain("buildFifplFundingDetails(registration, price)");
+    expect(edge).toContain("buildFundingDetails(registration, price)");
+    expect(edge).not.toMatch(
+      /const coursePrice\s*=\s*\n?\s*registration\.price/
+    );
+  });
+});
