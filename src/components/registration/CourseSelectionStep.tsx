@@ -12,7 +12,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, MessageSquare, Monitor, Mountain, Phone, User } from "lucide-react";
+import { Calendar, Languages, MessageSquare, Monitor, Mountain, Phone, User } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,12 +22,15 @@ import { useRegistrationOfferings } from "@/hooks/useRegistrationOfferings";
 import {
   CUSTOM_FORMAT_DURATION,
   WAITLIST_MESSAGE,
+  filterByLanguage,
   filterInPersonSessions,
   filterOnlineGroupSessions,
   filterOnlineIndividual,
   isCustomFormatDuration,
   isOpenOffering,
   isWaitlistOffering,
+  offeringDateKey,
+  sortOfferingsByDateThenLocation,
   uniqueDurations,
   uniqueLanguages,
   type RegistrationOffering,
@@ -49,10 +52,6 @@ interface CourseSelectionStepProps {
 
 type PathMode = "in_person" | "online";
 type OnlineKind = "individual" | "group";
-
-function sessionDateKey(o: RegistrationOffering): string {
-  return o.start_date && o.end_date ? `${o.start_date}_${o.end_date}` : o.date_label || "flex";
-}
 
 /** Dates + durée — sans formateur, sans répéter la modalité. */
 function sessionScheduleLine(o: RegistrationOffering): string {
@@ -104,16 +103,34 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
   );
 
   const individualForLanguage = useMemo(
-    () =>
-      data.language
-        ? onlineIndividual.filter((o) => o.language_key === data.language)
-        : [],
+    () => (data.language ? filterByLanguage(onlineIndividual, data.language) : []),
     [onlineIndividual, data.language]
   );
 
   const individualDurations = useMemo(
     () => uniqueDurations(individualForLanguage),
     [individualForLanguage]
+  );
+
+  // Présentiel / collectif : cascade langue, puis sessions (dates + lieux) listées
+  const inPersonLanguages = useMemo(() => uniqueLanguages(inPerson), [inPerson]);
+
+  const inPersonForLanguage = useMemo(
+    () =>
+      data.language
+        ? sortOfferingsByDateThenLocation(filterByLanguage(inPerson, data.language))
+        : [],
+    [inPerson, data.language]
+  );
+
+  const onlineGroupLanguages = useMemo(() => uniqueLanguages(onlineGroup), [onlineGroup]);
+
+  const onlineGroupForLanguage = useMemo(
+    () =>
+      data.language
+        ? sortOfferingsByDateThenLocation(filterByLanguage(onlineGroup, data.language))
+        : [],
+    [onlineGroup, data.language]
   );
 
   const isCustomFormat = isCustomFormatDuration(data.duration);
@@ -151,7 +168,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
       startDate: offering.start_date || undefined,
       endDate: offering.end_date || undefined,
       requestedStartDate: offeringHasFixedDates(offering) ? undefined : data.requestedStartDate,
-      dateKey: sessionDateKey(offering),
+      dateKey: offeringDateKey(offering),
       dateLabel: offering.date_label || undefined,
       modality: offering.modality_key,
       language: offering.language_key,
@@ -200,6 +217,34 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
       modality: kind === "group" ? "online_group" : "online_individual",
       location: "online",
       locationLabel: "En ligne",
+    });
+  };
+
+  /** Présentiel : cascade langue, puis liste des sessions (dates + lieux). */
+  const handleInPersonLanguage = (languageKey: string) => {
+    const forLang = sortOfferingsByDateThenLocation(filterByLanguage(inPerson, languageKey));
+    if (forLang.length === 1) {
+      applyOffering(forLang[0]);
+      return;
+    }
+    resetCourseFields({
+      modality: "in_person",
+      language: languageKey,
+    });
+  };
+
+  /** Collectif en ligne : cascade langue, puis sessions datées. */
+  const handleOnlineGroupLanguage = (languageKey: string) => {
+    const forLang = sortOfferingsByDateThenLocation(filterByLanguage(onlineGroup, languageKey));
+    if (forLang.length === 1) {
+      applyOffering(forLang[0]);
+      return;
+    }
+    resetCourseFields({
+      modality: "online_group",
+      location: "online",
+      locationLabel: "En ligne",
+      language: languageKey,
     });
   };
 
@@ -303,7 +348,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                     </span>
                   </span>
                   <span className="pl-8 text-sm text-muted-foreground">
-                    Stages sur site — choisissez ensuite le lieu, la langue et les dates (
+                    Stages sur site — choisissez une langue, puis une session (
                     {inPerson.length} sessions).
                   </span>
                 </Label>
@@ -326,55 +371,83 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
             </RadioGroup>
           </div>
 
-          {/* 2a. Stages présentiel — lieux / stations uniquement */}
+          {/* 2a. Stages présentiel — cascade langue, puis sessions (dates + lieux) */}
           {pathMode === "in_person" && (
-            <div className="animate-in fade-in slide-in-from-top-2 space-y-3 border-t border-border pt-6">
-              <Label className="flex items-center gap-2">
-                <Mountain className="h-4 w-4" />
-                Stage en station *
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Station, langue et dates — uniquement les formations présentiel.
-              </p>
-              <RadioGroup
-                value={data.offeringId || ""}
-                onValueChange={(id) => {
-                  const o = inPerson.find((x) => x.id === id);
-                  if (o) applyOffering(o);
-                }}
-                className="space-y-2"
-              >
-                {inPerson.map((o) => {
-                  const waitlist = isWaitlistOffering(o);
-                  return (
-                    <OptionCard key={o.id} selected={data.offeringId === o.id}>
+            <div className="animate-in fade-in slide-in-from-top-2 space-y-6 border-t border-border pt-6">
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <Languages className="h-4 w-4" />
+                  Langue *
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Ensuite toutes les sessions de cette langue — dates et lieux affichés ensemble.
+                </p>
+                <RadioGroup
+                  value={data.language || ""}
+                  onValueChange={handleInPersonLanguage}
+                  className="grid gap-2 sm:grid-cols-2"
+                >
+                  {inPersonLanguages.map((lang) => (
+                    <OptionCard key={lang.key} selected={data.language === lang.key}>
                       <Label
-                        htmlFor={`sess-${o.id}`}
-                        className="flex cursor-pointer flex-col gap-1 px-4 py-3 font-normal"
+                        htmlFor={`ip-lang-${lang.key}`}
+                        className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
                       >
-                        <span className="flex flex-wrap items-start gap-3">
-                          <RadioGroupItem value={o.id} id={`sess-${o.id}`} className="mt-1" />
-                          <span className="min-w-0 flex-1 space-y-1">
-                            <span className="flex flex-wrap items-center gap-2">
-                              <span className="font-medium text-foreground">
-                                {o.location_label} · {o.language_label}
-                              </span>
-                              {waitlist ? (
-                                <StatusPill tone="warning">En attente de confirmation</StatusPill>
-                              ) : (
-                                <StatusPill tone="success">Inscriptions ouvertes</StatusPill>
-                              )}
-                            </span>
-                            <span className="block text-sm text-muted-foreground">
-                              {sessionScheduleLine(o)}
-                            </span>
-                          </span>
-                        </span>
+                        <RadioGroupItem value={lang.key} id={`ip-lang-${lang.key}`} />
+                        <span className="font-medium">{lang.label}</span>
                       </Label>
                     </OptionCard>
-                  );
-                })}
-              </RadioGroup>
+                  ))}
+                </RadioGroup>
+              </div>
+
+              {data.language && inPersonForLanguage.length > 0 && (
+                <div className="animate-in fade-in slide-in-from-top-2 space-y-3">
+                  <Label className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Session (dates et lieu) *
+                  </Label>
+                  <RadioGroup
+                    value={data.offeringId || ""}
+                    onValueChange={(id) => {
+                      const o = inPersonForLanguage.find((x) => x.id === id);
+                      if (o) applyOffering(o);
+                    }}
+                    className="space-y-2"
+                  >
+                    {inPersonForLanguage.map((o) => {
+                      const waitlist = isWaitlistOffering(o);
+                      return (
+                        <OptionCard key={o.id} selected={data.offeringId === o.id}>
+                          <Label
+                            htmlFor={`sess-${o.id}`}
+                            className="flex cursor-pointer flex-col gap-1 px-4 py-3 font-normal"
+                          >
+                            <span className="flex flex-wrap items-start gap-3">
+                              <RadioGroupItem value={o.id} id={`sess-${o.id}`} className="mt-1" />
+                              <span className="min-w-0 flex-1 space-y-1">
+                                <span className="flex flex-wrap items-center gap-2">
+                                  <span className="font-medium text-foreground">
+                                    {o.location_label}
+                                  </span>
+                                  {waitlist ? (
+                                    <StatusPill tone="warning">En attente de confirmation</StatusPill>
+                                  ) : (
+                                    <StatusPill tone="success">Inscriptions ouvertes</StatusPill>
+                                  )}
+                                </span>
+                                <span className="block text-sm text-muted-foreground">
+                                  {sessionScheduleLine(o)}
+                                </span>
+                              </span>
+                            </span>
+                          </Label>
+                        </OptionCard>
+                      );
+                    })}
+                  </RadioGroup>
+                </div>
+              )}
             </div>
           )}
 
@@ -423,45 +496,76 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
           )}
 
           {pathMode === "online" && onlineKind === "group" && (
-            <div className="animate-in fade-in slide-in-from-top-2 space-y-3">
-              <Label>Session collective en visio *</Label>
-              <RadioGroup
-                value={data.offeringId || ""}
-                onValueChange={(id) => {
-                  const o = onlineGroup.find((x) => x.id === id);
-                  if (o) applyOffering(o);
-                }}
-                className="space-y-2"
-              >
-                {onlineGroup.map((o) => {
-                  const waitlist = isWaitlistOffering(o);
-                  return (
-                    <OptionCard key={o.id} selected={data.offeringId === o.id}>
+            <div className="animate-in fade-in slide-in-from-top-2 space-y-6">
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <Languages className="h-4 w-4" />
+                  Langue *
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Ensuite les sessions collectives de cette langue (dates affichées).
+                </p>
+                <RadioGroup
+                  value={data.language || ""}
+                  onValueChange={handleOnlineGroupLanguage}
+                  className="grid gap-2 sm:grid-cols-2"
+                >
+                  {onlineGroupLanguages.map((lang) => (
+                    <OptionCard key={lang.key} selected={data.language === lang.key}>
                       <Label
-                        htmlFor={`grp-${o.id}`}
-                        className="flex cursor-pointer flex-col gap-1 px-4 py-3 font-normal"
+                        htmlFor={`og-lang-${lang.key}`}
+                        className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
                       >
-                        <span className="flex flex-wrap items-start gap-3">
-                          <RadioGroupItem value={o.id} id={`grp-${o.id}`} className="mt-1" />
-                          <span className="min-w-0 flex-1 space-y-1">
-                            <span className="flex flex-wrap items-center gap-2">
-                              <span className="font-medium">{o.language_label}</span>
-                              {waitlist ? (
-                                <StatusPill tone="warning">En attente de confirmation</StatusPill>
-                              ) : (
-                                <StatusPill tone="success">Inscriptions ouvertes</StatusPill>
-                              )}
-                            </span>
-                            <span className="block text-sm text-muted-foreground">
-                              {sessionScheduleLine(o)}
-                            </span>
-                          </span>
-                        </span>
+                        <RadioGroupItem value={lang.key} id={`og-lang-${lang.key}`} />
+                        <span className="font-medium">{lang.label}</span>
                       </Label>
                     </OptionCard>
-                  );
-                })}
-              </RadioGroup>
+                  ))}
+                </RadioGroup>
+              </div>
+
+              {data.language && onlineGroupForLanguage.length > 0 && (
+                <div className="animate-in fade-in slide-in-from-top-2 space-y-3">
+                  <Label className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Session *
+                  </Label>
+                  <RadioGroup
+                    value={data.offeringId || ""}
+                    onValueChange={(id) => {
+                      const o = onlineGroupForLanguage.find((x) => x.id === id);
+                      if (o) applyOffering(o);
+                    }}
+                    className="space-y-2"
+                  >
+                    {onlineGroupForLanguage.map((o) => {
+                      const waitlist = isWaitlistOffering(o);
+                      return (
+                        <OptionCard key={o.id} selected={data.offeringId === o.id}>
+                          <Label
+                            htmlFor={`grp-${o.id}`}
+                            className="flex cursor-pointer flex-col gap-1 px-4 py-3 font-normal"
+                          >
+                            <span className="flex flex-wrap items-start gap-3">
+                              <RadioGroupItem value={o.id} id={`grp-${o.id}`} className="mt-1" />
+                              <span className="min-w-0 flex-1 space-y-1">
+                                <span className="flex flex-wrap items-center gap-2">
+                                  <span className="font-medium">{sessionScheduleLine(o)}</span>
+                                  {waitlist ? (
+                                    <StatusPill tone="warning">En attente de confirmation</StatusPill>
+                                  ) : (
+                                    <StatusPill tone="success">Inscriptions ouvertes</StatusPill>
+                                  )}
+                                </span>
+                              </span>
+                            </span>
+                          </Label>
+                        </OptionCard>
+                      );
+                    })}
+                  </RadioGroup>
+                </div>
+              )}
             </div>
           )}
 
