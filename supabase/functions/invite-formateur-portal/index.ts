@@ -63,16 +63,19 @@ async function ensureFormateurAuthUser(
     .eq("id", instructor.id)
     .is("auth_user_id", null);
 
+  // Ne jamais écraser un rôle existant (admin/user/student → formateur).
   const { data: existingRole } = await adminClient
     .from("user_roles")
-    .select("id")
+    .select("id, role")
     .eq("user_id", authUserId)
     .maybeSingle();
 
   if (!existingRole) {
     await adminClient.from("user_roles").insert({ user_id: authUserId, role: "formateur" });
-  } else {
-    await adminClient.from("user_roles").update({ role: "formateur" }).eq("user_id", authUserId);
+  } else if (existingRole.role !== "formateur") {
+    throw new Error(
+      `Compte existant avec le rôle « ${existingRole.role} » — invitation refusée pour éviter un écrasement. Liez manuellement ou changez le rôle côté Admin utilisateurs.`
+    );
   }
 
   await adminClient.from("profiles").update({ full_name: fullName }).eq("id", authUserId);
