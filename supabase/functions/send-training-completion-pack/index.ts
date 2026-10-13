@@ -2,8 +2,8 @@
  * Pack fin de formation — envoi manuel (crons fermés).
  *
  * POST JSON `{ "inscriptionId": "uuid" }`
- * Staff ou service_role. Pièces jointes : certificat, attestation FIF-PL,
- * facture acquittée (déjà générés / stockés). Modèle
+ * Staff ou service_role. Pièces jointes : attestation FIF-PL, facture
+ * acquittée, et certificat s'il a été généré. Modèle
  * `training_completion_pack_student`. BCC info@fli.fr via sendFliEmail.
  */
 
@@ -17,6 +17,7 @@ import {
 } from "../_shared/email-model-templates.ts";
 import { sendFliEmail } from "../_shared/fli-email.ts";
 import { isFliPlaceholderEmail } from "../_shared/email-guards.ts";
+import { stripCertificateMentionsFromCompletionEmail } from "../_shared/training-completion-email.ts";
 
 const corsHeaders = adminCorsHeaders;
 const APP_URL = Deno.env.get("APP_URL") || "https://plateforme.fli.fr";
@@ -41,6 +42,28 @@ function formatFr(iso: string | null | undefined): string {
     return `${d}/${m}/${y}`;
   }
   return raw;
+}
+
+function pickInvoiceNumber(
+  invoices: Array<{
+    invoice_number?: string | null;
+    status?: string | null;
+    amount_ht?: number | null;
+  }> | null
+): string {
+  const list = invoices || [];
+  const usable = list.filter((inv) => {
+    const status = (inv.status || "").toLowerCase();
+    if (status === "cancelled" || status === "annulee") return false;
+    const amount = Number(inv.amount_ht);
+    if (Number.isFinite(amount) && amount <= 0) return false;
+    return true;
+  });
+  const preferred =
+    usable.find((inv) => (inv.status || "").toLowerCase() === "paid") ||
+    usable[0] ||
+    list[0];
+  return preferred?.invoice_number || "facture";
 }
 
 function json(status: number, body: Record<string, unknown>): Response {
@@ -117,12 +140,7 @@ Deno.serve(async (req) => {
       .select("id, pdf_url")
       .eq("inscription_id", inscriptionId)
       .maybeSingle();
-    if (!cert?.pdf_url) {
-      return json(400, {
-        success: false,
-        error: "Certificat PDF manquant — générez d'abord le pack.",
-      });
-    }
+    // Certificat optionnel : pack sans bilan de sortie formateur.
 
     const { data: attRows } = await adminClient
       .from("document_sendings")
@@ -138,12 +156,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: inv } = await adminClient
+    const { data: invoices } = await adminClient
       .from("invoices")
-      .select("id, invoice_number, status")
+      .select("id, invoice_number, status, amount_ht")
       .eq("inscription_id", inscriptionId)
-      .in("payment_type", ["integral", "saldo", "solde"])
-      .maybeSingle();
+      .in("payment_type", ["integral", "saldo", "solde"]);
 
     const { data: invSendings } = await adminClient
       .from("document_sendings")
@@ -171,7 +188,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const invoiceNumber = inv?.invoice_number || "facture";
+    const invoiceNumber = pickInvoiceNumber(invoices);
     const variables = {
       student_name: studentName,
       language: row.language || "formation",
@@ -180,7 +197,11 @@ Deno.serve(async (req) => {
       invoice_number: invoiceNumber,
       survey_link: `${APP_URL.replace(/\/$/, "")}/survey/${survey.token}`,
     };
-    const rendered = renderEmailTemplate(template, variables);
+    let rendered = renderEmailTemplate(template, variables);
+    const includeCertificate = Boolean(cert?.pdf_url);
+    if (!includeCertificate) {
+      rendered = stripCertificateMentionsFromCompletionEmail(rendered);
+    }
 
     const download = async (bucket: string, path: string) => {
       const { data, error } = await adminClient.storage.from(bucket).download(path);
@@ -190,16 +211,19 @@ Deno.serve(async (req) => {
       return new Uint8Array(await data.arrayBuffer());
     };
 
-    const certBytes = await download(CERTIFICATE_BUCKET, cert.pdf_url);
     const attBytes = await download(DOCUMENTS_BUCKET, attestationPath);
     const invBytes = await download(DOCUMENTS_BUCKET, invoicePath);
 
     const safeName = studentName.replace(/[^\w.-]+/g, "-");
-    const attachments = [
-      {
+    const attachments: Array<{ filename: string; content: string }> = [];
+    if (includeCertificate && cert?.pdf_url) {
+      const certBytes = await download(CERTIFICATE_BUCKET, cert.pdf_url);
+      attachments.push({
         filename: `Certificat-fin-formation-${safeName}.pdf`,
         content: bytesToBase64(certBytes),
-      },
+      });
+    }
+    attachments.push(
       {
         filename: `Attestation-presence-FIFPL-${safeName}.pdf`,
         content: bytesToBase64(attBytes),
@@ -207,8 +231,8 @@ Deno.serve(async (req) => {
       {
         filename: `Facture-acquittee-${invoiceNumber}.pdf`,
         content: bytesToBase64(invBytes),
-      },
-    ];
+      }
+    );
 
     const send = await sendFliEmail({
       resendApiKey,
@@ -229,6 +253,7 @@ Deno.serve(async (req) => {
         ...variables,
         attachments: attachments.map((a) => a.filename),
         manual_send: true,
+        certificate_included: includeCertificate,
       },
     });
 
@@ -251,6 +276,7 @@ Deno.serve(async (req) => {
       to: email,
       subject: rendered.subject,
       attachments: attachments.map((a) => a.filename),
+      certificate_included: includeCertificate,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

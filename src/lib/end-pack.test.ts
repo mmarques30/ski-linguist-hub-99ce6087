@@ -4,6 +4,7 @@ import { join } from "node:path";
 import {
   describeEndPackRollback,
   generateEndPack,
+  pickEndPackInvoice,
   resolveEndPackDeposit,
   type EndPackCloseFields,
   type EndPackInput,
@@ -404,6 +405,29 @@ describe("generateEndPack — ordre et compensation", () => {
     expect(memory.inscription.status).toBe("en_cours");
   });
 
+  it("génère le pack sans certificat si generateCertificate est false", async () => {
+    const memory = createMemoryStore();
+    const result = await generateEndPack(
+      memory.store,
+      input({
+        generateCertificate: false,
+        niveauGeneralSortie: null,
+        niveauTechniqueSortie: null,
+        objectifAtteint: null,
+        commentaireSortie: null,
+      })
+    );
+
+    expect(result.invoiceId).toBeTruthy();
+    expect(result.invoicePath).toBeTruthy();
+    expect(result.attestationPath).toBeTruthy();
+    expect(result.surveyToken).toBeTruthy();
+    expect(result.certificateId).toBeUndefined();
+    expect(memory.certificates).toHaveLength(0);
+    expect(memory.inscription.status).toBe("terminee");
+    expect(memory.calls).not.toContain("insertCertificate");
+  });
+
   it("déduit l'acompte même si deposit_amount est null (repli balance_after_deposit)", async () => {
     const memory = createMemoryStore();
     memory.inscription.price = 300;
@@ -431,7 +455,29 @@ describe("generateEndPack — ordre et compensation", () => {
   it("le hook délègue au module et n'écrit plus le statut en premier", () => {
     const hook = readFileSync(join(process.cwd(), "src/hooks/useEndPack.ts"), "utf8");
     expect(hook).toContain("generateEndPack(createSupabaseEndPackStore(), data)");
+    expect(hook).toContain("pickEndPackInvoice");
     expect(hook).not.toMatch(/status:\s*"terminee"[\s\S]*generateInvoice/);
+  });
+});
+
+describe("pickEndPackInvoice", () => {
+  it("ignore les annulées et les avoirs, préfère une payée", () => {
+    const picked = pickEndPackInvoice([
+      { id: "a", status: "cancelled", amount_ht: 900 },
+      { id: "b", status: "paid", amount_ht: -900 },
+      { id: "c", status: "draft", amount_ht: 900 },
+      { id: "d", status: "paid", amount_ht: 900 },
+    ]);
+    expect(picked?.id).toBe("d");
+  });
+
+  it("renvoie null s'il ne reste que annulées / avoirs", () => {
+    expect(
+      pickEndPackInvoice([
+        { id: "a", status: "cancelled", amount_ht: 900 },
+        { id: "b", status: "paid", amount_ht: -900 },
+      ])
+    ).toBeNull();
   });
 });
 

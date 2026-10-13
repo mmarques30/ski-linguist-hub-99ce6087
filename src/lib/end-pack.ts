@@ -63,10 +63,11 @@ export interface EndPackInput {
   code: string | null;
   niveauGeneralEntree: string;
   niveauTechniqueEntree: string;
-  niveauGeneralSortie: string;
-  niveauTechniqueSortie: string;
-  objectifAtteint: ObjectifAtteint;
-  commentaireSortie: string;
+  /** Requis seulement si `generateCertificate` — sinon le pack part sans certificat. */
+  niveauGeneralSortie?: string | null;
+  niveauTechniqueSortie?: string | null;
+  objectifAtteint?: ObjectifAtteint | null;
+  commentaireSortie?: string | null;
   attendanceRate?: number;
   generateInvoice: boolean;
   generateCertificate: boolean;
@@ -320,6 +321,27 @@ export function resolveEndPackDeposit(amounts: {
   return 0;
 }
 
+/**
+ * Choisit la facture à réutiliser pour le pack fin.
+ * Ignore les annulées et les avoirs (montant ≤ 0) ; préfère une payée.
+ */
+export function pickEndPackInvoice<
+  T extends { status?: string | null; amount_ht?: number | null },
+>(invoices: T[]): T | null {
+  const usable = invoices.filter((inv) => {
+    const status = (inv.status || "").toLowerCase();
+    if (status === "cancelled" || status === "annulee") return false;
+    const amount = Number(inv.amount_ht);
+    if (Number.isFinite(amount) && amount <= 0) return false;
+    return true;
+  });
+  if (usable.length === 0) return null;
+  return (
+    usable.find((inv) => (inv.status || "").toLowerCase() === "paid") ||
+    usable[0]
+  );
+}
+
 export async function generateEndPack(
   store: EndPackStore,
   data: EndPackInput
@@ -329,10 +351,10 @@ export async function generateEndPack(
   let step: EndPackStep = "invoice";
 
   const exitFields = {
-    niveau_general_sortie: data.niveauGeneralSortie,
-    niveau_technique_sortie: data.niveauTechniqueSortie,
-    objectif_atteint: data.objectifAtteint,
-    commentaire_sortie: data.commentaireSortie,
+    niveau_general_sortie: data.niveauGeneralSortie ?? null,
+    niveau_technique_sortie: data.niveauTechniqueSortie ?? null,
+    objectif_atteint: data.objectifAtteint ?? null,
+    commentaire_sortie: data.commentaireSortie ?? null,
   };
 
   if (data.generateCertificate && !canIssueCertificate(exitFields)) {
@@ -340,6 +362,11 @@ export async function generateEndPack(
       "Certificat impossible : formulaire de sortie formateur incomplet"
     );
   }
+
+  const niveauGeneralSortie = (data.niveauGeneralSortie || "").trim();
+  const niveauTechniqueSortie = (data.niveauTechniqueSortie || "").trim();
+  const objectifAtteint: ObjectifAtteint = data.objectifAtteint || "non";
+  const commentaireSortie = (data.commentaireSortie || "").trim();
 
   const force = data.forceRegenerate === true;
 
@@ -497,10 +524,10 @@ export async function generateEndPack(
         formateurName: data.formateurName,
         niveauGeneralEntree: data.niveauGeneralEntree,
         niveauTechniqueEntree: data.niveauTechniqueEntree,
-        niveauGeneralSortie: data.niveauGeneralSortie,
-        niveauTechniqueSortie: data.niveauTechniqueSortie,
-        objectifAtteint: data.objectifAtteint,
-        commentaire: data.commentaireSortie,
+        niveauGeneralSortie,
+        niveauTechniqueSortie,
+        objectifAtteint,
+        commentaire: commentaireSortie,
         issueDate,
         inscriptionCode: data.code,
       };
@@ -527,7 +554,7 @@ export async function generateEndPack(
         const certificate = await store.insertCertificate({
           inscription_id: data.inscriptionId,
           student_id: data.studentId,
-          level_achieved: data.niveauGeneralSortie,
+          level_achieved: niveauGeneralSortie,
           attendance_rate: data.attendanceRate ?? null,
           issue_date: issueDate,
           hours_followed: data.hoursFollowed,
@@ -651,10 +678,12 @@ export async function generateEndPack(
     step = "close";
     await store.closeInscription(data.inscriptionId, {
       status: "terminee",
-      exit_level: data.niveauGeneralSortie,
-      final_general_level: data.niveauGeneralSortie,
-      final_specific_level: data.niveauTechniqueSortie,
-      progression: progressionLabel(data.objectifAtteint),
+      exit_level: niveauGeneralSortie,
+      final_general_level: niveauGeneralSortie,
+      final_specific_level: niveauTechniqueSortie,
+      progression: niveauGeneralSortie
+        ? progressionLabel(objectifAtteint)
+        : "",
       final_status: "terminee",
       end_pack_sent_at: new Date().toISOString(),
       hours_followed: data.hoursFollowed,
