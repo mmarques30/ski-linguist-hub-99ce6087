@@ -42,6 +42,15 @@ describe("LP institutionnelle — conformité spec", () => {
     expect(src).toContain("YOUTUBE_VIDEO_ID");
   });
 
+  it("force la couleur des titres sur fonds colorés (règle globale h1–h6 text-foreground)", () => {
+    const src = landing();
+    const headings = src.match(/<h[1-6][^>]*className="[^"]*"/g) ?? [];
+    expect(headings.length).toBeGreaterThan(0);
+    for (const h of headings) {
+      expect(h, h).toMatch(/text-(white|\[hsl\(var\(--fli-navy\)\)\])/);
+    }
+  });
+
   it("place la FAQ après le footer dans le flux", () => {
     const src = landing();
     const footerIdx = src.indexOf("<footer");

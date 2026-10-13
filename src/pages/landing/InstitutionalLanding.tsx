@@ -417,7 +417,7 @@ export default function InstitutionalLanding() {
           className="scroll-mt-24 overflow-hidden border-y border-border bg-[hsl(var(--fli-navy))] py-14 text-white"
         >
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <h2 className="lp-display text-center text-2xl font-bold tracking-tight sm:text-3xl">
+            <h2 className="lp-display text-center text-2xl font-bold tracking-tight text-white sm:text-3xl">
               Ils nous font confiance
             </h2>
             <p className="mx-auto mt-2 max-w-xl text-center text-sm text-white/60">
@@ -472,7 +472,7 @@ export default function InstitutionalLanding() {
             {/* Bandeau CTA */}
             <div className="mt-14 overflow-hidden rounded-[var(--radius-panel)] bg-[hsl(var(--fli-yellow))] px-6 py-10 text-[hsl(var(--fli-navy))] sm:px-10 sm:py-12 lg:flex lg:items-center lg:justify-between lg:gap-8">
               <div className="max-w-xl">
-                <h3 className="lp-display text-2xl font-extrabold tracking-tight sm:text-3xl">
+                <h3 className="lp-display text-2xl font-extrabold tracking-tight text-[hsl(var(--fli-navy))] sm:text-3xl">
                   Organisez la formation linguistique de votre équipe, sans complexité
                   administrative
                 </h3>
