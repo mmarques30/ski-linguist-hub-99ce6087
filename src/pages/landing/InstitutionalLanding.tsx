@@ -27,9 +27,9 @@ import {
 } from "@/components/landing/landing-assets";
 
 const NAV = [
-  { label: "Nosso Método", href: "#metodo" },
-  { label: "Parceiros", href: "#parceiros" },
-  { label: "Formações", href: "#formacoes" },
+  { label: "Notre méthode", href: "#methode" },
+  { label: "Partenaires", href: "#partenaires" },
+  { label: "Formations", href: "#formations" },
   { label: "FAQ", href: "#faq" },
 ] as const;
 
@@ -148,7 +148,7 @@ const FAQ_ITEMS = [
 
 /**
  * Landing institutionnelle publique — conforme `docs/FLI-LP-institucional-spec.md`.
- * `/` = LP ; `/auth` = login inchangé ; CTA « Acesso FLI ».
+ * `/` = LP ; `/auth` = login inchangé ; CTA « Accès FLI ».
  */
 export default function InstitutionalLanding() {
   const [scrolled, setScrolled] = useState(false);
@@ -203,7 +203,7 @@ export default function InstitutionalLanding() {
         }`}
       >
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:h-[4.25rem] sm:px-6">
-          <a href="#inicio" className="flex shrink-0 items-center" aria-label="FLI — accueil">
+          <a href="#accueil" className="flex shrink-0 items-center" aria-label="FLI — accueil">
             <img
               src={RECOMMENDED.navLogo}
               alt="France Langues International"
@@ -238,7 +238,7 @@ export default function InstitutionalLanding() {
               to="/auth"
               className="inline-flex items-center gap-1.5 rounded-full bg-[hsl(var(--fli-yellow))] px-4 py-2 text-sm font-semibold text-[hsl(var(--fli-navy))] shadow-sm transition hover:brightness-105"
             >
-              Acesso FLI
+              Accès FLI
               <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
             <button
@@ -277,9 +277,9 @@ export default function InstitutionalLanding() {
       </header>
 
       <main>
-        {/* —— Dobra 1 : Hero —— fond gris foncé uni, sans photo de fond */}
+        {/* —— Bloc 1 : Hero —— fond gris foncé uni, sans photo de fond */}
         <section
-          id="inicio"
+          id="accueil"
           className="relative overflow-hidden bg-[#2c2c2e] pt-16 text-white sm:pt-[4.25rem]"
         >
           <div className="relative mx-auto grid max-w-6xl gap-10 px-4 pb-8 pt-12 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-8 lg:pb-6 lg:pt-16">
@@ -297,14 +297,14 @@ export default function InstitutionalLanding() {
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-4">
                 <a
-                  href="#formacoes"
+                  href="#formations"
                   className="inline-flex items-center gap-2 rounded-full bg-[hsl(var(--fli-yellow))] px-6 py-3 text-base font-semibold text-[hsl(var(--fli-navy))] transition hover:brightness-105"
                 >
                   Réserver mon stage
                   <ArrowRight className="h-5 w-5" aria-hidden />
                 </a>
                 <a
-                  href="#metodo"
+                  href="#methode"
                   className="text-sm font-semibold text-white/90 underline-offset-4 transition hover:text-[hsl(var(--fli-yellow))] hover:underline"
                 >
                   Découvrir la méthode
@@ -346,8 +346,8 @@ export default function InstitutionalLanding() {
           </div>
         </section>
 
-        {/* —— Dobra 2 : Méthode / Vidéo —— */}
-        <section id="metodo" className="scroll-mt-24 bg-[hsl(var(--surface-raised))]">
+        {/* —— Bloc 2 : Méthode / Vidéo —— */}
+        <section id="methode" className="scroll-mt-24 bg-[hsl(var(--surface-raised))]">
           <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:items-center lg:py-20">
             <div>
               <h2 className="lp-display text-3xl font-bold tracking-tight text-[hsl(var(--fli-navy))] sm:text-4xl">
@@ -411,9 +411,9 @@ export default function InstitutionalLanding() {
           </div>
         </section>
 
-        {/* —— Dobra 3 : Parceiros —— */}
+        {/* —— Bloc 3 : Partenaires —— */}
         <section
-          id="parceiros"
+          id="partenaires"
           className="scroll-mt-24 overflow-hidden border-y border-border bg-[hsl(var(--fli-navy))] py-14 text-white"
         >
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -439,8 +439,8 @@ export default function InstitutionalLanding() {
           </div>
         </section>
 
-        {/* —— Dobra 4 : Formações —— */}
-        <section id="formacoes" className="scroll-mt-24 bg-[hsl(var(--surface-page))]">
+        {/* —— Bloc 4 : Formations —— */}
+        <section id="formations" className="scroll-mt-24 bg-[hsl(var(--surface-page))]">
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
             <div className="max-w-2xl">
               <h2 className="lp-display text-3xl font-bold tracking-tight text-[hsl(var(--fli-navy))] sm:text-4xl">
@@ -530,10 +530,10 @@ export default function InstitutionalLanding() {
                 Conditions générales
               </Link>
               <Link to="/mockup/lp-assets" className="hover:text-white/80">
-                Validation assets
+                Validation des visuels
               </Link>
               <Link to="/auth" className="hover:text-white/80">
-                Acesso FLI
+                Accès FLI
               </Link>
             </div>
           </div>
@@ -543,7 +543,7 @@ export default function InstitutionalLanding() {
         </div>
       </footer>
 
-      {/* —— Dobra 5 : FAQ (après footer) —— */}
+      {/* —— Bloc 5 : FAQ (après footer) —— */}
       <section id="faq" className="scroll-mt-24 bg-[hsl(var(--surface-raised))]">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[0.85fr_1.15fr] lg:py-20">
           <div>

@@ -7,7 +7,7 @@ import {
 
 const SPEC_PICKS = [
   {
-    role: "Nav / Acesso FLI",
+    role: "Nav / Accès FLI",
     file: "fli-marca-yellow.png",
     why: "Logo header sticky (spec §4) — déjà en prod app",
   },
@@ -22,19 +22,19 @@ const SPEC_PICKS = [
     why: "Groupes de 6 max · Financement FIFPL · Certifié Qualiopi",
   },
   {
-    role: "Vidéo #metodo",
+    role: "Vidéo #methode",
     file: "YouTube 1cIivE5ggCk",
-    why: "Embed stages-langues (spec §3 dobra 2)",
+    why: "Embed stages-langues (spec §3 bloc 2)",
   },
   {
-    role: "Parceiros carousel",
+    role: "Carrousel partenaires",
     file: "placeholders texte",
     why: "Logos HD ESF / stations / Qualiopi / FIFPL / Linguaskill / Bright à fournir",
   },
 ];
 
 /**
- * Mockup validation assets — aligné sur docs/FLI-LP-institucional-spec.md §5–7.
+ * Mockup validation des visuels — aligné sur docs/FLI-LP-institucional-spec.md §5–7.
  * Route : /mockup/lp-assets
  */
 export default function AssetValidationMockupPage() {
@@ -44,10 +44,10 @@ export default function AssetValidationMockupPage() {
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#FCAF17]">
-              Spec LP · validation assets
+              Spec LP · validation des visuels
             </p>
             <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
-              Logos & illustrations — FLI-LP-institucional
+              Logos & illustrations — LP institutionnelle FLI
             </h1>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -61,7 +61,7 @@ export default function AssetValidationMockupPage() {
               to="/auth"
               className="rounded-full border border-white/25 px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/10"
             >
-              Acesso FLI
+              Accès FLI
             </Link>
           </div>
         </div>
@@ -73,8 +73,8 @@ export default function AssetValidationMockupPage() {
             Aligné sur docs/FLI-LP-institucional-spec.md
           </h2>
           <p className="mt-2 max-w-3xl text-sm text-white/75">
-            Sitemap : Hero → Méthode/vidéo → Parceiros → Formações → Footer → FAQ. CTA header
-            « Acesso FLI » → <code className="text-[#FCAF17]">/auth</code>. Pendances spec §5–7 :
+            Sitemap : Hero → Méthode/vidéo → Partenaires → Formations → Footer → FAQ. CTA header
+            « Accès FLI » → <code className="text-[#FCAF17]">/auth</code>. Pendances spec §5–7 :
             photo hero réelle, logos partenaires HD, chiffres moniteurs formés.
           </p>
           <ul className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -100,7 +100,7 @@ export default function AssetValidationMockupPage() {
                 alt=""
                 className="mx-auto h-28 object-contain"
               />
-              <figcaption className="mt-2 text-xs text-white/50">Hero placeholder</figcaption>
+              <figcaption className="mt-2 text-xs text-white/50">Hero (provisoire)</figcaption>
             </figure>
             <figure className="text-center">
               <img
@@ -108,7 +108,7 @@ export default function AssetValidationMockupPage() {
                 alt=""
                 className="mx-auto h-28 object-contain"
               />
-              <figcaption className="mt-2 text-xs text-white/50">Dispo (non utilisé hero)</figcaption>
+              <figcaption className="mt-2 text-xs text-white/50">Disponible (non utilisé dans le hero)</figcaption>
             </figure>
           </div>
         </section>

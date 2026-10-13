@@ -31,12 +31,15 @@ describe("LP institutionnelle — conformité spec", () => {
   const landing = () =>
     readFileSync(join(process.cwd(), "src/pages/landing/InstitutionalLanding.tsx"), "utf8");
 
-  it("couvre les ancres et le CTA Acesso FLI du sitemap", () => {
+  it("couvre les ancres françaises et le CTA Accès FLI du sitemap", () => {
     const src = landing();
-    for (const id of ["inicio", "metodo", "parceiros", "formacoes", "faq"]) {
+    for (const id of ["accueil", "methode", "partenaires", "formations", "faq"]) {
       expect(src).toContain(`id="${id}"`);
     }
-    expect(src).toContain("Acesso FLI");
+    expect(src).toContain("Accès FLI");
+    for (const label of ["Notre méthode", "Partenaires", "Formations"]) {
+      expect(src).toContain(`label: "${label}"`);
+    }
     expect(src).toContain('to="/auth"');
     expect(src).toContain("Réserver mon stage");
     expect(src).toContain("YOUTUBE_VIDEO_ID");
@@ -48,6 +51,16 @@ describe("LP institutionnelle — conformité spec", () => {
     expect(headings.length).toBeGreaterThan(0);
     for (const h of headings) {
       expect(h, h).toMatch(/text-(white|\[hsl\(var\(--fli-navy\)\)\])/);
+    }
+  });
+
+  it("ne laisse aucun libellé ou ancre en portugais", () => {
+    const sources = [
+      landing(),
+      readFileSync(join(process.cwd(), "src/pages/landing/AssetValidationMockup.tsx"), "utf8"),
+    ];
+    for (const src of sources) {
+      expect(src).not.toMatch(/Acesso FLI|Nosso Método|Parceiros|Formações|#inicio|#metodo|#parceiros|#formacoes/);
     }
   });
 

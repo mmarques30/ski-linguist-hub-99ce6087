@@ -1,91 +1,92 @@
-# FLI — Nova Landing Page Institucional
-### Spec técnico para implementação no Cursor
-Referência visual: [Empregga — Site Institucional (Behance)](https://www.behance.net/gallery/239766373/Site-Institucional-Empregga)
-Fonte de copy/conteúdo: [stages-langues.fr](https://www.stages-langues.fr) (site atual da FLI)
-Repositório de destino: `ski-linguist-hub` (mmarques30/ski-linguist-hub-99ce6087) — React + TypeScript + Tailwind + Supabase (Lovable)
+# FLI — Nouvelle landing page institutionnelle
+### Spec technique pour implémentation dans Cursor
+Référence visuelle : [Empregga — Site institutionnel (Behance)](https://www.behance.net/gallery/239766373/Site-Institucional-Empregga)
+Source du contenu : [stages-langues.fr](https://www.stages-langues.fr) (site actuel de FLI)
+Dépôt cible : `ski-linguist-hub` (mmarques30/ski-linguist-hub-99ce6087) — React + TypeScript + Tailwind + Supabase (Lovable)
 
 ---
 
-## 1. Objetivo
+## 1. Objectif
 
-Hoje, `plateforme.fli.fr` abre direto em `/auth`. Vamos inverter isso: a raiz do domínio passa a servir uma landing page institucional, e o acesso ao sistema (login) passa a ser uma ação deliberada via botão no menu.
+Aujourd'hui, `plateforme.fli.fr` ouvre directement sur `/auth`. On inverse la logique : la racine du domaine sert une landing page institutionnelle, et l'accès au système (connexion) devient une action délibérée via un bouton du menu.
 
-**Mudança de rota:**
-- `plateforme.fli.fr/` → nova LP institucional (este spec)
-- `plateforme.fli.fr/auth` → tela de login atual, sem alterações
-- Botão "Acesso FLI" no header da LP → link/rota para `/auth`
+**Changement de routes :**
+- `plateforme.fli.fr/` → nouvelle LP institutionnelle (cette spec)
+- `plateforme.fli.fr/auth` → écran de connexion actuel, inchangé
+- `plateforme.fli.fr/app` → tableau de bord staff (anciennement `/`)
+- Bouton « Accès FLI » dans le header de la LP → route `/auth`
 
-Não é um site separado. É uma nova rota dentro do mesmo projeto, reaproveitando o stack já em produção.
+Ce n'est pas un site séparé : c'est une nouvelle route dans le même projet, qui réutilise la stack déjà en production.
 
 ---
 
-## 2. Estrutura geral (sitemap de uma página + FAQ)
+## 2. Structure générale (sitemap une page + FAQ)
 
 ```
-Header fixo (logo + menu + CTA "Acesso FLI")
-├── #inicio        → Dobra 1: Hero
-├── #metodo         → Dobra 2: Vídeo institucional
-├── #parceiros      → Dobra 3: Carrossel de logos (entre dobra 2 e dobra 4)
-├── #formacoes      → Dobra 4: Serviços/diferenciais
+Header fixe (logo + menu + CTA « Accès FLI »)
+├── #accueil        → Bloc 1 : Hero
+├── #methode        → Bloc 2 : Vidéo institutionnelle
+├── #partenaires    → Bloc 3 : Carrousel de logos (entre bloc 2 et bloc 4)
+├── #formations     → Bloc 4 : Formations / différenciateurs
 Footer
-├── #faq            → Dobra 5: FAQ (após o footer, fora do fluxo principal)
+├── #faq            → Bloc 5 : FAQ (après le footer, hors du flux principal)
 ```
 
-Menu do header (scroll suave para cada âncora, exceto o CTA):
+Menu du header (défilement doux vers chaque ancre, sauf le CTA) :
 
-| Label do menu | Âncora | Dobra |
+| Libellé du menu | Ancre | Bloc |
 |---|---|---|
-| Logo FLI | topo | — |
-| Nosso Método | `#metodo` | Dobra 2 |
-| Parceiros | `#parceiros` | Dobra 3 |
-| Formações | `#formacoes` | Dobra 4 |
-| FAQ | `#faq` | Dobra 5 |
-| **Acesso FLI** (botão destacado, cor de destaque) | — | redireciona para `/auth` |
+| Logo FLI | haut de page (`#accueil`) | — |
+| Notre méthode | `#methode` | Bloc 2 |
+| Partenaires | `#partenaires` | Bloc 3 |
+| Formations | `#formations` | Bloc 4 |
+| FAQ | `#faq` | Bloc 5 |
+| **Accès FLI** (bouton mis en avant, couleur d'accent) | — | redirige vers `/auth` |
 
 ---
 
-## 3. Dobra a dobra
+## 3. Bloc par bloc
 
-### Dobra 1 — Hero (referência: Anexo 1)
+### Bloc 1 — Hero (référence : Annexe 1)
 
-**Layout:** título grande à esquerda + CTA, foto de pessoa real à direita com 2-3 badges flutuantes, barra de indicadores no rodapé da dobra.
+**Mise en page :** grand titre à gauche + CTA, photo d'une personne réelle à droite avec 2-3 badges flottants, barre d'indicateurs en bas du bloc.
 
-**Copy proposta (FR — público-alvo francês):**
-- Headline: "Formez-vous dans la langue de votre métier, sans sacrifier votre saison."
-- Subheadline: "France Langues International conçoit des formations linguistiques sur mesure pour les moniteur·rices de ski, le personnel des remontées mécaniques, les pisteur·euses et l'hôtellerie de montagne."
-- CTA primário (botão): "Réserver mon stage" → ancora para `#formacoes` ou formulaire d'inscription existant
-- CTA secundário (link texto): "Découvrir la méthode" → `#metodo`
+**Copy (FR — public cible francophone) :**
+- Titre : « Formez-vous dans la langue de votre métier, sans sacrifier votre saison. »
+- Sous-titre : « France Langues International conçoit des formations linguistiques sur mesure pour les moniteur·rices de ski, le personnel des remontées mécaniques, les pisteur·euses et l'hôtellerie de montagne. »
+- CTA primaire (bouton) : « Réserver mon stage » → ancre `#formations` ou formulaire d'inscription existant
+- CTA secondaire (lien texte) : « Découvrir la méthode » → `#methode`
 
-**Badges flutuantes na foto** (substituindo "Rapidez / 100% Digital / Acessível"):
-- "Groupes de 6 max"
-- "Financement FIFPL"
-- "Certifié Qualiopi"
+**Badges flottants sur la photo** (à la place de « Rapidez / 100% Digital / Acessível ») :
+- « Groupes de 6 max »
+- « Financement FIFPL »
+- « Certifié Qualiopi »
 
-**Barra de indicadores (rodapé da dobra)** — dados confirmados no site atual:
-- 87% de stagiaires satisfait·es ou très satisfait·es
-- 0,6% de taux d'abandon
+**Barre d'indicateurs (bas du bloc)** — données confirmées sur le site actuel :
+- 87 % de stagiaires satisfait·es ou très satisfait·es
+- 0,6 % de taux d'abandon
 - 4,72/5 en qualité d'animation
 - Depuis 2018
 
-⚠️ **A confirmar com Paula** : nombre total de moniteur·rices formé·es à ce jour, nombre d'écoles de ski partenaires — si dispo, remplacer un des 4 indicateurs ci-dessus par un chiffre plus parlant en acquisition (ex. "+X moniteurs formés chaque saison").
+⚠️ **À confirmer avec Paula** : nombre total de moniteur·rices formé·es à ce jour, nombre d'écoles de ski partenaires — si disponible, remplacer un des 4 indicateurs ci-dessus par un chiffre plus parlant en acquisition (ex. « +X moniteurs formés chaque saison »).
 
 **Assets nécessaires :** photo professionnelle (moniteur de ski en contexte, ou formateur/formatrice en session) — pas de stock générique type Empregga.
 
 ---
 
-### Dobra 2 — Vidéo institutionnelle (référence : Anexo 5)
+### Bloc 2 — Vidéo institutionnelle (référence : Annexe 5)
 
-**Layout :** texte à gauche, thumbnail vidéo à droite avec bouton play.
+**Mise en page :** texte à gauche, vignette vidéo à droite avec bouton lecture.
 
-**Copy proposta :**
-- Titre : "Découvrez comment se déroule votre formation"
-- Sous-texte : "Un parcours structuré, testé sur plus de 500 sessions."
-- CTA : "Regarder la vidéo" (lien/lightbox)
+**Copy :**
+- Titre : « Découvrez comment se déroule votre formation »
+- Sous-texte : « Un parcours structuré, testé sur plus de 500 sessions. »
+- CTA : « Regarder la vidéo » (lien/lightbox)
 
 **Vidéo :** réutiliser l'embed déjà en production sur stages-langues.fr :
 `https://www.youtube.com/embed/1cIivE5ggCk`
 
-**Contenu alternatif si on veut illustrer les 5 étapes du déroulement (repris du site actuel) sous la vidéo, en mini-liste :**
+**Contenu complémentaire pour illustrer les 5 étapes du déroulement (repris du site actuel) sous la vidéo, en mini-liste :**
 1. Test de niveau à l'inscription
 2. Objectifs définis avec le groupe
 3. Formation adaptée aux niveaux et besoins
@@ -94,11 +95,11 @@ Menu do header (scroll suave para cada âncora, exceto o CTA):
 
 ---
 
-### Dobra 3 — Carrossel de parceiros (référence : Anexo 4)
+### Bloc 3 — Carrousel de partenaires (référence : Annexe 4)
 
-**Layout :** bande horizontale, fond sombre ou clair contrastant, logos en niveaux de gris/blanc, défilement automatique (carousel infini).
+**Mise en page :** bande horizontale, fond sombre ou clair contrastant, logos en niveaux de gris/blanc, défilement automatique (carrousel infini).
 
-**Titre :** "Ils nous font confiance"
+**Titre :** « Ils nous font confiance »
 
 **Logos à intégrer** (à collecter en haute résolution) :
 - Réseau ESF (national)
@@ -107,15 +108,15 @@ Menu do header (scroll suave para cada âncora, exceto o CTA):
 - Logo FIFPL / OPCO (financement)
 - Linguaskill / Bright (organismes de certification)
 
-⚠️ **A confirmar :** liste définitive des logos autorisés à l'usage (accord des écoles de ski), fichiers vectoriels/PNG haute résolution.
+⚠️ **À confirmer :** liste définitive des logos autorisés à l'usage (accord des écoles de ski), fichiers vectoriels/PNG haute résolution.
 
 ---
 
-### Dobra 4 — Formations / différenciateurs (référence : Anexo 3)
+### Bloc 4 — Formations / différenciateurs (référence : Annexe 3)
 
-**Layout :** grille de 6 items avec icône + titre + phrase courte, puis bandeau CTA en dessous avec fond coloré et bouton.
+**Mise en page :** grille de 6 items avec icône + titre + phrase courte, puis bandeau CTA en dessous avec fond coloré et bouton.
 
-**6 items proposés** (adaptés des 6 de l'Empregga) :
+**6 items** (adaptés des 6 de l'Empregga) :
 
 | Icône | Titre | Texte |
 |---|---|---|
@@ -127,18 +128,18 @@ Menu do header (scroll suave para cada âncora, exceto o CTA):
 | Mesure | Progression mesurée | Test d'entrée et de sortie, résultats transmis à votre école de ski. |
 
 **Bandeau CTA (fond coloré, style bandeau orange de l'Empregga) :**
-- Titre : "Organisez la formation linguistique de votre équipe, sans complexité administrative"
-- Bouton : "Demander un devis" ou "Je réserve mon stage" → lien vers formulaire d'inscription existant ou contact (`info@fli.fr` / 04 79 28 21 09)
+- Titre : « Organisez la formation linguistique de votre équipe, sans complexité administrative »
+- Bouton : « Demander un devis » ou « Je réserve mon stage » → lien vers formulaire d'inscription existant ou contact (`info@fli.fr` / 04 79 28 21 09)
 
 ---
 
-### Dobra 5 — FAQ (référence : Anexo 2, après o footer)
+### Bloc 5 — FAQ (référence : Annexe 2, après le footer)
 
-**Layout :** accordéon, titre à gauche + petit encart "Vous n'avez pas trouvé votre réponse ?" avec bouton de contact, liste de questions à droite (colonne, chevrons +/-).
+**Mise en page :** accordéon, titre à gauche + petit encart « Vous n'avez pas trouvé votre réponse ? » avec bouton de contact, liste de questions à droite (colonne, chevrons +/-).
 
-**Titre :** "Une question ?"
+**Titre :** « Une question ? »
 
-**Questions/réponses proposées** (adaptées des 11 de l'Empregga au contexte FLI) :
+**Questions/réponses** (adaptées des 11 de l'Empregga au contexte FLI) :
 
 1. **Je n'ai jamais suivi de formation en langues, c'est fait pour moi ?**
    Oui. Un test de niveau à l'inscription permet de vous placer dans le bon groupe, quel que soit votre point de départ.
@@ -173,62 +174,63 @@ Menu do header (scroll suave para cada âncora, exceto o CTA):
 11. **Quel suivi est proposé pendant et après la formation ?**
     Test de progression en fin de stage, questionnaire de satisfaction, et transmission des résultats à votre école de ski.
 
-**Encart contact (comme l'encart Empregga "Não encontrou o que gostaria?"):**
-"Vous n'avez pas trouvé votre réponse ?" → bouton "Nous contacter" → `info@fli.fr` / 04 79 28 21 09
+**Encart contact (comme l'encart Empregga « Não encontrou o que gostaria? ») :**
+« Vous n'avez pas trouvé votre réponse ? » → bouton « Nous contacter » → `info@fli.fr` / 04 79 28 21 09
 
 ---
 
-## 4. Header / Botão "Acesso FLI"
+## 4. Header / bouton « Accès FLI »
 
-- Botão de destaque visual (cor de contraste, estilo "Conecte Grátis" no Empregga)
-- Texto: **"Acesso FLI"**
-- Ação: navegação para rota `/auth` já existente no sistema (não é link externo, é rota interna do mesmo app)
-- Fixo em todas as dobras (sticky header)
-
----
-
-## 5. Identidade visual — pendências
-
-O spec acima não define paleta/tipografia porque não temos a charte gráfica atual da FLI confirmada. Antes de codar no Cursor, confirmar:
-
-- [ ] Paleta de cores oficial (logo FLI atual usa que cores? Ver `logo-fli.png` em stages-langues.fr)
-- [ ] Fonte tipográfica (se já definida no design system do app FLI Formation/Lovable)
-- [ ] Se a LP deve reaproveitar o design system do app (componentes shadcn/ui já usados) ou ter identidade própria mais "marketing"
-
-Sugestão: reaproveitar o design system do app (Tailwind + shadcn já configurado no repo) para consistência visual entre LP e plataforma, evitando duplicar tokens de design.
+- Bouton mis en avant visuellement (couleur de contraste, style « Conecte Grátis » de l'Empregga)
+- Texte : **« Accès FLI »**
+- Action : navigation vers la route `/auth` déjà existante (route interne de la même app, pas un lien externe)
+- Fixe sur tous les blocs (header sticky)
 
 ---
 
-## 6. Arquitetura técnica
+## 5. Identité visuelle — points en suspens
 
-- **Stack:** React + TypeScript + Tailwind (mesmo do repo `ski-linguist-hub`)
-- **Rota nova:** `/` → componente `LandingPage.tsx` (ou equivalente)
-- **Rota existente:** `/auth` inalterada
-- **Navegação:** scroll suave (`scroll-behavior: smooth` ou lib tipo `react-scroll`) para as âncoras do menu
-- **Carrossel de logos (Dobra 3):** componente de auto-scroll infinito (ex. Embla Carousel, já comum em stacks shadcn)
-- **Vídeo (Dobra 2):** iframe YouTube embed, lazy-loaded
-- **FAQ (Dobra 5):** componente accordion (shadcn/ui `Accordion` se disponível no projeto)
-- **Responsivo:** mobile-first, já que boa parte do público (moniteurs) acessa via celular
-- **SEO básico:** title/meta description, og:image, mesma lógica do site atual (`stages-langues.fr` tem Yoast configurado — replicar meta tags equivalentes)
+La spec ci-dessus ne définit ni palette ni typographie car la charte graphique actuelle de FLI n'est pas confirmée. Avant de coder dans Cursor, confirmer :
+
+- [ ] Palette de couleurs officielle (quelles couleurs utilise le logo FLI actuel ? Voir `logo-fli.png` sur stages-langues.fr)
+- [ ] Police typographique (si déjà définie dans le design system de l'app FLI Formation/Lovable)
+- [ ] La LP doit-elle réutiliser le design system de l'app (composants shadcn/ui déjà utilisés) ou avoir une identité propre plus « marketing » ?
+
+Suggestion : réutiliser le design system de l'app (Tailwind + shadcn déjà configurés dans le dépôt) pour la cohérence visuelle entre LP et plateforme, et éviter de dupliquer les tokens de design.
 
 ---
 
-## 7. Assets a reunir antes da implementação
+## 6. Architecture technique
 
-| Item | Status |
+- **Stack :** React + TypeScript + Tailwind (identique au dépôt `ski-linguist-hub`)
+- **Nouvelle route :** `/` → composant `InstitutionalLanding.tsx`
+- **Route existante :** `/auth` inchangée ; tableau de bord staff déplacé sur `/app` (`ADMIN_HOME_PATH`)
+- **Navigation :** défilement doux (`scroll-behavior: smooth` ou lib type `react-scroll`) vers les ancres du menu
+- **Carrousel de logos (bloc 3) :** composant à défilement automatique infini (ex. Embla Carousel, courant dans les stacks shadcn)
+- **Vidéo (bloc 2) :** iframe YouTube embed, chargée à la demande
+- **FAQ (bloc 5) :** composant accordéon (shadcn/ui `Accordion` si disponible dans le projet)
+- **Responsive :** mobile-first, une bonne partie du public (moniteurs) accède depuis son téléphone
+- **SEO de base :** title/meta description, og:image, même logique que le site actuel (`stages-langues.fr` a Yoast configuré — répliquer des meta tags équivalentes)
+
+---
+
+## 7. Assets à réunir avant l'implémentation
+
+| Élément | Statut |
 |---|---|
-| Foto hero (moniteur/formateur em contexto) | A fornecer |
-| Logos de parceiros (ESF, stations, OPCO, Linguaskill, Bright) em alta resolução | A fornecer |
-| Paleta de cores oficial FLI | A confirmar |
-| Número real de moniteurs formés / écoles partenaires (para barra de indicadores) | A confirmar |
-| Vídeo institucional (já existe, embed YouTube) | ✅ Disponível |
-| Textos de témoignages (já existem 3 no site atual, reutilizáveis se quiser adicionar uma dobra extra) | ✅ Disponível |
+| Photo hero (moniteur/formateur en contexte) | À fournir |
+| Logos partenaires (ESF, stations, OPCO, Linguaskill, Bright) en haute résolution | À fournir |
+| Palette de couleurs officielle FLI | À confirmer |
+| Nombre réel de moniteurs formés / écoles partenaires (pour la barre d'indicateurs) | À confirmer |
+| Vidéo institutionnelle (existe déjà, embed YouTube) | ✅ Disponible |
+| Textes de témoignages (3 existent déjà sur le site actuel, réutilisables si on veut ajouter un bloc) | ✅ Disponible |
+
+Page de validation des visuels disponibles dans le dépôt : `/mockup/lp-assets`.
 
 ---
 
-## 8. Próximos passos sugeridos
+## 8. Prochaines étapes suggérées
 
-1. Validar com Paula a paleta de cores e assets pendentes (seção 5 e 7)
-2. Confirmar se a LP entra na mesma branch/deploy do app FLI Formation ou em branch separada até a recette de outubro
-3. Passar este documento ao Cursor com instrução: "criar rota `/` conforme spec abaixo, mantendo `/auth` intacto"
-4. Revisar copy final em francês antes de publicar (tom formal, adequado ao público profissional)
+1. Valider avec Paula la palette de couleurs et les assets en suspens (sections 5 et 7)
+2. Confirmer si la LP part avec la même branche/déploiement que l'app FLI Formation ou sur une branche séparée jusqu'à la recette d'octobre
+3. Relire la copy finale en français avant publication (ton formel, adapté au public professionnel)
