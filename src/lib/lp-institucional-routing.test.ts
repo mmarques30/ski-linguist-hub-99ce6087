@@ -25,6 +25,15 @@ describe("LP institutionnelle — routage public / app", () => {
     expect(app).toContain('path="/mockup/lp-assets"');
     expect(app).toContain('path="/app" element={<ProtectedRoute><Dashboard /></ProtectedRoute>}');
   });
+
+  it("importe le routeur de l'app, pas react-router-dom", () => {
+    const mockup = readFileSync(
+      join(process.cwd(), "src/pages/landing/AssetValidationMockup.tsx"),
+      "utf8",
+    );
+    expect(mockup).toContain('from "react-router"');
+    expect(mockup).not.toContain("react-router-dom");
+  });
 });
 
 describe("LP institutionnelle — conformité spec", () => {
@@ -37,6 +46,8 @@ describe("LP institutionnelle — conformité spec", () => {
       expect(src).toContain(`id="${id}"`);
     }
     expect(src).toContain("Acesso FLI");
+    expect(src).toContain('from "react-router"');
+    expect(src).not.toContain("react-router-dom");
     expect(src).toContain('to="/auth"');
     expect(src).toContain("Réserver mon stage");
     expect(src).toContain("YOUTUBE_VIDEO_ID");
