@@ -29,7 +29,11 @@ import {
   YOUTUBE_VIDEO_ID,
 } from "@/components/landing/landing-assets";
 import { useRegistrationOfferings } from "@/hooks/useRegistrationOfferings";
-import { isOpenOffering, type RegistrationOffering } from "@/lib/registration-offerings";
+import {
+  isOpenOffering,
+  sortOfferingsByDateThenLocation,
+  type RegistrationOffering,
+} from "@/lib/registration-offerings";
 
 const NAV = [
   { label: "Nosso Método", href: "#metodo" },
@@ -177,7 +181,7 @@ function groupSessionsByLanguage(offerings: RegistrationOffering[]): LanguageSes
     }
   }
   for (const group of groups.values()) {
-    group.sessions.sort((a, b) => a.sort_order - b.sort_order);
+    group.sessions = sortOfferingsByDateThenLocation(group.sessions);
   }
   return Array.from(groups.values()).sort((a, b) => a.label.localeCompare(b.label, "fr"));
 }
