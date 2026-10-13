@@ -85,8 +85,8 @@ const FLI_INVOICE_DEFAULTS = {
   address: "25 avenue de la gare",
   postalCode: "73800",
   city: "Montmélian",
-  phone: "+33 (0)6 27 13 45 16",
-  email: "contact@france-langues-international.com",
+  phone: "04 79 28 21 09",
+  email: "info@fli.fr",
   siret: "484 772 041 00048",
 } as const;
 
@@ -198,10 +198,10 @@ export function organizationInvoiceHeader(
 
 function escapeHtml(value: string): string {
   return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 /** Mentions légales d'un pied de document : rien si elles ne sont pas saisies. */
@@ -215,4 +215,32 @@ export function organizationLegalMentions(identity: OrganizationIdentity): strin
       ? `Enregistré auprès du ${identity.activity_authority}`
       : "",
   ].filter(Boolean);
+}
+
+/**
+ * Pied de page Version 4 des conventions FLI (en ligne),
+ * fourni par Paula le 24 septembre 2026.
+ */
+export const FLI_DOCUMENT_FOOTER_V4_LINES = [
+  "Formation Professionnelle Continue : Langues Étrangères",
+  "SARL au capital de 5000 euros. 25 avenue de la gare, 73800 Montmélian",
+  "Siret : 484 772 041 00048- RCS Chambéry – NAF : 8559A Organisme de formation n° 82 73 01 366 73",
+  "Version 4 du 24 septembre 2026",
+] as const;
+
+/**
+ * Pied de page Version 2 du programme pédagogique en ligne,
+ * fourni par Paula le 24 septembre 2026.
+ */
+export const FLI_DOCUMENT_FOOTER_V2_LINES = [
+  "Formation Professionnelle Continue : Langues Étrangères",
+  "SARL au capital de 5000 euros. 25 avenue de la gare, 73800 Montmélian",
+  "Siret : 484 772 041 00048- RCS Chambéry – NAF : 8559A Organisme de formation n° 82 73 01 366 73",
+  "Version 2 du 24 septembre 2026",
+] as const;
+
+export function fliDocumentFooterLines(version: 2 | 4 = 4): string[] {
+  return version === 2
+    ? [...FLI_DOCUMENT_FOOTER_V2_LINES]
+    : [...FLI_DOCUMENT_FOOTER_V4_LINES];
 }

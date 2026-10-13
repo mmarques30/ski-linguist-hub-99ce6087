@@ -1,5 +1,5 @@
 import { Calendar, MapPin, Users, GraduationCap } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { StatusPill, SurfaceCard, TableEmpty } from "@/components/ui-kit";
 

@@ -22,11 +22,9 @@ export function pisteBucketFromDeterminedLevel(raw: string | null | undefined): 
   if (!raw || !raw.trim()) return NIVEAU_NON_RENSEIGNE;
   const trimmed = raw.trim();
   if (/^piste\s/i.test(trimmed)) return trimmed;
-  const upper = trimmed.toUpperCase();
-  if (["A1", "A2", "B1", "B2", "C1", "C2"].includes(upper)) {
-    return studentFacingPisteFromCecrl(upper);
-  }
-  return NIVEAU_NON_RENSEIGNE;
+  const piste = studentFacingPisteFromCecrl(trimmed);
+  if (piste === "À déterminer") return NIVEAU_NON_RENSEIGNE;
+  return piste;
 }
 
 export interface PlacementTestStatsRow {

@@ -2,7 +2,7 @@
 
 Règle : noter ici, **ne pas corriger** tant que le point courant n’est pas validé.
 
-Dernière mise à jour : 2026-09-21 (BL-014 peaufinage clos PR #87).
+Dernière mise à jour : 2026-09-29 (BL-015 + BL-020 clos ; BL-022 CV cadré).
 
 ## Conventions de lecture
 
@@ -82,8 +82,8 @@ BL-030 / BL-050 **fusionnés** (PR #73 + #75). BL-014 peaufinage **clos** (#87).
 
 ### Hors périmètre du 1er octobre
 
-BL-001, BL-008, BL-009, BL-010, BL-011, BL-015, BL-017, BL-019, BL-020,
-BL-022 : dette antérieure, non remontée par la recette.
+BL-001, BL-008, BL-009, BL-010, BL-011, BL-017, BL-019 :
+dette antérieure, non remontée par la recette.
 
 ---
 
@@ -134,11 +134,11 @@ BL-022 : dette antérieure, non remontée par la recette.
 | BL-010 | Phrases 321 vs 540 — point 7 fusionné | Point 7 |
 | BL-011 | `soustraitance` vs `sous_traitance` | Plus tard |
 | BL-014 | UI candidat → actif — **clos** PR #77 (CTA) + #87 (bannière gaps, confirm enrichie, liste, presets admin, inactif) | Recrutement |
-| BL-015 | Backfill formateur CSV (si restes) | Avant rattachement |
+| BL-015 | Backfill formateur CSV (si restes) — **clos** 29/09 : Point 3 déjà livré ; 2 fiches facturées restantes (Sofie → Tulio, Lana → Claire) rattachées en live (`audit_log` `c7e5b048-…`, `9e3ffd31-…`) ; 0 fiche active avec texte formateur orphelin | Avant rattachement |
 | BL-017 | Imports massifs hors UI | Avant point 9 |
 | BL-019 | J-10 horaires FLI exacts + pas de code depuis horaires | Point 10 |
-| BL-020 | Policies storage certificats (vue `inscriptions_complete` OK live) | Ops |
-| BL-022 | `instructors.cv_url` : 16 liens `drive.google.com`, hors Supabase Storage — rapatriement à cadrer | Faible |
+| BL-020 | Policies storage certificats — **clos** 29/09 : Point A / PR #16 déjà livré ; *(live)* bucket `certificates` `public=false`, 5 policies RLS (`select_staff` / `select_owner` / `insert_staff` / `update_staff` / `delete_admin`) ; 0 ligne `certificates`, 0 objet storage ; URL `/object/public/certificates/…` → `NoSuchBucket` ; vue `inscriptions_complete` bilan OK | Ops |
+| BL-022 | `instructors.cv_url` Drive — **cadré** 29/09 : `docs/POINT_BL022_CV_URL.md` ; *(live)* 16/72 liens Drive, 0 Storage ; pas de scrape auto ; UI Administratif + upload `documents/staff/instructors/<id>/cv.pdf` | Faible |
 
 ---
 
@@ -178,7 +178,9 @@ BL-022 : dette antérieure, non remontée par la recette.
 | BL-005 | CECRL hors UI stagiaire (pistes) — point 4 |
 | BL-013 | Statut `candidat` |
 | BL-018 | Mapping certificat→piste remplacé par bilan Entrée/Sortie |
+| BL-020 | Bucket `certificates` privé + policies — Point A / PR #16, `docs/SECURITE_A_TEST_EVALUATIONS.md` ; recontrôle live 29/09 |
 | BL-021 | Bucket `documents` privé — point A2, `docs/SECURITE_A2_BUCKET_DOCUMENTS.md` |
+| BL-022 | CV formateur Drive → Storage cadré — `docs/POINT_BL022_CV_URL.md` (UI + upload manuel ; pas de scrape) |
 | BL-006 | Outreach sans unsubscribe — traité par le gel, point 5, `docs/GEL_PROSPECTION_MONITEURS.md`. Condition de réouverture vérifiée à l'exécution. |
 | BL-023…026, 028, 036 | Vague 1 — PR #44 |
 | BL-029 | Dates flexibles — PR #45 |
@@ -194,6 +196,7 @@ BL-022 : dette antérieure, non remontée par la recette.
 | BL-038 (hard) | Hard dedup partenaires — PR #80 |
 | BL-014 (partiel), Qualiopi/statuts/dashboard | Suite 6 octobre — PR #77 |
 | BL-014 (peaufinage) | Bannière gaps, confirm, liste, presets, inactif — PR #87 |
+| BL-015 | Restes backfill formateur (2 `instructor_id`) — live 29/09 |
 | `/documents`, pagination morte, STRIPE_SETUP | Suite 7 octobre — PR #78 |
 | BL-046, 047, 031 | Vague 0 deploy 19/09 — front + edges + Resend |
 | Onda D5–D8 | Identité org, chrome i18n, import idempotent, CRM leads — PR #70 |

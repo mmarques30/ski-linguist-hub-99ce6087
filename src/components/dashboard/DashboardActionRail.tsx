@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { AlertTriangle, ChevronRight, CheckCircle2 } from "lucide-react";
 import { useDashboardActionItems } from "@/hooks/useDashboardActionItems";
 import { StatusPill, SurfaceCard } from "@/components/ui-kit";

@@ -1,11 +1,11 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import {
+  adminCorsHeaders,
+  requireServiceRoleOrStaff,
+} from '../_shared/admin-auth.ts'
 import { sendFliEmail } from '../_shared/fli-email.ts'
 import { loadEmailTemplate, renderEmailTemplate } from '../_shared/email-model-templates.ts'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+const corsHeaders = adminCorsHeaders
 
 const REMINDER_SLUGS = {
   1: 'satisfaction_survey_reminder_1',
@@ -28,12 +28,14 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders })
   }
 
+  // Cron / staff only — refuse anon (finding #5).
+  const auth = await requireServiceRoleOrStaff(req)
+  if (auth instanceof Response) return auth
+
   try {
     const url = new URL(req.url)
     const dryRun = url.searchParams.get('dry_run') === 'true'
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const resendApiKey = Deno.env.get('RESEND_API_KEY')
     const surveyBaseUrl = Deno.env.get('SURVEY_BASE_URL')
       || 'https://ski-linguist-hub.lovable.app'
@@ -48,7 +50,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    const supabase = auth.adminClient
 
     // Point 8 : aucune relance ne part si son modèle n'est pas validé et actif.
     const templates = new Map<ReminderLevel, Awaited<ReturnType<typeof loadEmailTemplate>>>()

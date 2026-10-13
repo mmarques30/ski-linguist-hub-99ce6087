@@ -7,9 +7,11 @@
  */
 
 import { REGISTRATION_PAYMENT_OPTIONS } from "@/lib/registration-payments";
+import type { FifplQuestionnaire } from "@/lib/fifpl-funding";
 
 export const FUNDING_ORGANIZATION_OPTIONS = [
   { value: "FIFPL", label: "FIFPL" },
+  { value: "AGEFICE", label: "AGEFICE" },
   { value: "OPCO", label: "OPCO" },
   { value: "Entreprise", label: "Entreprise (école de ski)" },
   { value: "Autofinancement", label: "Autofinancement" },
@@ -31,7 +33,7 @@ export type ProposalPayerType = (typeof PROPOSAL_PAYER_TYPES)[number]["value"];
 export const PROPOSAL_PAYMENT_FORMULAS = [
   {
     value: REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE,
-    label: "150 € Stripe + solde chèque",
+    label: "150 € carte bancaire en ligne + solde chèque",
   },
   {
     value: REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT,
@@ -39,7 +41,11 @@ export const PROPOSAL_PAYMENT_FORMULAS = [
   },
   {
     value: REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL,
-    label: "Paiement intégral Stripe",
+    label: "Règlement intégral en ligne",
+  },
+  {
+    value: REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X,
+    label: "Payez en 3 fois avec Klarna (≥ 500 €, particulier)",
   },
   {
     value: REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL,
@@ -87,6 +93,8 @@ export interface FundingDetailsPayload {
   version: 1;
   source: "register" | "admin";
   opco?: OpcoQuestionnaire;
+  /** Questionnaire FIFPL (attestation CFP + droits) — optionnel. */
+  fifpl?: FifplQuestionnaire;
 }
 
 export function serializeFundingDetails(payload: FundingDetailsPayload): string {

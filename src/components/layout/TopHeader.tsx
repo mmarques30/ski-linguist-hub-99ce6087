@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Bell, BookOpen, CreditCard, ClipboardCheck, GraduationCap, CheckCheck, CalendarClock } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";

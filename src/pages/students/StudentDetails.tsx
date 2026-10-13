@@ -1,10 +1,11 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
   Mail,
   Phone,
+  MessageSquare,
   MapPin,
   Building2,
   Calendar,
@@ -22,6 +23,9 @@ import type { ReactNode } from "react";
 import { useStudentDetails } from "@/hooks/useStudentDetails";
 import { StudentPortalAccessCard } from "@/components/students/StudentPortalAccessCard";
 import { StudentFormDialog } from "@/components/students/StudentFormDialog";
+import { SendStudentEmailDialog } from "@/components/students/SendStudentEmailDialog";
+import { SendStudentSmsDialog } from "@/components/students/SendStudentSmsDialog";
+import { normalizePhoneForSms } from "@/lib/staff-sms";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import {
   studentEmailForSend,
@@ -54,10 +58,14 @@ import {
 import type { PillTone } from "@/components/ui-kit";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import {
+  displayPisteLabel,
+  pistePillTone,
+} from "@/lib/placement-test-engine";
 
 type HistoryTab = "all" | "completed" | "certifications";
 
-/** Teinte CECRL : A (découverte), B (intermédiaire), C (avancé). */
+/** Teinte CECRL (certificat SNMSF uniquement). */
 function toneForLevel(level: string | null | undefined): PillTone {
   if (!level) return "neutral";
   if (level.startsWith("A")) return "accent";
@@ -78,6 +86,16 @@ function getLevelProgress(level: string | null | undefined) {
   return levelMap[level || ""] || 0;
 }
 
+function getPisteProgress(piste: string | null | undefined) {
+  const map: Record<string, number> = {
+    "Piste verte": 25,
+    "Piste bleue": 50,
+    "Piste rouge": 75,
+    "Piste noire": 100,
+  };
+  return map[piste || ""] || 0;
+}
+
 function formatDate(dateStr: string | null) {
   if (!dateStr) return "-";
   try {
@@ -93,6 +111,8 @@ export default function StudentDetails() {
   const { data: student, isLoading, error } = useStudentDetails(id);
   const { canEdit } = useUserPermissions();
   const [editOpen, setEditOpen] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [smsOpen, setSmsOpen] = useState(false);
   const [historyTab, setHistoryTab] = useState<HistoryTab>("all");
 
   const getInitials = (firstName: string, lastName: string) => {
@@ -322,16 +342,39 @@ export default function StudentDetails() {
                 </Button>
               )}
               {studentEmailForSend(student.email) ? (
-                <Button variant="outline" size="sm" asChild>
-                  <a href={`mailto:${student.email}`}>
-                    <Mail className="mr-2 h-4 w-4" />
-                    Envoyer un email
-                  </a>
+                <Button variant="outline" size="sm" onClick={() => setEmailOpen(true)}>
+                  <Mail className="mr-2 h-4 w-4" />
+                  Envoyer un email
+                </Button>
+              ) : null}
+              {normalizePhoneForSms(student.phone) ? (
+                <Button variant="outline" size="sm" onClick={() => setSmsOpen(true)}>
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Envoyer un SMS
                 </Button>
               ) : null}
             </>
           }
         />
+
+        {studentEmailForSend(student.email) ? (
+          <SendStudentEmailDialog
+            open={emailOpen}
+            onOpenChange={setEmailOpen}
+            to={studentEmailForSend(student.email)!}
+            recipientName={`${student.first_name} ${student.last_name}`.trim()}
+            studentId={student.id}
+          />
+        ) : null}
+        {normalizePhoneForSms(student.phone) ? (
+          <SendStudentSmsDialog
+            open={smsOpen}
+            onOpenChange={setSmsOpen}
+            phone={student.phone}
+            recipientName={`${student.first_name} ${student.last_name}`.trim()}
+            studentId={student.id}
+          />
+        ) : null}
 
         <StudentPortalAccessCard
           studentId={student.id}
@@ -459,17 +502,29 @@ export default function StudentDetails() {
                     const lastCert = langInscriptions.find(
                       (i) => i.certification_result && i.certification_result !== "N/A"
                     );
-                    const level = lastCert?.certification_result || langInscriptions[0]?.entry_level;
+                    const hasCert = Boolean(lastCert?.certification_result);
+                    const certLevel = lastCert?.certification_result ?? null;
+                    const pisteLevel = displayPisteLabel(
+                      langInscriptions[0]?.entry_level,
+                      ""
+                    );
+                    const displayLevel = hasCert ? certLevel : pisteLevel || null;
+                    const progress = hasCert
+                      ? getLevelProgress(certLevel)
+                      : getPisteProgress(pisteLevel);
+                    const tone = hasCert
+                      ? toneForLevel(certLevel)
+                      : pistePillTone(pisteLevel);
 
                     return (
                       <div key={language} className="space-y-1.5">
                         <MeterRow
                           label={language}
-                          value={getLevelProgress(level)}
+                          value={progress}
                           display={
-                            level ? (
-                              <StatusPill tone={toneForLevel(level)} size="sm">
-                                {level}
+                            displayLevel ? (
+                              <StatusPill tone={tone} size="sm">
+                                {displayLevel}
                               </StatusPill>
                             ) : (
                               <></>

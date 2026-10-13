@@ -10,7 +10,7 @@ Ne pas se fier à un statut figé dans ce fichier : la configuration évolue sel
 2. La carte appelle l'edge function **`check-stripe-config`** et affiche deux lignes **`StatusRow`** :
    - `STRIPE_SECRET_KEY` — clé présente et valide
    - `STRIPE_WEBHOOK_SECRET` — signing secret présent (Supabase Secrets ou `app_settings`)
-3. Badge **Opérationnel** = les deux secrets OK + clé valide (**constaté live 22/09/2026**, mode **test**).
+3. Badge **Opérationnel** = les deux secrets OK + clé valide. Le badge **Mode live** / **Mode test** indique si les paiements sont réels.
 4. Si le webhook manque, utiliser **Configurer le webhook automatiquement** (edge `provision-stripe-webhook`) ou suivre les étapes manuelles ci-dessous.
 
 Sans webhook, le checkout Stripe peut s'afficher, mais l'inscription n'est pas mise à jour automatiquement en base.
@@ -119,19 +119,33 @@ LIMIT 5;
 | Option | Montant Stripe | Solde |
 |--------|----------------|-------|
 | Acompte Stripe + chèque | 150 € | Solde chèque à envoyer à l'inscription (encaissement après clôture du dossier) |
-| Paiement intégral Stripe | Prix total | 0 € |
+| Paiement intégral Stripe | Prix total (carte / Klarna) | 0 € |
+| Payez en 3 fois avec Klarna | Prix total si ≥ 500 € (particulier uniquement) | 0 € — même prix qu'en une fois (pas de surcoût) |
 | Virement | — | Pas de Stripe |
+
+**Alma** n'est pas disponible pour FLI (secteur éducation / B2B refusé par Alma). Le BNPL Stripe utilisable est **Klarna** (3 fois en France). Ne pas proposer Klarna aux entreprises / ESF — pour elles : OPCO ou échéancier virement.
 
 ---
 
 ## Passage en production (live)
 
-1. Activer le compte Stripe (KYC)
-2. `supabase secrets set STRIPE_SECRET_KEY=sk_live_...`
-3. Nouveau webhook live → même URL Supabase
-4. `supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...` (live)
-5. Redéployer les fonctions + test réel
-6. Re-vérifier **Settings → Intégration de paiement** (mode live, `StatusRow` OK)
+1. Activer le compte Stripe (KYC terminé) — bascule **Live** dans le Dashboard.
+2. Mettre à jour la clé via le **chat Lovable** (« Update Stripe secret key ») avec `sk_live_...`
+   (le badge Lovable sur `STRIPE_SECRET_KEY` empêche l'édition depuis Cloud → Secrets).
+3. **Settings → Intégrations** : le badge doit passer en **Mode live**. Si **Webhook live manquant**
+   apparaît, cliquer **Configurer le webhook automatiquement** (crée l'endpoint live + enregistre
+   le `whsec_` dans `app_settings`, avec le mode `live`).
+4. Vérifier dans [Stripe → Webhooks (live)](https://dashboard.stripe.com/webhooks) qu'un endpoint
+   pointe vers  
+   `https://nghkrmvakjomzmfwdhbo.supabase.co/functions/v1/stripe-webhook`  
+   (événement `checkout.session.completed`). Le webhook de test (`CursorFLI0909`, etc.) ne compte pas.
+5. `check-stripe-config` contrôle désormais **l'existence réelle** de l'endpoint dans le mode de la
+   clé (pas seulement la présence d'un `whsec_` en base — souvent celui du mode test).
+6. Badge **Mode live** + **Opérationnel** uniquement si clé live valide **et** endpoint live présent.
+7. Test réel (petit montant) sur `/register` — la page de confirmation ne doit plus afficher
+   l'avertissement « mode test ».
+
+**Important :** tant que `STRIPE_SECRET_KEY` commence par `sk_test_`, aucun argent n'arrive sur le compte bancaire FLI. Un secret webhook test laissé en `app_settings` ne suffit **pas** en live.
 
 ---
 
@@ -144,5 +158,6 @@ LIMIT 5;
 | Checkout OK mais pas de paiement en BD | Configurer `STRIPE_WEBHOOK_SECRET` (auto ou manuel) + redéployer `stripe-webhook` et `verify-registration-checkout` |
 | Paiement confirmé mais rien sur Stripe / carte | Vérifier le **mode test** ([dashboard test](https://dashboard.stripe.com/test/payments)) ; carte test `4242…` = pas de débit réel |
 | Page « Paiement confirmé » sans trace | La page vérifie la session Stripe ; sans `session_id` valide, le paiement n'est pas confirmé |
+| « Opérationnel » alors qu'aucun webhook live n'existe | Ancien bug : un `whsec_` test en `app_settings` suffisait. Corrigé — `check-stripe-config` liste les endpoints Stripe du mode courant. Recréer via **Configurer le webhook automatiquement**. |
 | « Invalid signature » | Vérifier que le `whsec_` correspond au bon mode test/live |
 | Fonction introuvable | `supabase functions deploy` depuis la branche `main` GitHub |

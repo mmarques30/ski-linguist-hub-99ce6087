@@ -4,6 +4,7 @@ import {
   STATUS_TRANSITIONS,
   TERMINAL_STATUSES,
   canCloseWithEndPack,
+  canGenerateEndPackDocuments,
   canTransition,
   cancellationBlockedReason,
   describeRefusedTransition,
@@ -81,13 +82,16 @@ describe('clôture par le pack de fin', () => {
     expect(endPackBlockedReason('annulee', null)).toContain('Annulée');
   });
 
-  it('signale une inscription déjà terminée sans bloquer les documents', () => {
-    expect(endPackBlockedReason('terminee', null)).toContain('déjà terminée');
+  it('autorise la régénération sur une inscription déjà terminée', () => {
+    expect(endPackBlockedReason('terminee', null)).toBeNull();
+    expect(canGenerateEndPackDocuments('terminee')).toBe(true);
   });
 
-  it('signale un pack déjà généré', () => {
-    const raison = endPackBlockedReason('terminee', '2026-09-15T10:00:00Z');
-    expect(raison).toContain('déjà été généré');
+  it('autorise la régénération quand le pack a déjà été généré', () => {
+    expect(
+      endPackBlockedReason('terminee', '2026-09-15T10:00:00Z')
+    ).toBeNull();
+    expect(canGenerateEndPackDocuments('terminee')).toBe(true);
   });
 });
 

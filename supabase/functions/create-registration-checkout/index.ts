@@ -2,9 +2,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   createStripeCheckoutSession,
   getInscriptionPaymentFields,
+  isStripeKlarna3xEligibleAmount,
   isValidPaymentOption,
   normalizePaymentOption,
   REGISTRATION_PAYMENT_OPTIONS,
+  resolveStripeCheckoutAmountEur,
+  STRIPE_KLARNA_3X_MIN_EUR,
 } from "../_shared/registration-payments.ts";
 
 const corsHeaders = {
@@ -38,7 +41,8 @@ Deno.serve(async (req) => {
 
     if (
       normalizedOption !== REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE &&
-      normalizedOption !== REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL
+      normalizedOption !== REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL &&
+      normalizedOption !== REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X
     ) {
       return new Response(
         JSON.stringify({ success: false, error: "Ce mode de paiement ne nécessite pas Stripe" }),
@@ -61,7 +65,7 @@ Deno.serve(async (req) => {
 
     const { data: inscription, error: inscriptionError } = await supabase
       .from("inscriptions")
-      .select("id, code, price, student_id")
+      .select("id, code, price, student_id, balance_after_deposit")
       .eq("id", inscriptionId)
       .maybeSingle();
 
@@ -86,32 +90,63 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Montant uniquement depuis la fiche inscription (fixée côté
+    // submit-registration via catalogue / pricing_rules — jamais un prix client).
     const coursePrice = Number(inscription.price) || 0;
     if (coursePrice <= 0) {
       return new Response(
-        JSON.stringify({ success: false, error: "Montant de formation invalide" }),
+        JSON.stringify({
+          success: false,
+          error: "Montant de formation invalide ou tarif en attente de confirmation FLI",
+        }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const paymentFields = getInscriptionPaymentFields(coursePrice, normalizedOption);
+    const stripeAmount = resolveStripeCheckoutAmountEur({
+      coursePrice,
+      balanceAfterDeposit: inscription.balance_after_deposit,
+      paymentOption: normalizedOption,
+    });
+
+    if (
+      normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X &&
+      !isStripeKlarna3xEligibleAmount(stripeAmount)
+    ) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Le paiement en 3 fois avec Klarna est disponible à partir de ${STRIPE_KLARNA_3X_MIN_EUR} €`,
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const productName =
-      normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL
-        ? `Formation FLI — ${inscription.code}`
-        : `Frais de dossier FLI — ${inscription.code}`;
+      normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X
+        ? `Formation FLI (3× Klarna) — ${inscription.code}`
+        : normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL
+          ? `Formation FLI — ${inscription.code}`
+          : `Frais de dossier FLI — ${inscription.code}`;
 
     const session = await createStripeCheckoutSession({
       stripeSecretKey,
-      amountEur: paymentFields.stripeAmount,
+      amountEur: stripeAmount,
       productName,
       customerEmail: email,
       successUrl,
       cancelUrl,
+      paymentMethodTypes:
+        normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X
+          ? ["klarna"]
+          : ["card", "klarna"],
       metadata: {
         inscription_id: inscriptionId,
         payment_option: normalizedOption,
         payment_type: paymentFields.paymentType,
         inscription_code: inscription.code || "",
+        stripe_amount_eur: String(stripeAmount),
       },
     });
 

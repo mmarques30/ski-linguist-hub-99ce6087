@@ -13,10 +13,16 @@ import { Sun, Sunset, Loader2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useApproveSchedule } from "@/hooks/useApproveSchedule";
 import {
+  displayPisteLabel,
   isScheduleAssignmentDue,
   SCHEDULE_ASSIGNMENT_DAYS_BEFORE,
   type ScheduleStatus,
 } from "@/lib/placement-test-engine";
+import {
+  FLI_SCHEDULE_HOURS,
+  scheduleButtonLabel,
+  scheduleLabelForSlot,
+} from "@/lib/fli-schedule-slots";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
@@ -38,8 +44,8 @@ interface ScheduleApprovalDialogProps {
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "En attente",
-  matin: "Matin",
-  "apres-midi": "Après-midi",
+  matin: scheduleLabelForSlot("matin"),
+  "apres-midi": scheduleLabelForSlot("apres-midi"),
 };
 
 export function ScheduleApprovalDialog({
@@ -61,7 +67,7 @@ export function ScheduleApprovalDialog({
         inscriptionId: inscription.id,
         scheduleStatus: slot,
       });
-      toast.success(`Groupe ${slot === "matin" ? "du matin" : "de l'après-midi"} validé`);
+      toast.success(`Groupe validé : ${scheduleLabelForSlot(slot)}`);
       onOpenChange(false);
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "Erreur lors de la validation");
@@ -74,7 +80,7 @@ export function ScheduleApprovalDialog({
         slot === "matin"
           ? "Valider le groupe du matin ?"
           : "Valider le groupe de l'après-midi ?",
-      description: `L'affectation horaire de ${inscription.student_name || "ce stagiaire"} (${inscription.code || "—"}) sera enregistrée.`,
+      description: `L'affectation de ${inscription.student_name || "ce stagiaire"} (${inscription.code || "—"}) sera enregistrée : ${scheduleLabelForSlot(slot)}.`,
       actionLabel: "Valider",
       run: () => persistApprove(slot),
     });
@@ -93,7 +99,12 @@ export function ScheduleApprovalDialog({
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2 text-sm">
             <StatusPill tone="info">{inscription.language}</StatusPill>
-            <StatusPill tone="neutral">Niveau: {inscription.entry_level || "—"}</StatusPill>
+            <StatusPill tone="neutral">
+              Niveau:{" "}
+              {inscription.entry_level
+                ? displayPisteLabel(inscription.entry_level)
+                : "—"}
+            </StatusPill>
             {inscription.start_date && (
               <StatusPill tone="neutral">
                 Début: {format(new Date(inscription.start_date), "dd MMM yyyy", { locale: fr })}
@@ -106,6 +117,8 @@ export function ScheduleApprovalDialog({
             <AlertDescription>
               L'affectation doit être validée environ {SCHEDULE_ASSIGNMENT_DAYS_BEFORE} jours avant le
               début des cours, après analyse de l'ensemble des inscrits du même créneau.
+              Horaires FLI : matin {FLI_SCHEDULE_HOURS.matin.replace(/^de /, "")}, après-midi{" "}
+              {FLI_SCHEDULE_HOURS["apres-midi"].replace(/^de /, "")}.
             </AlertDescription>
           </Alert>
 
@@ -140,7 +153,7 @@ export function ScheduleApprovalDialog({
             ) : (
               <Sun className="mr-2 h-4 w-4" />
             )}
-            Valider — Matin
+            {scheduleButtonLabel("matin")}
           </Button>
           <Button
             onClick={() => handleApprove("apres-midi")}
@@ -151,7 +164,7 @@ export function ScheduleApprovalDialog({
             ) : (
               <Sunset className="mr-2 h-4 w-4" />
             )}
-            Valider — Après-midi
+            {scheduleButtonLabel("apres-midi")}
           </Button>
         </DialogFooter>
       </DialogContent>

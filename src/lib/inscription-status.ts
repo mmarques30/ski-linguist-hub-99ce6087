@@ -66,14 +66,26 @@ export function endPackBlockedReason(
   status: string,
   endPackSentAt?: string | null
 ): string | null {
+  if (isTerminalStatus(status) && status !== 'terminee') {
+    return `Une inscription « ${getStatusLabel(status, 'fr')} » ne peut plus être clôturée : son statut est final.`;
+  }
   if (endPackSentAt) {
-    return 'Le pack de fin a déjà été généré pour cette inscription : les documents existants sont réutilisés, le statut ne change plus.';
+    // Informational — la génération reste possible (force régénération PDF).
+    return null;
   }
   if (canCloseWithEndPack(status)) return null;
   if (status === 'terminee') {
-    return 'Cette inscription est déjà terminée. Générer le pack complétera les documents manquants sans changer le statut.';
+    return null;
   }
   return `Une inscription « ${getStatusLabel(status, 'fr')} » ne peut plus être clôturée : son statut est final.`;
+}
+
+/** La génération / régénération des documents reste ouverte hors statuts finaux durs. */
+export function canGenerateEndPackDocuments(status: string | null | undefined): boolean {
+  if (!status) return true;
+  if (status === 'terminee') return true;
+  if (canCloseWithEndPack(status)) return true;
+  return false;
 }
 
 /**

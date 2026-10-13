@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
@@ -118,6 +118,178 @@ export type Database = {
           value?: Json
         }
         Relationships: []
+      }
+      attendance_records: {
+        Row: {
+          created_at: string
+          id: string
+          inscription_id: string
+          note: string | null
+          signed_at: string | null
+          signed_by: string | null
+          signed_via: string | null
+          slot_id: string
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inscription_id: string
+          note?: string | null
+          signed_at?: string | null
+          signed_by?: string | null
+          signed_via?: string | null
+          slot_id: string
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inscription_id?: string
+          note?: string | null
+          signed_at?: string | null
+          signed_by?: string | null
+          signed_via?: string | null
+          slot_id?: string
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions_complete"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_slot_id_fkey"
+            columns: ["slot_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_slots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance_slots: {
+        Row: {
+          admin_validated_at: string | null
+          admin_validated_by: string | null
+          closed_at: string | null
+          created_at: string
+          day_part: string
+          ends_at: string
+          group_key: string | null
+          id: string
+          inscription_id: string | null
+          instructor_id: string
+          instructor_validated_at: string | null
+          instructor_validated_by: string | null
+          opened_at: string | null
+          session_id: string | null
+          sign_token: string
+          sign_token_expires_at: string | null
+          slot_date: string
+          starts_at: string
+          status: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_validated_at?: string | null
+          admin_validated_by?: string | null
+          closed_at?: string | null
+          created_at?: string
+          day_part?: string
+          ends_at: string
+          group_key?: string | null
+          id?: string
+          inscription_id?: string | null
+          instructor_id: string
+          instructor_validated_at?: string | null
+          instructor_validated_by?: string | null
+          opened_at?: string | null
+          session_id?: string | null
+          sign_token?: string
+          sign_token_expires_at?: string | null
+          slot_date: string
+          starts_at: string
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_validated_at?: string | null
+          admin_validated_by?: string | null
+          closed_at?: string | null
+          created_at?: string
+          day_part?: string
+          ends_at?: string
+          group_key?: string | null
+          id?: string
+          inscription_id?: string | null
+          instructor_id?: string
+          instructor_validated_at?: string | null
+          instructor_validated_by?: string | null
+          opened_at?: string | null
+          session_id?: string | null
+          sign_token?: string
+          sign_token_expires_at?: string | null
+          slot_date?: string
+          starts_at?: string
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_slots_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_slots_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions_complete"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_slots_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_slots_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       audit_log: {
         Row: {
@@ -1005,6 +1177,8 @@ export type Database = {
           formateur: string | null
           formateur_email: string | null
           formateur_telephone: string | null
+          formulaire_entree: Json | null
+          formulaire_sortie: Json | null
           funding_details: string | null
           funding_organization: string | null
           group_name: string | null
@@ -1089,6 +1263,8 @@ export type Database = {
           formateur?: string | null
           formateur_email?: string | null
           formateur_telephone?: string | null
+          formulaire_entree?: Json | null
+          formulaire_sortie?: Json | null
           funding_details?: string | null
           funding_organization?: string | null
           group_name?: string | null
@@ -1173,6 +1349,8 @@ export type Database = {
           formateur?: string | null
           formateur_email?: string | null
           formateur_telephone?: string | null
+          formulaire_entree?: Json | null
+          formulaire_sortie?: Json | null
           funding_details?: string | null
           funding_organization?: string | null
           group_name?: string | null
@@ -2085,6 +2263,7 @@ export type Database = {
           contract_start_date: string | null
           created_at: string
           esf_code: string | null
+          evaluation_results_cc: string[] | null
           id: string
           name: string
           notes: string | null
@@ -2102,6 +2281,7 @@ export type Database = {
           contract_start_date?: string | null
           created_at?: string
           esf_code?: string | null
+          evaluation_results_cc?: string[] | null
           id?: string
           name: string
           notes?: string | null
@@ -2119,6 +2299,7 @@ export type Database = {
           contract_start_date?: string | null
           created_at?: string
           esf_code?: string | null
+          evaluation_results_cc?: string[] | null
           id?: string
           name?: string
           notes?: string | null
@@ -2590,7 +2771,11 @@ export type Database = {
           date_label: string | null
           duration_hours: number
           end_date: string | null
+          enrollment_status: string
+          format_label: string | null
+          funding_mode: string
           id: string
+          instructor_label: string | null
           is_active: boolean
           language_key: string
           language_label: string
@@ -2598,7 +2783,12 @@ export type Database = {
           location_label: string
           modality_key: string
           modality_label: string
+          partner_price: number | null
+          partner_price_alt: number | null
+          partner_price_pending: boolean
+          partner_school_codes: string[]
           season_id: string | null
+          session_code: string | null
           sort_order: number
           start_date: string | null
           updated_at: string
@@ -2609,7 +2799,11 @@ export type Database = {
           date_label?: string | null
           duration_hours: number
           end_date?: string | null
+          enrollment_status?: string
+          format_label?: string | null
+          funding_mode?: string
           id?: string
+          instructor_label?: string | null
           is_active?: boolean
           language_key: string
           language_label: string
@@ -2617,7 +2811,12 @@ export type Database = {
           location_label: string
           modality_key: string
           modality_label: string
+          partner_price?: number | null
+          partner_price_alt?: number | null
+          partner_price_pending?: boolean
+          partner_school_codes?: string[]
           season_id?: string | null
+          session_code?: string | null
           sort_order?: number
           start_date?: string | null
           updated_at?: string
@@ -2628,7 +2827,11 @@ export type Database = {
           date_label?: string | null
           duration_hours?: number
           end_date?: string | null
+          enrollment_status?: string
+          format_label?: string | null
+          funding_mode?: string
           id?: string
+          instructor_label?: string | null
           is_active?: boolean
           language_key?: string
           language_label?: string
@@ -2636,7 +2839,12 @@ export type Database = {
           location_label?: string
           modality_key?: string
           modality_label?: string
+          partner_price?: number | null
+          partner_price_alt?: number | null
+          partner_price_pending?: boolean
+          partner_school_codes?: string[]
           season_id?: string | null
+          session_code?: string | null
           sort_order?: number
           start_date?: string | null
           updated_at?: string
@@ -2647,6 +2855,53 @@ export type Database = {
             columns: ["season_id"]
             isOneToOne: false
             referencedRelation: "seasons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      registration_waitlist_requests: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          notes: string | null
+          offering_id: string | null
+          phone: string | null
+          session_code: string | null
+          ski_school: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          notes?: string | null
+          offering_id?: string | null
+          phone?: string | null
+          session_code?: string | null
+          ski_school?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          notes?: string | null
+          offering_id?: string | null
+          phone?: string | null
+          session_code?: string | null
+          ski_school?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registration_waitlist_requests_offering_id_fkey"
+            columns: ["offering_id"]
+            isOneToOne: false
+            referencedRelation: "registration_offerings"
             referencedColumns: ["id"]
           },
         ]
@@ -3054,6 +3309,78 @@ export type Database = {
           },
         ]
       }
+      ski_school_directory: {
+        Row: {
+          cartes_actifs: number | null
+          code: string
+          courriel_direction: string | null
+          courriel_ecole: string | null
+          courriel_resultats_cc: string | null
+          cp: string | null
+          created_at: string
+          departement: string | null
+          directeur: string | null
+          id: string
+          is_active: boolean
+          nom_affiche: string
+          num_esf: string | null
+          pending_validation: boolean
+          region_esf: string | null
+          reseau: string
+          source: string | null
+          station: string | null
+          telephone: string | null
+          updated_at: string
+          ville: string | null
+        }
+        Insert: {
+          cartes_actifs?: number | null
+          code: string
+          courriel_direction?: string | null
+          courriel_ecole?: string | null
+          courriel_resultats_cc?: string | null
+          cp?: string | null
+          created_at?: string
+          departement?: string | null
+          directeur?: string | null
+          id?: string
+          is_active?: boolean
+          nom_affiche: string
+          num_esf?: string | null
+          pending_validation?: boolean
+          region_esf?: string | null
+          reseau: string
+          source?: string | null
+          station?: string | null
+          telephone?: string | null
+          updated_at?: string
+          ville?: string | null
+        }
+        Update: {
+          cartes_actifs?: number | null
+          code?: string
+          courriel_direction?: string | null
+          courriel_ecole?: string | null
+          courriel_resultats_cc?: string | null
+          cp?: string | null
+          created_at?: string
+          departement?: string | null
+          directeur?: string | null
+          id?: string
+          is_active?: boolean
+          nom_affiche?: string
+          num_esf?: string | null
+          pending_validation?: boolean
+          region_esf?: string | null
+          reseau?: string
+          source?: string | null
+          station?: string | null
+          telephone?: string | null
+          updated_at?: string
+          ville?: string | null
+        }
+        Relationships: []
+      }
       ski_schools: {
         Row: {
           created_at: string
@@ -3101,6 +3428,8 @@ export type Database = {
       students: {
         Row: {
           auth_user_id: string | null
+          carte_syndicale: string | null
+          carte_syndicale_pending: boolean
           city: string | null
           civility: string | null
           company: string | null
@@ -3111,11 +3440,16 @@ export type Database = {
           last_name: string
           phone: string | null
           postal_code: string | null
+          ski_network: string | null
+          ski_school_code: string | null
+          ski_school_other: string | null
           street_address: string | null
           updated_at: string
         }
         Insert: {
           auth_user_id?: string | null
+          carte_syndicale?: string | null
+          carte_syndicale_pending?: boolean
           city?: string | null
           civility?: string | null
           company?: string | null
@@ -3126,11 +3460,16 @@ export type Database = {
           last_name: string
           phone?: string | null
           postal_code?: string | null
+          ski_network?: string | null
+          ski_school_code?: string | null
+          ski_school_other?: string | null
           street_address?: string | null
           updated_at?: string
         }
         Update: {
           auth_user_id?: string | null
+          carte_syndicale?: string | null
+          carte_syndicale_pending?: boolean
           city?: string | null
           civility?: string | null
           company?: string | null
@@ -3141,6 +3480,9 @@ export type Database = {
           last_name?: string
           phone?: string | null
           postal_code?: string | null
+          ski_network?: string | null
+          ski_school_code?: string | null
+          ski_school_other?: string | null
           street_address?: string | null
           updated_at?: string
         }
@@ -3622,6 +3964,8 @@ export type Database = {
           formateur: string | null
           formateur_email: string | null
           formateur_telephone: string | null
+          formulaire_entree: Json | null
+          formulaire_sortie: Json | null
           group_name: string | null
           hours_followed: number | null
           hours_per_day: number | null
@@ -3780,10 +4124,6 @@ export type Database = {
         Args: { _dry_run?: boolean }
         Returns: Json
       }
-      _zztest_make_auth_user: {
-        Args: { _email: string; _password: string }
-        Returns: string
-      }
       activate_season: { Args: { p_season_id: string }; Returns: undefined }
       avancer_statuts_inscriptions: {
         Args: { _dry_run?: boolean }
@@ -3792,6 +4132,10 @@ export type Database = {
       cecrl_label_from_score: { Args: { _score: number }; Returns: string }
       classify_entry_level_source: { Args: { _raw: string }; Returns: string }
       cleanup_zztest_data: { Args: { _dry_run?: boolean }; Returns: Json }
+      compute_attendance_rate: {
+        Args: { p_inscription_id: string }
+        Returns: number
+      }
       dispatch_edge_function: {
         Args: {
           p_body?: Json
@@ -3819,6 +4163,7 @@ export type Database = {
       }
       funding_object_is_linked: { Args: { _name: string }; Returns: boolean }
       generate_inscription_code: { Args: never; Returns: string }
+      get_attendance_slot_by_token: { Args: { p_token: string }; Returns: Json }
       get_fiscal_year: { Args: { invoice_date: string }; Returns: string }
       get_inscription_suivi_by_token: {
         Args: { p_token: string }
@@ -3882,6 +4227,7 @@ export type Database = {
         }[]
       }
       map_entry_level_to_cecrl: { Args: { _raw: string }; Returns: string }
+      monitoring_rls_summary: { Args: never; Returns: Json }
       notify_admins: {
         Args: {
           p_link?: string
@@ -3904,6 +4250,10 @@ export type Database = {
       }
       set_email_cron_active: {
         Args: { p_active: boolean; p_jobname: string }
+        Returns: Json
+      }
+      sign_attendance_by_token: {
+        Args: { p_email: string; p_token: string }
         Returns: Json
       }
       sign_instructor_contract_by_token: {

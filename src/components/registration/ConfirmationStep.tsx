@@ -64,10 +64,21 @@ import {
   type RegistrationFailureNotice,
 } from "@/lib/registration-error-message";
 import {
+  isAgeficeFundingType,
+  isFifplFunding,
   isOpcoFunding,
   REGISTRATION_FUNDING_MAP,
 } from "@/lib/registration-utils";
+import { getFundingFlow } from "@/lib/funding-flows";
 import { OPCO_REGISTER_COPY } from "@/lib/opco-funding";
+import {
+  estimateFifplRights,
+  FIFPL_REGISTER_COPY,
+} from "@/lib/fifpl-funding";
+import {
+  AGEFICE_CEILINGS_URL,
+  AGEFICE_REGISTER_COPY,
+} from "@/lib/agefice-funding";
 import { StepActions, StepCard, SummaryPanel, SummaryRow } from "./StepLayout";
 
 interface ConfirmationStepProps {
@@ -118,8 +129,14 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
   const isStationGroup = expectsStationGroupAssignment(data.modality);
   const isCustomFormat = data.isCustomFormat || isCustomFormatDuration(data.duration);
   const isOpco = isOpcoFunding(data.fundingType);
+  const isFifpl = isFifplFunding(data.fundingType);
+  const isAgefice = isAgeficeFundingType(data.fundingType);
+  const fundingFlow = getFundingFlow(
+    REGISTRATION_FUNDING_MAP[data.fundingType] || data.fundingType,
+  );
   const coursePrice = data.price ?? 0;
-  const hasPaymentStep = !isCustomFormat && coursePrice > 0 && !isOpco;
+  const pricePending = Boolean(data.pricePending);
+  const hasPaymentStep = !isCustomFormat && coursePrice > 0 && !isOpco && !pricePending;
   // Décision Paula : aucun mode de règlement coché par défaut, donc aucun repli ici.
   const paymentOption = data.paymentOption ?? null;
   const paymentMissing = hasPaymentStep && !paymentOption;
@@ -239,10 +256,26 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             <p className="max-w-md text-sm text-muted-foreground">
               Merci de vous être inscrit chez France Langues International.
               {result.documentsSent
-                ? " Les documents d'inscription (convention, programme et critères FIF-PL) vous seront envoyés par email dans les 30 minutes."
-                : result.emailSent
-                  ? " Un email de confirmation vous a été envoyé."
-                  : " Notre équipe vous contactera prochainement."}
+                ? fundingFlow?.packId === "agefice"
+                  ? " Les documents d'inscription (convention, programme et formulaire AGEFICE) vous seront envoyés par email."
+                  : fundingFlow?.packId === "fifpl"
+                    ? " Les documents d'inscription (convention, programme et critères FIF-PL) vous seront envoyés par email."
+                    : fundingFlow?.packId === "convention_programme"
+                      ? " Votre convention et votre programme de formation vous seront envoyés par email."
+                      : " Les documents d'inscription vous seront envoyés par email."
+                : result.paymentFlow === "virement" || result.paymentFlow === "stripe"
+                  ? fundingFlow?.documentTrigger === "after_deposit"
+                    ? " Les documents d'inscription vous seront envoyés par email après confirmation du règlement des frais de dossier (150 €)."
+                    : fundingFlow?.documentTrigger === "after_full_payment"
+                      ? " Votre convention et votre programme vous seront envoyés par email après confirmation du règlement de la totalité de la formation."
+                      : " Un email de confirmation vous a été envoyé."
+                  : isOpco
+                    ? " Aucun règlement n'est demandé pour l'instant : nous analysons votre dossier OPCO et vous recontacterons."
+                    : pricePending
+                      ? " Votre inscription est enregistrée hors paiement : le tarif partenaire sera confirmé, puis nous vous enverrons le lien de règlement et vos documents."
+                      : result.emailSent
+                        ? " Un email de confirmation vous a été envoyé."
+                        : " Notre équipe vous contactera prochainement."}
             </p>
             <StatusPill tone="warning" className="px-4 py-1.5 text-base">
               Code : {result.inscriptionCode}
@@ -350,7 +383,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                         result.paymentOption as RegistrationPaymentOption
                       ).balanceAfterDossier
                     )}{" "}
-                    à envoyer avec votre inscription
+                    à envoyer avant le début de la formation
                   </p>
                   <p className="text-sm text-muted-foreground">{CHEQUE_BALANCE_INSTRUCTION}</p>
                 </AlertDescription>
@@ -364,19 +397,55 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             </Alert>
           )}
 
+          {pricePending && (
+            <Alert>
+              <AlertDescription>
+                En attente tarif : aucun paiement ni convention à l&apos;inscription. Le lien de
+                paiement et vos documents suivront dès fixation du tarif.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isFifpl && (
+            <Alert>
+              <AlertDescription>
+                {FIFPL_REGISTER_COPY.confirmationAlert(
+                  estimateFifplRights({
+                    status: data.fifplStatus ?? null,
+                    cfpContributionEur: data.fifplCfpContributionEur ?? null,
+                    modality: data.modality,
+                    alreadyCoveredEur:
+                      data.fifplHadOtherTrainingThisYear === true
+                        ? data.fifplOtherAmountAlreadyCoveredEur
+                        : 0,
+                    coursePriceEur: data.price ?? null,
+                  })?.remainingRightsEur ?? null
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isAgefice && (
+            <Alert>
+              <AlertDescription>
+                {AGEFICE_REGISTER_COPY.confirmationAlert(data.startDate)}{" "}
+                <a
+                  href={AGEFICE_CEILINGS_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium underline underline-offset-2"
+                >
+                  {AGEFICE_REGISTER_COPY.ceilingsLinkLabel}
+                </a>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {isStationGroup && (
             <Alert>
               <Mountain className="h-4 w-4" />
               <AlertDescription>
                 {STATION_GROUP_NOTICE_AFTER_TEST} — {STATION_GROUP_SIGNATURE}
-              </AlertDescription>
-            </Alert>
-          )}
-          {result.needsAdminCall && (
-            <Alert>
-              <Phone className="h-4 w-4" />
-              <AlertDescription>
-                Notre équipe vous contactera par téléphone suite à votre résultat au test.
               </AlertDescription>
             </Alert>
           )}
@@ -398,7 +467,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             <SummaryPanel>
               <SummaryRow
                 label="Nom"
-                value={`${data.civility === "madame" ? "Mme" : "M."} ${data.firstName} ${data.lastName}`}
+                value={`${data.firstName} ${data.lastName}`.trim()}
               />
               <SummaryRow label="Email" value={<span className="break-all">{data.email}</span>} />
               <SummaryRow label="Téléphone" value={data.phone} />
@@ -458,30 +527,17 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                       ? studentFacingPisteLabel({
                           passedSlopes: data.testSummary.passedSlopes,
                           highestSlopeReached: data.testSummary.highestSlopeReached,
-                          endedAtVocab: data.testSummary.endedAtVocab,
                         })
                       : studentFacingPisteFromCecrl(data.currentLevel)}
                   </StatusPill>
                 }
               />
-              {data.correctAnswers !== undefined && (
+              {data.profession !== "ski_instructor" && (
                 <SummaryRow
-                  label="Score test"
-                  value={
-                    <>
-                      {data.correctAnswers}/
-                      {data.totalAnswered ??
-                        data.testSummary?.slopeResults.reduce((sum, sr) => sum + sr.total, 0) ??
-                        "—"}{" "}
-                      bonnes réponses
-                    </>
-                  }
+                  label="Certification"
+                  value={certificationLabels[data.certification] || data.certification}
                 />
               )}
-              <SummaryRow
-                label="Certification"
-                value={certificationLabels[data.certification] || data.certification}
-              />
             </SummaryPanel>
           </div>
 
@@ -492,6 +548,41 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
             </Alert>
           )}
 
+          {isFifpl && (
+            <Alert>
+              <AlertDescription>
+                {FIFPL_REGISTER_COPY.confirmationAlert(
+                  estimateFifplRights({
+                    status: data.fifplStatus ?? null,
+                    cfpContributionEur: data.fifplCfpContributionEur ?? null,
+                    modality: data.modality,
+                    alreadyCoveredEur:
+                      data.fifplHadOtherTrainingThisYear === true
+                        ? data.fifplOtherAmountAlreadyCoveredEur
+                        : 0,
+                    coursePriceEur: data.price ?? null,
+                  })?.remainingRightsEur ?? null
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isAgefice && (
+            <Alert>
+              <AlertDescription>
+                {AGEFICE_REGISTER_COPY.confirmationAlert(data.startDate)}{" "}
+                <a
+                  href={AGEFICE_CEILINGS_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium underline underline-offset-2"
+                >
+                  {AGEFICE_REGISTER_COPY.ceilingsLinkLabel}
+                </a>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {paymentSummary && (
             <>
               <Separator />
@@ -499,10 +590,12 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                 <p className="text-sm font-medium">Paiement</p>
                 <SummaryPanel>
                   <SummaryRow label="Mode choisi" value={PAYMENT_OPTION_LABELS[paymentOption]} />
-                  <SummaryRow
-                    label="Frais de dossier"
-                    value={formatPriceEUR(paymentSummary.dossierFee)}
-                  />
+                  {paymentSummary.dossierFee > 0 && (
+                    <SummaryRow
+                      label="Frais de dossier"
+                      value={formatPriceEUR(paymentSummary.dossierFee)}
+                    />
+                  )}
                   {paymentSummary.balanceAfterDossier > 0 && hasChequeBalance(paymentOption) && (
                     <SummaryRow
                       label={CHEQUE_BALANCE_SUMMARY_LABEL}
@@ -511,7 +604,11 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                   )}
                   <SummaryRow
                     label="À régler maintenant"
-                    value={formatPriceEUR(paymentSummary.amountDueNow)}
+                    value={
+                      paymentOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X
+                        ? paymentSummary.amountDueNowLabel
+                        : formatPriceEUR(paymentSummary.amountDueNow)
+                    }
                     emphasis
                   />
                 </SummaryPanel>

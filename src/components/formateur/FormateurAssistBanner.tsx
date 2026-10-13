@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { Eye, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFormateurView } from "@/contexts/FormateurViewContext";

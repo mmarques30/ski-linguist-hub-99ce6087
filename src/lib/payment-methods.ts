@@ -6,7 +6,7 @@ export const PAYMENT_METHODS = [
   { value: "virement", label: "Virement" },
   { value: "cheque", label: "Chèque" },
   { value: "especes", label: "Espèces" },
-  { value: "stripe", label: "Stripe" },
+  { value: "stripe", label: "Carte bancaire en ligne" },
   { value: "organisme", label: "Prise en charge organisme" },
 ] as const;
 

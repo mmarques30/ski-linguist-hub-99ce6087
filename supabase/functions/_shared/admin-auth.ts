@@ -5,8 +5,129 @@ export const adminCorsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function jsonAuthError(status: number, error: string): Response {
+  return new Response(JSON.stringify({ success: false, error }), {
+    status,
+    headers: { ...adminCorsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+/** Extrait le Bearer ; null si absent ou mal formé. */
+export function extractBearerToken(req: Request): string | null {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return null;
+  const token = authHeader.slice("Bearer ".length).trim();
+  return token || null;
+}
+
+/**
+ * Lit le claim `role` d'un JWT Supabase (anon / service_role / authenticated)
+ * sans vérification crypto — uniquement pour filtrer la clé publique.
+ */
+export function readJwtRoleClaim(token: string): string | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length < 2) return null;
+    const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
+    const payload = JSON.parse(atob(padded)) as { role?: unknown };
+    return typeof payload.role === "string" ? payload.role : null;
+  } catch {
+    return null;
+  }
+}
+
+function isAnonToken(token: string, anonKey: string): boolean {
+  if (token === anonKey) return true;
+  return readJwtRoleClaim(token) === "anon";
+}
+
+function isServiceRoleToken(token: string, serviceRoleKey: string): boolean {
+  if (token === serviceRoleKey) return true;
+  return readJwtRoleClaim(token) === "service_role";
+}
+
 export async function requireAdmin(
   req: Request
+): Promise<{ adminClient: SupabaseClient; userId: string } | Response> {
+  return requireRole(req, ["admin"], "Forbidden: admin only");
+}
+
+/** Staff back-office (admin ou user) — exclut formateur / stagiaire. */
+export async function requireStaff(
+  req: Request
+): Promise<{ adminClient: SupabaseClient; userId: string } | Response> {
+  return requireRole(req, ["admin", "user"], "Forbidden: staff only");
+}
+
+/**
+ * Cron / dispatch SQL (JWT service_role) **ou** staff connecté.
+ * Refuse explicitement la clé anon : `verify_jwt=true` l'accepte autrement.
+ */
+export async function requireServiceRoleOrStaff(
+  req: Request
+): Promise<
+  | { adminClient: SupabaseClient; userId: string | null; authMode: "service_role" | "staff" }
+  | Response
+> {
+  return requireServiceRoleOrRoles(req, ["admin", "user"], "Forbidden: staff or service role only");
+}
+
+/**
+ * Cron / dispatch SQL (JWT service_role) **ou** admin connecté.
+ * Pour les envois sensibles (prospection moniteurs).
+ */
+export async function requireServiceRoleOrAdmin(
+  req: Request
+): Promise<
+  | { adminClient: SupabaseClient; userId: string | null; authMode: "service_role" | "admin" }
+  | Response
+> {
+  const result = await requireServiceRoleOrRoles(req, ["admin"], "Forbidden: admin or service role only");
+  if (result instanceof Response) return result;
+  return {
+    adminClient: result.adminClient,
+    userId: result.userId,
+    authMode: result.authMode === "service_role" ? "service_role" : "admin",
+  };
+}
+
+async function requireServiceRoleOrRoles(
+  req: Request,
+  roles: Array<"admin" | "user">,
+  forbiddenMessage: string
+): Promise<
+  | { adminClient: SupabaseClient; userId: string | null; authMode: "service_role" | "staff" }
+  | Response
+> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const token = extractBearerToken(req);
+
+  if (!token) {
+    return jsonAuthError(401, "Unauthorized");
+  }
+
+  if (isAnonToken(token, anonKey)) {
+    return jsonAuthError(403, "Forbidden: anon key is not sufficient");
+  }
+
+  const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
+  if (isServiceRoleToken(token, serviceRoleKey)) {
+    return { adminClient, userId: null, authMode: "service_role" };
+  }
+
+  const staff = await requireRole(req, roles, forbiddenMessage);
+  if (staff instanceof Response) return staff;
+  return { adminClient: staff.adminClient, userId: staff.userId, authMode: "staff" };
+}
+
+async function requireRole(
+  req: Request,
+  roles: Array<"admin" | "user">,
+  forbiddenMessage: string
 ): Promise<{ adminClient: SupabaseClient; userId: string } | Response> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -14,16 +135,22 @@ export async function requireAdmin(
 
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
-    return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
-      status: 401,
-      headers: { ...adminCorsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonAuthError(401, "Unauthorized");
+  }
+
+  const token = authHeader.replace("Bearer ", "").trim();
+  if (!token) {
+    return jsonAuthError(401, "Unauthorized");
+  }
+
+  // La clé publique franchit verify_jwt mais n'est jamais un appelant admin/staff.
+  if (isAnonToken(token, anonKey)) {
+    return jsonAuthError(403, "Forbidden: anon key is not sufficient");
   }
 
   const callerClient = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: authHeader } },
   });
-  const token = authHeader.replace("Bearer ", "");
 
   // getClaims (JWT local) puis repli getUser (Auth API) si le runtime
   // Deno / la lib ne résout pas les claims — sinon les boutons admin
@@ -40,23 +167,24 @@ export async function requireAdmin(
   }
 
   if (!userId) {
-    return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
-      status: 401,
-      headers: { ...adminCorsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonAuthError(401, "Unauthorized");
   }
 
   const adminClient = createClient(supabaseUrl, serviceRoleKey);
-  const { data: isAdmin } = await adminClient.rpc("has_role", {
-    _user_id: userId,
-    _role: "admin",
-  });
-
-  if (!isAdmin) {
-    return new Response(JSON.stringify({ success: false, error: "Forbidden: admin only" }), {
-      status: 403,
-      headers: { ...adminCorsHeaders, "Content-Type": "application/json" },
+  let allowed = false;
+  for (const role of roles) {
+    const { data } = await adminClient.rpc("has_role", {
+      _user_id: userId,
+      _role: role,
     });
+    if (data) {
+      allowed = true;
+      break;
+    }
+  }
+
+  if (!allowed) {
+    return jsonAuthError(403, forbiddenMessage);
   }
 
   return { adminClient, userId };

@@ -38,6 +38,8 @@ export interface VerifyRegistrationCheckoutResult {
   duplicate?: boolean;
   inscriptionCode?: string | null;
   amountPaid?: number;
+  /** Présent si la clé Stripe côté serveur est sk_test_ / sk_live_. */
+  stripeMode?: "test" | "live" | null;
 }
 
 export async function verifyRegistrationCheckout(

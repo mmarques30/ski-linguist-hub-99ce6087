@@ -1,10 +1,13 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   getInscriptionPaymentFields,
+  isStripeTotalSettlement,
   normalizePaymentOption,
   REGISTRATION_PAYMENT_OPTIONS,
   type RegistrationPaymentOption,
 } from "./registration-payments.ts";
+import { enqueueInscriptionDocuments } from "./enqueue-inscription-documents.ts";
+import { paymentTriggersDocumentEnqueue } from "./funding-flows.ts";
 
 export interface StripeCheckoutSessionLike {
   id: string;
@@ -40,7 +43,7 @@ export async function recordStripeCheckoutPayment(
 
   const { data: inscription } = await supabase
     .from("inscriptions")
-    .select("id, price, code")
+    .select("id, price, code, funding_organization")
     .eq("id", inscriptionId)
     .maybeSingle();
 
@@ -52,11 +55,25 @@ export async function recordStripeCheckoutPayment(
   const paymentFields = getInscriptionPaymentFields(coursePrice, normalizedOption);
   const amountPaid = (session.amount_total || 0) / 100;
   const today = new Date().toISOString().split("T")[0];
+  const settledTotal = isStripeTotalSettlement(normalizedOption);
+  const resolvedPaymentType =
+    paymentType === "acompte" || paymentType === "total"
+      ? paymentType
+      : settledTotal
+        ? "total"
+        : "acompte";
+
+  const paymentNotes =
+    normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X
+      ? "Paiement en 3 fois (Klarna) — inscription en ligne"
+      : settledTotal
+        ? "Paiement intégral inscription en ligne"
+        : "Frais de dossier inscription en ligne";
 
   await supabase.from("payments").insert({
     inscription_id: inscriptionId,
     amount: amountPaid,
-    payment_type: paymentType,
+    payment_type: resolvedPaymentType,
     payment_method: "stripe",
     status: "recu",
     payment_date: today,
@@ -64,17 +81,11 @@ export async function recordStripeCheckoutPayment(
     stripe_payment_intent_id: session.payment_intent,
     reference: inscription.code,
     payer_type: "stagiaire",
-    notes:
-      normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL
-        ? "Paiement intégral inscription en ligne"
-        : "Frais de dossier inscription en ligne",
+    notes: paymentNotes,
   });
 
   const depositAmount = amountPaid;
-  const balanceAfterDeposit =
-    normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL
-      ? 0
-      : paymentFields.balanceAfterDeposit;
+  const balanceAfterDeposit = settledTotal ? 0 : paymentFields.balanceAfterDeposit;
 
   await supabase
     .from("inscriptions")
@@ -83,10 +94,29 @@ export async function recordStripeCheckoutPayment(
       deposit_amount: depositAmount,
       deposit_date: today,
       balance_after_deposit: balanceAfterDeposit,
-      status:
-        normalizedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL ? "confirmee" : undefined,
+      status: settledTotal ? "confirmee" : undefined,
     })
     .eq("id", inscriptionId);
+
+  // Dossier : FIFPL / AGEFICE / Autofinancement après 150 € ou total.
+  try {
+    const fundingOrganization = inscription.funding_organization ?? null;
+    if (
+      paymentTriggersDocumentEnqueue(fundingOrganization, {
+        status: "recu",
+        amount: amountPaid,
+        payment_type: resolvedPaymentType,
+      })
+    ) {
+      await enqueueInscriptionDocuments({
+        supabase,
+        inscriptionId,
+        fundingOrganization,
+      });
+    }
+  } catch (docError) {
+    console.error("enqueue inscription_documents after Stripe:", docError);
+  }
 
   return { recorded: true, duplicate: false, inscriptionId };
 }
