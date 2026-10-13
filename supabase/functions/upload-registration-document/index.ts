@@ -1,9 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  adminCorsHeaders,
+  requireServiceRoleOrStaff,
+} from "../_shared/admin-auth.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const corsHeaders = adminCorsHeaders;
 
 const BUCKET = "documents";
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -15,7 +16,7 @@ const ALLOWED_TYPES: Record<string, string> = {
 };
 
 interface UploadPayload {
-  /** Stagiaire propriétaire. Absent avant création du dossier : dépôt sous register/. */
+  /** Stagiaire propriétaire. Réservé staff/service_role — le public dépose sous register/. */
   studentId?: string;
   documentKind: string;
   fileName: string;
@@ -46,6 +47,13 @@ function decodeBase64(value: string): Uint8Array {
   return bytes;
 }
 
+function serviceRoleClient() {
+  return createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -69,11 +77,28 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (payload.studentId && !isUuid(payload.studentId)) {
+    const requestedStudentId =
+      typeof payload.studentId === "string" && payload.studentId.trim()
+        ? payload.studentId.trim()
+        : undefined;
+
+    if (requestedStudentId && !isUuid(requestedStudentId)) {
       return new Response(
         JSON.stringify({ error: "Identifiant stagiaire invalide" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Finding #11 : un appelant anonyme ne doit pas pouvoir choisir le dossier
+    // d'un autre élève. Le formulaire public dépose uniquement sous register/.
+    // Un studentId explicite exige staff ou service_role.
+    let ownerSegment = "register";
+    let supabase = serviceRoleClient();
+    if (requestedStudentId) {
+      const auth = await requireServiceRoleOrStaff(req);
+      if (auth instanceof Response) return auth;
+      ownerSegment = requestedStudentId;
+      supabase = auth.adminClient;
     }
 
     const bytes = decodeBase64(payload.contentBase64);
@@ -86,14 +111,6 @@ Deno.serve(async (req) => {
 
     // Clé service-role : le dépôt ne passe jamais par le client anonyme, dont la
     // RLS du bucket privé refuse l'écriture.
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
-    // Premier segment = student_id : c'est la clé de la politique de lecture
-    // du stagiaire (rls_documents_storage_select_owner).
-    const ownerSegment = payload.studentId ?? "register";
     const baseName = sanitizeSegment(
       payload.fileName?.replace(/\.[^.]+$/, "") || payload.documentKind
     );

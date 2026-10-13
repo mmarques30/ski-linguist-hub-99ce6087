@@ -1,9 +1,9 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import {
+  adminCorsHeaders,
+  requireServiceRoleOrStaff,
+} from '../_shared/admin-auth.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const corsHeaders = adminCorsHeaders;
 
 interface CostTemplate {
   id: string;
@@ -19,11 +19,12 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Cron / staff only — refuse anon (finding #7).
+  const auth = await requireServiceRoleOrStaff(req);
+  if (auth instanceof Response) return auth;
+
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = auth.adminClient;
 
     // Get current month in YYYY-MM format
     const now = new Date();

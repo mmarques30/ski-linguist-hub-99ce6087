@@ -169,11 +169,12 @@ describe("La Rosière — demande CFP manquante", () => {
     expect(edge).toContain("renderRosiereCfpRequestEmail");
   });
 
-  it("expose un backfill service-role sans requireStaff", () => {
+  it("expose un backfill staff ou service_role (finding #8)", () => {
     const edge = source("supabase/functions/send-rosiere-cfp-request/index.ts");
     expect(edge).toContain("inscriptionIds");
     expect(edge).toContain("ROSIERE_CFP_EMAIL_SLUG");
-    expect(edge).not.toContain('from "../_shared/admin-auth.ts"');
+    expect(edge).toContain("requireServiceRoleOrStaff");
+    expect(edge).toContain('from "../_shared/admin-auth.ts"');
     const toml = source("supabase/config.toml");
     expect(toml).toContain("[functions.send-rosiere-cfp-request]");
   });
