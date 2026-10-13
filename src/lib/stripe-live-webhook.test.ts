@@ -20,6 +20,7 @@ describe("Stripe live webhook — vérification réelle", () => {
     expect(check).toContain("webhookModeMismatch");
     expect(check).toContain("webhookOperational");
     expect(check).toMatch(/configured:[\s\S]*webhookOperational/);
+    expect(check).toContain("requireStaff");
   });
 
   it("provision enregistre le mode (test/live) avec le secret", () => {

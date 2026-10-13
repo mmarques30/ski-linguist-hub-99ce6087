@@ -252,7 +252,11 @@ function hasFifplAnswers(registration: RegistrationPayload): boolean {
   );
 }
 
-function buildFifplFundingDetails(registration: RegistrationPayload): string | null {
+function buildFifplFundingDetails(
+  registration: RegistrationPayload,
+  /** Prix catalogue résolu côté serveur — jamais registration.price client. */
+  serverCoursePrice: number | null = null
+): string | null {
   if (!isFifplFunding(registration.fundingType) && !hasFifplAnswers(registration)) {
     return null;
   }
@@ -284,9 +288,10 @@ function buildFifplFundingDetails(registration: RegistrationPayload): string | n
   }
   const gross = Math.round((annualBase * percent) / 100);
   const remaining = Math.max(0, gross - (Number(already) || 0));
+  // Finding scan : coveredOnCourseEur ne doit pas dépendre du prix client.
   const coursePrice =
-    registration.price != null && Number(registration.price) > 0
-      ? Number(registration.price)
+    serverCoursePrice != null && Number(serverCoursePrice) > 0
+      ? Number(serverCoursePrice)
       : null;
   const coveredOnCourse =
     coursePrice != null ? Math.min(coursePrice, remaining) : null;
@@ -328,14 +333,21 @@ function buildFifplFundingDetails(registration: RegistrationPayload): string | n
   });
 }
 
-function buildFundingDetails(registration: RegistrationPayload): string | null {
+function buildFundingDetails(
+  registration: RegistrationPayload,
+  serverCoursePrice: number | null = null
+): string | null {
   return (
-    buildOpcoFundingDetails(registration) || buildFifplFundingDetails(registration)
+    buildOpcoFundingDetails(registration) ||
+    buildFifplFundingDetails(registration, serverCoursePrice)
   );
 }
 
-function formatFifplObservation(registration: RegistrationPayload): string {
-  const details = buildFifplFundingDetails(registration);
+function formatFifplObservation(
+  registration: RegistrationPayload,
+  serverCoursePrice: number | null = null
+): string {
+  const details = buildFifplFundingDetails(registration, serverCoursePrice);
   if (!details) return "Financement FIFPL";
   try {
     const parsed = JSON.parse(details) as {
@@ -721,7 +733,7 @@ Deno.serve(async (req) => {
       (isFifpl || hasFifplAnswers(registration))
     ) {
       try {
-        const details = buildFifplFundingDetails(registration);
+        const details = buildFifplFundingDetails(registration, price);
         if (details) {
           const parsed = JSON.parse(details) as {
             fifpl?: { estimatedRights?: { coveredOnCourseEur?: number | null } };
@@ -789,7 +801,7 @@ Deno.serve(async (req) => {
         course_type: COURSE_TYPE_MAP[registration.modality] || null,
         course_location: courseLocation,
         funding_organization: FUNDING_MAP[registration.fundingType] || registration.fundingType || null,
-        funding_details: buildFundingDetails(registration),
+        funding_details: buildFundingDetails(registration, price),
         certification_type: registration.certification || null,
         expectations: registration.expectations || null,
         schedule_status: "pending",
@@ -818,7 +830,7 @@ Deno.serve(async (req) => {
             : null,
           isOpco ? formatOpcoObservation(registration) : null,
           isFifpl || hasFifplAnswers(registration)
-            ? formatFifplObservation(registration)
+            ? formatFifplObservation(registration, price)
             : null,
           isAgefice ? formatAgeficeObservation(registration) : null,
           registration.paymentOption
@@ -1145,7 +1157,7 @@ Deno.serve(async (req) => {
         isFifpl,
         fifplObservation:
           isFifpl || hasFifplAnswers(registration)
-            ? formatFifplObservation(registration)
+            ? formatFifplObservation(registration, price)
             : null,
         isAgefice,
         ageficeObservation: isAgefice ? formatAgeficeObservation(registration) : null,

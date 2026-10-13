@@ -1,4 +1,6 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  requireStaff,
+} from "../_shared/admin-auth.ts";
 import { getStripeMode, stripeCorsHeaders as corsHeaders, validateStripeKey } from "../_shared/stripe.ts";
 import {
   getStoredStripeWebhookSecretRecord,
@@ -14,16 +16,17 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Settings / Intégrations — refuse anon et comptes non-staff (finding scan).
+  const auth = await requireStaff(req);
+  if (auth instanceof Response) return auth;
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const webhookUrl = supabaseUrl
     ? `${supabaseUrl.replace(/\/$/, "")}/functions/v1/stripe-webhook`
     : null;
 
   const secretKey = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
-  const supabase = createClient(
-    supabaseUrl,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-  );
+  const supabase = auth.adminClient;
   const webhookSecretFromEnv = Boolean(Deno.env.get("STRIPE_WEBHOOK_SECRET"));
   const storedRecord = await getStoredStripeWebhookSecretRecord(supabase);
   const webhookSecretConfigured = await isStripeWebhookSecretConfigured(supabase);
