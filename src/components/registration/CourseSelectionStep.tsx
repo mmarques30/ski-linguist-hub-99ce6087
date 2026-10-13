@@ -12,7 +12,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, MessageSquare, Monitor, Mountain, Phone, User } from "lucide-react";
+import { Calendar, Languages, MapPin, MessageSquare, Monitor, Mountain, Phone, User } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,14 +22,20 @@ import { useRegistrationOfferings } from "@/hooks/useRegistrationOfferings";
 import {
   CUSTOM_FORMAT_DURATION,
   WAITLIST_MESSAGE,
+  filterByDateKey,
+  filterByLanguage,
   filterInPersonSessions,
   filterOnlineGroupSessions,
   filterOnlineIndividual,
   isCustomFormatDuration,
   isOpenOffering,
   isWaitlistOffering,
+  matchOffering,
+  offeringDateKey,
+  uniqueDateOptions,
   uniqueDurations,
   uniqueLanguages,
+  uniqueLocations,
   type RegistrationOffering,
 } from "@/lib/registration-offerings";
 import {
@@ -50,16 +56,26 @@ interface CourseSelectionStepProps {
 type PathMode = "in_person" | "online";
 type OnlineKind = "individual" | "group";
 
-function sessionDateKey(o: RegistrationOffering): string {
-  return o.start_date && o.end_date ? `${o.start_date}_${o.end_date}` : o.date_label || "flex";
-}
-
 /** Dates + durée — sans formateur, sans répéter la modalité. */
 function sessionScheduleLine(o: RegistrationOffering): string {
   const parts: string[] = [];
   if (o.date_label) parts.push(o.date_label);
   if (o.duration_hours) parts.push(`${o.duration_hours} h`);
   return parts.join(" · ");
+}
+
+/** Si une seule offre reste, l’appliquer ; sinon null. */
+function soleMatchingOffering(
+  pool: RegistrationOffering[],
+  filters: {
+    locationKey: string;
+    modalityKey: RegistrationOffering["modality_key"];
+    languageKey: string;
+    dateKey: string;
+  }
+): RegistrationOffering | null {
+  const matched = matchOffering(pool, filters);
+  return matched ?? null;
 }
 
 export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionStepProps) {
@@ -104,16 +120,49 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
   );
 
   const individualForLanguage = useMemo(
-    () =>
-      data.language
-        ? onlineIndividual.filter((o) => o.language_key === data.language)
-        : [],
+    () => (data.language ? filterByLanguage(onlineIndividual, data.language) : []),
     [onlineIndividual, data.language]
   );
 
   const individualDurations = useMemo(
     () => uniqueDurations(individualForLanguage),
     [individualForLanguage]
+  );
+
+  // Présentiel : cascade langue → dates → lieu
+  const inPersonLanguages = useMemo(() => uniqueLanguages(inPerson), [inPerson]);
+
+  const inPersonForLanguage = useMemo(
+    () => (data.language ? filterByLanguage(inPerson, data.language) : []),
+    [inPerson, data.language]
+  );
+
+  const inPersonDateOptions = useMemo(
+    () => uniqueDateOptions(inPersonForLanguage),
+    [inPersonForLanguage]
+  );
+
+  const inPersonForLanguageAndDate = useMemo(
+    () => (data.dateKey ? filterByDateKey(inPersonForLanguage, data.dateKey) : []),
+    [inPersonForLanguage, data.dateKey]
+  );
+
+  const inPersonLocations = useMemo(
+    () => uniqueLocations(inPersonForLanguageAndDate),
+    [inPersonForLanguageAndDate]
+  );
+
+  // Collectif en ligne : cascade langue → dates
+  const onlineGroupLanguages = useMemo(() => uniqueLanguages(onlineGroup), [onlineGroup]);
+
+  const onlineGroupForLanguage = useMemo(
+    () => (data.language ? filterByLanguage(onlineGroup, data.language) : []),
+    [onlineGroup, data.language]
+  );
+
+  const onlineGroupDateOptions = useMemo(
+    () => uniqueDateOptions(onlineGroupForLanguage),
+    [onlineGroupForLanguage]
   );
 
   const isCustomFormat = isCustomFormatDuration(data.duration);
@@ -151,7 +200,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
       startDate: offering.start_date || undefined,
       endDate: offering.end_date || undefined,
       requestedStartDate: offeringHasFixedDates(offering) ? undefined : data.requestedStartDate,
-      dateKey: sessionDateKey(offering),
+      dateKey: offeringDateKey(offering),
       dateLabel: offering.date_label || undefined,
       modality: offering.modality_key,
       language: offering.language_key,
@@ -201,6 +250,111 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
       location: "online",
       locationLabel: "En ligne",
     });
+  };
+
+  /** Présentiel : langue → dates → lieu (auto-avance s'il n'y a qu'une option). */
+  const handleInPersonLanguage = (languageKey: string) => {
+    const forLang = filterByLanguage(inPerson, languageKey);
+    const dates = uniqueDateOptions(forLang);
+    const nextDateKey = dates.length === 1 ? dates[0].key : "";
+    if (nextDateKey) {
+      const forDate = filterByDateKey(forLang, nextDateKey);
+      const locs = uniqueLocations(forDate);
+      if (locs.length === 1) {
+        const o = soleMatchingOffering(inPerson, {
+          locationKey: locs[0].key,
+          modalityKey: "in_person",
+          languageKey,
+          dateKey: nextDateKey,
+        });
+        if (o) {
+          applyOffering(o);
+          return;
+        }
+      }
+      resetCourseFields({
+        modality: "in_person",
+        language: languageKey,
+        dateKey: nextDateKey,
+        dateLabel: dates[0]?.label,
+        dates: dates[0]?.label,
+      });
+      return;
+    }
+    resetCourseFields({
+      modality: "in_person",
+      language: languageKey,
+    });
+  };
+
+  const handleInPersonDate = (dateKey: string) => {
+    const dateOpt = inPersonDateOptions.find((d) => d.key === dateKey);
+    const forDate = filterByDateKey(inPersonForLanguage, dateKey);
+    const locs = uniqueLocations(forDate);
+    if (locs.length === 1 && data.language) {
+      const o = soleMatchingOffering(inPerson, {
+        locationKey: locs[0].key,
+        modalityKey: "in_person",
+        languageKey: data.language,
+        dateKey,
+      });
+      if (o) {
+        applyOffering(o);
+        return;
+      }
+    }
+    resetCourseFields({
+      modality: "in_person",
+      language: data.language,
+      dateKey,
+      dateLabel: dateOpt?.label,
+      dates: dateOpt?.label,
+    });
+  };
+
+  const handleInPersonLocation = (locationKey: string) => {
+    if (!data.language || !data.dateKey) return;
+    const o = soleMatchingOffering(inPerson, {
+      locationKey,
+      modalityKey: "in_person",
+      languageKey: data.language,
+      dateKey: data.dateKey,
+    });
+    if (o) applyOffering(o);
+  };
+
+  const handleOnlineGroupLanguage = (languageKey: string) => {
+    const forLang = filterByLanguage(onlineGroup, languageKey);
+    const dates = uniqueDateOptions(forLang);
+    if (dates.length === 1) {
+      const o = soleMatchingOffering(onlineGroup, {
+        locationKey: "online",
+        modalityKey: "online_group",
+        languageKey,
+        dateKey: dates[0].key,
+      });
+      if (o) {
+        applyOffering(o);
+        return;
+      }
+    }
+    resetCourseFields({
+      modality: "online_group",
+      location: "online",
+      locationLabel: "En ligne",
+      language: languageKey,
+    });
+  };
+
+  const handleOnlineGroupDate = (dateKey: string) => {
+    if (!data.language) return;
+    const o = soleMatchingOffering(onlineGroup, {
+      locationKey: "online",
+      modalityKey: "online_group",
+      languageKey: data.language,
+      dateKey,
+    });
+    if (o) applyOffering(o);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -303,7 +457,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                     </span>
                   </span>
                   <span className="pl-8 text-sm text-muted-foreground">
-                    Stages sur site — choisissez ensuite le lieu, la langue et les dates (
+                    Stages sur site — choisissez ensuite la langue, les dates et le lieu (
                     {inPerson.length} sessions).
                   </span>
                 </Label>
@@ -326,55 +480,107 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
             </RadioGroup>
           </div>
 
-          {/* 2a. Stages présentiel — lieux / stations uniquement */}
+          {/* 2a. Stages présentiel — cascade langue → dates → lieu */}
           {pathMode === "in_person" && (
-            <div className="animate-in fade-in slide-in-from-top-2 space-y-3 border-t border-border pt-6">
-              <Label className="flex items-center gap-2">
-                <Mountain className="h-4 w-4" />
-                Stage en station *
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Station, langue et dates — uniquement les formations présentiel.
-              </p>
-              <RadioGroup
-                value={data.offeringId || ""}
-                onValueChange={(id) => {
-                  const o = inPerson.find((x) => x.id === id);
-                  if (o) applyOffering(o);
-                }}
-                className="space-y-2"
-              >
-                {inPerson.map((o) => {
-                  const waitlist = isWaitlistOffering(o);
-                  return (
-                    <OptionCard key={o.id} selected={data.offeringId === o.id}>
+            <div className="animate-in fade-in slide-in-from-top-2 space-y-6 border-t border-border pt-6">
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <Languages className="h-4 w-4" />
+                  Langue *
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Puis les dates, puis le lieu — uniquement les formations présentiel.
+                </p>
+                <RadioGroup
+                  value={data.language || ""}
+                  onValueChange={handleInPersonLanguage}
+                  className="grid gap-2 sm:grid-cols-2"
+                >
+                  {inPersonLanguages.map((lang) => (
+                    <OptionCard key={lang.key} selected={data.language === lang.key}>
                       <Label
-                        htmlFor={`sess-${o.id}`}
-                        className="flex cursor-pointer flex-col gap-1 px-4 py-3 font-normal"
+                        htmlFor={`ip-lang-${lang.key}`}
+                        className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
                       >
-                        <span className="flex flex-wrap items-start gap-3">
-                          <RadioGroupItem value={o.id} id={`sess-${o.id}`} className="mt-1" />
-                          <span className="min-w-0 flex-1 space-y-1">
-                            <span className="flex flex-wrap items-center gap-2">
-                              <span className="font-medium text-foreground">
-                                {o.location_label} · {o.language_label}
-                              </span>
-                              {waitlist ? (
-                                <StatusPill tone="warning">En attente de confirmation</StatusPill>
-                              ) : (
-                                <StatusPill tone="success">Inscriptions ouvertes</StatusPill>
-                              )}
-                            </span>
-                            <span className="block text-sm text-muted-foreground">
-                              {sessionScheduleLine(o)}
-                            </span>
-                          </span>
-                        </span>
+                        <RadioGroupItem value={lang.key} id={`ip-lang-${lang.key}`} />
+                        <span className="font-medium">{lang.label}</span>
                       </Label>
                     </OptionCard>
-                  );
-                })}
-              </RadioGroup>
+                  ))}
+                </RadioGroup>
+              </div>
+
+              {data.language && inPersonDateOptions.length > 0 && (
+                <div className="animate-in fade-in slide-in-from-top-2 space-y-3">
+                  <Label className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Dates *
+                  </Label>
+                  <RadioGroup
+                    value={data.dateKey || ""}
+                    onValueChange={handleInPersonDate}
+                    className="space-y-2"
+                  >
+                    {inPersonDateOptions.map((d) => (
+                      <OptionCard key={d.key} selected={data.dateKey === d.key}>
+                        <Label
+                          htmlFor={`ip-date-${d.key}`}
+                          className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
+                        >
+                          <RadioGroupItem value={d.key} id={`ip-date-${d.key}`} />
+                          <span className="font-medium">{d.label}</span>
+                        </Label>
+                      </OptionCard>
+                    ))}
+                  </RadioGroup>
+                </div>
+              )}
+
+              {data.language && data.dateKey && inPersonLocations.length > 0 && (
+                <div className="animate-in fade-in slide-in-from-top-2 space-y-3">
+                  <Label className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    Lieu *
+                  </Label>
+                  <RadioGroup
+                    value={data.location || ""}
+                    onValueChange={handleInPersonLocation}
+                    className="space-y-2"
+                  >
+                    {inPersonLocations.map((loc) => {
+                      const o = inPersonForLanguageAndDate.find((x) => x.location_key === loc.key);
+                      const waitlist = o ? isWaitlistOffering(o) : false;
+                      return (
+                        <OptionCard key={loc.key} selected={data.location === loc.key}>
+                          <Label
+                            htmlFor={`ip-loc-${loc.key}`}
+                            className="flex cursor-pointer flex-col gap-1 px-4 py-3 font-normal"
+                          >
+                            <span className="flex flex-wrap items-start gap-3">
+                              <RadioGroupItem value={loc.key} id={`ip-loc-${loc.key}`} className="mt-1" />
+                              <span className="min-w-0 flex-1 space-y-1">
+                                <span className="flex flex-wrap items-center gap-2">
+                                  <span className="font-medium text-foreground">{loc.label}</span>
+                                  {waitlist ? (
+                                    <StatusPill tone="warning">En attente de confirmation</StatusPill>
+                                  ) : (
+                                    <StatusPill tone="success">Inscriptions ouvertes</StatusPill>
+                                  )}
+                                </span>
+                                {o && (
+                                  <span className="block text-sm text-muted-foreground">
+                                    {sessionScheduleLine(o)}
+                                  </span>
+                                )}
+                              </span>
+                            </span>
+                          </Label>
+                        </OptionCard>
+                      );
+                    })}
+                  </RadioGroup>
+                </div>
+              )}
             </div>
           )}
 
@@ -423,45 +629,76 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
           )}
 
           {pathMode === "online" && onlineKind === "group" && (
-            <div className="animate-in fade-in slide-in-from-top-2 space-y-3">
-              <Label>Session collective en visio *</Label>
-              <RadioGroup
-                value={data.offeringId || ""}
-                onValueChange={(id) => {
-                  const o = onlineGroup.find((x) => x.id === id);
-                  if (o) applyOffering(o);
-                }}
-                className="space-y-2"
-              >
-                {onlineGroup.map((o) => {
-                  const waitlist = isWaitlistOffering(o);
-                  return (
-                    <OptionCard key={o.id} selected={data.offeringId === o.id}>
+            <div className="animate-in fade-in slide-in-from-top-2 space-y-6">
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <Languages className="h-4 w-4" />
+                  Langue *
+                </Label>
+                <RadioGroup
+                  value={data.language || ""}
+                  onValueChange={handleOnlineGroupLanguage}
+                  className="grid gap-2 sm:grid-cols-2"
+                >
+                  {onlineGroupLanguages.map((lang) => (
+                    <OptionCard key={lang.key} selected={data.language === lang.key}>
                       <Label
-                        htmlFor={`grp-${o.id}`}
-                        className="flex cursor-pointer flex-col gap-1 px-4 py-3 font-normal"
+                        htmlFor={`og-lang-${lang.key}`}
+                        className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
                       >
-                        <span className="flex flex-wrap items-start gap-3">
-                          <RadioGroupItem value={o.id} id={`grp-${o.id}`} className="mt-1" />
-                          <span className="min-w-0 flex-1 space-y-1">
-                            <span className="flex flex-wrap items-center gap-2">
-                              <span className="font-medium">{o.language_label}</span>
-                              {waitlist ? (
-                                <StatusPill tone="warning">En attente de confirmation</StatusPill>
-                              ) : (
-                                <StatusPill tone="success">Inscriptions ouvertes</StatusPill>
-                              )}
-                            </span>
-                            <span className="block text-sm text-muted-foreground">
-                              {sessionScheduleLine(o)}
-                            </span>
-                          </span>
-                        </span>
+                        <RadioGroupItem value={lang.key} id={`og-lang-${lang.key}`} />
+                        <span className="font-medium">{lang.label}</span>
                       </Label>
                     </OptionCard>
-                  );
-                })}
-              </RadioGroup>
+                  ))}
+                </RadioGroup>
+              </div>
+
+              {data.language && onlineGroupDateOptions.length > 0 && (
+                <div className="animate-in fade-in slide-in-from-top-2 space-y-3">
+                  <Label className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Dates *
+                  </Label>
+                  <RadioGroup
+                    value={data.dateKey || ""}
+                    onValueChange={handleOnlineGroupDate}
+                    className="space-y-2"
+                  >
+                    {onlineGroupDateOptions.map((d) => {
+                      const o = onlineGroupForLanguage.find((x) => offeringDateKey(x) === d.key);
+                      const waitlist = o ? isWaitlistOffering(o) : false;
+                      return (
+                        <OptionCard key={d.key} selected={data.dateKey === d.key}>
+                          <Label
+                            htmlFor={`og-date-${d.key}`}
+                            className="flex cursor-pointer flex-col gap-1 px-4 py-3 font-normal"
+                          >
+                            <span className="flex flex-wrap items-start gap-3">
+                              <RadioGroupItem value={d.key} id={`og-date-${d.key}`} className="mt-1" />
+                              <span className="min-w-0 flex-1 space-y-1">
+                                <span className="flex flex-wrap items-center gap-2">
+                                  <span className="font-medium">{d.label}</span>
+                                  {waitlist ? (
+                                    <StatusPill tone="warning">En attente de confirmation</StatusPill>
+                                  ) : (
+                                    <StatusPill tone="success">Inscriptions ouvertes</StatusPill>
+                                  )}
+                                </span>
+                                {o?.duration_hours ? (
+                                  <span className="block text-sm text-muted-foreground">
+                                    {o.duration_hours} h
+                                  </span>
+                                ) : null}
+                              </span>
+                            </span>
+                          </Label>
+                        </OptionCard>
+                      );
+                    })}
+                  </RadioGroup>
+                </div>
+              )}
             </div>
           )}
 

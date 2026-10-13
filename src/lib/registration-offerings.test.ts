@@ -5,6 +5,8 @@ import {
   CHATEL_PENDING_PRICE_MESSAGE,
   PENDING_PARTNER_PRICE_MESSAGE,
   WAITLIST_MESSAGE,
+  filterByDateKey,
+  filterByLanguage,
   formatOfferingPriceHint,
   formatPartnerConditionalPriceHint,
   getSessionFundingMode,
@@ -13,8 +15,14 @@ import {
   isPartnerPricePending,
   isPartnerSchool,
   isWaitlistOffering,
+  matchOffering,
+  offeringDateKey,
   requiresMandatoryFifplEstimate,
   resolveOfferingPrice,
+  uniqueDateOptions,
+  uniqueLanguages,
+  uniqueLocations,
+  type RegistrationOffering,
 } from "./registration-offerings";
 
 /**
@@ -131,5 +139,115 @@ describe("copie Deno registration-offerings", () => {
     expect(deno).toContain('skiSchoolCode !== "__autre__"');
     expect(deno).toContain("codes.includes(skiSchoolCode)");
     expect(deno).toContain("partner_price_pending");
+  });
+});
+
+const cascadeSample: RegistrationOffering[] = [
+  {
+    id: "a",
+    season_id: null,
+    location_key: "meribel",
+    location_label: "Méribel",
+    language_key: "english",
+    language_label: "Anglais",
+    modality_key: "in_person",
+    modality_label: "Présentiel",
+    duration_hours: 24,
+    start_date: "2026-11-30",
+    end_date: "2026-12-04",
+    date_label: "30 nov.–4 déc. 2026",
+    base_price: 900,
+    sort_order: 1,
+  },
+  {
+    id: "b",
+    season_id: null,
+    location_key: "chatel",
+    location_label: "Châtel",
+    language_key: "english",
+    language_label: "Anglais",
+    modality_key: "in_person",
+    modality_label: "Présentiel",
+    duration_hours: 24,
+    start_date: "2026-12-08",
+    end_date: "2026-12-12",
+    date_label: "8–12 déc. 2026",
+    base_price: 900,
+    sort_order: 2,
+  },
+  {
+    id: "c",
+    season_id: null,
+    location_key: "sainte-foy",
+    location_label: "Sainte-Foy",
+    language_key: "portuguese",
+    language_label: "Portugais brésilien",
+    modality_key: "in_person",
+    modality_label: "Présentiel",
+    duration_hours: 24,
+    start_date: "2026-11-23",
+    end_date: "2026-11-27",
+    date_label: "23–27 nov. 2026",
+    base_price: 950,
+    sort_order: 3,
+  },
+  {
+    id: "d",
+    season_id: null,
+    location_key: "oz",
+    location_label: "Oz en Oisans",
+    language_key: "english",
+    language_label: "Anglais",
+    modality_key: "in_person",
+    modality_label: "Présentiel",
+    duration_hours: 24,
+    start_date: "2026-11-30",
+    end_date: "2026-12-04",
+    date_label: "30 nov.–4 déc. 2026",
+    base_price: 900,
+    sort_order: 4,
+  },
+];
+
+describe("cascade /register langue → dates → lieu", () => {
+  it("liste les langues distinctes triées", () => {
+    const langs = uniqueLanguages(cascadeSample);
+    expect(langs.map((l) => l.key)).toEqual(["english", "portuguese"]);
+  });
+
+  it("filtre puis propose les dates chronologiques pour une langue", () => {
+    const forEn = filterByLanguage(cascadeSample, "english");
+    const dates = uniqueDateOptions(forEn);
+    expect(dates.map((d) => d.key)).toEqual([
+      "2026-11-30_2026-12-04",
+      "2026-12-08_2026-12-12",
+    ]);
+  });
+
+  it("propose les lieux pour une langue + une période", () => {
+    const forEn = filterByLanguage(cascadeSample, "english");
+    const week = filterByDateKey(forEn, "2026-11-30_2026-12-04");
+    const locs = uniqueLocations(week);
+    expect(locs.map((l) => l.key).sort()).toEqual(["meribel", "oz"]);
+  });
+
+  it("résout une offre unique via matchOffering", () => {
+    const o = matchOffering(cascadeSample, {
+      locationKey: "chatel",
+      modalityKey: "in_person",
+      languageKey: "english",
+      dateKey: "2026-12-08_2026-12-12",
+    });
+    expect(o?.id).toBe("b");
+    expect(offeringDateKey(o!)).toBe("2026-12-08_2026-12-12");
+  });
+
+  it("CourseSelectionStep enchaîne langue, dates et lieu", () => {
+    const step = source("src/components/registration/CourseSelectionStep.tsx");
+    expect(step).toContain("handleInPersonLanguage");
+    expect(step).toContain("handleInPersonDate");
+    expect(step).toContain("handleInPersonLocation");
+    expect(step).toContain("Puis les dates, puis le lieu");
+    expect(step).toContain("handleOnlineGroupLanguage");
   });
 });
