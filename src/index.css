@@ -2,6 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Inter — mêmes fichiers que les PDF (`public/fonts/`), chargés pour l’UI. */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/Inter-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/Inter-SemiBold.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/Inter-SemiBold.ttf") format("truetype");
+}
+
 /* ============================================================================
    FLI Design System — France Langues International
    Refonte visuelle 2026-09 : surfaces, profondeur, palette data-viz validée.
