@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Durcissement sécurité edge (auth gates 5 fonctions, submit-registration, create-registration-checkout, admin-auth helpers)
-- [ ] Déploiement des 7 fonctions
-- [ ] Jeton cron (edge_dispatch_jwt) accepté par les nouvelles gardes
-- [ ] activate_season : garde is_staff()
+- [x] Durcissement sécurité edge (gardes, submit-registration, admin-auth)
+- [x] Déploiement des 7 fonctions
+- [ ] Jeton cron edge_dispatch_jwt → clé service_role (bloqué : clé non accessible à l'agent)
+- [x] activate_season : garde is_staff()
