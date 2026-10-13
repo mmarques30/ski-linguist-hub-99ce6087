@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
               { status: 400, headers: { ...adminCorsHeaders, "Content-Type": "application/json" } }
             );
           }
-          recipients = [...new Set(cleaned)] as string[];
+          recipients = [...new Set(cleaned)];
         }
       }
     } catch {
