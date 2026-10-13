@@ -1,5 +1,5 @@
 import { CheckCircle2, Circle, ListChecks } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import {
   buildInscriptionOpsChecklist,

@@ -107,7 +107,7 @@ export function useCreateSkiMonitor() {
   return useMutation({
     mutationFn: async (monitor: Omit<SkiMonitor, "id" | "created_at" | "updated_at">) => {
       assertProspectionNonGelee();
-      const { data, error } = await supabase.from("ski_monitors").insert(monitor).select().single();
+      const { data, error } = await supabase.from("ski_monitors").insert(monitor as never).select().single();
       if (error) throw error;
       return data;
     },
@@ -123,7 +123,7 @@ export function useUpdateSkiMonitor() {
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<SkiMonitor> & { id: string }) => {
       assertProspectionNonGelee();
-      const { data, error } = await supabase.from("ski_monitors").update(updates).eq("id", id).select().single();
+      const { data, error } = await supabase.from("ski_monitors").update(updates as never).eq("id", id).select().single();
       if (error) throw error;
       return data;
     },

@@ -8,6 +8,16 @@ export interface StripeConfigStatus {
   webhookSecretConfigured: boolean;
   webhookSecretFromEnv?: boolean;
   webhookSecretFromSettings?: boolean;
+  /** Endpoint présent chez Stripe dans le mode de la clé courante. */
+  webhookEndpointExists?: boolean;
+  webhookEndpointId?: string | null;
+  webhookEndpointStatus?: string | null;
+  webhookHasRequiredEvents?: boolean;
+  webhookEndpointCount?: number;
+  webhookEndpointError?: string | null;
+  webhookModeMismatch?: boolean;
+  storedWebhookMode?: "test" | "live" | null;
+  storedWebhookEndpointId?: string | null;
   mode: "test" | "live" | null;
   configured: boolean;
   webhookUrl: string | null;
@@ -57,6 +67,7 @@ export function useProvisionStripeWebhook() {
         webhookUrl: string;
         endpointId: string;
         created: boolean;
+        mode?: "test" | "live" | null;
         webhookSecretConfigured: boolean;
         envSecretConfigured: boolean;
         message: string;

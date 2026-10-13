@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import {
+  Activity,
   Award,
   BadgeCheck,
   BarChart3,
@@ -10,6 +11,7 @@ import {
   Cog,
   Database,
   DoorOpen,
+  FileText,
   GraduationCap,
   Handshake,
   Layers,
@@ -20,6 +22,7 @@ import {
   ShieldCheck,
   Smile,
   TrendingUp,
+  User,
   UserCog,
   Users,
   Wallet,
@@ -318,6 +321,43 @@ export const NAV_SECTIONS: NavSection[] = [
       },
     ],
   },
+  {
+    id: "monitoramento",
+    label: CHROME_SECTIONS.monitoramento,
+    icon: Activity,
+    adminOnly: true,
+    items: [
+      {
+        id: "monitoramento-hub",
+        label: G.monitoramentoHub,
+        icon: LayoutDashboard,
+        href: "/monitoramento",
+        routeKey: "monitoramento",
+        children: [
+          {
+            href: "/monitoramento",
+            label: G.monitoramentoOverview,
+            routeKey: "monitoramento",
+          },
+          {
+            href: "/monitoramento/seguranca",
+            label: G.monitoramentoSecurite,
+            routeKey: "monitoramento",
+          },
+          {
+            href: "/monitoramento/qualidade",
+            label: G.monitoramentoQualidade,
+            routeKey: "monitoramento",
+          },
+          {
+            href: "/monitoramento/acessos",
+            label: G.monitoramentoAcessos,
+            routeKey: "monitoramento",
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 /** Navigation réduite affichée aux comptes formateur. */
@@ -328,10 +368,76 @@ export const FORMATEUR_SECTIONS: NavSection[] = [
     icon: DoorOpen,
     items: [
       {
+        id: "formateur-dashboard",
+        label: {
+          fr: "Tableau de bord",
+          "pt-BR": "Painel",
+          en: "Dashboard",
+        },
+        icon: LayoutDashboard,
+        href: "/formateur/tableau-de-bord",
+        routeKey: "evaluations",
+      },
+      {
+        id: "formateur-planning",
+        label: {
+          fr: "Planning",
+          "pt-BR": "Agenda",
+          en: "Schedule",
+        },
+        icon: CalendarDays,
+        href: "/formateur/planning",
+        routeKey: "evaluations",
+      },
+      {
+        id: "formateur-stagiaires",
+        label: {
+          fr: "Stagiaires",
+          "pt-BR": "Alunos",
+          en: "Students",
+        },
+        icon: Users,
+        href: "/formateur/stagiaires",
+        routeKey: "evaluations",
+      },
+      {
         id: "mes-evaluations",
         label: L["/formateur/evaluations"],
         icon: ClipboardCheck,
         href: "/formateur/evaluations",
+        routeKey: "evaluations",
+      },
+      {
+        id: "formateur-documents",
+        label: {
+          fr: "Documents",
+          "pt-BR": "Documentos",
+          en: "Documents",
+        },
+        icon: FileText,
+        href: "/formateur/documents",
+        routeKey: "evaluations",
+      },
+      {
+        id: "formateur-paiements",
+        label: {
+          fr: "Paiements",
+          "pt-BR": "Pagamentos",
+          en: "Payments",
+        },
+        icon: Wallet,
+        href: "/formateur/paiements",
+        routeKey: "evaluations",
+      },
+      {
+        id: "formateur-profil",
+        label: {
+          fr: "Profil",
+          "pt-BR": "Perfil",
+          en: "Profile",
+        },
+        icon: User,
+        href: "/formateur/profil",
         routeKey: "evaluations",
       },
     ],
@@ -359,6 +465,9 @@ export function isPathActive(pathname: string, path: string): boolean {
   }
   if (path === "/finance") {
     return pathname === "/finance";
+  }
+  if (path === "/monitoramento") {
+    return pathname === "/monitoramento";
   }
   if (path === "/finance/tresorerie") {
     return (

@@ -1,0 +1,352 @@
+[
+  {
+    "order_index": 1,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "Votre client arrive à l'école de ski. Vous dites :",
+    "options": [
+      "Bonjour ! Comment allez-vous ?",
+      "Bonjour ! Comment êtes-vous ?",
+      "Bonjour ! Comment avez-vous ?",
+      "Bonjour ! Comment vas-tu ?",
+      "je ne sais pas"
+    ],
+    "correct_answer": "Bonjour ! Comment allez-vous ?"
+  },
+  {
+    "order_index": 2,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "La famille a 5 personnes. Vous dites : \"Il y _____ cinq personnes dans votre groupe.\"",
+    "options": [
+      "est",
+      "a",
+      "ont",
+      "sont",
+      "je ne sais pas"
+    ],
+    "correct_answer": "a"
+  },
+  {
+    "order_index": 3,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "Vous demandez l'âge de l'enfant : \"Quel âge _____-t-elle ?\"",
+    "options": [
+      "est",
+      "a",
+      "fait",
+      "va",
+      "je ne sais pas"
+    ],
+    "correct_answer": "a"
+  },
+  {
+    "order_index": 4,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "Il fait très froid aujourd'hui. Vous dites : \"Aujourd'hui, il _____ moins 10 degrés.\"",
+    "options": [
+      "est",
+      "a",
+      "fait",
+      "va",
+      "je ne sais pas"
+    ],
+    "correct_answer": "fait"
+  },
+  {
+    "order_index": 5,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "Vous vous présentez : \"Je _____ moniteur de ski depuis 5 ans.\"",
+    "options": [
+      "ai",
+      "suis",
+      "fais",
+      "travaille",
+      "je ne sais pas"
+    ],
+    "correct_answer": "suis"
+  },
+  {
+    "order_index": 6,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "Vous demandez à propos du cours d'hier : \"Comment _____ le cours de ski hier ?\"",
+    "options": [
+      "était",
+      "a été",
+      "fut",
+      "A ou B",
+      "je ne sais pas"
+    ],
+    "correct_answer": "A ou B"
+  },
+  {
+    "order_index": 7,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "Vous expliquez où se retrouver : \"On se retrouve _____ l'école de ski, à côté du télésiège.\"",
+    "options": [
+      "devant",
+      "avant",
+      "en face",
+      "au devant de",
+      "je ne sais pas"
+    ],
+    "correct_answer": "devant"
+  },
+  {
+    "order_index": 8,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "Le temps a changé. Vous dites : \"Hier, il _____ du soleil, mais aujourd'hui il neige.\"",
+    "options": [
+      "faisait",
+      "a fait",
+      "fit",
+      "A ou B",
+      "je ne sais pas"
+    ],
+    "correct_answer": "A ou B"
+  },
+  {
+    "order_index": 9,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "Le client raconte son passé : \"Quand j'_____ enfant, je n'avais jamais vu la neige.\"",
+    "options": [
+      "ai été",
+      "étais",
+      "suis",
+      "fus",
+      "je ne sais pas"
+    ],
+    "correct_answer": "étais"
+  },
+  {
+    "order_index": 10,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "Vous décrivez la piste : \"Cette piste est beaucoup _____ que l'autre.\"",
+    "options": [
+      "facile",
+      "plus facile",
+      "la plus facile",
+      "plus facilement",
+      "je ne sais pas"
+    ],
+    "correct_answer": "plus facile"
+  },
+  {
+    "order_index": 11,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "Le client veut aller sur une piste noire. Vous dites : \"Vous _____ vous échauffer avant de skier sur cette piste.\"",
+    "options": [
+      "pouvez",
+      "devez",
+      "voulez",
+      "allez",
+      "je ne sais pas"
+    ],
+    "correct_answer": "devez"
+  },
+  {
+    "order_index": 12,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "Vous demandez les habitudes du client : \"Quand vous _____ en France, vous faisiez du sport d'hiver ?\"",
+    "options": [
+      "avez habité",
+      "habitiez",
+      "habitez",
+      "avez vécu",
+      "je ne sais pas"
+    ],
+    "correct_answer": "habitiez"
+  },
+  {
+    "order_index": 13,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "Le temps change. Vous prévenez : \"La visibilité _____ moins bonne cet après-midi. On ferait mieux de descendre tôt.\"",
+    "options": [
+      "sera",
+      "va être",
+      "est",
+      "A ou B",
+      "je ne sais pas"
+    ],
+    "correct_answer": "A ou B"
+  },
+  {
+    "order_index": 14,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "Le client raconte : \"Quand j'étais jeune, j'_____ à la montagne chaque hiver avec mes parents.\"",
+    "options": [
+      "allais",
+      "suis allé",
+      "irais",
+      "vais",
+      "je ne sais pas"
+    ],
+    "correct_answer": "allais"
+  },
+  {
+    "order_index": 15,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "Vous expliquez quoi faire : \"Quand vous _____ le panneau rouge, vous vous arrêtez tout de suite.\"",
+    "options": [
+      "voyez",
+      "verrez",
+      "avez vu",
+      "voyiez",
+      "je ne sais pas"
+    ],
+    "correct_answer": "voyez"
+  },
+  {
+    "order_index": 16,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "Explication technique : \"Si vous _____ plus de pression sur le ski aval, vous tourneriez plus facilement.\"",
+    "options": [
+      "mettez",
+      "mettiez",
+      "mettriez",
+      "avez mis",
+      "je ne sais pas"
+    ],
+    "correct_answer": "mettiez"
+  },
+  {
+    "order_index": 17,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "Un client demande le risque d'avalanche. Vous expliquez : \"S'il _____ de la neige fraîche cette nuit, la station _____ certaines pistes demain.\"",
+    "options": [
+      "tombe / ferme",
+      "tombait / fermerait",
+      "y a / fermera",
+      "y avait / fermerait",
+      "je ne sais pas"
+    ],
+    "correct_answer": "tombe / ferme"
+  },
+  {
+    "order_index": 18,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "Décrivant ce qui s'est passé : \"Le client ne se _____ pas blessé s'il _____ les consignes de sécurité.\"",
+    "options": [
+      "serait / avait suivi",
+      "aurait / suivait",
+      "était / avait suivi",
+      "serait / suivait",
+      "je ne sais pas"
+    ],
+    "correct_answer": "serait / avait suivi"
+  },
+  {
+    "order_index": 19,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "Vous demandez sur le passé : \"Avant de venir ici, vous _____ une idée de ce qu'était le ski ?\"",
+    "options": [
+      "avez",
+      "avez eu",
+      "aviez",
+      "ayez",
+      "je ne sais pas"
+    ],
+    "correct_answer": "aviez"
+  },
+  {
+    "order_index": 20,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "Explication d'une situation : \"Bien que la piste _____ difficile, je pense que vous pouvez y arriver si vous _____ calme.\"",
+    "options": [
+      "soit / restez",
+      "est / restez",
+      "soit / restiez",
+      "serait / resteriez",
+      "je ne sais pas"
+    ],
+    "correct_answer": "soit / restez"
+  },
+  {
+    "order_index": 21,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Le ski de votre client se détache. Vous vérifiez l'équipement et dites : \"Je crois que vos _____ sont trop lâches. Je vais les régler.\"",
+    "options": [
+      "bâtons",
+      "fixations",
+      "carres",
+      "chaussures",
+      "je ne sais pas"
+    ],
+    "correct_answer": "fixations"
+  },
+  {
+    "order_index": 22,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Vous enseignez le chasse-neige. Vous dites : \"Fléchissez plus les _____ et gardez votre poids vers l'avant.\"",
+    "options": [
+      "chevilles",
+      "épaules",
+      "hanches",
+      "genoux",
+      "je ne sais pas"
+    ],
+    "correct_answer": "genoux"
+  },
+  {
+    "order_index": 23,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Votre client tombe souvent dans les virages. Vous expliquez : \"Vous devez mettre plus de pression sur le _____ — c'est le ski le plus proche de la vallée.\"",
+    "options": [
+      "ski amont",
+      "ski intérieur",
+      "ski aval",
+      "ski extérieur",
+      "je ne sais pas"
+    ],
+    "correct_answer": "ski aval"
+  },
+  {
+    "order_index": 24,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Il a neigé 30cm pendant la nuit. Vous dites au client enthousiaste : \"Bonne nouvelle ! On a de la _____ fraîche aujourd'hui — parfait pour le hors-piste !\"",
+    "options": [
+      "glace",
+      "poudreuse",
+      "neige dure",
+      "brouillard",
+      "je ne sais pas"
+    ],
+    "correct_answer": "poudreuse"
+  },
+  {
+    "order_index": 25,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Un enfant arrive sans protection sur la tête. Vous dites aux parents : \"Pour la sécurité, votre enfant doit porter un _____ sur les pistes.\"",
+    "options": [
+      "forfait",
+      "masque",
+      "casque",
+      "gants",
+      "je ne sais pas"
+    ],
+    "correct_answer": "casque"
+  }
+]

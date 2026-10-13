@@ -5,10 +5,11 @@
 
 import {
   CONDITIONS_GENERALES_PROVENANCE,
-  CONDITIONS_GENERALES_SECTIONS,
   CONDITIONS_GENERALES_TITLE,
+  conditionsGeneralesSectionsForConvention,
 } from "./conditions-generales-content.ts";
 import {
+  fliDocumentFooterLines,
   formatOrganizationAddress,
   organizationLegalMentions,
   parseOrganizationIdentity,
@@ -32,14 +33,16 @@ export type InscriptionDocumentsRow = {
   language?: string | null;
   start_date?: string | null;
   end_date?: string | null;
-  duration_hours?: number | null;
+  dates_to_confirm?: boolean | null;
+  duration_hours?: number | string | null;
   course_location?: string | null;
   modality?: string | null;
-  price?: number | null;
-  deposit_amount?: number | null;
-  balance_after_deposit?: number | null;
-  group_size?: number | null;
+  price?: number | string | null;
+  deposit_amount?: number | string | null;
+  balance_after_deposit?: number | string | null;
+  group_size?: number | string | null;
   funding_organization?: string | null;
+  payment_method?: string | null;
 };
 
 export type InscriptionDocumentPdfModel = {
@@ -50,9 +53,13 @@ export type InscriptionDocumentPdfModel = {
   studentDisplayName: string;
   studentCivility: string;
   studentAddressLines: string[];
+  studentEmail: string;
+  studentPhone: string;
+  studentCompany: string;
   language: string;
   startDateLabel: string;
   endDateLabel: string;
+  datesLabel: string;
   durationHoursLabel: string;
   locationLabel: string;
   modalityLabel: string;
@@ -61,15 +68,32 @@ export type InscriptionDocumentPdfModel = {
   depositLabel: string;
   balanceLabel: string;
   fundingLabel: string;
+  paymentTermsLabel: string;
+  /** Masque la ligne Acompte et les CGV « 150 € » (Méribel / La Rosière). */
+  hideDepositFee?: boolean;
+  /** Libellé de la ligne solde / part moniteur. */
+  balanceRowLabel?: string;
+  /** La Rosière : montant facturé à l'ESF (ligne Conditions financières). */
+  schoolCoverageLabel?: string | null;
   organization: OrganizationIdentity;
   organizationAddress: string;
   organizationLegalLines: string[];
+  /** Pied de page légal (Version 4) en bas du document. */
+  documentFooterLines: string[];
   sections: Array<{ title: string; paragraphs: string[] }>;
   footerNote: string;
+  /** Bloc signatures convention en ligne (texte Paula). */
+  onlineSignatureBlock?: boolean;
 };
 
 function texte(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function asNumber(value: unknown): number | null {
+  if (value == null || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
 }
 
 function formatDateFr(iso: string | null | undefined): string {
@@ -93,12 +117,174 @@ function formatDateFr(iso: string | null | undefined): string {
   });
 }
 
-function formatEuros(amount: number | null | undefined): string {
-  if (amount == null || Number.isNaN(Number(amount))) return "—";
+function formatEuros(amount: number | string | null | undefined): string {
+  const n = asNumber(amount);
+  if (n == null) return "—";
   return new Intl.NumberFormat("fr-FR", {
     style: "currency",
     currency: "EUR",
-  }).format(Number(amount));
+  }).format(n);
+}
+
+function normalizeCivility(value: string | null | undefined): string {
+  const raw = texte(value).toLowerCase();
+  if (!raw) return "";
+  if (raw === "madame" || raw === "mme" || raw === "mlle" || raw === "mademoiselle") {
+    return "Mme";
+  }
+  if (raw === "monsieur" || raw === "m." || raw === "mr" || raw === "m") {
+    return "M.";
+  }
+  return texte(value);
+}
+
+function paymentMethodLabelFr(method: string | null | undefined): string {
+  const m = (method || "").toLowerCase();
+  if (m.includes("virement")) return "virement bancaire";
+  // Avant « cheque » : stripe_deposit_cheque contient les deux tokens.
+  if (m.includes("stripe_deposit") || m === "stripe" || m.includes("carte")) {
+    return "carte bancaire";
+  }
+  if (m.includes("cheque") || m.includes("chèque")) return "chèque";
+  if (m.includes("stripe")) return "carte bancaire";
+  if (m.includes("especes") || m.includes("espèces")) return "espèces";
+  return method?.trim() || "selon les modalités convenues";
+}
+
+function buildDatesLabel(input: {
+  start_date?: string | null;
+  end_date?: string | null;
+  dates_to_confirm?: boolean | null;
+}): { startDateLabel: string; endDateLabel: string; datesLabel: string } {
+  const startDateLabel = formatDateFr(input.start_date);
+  const endDateLabel = formatDateFr(input.end_date);
+  if (input.dates_to_confirm) {
+    const wished = startDateLabel !== "—" ? startDateLabel : endDateLabel;
+    const datesLabel =
+      wished !== "—"
+        ? `À planifier — début souhaité le ${wished}`
+        : "À planifier";
+    return { startDateLabel: datesLabel, endDateLabel: datesLabel, datesLabel };
+  }
+  if (startDateLabel === endDateLabel) {
+    return {
+      startDateLabel,
+      endDateLabel,
+      datesLabel: startDateLabel,
+    };
+  }
+  return {
+    startDateLabel,
+    endDateLabel,
+    datesLabel: `du ${startDateLabel} au ${endDateLabel}`,
+  };
+}
+
+function foldLocationKey(value: string | null | undefined): string {
+  return (value || "")
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase();
+}
+
+/** Stations partenaire sans acompte 150 € (SESSIONS §3.3 / §3.4). */
+export function isPartnerSchoolStationLocation(
+  location: string | null | undefined
+): boolean {
+  const loc = foldLocationKey(location);
+  return loc.includes("rosiere") || loc.includes("meribel");
+}
+
+export function isLaRosiereStationLocation(
+  location: string | null | undefined
+): boolean {
+  return foldLocationKey(location).includes("rosiere");
+}
+
+export function isSchoolFifplChequeMethod(
+  paymentMethod: string | null | undefined
+): boolean {
+  const method = (paymentMethod || "").toLowerCase();
+  return method.includes("cheque_fifpl_ecole") || method.includes("school_fifpl");
+}
+
+/** Convention moniteur ESF Méribel / La Rosière : pas de frais de dossier 150 €. */
+export function isSchoolStationConvention(row: InscriptionDocumentsRow): boolean {
+  return (
+    isSchoolFifplChequeMethod(row.payment_method) ||
+    isPartnerSchoolStationLocation(row.course_location)
+  );
+}
+
+function buildPaymentTermsLabel(input: {
+  priceLabel: string;
+  depositLabel: string;
+  balanceLabel: string;
+  payment_method?: string | null;
+  fundingLabel: string;
+  /** Part moniteur (chèque FIF-PL) quand le solde est facturé à l'école. */
+  schoolShareLabel?: string | null;
+  /** Méribel / La Rosière : ne pas mentionner les 150 €. */
+  omitDossierFee?: boolean;
+}): string {
+  const methodRaw = (input.payment_method || "").toLowerCase();
+  const schoolFifplCheque = isSchoolFifplChequeMethod(input.payment_method);
+  const schoolStationTerms = schoolFifplCheque || Boolean(input.omitDossierFee);
+
+  if (schoolStationTerms) {
+    const moniteurShare =
+      input.balanceLabel !== "—" ? input.balanceLabel : input.priceLabel;
+    const parts = [
+      `Coût pédagogique total : ${input.priceLabel}.`,
+      `Votre part : ${moniteurShare} — règlement au choix : (1) règlement intégral en ligne ; (2) chèque FIF-PL à l'ordre de France Langues International, à envoyer à : France Langues International — 25 avenue de la Gare, 73800 Montmélian (encaissé après la formation).`,
+    ];
+    if (input.schoolShareLabel && input.schoolShareLabel !== "—") {
+      parts.push(
+        `Prise en charge ESF : ${input.schoolShareLabel} — facturé à l'ESF (convention école).`
+      );
+    }
+    if (input.fundingLabel && input.fundingLabel !== "—") {
+      parts.push(`Financement : ${input.fundingLabel}.`);
+    }
+    return parts.join(" ");
+  }
+
+  // Option /register « 150 € en ligne + solde chèque ».
+  // Historique : stocké « cheque » ; désormais « stripe_deposit_cheque ».
+  // L'acompte est en paiement sécurisé en ligne ; le solde part par chèque à FLI Montmélian.
+  if (
+    methodRaw === "cheque" ||
+    methodRaw === "chèque" ||
+    methodRaw.includes("stripe_deposit_cheque") ||
+    methodRaw === "stripe_deposit"
+  ) {
+    const parts = [
+      `Coût pédagogique total : ${input.priceLabel}.`,
+      `Frais de dossier / acompte : ${input.depositLabel} (mode : paiement sécurisé en ligne).`,
+      `Solde : ${input.balanceLabel} — par chèque à l'ordre de France Langues International, à envoyer à : France Langues International — 25 avenue de la Gare, 73800 Montmélian, avant le début de la formation.`,
+    ];
+    if (input.fundingLabel && input.fundingLabel !== "—") {
+      parts.push(`Financement : ${input.fundingLabel}.`);
+    }
+    return parts.join(" ");
+  }
+
+  const method = paymentMethodLabelFr(input.payment_method);
+
+  const parts = [
+    `Coût pédagogique total : ${input.priceLabel}.`,
+    `Frais de dossier / acompte : ${input.depositLabel} (mode : ${method}).`,
+    `Solde : ${input.balanceLabel}.`,
+  ];
+  if (input.fundingLabel && input.fundingLabel !== "—") {
+    parts.push(`Financement : ${input.fundingLabel}.`);
+  }
+  if (methodRaw.includes("virement")) {
+    parts.push(
+      "Le solde peut être réglé par chèque avant le début de la formation, sauf paiement intégral."
+    );
+  }
+  return parts.join(" ");
 }
 
 function modalityLabelFr(modality: string | null | undefined): string {
@@ -114,6 +300,139 @@ function modalityLabelFr(modality: string | null | undefined): string {
   return modality?.trim() || "—";
 }
 
+export function isOnlineModality(modality: string | null | undefined): boolean {
+  const m = (modality || "").toLowerCase();
+  return (
+    m.includes("en_ligne") ||
+    m.includes("e-learning") ||
+    m.includes("distanciel") ||
+    m.includes("online")
+  );
+}
+
+/** Articles de la convention « formations en ligne » (texte Paula, Version 4). */
+export function buildOnlineConventionSections(input: {
+  language: string;
+  datesLabel: string;
+  durationHoursLabel: string;
+  groupSizeLabel: string;
+  studentAddressLines: string[];
+  pedagogicalContact: string;
+  priceLabel: string;
+  depositLabel: string;
+  balanceLabel: string;
+}): Array<{ title: string; paragraphs: string[] }> {
+  const language = input.language || "la langue choisie";
+  const addressHint = input.studentAddressLines.join(" ").trim();
+  const lieu = addressHint
+    ? `formation en ligne — ${addressHint}`
+    : "formation en ligne";
+  const contact = input.pedagogicalContact || "Paula Rangel-Halbwachs";
+  const price = input.priceLabel !== "—" ? input.priceLabel : "—";
+  const deposit = input.depositLabel !== "—" ? input.depositLabel : "—";
+  const balance = input.balanceLabel !== "—" ? input.balanceLabel : "—";
+
+  return [
+    {
+      title: "Article I : Objet",
+      paragraphs: [
+        `En exécution du présent contrat, F.L.I. s'engage à organiser l'action de formation suivante : formation individualisée ${language}.`,
+      ],
+    },
+    {
+      title: "Article II : Nature et caractéristique des actions de formation",
+      paragraphs: [
+        "L'action de formation entre dans la catégorie des actions d'acquisition et de perfectionnement des connaissances prévue à l'article L.6313-1 du code du travail.",
+        `L'objectif de la formation est de permettre au stagiaire de développer les bases en ${language} afin de pouvoir communiquer avec la clientèle étrangère dans le cadre de son activité professionnelle.`,
+        "À l'issue de la formation une attestation de stage sera délivrée au stagiaire.",
+        "Le programme du stage est joint à la présente convention.",
+      ],
+    },
+    {
+      title: "Article III : Niveau de connaissances préalables nécessaire",
+      paragraphs: ["Avoir des notions dans la langue."],
+    },
+    {
+      title: "Article IV : Organisation de l'action de formation",
+      paragraphs: [
+        `Lieu de la formation : ${lieu}.`,
+        `Dates de la formation : ${input.datesLabel}.`,
+        `Durée du pack : ${input.durationHoursLabel}.`,
+        "Horaires : à définir en fonction de vos disponibilités et celles du professeur.",
+        `Effectif : ${input.groupSizeLabel}.`,
+      ],
+    },
+    {
+      title: "Description des équipements",
+      paragraphs: [
+        "Le stagiaire devra disposer :",
+        "• d'un ordinateur équipé d'une Webcam,",
+        "• d'une connexion internet haut débit,",
+        "• d'un casque ou enceintes et microphone,",
+        "• d'un compte zoom.us — gratuit.",
+      ],
+    },
+    {
+      title: "Moyens pédagogiques et de suivi",
+      paragraphs: [
+        "• cours en face à face en ligne avec le formateur via notre plateforme www.zoom.us,",
+        "• remise d'un fascicule support de cours,",
+        "• exercices en ligne,",
+        "• mise en situation,",
+        "• travaux d'écoute et de compréhension orale (support audio fourni).",
+        "Évaluation en continue de la progression via des exercices écrits et oraux adaptés aux besoins de l'apprenant.",
+        `Personne assurant le suivi pédagogique : ${contact}.`,
+      ],
+    },
+    {
+      title: "Réservation des cours",
+      paragraphs: [
+        "L'apprenant réservera ses cours en ligne directement avec le formateur par téléphone ou e-mail.",
+        "Pour les cours en ligne réservés auprès de nos formateurs, le stagiaire dispose d'un délai d'annulation de minimum 24 h. En cas de non-respect du délai, ou d'absence lors d'un cours, le cours sera facturé.",
+      ],
+    },
+    {
+      title: "Suivi de l'exécution et appréciation des résultats",
+      paragraphs: [
+        "• Une feuille d'émargement où figureront les dates et la durée des séances sera établie et validée par la responsable de formation.",
+        "• Travaux corrigés au fur et à mesure par le formateur pendant les séances.",
+        "• Test de niveau en entrée et sortie de formation.",
+      ],
+    },
+    {
+      title: "Article V : Délai de rétractation",
+      paragraphs: [
+        "À compter de la date de signature de la présente convention, le stagiaire a un délai de 10 jours pour se rétracter, il en informe l'organisme de formation par lettre recommandée ; dans ce cas aucune somme ne pourra être exigée du stagiaire.",
+      ],
+    },
+    {
+      title: "Article VI : Dispositions financières",
+      paragraphs: [
+        `En contrepartie de la présente convention, l'entreprise/stagiaire signataire s'engage à acquitter la somme de : ${price} nets* à l'ordre de F.L.I., correspondant au coût pédagogique de la formation. Le règlement de la formation s'effectuera en deux fois : ${deposit} par virement ou carte bancaire lors de l'inscription et le restant (${balance}) par chèque avant le début des cours. Vous avez la possibilité de demander un délai pour l'encaissement du chèque. (* organisme exonéré de TVA — formulaire 3511)`,
+      ],
+    },
+    {
+      title: "Article VII : Interruption de la formation",
+      paragraphs: [
+        "En cas de l'abandon du stage par le stagiaire pour un autre motif que la force majeure reconnue, le présent contrat est résilié selon les modalités financières suivantes : règlement du montant total de ce contrat, sans remboursement des cours non suivis. En cas de cessation anticipée de la formation du fait de l'organisme de formation ou si le stagiaire est empêché de suivre la formation par suite de force majeure dûment reconnue, le contrat de formation professionnelle est résilié. Dans ce cas seules les prestations effectivement dispensées sont dues au pro rata temporis de leur valeur prévue au présent contrat.",
+      ],
+    },
+    {
+      title: "Article VIII : Cas de différend",
+      paragraphs: [
+        "Si une contestation ou un différend n'ont pu être réglés à l'amiable, le tribunal de Chambéry sera seul compétent pour régler le litige.",
+      ],
+    },
+    {
+      title: "Article IX : Accessibilité",
+      paragraphs: [
+        "Nos formations en ligne sont accessibles et adaptées aux personnes à mobilité réduite. Les formations en présentiel se déroulant dans des locaux externes à notre structure, FLI ne peut garantir de manière systématique leur conformité avec la norme PMR.",
+        "FLI ne dispose pas de contenus pédagogiques adaptés pour les stagiaires en situation de handicap visuel et auditif. Cependant, nous ferons notre possible pour vous orienter vers nos partenaires offrant des formations adaptées à vos besoins à l'aide de notre base de données.",
+      ],
+    },
+  ];
+}
+
 function studentFullName(student: InscriptionDocumentsStudent): string {
   return [texte(student.first_name), texte(student.last_name)].filter(Boolean).join(" ");
 }
@@ -127,10 +446,23 @@ function studentAddressLines(student: InscriptionDocumentsStudent): string[] {
 }
 
 function balanceAmount(row: InscriptionDocumentsRow): number | null {
-  if (row.balance_after_deposit != null) return Number(row.balance_after_deposit);
-  if (row.price == null) return null;
-  const deposit = Number(row.deposit_amount ?? 0);
-  return Number(row.price) - deposit;
+  const balance = asNumber(row.balance_after_deposit);
+  if (balance != null) return balance;
+  const price = asNumber(row.price);
+  if (price == null) return null;
+  const deposit = asNumber(row.deposit_amount) ?? 0;
+  return price - deposit;
+}
+
+/** Solde facturé à l'école = tarif − part moniteur (chèque FIF-PL école). */
+function schoolShareAmount(row: InscriptionDocumentsRow): number | null {
+  if (!isSchoolFifplChequeMethod(row.payment_method)) {
+    return null;
+  }
+  const price = asNumber(row.price);
+  const moniteurShare = balanceAmount(row);
+  if (price == null || moniteurShare == null) return null;
+  return Math.max(0, price - moniteurShare);
 }
 
 const PROGRAMME_SECTIONS: Array<{ title: string; paragraphs: string[] }> = [
@@ -167,6 +499,68 @@ const PROGRAMME_SECTIONS: Array<{ title: string; paragraphs: string[] }> = [
   },
 ];
 
+/**
+ * Programme « formation individualisée en ligne » — texte Paula (Version 2).
+ * Placeholders «Langue» / durée remplacés à l'appel.
+ */
+export function buildOnlineProgrammeSections(input: {
+  language: string;
+  durationHoursLabel: string;
+}): Array<{ title: string; paragraphs: string[] }> {
+  const language = input.language || "la langue choisie";
+  const duree = input.durationHoursLabel || "—";
+  return [
+    {
+      title: "Objectifs",
+      paragraphs: [
+        "Les objectifs de cette formation sont de :",
+        "• Développer les compétences en communication orale.",
+        "• Améliorer les capacités de compréhension.",
+        "• Enrichir les connaissances lexicales courantes et relatives à l'enseignement du ski.",
+        "• Consolider les connaissances grammaticales et lexicales.",
+      ],
+    },
+    {
+      title: "Méthode et contenu",
+      paragraphs: [
+        "• Parcours personnalisé adapté à votre niveau et à vos besoins spécifiques.",
+        "• Travail en face à face pédagogique via Google Meet.",
+        `• Exercices de compréhension et d'expression en ${language}.`,
+        "• Support de cours fourni.",
+        "• Matériel nécessaire : un ordinateur avec Webcam, casque, microphone et une connexion internet haut débit.",
+      ],
+    },
+    {
+      title: "Durée",
+      paragraphs: [`${duree}.`],
+    },
+    {
+      title: "Déroulement d'un cours",
+      paragraphs: [
+        "• Vérification des acquis et corrections des exercices.",
+        "• Cours théorique spécifique et pratique afin de permettre la pratique du langage propre à votre profession.",
+        "• Jeux de rôles adaptés à votre profession et à votre niveau.",
+        "• Utilisation de tout autre moyen audio ou audio-visuel que le professeur estimera nécessaire.",
+        "• Cours pour l'acquisition des structures grammaticales de bases et du vocabulaire commun au milieu montagne ; ainsi que le vocabulaire technique professionnel.",
+      ],
+    },
+    {
+      title: "Contenu prévisionnel",
+      paragraphs: [
+        "Ce stage va permettre au stagiaire d'utiliser entre autres les fonctions langagières suivantes :",
+        "• Bases linguistiques.",
+        "• Grammaire (conjugaison, syntaxe de la langue apprise, etc.).",
+        "• Expression orale – donner des informations et instructions précises et brèves.",
+        "• Expression écrite – les outils pour une communication écrite – mail et texto – efficace avec vos clients.",
+        "• Compréhension écrite – comprendre des textes courts et simples et de reconnaître les idées principales d'un contenu.",
+        "• Compréhension orale – comprendre des informations, questions et instructions précises et brèves.",
+        "• Les composants culturels pouvant aider à une meilleure communication avec la clientèle étrangère.",
+        "Ceci est un contenu prévisionnel qui sera réajusté tout au long de la formation en fonction de votre niveau, progression et de vos besoins.",
+      ],
+    },
+  ];
+}
+
 export function buildConventionPdfModel(input: {
   inscription: InscriptionDocumentsRow;
   student: InscriptionDocumentsStudent;
@@ -176,6 +570,80 @@ export function buildConventionPdfModel(input: {
   const organization = parseOrganizationIdentity(input.identity);
   const generatedAt = input.generatedAt ?? new Date();
   const name = studentFullName(input.student) || "Stagiaire";
+  const language = texte(input.inscription.language) || "—";
+  const { startDateLabel, endDateLabel, datesLabel } = buildDatesLabel(
+    input.inscription
+  );
+  const hours = asNumber(input.inscription.duration_hours);
+  const durationHoursLabel = hours != null ? `${hours} heures` : "—";
+  const addressLines = studentAddressLines(input.student);
+  const groupSizeLabel = String(input.inscription.group_size ?? 1);
+  const online = isOnlineModality(input.inscription.modality);
+  const civility = normalizeCivility(input.student.civility);
+  const priceLabel = formatEuros(input.inscription.price);
+  const depositLabel = formatEuros(input.inscription.deposit_amount);
+  const balanceLabel = formatEuros(balanceAmount(input.inscription));
+  const fundingLabel = texte(input.inscription.funding_organization) || "—";
+  const schoolStation = isSchoolStationConvention(input.inscription);
+  const laRosiere = isLaRosiereStationLocation(input.inscription.course_location);
+  const schoolShareLabel = formatEuros(schoolShareAmount(input.inscription));
+  const paymentTermsLabel = buildPaymentTermsLabel({
+    priceLabel,
+    depositLabel,
+    balanceLabel,
+    payment_method: input.inscription.payment_method,
+    fundingLabel,
+    schoolShareLabel,
+    omitDossierFee: schoolStation,
+  });
+  const cgvSections = conditionsGeneralesSectionsForConvention({
+    omitDossierFee: schoolStation,
+  });
+
+  const sections = online
+    ? [
+        {
+          title: "Entre les soussignés",
+          paragraphs: [
+            `1/ L'organisme de formation : ${organization.legal_name || "France Langues International"}, ${formatOrganizationAddress(organization) || "25 avenue de la gare, 73800 Montmélian"}${organization.siret ? `, Siret : ${organization.siret}` : ""}${organization.activity_number ? `, enregistré sous le n° de déclaration d'activité : ${organization.activity_number}` : ""}${organization.activity_authority ? ` auprès du ${organization.activity_authority}` : ""}${organization.representative ? `, représenté par ${organization.representative}` : ""}.`,
+            `2/ L'entreprise ou le stagiaire : ${[civility, name].filter(Boolean).join(" ")}${addressLines.length ? `, ${addressLines.join(", ")}` : ""}${texte(input.student.company) ? ` (${texte(input.student.company)})` : ""}.`,
+            "Est conclue la convention de formation professionnelle suivante.",
+          ],
+        },
+        ...buildOnlineConventionSections({
+          language,
+          datesLabel,
+          durationHoursLabel,
+          groupSizeLabel,
+          studentAddressLines: addressLines,
+          pedagogicalContact:
+            organization.representative || "Paula Rangel-Halbwachs",
+          priceLabel,
+          depositLabel,
+          balanceLabel,
+        }),
+      ]
+    : [
+        {
+          title: "Objet",
+          paragraphs: [
+            `${organization.legal_name || "L'organisme de formation"} organise une action de formation professionnelle au bénéfice de ${name}.`,
+            "L'action entre dans la catégorie des actions d'acquisition et de perfectionnement des connaissances prévue par l'article L.6313-1 du code du travail.",
+          ],
+        },
+        {
+          title: CONDITIONS_GENERALES_TITLE,
+          paragraphs: [CONDITIONS_GENERALES_PROVENANCE],
+        },
+        ...cgvSections.map((s) => ({
+          title: s.title,
+          paragraphs: s.paragraphs,
+        })),
+        {
+          title: "Prix et modalités de règlement",
+          paragraphs: [paymentTermsLabel],
+        },
+      ];
 
   return {
     kind: "convention",
@@ -183,44 +651,36 @@ export function buildConventionPdfModel(input: {
     generatedAtLabel: formatDateFr(generatedAt.toISOString()),
     inscriptionCode: texte(input.inscription.code) || "—",
     studentDisplayName: name,
-    studentCivility: texte(input.student.civility),
-    studentAddressLines: studentAddressLines(input.student),
-    language: texte(input.inscription.language) || "—",
-    startDateLabel: formatDateFr(input.inscription.start_date),
-    endDateLabel: formatDateFr(input.inscription.end_date),
-    durationHoursLabel:
-      input.inscription.duration_hours != null
-        ? `${input.inscription.duration_hours} heures`
-        : "—",
+    studentCivility: civility,
+    studentAddressLines: addressLines,
+    studentEmail: texte(input.student.email),
+    studentPhone: texte(input.student.phone),
+    studentCompany: texte(input.student.company),
+    language,
+    startDateLabel,
+    endDateLabel,
+    datesLabel,
+    durationHoursLabel,
     locationLabel: texte(input.inscription.course_location) || "—",
     modalityLabel: modalityLabelFr(input.inscription.modality),
-    groupSizeLabel: String(input.inscription.group_size ?? 1),
-    priceLabel: formatEuros(input.inscription.price),
-    depositLabel: formatEuros(input.inscription.deposit_amount),
-    balanceLabel: formatEuros(balanceAmount(input.inscription)),
-    fundingLabel: texte(input.inscription.funding_organization) || "—",
+    groupSizeLabel,
+    priceLabel,
+    depositLabel,
+    balanceLabel,
+    fundingLabel,
+    paymentTermsLabel,
+    hideDepositFee: schoolStation,
+    balanceRowLabel: schoolStation ? "Votre part" : "Solde",
+    schoolCoverageLabel:
+      laRosiere && schoolShareLabel !== "—" ? schoolShareLabel : null,
     organization,
     organizationAddress: formatOrganizationAddress(organization),
     organizationLegalLines: organizationLegalMentions(organization),
-    sections: [
-      {
-        title: "Objet",
-        paragraphs: [
-          `${organization.legal_name || "L'organisme de formation"} organise une action de formation professionnelle au bénéfice de ${name}.`,
-          "L'action entre dans la catégorie des actions d'acquisition et de perfectionnement des connaissances prévue par l'article L.6313-1 du code du travail.",
-        ],
-      },
-      {
-        title: CONDITIONS_GENERALES_TITLE,
-        paragraphs: [CONDITIONS_GENERALES_PROVENANCE],
-      },
-      ...CONDITIONS_GENERALES_SECTIONS.map((s) => ({
-        title: s.title,
-        paragraphs: s.paragraphs,
-      })),
-    ],
+    documentFooterLines: fliDocumentFooterLines(),
+    sections,
     footerNote:
       "Document généré automatiquement à partir des données de l'inscription. La convention signée fait foi.",
+    onlineSignatureBlock: online,
   };
 }
 
@@ -234,40 +694,85 @@ export function buildProgrammePdfModel(input: {
   const generatedAt = input.generatedAt ?? new Date();
   const name = studentFullName(input.student) || "Stagiaire";
   const language = texte(input.inscription.language) || "la langue choisie";
+  const { startDateLabel, endDateLabel, datesLabel } = buildDatesLabel(
+    input.inscription
+  );
+  const hours = asNumber(input.inscription.duration_hours);
+  const durationHoursLabel = hours != null ? `${hours} heures` : "—";
+  const priceLabel = formatEuros(input.inscription.price);
+  const depositLabel = formatEuros(input.inscription.deposit_amount);
+  const balanceLabel = formatEuros(balanceAmount(input.inscription));
+  const fundingLabel = texte(input.inscription.funding_organization) || "—";
+  const addressLines = studentAddressLines(input.student);
+  const online = isOnlineModality(input.inscription.modality);
+
+  const locationLabel = online
+    ? addressLines.length
+      ? `Cours en ligne — ${addressLines.join(" ")}`
+      : "Cours en ligne"
+    : texte(input.inscription.course_location) || "—";
+
+  const programmeDatesLabel = online
+    ? input.inscription.dates_to_confirm
+      ? datesLabel
+      : startDateLabel === endDateLabel
+        ? `du ${startDateLabel} au ${endDateLabel}`
+        : datesLabel.startsWith("du ")
+          ? datesLabel
+          : `du ${startDateLabel} au ${endDateLabel}`
+    : datesLabel;
 
   return {
     kind: "programme",
-    title: "Programme de formation",
+    title: online
+      ? `Formation individualisée, en ligne, en ${language}`
+      : "Programme de formation",
     generatedAtLabel: formatDateFr(generatedAt.toISOString()),
     inscriptionCode: texte(input.inscription.code) || "—",
     studentDisplayName: name,
-    studentCivility: texte(input.student.civility),
-    studentAddressLines: studentAddressLines(input.student),
+    studentCivility: normalizeCivility(input.student.civility),
+    studentAddressLines: addressLines,
+    studentEmail: texte(input.student.email),
+    studentPhone: texte(input.student.phone),
+    studentCompany: texte(input.student.company),
     language: texte(input.inscription.language) || "—",
-    startDateLabel: formatDateFr(input.inscription.start_date),
-    endDateLabel: formatDateFr(input.inscription.end_date),
-    durationHoursLabel:
-      input.inscription.duration_hours != null
-        ? `${input.inscription.duration_hours} heures`
-        : "—",
-    locationLabel: texte(input.inscription.course_location) || "—",
+    startDateLabel,
+    endDateLabel,
+    datesLabel: programmeDatesLabel,
+    durationHoursLabel,
+    locationLabel,
     modalityLabel: modalityLabelFr(input.inscription.modality),
     groupSizeLabel: String(input.inscription.group_size ?? 1),
-    priceLabel: formatEuros(input.inscription.price),
-    depositLabel: formatEuros(input.inscription.deposit_amount),
-    balanceLabel: formatEuros(balanceAmount(input.inscription)),
-    fundingLabel: texte(input.inscription.funding_organization) || "—",
+    priceLabel,
+    depositLabel,
+    balanceLabel,
+    fundingLabel,
+    paymentTermsLabel: buildPaymentTermsLabel({
+      priceLabel,
+      depositLabel,
+      balanceLabel,
+      payment_method: input.inscription.payment_method,
+      fundingLabel,
+      schoolShareLabel: formatEuros(schoolShareAmount(input.inscription)),
+    }),
     organization,
     organizationAddress: formatOrganizationAddress(organization),
     organizationLegalLines: organizationLegalMentions(organization),
-    sections: PROGRAMME_SECTIONS.map((s) => ({
-      title: s.title,
-      paragraphs: s.paragraphs.map((p) =>
-        p.replace(/l'exercice professionnel/g, `l'exercice professionnel en ${language}`)
-      ),
-    })),
-    footerNote:
-      "Programme personnalisé généré pour cette inscription. Les modalités précises figurent aussi sur la convention.",
+    documentFooterLines: fliDocumentFooterLines(online ? 2 : 4),
+    sections: online
+      ? buildOnlineProgrammeSections({ language, durationHoursLabel })
+      : PROGRAMME_SECTIONS.map((s) => ({
+          title: s.title,
+          paragraphs: s.paragraphs.map((p) =>
+            p.replace(
+              /l'exercice professionnel/g,
+              `l'exercice professionnel en ${language}`
+            )
+          ),
+        })),
+    footerNote: online
+      ? "Programme pédagogique en ligne — Version 2. Les modalités précises figurent aussi sur la convention."
+      : "Programme personnalisé généré pour cette inscription. Les modalités précises figurent aussi sur la convention.",
   };
 }
 

@@ -1,5 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { stripeCorsHeaders as corsHeaders } from "../_shared/stripe.ts";
+import {
+  getStripeMode,
+  stripeCorsHeaders as corsHeaders,
+} from "../_shared/stripe.ts";
 import {
   recordStripeCheckoutPayment,
   retrieveStripeCheckoutSession,
@@ -30,6 +33,7 @@ Deno.serve(async (req) => {
 
     const session = await retrieveStripeCheckoutSession(stripeSecretKey, sessionId);
     const paymentStatus = session.payment_status || "unpaid";
+    const stripeMode = getStripeMode(stripeSecretKey);
 
     if (paymentStatus !== "paid") {
       return new Response(
@@ -39,6 +43,7 @@ Deno.serve(async (req) => {
             paymentStatus,
             recorded: false,
             inscriptionCode: session.metadata?.inscription_code || null,
+            stripeMode,
           },
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -61,6 +66,7 @@ Deno.serve(async (req) => {
           duplicate: result.duplicate,
           inscriptionCode: session.metadata?.inscription_code || null,
           amountPaid: (session.amount_total || 0) / 100,
+          stripeMode,
         },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

@@ -2,351 +2,411 @@
   {
     "order_index": 1,
     "slope": "verte",
-    "category": "grammaire",
-    "question_text": "Su cliente llega a la escuela de esquí. Usted dice:",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un client vous demande : « ¿Dónde quedamos mañana? » Que veut-il savoir ?",
     "options": [
-      "¡Buenos días! ¿Cómo está usted?",
-      "¡Buenos días! ¿Cómo es usted?",
-      "¡Buenos días! ¿Cómo tiene usted?",
-      "¡Buenos días! ¿Cómo estar usted?",
+      "l'heure du rendez-vous",
+      "le lieu du rendez-vous",
+      "si le cours a lieu demain",
+      "le nom de son moniteur",
       "je ne sais pas"
     ],
-    "correct_answer": "¡Buenos días! ¿Cómo está usted?"
+    "correct_answer": "le lieu du rendez-vous",
+    "teacher_notes": "Espagnol d'Espagne. Groupe vouvoyé (ustedes)."
   },
   {
     "order_index": 2,
     "slope": "verte",
-    "category": "grammaire",
-    "question_text": "La familia tiene 5 personas. Usted dice: \"_____ cinco personas en su grupo.\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Vous voulez que votre groupe vous attende en bas de la piste. Vous dites :",
     "options": [
-      "Son",
-      "Están",
-      "Hay",
-      "Tienen",
+      "Espérenme arriba de la pista.",
+      "Síganme pista abajo.",
+      "Espérenme abajo, al final de la pista.",
+      "Nos vemos en la escuela de esquí.",
       "je ne sais pas"
     ],
-    "correct_answer": "Hay"
+    "correct_answer": "Espérenme abajo, al final de la pista.",
+    "teacher_notes": null
   },
   {
     "order_index": 3,
     "slope": "verte",
-    "category": "grammaire",
-    "question_text": "Usted pregunta la edad del niño: \"¿Cuántos años _____?\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Une cliente vous dit : « Mi hija tiene seis años y nunca ha esquiado. » Qu'apprenez-vous ?",
     "options": [
-      "es",
-      "está",
-      "tiene",
-      "hace",
+      "Sa fille a 6 ans et skie depuis peu.",
+      "Sa fille a 16 ans et n'a jamais skié.",
+      "Sa fille a 6 ans et a peur de skier.",
+      "Sa fille a 6 ans et n'a jamais skié.",
       "je ne sais pas"
     ],
-    "correct_answer": "tiene"
+    "correct_answer": "Sa fille a 6 ans et n'a jamais skié.",
+    "teacher_notes": null
   },
   {
     "order_index": 4,
     "slope": "verte",
-    "category": "grammaire",
-    "question_text": "Hace mucho frío hoy. Usted dice: \"Hoy _____ 10 grados bajo cero.\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Vous annoncez que le cours se termine à midi. Vous dites :",
     "options": [
-      "es",
-      "hace",
-      "está",
-      "tiene",
+      "La clase termina a mediodía.",
+      "La clase empieza a mediodía.",
+      "La clase termina a las dos.",
+      "Hacemos una pausa a mediodía.",
       "je ne sais pas"
     ],
-    "correct_answer": "hace"
+    "correct_answer": "La clase termina a mediodía.",
+    "teacher_notes": null
   },
   {
     "order_index": 5,
     "slope": "verte",
-    "category": "grammaire",
-    "question_text": "Usted se presenta: \"Yo _____ instructor de esquí desde hace 5 años.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un enfant vous dit : « Tengo las manos heladas. » Que se passe-t-il ?",
     "options": [
-      "estoy",
-      "soy",
-      "tengo",
-      "hago",
+      "Il a mal aux mains.",
+      "Il a perdu ses gants.",
+      "Il a froid aux mains.",
+      "Il a froid aux pieds.",
       "je ne sais pas"
     ],
-    "correct_answer": "soy"
+    "correct_answer": "Il a froid aux mains.",
+    "teacher_notes": null
   },
   {
     "order_index": 6,
     "slope": "bleue",
-    "category": "grammaire",
-    "question_text": "Usted pregunta sobre la clase de ayer: \"¿Cómo _____ la clase de esquí ayer?\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Vous recevez ce message : « La clase de esta tarde se ha cancelado por el viento, pero la de mañana se mantiene. » Qu'est-ce que cela veut dire ?",
     "options": [
-      "era",
-      "fue",
-      "estaba",
-      "ha sido",
+      "Le cours de cet après-midi est annulé, celui de demain est maintenu.",
+      "Les deux cours sont annulés.",
+      "Le cours de cet après-midi est reporté à demain.",
+      "Le cours de demain est annulé.",
       "je ne sais pas"
     ],
-    "correct_answer": "fue"
+    "correct_answer": "Le cours de cet après-midi est annulé, celui de demain est maintenu.",
+    "teacher_notes": null
   },
   {
     "order_index": 7,
     "slope": "bleue",
-    "category": "grammaire",
-    "question_text": "Usted explica dónde encontrarse: \"Nos vemos _____ de la escuela de esquí, al lado del telesilla.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un client vous dit : « Esquié un poco el invierno pasado, pero solo en pistas verdes. » Qu'apprenez-vous ?",
     "options": [
-      "delante",
-      "en frente",
-      "adelante",
-      "ante",
+      "Il n'a jamais skié sur une piste verte.",
+      "Il veut skier uniquement sur des pistes vertes cet hiver.",
+      "Il a skié tout l'hiver dernier.",
+      "Il a un peu skié l'hiver dernier, seulement sur des pistes vertes.",
       "je ne sais pas"
     ],
-    "correct_answer": "delante"
+    "correct_answer": "Il a un peu skié l'hiver dernier, seulement sur des pistes vertes.",
+    "teacher_notes": null
   },
   {
     "order_index": 8,
     "slope": "bleue",
-    "category": "grammaire",
-    "question_text": "El tiempo ha cambiado. Usted dice: \"Ayer _____ sol todo el día, pero hoy está nevando.\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Le télésiège est fermé, le groupe prendra la télécabine. Vous dites :",
     "options": [
-      "hacía",
-      "hizo",
-      "ha hecho",
-      "A ou B",
+      "La telecabina está cerrada, así que vamos a coger el telesilla.",
+      "El telesilla está cerrado, así que vamos a coger la telecabina.",
+      "El telesilla está lleno, así que vamos a esperar.",
+      "El telesilla ha vuelto a abrir, así que no necesitamos la telecabina.",
       "je ne sais pas"
     ],
-    "correct_answer": "A ou B"
+    "correct_answer": "El telesilla está cerrado, así que vamos a coger la telecabina.",
+    "teacher_notes": null
   },
   {
     "order_index": 9,
     "slope": "bleue",
-    "category": "grammaire",
-    "question_text": "El cliente cuenta sobre el pasado: \"Cuando yo _____ niño, nunca había visto la nieve.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un parent vous demande : « ¿Puedo recogerlo a las tres y media en vez de a las cuatro? » Que veut-il ?",
     "options": [
-      "fui",
-      "era",
-      "estaba",
-      "estuve",
+      "Il veut récupérer son fils à 16 h 30 au lieu de 15 h.",
+      "Il veut que le cours dure jusqu'à 16 h.",
+      "Il veut récupérer son fils à 15 h 30 au lieu de 16 h.",
+      "Il demande s'il peut assister au cours de 15 h 30.",
       "je ne sais pas"
     ],
-    "correct_answer": "era"
+    "correct_answer": "Il veut récupérer son fils à 15 h 30 au lieu de 16 h.",
+    "teacher_notes": null
   },
   {
     "order_index": 10,
     "slope": "bleue",
-    "category": "grammaire",
-    "question_text": "Usted describe la pista: \"Esta pista es mucho _____ que la otra.\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Vous demandez au client d'apporter son forfait demain et d'arriver 15 minutes en avance. Vous dites :",
     "options": [
-      "más fácil",
-      "fácil más",
-      "muy fácil",
-      "mayor fácil",
+      "Traiga su forfait y llegue quince minutos antes.",
+      "Compre su forfait y llegue quince minutos más tarde.",
+      "Traiga su forfait y espere quince minutos en la cola.",
+      "Enséñeme su forfait después de la clase.",
       "je ne sais pas"
     ],
-    "correct_answer": "más fácil"
+    "correct_answer": "Traiga su forfait y llegue quince minutos antes.",
+    "teacher_notes": null
   },
   {
     "order_index": 11,
     "slope": "rouge",
-    "category": "grammaire",
-    "question_text": "El cliente quiere ir a una pista negra. Usted dice: \"Usted _____ calentar antes de esquiar en esta pista.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un parent vous dit : « Tuvo una caída fuerte el año pasado. ¿Podría estar pendiente de él sin agobiarlo? » Que vous demande-t-il ?",
     "options": [
-      "puede",
-      "debe",
-      "quiere",
-      "va a",
+      "le mettre dans un groupe plus facile",
+      "le surveiller discrètement",
+      "l'appeler après le cours",
+      "éviter les pistes raides",
       "je ne sais pas"
     ],
-    "correct_answer": "debe"
+    "correct_answer": "le surveiller discrètement",
+    "teacher_notes": null
   },
   {
     "order_index": 12,
     "slope": "rouge",
-    "category": "grammaire",
-    "question_text": "Usted pregunta sobre los hábitos del cliente: \"Cuando usted _____ en España, ¿practicaba algún deporte de invierno?\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Un élève est tombé et se tient le genou. Que lui dites-vous en premier ?",
     "options": [
-      "vivió",
-      "vivía",
-      "vive",
-      "ha vivido",
+      "¿Puede levantarse y bajar hasta el telesilla?",
+      "Tranquilo, no es nada.",
+      "Tendría que haber tenido más cuidado.",
+      "¿Dónde le duele? ¿Puede mover la pierna?",
       "je ne sais pas"
     ],
-    "correct_answer": "vivía"
+    "correct_answer": "¿Dónde le duele? ¿Puede mover la pierna?",
+    "teacher_notes": null
   },
   {
     "order_index": 13,
     "slope": "rouge",
-    "category": "grammaire",
-    "question_text": "El tiempo está cambiando. Usted avisa: \"La visibilidad _____ peor por la tarde. Es mejor que bajemos temprano.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un client vous dit : « Hoy prefiero no hacer la pista negra, todavía me duelen las piernas de ayer. » Qu'apprenez-vous ?",
     "options": [
-      "será",
-      "va a ser",
-      "es",
-      "A ou B",
+      "Il préfère éviter la noire aujourd'hui, car il a encore mal aux jambes.",
+      "Il a peur de la piste noire.",
+      "Il s'est blessé hier sur la piste noire.",
+      "Il veut faire la noire demain.",
       "je ne sais pas"
     ],
-    "correct_answer": "A ou B"
+    "correct_answer": "Il préfère éviter la noire aujourd'hui, car il a encore mal aux jambes.",
+    "teacher_notes": null
   },
   {
     "order_index": 14,
     "slope": "rouge",
-    "category": "grammaire",
-    "question_text": "El cliente cuenta: \"Cuando era joven, _____ a las montañas cada invierno con mis padres.\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Le brouillard arrive. Vous voulez redescendre maintenant, calmement, sans inquiéter le groupe. Vous dites :",
     "options": [
-      "iba",
-      "fui",
-      "iría",
-      "voy",
+      "¡Es muy peligroso, bajen todos lo más rápido posible!",
+      "Está entrando niebla, subamos una vez más antes de que empeore.",
+      "Está entrando niebla, así que bajamos ahora, todos juntos y cerca de mí.",
+      "La niebla se irá pronto, esperemos aquí.",
       "je ne sais pas"
     ],
-    "correct_answer": "iba"
+    "correct_answer": "Está entrando niebla, así que bajamos ahora, todos juntos y cerca de mí.",
+    "teacher_notes": null
   },
   {
     "order_index": 15,
     "slope": "rouge",
-    "category": "grammaire",
-    "question_text": "Usted explica qué hacer: \"Cuando _____ la señal roja, pare inmediatamente.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un client vous dit : « El año pasado, nuestro monitor nos tenía esperando arriba una eternidad. Esta vez solo queremos esquiar más. » Que demande-t-il ?",
     "options": [
-      "ve",
-      "vea",
-      "verá",
-      "veía",
+      "changer de moniteur",
+      "moins d'attente et plus de temps sur les skis",
+      "des pauses plus longues en haut des pistes",
+      "un cours plus difficile",
       "je ne sais pas"
     ],
-    "correct_answer": "ve"
+    "correct_answer": "moins d'attente et plus de temps sur les skis",
+    "teacher_notes": null
   },
   {
     "order_index": 16,
     "slope": "noire",
-    "category": "grammaire",
-    "question_text": "Explicando la técnica: \"Si usted _____ más presión en el esquí de abajo, giraría con más facilidad.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un cliente dice: « Si hubiéramos salido diez minutos antes, habríamos cogido el último telesilla. » ¿Qué pasó?",
     "options": [
-      "pone",
-      "pusiera",
-      "pondría",
-      "puso",
+      "Cogieron el último telesilla por los pelos.",
+      "Saldrán antes mañana.",
+      "Perdieron el último telesilla.",
+      "El telesilla cerró diez minutos antes.",
       "je ne sais pas"
     ],
-    "correct_answer": "pusiera"
+    "correct_answer": "Perdieron el último telesilla.",
+    "teacher_notes": null
   },
   {
     "order_index": 17,
     "slope": "noire",
-    "category": "grammaire",
-    "question_text": "Un cliente pregunta sobre riesgo de avalancha. Usted explica: \"Si _____ nieve fresca por la noche, la estación _____ algunas pistas mañana.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Después de la clase, un cliente dice: « Estuvo bien, supongo... aunque esperaba hacer algo más que quedarnos en la pista verde. » ¿Cómo se siente?",
     "options": [
-      "hay / cierra",
-      "hubiera / cerraría",
-      "haya / cerrará",
-      "habrá / cierra",
+      "Decepcionado: quería trabajar algo más avanzado.",
+      "Muy contento con el ritmo.",
+      "La clase le pareció demasiado difícil.",
+      "Quiere dejar las clases.",
       "je ne sais pas"
     ],
-    "correct_answer": "hay / cierra"
+    "correct_answer": "Decepcionado: quería trabajar algo más avanzado.",
+    "teacher_notes": null
   },
   {
     "order_index": 18,
     "slope": "noire",
-    "category": "grammaire",
-    "question_text": "Describiendo lo que pasó: \"El cliente no se _____ lastimado si _____ las instrucciones de seguridad.\"",
+    "category": "guided_production",
+    "vocabulary_level": null,
+    "question_text": "Un padre enfadado dice que han puesto a su hijo en el grupo equivocado. ¿Cuál es la mejor respuesta?",
     "options": [
-      "habría / hubiera seguido",
-      "había / había seguido",
-      "habría / siguiera",
-      "hubo / siguió",
+      "Eso no lo decido yo, tiene que hablar con la oficina.",
+      "De todas formas, todos los grupos tienen el mismo nivel.",
+      "No se preocupe, le devolvemos el dinero de la clase ahora mismo.",
+      "Lo entiendo. Lo observo en la primera bajada y, si hace falta, lo cambio de grupo.",
       "je ne sais pas"
     ],
-    "correct_answer": "habría / hubiera seguido"
+    "correct_answer": "Lo entiendo. Lo observo en la primera bajada y, si hace falta, lo cambio de grupo.",
+    "teacher_notes": null
   },
   {
     "order_index": 19,
     "slope": "noire",
-    "category": "grammaire",
-    "question_text": "Usted pregunta sobre el pasado: \"Antes de venir aquí, ¿_____ alguna idea de cómo era esquiar?\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Usted oye: « A menos que el viento amaine antes de mediodía, los remontes de arriba no volverán a abrir hoy. » ¿Qué quiere decir?",
     "options": [
-      "tiene",
-      "tuvo",
-      "tenía",
-      "tenga",
+      "Los remontes de arriba abrirán a mediodía.",
+      "Los remontes de arriba solo volverán a abrir hoy si el viento amaina antes de mediodía.",
+      "Los remontes de arriba están cerrados hasta mediodía, pase lo que pase.",
+      "Se espera que el viento amaine a mediodía.",
       "je ne sais pas"
     ],
-    "correct_answer": "tenía"
+    "correct_answer": "Los remontes de arriba solo volverán a abrir hoy si el viento amaina antes de mediodía.",
+    "teacher_notes": null
   },
   {
     "order_index": 20,
     "slope": "noire",
-    "category": "grammaire",
-    "question_text": "Explicando una situación: \"Aunque la pista _____ difícil, creo que usted puede hacerlo si _____ con calma.\"",
+    "category": "comprehension",
+    "vocabulary_level": null,
+    "question_text": "Un cliente dice: « En las rojas me defiendo bien; es solo cuando se pone más empinado cuando empiezo a echarme hacia atrás. » ¿Qué quiere decir?",
     "options": [
-      "sea / va",
-      "es / va",
-      "sea / vaya",
-      "fuera / fuera",
+      "Se echa hacia atrás en todas las pistas.",
+      "Tiene dificultades en las pistas rojas.",
+      "Prefiere las pendientes empinadas a las rojas.",
+      "Se defiende bien en las rojas, pero se echa hacia atrás cuando la pendiente es más empinada.",
       "je ne sais pas"
     ],
-    "correct_answer": "es / va"
+    "correct_answer": "Se defiende bien en las rojas, pero se echa hacia atrás cuando la pendiente es más empinada.",
+    "teacher_notes": null
   },
   {
     "order_index": 21,
     "slope": "vocab_ski",
-    "category": "vocabulaire",
-    "question_text": "El esquí de su cliente se suelta. Usted revisa el equipo y dice: \"Creo que sus _____ están muy flojas. Déjeme ajustarlas.\"",
+    "category": "vocabulary",
+    "vocabulary_level": "verte",
+    "question_text": "Votre élève a laissé ses bâtons au départ. Complétez : « Se ha dejado ___ arriba. »",
     "options": [
-      "bastones",
-      "fijaciones",
-      "cantos",
-      "botas",
+      "los bastones",
+      "las botas",
+      "los guantes",
+      "las gafas",
       "je ne sais pas"
     ],
-    "correct_answer": "fijaciones"
+    "correct_answer": "los bastones",
+    "teacher_notes": null
   },
   {
     "order_index": 22,
     "slope": "vocab_ski",
-    "category": "vocabulaire",
-    "question_text": "Usted enseña la cuña. Dice: \"Flexione más las _____ y mantenga el peso hacia adelante.\"",
+    "category": "vocabulary",
+    "vocabulary_level": "verte",
+    "question_text": "Les fixations de votre élève sont trop lâches. Complétez : « ___ están demasiado flojas, se las ajusto. »",
     "options": [
-      "tobillos",
-      "hombros",
-      "caderas",
-      "rodillas",
+      "Las hebillas",
+      "Las botas",
+      "Las fijaciones",
+      "Las correas",
       "je ne sais pas"
     ],
-    "correct_answer": "rodillas"
+    "correct_answer": "Las fijaciones",
+    "teacher_notes": null
   },
   {
     "order_index": 23,
     "slope": "vocab_ski",
-    "category": "vocabulaire",
-    "question_text": "Su cliente se cae mucho en las curvas. Usted explica: \"Necesita poner más presión en el _____ - es el esquí más cercano al valle.\"",
+    "category": "vocabulary",
+    "vocabulary_level": "bleue",
+    "question_text": "La piste a été damée ce matin. Complétez : « Esta mañana la pista está ___. »",
     "options": [
-      "esquí de arriba",
-      "esquí interior",
-      "esquí de abajo",
-      "esquí exterior",
+      "llena de bañeras",
+      "helada",
+      "muy concurrida",
+      "pisada",
       "je ne sais pas"
     ],
-    "correct_answer": "esquí de abajo"
+    "correct_answer": "pisada",
+    "teacher_notes": null
   },
   {
     "order_index": 24,
     "slope": "vocab_ski",
-    "category": "vocabulaire",
-    "question_text": "Nevó 30cm durante la noche. Usted dice al cliente emocionado: \"¡Buenas noticias! Tenemos _____ fresca hoy - ¡perfecto para fuera de pista!\"",
+    "category": "vocabulary",
+    "vocabulary_level": "rouge",
+    "question_text": "Les carres des skis de votre élève sont émoussées. Complétez : « Hay que afilar ___ de sus esquís. »",
     "options": [
-      "hielo",
-      "nieve polvo",
-      "nieve dura",
-      "niebla",
+      "las espátulas",
+      "los cantos",
+      "las colas",
+      "las suelas",
       "je ne sais pas"
     ],
-    "correct_answer": "nieve polvo"
+    "correct_answer": "los cantos",
+    "teacher_notes": null
   },
   {
     "order_index": 25,
     "slope": "vocab_ski",
-    "category": "vocabulaire",
-    "question_text": "Un niño llega sin protección en la cabeza. Usted dice a los padres: \"Por seguridad, su hijo necesita usar _____ en las pistas.\"",
+    "category": "vocabulary",
+    "vocabulary_level": "noire",
+    "question_text": "En fin d'après-midi, la neige devient lourde et mouillée. Complétez : « Cuidado, a esta hora ya hay ___. »",
     "options": [
-      "forfait",
-      "gafas",
-      "casco",
-      "guantes",
+      "nieve polvo",
+      "costra",
+      "nieve primavera",
+      "hielo",
       "je ne sais pas"
     ],
-    "correct_answer": "casco"
+    "correct_answer": "nieve primavera",
+    "teacher_notes": null
+  },
+  {
+    "order_index": 26,
+    "slope": "presentation",
+    "category": "free_text",
+    "vocabulary_level": null,
+    "question_text": "Si vous le pouvez, présentez-vous en quelques phrases dans la langue du test : votre parcours de moniteur, votre station, ce que vous aimeriez mieux savoir faire avec vos clients.",
+    "options": null,
+    "correct_answer": null,
+    "teacher_notes": "Non notée, sans effet sur la piste. Lue par le formateur avant la 1re séance. Facultative, 1 000 caractères max."
   }
 ]

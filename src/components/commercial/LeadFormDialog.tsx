@@ -22,7 +22,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Trash2, UserPlus } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
 
 interface Props {
@@ -283,7 +283,7 @@ export function LeadFormDialog({ open, onOpenChange, lead, defaultChannel = "cpf
                   <SelectTrigger><SelectValue placeholder="Aucun" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Aucun</SelectItem>
-                    {skiMonitors.map((m) => (
+                    {(Array.isArray(skiMonitors) ? skiMonitors : skiMonitors.rows).map((m) => (
                       <SelectItem key={m.id} value={m.id}>
                         {m.first_name} {m.last_name} — {m.email}
                       </SelectItem>

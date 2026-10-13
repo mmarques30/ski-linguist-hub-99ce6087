@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  isFifplFunding,
   isOpcoFunding,
   REGISTRATION_FUNDING_MAP,
 } from "./registration-utils";
@@ -11,8 +12,9 @@ function source(relatif: string): string {
 }
 
 describe("BL-027 — FIFPL et OPCO séparés", () => {
-  it("REGISTRATION_FUNDING_MAP distingue fifpl et opco", () => {
+  it("REGISTRATION_FUNDING_MAP distingue fifpl, agefice et opco", () => {
     expect(REGISTRATION_FUNDING_MAP.fifpl).toBe("FIFPL");
+    expect(REGISTRATION_FUNDING_MAP.agefice).toBe("AGEFICE");
     expect(REGISTRATION_FUNDING_MAP.opco).toBe("OPCO");
     expect(REGISTRATION_FUNDING_MAP.company).toBe("Entreprise");
     expect(REGISTRATION_FUNDING_MAP.self).toBe("Autofinancement");
@@ -22,6 +24,11 @@ describe("BL-027 — FIFPL et OPCO séparés", () => {
     expect(isOpcoFunding("opco")).toBe(true);
     expect(isOpcoFunding("fifpl")).toBe(false);
     expect(isOpcoFunding("company")).toBe(false);
+  });
+
+  it("isFifplFunding ne cible que fifpl", () => {
+    expect(isFifplFunding("fifpl")).toBe(true);
+    expect(isFifplFunding("opco")).toBe(false);
   });
 
   it("PaymentStep saute les options de paiement pour OPCO", () => {
@@ -35,6 +42,13 @@ describe("BL-027 — FIFPL et OPCO séparés", () => {
     expect(paymentStep).toContain("opcoKnowsOpco");
   });
 
+  it("PaymentStep collecte l'attestation CFP pour FIFPL", () => {
+    const paymentStep = source("src/components/registration/PaymentStep.tsx");
+    expect(paymentStep).toContain("isFifplFunding");
+    expect(paymentStep).toContain("FifplCfpSection");
+    expect(paymentStep).toContain("validateFifplQuestionnaire");
+  });
+
   it("ConfirmationStep traite OPCO comme sans paiement", () => {
     const confirmation = source("src/components/registration/ConfirmationStep.tsx");
     expect(confirmation).toContain("isOpcoFunding");
@@ -46,12 +60,19 @@ describe("BL-027 — FIFPL et OPCO séparés", () => {
   it("submit-registration ignore paiement et inserts pour OPCO", () => {
     const edge = source("supabase/functions/submit-registration/index.ts");
     expect(edge).toContain('fifpl: "FIFPL"');
+    expect(edge).toContain('agefice: "AGEFICE"');
     expect(edge).toContain('opco: "OPCO"');
     expect(edge).toContain("isOpcoFunding");
     expect(edge).toMatch(/!isOpco &&/);
     expect(edge).toContain("funding_details");
-    expect(edge).toContain("OPCO à analyser");
     expect(edge).toContain("formatOpcoObservation");
+    expect(edge).toContain("formatFifplObservation");
+    expect(edge).toContain("formatAgeficeObservation");
+    expect(edge).toContain("isFifplFunding");
+    expect(edge).toContain("isAgeficeFunding");
+    const notify = source("supabase/functions/_shared/registration-admin-notify.ts");
+    expect(notify).toContain("OPCO à analyser");
+    expect(notify).toContain("AGEFICE — dossier demande");
   });
 
   it("CourseSelectionStep affiche le texte OPCO validé", () => {
@@ -75,6 +96,15 @@ describe("BL-027 — FIFPL et OPCO séparés", () => {
     expect(details).toContain("funding_organization");
     expect(details).toContain("depositAmount");
     expect(details).toContain("balanceAfterDeposit");
+  });
+
+  it("useUpdateInscriptionFunding invalide inscription-details (montants Financier)", () => {
+    const hook = source("src/hooks/useFundingProposals.ts");
+    expect(hook).toContain("useUpdateInscriptionFunding");
+    expect(hook).toContain('queryKey: ["inscription-details", vars.id]');
+    expect(hook).toContain('queryKey: ["inscription-ops-fields", vars.id]');
+    // Anciennes clés fantômes : la fiche lit inscription-details, pas celles-ci.
+    expect(hook).not.toContain('queryKey: ["inscription-funding"');
   });
 });
 

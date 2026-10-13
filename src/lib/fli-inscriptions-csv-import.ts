@@ -1,4 +1,5 @@
 import { mapEntryLevelToCecrl } from "@/lib/entry-level-cecrl";
+import { isScheduleMistakenForCode } from "@/lib/fli-schedule-slots";
 
 export interface ParsedFliInscriptionRow {
   modality: string | null;
@@ -225,7 +226,9 @@ export function mapFliInscriptionStatus(status: string, statusFinal: string, end
 function rowToParsed(row: Record<string, string>): ParsedFliInscriptionRow | null {
   const fullName = getColumn(row, "Nom et Prénom", "Nom et Prenom");
   const emailRaw = getColumn(row, "Email");
-  const code = getColumn(row, "Code") || null;
+  // BL-019 : un horaire (ex. « 8h30 ») n'est jamais un code d'inscription.
+  const codeRaw = getColumn(row, "Code") || null;
+  const code = codeRaw && isScheduleMistakenForCode(codeRaw) ? null : codeRaw;
   const startDate = parseFrenchDate(getColumn(row, "Date début", "Date debut"));
   const endDate = parseFrenchDate(getColumn(row, "Date fin"));
 

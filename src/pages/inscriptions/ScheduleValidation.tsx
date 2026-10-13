@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -11,9 +11,13 @@ import { Loader2, Sun, Sunset, ExternalLink, Clock, AlertTriangle, Users } from 
 import { toast } from "sonner";
 import { usePendingSchedules } from "@/hooks/usePendingSchedules";
 import { useBulkApproveSchedule } from "@/hooks/useApproveSchedule";
-import { SCHEDULE_ASSIGNMENT_DAYS_BEFORE } from "@/lib/placement-test-engine";
+import {
+  displayPisteLabel,
+  SCHEDULE_ASSIGNMENT_DAYS_BEFORE,
+} from "@/lib/placement-test-engine";
 import { getStatusLabel } from "@/lib/inscription-status";
 import { DATES_A_PLANIFIER_LABEL } from "@/lib/registration-dates";
+import { scheduleButtonLabel, scheduleLabelForSlot } from "@/lib/fli-schedule-slots";
 import {
   PageHeader,
   PageShell,
@@ -52,7 +56,7 @@ export default function ScheduleValidation() {
         scheduleStatus: slot,
       });
       toast.success(
-        `${selectedIds.size} inscription(s) — groupe ${slot === "matin" ? "matin" : "après-midi"} validé`
+        `${selectedIds.size} inscription(s) — ${scheduleLabelForSlot(slot)}`
       );
       setSelectedIds(new Set());
     } catch (error) {
@@ -69,10 +73,11 @@ export default function ScheduleValidation() {
           tone="blue"
           description={
             <>
-              Stages collectifs en station : attribution du groupe matin ou après-midi
-              pour les débuts dans les {SCHEDULE_ASSIGNMENT_DAYS_BEFORE} prochains jours,
-              et les retards non traités. Les formations individuelles ou en ligne
-              n&apos;apparaissent pas ici.
+              Stages collectifs en station : attribution du groupe matin (8h30–12h30)
+              ou après-midi (13h30–17h30) pour les débuts dans les{" "}
+              {SCHEDULE_ASSIGNMENT_DAYS_BEFORE} prochains jours, et les retards non
+              traités. Les formations individuelles ou en ligne n&apos;apparaissent pas
+              ici.
             </>
           }
         />
@@ -213,7 +218,8 @@ export default function ScheduleValidation() {
                         <p className="font-medium">{inscription.student_name}</p>
                       )}
                       <p className="text-muted-foreground text-xs">
-                        {inscription.code || "—"} · Niveau {inscription.entry_level || "—"} ·{" "}
+                        {inscription.code || "—"} · Niveau{" "}
+                        {displayPisteLabel(inscription.entry_level, "—")} ·{" "}
                         {getStatusLabel(inscription.status, "fr")}
                       </p>
                       {inscription.schedule && (
@@ -258,7 +264,7 @@ export default function ScheduleValidation() {
               ) : (
                 <Sun className="mr-2 h-4 w-4" />
               )}
-              Valider matin
+              {scheduleButtonLabel("matin")}
             </Button>
             <Button
               type="button"
@@ -270,7 +276,7 @@ export default function ScheduleValidation() {
               ) : (
                 <Sunset className="mr-2 h-4 w-4" />
               )}
-              Valider après-midi
+              {scheduleButtonLabel("apres-midi")}
             </Button>
           </div>
         )}

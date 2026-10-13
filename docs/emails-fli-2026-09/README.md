@@ -20,7 +20,7 @@ Publier depuis `/admin/emails` après relecture.
 
 ## Hors de cette livraison (à brancher ensuite)
 
-- Tâche +30 min `inscription_documents`
+- Tâche +30 min `inscription_documents` (après confirmation acompte 150 € / paiement intégral)
 - Crons J-11 / 2 h, day0 satisfaction, formateur 17h30
 - `send-schedule-convocation`, `send-convention`, pack fin auto, bilan école
 - `resend-webhook`

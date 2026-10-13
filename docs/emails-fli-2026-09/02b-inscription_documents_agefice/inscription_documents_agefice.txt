@@ -1,0 +1,17 @@
+Sujet : Votre dossier de formation {{language}} (AGEFICE) — {{inscription_code}}
+
+Bonjour {{student_name}},
+
+Vous trouverez en pièces jointes votre dossier AGEFICE pour la formation {{language}} (inscription {{inscription_code}}) :
+
+- Convention de formation — à nous retourner signée
+- Programme de la formation
+- Formulaire de demande de prise en charge AGEFICE — à compléter et signer
+- Liste des pièces justificatives AGEFICE
+
+Merci de nous retourner la convention et la demande AGEFICE remplies et signées pour que nous puissions déposer votre dossier. Consultez les plafonds 2026 : https://communication-agefice.fr/plafonds-financiers-annee-2026/
+
+Pour nous renvoyer les documents, répondez à ce message avec les fichiers en pièce jointe : ils arrivent à info@fli.fr.
+
+Cordialement,
+L'équipe FLI

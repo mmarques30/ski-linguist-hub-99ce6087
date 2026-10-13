@@ -55,6 +55,7 @@ export function useUserPermissions() {
       return routeKey === "evaluations" || routeKey.startsWith("evaluations.");
     }
     if (routeKey === "admin") return false;
+    if (routeKey === "monitoramento") return false;
     return hasFlag(routeKey, "can_view");
   };
 
@@ -63,7 +64,7 @@ export function useUserPermissions() {
     if (isFormateur) {
       return routeKey === "evaluations" || routeKey.startsWith("evaluations.");
     }
-    if (routeKey === "admin" || routeKey === "dashboard") return false;
+    if (routeKey === "admin" || routeKey === "monitoramento" || routeKey === "dashboard") return false;
     return hasFlag(routeKey, "can_edit");
   };
 

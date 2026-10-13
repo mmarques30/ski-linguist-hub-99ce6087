@@ -1,5 +1,5 @@
 import { ChevronRight, Filter } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { tx } from "./translations";
 import { SectionCard } from "./primitives";

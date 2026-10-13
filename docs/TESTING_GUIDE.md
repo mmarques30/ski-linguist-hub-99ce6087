@@ -12,7 +12,7 @@ Les rôles existent déjà en base (`formateur`, `student`). Pour voir chaque es
 
 | Rôle | Email | Mot de passe | Accueil |
 |---|---|---|---|
-| Formateur | `zztest.formateur@example.invalid` | `ZZTEST-Formateur1!` | `/formateur/evaluations` |
+| Formateur | `zztest.formateur@example.invalid` | `ZZTEST-Formateur1!` | `/formateur/tableau-de-bord` |
 | Stagiaire | `zztest.stagiaire@example.invalid` | `ZZTEST-Stagiaire1!` | `/student/dashboard` |
 
 Connexion sur **/auth**, carte **Administration FLI** (email + mot de passe) pour les deux. La carte « Espace stagiaire » n’offre que le magic link. Script de re-provision : `scripts/sql/zztest_roles_logins.sql`.
