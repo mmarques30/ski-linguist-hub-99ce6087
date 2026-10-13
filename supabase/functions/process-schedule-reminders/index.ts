@@ -1,11 +1,10 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { requireServiceRoleOrStaff } from "../_shared/admin-auth.ts";
+import {
+  adminCorsHeaders,
+  requireServiceRoleOrStaff,
+} from "../_shared/admin-auth.ts";
 import { applyEmailTemplate, sendFliEmail } from "../_shared/fli-email.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const corsHeaders = adminCorsHeaders;
 
 const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") || "info@fli.fr";
 const DAYS_BEFORE_START = 10;
@@ -88,10 +87,9 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Cron / staff only — refuse anon (finding #4).
   const auth = await requireServiceRoleOrStaff(req);
-  if (auth instanceof Response) {
-    return new Response(await auth.text(), { status: auth.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  }
+  if (auth instanceof Response) return auth;
 
   try {
     const url = new URL(req.url);
@@ -99,10 +97,9 @@ Deno.serve(async (req) => {
 
     console.log(`Starting schedule reminder processing (dry_run: ${dryRun})`);
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     const appBaseUrl = Deno.env.get("APP_BASE_URL") || "https://id-preview--34e71e1a-49f7-433e-bb36-fc4d26e86f8e.lovable.app";
+    const supabase = auth.adminClient;
 
     if (!dryRun && !resendApiKey) {
       return new Response(
@@ -114,7 +111,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
     const today = new Date();
     const targetDate = new Date(today);
     targetDate.setDate(targetDate.getDate() + DAYS_BEFORE_START);

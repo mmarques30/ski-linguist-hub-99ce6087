@@ -81,3 +81,8 @@ verify_jwt = true
 
 [functions.send-daily-ops-digest]
 verify_jwt = true
+
+# Prospection moniteurs : verify_jwt ne suffit pas (anon JWT valide).
+# L'Edge refuse anon et exige admin ou service_role (admin-auth).
+[functions.process-intake-outreach]
+verify_jwt = true

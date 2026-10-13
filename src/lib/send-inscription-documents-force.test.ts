@@ -14,6 +14,10 @@ describe("send-inscription-documents — renvoi forcé", () => {
     expect(edge).toContain("IGNORE - déjà envoyé");
   });
 
+  it("exige staff ou service_role (refuse la clé anon)", () => {
+    expect(edge).toContain("requireServiceRoleOrStaff");
+  });
+
   it("permet un sujet et un HTML personnalisés pour le renvoi", () => {
     expect(edge).toContain("customSubject");
     expect(edge).toContain("customHtml");

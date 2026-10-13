@@ -536,15 +536,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (!isCustomFormat && !isOpco && !registration.pricePending && (registration.price ?? 0) > 0) {
-      if (!registration.paymentOption || !isValidPaymentOption(registration.paymentOption)) {
-        return new Response(
-          JSON.stringify({ success: false, error: "Veuillez choisir un mode de paiement" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    }
-
     // BL-029 : plus aucun repli sur les dates de la saison. Une offre « dates
     // flexibles » retient la date de début souhaitée par le stagiaire et reste
     // marquée « à planifier » jusqu'à ce que FLI fixe le calendrier. Le contrôle
@@ -573,10 +564,10 @@ Deno.serve(async (req) => {
       .eq("is_current", true)
       .maybeSingle();
 
-    // Sécurité : registration.price (envoyé par le navigateur) n'est jamais
-    // retenu ; le prix vient uniquement de l'offre catalogue ou des pricing_rules.
+    // Finding #9 : ne jamais faire confiance au prix client. Uniquement catalogue
+    // (offering) ou pricing_rules saison ; sinon tarif en attente côté FLI.
     let price: number | null = null;
-    let pricePending = Boolean(registration.pricePending);
+    let pricePending = false;
     let offeringFundingMode: string | null = null;
     let offeringLocationKey: string | null = registration.location || null;
 
@@ -617,12 +608,10 @@ Deno.serve(async (req) => {
           price = resolved;
           pricePending = false;
         }
-      } else if (price == null) {
-        price = null;
       }
     }
 
-    if (price == null && season?.id && registration.currentLevel && registration.modality && durationHours) {
+    if (price == null && !pricePending && season?.id && registration.currentLevel && registration.modality && durationHours) {
       const { data: pricing } = await supabase
         .from("pricing_rules")
         .select("base_price")
@@ -633,7 +622,24 @@ Deno.serve(async (req) => {
         .eq("duration_hours", durationHours)
         .maybeSingle();
 
-      price = pricing?.base_price ?? null;
+      if (pricing?.base_price != null) {
+        price = Number(pricing.base_price);
+        pricePending = false;
+      }
+    }
+
+    if (price == null && !isCustomFormat && !isOpco) {
+      // Pas d'offre / règle → FLI fixe le tarif (pas de Stripe sur un montant client).
+      pricePending = true;
+    }
+
+    if (!isCustomFormat && !isOpco && !pricePending && (price ?? 0) > 0) {
+      if (!registration.paymentOption || !isValidPaymentOption(registration.paymentOption)) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Veuillez choisir un mode de paiement" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     const { data: existingStudent } = await supabase
@@ -665,10 +671,11 @@ Deno.serve(async (req) => {
       carte_syndicale_pending: Boolean(registration.carteSyndicalePending),
     };
 
-    // Sécurité : un formulaire public ne prouve pas la possession de l'e-mail.
-    // On ne met donc JAMAIS à jour une fiche stagiaire existante ici ; l'équipe
-    // FLI corrige les coordonnées si besoin.
-    if (!studentId) {
+    if (studentId) {
+      // Finding #10 : e-mail déjà connu — on rattache la nouvelle inscription
+      // sans écraser les coordonnées (pas de vérification de boîte mail ici).
+      // Le staff met à jour la fiche stagiaire depuis le back-office si besoin.
+    } else {
       const { data: newStudent, error: studentError } = await supabase
         .from("students")
         .insert({

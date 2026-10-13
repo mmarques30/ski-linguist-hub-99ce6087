@@ -1,15 +1,14 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { requireServiceRoleOrAdmin } from "../_shared/admin-auth.ts";
+import {
+  adminCorsHeaders,
+  requireServiceRoleOrAdmin,
+} from "../_shared/admin-auth.ts";
 import {
   outreachFreezeState,
   verifierConformiteRgpd,
 } from "../_shared/outreach-freeze.ts";
 import { isFliPlaceholderEmail } from "../_shared/email-guards.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const corsHeaders = adminCorsHeaders;
 
 interface SkiMonitor {
   id: string;
@@ -92,10 +91,10 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Auth avant gel / dry_run : la clé anon franchit verify_jwt et exposait
+  // la liste nominative des moniteurs (finding sécurité #1).
   const auth = await requireServiceRoleOrAdmin(req);
-  if (auth instanceof Response) {
-    return new Response(await auth.text(), { status: auth.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  }
+  if (auth instanceof Response) return auth;
 
   // Gel de la prospection : refus avant toute lecture de la base moniteurs,
   // y compris en dry_run (un dry_run renvoie la liste nominative des destinataires).
@@ -119,8 +118,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     const appBaseUrl = Deno.env.get("APP_BASE_URL") || "https://id-preview--34e71e1a-49f7-433e-bb36-fc4d26e86f8e.lovable.app";
 
@@ -134,7 +131,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = auth.adminClient;
 
     const { data: intakeRow, error: intakeError } = await supabase
       .from("course_intakes")

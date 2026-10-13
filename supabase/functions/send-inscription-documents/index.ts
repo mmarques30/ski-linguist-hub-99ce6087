@@ -15,8 +15,10 @@
  * `force` ignore le journal « déjà envoyé » et régénère les PDF depuis l'inscription.
  */
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { requireServiceRoleOrStaff } from "../_shared/admin-auth.ts";
+import {
+  adminCorsHeaders,
+  requireServiceRoleOrStaff,
+} from "../_shared/admin-auth.ts";
 import { loadEmailTemplate, renderEmailTemplate } from "../_shared/email-model-templates.ts";
 import { sendFliEmail } from "../_shared/fli-email.ts";
 import { isStudentPayer } from "../_shared/inscription-payer.ts";
@@ -43,10 +45,7 @@ import {
   FUNDING_DOSSIER_EMAIL_FALLBACK_SLUG,
 } from "../_shared/funding-flows.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const corsHeaders = adminCorsHeaders;
 
 const STATIC_BY_TYPE: Record<string, { filename: string; internalFile: string }> = {
   REGLEMENT: {
@@ -102,10 +101,10 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Cron (service_role) ou staff — refuse la clé anon (finding #2).
+  // Le renvoi manuel force=true nécessite un compte staff (ou service_role).
   const auth = await requireServiceRoleOrStaff(req);
-  if (auth instanceof Response) {
-    return new Response(await auth.text(), { status: auth.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  }
+  if (auth instanceof Response) return auth;
 
   try {
     const url = new URL(req.url);
@@ -125,10 +124,8 @@ Deno.serve(async (req) => {
     const customHtml =
       typeof payload.customHtml === "string" ? payload.customHtml.trim() : "";
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = auth.adminClient;
 
     if (!dryRun && !resendApiKey) {
       return new Response(
