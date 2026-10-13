@@ -2,10 +2,13 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PDFDocument } from "pdf-lib";
+import { existsSync } from "node:fs";
 import {
   buildInvoicePdfBytes,
   buildInvoicePdfPath,
   invoicePdfFilename,
+  INVOICE_FONT_REGULAR_PATH,
+  INVOICE_FONT_SEMIBOLD_PATH,
   INVOICE_LOGO_PUBLIC_PATH,
   INVOICE_PAID_STAMP_PUBLIC_PATH,
 } from "./invoice-pdf";
@@ -16,6 +19,15 @@ describe("invoice-pdf", () => {
     expect(buildInvoicePdfPath("stu", "ins", "26-27.14323")).toBe(
       "stu/ins/Facture-26-27.14323.pdf"
     );
+  });
+
+  it("embarque Inter (même police que InvoiceTemplate / back-office)", () => {
+    expect(
+      existsSync(join(process.cwd(), "public", INVOICE_FONT_REGULAR_PATH))
+    ).toBe(true);
+    expect(
+      existsSync(join(process.cwd(), "public", INVOICE_FONT_SEMIBOLD_PATH))
+    ).toBe(true);
   });
 
   it("produit une facture acquittée au format officiel (logo + tampon)", async () => {

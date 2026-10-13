@@ -1,13 +1,20 @@
 /**
  * Facture PDF (format officiel aligné sur InvoiceTemplate).
  * Utilisé par le pack fin de formation (PJ e-mail + Storage).
+ *
+ * Police : Inter (comme le back-office / InvoiceTemplate à l'écran),
+ * pas Helvetica standard.
  */
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb, type PDFFont } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
 
 export const INVOICE_LOGO_PUBLIC_PATH =
   "inscription-documents/fli-invoice-logo.png";
 export const INVOICE_PAID_STAMP_PUBLIC_PATH =
   "inscription-documents/facture-acquittee-stamp.png";
+/** Même famille que `body { font-family: Inter }` dans index.css. */
+export const INVOICE_FONT_REGULAR_PATH = "fonts/Inter-Regular.ttf";
+export const INVOICE_FONT_SEMIBOLD_PATH = "fonts/Inter-SemiBold.ttf";
 
 export interface InvoicePdfInput {
   invoiceNumber: string;
@@ -110,13 +117,32 @@ export function buildInvoicePdfPath(
   return `${studentId}/${inscriptionId}/${invoicePdfFilename(invoiceNumber)}`;
 }
 
+async function embedInvoiceFonts(doc: PDFDocument): Promise<{
+  font: PDFFont;
+  fontBold: PDFFont;
+}> {
+  doc.registerFontkit(fontkit);
+  const regularBytes = await loadPublicAssetBytes(INVOICE_FONT_REGULAR_PATH);
+  const boldBytes = await loadPublicAssetBytes(INVOICE_FONT_SEMIBOLD_PATH);
+  if (regularBytes?.byteLength && boldBytes?.byteLength) {
+    return {
+      font: await doc.embedFont(regularBytes, { subset: true }),
+      fontBold: await doc.embedFont(boldBytes, { subset: true }),
+    };
+  }
+  // Fallback uniquement si les fichiers Inter sont absents.
+  return {
+    font: await doc.embedFont(StandardFonts.Helvetica),
+    fontBold: await doc.embedFont(StandardFonts.HelveticaBold),
+  };
+}
+
 export async function buildInvoicePdfBytes(
   input: InvoicePdfInput
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   const page = doc.addPage([PAGE_W, PAGE_H]);
-  const font = await doc.embedFont(StandardFonts.Helvetica);
-  const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const { font, fontBold } = await embedInvoiceFonts(doc);
   const left = 48;
   const right = PAGE_W - 48;
   let y = PAGE_H - 48;
