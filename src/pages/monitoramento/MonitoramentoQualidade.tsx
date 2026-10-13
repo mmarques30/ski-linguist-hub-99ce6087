@@ -98,7 +98,7 @@ export default function MonitoramentoQualidade() {
         value: config?.configured ? "Complets" : "Incomplets",
         analysis: config?.configured
           ? "GITHUB_TOKEN + GITHUB_REPO opérationnels."
-          : "Compléter Lovable / Supabase Secrets puis redéployer les edges.",
+          : "Compléter Lovable → More → Cloud → Secrets puis redéployer les edges.",
         tone: config?.configured ? "ok" : "warn",
         statusLabel: config?.configured ? "OK" : "Action requise",
       },

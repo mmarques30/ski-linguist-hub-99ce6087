@@ -24,9 +24,13 @@ Le Checkout est forcé en **EUR** (`locale=fr`, adaptive pricing désactivé) po
 
 1. [Stripe Dashboard → API Keys (test)](https://dashboard.stripe.com/test/apikeys)
 2. Secret key : `sk_test_...`
-3. [Supabase → Edge Functions → Secrets](https://supabase.com/dashboard/project/nghkrmvakjomzmfwdhbo/settings/functions)
+3. Lovable Cloud (projet actuel) : éditeur → **More → Cloud → Secrets** →
+   `STRIPE_SECRET_KEY`. Ne pas utiliser le dashboard Supabase standalone pour ce
+   projet Cloud. Éditeur :
+   https://lovable.dev/projects/34e71e1a-49f7-433e-bb36-fc4d26e86f8e
 
 ```bash
+# Uniquement après migration vers un projet Supabase self-managed FLI :
 supabase secrets set STRIPE_SECRET_KEY=sk_test_...
 ```
 

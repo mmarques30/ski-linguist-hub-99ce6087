@@ -142,7 +142,7 @@ export function healthLabel(tone: HealthTone): { fr: string; "pt-BR": string; en
   }
 }
 
-/** Secrets attendus pour brancher le monitoring (Lovable Cloud → Supabase). */
+/** Secrets attendus pour brancher le monitoring (Lovable Cloud Secrets). */
 export const MONITORING_SECRET_CATALOG: Omit<MonitoringSecretStatus, "configured">[] = [
   {
     key: "GITHUB_TOKEN",

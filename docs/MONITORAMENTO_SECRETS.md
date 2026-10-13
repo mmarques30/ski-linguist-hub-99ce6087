@@ -19,27 +19,36 @@ stores de secrets (Lovable, Supabase, CI).
 
 ---
 
-## A. Lovable Cloud (état actuel)
+## A. Lovable Cloud (état actuel — backend réel)
 
-1. Ouvrir le projet dans **Lovable** → **Settings / Cloud / Secrets**
-   (ou *Project settings → Secrets* selon l'UI).
-2. Ajouter :
+Le projet est sur **Lovable Cloud**, pas un projet Supabase du compte FLI.
+**Ne pas** utiliser `supabase.com/dashboard/project/nghkrmvakjomzmfwdhbo`.
+
+1. Ouvrir l’éditeur Lovable → barre d’outils projet → **More → Cloud → Secrets**
+   (mobile : Chat → `…` → Cloud → Secrets).
+2. Ajouter (valeurs write-only après enregistrement ; ne pas les coller dans le chat) :
    - `GITHUB_TOKEN` = `github_pat_…` ou `ghp_…`
    - `GITHUB_REPO` = `mmarques30/ski-linguist-hub-99ce6087`
    - `SENTRY_DSN` = `https://…@….ingest.sentry.io/…` (optionnel)
-3. Redéployer / republier le projet pour que les Edge Functions voient les
-   nouvelles variables.
-4. Dans l'app admin : **Monitoring → Vue d'ensemble** — la carte
+3. `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_URL` / `SUPABASE_ANON_KEY` sont
+   **réservés** : déjà injectés dans les Edge Functions ; **non visibles** dans
+   l’UI Secrets (on ne peut ni les créer ni les copier).
+4. Republier si besoin pour que les Edge Functions voient les nouvelles variables.
+5. Dans l’app admin : **Monitoring → Vue d'ensemble** — la carte
    *Secrets monitoring* doit passer à **Opérationnel** pour GitHub.
 
-> Pendant la migration Lovable Cloud → Supabase self-managed, garder les mêmes
-> noms de clés pour éviter un double câblage.
+> Cet écran Secrets = **env Edge Functions uniquement**. Il ne met **pas** à jour
+> le Vault Postgres (`edge_dispatch_jwt`). Voir
+> `docs/EDGE_DISPATCH_JWT_LOVABLE_CLOUD.md`.
 
 ---
 
-## B. Supabase (cible de migration)
+## B. Supabase self-managed (uniquement après migration hors Cloud)
 
-1. [Dashboard → Edge Functions → Secrets](https://supabase.com/dashboard/project/nghkrmvakjomzmfwdhbo/settings/functions)
+Sans migration vers un projet Supabase **appartenant** à FLI, cette section
+ne s’applique pas.
+
+1. Dashboard du **propre** projet Supabase → Edge Functions → Secrets
 2. CLI (recommandé, depuis une machine avec `supabase` lié) :
 
 ```bash

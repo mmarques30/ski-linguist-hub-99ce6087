@@ -9,10 +9,14 @@ This is a single-package **Vite + React 18 + TypeScript** SPA (Lovable-generated
 ### Services
 - **Frontend (Vite dev server)** — the only service in this repo. Runs on port **8080**
   (`vite.config.ts`, host `::`). Start with `npm run dev`.
-- **Supabase backend** — hosted at the URL in `.env` (`VITE_SUPABASE_URL`). The frontend is
-  already wired to it via the committed anon key in `.env`, so no local Supabase stack is
-  needed to run the app. Edge functions in `supabase/functions/` are deployed to Supabase
-  cloud (running them locally requires the Supabase CLI + Deno and is optional).
+- **Backend** — **Lovable Cloud** (built-in), reachable at the URL in `.env`
+  (`VITE_SUPABASE_URL`). The frontend is already wired via the committed anon key in
+  `.env`. This is **not** a FLI-owned Supabase project: do **not** direct Paula to
+  `supabase.com/dashboard/project/nghkrmvakjomzmfwdhbo` for `service_role` or Vault.
+  Edge Function env secrets: Lovable editor **More → Cloud → Secrets** (write-only;
+  `SUPABASE_*` are reserved and never shown). Postgres Vault (`edge_dispatch_jwt`) is
+  **not** that screen — see `docs/EDGE_DISPATCH_JWT_LOVABLE_CLOUD.md`. Running Edge
+  Functions locally requires the Supabase CLI + Deno and is optional.
 
 ### Standard commands (see `package.json`)
 - Install: `npm install --legacy-peer-deps` (use this flag; plain `npm i` / `npm ci` can fail with

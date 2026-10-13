@@ -4,8 +4,9 @@ import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import { MONITORING_SECRET_CATALOG, type MonitoringConfigStatus } from "@/lib/monitoramento";
 import { Link } from "react-router";
 
-const SUPABASE_SECRETS_URL =
-  "https://supabase.com/dashboard/project/nghkrmvakjomzmfwdhbo/settings/functions";
+/** Lovable Cloud — More → Cloud → Secrets (pas le dashboard Supabase standalone). */
+const LOVABLE_CLOUD_SECRETS_URL =
+  "https://lovable.dev/projects/34e71e1a-49f7-433e-bb36-fc4d26e86f8e";
 const GITHUB_TOKENS_URL = "https://github.com/settings/tokens?type=beta";
 const DOCS_PATH = "/monitoramento"; // le guide est dans docs/ ; lien relatif UI vers l'onglet secrets
 
@@ -21,7 +22,7 @@ export function SecretsSetupCard({ config, isLoading }: SecretsSetupCardProps) {
     <SurfaceCard
       title="Secrets monitoring"
       icon={KeyRound}
-      description="Branchez GitHub (et Sentry optionnel) via Lovable Cloud Secrets ou Supabase Edge Secrets. Guide : docs/MONITORAMENTO_SECRETS.md"
+      description="Branchez GitHub (et Sentry optionnel) via Lovable → More → Cloud → Secrets. Guide : docs/MONITORAMENTO_SECRETS.md"
       actions={
         isLoading ? (
           <StatusPill tone="neutral">
@@ -74,8 +75,8 @@ export function SecretsSetupCard({ config, isLoading }: SecretsSetupCardProps) {
 
       <div className="mt-4 flex flex-wrap gap-2">
         <Button variant="outline" size="sm" asChild>
-          <a href={SUPABASE_SECRETS_URL} target="_blank" rel="noreferrer">
-            Supabase Secrets
+          <a href={LOVABLE_CLOUD_SECRETS_URL} target="_blank" rel="noreferrer">
+            Lovable → Cloud → Secrets
             <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
           </a>
         </Button>

@@ -101,11 +101,16 @@ d'authentification, auteur). Les deux tables sont en RLS, lecture réservée à
 
 ### Le JWT du cron
 
-Les fonctions Edge lisent elles-mêmes `SUPABASE_SERVICE_ROLE_KEY` dans leur
-propre environnement. Le JWT joint par le cron ne sert donc qu'à franchir
-`verify_jwt` : la clé anon suffit, et la clé `service_role` n'a pas à être
-stockée en base. Le secret s'appelle `edge_dispatch_jwt` ; Paula peut en changer
-la valeur sans toucher au code.
+Le secret Vault s'appelle `edge_dispatch_jwt` (Postgres `vault.secrets`, **pas**
+More → Cloud → Secrets). Historiquement (Point 8) il était initialisé avec la
+clé **anon** pour franchir `verify_jwt`.
+
+**Mise à jour sécurité (2026-10) :** les Edge Functions refusent désormais l’anon
+et exigent `service_role` ou staff. Sur **Lovable Cloud**, Paula **ne peut pas**
+lire ni coller `SUPABASE_SERVICE_ROLE_KEY` depuis l’UI (clé non surfaceable).
+Ne pas utiliser le dashboard Supabase standalone. Procédure à jour :
+`docs/EDGE_DISPATCH_JWT_LOVABLE_CLOUD.md` (support Lovable, ou alternative
+jeton cron après validation Paula).
 
 ### État des jobs
 

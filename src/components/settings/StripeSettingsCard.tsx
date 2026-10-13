@@ -7,8 +7,9 @@ import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import { toast } from "sonner";
 import { useProvisionStripeWebhook, useStripeConfig } from "@/hooks/useStripeConfig";
 
-const SUPABASE_PROJECT_URL =
-  "https://supabase.com/dashboard/project/nghkrmvakjomzmfwdhbo/settings/functions";
+/** Lovable Cloud — More → Cloud → Secrets (pas supabase.com/dashboard pour ce projet). */
+const LOVABLE_CLOUD_SECRETS_URL =
+  "https://lovable.dev/projects/34e71e1a-49f7-433e-bb36-fc4d26e86f8e";
 const GITHUB_REPO_URL = "https://github.com/mmarques30/ski-linguist-hub-99ce6087";
 const STRIPE_TEST_KEYS_URL = "https://dashboard.stripe.com/test/apikeys";
 const STRIPE_LIVE_KEYS_URL = "https://dashboard.stripe.com/apikeys";
@@ -161,8 +162,8 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
             <AlertTitle>Webhook configuré via l&apos;application</AlertTitle>
             <AlertDescription>
               Endpoint <code>{data.webhookEndpointId}</code> ({data.mode}) — signing secret stocké de
-              façon sécurisée. Vous pouvez aussi le copier dans Supabase Secrets (
-              <code>STRIPE_WEBHOOK_SECRET</code>) pour une config classique.
+              façon sécurisée. Vous pouvez aussi l&apos;enregistrer dans Lovable Cloud Secrets
+              (More → Cloud → Secrets, <code>STRIPE_WEBHOOK_SECRET</code>).
             </AlertDescription>
           </Alert>
         )}
@@ -226,7 +227,7 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
           </Alert>
         ) : (
           <Alert>
-            <AlertTitle>Étapes de configuration (GitHub + Supabase)</AlertTitle>
+            <AlertTitle>Étapes de configuration (GitHub + Lovable Cloud)</AlertTitle>
             <AlertDescription className="space-y-3 text-sm">
               <ol className="list-decimal pl-5 space-y-2">
                 <li>
@@ -237,11 +238,11 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
                   et copiez la <strong>Secret key</strong>.
                 </li>
                 <li>
-                  Dans{" "}
-                  <a href={SUPABASE_PROJECT_URL} target="_blank" rel="noreferrer" className="underline font-medium">
-                    Supabase → Edge Functions → Secrets
+                  Dans Lovable →{" "}
+                  <a href={LOVABLE_CLOUD_SECRETS_URL} target="_blank" rel="noreferrer" className="underline font-medium">
+                    More → Cloud → Secrets
                   </a>
-                  , ajoutez <code>STRIPE_SECRET_KEY</code>.
+                  , ajoutez <code>STRIPE_SECRET_KEY</code> (pas le dashboard Supabase standalone).
                 </li>
                 <li>
                   Créez un webhook dans{" "}
@@ -251,7 +252,8 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
                   avec l&apos;URL ci-dessous et <code>checkout.session.completed</code>.
                 </li>
                 <li>
-                  Ajoutez <code>STRIPE_WEBHOOK_SECRET</code> (<code>whsec_...</code>) dans Supabase Secrets.
+                  Ajoutez <code>STRIPE_WEBHOOK_SECRET</code> (<code>whsec_...</code>) dans Lovable
+                  Cloud Secrets.
                 </li>
                 <li>
                   Cliquez sur <strong>Configurer le webhook automatiquement</strong> ci-dessus, ou exécutez{" "}
@@ -293,7 +295,7 @@ export function StripeSettingsCard({ configureLabel }: StripeSettingsCardProps) 
 
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline">
-            <a href={SUPABASE_PROJECT_URL} target="_blank" rel="noreferrer">
+            <a href={LOVABLE_CLOUD_SECRETS_URL} target="_blank" rel="noreferrer">
               <ExternalLink className="mr-2 h-4 w-4" />
               {configureLabel}
             </a>
