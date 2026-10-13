@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,7 +80,7 @@ export function EmailSendJournal() {
     <SurfaceCard
       title="Journal des envois"
       icon={Mail}
-      description="200 derniers e-mails transactionnels enregistrés dans email_log."
+      description="200 derniers e-mails (Resend) et SMS (Brevo, slugs staff_sms_*) enregistrés dans email_log."
       actions={
         failedCount > 0 ? (
           <StatusPill tone="danger" dot>
@@ -119,7 +119,7 @@ export function EmailSendJournal() {
         <TableEmpty
           icon={Mail}
           title="Aucun envoi"
-          description="Les e-mails transactionnels (inscription, documents, invitations…) apparaîtront ici."
+          description="Les e-mails transactionnels et SMS Brevo (staff_sms_*) apparaîtront ici."
         />
       ) : (
         <>

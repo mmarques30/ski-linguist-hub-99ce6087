@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { paymentMethodLabel, paymentTypeLabel } from "@/lib/payment-methods";
+import { scheduleLabelForSlot } from "@/lib/fli-schedule-slots";
 
 export type InscriptionTimelineEventType =
   | "created"
@@ -122,11 +123,9 @@ export function useInscriptionTimeline(inscriptionId?: string) {
           at: inscriptionRes.data.schedule_approved_at,
           title: "Horaire validé",
           description:
-            slot === "matin"
-              ? "Groupe du matin"
-              : slot === "apres-midi"
-                ? "Groupe de l'après-midi"
-                : slot || undefined,
+            slot === "matin" || slot === "apres-midi"
+              ? scheduleLabelForSlot(slot)
+              : slot || undefined,
         });
       }
 

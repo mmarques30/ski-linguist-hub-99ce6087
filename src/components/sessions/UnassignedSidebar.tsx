@@ -4,7 +4,7 @@ import { UserPlus, Users } from "lucide-react";
 import { useUnassignedInscriptions, useEnrollStudent } from "@/hooks/useSessions";
 import { toast } from "sonner";
 import { StatusPill, SurfaceCard, TableEmpty } from "@/components/ui-kit";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 interface Props {
   selectedSessionId: string | undefined;

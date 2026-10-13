@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { resolveRouteKey, routeKeyLabel } from "@/lib/route-permissions";
@@ -40,7 +40,7 @@ export function ProtectedRoute({ children, routeKey: routeKeyProp }: ProtectedRo
       !location.pathname.startsWith("/formateur") &&
       !location.pathname.startsWith("/portails/formateur")
     ) {
-      navigate("/formateur/evaluations", { replace: true });
+      navigate("/formateur/tableau-de-bord", { replace: true });
     }
   }, [role, permsLoading, location.pathname, navigate]);
 

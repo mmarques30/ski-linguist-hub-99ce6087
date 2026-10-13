@@ -1,9 +1,14 @@
 const WEBHOOK_EVENT = "checkout.session.completed";
 
+export const STRIPE_WEBHOOK_REQUIRED_EVENTS = [WEBHOOK_EVENT] as const;
+
 export interface StripeWebhookEndpoint {
   id: string;
   url: string;
   status?: string;
+  enabled_events?: string[];
+  description?: string | null;
+  livemode?: boolean;
 }
 
 async function stripeRequest<T>(
@@ -37,6 +42,21 @@ export async function listStripeWebhookEndpoints(
     "/webhook_endpoints?limit=100"
   );
   return data.data || [];
+}
+
+/** Endpoint dont l'URL pointe vers notre edge `stripe-webhook`. */
+export function findStripeWebhookForUrl(
+  endpoints: StripeWebhookEndpoint[],
+  webhookUrl: string
+): StripeWebhookEndpoint | undefined {
+  const normalized = webhookUrl.replace(/\/$/, "");
+  return endpoints.find((endpoint) => endpoint.url?.replace(/\/$/, "") === normalized);
+}
+
+export function webhookHasRequiredEvents(endpoint: StripeWebhookEndpoint): boolean {
+  const events = endpoint.enabled_events ?? [];
+  if (events.includes("*")) return true;
+  return STRIPE_WEBHOOK_REQUIRED_EVENTS.every((required) => events.includes(required));
 }
 
 export async function createStripeWebhookEndpoint(
@@ -85,8 +105,9 @@ export async function ensureStripeWebhookEndpoint(
   stripeSecretKey: string,
   webhookUrl: string
 ): Promise<{ endpointId: string; secret: string; created: boolean }> {
-  const existing = (await listStripeWebhookEndpoints(stripeSecretKey)).find(
-    (endpoint) => endpoint.url === webhookUrl
+  const existing = findStripeWebhookForUrl(
+    await listStripeWebhookEndpoints(stripeSecretKey),
+    webhookUrl
   );
 
   if (existing) {
@@ -96,4 +117,29 @@ export async function ensureStripeWebhookEndpoint(
 
   const created = await createStripeWebhookEndpoint(stripeSecretKey, webhookUrl);
   return { endpointId: created.id, secret: created.secret, created: true };
+}
+
+/**
+ * Vérifie côté Stripe (mode de la clé courante) qu'un endpoint existe
+ * pour notre URL et écoute les événements requis.
+ */
+export async function inspectStripeWebhookEndpoint(
+  stripeSecretKey: string,
+  webhookUrl: string
+): Promise<{
+  endpointExists: boolean;
+  endpointId: string | null;
+  endpointStatus: string | null;
+  hasRequiredEvents: boolean;
+  endpointCount: number;
+}> {
+  const endpoints = await listStripeWebhookEndpoints(stripeSecretKey);
+  const match = findStripeWebhookForUrl(endpoints, webhookUrl);
+  return {
+    endpointExists: Boolean(match),
+    endpointId: match?.id ?? null,
+    endpointStatus: match?.status ?? null,
+    hasRequiredEvents: match ? webhookHasRequiredEvents(match) : false,
+    endpointCount: endpoints.length,
+  };
 }

@@ -1,7 +1,7 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, FileText, Info, Settings2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   PageHeader,

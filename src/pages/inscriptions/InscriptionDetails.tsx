@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -39,6 +39,7 @@ import {
   OBJECTIF_ATTEINT_LABELS,
   type ObjectifAtteint,
 } from "@/lib/certificate-progression";
+import { formatFormateurLevelDisplay } from "@/lib/formateur-formation-forms";
 import {
   useInscriptionCertificates,
   useInscriptionProgression,
@@ -95,6 +96,7 @@ import { InscriptionTimelineCard } from "@/components/inscriptions/InscriptionTi
 import { FormateurEntryFormDialog } from "@/components/inscriptions/FormateurEntryFormDialog";
 import { FormateurExitFormDialog } from "@/components/inscriptions/FormateurExitFormDialog";
 import {
+  displayPisteLabel,
   pisteLabelFromPlacementAnswers,
   SLOPE_LABELS,
   type SlopeLevel,
@@ -475,13 +477,14 @@ export default function InscriptionDetails() {
   }
 
   /**
-   * Niveaux affichés : bilan formateur d'abord, à défaut les niveaux portés
-   * par la fiche inscription. Aucune valeur n'est déduite d'une autre.
+   * Bilan de progression = saisie formateur uniquement.
+   * Jamais de repli sur entry_level / exit_level (issus du test ou d'imports) :
+   * le niveau d'entrée est constaté en début de formation, pas déduit du test.
    */
-  const entryGeneralLevel = progression?.niveau_general_entree || inscription.entry_level || null;
-  const exitGeneralLevel = progression?.niveau_general_sortie || inscription.exit_level || null;
-  const entryTechnicalLevel = progression?.niveau_technique_entree || null;
-  const exitTechnicalLevel = progression?.niveau_technique_sortie || null;
+  const entryGeneralLevel = progression?.niveau_general_entree?.trim() || null;
+  const exitGeneralLevel = progression?.niveau_general_sortie?.trim() || null;
+  const entryTechnicalLevel = progression?.niveau_technique_entree?.trim() || null;
+  const exitTechnicalLevel = progression?.niveau_technique_sortie?.trim() || null;
   const hasAnyLevel = Boolean(
     entryGeneralLevel || exitGeneralLevel || entryTechnicalLevel || exitTechnicalLevel
   );
@@ -589,9 +592,11 @@ export default function InscriptionDetails() {
         {/* Bandeau d'indicateurs — chaque tuile ouvre l'onglet qui porte le détail. */}
         <StatTileGrid cols={4}>
           <StatTile
-            label="Progression CECRL"
-            value={`${entryGeneralLevel || "—"} → ${exitGeneralLevel || "—"}`}
-            hint="Niveau général : entrée → sortie"
+            label="Progression"
+            value={`${formatFormateurLevelDisplay(entryGeneralLevel)} → ${
+              exitGeneralLevel || "—"
+            }`}
+            hint="Saisi par le formateur : entrée → sortie"
             icon={TrendingUp}
             tone="purple"
             onClick={() => setActiveTab("training")}
@@ -921,7 +926,7 @@ export default function InscriptionDetails() {
             <SurfaceCard
               title="Bilan de progression"
               icon={GraduationCap}
-              description="Entrée = piste / observation formateur · Sortie = CECRL formateur (jamais SNMSF/DSF sur le certificat)"
+              description="Entrée / sortie = constat formateur (Google Form / app), échelle CECRL avec demi-niveaux — jamais le test de placement ni SNMSF/DSF sur le certificat"
               bodyClassName="space-y-4"
               actions={
                 editable && (
@@ -949,9 +954,7 @@ export default function InscriptionDetails() {
                     <TableRow>
                       <TableCell className="font-medium">Niveau général</TableCell>
                       <TableCell>
-                        {progression?.niveau_general_entree ||
-                          inscription.entry_level ||
-                          "—"}
+                        {formatFormateurLevelDisplay(entryGeneralLevel)}
                       </TableCell>
                       <TableCell>{progression?.niveau_general_sortie || "—"}</TableCell>
                     </TableRow>
@@ -970,14 +973,14 @@ export default function InscriptionDetails() {
                   <div className="space-y-3">
                     <p className="text-sm font-medium">Niveau général</p>
                     <MeterRow
-                      label="Entrée"
+                      label="Entrée (CECRL)"
                       value={cecrlRank(entryGeneralLevel)}
                       max={CECRL_LEVELS.length}
-                      display={entryGeneralLevel || "—"}
+                      display={formatFormateurLevelDisplay(entryGeneralLevel)}
                       color={seriesColor(0)}
                     />
                     <MeterRow
-                      label="Sortie"
+                      label="Sortie (CECRL)"
                       value={cecrlRank(exitGeneralLevel)}
                       max={CECRL_LEVELS.length}
                       display={exitGeneralLevel || "—"}
@@ -1002,8 +1005,9 @@ export default function InscriptionDetails() {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground sm:col-span-2">
-                    Échelle A1 → C2 ({CECRL_LEVELS.join(" · ")}). Une valeur hors échelle reste
-                    affichée telle quelle, sans remplir la barre.
+                    Niveaux formateur ({CECRL_LEVELS.join(" · ")}). Indépendants du test
+                    de placement. Une ancienne saisie « Piste … » reste affichée telle
+                    quelle. Le certificat reprend la synthèse général / technique.
                   </p>
                 </div>
               ) : (
@@ -1161,7 +1165,19 @@ export default function InscriptionDetails() {
             modality={inscription.modality}
             courseLocation={inscription.course_location}
             observations={inscription.observations}
+            fundingOrganization={opsFields?.funding_organization ?? inscription.funding_organization ?? null}
             studentEmail={inscription.student_email}
+            inscriptionCode={inscription.code}
+            courseLanguage={inscription.language}
+            startDate={inscription.start_date}
+            endDate={inscription.end_date}
+            durationHours={inscription.duration_hours}
+            studentName={inscription.student_name}
+            studentId={inscription.student_id}
+            studentCity={inscription.student_city}
+            formateurName={
+              inscription.instructor_name || inscription.formateur || null
+            }
           />
         )}
       </PageShell>
@@ -1267,6 +1283,9 @@ export default function InscriptionDetails() {
               status: inscription.status,
               end_pack_sent_at: (inscription as { end_pack_sent_at?: string | null })
                 .end_pack_sent_at ?? null,
+              funding_organization:
+                (inscription as { funding_organization?: string | null })
+                  .funding_organization ?? null,
             }}
           />
 
@@ -1275,7 +1294,8 @@ export default function InscriptionDetails() {
             onOpenChange={setEntryFormOpen}
             inscriptionId={inscription.id}
             suggestedGeneralEntry={placementSuggestion}
-            initial={
+            initialFormulaire={progression?.formulaire_entree ?? null}
+            legacyFlat={
               progression
                 ? {
                     niveau_general_entree: progression.niveau_general_entree,
@@ -1292,22 +1312,23 @@ export default function InscriptionDetails() {
             inscriptionId={inscription.id}
             durationHours={inscription.duration_hours}
             hoursFollowed={progression?.hours_followed}
-            initial={
-              progression
-                ? {
-                    niveau_general_sortie: progression.niveau_general_sortie,
-                    niveau_technique_sortie: progression.niveau_technique_sortie,
-                    objectif_atteint: progression.objectif_atteint,
-                    commentaire_sortie: progression.commentaire_sortie,
-                  }
-                : null
-            }
+            initialFormulaire={progression?.formulaire_sortie ?? null}
             existingEntry={
               progression
                 ? {
                     niveau_general_entree: progression.niveau_general_entree,
                     niveau_technique_entree: progression.niveau_technique_entree,
                     remarques_entree: progression.remarques_entree,
+                  }
+                : null
+            }
+            legacyFlat={
+              progression
+                ? {
+                    niveau_general_sortie: progression.niveau_general_sortie,
+                    niveau_technique_sortie: progression.niveau_technique_sortie,
+                    objectif_atteint: progression.objectif_atteint,
+                    commentaire_sortie: progression.commentaire_sortie,
                   }
                 : null
             }

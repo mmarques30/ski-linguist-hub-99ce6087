@@ -19,6 +19,9 @@ verify_jwt = true
 [functions.send-inscription-documents]
 verify_jwt = true
 
+[functions.send-training-completion-pack]
+verify_jwt = true
+
 [functions.create-user]
 verify_jwt = false
 
@@ -38,7 +41,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.check-stripe-config]
-verify_jwt = false
+verify_jwt = true
 
 [functions.verify-registration-checkout]
 verify_jwt = false
@@ -49,7 +52,16 @@ verify_jwt = true
 [functions.invite-student-portal]
 verify_jwt = true
 
+[functions.invite-formateur-portal]
+verify_jwt = true
+
 [functions.send-test-email]
+verify_jwt = true
+
+[functions.send-staff-email]
+verify_jwt = true
+
+[functions.send-staff-sms]
 verify_jwt = true
 
 [functions.generate-evaluation-pdf]
@@ -57,3 +69,23 @@ verify_jwt = true
 
 [functions.cleanup-zztest]
 verify_jwt = false
+
+[functions.sign-private-download]
+verify_jwt = true
+
+[functions.publish-inscription-documents]
+verify_jwt = true
+
+[functions.invite-formateur-portal]
+verify_jwt = true
+
+[functions.send-rosiere-cfp-request]
+verify_jwt = true
+
+[functions.send-daily-ops-digest]
+verify_jwt = true
+
+# Prospection moniteurs : verify_jwt ne suffit pas (anon JWT valide).
+# L'Edge refuse anon et exige admin ou service_role (admin-auth).
+[functions.process-intake-outreach]
+verify_jwt = true

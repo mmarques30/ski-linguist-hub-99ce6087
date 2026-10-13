@@ -13,7 +13,30 @@ import {
   REQUESTED_START_DATE_REQUIRED_MESSAGE,
   resolveInscriptionDates,
 } from "../_shared/registration-dates.ts";
-import { isStudentPayer } from "../_shared/inscription-payer.ts";
+import { enqueueInscriptionDocuments } from "../_shared/enqueue-inscription-documents.ts";
+import {
+  confirmationNextStepsHtmlForFunding,
+  shouldEnqueueDocumentsAtSubmitWithoutPayment,
+} from "../_shared/funding-flows.ts";
+import { buildAgeficeObservation } from "../_shared/agefice-funding.ts";
+import {
+  buildRegistrationAdminNotifyHtml,
+  buildRegistrationAdminNotifyMessage,
+  buildRegistrationAdminNotifySubject,
+  buildRegistrationAdminNotifyTitle,
+  type RegistrationAdminSummaryInput,
+} from "../_shared/registration-admin-notify.ts";
+import {
+  getSessionFundingMode,
+  hidesDepositPaymentOptions,
+  isWaitlistOffering,
+  resolveOfferingPrice,
+} from "../_shared/registration-offerings.ts";
+import {
+  renderRosiereCfpRequestEmail,
+  ROSIERE_CFP_EMAIL_SLUG,
+  shouldSendRosiereCfpRequest,
+} from "../_shared/rosiere-cfp-request.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -62,6 +85,7 @@ const COURSE_TYPE_MAP: Record<string, string> = {
 
 const FUNDING_MAP: Record<string, string> = {
   fifpl: "FIFPL",
+  agefice: "AGEFICE",
   opco: "OPCO",
   company: "Entreprise",
   self: "Autofinancement",
@@ -69,6 +93,14 @@ const FUNDING_MAP: Record<string, string> = {
 
 function isOpcoFunding(type: string): boolean {
   return type === "opco";
+}
+
+function isFifplFunding(type: string): boolean {
+  return type === "fifpl";
+}
+
+function isAgeficeFunding(type: string): boolean {
+  return type === "agefice";
 }
 
 const LOCATION_LABELS: Record<string, string> = {
@@ -98,7 +130,7 @@ const SLOPE_LABELS: Record<string, string> = {
 function studentFacingSlopeLabel(summary?: {
   passedSlopes: string[];
   highestSlopeReached: string;
-  endedAtVocab: boolean;
+  vocabScore?: { correct: number; total: number };
 }): string {
   if (!summary) return "À déterminer";
   const order = ["verte", "bleue", "rouge", "noire"];
@@ -111,7 +143,8 @@ function studentFacingSlopeLabel(summary?: {
 }
 
 interface RegistrationPayload {
-  civility: string;
+  /** Optionnel — plus demandé à l'inscription (langage inclusif). */
+  civility?: string | null;
   firstName: string;
   lastName: string;
   email: string;
@@ -122,6 +155,12 @@ interface RegistrationPayload {
   hasHandicap: boolean;
   profession: "ski_instructor" | "other";
   skiSchool: string;
+  skiNetwork?: string;
+  skiSchoolCode?: string;
+  skiSchoolOther?: string;
+  stationOrValley?: string;
+  carteSyndicale?: string;
+  carteSyndicalePending?: boolean;
   offeringId?: string;
   fundingType: string;
   modality: string;
@@ -149,16 +188,44 @@ interface RegistrationPayload {
     slopeResults: Array<{ slope: string; correct: number; total: number; passed: boolean }>;
     passedSlopes: string[];
     highestSlopeReached: string;
-    endedAtVocab: boolean;
+    vocabScore?: { correct: number; total: number };
+    vocabAnswers?: Array<{
+      questionId: string;
+      questionText: string;
+      selected: string;
+      correctAnswer: string;
+      isCorrect: boolean;
+    }>;
+    presentationText?: string;
+    startedAt?: string | null;
+    completedAt?: string | null;
+  };
+  /** Auto-diagnostic (avant QCM) — feuille Excel Auto-diagnostic */
+  autoDiagnostic?: {
+    version: 1;
+    answers: Record<string, string | string[]>;
+    completedAt: string;
   };
   expectations: string;
   certification: string;
   paymentOption?: string;
+  /** Tarif partenaire non définitif → inscription sans paiement. */
+  pricePending?: boolean;
   /** BL-027 questionnaire OPCO */
   opcoKnowsOpco?: boolean | null;
   opcoName?: string;
   opcoNafCode?: string;
   opcoCaseNotes?: string;
+  /** FIFPL — estimation des droits (critères Moniteurs de ski) ; attestation CFP facultative */
+  fifplStatus?: "independant" | "micro_entrepreneur" | null;
+  fifplCfpAttestationYear?: number | null;
+  fifplCfpContributionEur?: number | null;
+  fifplCfpAttestationPath?: string | null;
+  fifplCfpAttestationFileName?: string | null;
+  fifplHadOtherTrainingThisYear?: boolean | null;
+  /** Montant déjà pris en charge FIFPL pour une autre formation cette année */
+  fifplOtherAmountAlreadyCoveredEur?: number | null;
+  fifplParseWarnings?: string[];
 }
 
 function buildOpcoFundingDetails(registration: RegistrationPayload): string | null {
@@ -175,6 +242,155 @@ function buildOpcoFundingDetails(registration: RegistrationPayload): string | nu
   });
 }
 
+function hasFifplAnswers(registration: RegistrationPayload): boolean {
+  return Boolean(
+    registration.fifplStatus ||
+      registration.fifplCfpAttestationPath ||
+      registration.fifplCfpAttestationFileName ||
+      registration.fifplHadOtherTrainingThisYear === true ||
+      registration.fifplHadOtherTrainingThisYear === false
+  );
+}
+
+function buildFifplFundingDetails(
+  registration: RegistrationPayload,
+  /** Prix catalogue résolu côté serveur — jamais registration.price client. */
+  serverCoursePrice: number | null = null
+): string | null {
+  if (!isFifplFunding(registration.fundingType) && !hasFifplAnswers(registration)) {
+    return null;
+  }
+  const status = registration.fifplStatus ?? null;
+  const contribution = registration.fifplCfpContributionEur ?? null;
+  const already =
+    registration.fifplHadOtherTrainingThisYear === true
+      ? registration.fifplOtherAmountAlreadyCoveredEur ?? 0
+      : 0;
+  // Estimation alignée sur src/lib/fifpl-funding.ts (copie Deno volontairement
+  // allégée — le détail complet reste dans funding_details.fifpl).
+  // Visio FLI = présentiel FIFPL (pas e-learning asynchrone → pas de plafond 450 €).
+  const annualBase = 900;
+  let percent = 100;
+  let provisionalMicro = false;
+  if (status === "micro_entrepreneur") {
+    const c = Number(contribution) || 0;
+    if (c >= 116) percent = 100;
+    else if (c >= 101) percent = 90;
+    else if (c >= 81) percent = 80;
+    else if (c >= 41) percent = 60;
+    else if (c >= 21) percent = 40;
+    else if (c >= 1) percent = 20;
+    else {
+      // Sans cotisation : pire cas 20 % (aligné src/lib/fifpl-funding.ts)
+      percent = 20;
+      provisionalMicro = true;
+    }
+  }
+  const gross = Math.round((annualBase * percent) / 100);
+  const remaining = Math.max(0, gross - (Number(already) || 0));
+  // Finding scan : coveredOnCourseEur ne doit pas dépendre du prix client.
+  const coursePrice =
+    serverCoursePrice != null && Number(serverCoursePrice) > 0
+      ? Number(serverCoursePrice)
+      : null;
+  const coveredOnCourse =
+    coursePrice != null ? Math.min(coursePrice, remaining) : null;
+  const remainingCharge =
+    coursePrice != null && coveredOnCourse != null
+      ? Math.max(0, Math.round(coursePrice - coveredOnCourse))
+      : null;
+  const hasAttestation = Boolean(
+    registration.fifplCfpAttestationPath || registration.fifplCfpAttestationFileName
+  );
+
+  return JSON.stringify({
+    version: 1,
+    source: "register",
+    fifpl: {
+      status,
+      cfpAttestationYear: registration.fifplCfpAttestationYear ?? null,
+      cfpContributionEur: contribution,
+      cfpAttestationPath: registration.fifplCfpAttestationPath ?? null,
+      cfpAttestationFileName: registration.fifplCfpAttestationFileName ?? null,
+      hadOtherFifplTrainingThisYear: registration.fifplHadOtherTrainingThisYear ?? null,
+      otherFifplAmountAlreadyCoveredEur:
+        registration.fifplHadOtherTrainingThisYear === true
+          ? registration.fifplOtherAmountAlreadyCoveredEur ?? null
+          : null,
+      parseWarnings: registration.fifplParseWarnings ?? [],
+      estimatedRights: {
+        rightsPercent: percent,
+        grossRightsEur: gross,
+        alreadyCoveredEur: Number(already) || 0,
+        remainingRightsEur: remaining,
+        annualCeilingBaseEur: annualBase,
+        isProvisionalMicroEstimate: provisionalMicro,
+        coveredOnCourseEur: coveredOnCourse,
+        remainingChargeEur: remainingCharge,
+        hasCfpAttestation: hasAttestation,
+      },
+    },
+  });
+}
+
+function buildFundingDetails(
+  registration: RegistrationPayload,
+  serverCoursePrice: number | null = null
+): string | null {
+  return (
+    buildOpcoFundingDetails(registration) ||
+    buildFifplFundingDetails(registration, serverCoursePrice)
+  );
+}
+
+function formatFifplObservation(
+  registration: RegistrationPayload,
+  serverCoursePrice: number | null = null
+): string {
+  const details = buildFifplFundingDetails(registration, serverCoursePrice);
+  if (!details) return "Financement FIFPL";
+  try {
+    const parsed = JSON.parse(details) as {
+      fifpl?: {
+        status?: string | null;
+        cfpAttestationYear?: number | null;
+        cfpContributionEur?: number | null;
+        hadOtherFifplTrainingThisYear?: boolean | null;
+        otherFifplAmountAlreadyCoveredEur?: number | null;
+        cfpAttestationFileName?: string | null;
+        estimatedRights?: {
+          remainingRightsEur?: number;
+          rightsPercent?: number;
+        };
+      };
+    };
+    const f = parsed.fifpl;
+    if (!f) return "Financement FIFPL";
+    const lines = ["Financement FIFPL — attestation CFP URSSAF"];
+    if (f.status === "independant") lines.push("Statut : indépendant (100 %)");
+    if (f.status === "micro_entrepreneur") {
+      lines.push(
+        `Statut : micro-entrepreneur — CFP ${f.cfpContributionEur ?? "?"} € → ${f.estimatedRights?.rightsPercent ?? "?"} %`
+      );
+    }
+    if (f.cfpAttestationYear != null) lines.push(`Attestation année : ${f.cfpAttestationYear}`);
+    if (f.cfpAttestationFileName) lines.push(`Fichier : ${f.cfpAttestationFileName}`);
+    if (f.hadOtherFifplTrainingThisYear === true) {
+      lines.push(
+        `Autre formation FIFPL cette année : oui — déjà pris en charge ${f.otherFifplAmountAlreadyCoveredEur ?? 0} €`
+      );
+    } else if (f.hadOtherFifplTrainingThisYear === false) {
+      lines.push("Autre formation FIFPL cette année : non");
+    }
+    if (f.estimatedRights?.remainingRightsEur != null) {
+      lines.push(`Droits restants estimés : ${f.estimatedRights.remainingRightsEur} €`);
+    }
+    return lines.join("\n");
+  } catch {
+    return "Financement FIFPL";
+  }
+}
+
 function formatOpcoObservation(registration: RegistrationPayload): string {
   const lines = [
     "Financement OPCO — dossier à analyser par FLI pour définir les modalités du contrat (aucun frais facturé pour le moment).",
@@ -189,34 +405,14 @@ function formatOpcoObservation(registration: RegistrationPayload): string {
   return lines.join("\n");
 }
 
+function formatAgeficeObservation(registration: RegistrationPayload): string {
+  return buildAgeficeObservation({ startDate: registration.startDate ?? null });
+}
+
 function parseDurationHours(duration?: string): number | null {
   if (!duration) return null;
   const match = duration.match(/(\d+)/);
   return match ? Number(match[1]) : null;
-}
-
-/** File d'attente modèle 2 : dossier FIF-PL à +30 min (payeur stagiaire). */
-async function enqueueInscriptionDocuments(params: {
-  supabase: ReturnType<typeof createClient>;
-  inscriptionId: string;
-  fundingOrganization: string | null;
-}): Promise<boolean> {
-  if (!isStudentPayer({ funding_organization: params.fundingOrganization })) {
-    return false;
-  }
-  const scheduledFor = new Date(Date.now() + 30 * 60 * 1000).toISOString();
-  const { error } = await params.supabase.from("scheduled_reminders").insert({
-    type: "DOCUMENT",
-    related_id: params.inscriptionId,
-    related_table: "inscriptions",
-    scheduled_for: scheduledFor,
-    status: "PENDING",
-  });
-  if (error) {
-    console.error("enqueue inscription_documents:", error);
-    return false;
-  }
-  return true;
 }
 
 Deno.serve(async (req) => {
@@ -230,6 +426,16 @@ Deno.serve(async (req) => {
     if (!registration?.email || !registration?.firstName || !registration?.lastName) {
       return new Response(
         JSON.stringify({ success: false, error: "Données d'inscription incomplètes" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!registration.autoDiagnostic?.answers) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Veuillez compléter l’auto-diagnostic avant le test de niveau",
+        }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -257,6 +463,8 @@ Deno.serve(async (req) => {
     const needsAdminCall = registration.needsAdminCall ?? false;
 
     const isOpco = isOpcoFunding(registration.fundingType);
+    const isFifpl = isFifplFunding(registration.fundingType);
+    const isAgefice = isAgeficeFunding(registration.fundingType);
 
     if (isOpco) {
       if (registration.opcoKnowsOpco !== true && registration.opcoKnowsOpco !== false) {
@@ -282,10 +490,59 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (!isCustomFormat && !isOpco && (registration.price ?? 0) > 0) {
-      if (!registration.paymentOption || !isValidPaymentOption(registration.paymentOption)) {
+    if (isFifpl) {
+      if (
+        registration.fifplStatus !== "independant" &&
+        registration.fifplStatus !== "micro_entrepreneur"
+      ) {
         return new Response(
-          JSON.stringify({ success: false, error: "Veuillez choisir un mode de paiement" }),
+          JSON.stringify({
+            success: false,
+            error: "Indiquez si vous êtes indépendant ou micro-entrepreneur.",
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      // Attestation CFP facultative : ne pas bloquer sur l'année (scan / extraction incertaine).
+      // L'équipe FLI vérifie le fichier.
+      if (
+        registration.fifplStatus === "micro_entrepreneur" &&
+        !(Number(registration.fifplCfpContributionEur) >= 1)
+      ) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error:
+              "Indiquez le montant de votre cotisation CFP (micro-entrepreneur) pour estimer vos droits.",
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (
+        registration.fifplHadOtherTrainingThisYear !== true &&
+        registration.fifplHadOtherTrainingThisYear !== false
+      ) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error:
+              "Indiquez si vous avez déjà bénéficié d’une prise en charge FIFPL en 2026.",
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (
+        registration.fifplHadOtherTrainingThisYear === true &&
+        (registration.fifplOtherAmountAlreadyCoveredEur == null ||
+          !Number.isFinite(Number(registration.fifplOtherAmountAlreadyCoveredEur)) ||
+          Number(registration.fifplOtherAmountAlreadyCoveredEur) < 0)
+      ) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error:
+              "Indiquez le montant déjà pris en charge par le FIFPL pour cette autre formation.",
+          }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -300,6 +557,7 @@ Deno.serve(async (req) => {
       startDate: registration.startDate,
       endDate: registration.endDate,
       requestedStartDate: registration.requestedStartDate,
+      durationHours,
     });
 
     if (!dates) {
@@ -318,18 +576,54 @@ Deno.serve(async (req) => {
       .eq("is_current", true)
       .maybeSingle();
 
-    let price: number | null = registration.price ?? null;
+    // Finding #9 : ne jamais faire confiance au prix client. Uniquement catalogue
+    // (offering) ou pricing_rules saison ; sinon tarif en attente côté FLI.
+    let price: number | null = null;
+    let pricePending = false;
+    let offeringFundingMode: string | null = null;
+    let offeringLocationKey: string | null = registration.location || null;
 
-    if (price == null && registration.offeringId) {
+    if (registration.offeringId) {
       const { data: offering } = await supabase
         .from("registration_offerings")
-        .select("base_price")
+        .select(
+          "base_price, partner_price, partner_price_alt, partner_price_pending, partner_school_codes, enrollment_status, is_active, funding_mode, location_key, location_label"
+        )
         .eq("id", registration.offeringId)
         .maybeSingle();
-      price = offering?.base_price ?? null;
+
+      if (offering && isWaitlistOffering(offering)) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error:
+              "Cette formation est en attente de confirmation. Les inscriptions ne sont pas encore ouvertes.",
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (offering) {
+        offeringFundingMode =
+          typeof offering.funding_mode === "string" ? offering.funding_mode : null;
+        offeringLocationKey =
+          typeof offering.location_key === "string" ? offering.location_key : offeringLocationKey;
+        const skiCode =
+          registration.skiSchoolCode && registration.skiSchoolCode !== "__autre__"
+            ? registration.skiSchoolCode
+            : null;
+        const resolved = resolveOfferingPrice(offering, skiCode);
+        if (resolved == null) {
+          pricePending = true;
+          price = null;
+        } else {
+          price = resolved;
+          pricePending = false;
+        }
+      }
     }
 
-    if (price == null && season?.id && registration.currentLevel && registration.modality && durationHours) {
+    if (price == null && !pricePending && season?.id && registration.currentLevel && registration.modality && durationHours) {
       const { data: pricing } = await supabase
         .from("pricing_rules")
         .select("base_price")
@@ -340,7 +634,24 @@ Deno.serve(async (req) => {
         .eq("duration_hours", durationHours)
         .maybeSingle();
 
-      price = pricing?.base_price ?? null;
+      if (pricing?.base_price != null) {
+        price = Number(pricing.base_price);
+        pricePending = false;
+      }
+    }
+
+    if (price == null && !isCustomFormat && !isOpco) {
+      // Pas d'offre / règle → FLI fixe le tarif (pas de Stripe sur un montant client).
+      pricePending = true;
+    }
+
+    if (!isCustomFormat && !isOpco && !pricePending && (price ?? 0) > 0) {
+      if (!registration.paymentOption || !isValidPaymentOption(registration.paymentOption)) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Veuillez choisir un mode de paiement" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     const { data: existingStudent } = await supabase
@@ -352,25 +663,35 @@ Deno.serve(async (req) => {
     let studentId = existingStudent?.id;
     let createdStudent = false;
 
+    const skiSchoolCode =
+      registration.skiSchoolCode && registration.skiSchoolCode !== "__autre__"
+        ? registration.skiSchoolCode
+        : null;
+    const skiSchoolOther =
+      registration.skiSchoolOther?.trim() ||
+      (registration.skiNetwork === "Indépendant.e"
+        ? registration.stationOrValley?.trim() || null
+        : null);
+    const studentSchoolFields = {
+      company: registration.skiSchool || null,
+      ski_network: registration.skiNetwork || null,
+      ski_school_code: skiSchoolCode,
+      ski_school_other: skiSchoolOther,
+      carte_syndicale: registration.carteSyndicalePending
+        ? null
+        : registration.carteSyndicale?.trim() || null,
+      carte_syndicale_pending: Boolean(registration.carteSyndicalePending),
+    };
+
     if (studentId) {
-      await supabase
-        .from("students")
-        .update({
-          civility: registration.civility,
-          first_name: registration.firstName,
-          last_name: registration.lastName,
-          phone: registration.phone,
-          street_address: registration.address,
-          postal_code: registration.postalCode,
-          city: registration.city,
-          company: registration.skiSchool || null,
-        })
-        .eq("id", studentId);
+      // Finding #10 : e-mail déjà connu — on rattache la nouvelle inscription
+      // sans écraser les coordonnées (pas de vérification de boîte mail ici).
+      // Le staff met à jour la fiche stagiaire depuis le back-office si besoin.
     } else {
       const { data: newStudent, error: studentError } = await supabase
         .from("students")
         .insert({
-          civility: registration.civility,
+          civility: registration.civility?.trim() || null,
           first_name: registration.firstName,
           last_name: registration.lastName,
           email,
@@ -378,7 +699,7 @@ Deno.serve(async (req) => {
           street_address: registration.address,
           postal_code: registration.postalCode,
           city: registration.city,
-          company: registration.skiSchool || null,
+          ...studentSchoolFields,
         })
         .select("id")
         .single();
@@ -400,27 +721,68 @@ Deno.serve(async (req) => {
       registration.location ||
       null;
 
+    // Part moniteur La Rosière / Méribel = droits FIF-PL restants sur la formation
+    // (coveredOnCourseEur), pas le tarif plein — sinon la convention affiche 1 500 €
+    // au lieu de 300 € + 1 200 € ESF (cas Gobert FLI-260039).
+    let schoolFifplStudentShareEur: number | null = null;
+    if (
+      registration.paymentOption &&
+      isValidPaymentOption(registration.paymentOption) &&
+      normalizePaymentOption(registration.paymentOption) ===
+        REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE &&
+      (isFifpl || hasFifplAnswers(registration))
+    ) {
+      try {
+        const details = buildFifplFundingDetails(registration, price);
+        if (details) {
+          const parsed = JSON.parse(details) as {
+            fifpl?: { estimatedRights?: { coveredOnCourseEur?: number | null } };
+          };
+          const covered = parsed.fifpl?.estimatedRights?.coveredOnCourseEur;
+          if (covered != null && Number.isFinite(Number(covered))) {
+            schoolFifplStudentShareEur = Number(covered);
+          }
+        }
+      } catch {
+        schoolFifplStudentShareEur = null;
+      }
+    }
+
     const paymentFields =
       !isCustomFormat &&
       !isOpco &&
+      !pricePending &&
       price != null &&
       price > 0 &&
       registration.paymentOption &&
       isValidPaymentOption(registration.paymentOption)
-        ? getInscriptionPaymentFields(price, normalizePaymentOption(registration.paymentOption))
+        ? getInscriptionPaymentFields(
+            price,
+            normalizePaymentOption(registration.paymentOption),
+            { studentShareEur: schoolFifplStudentShareEur }
+          )
         : null;
 
     const paymentFlow = paymentFields?.paymentFlow ?? "none";
+    const sessionFundingMode = getSessionFundingMode({
+      funding_mode: offeringFundingMode,
+    });
+    const omitDossierFee = hidesDepositPaymentOptions(sessionFundingMode);
 
     const paymentLabels: Record<string, string> = {
       [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]:
-        "150 € Stripe + solde chèque à l'inscription (encaissement après clôture dossier)",
+        "150 € paiement sécurisé en ligne + solde chèque avant le début de la formation",
       [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]:
-        "150 € virement + solde chèque à l'inscription (encaissement après clôture dossier)",
-      [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]: "Paiement intégral Stripe",
+        "150 € virement + solde chèque avant le début de la formation",
+      [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]:
+        "Règlement intégral en ligne",
+      [REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X]:
+        "Payez en 3 fois avec Klarna",
       [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]: "Paiement intégral virement",
+      [REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE]:
+        "Chèque FIF-PL à envoyer à FLI (Montmélian)",
       virement:
-        "150 € virement + solde chèque à l'inscription (encaissement après clôture dossier)",
+        "150 € virement + solde chèque avant le début de la formation",
     };
 
     const { data: inscription, error: inscriptionError } = await supabase
@@ -439,7 +801,7 @@ Deno.serve(async (req) => {
         course_type: COURSE_TYPE_MAP[registration.modality] || null,
         course_location: courseLocation,
         funding_organization: FUNDING_MAP[registration.fundingType] || registration.fundingType || null,
-        funding_details: buildOpcoFundingDetails(registration),
+        funding_details: buildFundingDetails(registration, price),
         certification_type: registration.certification || null,
         expectations: registration.expectations || null,
         schedule_status: "pending",
@@ -451,6 +813,9 @@ Deno.serve(async (req) => {
           isCustomFormat
             ? `📋 DEVIS DEMANDÉ — Format personnalisé:\n${registration.customFormatDetails || "(non renseigné)"}`
             : null,
+          pricePending
+            ? "⏳ EN ATTENTE TARIF — partenaire (tarif à confirmer). Pas de paiement ni convention tant que le tarif n'est pas fixé."
+            : null,
           registration.dateLabel || registration.dates
             ? `Dates: ${registration.dateLabel || registration.dates}`
             : null,
@@ -460,19 +825,32 @@ Deno.serve(async (req) => {
           registration.offeringId ? `Offre catalogue: ${registration.offeringId}` : null,
           registration.profession === "ski_instructor" ? "Moniteur de ski" : "Autre profession",
           registration.hasHandicap ? "Situation de handicap signalée" : null,
-          needsAdminCall ? "⚠️ ALERTE: Niveau très faible — contacter le stagiaire" : null,
           registration.testSummary
-            ? `Test adaptatif: ${registration.testSummary.passedSlopes.join(" → ") || "vocab ski"}`
+            ? `Test adaptatif: ${registration.testSummary.passedSlopes.join(" → ") || "aucune piste validée"} · vocab ${registration.testSummary.vocabScore?.correct ?? "?"}/${registration.testSummary.vocabScore?.total ?? 5}`
             : null,
           isOpco ? formatOpcoObservation(registration) : null,
+          isFifpl || hasFifplAnswers(registration)
+            ? formatFifplObservation(registration, price)
+            : null,
+          isAgefice ? formatAgeficeObservation(registration) : null,
           registration.paymentOption
             ? `Paiement: ${paymentLabels[registration.paymentOption] || registration.paymentOption}`
             : null,
-          paymentFields && paymentFields.balanceAfterDeposit > 0
-            ? `Frais de dossier: ${FRAIS_DOSSIER_EUR} € · Solde chèque: ${paymentFields.balanceAfterDeposit} € (à envoyer à l'inscription, encaissement après clôture dossier)`
-            : paymentFields?.paymentType === "total" && paymentFields.paymentFlow === "virement"
-              ? `Paiement intégral par virement: ${price} €`
-              : null,
+          omitDossierFee
+            ? "Aucun acompte 150 € (forfait école Méribel / La Rosière)"
+            : null,
+          paymentFields &&
+          paymentFields.balanceAfterDeposit > 0 &&
+          paymentFields.paymentMethod === "cheque_fifpl_ecole"
+            ? `Chèque FIF-PL à envoyer à FLI (part stagiaire) : ${paymentFields.balanceAfterDeposit} € — encaissement après la formation`
+            : paymentFields &&
+                paymentFields.balanceAfterDeposit > 0 &&
+                paymentFields.depositAmount
+              ? `Frais de dossier: ${FRAIS_DOSSIER_EUR} € · Solde chèque: ${paymentFields.balanceAfterDeposit} € (avant le début de la formation)`
+              : paymentFields?.paymentType === "total" &&
+                  paymentFields.paymentFlow === "virement"
+                ? `Paiement intégral par virement: ${price} €`
+                : null,
         ]
           .filter(Boolean)
           .join("\n"),
@@ -518,7 +896,7 @@ Deno.serve(async (req) => {
         payer_type: "stagiaire",
         payer_name: `${registration.firstName} ${registration.lastName}`,
         notes:
-          "Chèque à envoyer à l'inscription — encaissement après clôture du dossier",
+          "Chèque à envoyer avant le début de la formation",
         cheque_deposited: false,
       });
     }
@@ -544,6 +922,7 @@ Deno.serve(async (req) => {
           answers: {
             responses: registration.testAnswers,
             summary: registration.testSummary ?? null,
+            autoDiagnostic: registration.autoDiagnostic ?? null,
           },
           status: "completed",
           completed_at: new Date().toISOString(),
@@ -618,6 +997,10 @@ Deno.serve(async (req) => {
           ? paymentLabels[registration.paymentOption] || registration.paymentOption
           : "Devis à établir",
         suivi_url: suiviUrl,
+        funding_next_steps: confirmationNextStepsHtmlForFunding(
+          FUNDING_MAP[registration.fundingType] || registration.fundingType,
+          { omitDossierFee },
+        ),
       };
 
       if (template) {
@@ -649,34 +1032,158 @@ Deno.serve(async (req) => {
         }
       }
 
+      if (
+        shouldSendRosiereCfpRequest({
+          profession: registration.profession,
+          locationKey: offeringLocationKey || registration.location,
+          locationLabel: courseLocation,
+          fundingMode: offeringFundingMode,
+          status: registration.fifplStatus,
+          cfpAttestationPath: registration.fifplCfpAttestationPath,
+          cfpAttestationFileName: registration.fifplCfpAttestationFileName,
+          cfpAttestationYear: registration.fifplCfpAttestationYear,
+          hadOtherFifplTrainingThisYear: registration.fifplHadOtherTrainingThisYear,
+          otherFifplAmountAlreadyCoveredEur:
+            registration.fifplOtherAmountAlreadyCoveredEur,
+        })
+      ) {
+        try {
+          const { data: priorCfp } = await supabase
+            .from("email_log")
+            .select("id")
+            .eq("template_slug", ROSIERE_CFP_EMAIL_SLUG)
+            .eq("inscription_id", inscription.id)
+            .eq("status", "sent")
+            .maybeSingle();
+
+          if (!priorCfp) {
+            let subject: string;
+            let html: string;
+            const { data: cfpTemplate } = await supabase
+              .from("email_templates")
+              .select("subject_fr, body_fr")
+              .eq("slug", ROSIERE_CFP_EMAIL_SLUG)
+              .eq("is_active", true)
+              .maybeSingle();
+            const cfpVars = {
+              student_name: studentName,
+              inscription_code: inscription.code || "",
+            };
+            if (cfpTemplate?.subject_fr && cfpTemplate?.body_fr) {
+              subject = applyEmailTemplate(cfpTemplate.subject_fr, cfpVars);
+              html = applyEmailTemplate(cfpTemplate.body_fr, cfpVars);
+            } else {
+              const rendered = renderRosiereCfpRequestEmail({
+                studentName,
+                inscriptionCode: inscription.code || "",
+              });
+              subject = rendered.subject;
+              html = rendered.html;
+            }
+            const cfpSend = await sendFliEmail({ resendApiKey, to: email, subject, html });
+            await supabase.from("email_log").insert({
+              template_slug: ROSIERE_CFP_EMAIL_SLUG,
+              recipient_email: email,
+              recipient_name: studentName,
+              status: cfpSend.ok ? "sent" : cfpSend.skipped ? "skipped" : "failed",
+              error_message: cfpSend.error ?? null,
+              inscription_id: inscription.id,
+              variables_used: cfpVars,
+            });
+          }
+        } catch (cfpEmailError) {
+          console.error("rosiere CFP request email error:", cfpEmailError);
+        }
+      }
+
+      // Règle Paula : flux avec règlement → dossier après 150 € / intégral.
+      // Forfait école (Méribel / La Rosière) : pas d'acompte — dossier dès la
+      // soumission si chèque FIF-PL école (ou sans flux paiement).
+      // OPCO / Entreprise : pas d'enfilement auto (funding-flows).
       const fundingOrganization =
         FUNDING_MAP[registration.fundingType] || registration.fundingType || null;
+      const schoolChequeAtSubmit =
+        omitDossierFee &&
+        registration.paymentOption ===
+          REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE;
+      if (
+        schoolChequeAtSubmit ||
+        (!paymentFields &&
+          shouldEnqueueDocumentsAtSubmitWithoutPayment(fundingOrganization))
+      ) {
+        try {
+          documentsSent = await enqueueInscriptionDocuments({
+            supabase,
+            inscriptionId: inscription.id,
+            fundingOrganization,
+          });
+        } catch (docError) {
+          console.error("enqueue inscription_documents error:", docError);
+        }
+      }
+
+      // Une seule notif e-mail admin par inscription, avec résumé des choix.
+      // Plus d'alerte « test niveau faible » (demande Paula, 24/09/2026).
+      const datesLabel = inscriptionDatesSentenceFr({
+        start_date: startDate,
+        end_date: endDate,
+        dates_to_confirm: datesToConfirm,
+      });
+      const adminSummary: RegistrationAdminSummaryInput = {
+        firstName: registration.firstName,
+        lastName: registration.lastName,
+        email,
+        phone: registration.phone,
+        language,
+        modalityLabel:
+          MODALITY_LABELS[registration.modality] || registration.modality || "À confirmer",
+        fundingLabel:
+          FUNDING_MAP[registration.fundingType] || registration.fundingType || "—",
+        level: registration.currentLevel || "—",
+        slopeLabel: studentFacingSlopeLabel(registration.testSummary),
+        durationHours,
+        courseLocation: courseLocation || null,
+        datesLabel,
+        paymentLabel: registration.paymentOption
+          ? paymentLabels[registration.paymentOption] || registration.paymentOption
+          : isCustomFormat || isOpco
+            ? "Devis / à définir"
+            : null,
+        inscriptionCode: inscription.code,
+        isCustomFormat,
+        customFormatDetails: registration.customFormatDetails || null,
+        isOpco,
+        opcoObservation: isOpco ? formatOpcoObservation(registration) : null,
+        isFifpl,
+        fifplObservation:
+          isFifpl || hasFifplAnswers(registration)
+            ? formatFifplObservation(registration, price)
+            : null,
+        isAgefice,
+        ageficeObservation: isAgefice ? formatAgeficeObservation(registration) : null,
+        hasHandicap: Boolean(registration.hasHandicap),
+        isOtherProfession: registration.profession === "other",
+        price,
+      };
+
       try {
-        documentsSent = await enqueueInscriptionDocuments({
-          supabase,
-          inscriptionId: inscription.id,
-          fundingOrganization,
+        const adminSend = await sendFliEmail({
+          resendApiKey,
+          to: ADMIN_EMAIL,
+          subject: buildRegistrationAdminNotifySubject(adminSummary),
+          html: buildRegistrationAdminNotifyHtml(adminSummary),
         });
-      } catch (docError) {
-        console.error("enqueue inscription_documents error:", docError);
-      }
-
-      if (needsAdminCall) {
-        const adminSubject = `[ALERTE FLI] Test de niveau faible — ${studentName}`;
-        const adminHtml = `<p>Le stagiaire <strong>${studentName}</strong> (${email}) nécessite un contact téléphonique suite au test de niveau.</p>
-          <p>Code inscription: <strong>${inscription.code}</strong></p>
-          <p>Merci de le contacter par téléphone.</p>`;
-        await sendFliEmail({ resendApiKey, to: ADMIN_EMAIL, subject: adminSubject, html: adminHtml });
-      }
-
-      if (isCustomFormat) {
-        const adminSubject = `[DEVIS FLI] Format personnalisé — ${studentName}`;
-        const adminHtml = `<p><strong>${studentName}</strong> (${email}) demande un devis pour un format personnalisé.</p>
-          <p>Code inscription: <strong>${inscription.code}</strong></p>
-          <p>Langue: ${language} · Lieu: ${courseLocation || "—"}</p>
-          <p><strong>Projet décrit:</strong></p>
-          <p>${(registration.customFormatDetails || "").replace(/\n/g, "<br>")}</p>`;
-        await sendFliEmail({ resendApiKey, to: ADMIN_EMAIL, subject: adminSubject, html: adminHtml });
+        await supabase.from("email_log").insert({
+          template_slug: "admin_new_inscription",
+          recipient_email: ADMIN_EMAIL,
+          recipient_name: "FLI Admin",
+          status: adminSend.ok ? "sent" : adminSend.skipped ? "skipped" : "failed",
+          error_message: adminSend.error ?? null,
+          inscription_id: inscription.id,
+          variables_used: adminSummary as unknown as Record<string, unknown>,
+        });
+      } catch (adminEmailError) {
+        console.error("admin new-inscription email error:", adminEmailError);
       }
 
       const { data: adminUsers } = await supabase
@@ -684,20 +1191,10 @@ Deno.serve(async (req) => {
         .select("user_id")
         .eq("role", "admin");
 
-      for (const admin of adminUsers || []) {
-        const notifTitle = isOpco
-          ? `OPCO à analyser — ${registration.firstName}`
-          : isCustomFormat
-            ? `📋 Devis à préparer — ${registration.firstName}`
-            : needsAdminCall
-              ? `⚠️ Inscription — appeler ${registration.firstName}`
-              : `Nouvelle inscription — ${registration.firstName}`;
-        const notifMessage = isOpco
-          ? `Inscription ${inscription.code} — financement OPCO. Définir les modalités du contrat.`
-          : isCustomFormat
-            ? `Inscription ${inscription.code} — format personnalisé (${language}). Envoyer une proposition.`
-            : `Inscription ${inscription.code} pour ${language}. Niveau: ${registration.currentLevel}. Horaire: en attente de validation.`;
+      const notifTitle = buildRegistrationAdminNotifyTitle(adminSummary);
+      const notifMessage = buildRegistrationAdminNotifyMessage(adminSummary);
 
+      for (const admin of adminUsers || []) {
         await supabase.from("notifications").insert({
           user_id: admin.user_id,
           type: "inscription",

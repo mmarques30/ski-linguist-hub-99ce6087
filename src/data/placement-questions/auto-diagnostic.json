@@ -1,7 +1,7 @@
 [
   {
     "order_index": 1,
-    "section": "Historique",
+    "section": "Parcours",
     "response_type": "Oui/Non",
     "question": "Avez-vous déjà pris des cours de [langue] ?",
     "options": "Oui / Non",
@@ -11,9 +11,9 @@
   },
   {
     "order_index": 2,
-    "section": "Historique",
+    "section": "Parcours",
     "response_type": "Texte libre",
-    "question": "Si vous le souhaitez, précisez où et il y a combien de temps :",
+    "question": "Si oui, où et il y a combien de temps ?",
     "options": null,
     "required": false,
     "condition": "Si Q1 = Oui",
@@ -21,7 +21,7 @@
   },
   {
     "order_index": 3,
-    "section": "Historique",
+    "section": "Parcours",
     "response_type": "Oui/Non",
     "question": "Avez-vous déjà suivi une formation chez FLI ?",
     "options": "Oui / Non",
@@ -31,9 +31,9 @@
   },
   {
     "order_index": 4,
-    "section": "Historique",
+    "section": "Parcours",
     "response_type": "Texte libre",
-    "question": "Si vous vous en souvenez, indiquez l'année et le/la formateur·rice :",
+    "question": "Si oui, en quelle année et avec quel formateur ?",
     "options": null,
     "required": false,
     "condition": "Si Q3 = Oui",
@@ -41,37 +41,57 @@
   },
   {
     "order_index": 5,
-    "section": "Difficultés",
-    "response_type": "Ranking",
-    "question": "Classez vos difficultés de la plus importante (1) à la moins importante :",
-    "options": "Expression orale (parler) / Compréhension orale (écouter) / Grammaire / Vocabulaire général / Prononciation / Vocabulaire technique ski / Autre",
+    "section": "Besoins",
+    "response_type": "Choix multiple",
+    "question": "Dans quelles situations avez-vous besoin de cette langue ?",
+    "options": "Accueillir les clients et les parents / Donner des consignes techniques / Sécurité, chute, accident / Cours avec des enfants / Conversation sur le télésiège / Renseigner sur la station (horaires, restaurants, météo) / Gérer un imprévu ou une réclamation / Autre",
     "required": true,
     "condition": null,
-    "notes": "Drag and drop - 7 items"
+    "notes": "Plusieurs réponses possibles"
   },
   {
     "order_index": 6,
-    "section": "Difficultés",
+    "section": "Besoins",
     "response_type": "Texte libre",
-    "question": "Si vous avez choisi « Autre », précisez :",
+    "question": "Précisez « Autre » :",
     "options": null,
     "required": false,
-    "condition": "Si 'Autre' classé",
+    "condition": "Si Q5 = Autre",
     "notes": null
   },
   {
     "order_index": 7,
-    "section": "Motivation",
-    "response_type": "Texte libre",
-    "question": "Pourquoi souhaitez-vous apprendre [langue] ?",
-    "options": null,
+    "section": "Besoins",
+    "response_type": "Choix multiple (max 3)",
+    "question": "Dans quels domaines voulez-vous progresser en priorité ?",
+    "options": "Parler / Comprendre à l'oral / Vocabulaire du ski / Vocabulaire général / Prononciation / Grammaire / Autre",
     "required": true,
     "condition": null,
-    "notes": null
+    "notes": "3 réponses maximum : bloquer la 4e sélection"
   },
   {
     "order_index": 8,
-    "section": "Motivation",
+    "section": "Besoins",
+    "response_type": "Texte libre",
+    "question": "Précisez « Autre » :",
+    "options": null,
+    "required": false,
+    "condition": "Si Q7 = Autre",
+    "notes": null
+  },
+  {
+    "order_index": 9,
+    "section": "Aisance",
+    "response_type": "Choix unique",
+    "question": "Aujourd'hui, face à un client qui parle [langue], vous :",
+    "options": "vous débrouillez sans difficulté / vous faites comprendre, mais cherchez vos mots / passez vite par les gestes ou une autre langue / ne pouvez pas communiquer",
+    "required": true,
+    "condition": null,
+    "notes": "À comparer avec la piste obtenue"
+  },
+  {
+    "order_index": 10,
+    "section": "Attentes",
     "response_type": "Texte libre",
     "question": "Qu'attendez-vous de cette formation ?",
     "options": null,
@@ -80,53 +100,33 @@
     "notes": null
   },
   {
-    "order_index": 9,
-    "section": "Confiance",
-    "response_type": "Choix unique",
-    "question": "Quel est votre niveau de confiance pour vous exprimer en [langue] ?",
-    "options": "Très confiant(e) / Assez confiant(e) / Peu confiant(e) / Pas du tout confiant(e)",
-    "required": true,
-    "condition": null,
-    "notes": null
-  },
-  {
-    "order_index": 10,
-    "section": "Culture",
-    "response_type": "Oui/Non",
-    "question": "Avez-vous déjà visité un pays où l'on parle [langue] ?",
-    "options": "Oui / Non",
-    "required": true,
-    "condition": null,
-    "notes": null
-  },
-  {
     "order_index": 11,
-    "section": "Culture",
-    "response_type": "Texte libre",
-    "question": "Lequel / Lesquels ?",
-    "options": null,
+    "section": "Contexte",
+    "response_type": "Oui/Non",
+    "question": "Avez-vous déjà vécu ou séjourné dans un pays où l'on parle [langue] ?",
+    "options": "Oui / Non",
     "required": false,
-    "condition": "Si Q10 = Oui",
+    "condition": null,
     "notes": null
   },
   {
     "order_index": 12,
-    "section": "Culture",
-    "response_type": "Choix unique",
-    "question": "Connaissez-vous des personnes qui parlent [langue] ?",
-    "options": "Oui, dans mon entourage proche (famille, amis) / Oui, des collègues ou connaissances / Non",
-    "required": true,
-    "condition": null,
+    "section": "Contexte",
+    "response_type": "Texte libre",
+    "question": "Lequel / lesquels ?",
+    "options": null,
+    "required": false,
+    "condition": "Si Q11 = Oui",
     "notes": null
   },
   {
     "order_index": 13,
-    "section": "Culture",
+    "section": "Contexte",
     "response_type": "Texte libre",
-    "question": "Y a-t-il un artiste, film, série ou livre en [langue] que vous appréciez ?",
+    "question": "Un artiste, un film, une série en [langue] que vous aimez ?",
     "options": null,
     "required": false,
     "condition": null,
-    "notes": null
+    "notes": "Sert à lancer la conversation en 1re séance"
   }
 ]

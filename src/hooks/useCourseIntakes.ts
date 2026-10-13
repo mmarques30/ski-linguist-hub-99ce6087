@@ -84,7 +84,7 @@ export function useCreateCourseIntake() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (intake: Partial<CourseIntake> & { hosting_partner_id: string; start_date: string; end_date: string; language: string; location: string }) => {
-      const { data, error } = await supabase.from("course_intakes").insert(intake).select().single();
+      const { data, error } = await supabase.from("course_intakes").insert(intake as never).select().single();
       if (error) throw error;
       return data;
     },
@@ -96,7 +96,7 @@ export function useUpdateCourseIntake() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<CourseIntake> & { id: string }) => {
-      const { data, error } = await supabase.from("course_intakes").update(updates).eq("id", id).select().single();
+      const { data, error } = await supabase.from("course_intakes").update(updates as never).eq("id", id).select().single();
       if (error) throw error;
       return data;
     },

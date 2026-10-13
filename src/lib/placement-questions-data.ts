@@ -1,4 +1,4 @@
-import type { PlacementQuestion, SlopeLevel } from "@/lib/placement-test-engine";
+import type { PlacementCategory, PlacementQuestion, SlopeLevel } from "@/lib/placement-test-engine";
 
 import anglais from "@/data/placement-questions/anglais.json";
 import portugais from "@/data/placement-questions/portugais.json";
@@ -12,11 +12,13 @@ import fle from "@/data/placement-questions/fle.json";
 
 type RawQuestion = {
   order_index: number;
-  slope: SlopeLevel;
-  category: string;
+  slope: SlopeLevel | "presentation";
+  category: PlacementCategory | string;
+  vocabulary_level?: SlopeLevel | null;
   question_text: string;
-  options: string[];
-  correct_answer: string;
+  options: string[] | null;
+  correct_answer: string | null;
+  teacher_notes?: string | null;
 };
 
 const QUESTION_BANK: Record<string, RawQuestion[]> = {
@@ -55,6 +57,13 @@ export function getPlacementQuestions(languageKey?: string): PlacementQuestion[]
     correct_answer: q.correct_answer,
     slope: q.slope,
     category: q.category,
+    vocabulary_level: q.vocabulary_level ?? null,
+    teacher_notes: q.teacher_notes ?? null,
     order_index: q.order_index,
   }));
+}
+
+/** Scored MCQ only (excludes free-text presentation). */
+export function getScoredPlacementQuestions(languageKey?: string): PlacementQuestion[] {
+  return getPlacementQuestions(languageKey).filter((q) => q.slope !== "presentation");
 }

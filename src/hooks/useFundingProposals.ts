@@ -167,13 +167,13 @@ export function useUpdateInscriptionFunding() {
         if (value !== undefined) payload[key] = value as string | number | null;
       }
       if (Object.keys(payload).length === 0) return;
-      const { error } = await supabase.from("inscriptions").update(payload).eq("id", id);
+      const { error } = await supabase.from("inscriptions").update(payload as never).eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_d, vars) => {
-      qc.invalidateQueries({ queryKey: ["inscription", vars.id] });
+      // Montants (price/deposit/balance) viennent de `inscription-details` sur la fiche.
+      qc.invalidateQueries({ queryKey: ["inscription-details", vars.id] });
       qc.invalidateQueries({ queryKey: ["inscription-ops-fields", vars.id] });
-      qc.invalidateQueries({ queryKey: ["inscription-funding", vars.id] });
       qc.invalidateQueries({ queryKey: ["inscriptions"] });
       toast({
         title: "Enregistré",

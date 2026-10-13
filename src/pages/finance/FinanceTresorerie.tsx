@@ -16,7 +16,7 @@ import {
   Table2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Navigate } from "react-router-dom";
+import { Navigate } from "react-router";
 import {
   CardList,
   CardListItem,

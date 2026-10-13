@@ -59,16 +59,19 @@ async function ensureStudentAuthUser(
 
   await adminClient.from("students").update({ auth_user_id: authUserId }).eq("id", student.id);
 
+  // Ne jamais écraser un rôle existant (admin/user/formateur → student).
   const { data: existingRole } = await adminClient
     .from("user_roles")
-    .select("id")
+    .select("id, role")
     .eq("user_id", authUserId)
     .maybeSingle();
 
   if (!existingRole) {
     await adminClient.from("user_roles").insert({ user_id: authUserId, role: "student" });
-  } else {
-    await adminClient.from("user_roles").update({ role: "student" }).eq("user_id", authUserId);
+  } else if (existingRole.role !== "student") {
+    throw new Error(
+      `Compte existant avec le rôle « ${existingRole.role} » — invitation refusée pour éviter un écrasement. Liez manuellement ou changez le rôle côté Admin utilisateurs.`
+    );
   }
 
   await adminClient
