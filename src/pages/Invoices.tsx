@@ -72,6 +72,12 @@ import {
   getFinSaison,
   getPreviousFiscalYear,
 } from "@/lib/fiscal-year";
+import { downloadTextFile } from "@/lib/csv-import-parser";
+import {
+  buildSalesJournalCsv,
+  buildSalesJournalRows,
+  salesJournalFilename,
+} from "@/lib/sales-journal-export";
 
 const translations = {
   title: {
@@ -93,6 +99,21 @@ const translations = {
     fr: "Export CSV téléchargé",
     "pt-BR": "CSV exportado com sucesso",
     en: "CSV export downloaded",
+  },
+  exportSalesJournal: {
+    fr: "Journal de ventes",
+    "pt-BR": "Diário de vendas",
+    en: "Sales journal",
+  },
+  exportSalesJournalSuccess: {
+    fr: "Journal de ventes téléchargé",
+    "pt-BR": "Diário de vendas exportado",
+    en: "Sales journal downloaded",
+  },
+  exportSalesJournalEmpty: {
+    fr: "Aucune facture émise à exporter (brouillons et annulées exclus)",
+    "pt-BR": "Nenhuma fatura emitida para exportar (rascunhos e canceladas excluídos)",
+    en: "No issued invoices to export (drafts and cancelled excluded)",
   },
   newInvoice: {
     fr: "Nouvelle facture",
@@ -756,6 +777,26 @@ export default function Invoices() {
     toast.success(t(translations.exportSuccess));
   };
 
+  /** Export comptable : hors brouillons/annulées, tri chronologique, montants FR. */
+  const handleExportSalesJournal = () => {
+    if (!invoices?.length) {
+      toast.error(t(translations.exportSalesJournalEmpty));
+      return;
+    }
+    const rows = buildSalesJournalRows(invoices);
+    if (!rows.length) {
+      toast.error(t(translations.exportSalesJournalEmpty));
+      return;
+    }
+    const csv = buildSalesJournalCsv(invoices);
+    const filename = salesJournalFilename({
+      dateFrom: dateRange.from ?? seasonStart,
+      dateTo: dateRange.to ?? seasonEnd,
+    });
+    downloadTextFile(filename, csv);
+    toast.success(t(translations.exportSalesJournalSuccess));
+  };
+
   const getPreviewData = (invoice: InvoiceWithInscription): InvoiceData => {
     const inscription = invoice.inscription;
     const clientName = resolveInvoiceClientName(invoice);
@@ -942,6 +983,16 @@ export default function Invoices() {
           tone="gold"
           actions={
             <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportSalesJournal}
+                disabled={!invoices?.length}
+                title="CSV pour l'expert-comptable (hors brouillons et annulées)"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                {t(translations.exportSalesJournal)}
+              </Button>
               <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={!invoices?.length}>
                 <Download className="mr-2 h-4 w-4" />
                 {t(translations.export)}
