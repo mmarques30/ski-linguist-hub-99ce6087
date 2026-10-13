@@ -23,7 +23,12 @@ type FailAt = keyof Pick<
 type MemoryInvoice = { id: string; invoice_number: string | null; inscription_id: string };
 type MemoryCertificate = { id: string; inscription_id: string; pdf_url: string | null };
 type MemorySurvey = { id: string; token: string; inscription_id: string };
-type MemorySending = { id: string; inscription_id: string };
+type MemorySending = {
+  id: string;
+  inscription_id: string;
+  document_type?: string;
+  pdf_url?: string | null;
+};
 type MemoryInscription = {
   id: string;
   price: number | null;
@@ -60,6 +65,7 @@ function input(overrides: Partial<EndPackInput> = {}): EndPackInput {
     sendSurvey: true,
     certificatePdfBlob: new Blob(["pdf"], { type: "application/pdf" }),
     attestationPdfBlob: new Blob(["attestation"], { type: "application/pdf" }),
+    invoicePdfBlob: new Blob(["invoice"], { type: "application/pdf" }),
     ...overrides,
   };
 }
@@ -80,6 +86,7 @@ function createMemoryStore(options?: {
   const sendings: MemorySending[] = [];
   const pdfs = new Set<string>();
   const attestationPdfs = new Set<string>();
+  const invoicePdfs = new Set<string>();
   const inscription: MemoryInscription = {
     id: "ins-1",
     price: 1200,
@@ -142,9 +149,19 @@ function createMemoryStore(options?: {
     async insertDocumentSending(row) {
       calls.push("insertDocumentSending");
       fail("insertDocumentSending");
-      const created = { id: `snd-${nextId++}`, inscription_id: row.inscription_id };
+      const created = {
+        id: `snd-${nextId++}`,
+        inscription_id: row.inscription_id,
+        document_type: row.document_type,
+        pdf_url: row.pdf_url,
+      };
       sendings.push(created);
       return created;
+    },
+    async updateDocumentSendingPdfUrl(id, path) {
+      calls.push("updateDocumentSendingPdfUrl");
+      const row = sendings.find((item) => item.id === id);
+      if (row) row.pdf_url = path;
     },
     async uploadCertificatePdf(path) {
       calls.push("uploadCertificatePdf");
@@ -153,21 +170,35 @@ function createMemoryStore(options?: {
     },
     async findExistingAttestation(inscriptionId) {
       calls.push("findExistingAttestation");
-      const row = sendings.find(
-        (s) => (s as { document_type?: string }).document_type === "ATTESTATION_PRESENCE"
+      return (
+        sendings.find(
+          (s) =>
+            s.inscription_id === inscriptionId &&
+            s.document_type === "ATTESTATION_PRESENCE"
+        ) ?? null
       );
-      // Memory sendings don't track type — look in attestationPdfs via path convention
-      void inscriptionId;
-      void row;
-      return null;
+    },
+    async findExistingInvoiceSending(inscriptionId) {
+      calls.push("findExistingInvoiceSending");
+      return (
+        sendings.find(
+          (s) =>
+            s.inscription_id === inscriptionId && s.document_type === "FACTURE"
+        ) ?? null
+      );
     },
     async uploadAttestationPdf(path) {
       calls.push("uploadAttestationPdf");
       attestationPdfs.add(path);
     },
+    async uploadInvoicePdf(path) {
+      calls.push("uploadInvoicePdf");
+      invoicePdfs.add(path);
+    },
     async removeAttestationPdf(path) {
       calls.push("removeAttestationPdf");
       attestationPdfs.delete(path);
+      invoicePdfs.delete(path);
     },
     async findExistingSurvey(inscriptionId) {
       calls.push("findExistingSurvey");
@@ -260,6 +291,7 @@ describe("generateEndPack — ordre et compensation", () => {
     const mutations = memory.calls.filter((name) =>
       [
         "insertInvoice",
+        "uploadInvoicePdf",
         "insertCertificate",
         "uploadCertificatePdf",
         "insertDocumentSending",
@@ -270,11 +302,13 @@ describe("generateEndPack — ordre et compensation", () => {
     );
     expect(mutations).toEqual([
       "insertInvoice",
+      "uploadInvoicePdf",
+      "insertDocumentSending", // FACTURE
       "insertCertificate",
       "uploadCertificatePdf",
-      "insertDocumentSending",
+      "insertDocumentSending", // CERTIFICAT
       "uploadAttestationPdf",
-      "insertDocumentSending",
+      "insertDocumentSending", // ATTESTATION
       "insertSurvey",
       "closeInscription",
     ]);
@@ -284,7 +318,7 @@ describe("generateEndPack — ordre et compensation", () => {
     const memory = createMemoryStore({ failAt: "insertCertificate" });
 
     await expect(generateEndPack(memory.store, input())).rejects.toThrow(
-      /étape « certificat »[\s\S]*n'est pas passée à « Terminée »[\s\S]*Annulé : facture brouillon/
+      /étape « certificat »[\s\S]*n'est pas passée à « Terminée »[\s\S]*Annulé :[\s\S]*facture brouillon/
     );
 
     expect(memory.invoices).toHaveLength(0);
@@ -345,13 +379,16 @@ describe("generateEndPack — ordre et compensation", () => {
     });
 
     await expect(generateEndPack(memory.store, input())).rejects.toThrow(
-      /Rien n'avait encore été créé/
+      /étape « certificat »[\s\S]*n'est pas passée à « Terminée »/
     );
 
     expect(memory.invoices).toEqual([
       { id: "inv-existant", invoice_number: "26-27.14298", inscription_id: "ins-1" },
     ]);
+    // La facture DB existante n'est pas supprimée ; seuls les PDF créés dans
+    // cette course (FACTURE) sont annulés.
     expect(memory.calls).not.toContain("deleteInvoice");
+    expect(memory.calls).toContain("deleteDocumentSending");
     expect(memory.inscription.status).toBe("en_cours");
   });
 

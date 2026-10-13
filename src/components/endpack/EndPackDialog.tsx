@@ -22,8 +22,11 @@ import {
   CheckCircle2,
   Package,
   AlertTriangle,
+  Send,
+  RefreshCw,
 } from "lucide-react";
 import { useGenerateEndPack } from "@/hooks/useEndPack";
+import { useSendTrainingCompletionPack } from "@/hooks/useSendTrainingCompletionPack";
 import { useInscriptionProgression } from "@/hooks/useInscriptionProgression";
 import { useAttendanceRate } from "@/hooks/useAttendance";
 import {
@@ -32,11 +35,13 @@ import {
   type ObjectifAtteint,
 } from "@/lib/certificate-progression";
 import {
-  canCloseWithEndPack,
+  canGenerateEndPackDocuments,
   endPackBlockedReason,
   getStatusLabel,
 } from "@/lib/inscription-status";
 import { resolveEndPackDeposit } from "@/lib/end-pack";
+import { supabase } from "@/integrations/supabase/client";
+import { paymentMethodLabel } from "@/lib/payment-methods";
 
 interface EndPackDialogProps {
   open: boolean;
@@ -67,6 +72,8 @@ interface EndPackDialogProps {
     end_pack_sent_at?: string | null;
     funding_organization?: string | null;
     course_type?: string | null;
+    student_email?: string | null;
+    student_city?: string | null;
   };
   onSuccess?: () => void;
 }
@@ -86,12 +93,16 @@ export function EndPackDialog({
   const [result, setResult] = useState<{
     invoiceId?: string;
     invoiceNumber?: string | null;
+    invoicePath?: string;
     certificateId?: string;
+    certificatePath?: string;
     attestationPath?: string;
     surveyToken?: string;
   } | null>(null);
+  const [emailSent, setEmailSent] = useState(false);
 
   const generateEndPack = useGenerateEndPack();
+  const sendPack = useSendTrainingCompletionPack();
   const { data: progression, isLoading: progressionLoading } =
     useInscriptionProgression(open ? inscription.id : undefined);
   const { data: computedAttendance } = useAttendanceRate(
@@ -124,6 +135,7 @@ export function EndPackDialog({
     if (!open) {
       setResult(null);
       setAttendanceOverride(false);
+      setEmailSent(false);
     }
   }, [open]);
 
@@ -145,13 +157,11 @@ export function EndPackDialog({
   );
 
   const statut = inscription.status ?? null;
-  // Générer le pack clôture l'inscription : la base accepte le passage à
-  // « Terminée » depuis brouillon, en attente, confirmée ou en cours dès que
-  // end_pack_sent_at est renseigné. Seuls les statuts finaux restent fermés.
+  const alreadyGenerated = Boolean(inscription.end_pack_sent_at);
   const clotureBloquee = statut
     ? endPackBlockedReason(statut, inscription.end_pack_sent_at ?? null)
     : null;
-  const clotureFermee = statut ? !canCloseWithEndPack(statut) : false;
+  const canGenerate = canGenerateEndPackDocuments(statut);
 
   const price = Number(inscription.price) || 0;
   const deposit = resolveEndPackDeposit({
@@ -161,17 +171,25 @@ export function EndPackDialog({
   });
   const invoiceRemaining = Math.max(price - deposit, 0);
 
-  const handleGenerate = async () => {
-    if (generateCertificate && !exitReady) return;
-    try {
-      await generateAll();
-    } catch {
-      // Le message est affiché par le hook ; la boîte reste ouverte pour
-      // corriger ce qui bloque.
-    }
-  };
-
   const generateAll = async () => {
+    const { data: student } = await supabase
+      .from("students")
+      .select("street_address, postal_code, city, company, email")
+      .eq("id", merged.student_id)
+      .maybeSingle();
+
+    const { data: payments } = await supabase
+      .from("payments")
+      .select("amount, payment_method, payment_date, status")
+      .eq("inscription_id", merged.id)
+      .order("payment_date", { ascending: true });
+
+    const paidMethods = (payments || [])
+      .filter((p) => p.status === "recu" || p.status === "encaisse" || !p.status)
+      .map((p) => paymentMethodLabel(p.payment_method || ""))
+      .filter(Boolean);
+    const uniqueMethods = [...new Set(paidMethods)];
+
     const res = await generateEndPack.mutateAsync({
       inscriptionId: merged.id,
       studentId: merged.student_id,
@@ -196,18 +214,60 @@ export function EndPackDialog({
       generateCertificate: generateCertificate && exitReady,
       generateAttestation,
       sendSurvey,
+      forceRegenerate: true,
       fundingOrganization: inscription.funding_organization ?? "FIFPL",
       pedagogicalAmount: merged.price ?? inscription.price ?? null,
       courseType: merged.course_type ?? inscription.course_type ?? null,
+      invoicePdfContext: {
+        clientName: merged.student_name,
+        clientAddress: student?.street_address ?? null,
+        clientPostalCode: student?.postal_code ?? null,
+        clientCity: student?.city ?? inscription.student_city ?? null,
+        clientCompany: student?.company ?? null,
+        courseDescription: `Formation ${merged.language}`,
+        courseLocation:
+          merged.modality === "en_ligne" || merged.modality === "En ligne"
+            ? "En ligne"
+            : merged.course_location || merged.modality || null,
+        amountHt: price || null,
+        amountTtc: price || null,
+        acompteAmount: deposit || null,
+        status: "paid",
+        paymentMethodLabel:
+          uniqueMethods.length > 0 ? uniqueMethods.join(" + ") : null,
+      },
     });
     setResult(res);
+    setEmailSent(false);
     onSuccess?.();
+  };
+
+  const handleGenerate = async () => {
+    if (generateCertificate && !exitReady) return;
+    try {
+      await generateAll();
+    } catch {
+      // toast via hook
+    }
+  };
+
+  const handleSend = async () => {
+    try {
+      await sendPack.mutateAsync({ inscriptionId: merged.id });
+      setEmailSent(true);
+      onSuccess?.();
+    } catch {
+      // toast via hook
+    }
   };
 
   const handleClose = () => {
     setResult(null);
+    setEmailSent(false);
     onOpenChange(false);
   };
+
+  const showGenerateForm = !result;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -223,7 +283,7 @@ export function EndPackDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {!result ? (
+        {showGenerateForm ? (
           <>
             <div className="flex flex-wrap gap-2 mb-4">
               <StatusPill tone="neutral">{inscription.code}</StatusPill>
@@ -239,15 +299,25 @@ export function EndPackDialog({
             </div>
 
             {clotureBloquee ? (
-              <Alert variant={clotureFermee ? "destructive" : "default"}>
+              <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>{clotureBloquee}</AlertDescription>
+              </Alert>
+            ) : alreadyGenerated ? (
+              <Alert>
+                <RefreshCw className="h-4 w-4" />
+                <AlertDescription>
+                  Pack déjà généré. Vous pouvez régénérer les PDF (tampon,
+                  signature, facture officielle) puis les envoyer manuellement —
+                  les crons sont fermés.
+                </AlertDescription>
               </Alert>
             ) : (
               statut && (
                 <p className="text-xs text-muted-foreground">
                   La génération clôture l&apos;inscription :{" "}
-                  {getStatusLabel(statut, "fr")} → Terminée.
+                  {getStatusLabel(statut, "fr")} → Terminée. L&apos;envoi
+                  e-mail se fait ensuite avec le bouton Envoyer.
                 </p>
               )
             )}
@@ -330,12 +400,12 @@ export function EndPackDialog({
                       className="flex items-center gap-2 font-medium cursor-pointer"
                     >
                       <FileText className="h-4 w-4 text-[hsl(var(--tint-blue-fg))]" />
-                      Facture de solde
+                      Facture (format officiel)
                     </label>
                     <p className="text-xs text-muted-foreground">
                       {deposit > 0
-                        ? `Montant restant (${invoiceRemaining} € HT) — acompte ${deposit} € déduit`
-                        : `Montant restant (${invoiceRemaining} € HT)`}
+                        ? `${price} € TTC avec acompte ${deposit} € — PDF officiel acquitté`
+                        : `Montant (${invoiceRemaining} € HT) — PDF officiel`}
                     </p>
                   </div>
                 </div>
@@ -357,10 +427,6 @@ export function EndPackDialog({
                       <Award className="h-4 w-4 text-[hsl(var(--tint-gold-fg))]" />
                       Certificat de fin de formation
                     </label>
-                    <p className="text-xs text-muted-foreground">
-                      Bilan Entrée / Sortie (jamais SNMSF/DSF ; jamais piste comme
-                      niveau final)
-                    </p>
                   </div>
                 </div>
 
@@ -381,7 +447,7 @@ export function EndPackDialog({
                       Attestation de présence (FIF-PL)
                     </label>
                     <p className="text-xs text-muted-foreground">
-                      Heures suivies / prévues — dossier de remboursement
+                      Cachet institutionnel + signature Paula
                     </p>
                   </div>
                 </div>
@@ -414,7 +480,7 @@ export function EndPackDialog({
                 disabled={
                   generateEndPack.isPending ||
                   progressionLoading ||
-                  clotureFermee ||
+                  !canGenerate ||
                   (!generateInvoice &&
                     !(generateCertificate && exitReady) &&
                     !generateAttestation &&
@@ -429,7 +495,9 @@ export function EndPackDialog({
                 ) : (
                   <>
                     <Package className="mr-2 h-4 w-4" />
-                    Générer le pack
+                    {alreadyGenerated
+                      ? "Régénérer les documents"
+                      : "Générer les documents"}
                   </>
                 )}
               </Button>
@@ -437,33 +505,39 @@ export function EndPackDialog({
           </>
         ) : (
           <>
-            <div className="py-6 text-center">
+            <div className="py-4 text-center">
               <div className="mx-auto w-12 h-12 rounded-pill bg-[hsl(var(--tint-teal-bg))] flex items-center justify-center mb-4">
                 <CheckCircle2 className="h-6 w-6 text-[hsl(var(--tint-teal-fg))]" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Pack généré</h3>
+              <h3 className="text-lg font-semibold mb-2">
+                {emailSent ? "Pack envoyé" : "Documents prêts — à valider"}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                {emailSent
+                  ? "L'e-mail a été envoyé au stagiaire (copie info@fli.fr)."
+                  : "Vérifiez les pièces dans Documents de l'inscription, puis envoyez."}
+              </p>
               <div className="space-y-3 text-left max-w-sm mx-auto">
                 {result.invoiceId && (
                   <div className="flex items-center gap-3 p-3 rounded-[var(--radius)] bg-[hsl(var(--tint-blue-bg))] border border-[hsl(var(--tint-blue-ring))]">
                     <FileText className="h-5 w-5 text-[hsl(var(--tint-blue-fg))]" />
                     <p className="font-medium text-sm">
-                      Facture créée{result.invoiceNumber ? ` ${result.invoiceNumber}` : ""}
+                      Facture{result.invoiceNumber ? ` ${result.invoiceNumber}` : ""}
+                      {result.invoicePath ? " (PDF officiel)" : ""}
                     </p>
                   </div>
                 )}
                 {result.certificateId && (
                   <div className="flex items-center gap-3 p-3 rounded-[var(--radius)] bg-[hsl(var(--tint-gold-bg))] border border-[hsl(var(--tint-gold-ring))]">
                     <Award className="h-5 w-5 text-[hsl(var(--tint-gold-fg))]" />
-                    <p className="font-medium text-sm">
-                      Certificat créé (bilan de progression)
-                    </p>
+                    <p className="font-medium text-sm">Certificat</p>
                   </div>
                 )}
                 {result.attestationPath && (
                   <div className="flex items-center gap-3 p-3 rounded-[var(--radius)] bg-[hsl(var(--tint-blue-bg))] border border-[hsl(var(--tint-blue-ring))]">
                     <ClipboardCheck className="h-5 w-5 text-[hsl(var(--tint-blue-fg))]" />
                     <p className="font-medium text-sm">
-                      Attestation de présence créée
+                      Attestation FIF-PL (cachet + signature)
                     </p>
                   </div>
                 )}
@@ -477,9 +551,29 @@ export function EndPackDialog({
                 )}
               </div>
             </div>
-            <DialogFooter>
-              <Button onClick={handleClose} className="w-full">
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button variant="outline" onClick={() => setResult(null)}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Régénérer
+              </Button>
+              <Button variant="outline" onClick={handleClose}>
                 Fermer
+              </Button>
+              <Button
+                onClick={handleSend}
+                disabled={sendPack.isPending || emailSent}
+              >
+                {sendPack.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Envoi...
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    {emailSent ? "Envoyé" : "Envoyer"}
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </>
