@@ -156,6 +156,10 @@ export function EndPackDialog({
     [merged]
   );
 
+  useEffect(() => {
+    if (!exitReady) setGenerateCertificate(false);
+  }, [exitReady]);
+
   const statut = inscription.status ?? null;
   const alreadyGenerated = Boolean(inscription.end_pack_sent_at);
   const clotureBloquee = statut
@@ -205,10 +209,10 @@ export function EndPackDialog({
       code: merged.code ?? null,
       niveauGeneralEntree: merged.niveau_general_entree || "—",
       niveauTechniqueEntree: merged.niveau_technique_entree || "—",
-      niveauGeneralSortie: merged.niveau_general_sortie!,
-      niveauTechniqueSortie: merged.niveau_technique_sortie!,
-      objectifAtteint: merged.objectif_atteint as ObjectifAtteint,
-      commentaireSortie: merged.commentaire_sortie!,
+      niveauGeneralSortie: merged.niveau_general_sortie ?? null,
+      niveauTechniqueSortie: merged.niveau_technique_sortie ?? null,
+      objectifAtteint: (merged.objectif_atteint as ObjectifAtteint) || null,
+      commentaireSortie: merged.commentaire_sortie ?? null,
       attendanceRate,
       generateInvoice,
       generateCertificate: generateCertificate && exitReady,
@@ -243,7 +247,6 @@ export function EndPackDialog({
   };
 
   const handleGenerate = async () => {
-    if (generateCertificate && !exitReady) return;
     try {
       await generateAll();
     } catch {
@@ -348,12 +351,12 @@ export function EndPackDialog({
                   </p>
                 </div>
               ) : (
-                <Alert variant="destructive">
+                <Alert>
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
-                    Formulaire de sortie formateur incomplet. Pas de certificat
-                    sans ce formulaire — complétez-le d&apos;abord (documents
-                    manquants).
+                    Formulaire de sortie formateur incomplet — le pack partira
+                    sans certificat (facture, attestation, questionnaire
+                    restent disponibles).
                   </AlertDescription>
                 </Alert>
               )}
@@ -422,11 +425,18 @@ export function EndPackDialog({
                   <div className="flex-1">
                     <label
                       htmlFor="certificate"
-                      className="flex items-center gap-2 font-medium cursor-pointer"
+                      className={`flex items-center gap-2 font-medium ${
+                        exitReady ? "cursor-pointer" : "cursor-not-allowed opacity-70"
+                      }`}
                     >
                       <Award className="h-4 w-4 text-[hsl(var(--tint-gold-fg))]" />
                       Certificat de fin de formation
                     </label>
+                    {!exitReady && (
+                      <p className="text-xs text-muted-foreground">
+                        Indisponible sans bilan de sortie formateur
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -527,11 +537,15 @@ export function EndPackDialog({
                     </p>
                   </div>
                 )}
-                {result.certificateId && (
+                {result.certificateId ? (
                   <div className="flex items-center gap-3 p-3 rounded-[var(--radius)] bg-[hsl(var(--tint-gold-bg))] border border-[hsl(var(--tint-gold-ring))]">
                     <Award className="h-5 w-5 text-[hsl(var(--tint-gold-fg))]" />
                     <p className="font-medium text-sm">Certificat</p>
                   </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground text-center">
+                    Pas de certificat dans ce pack (bilan de sortie manquant).
+                  </p>
                 )}
                 {result.attestationPath && (
                   <div className="flex items-center gap-3 p-3 rounded-[var(--radius)] bg-[hsl(var(--tint-blue-bg))] border border-[hsl(var(--tint-blue-ring))]">

@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { describeCaughtError } from "@/lib/supabase-error";
 import {
   generateEndPack,
+  pickEndPackInvoice,
   type EndPackInput,
   type EndPackResult,
   type EndPackStore,
@@ -29,8 +30,7 @@ function createSupabaseEndPackStore(): EndPackStore {
         .eq("inscription_id", inscriptionId)
         .in("payment_type", ["integral", "saldo", "solde"]);
       throwIfError(error, "Lecture des factures impossible.");
-      if (!data || data.length === 0) return null;
-      return data[0];
+      return pickEndPackInvoice(data || []);
     },
 
     async getInscriptionAmounts(inscriptionId) {
