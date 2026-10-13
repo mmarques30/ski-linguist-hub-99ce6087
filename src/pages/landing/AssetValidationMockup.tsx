@@ -61,7 +61,7 @@ export default function AssetValidationMockupPage() {
               to="/auth"
               className="rounded-full border border-white/25 px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/10"
             >
-              Acesso FLI
+              Accès FLI
             </Link>
           </div>
         </div>
@@ -73,8 +73,8 @@ export default function AssetValidationMockupPage() {
             Aligné sur docs/FLI-LP-institucional-spec.md
           </h2>
           <p className="mt-2 max-w-3xl text-sm text-white/75">
-            Sitemap : Hero → Méthode/vidéo → Parceiros → Formações → Footer → FAQ. CTA header
-            « Acesso FLI » → <code className="text-[#FCAF17]">/auth</code>. Pendances spec §5–7 :
+            Sitemap : Hero → Méthode/vidéo → Partenaires → Formations → Footer → FAQ. CTA header
+            « Accès FLI » → <code className="text-[#FCAF17]">/auth</code>. Pendances spec §5–7 :
             photo hero réelle, logos partenaires HD, chiffres moniteurs formés.
           </p>
           <ul className="mt-5 grid gap-3 sm:grid-cols-2">

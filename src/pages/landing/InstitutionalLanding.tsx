@@ -205,7 +205,7 @@ export default function InstitutionalLanding() {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:h-[4.25rem] sm:px-6">
           <a href="#inicio" className="flex shrink-0 items-center" aria-label="FLI — accueil">
             <img
-              src={RECOMMENDED.navLogo}
+              src={scrolled ? RECOMMENDED.navLogoDark : RECOMMENDED.navLogo}
               alt="France Langues International"
               className="h-8 w-auto sm:h-9"
             />
@@ -414,13 +414,13 @@ export default function InstitutionalLanding() {
         {/* —— Dobra 3 : Parceiros —— */}
         <section
           id="parceiros"
-          className="scroll-mt-24 overflow-hidden border-y border-border bg-[hsl(var(--fli-navy))] py-14 text-white"
+          className="scroll-mt-24 overflow-hidden border-y border-border bg-[#14213D] py-14 text-white"
         >
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <h2 className="lp-display text-center text-2xl font-bold tracking-tight sm:text-3xl">
+            <h2 className="lp-display text-center text-2xl font-bold tracking-tight text-white sm:text-3xl">
               Ils nous font confiance
             </h2>
-            <p className="mx-auto mt-2 max-w-xl text-center text-sm text-white/60">
+            <p className="mx-auto mt-2 max-w-xl text-center text-sm text-white/75">
               Logos partenaires en attente des fichiers HD (spec §7) — noms affichés en
               placeholder.
             </p>
@@ -430,7 +430,7 @@ export default function InstitutionalLanding() {
               {[...PARTNERS, ...PARTNERS].map((name, i) => (
                 <div
                   key={`${name}-${i}`}
-                  className="flex h-14 min-w-[9.5rem] items-center justify-center rounded-xl border border-white/15 bg-white/5 px-5 text-center text-sm font-semibold tracking-wide text-white/80"
+                  className="flex h-14 min-w-[9.5rem] items-center justify-center rounded-xl border border-white/20 bg-white/10 px-5 text-center text-sm font-semibold tracking-wide text-white"
                 >
                   {name}
                 </div>

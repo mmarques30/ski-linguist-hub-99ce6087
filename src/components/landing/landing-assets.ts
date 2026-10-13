@@ -175,6 +175,7 @@ export const CHARACTER_CANDIDATES: LandingAsset[] = [
 /** Choix proposés pour la LP (à valider via /mockup/lp-assets). */
 export const RECOMMENDED = {
   navLogo: logoMarcaYellow,
+  navLogoDark: logoMarcaBlack,
   heroLogo: logo2026_3,
   heroCharacter: personagem01,
   platformCharacter: personagem02,
