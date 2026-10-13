@@ -33,24 +33,42 @@ describe("Edge cron/admin auth — refuse anon JWT", () => {
     expect(edge).toContain("requireServiceRoleOrStaff");
   });
 
-  it("findings #3 #4 #6 crons digest/reminders exigent staff ou service_role", () => {
+  it("findings #3 #4 #5 #6 #7 crons digest/reminders/charges exigent staff ou service_role", () => {
     for (const path of [
       "supabase/functions/process-invoice-reminders/index.ts",
       "supabase/functions/process-schedule-reminders/index.ts",
+      "supabase/functions/process-survey-reminders/index.ts",
       "supabase/functions/send-daily-ops-digest/index.ts",
+      "supabase/functions/generate-monthly-charges/index.ts",
     ]) {
       const edge = source(path);
       expect(edge).toContain("requireServiceRoleOrStaff");
     }
   });
 
+  it("finding #8 send-rosiere-cfp-request exige staff ou service_role", () => {
+    const edge = source("supabase/functions/send-rosiere-cfp-request/index.ts");
+    expect(edge).toContain("requireServiceRoleOrStaff");
+    expect(edge).toContain('from "../_shared/admin-auth.ts"');
+  });
+
+  it("finding #11 upload-registration-document refuse studentId sans staff", () => {
+    const edge = source("supabase/functions/upload-registration-document/index.ts");
+    expect(edge).toContain("requireServiceRoleOrStaff");
+    expect(edge).toContain('ownerSegment = "register"');
+    expect(edge).toContain("requestedStudentId");
+  });
+
   it("config.toml déclare verify_jwt sur les fonctions cron concernées", () => {
     const cfg = source("supabase/config.toml");
     expect(cfg).toContain("[functions.process-invoice-reminders]");
     expect(cfg).toContain("[functions.process-schedule-reminders]");
+    expect(cfg).toContain("[functions.process-survey-reminders]");
+    expect(cfg).toContain("[functions.generate-monthly-charges]");
     expect(cfg).toContain("[functions.send-inscription-documents]");
     expect(cfg).toContain("[functions.send-daily-ops-digest]");
     expect(cfg).toContain("[functions.process-intake-outreach]");
+    expect(cfg).toContain("[functions.send-rosiere-cfp-request]");
   });
 });
 

@@ -7,11 +7,13 @@
  * Sans liste : inscriptions en_attente du lieu La Rosière, moniteur de ski,
  * données CFP incomplètes, pas encore envoyé (sauf force).
  *
- * JWT requis (comme send-inscription-documents) — vault / service_role OK.
- * Pas de requireStaff : dispatch SQL + cron possibles.
+ * Cron (service_role) ou staff — refuse anon / stagiaire / formateur (finding #8).
  */
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  adminCorsHeaders,
+  requireServiceRoleOrStaff,
+} from "../_shared/admin-auth.ts";
 import { applyEmailTemplate, sendFliEmail } from "../_shared/fli-email.ts";
 import { isMissingStudentEmail } from "../_shared/email-guards.ts";
 import {
@@ -23,15 +25,16 @@ import {
   shouldSendRosiereCfpRequest,
 } from "../_shared/rosiere-cfp-request.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const corsHeaders = adminCorsHeaders;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Staff / service_role only — refuse comptes stagiaire/formateur et anon (finding #8).
+  const auth = await requireServiceRoleOrStaff(req);
+  if (auth instanceof Response) return auth;
 
   try {
     const payload = (await req.json().catch(() => ({}))) as {
@@ -43,10 +46,8 @@ Deno.serve(async (req) => {
       ? payload.inscriptionIds.filter((id): id is string => typeof id === "string" && id.trim().length > 0)
       : [];
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = auth.adminClient;
 
     if (!resendApiKey) {
       return new Response(
