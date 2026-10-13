@@ -40,6 +40,10 @@ import {
   getStatusLabel,
 } from "@/lib/inscription-status";
 import { resolveEndPackDeposit } from "@/lib/end-pack";
+import {
+  defaultEndPackCcForInscription,
+  parseEndPackCcInput,
+} from "@/lib/end-pack-email-cc";
 import { supabase } from "@/integrations/supabase/client";
 import { paymentMethodLabel } from "@/lib/payment-methods";
 
@@ -100,6 +104,9 @@ export function EndPackDialog({
     surveyToken?: string;
   } | null>(null);
   const [emailSent, setEmailSent] = useState(false);
+  const [sendCc, setSendCc] = useState(() =>
+    defaultEndPackCcForInscription(inscription.id).join(", ")
+  );
 
   const generateEndPack = useGenerateEndPack();
   const sendPack = useSendTrainingCompletionPack();
@@ -136,8 +143,10 @@ export function EndPackDialog({
       setResult(null);
       setAttendanceOverride(false);
       setEmailSent(false);
+    } else {
+      setSendCc(defaultEndPackCcForInscription(inscription.id).join(", "));
     }
-  }, [open]);
+  }, [open, inscription.id]);
 
   useEffect(() => {
     if (open && computedAttendance != null && !attendanceOverride) {
@@ -256,7 +265,11 @@ export function EndPackDialog({
 
   const handleSend = async () => {
     try {
-      await sendPack.mutateAsync({ inscriptionId: merged.id });
+      const cc = parseEndPackCcInput(sendCc);
+      await sendPack.mutateAsync({
+        inscriptionId: merged.id,
+        ...(cc.length ? { cc } : {}),
+      });
       setEmailSent(true);
       onSuccess?.();
     } catch {
@@ -564,6 +577,20 @@ export function EndPackDialog({
                   </div>
                 )}
               </div>
+              {!emailSent && (
+                <div className="mt-4 max-w-sm mx-auto text-left space-y-2">
+                  <Label htmlFor="end-pack-cc">Copie (CC)</Label>
+                  <Input
+                    id="end-pack-cc"
+                    value={sendCc}
+                    onChange={(e) => setSendCc(e.target.value)}
+                    placeholder="Nom &lt;email@exemple.fr&gt;"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Optionnel — séparateur virgule si plusieurs adresses.
+                  </p>
+                </div>
+              )}
             </div>
             <DialogFooter className="flex-col sm:flex-row gap-2">
               <Button variant="outline" onClick={() => setResult(null)}>

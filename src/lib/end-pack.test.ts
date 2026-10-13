@@ -21,7 +21,14 @@ type FailAt = keyof Pick<
   | "closeInscription"
 >;
 
-type MemoryInvoice = { id: string; invoice_number: string | null; inscription_id: string };
+type MemoryInvoice = {
+  id: string;
+  invoice_number: string | null;
+  inscription_id: string;
+  status?: string | null;
+  amount_ht?: number | null;
+  payment_date?: string | null;
+};
 type MemoryCertificate = { id: string; inscription_id: string; pdf_url: string | null };
 type MemorySurvey = { id: string; token: string; inscription_id: string };
 type MemorySending = {
@@ -123,9 +130,20 @@ function createMemoryStore(options?: {
         id: `inv-${nextId++}`,
         invoice_number: `26-27.${14000 + nextId}`,
         inscription_id: row.inscription_id,
+        status: row.status,
+        amount_ht: row.amount_ht,
+        payment_date: row.payment_date ?? null,
       };
       invoices.push(created);
       return created;
+    },
+    async markInvoicePaid(id, fields) {
+      calls.push("markInvoicePaid");
+      const row = invoices.find((item) => item.id === id);
+      if (row) {
+        row.status = "paid";
+        row.payment_date = fields.payment_date;
+      }
     },
     async findExistingCertificate(inscriptionId) {
       calls.push("findExistingCertificate");
@@ -403,6 +421,44 @@ describe("generateEndPack — ordre et compensation", () => {
     ).rejects.toThrow(/formulaire de sortie formateur incomplet/);
     expect(memory.calls).toEqual([]);
     expect(memory.inscription.status).toBe("en_cours");
+  });
+
+  it("marque la facture payée quand le contexte pack dit paid", async () => {
+    const memory = createMemoryStore({
+      seed: {
+        invoices: [
+          {
+            id: "inv-draft",
+            invoice_number: "26-27.14324",
+            inscription_id: "ins-1",
+            status: "draft",
+            amount_ht: 900,
+          },
+        ],
+      },
+    });
+
+    const result = await generateEndPack(
+      memory.store,
+      input({
+        generateCertificate: false,
+        generateAttestation: false,
+        sendSurvey: false,
+        invoicePdfContext: {
+          status: "paid",
+          paymentDate: "2026-01-17",
+          paymentMethodLabel: "Chèque",
+          amountHt: 900,
+          amountTtc: 900,
+        },
+      })
+    );
+
+    expect(memory.calls).toContain("markInvoicePaid");
+    expect(memory.invoices[0].status).toBe("paid");
+    expect(memory.invoices[0].payment_date).toBe("2026-01-17");
+    expect(result.invoiceId).toBe("inv-draft");
+    expect(result.invoicePath).toBeTruthy();
   });
 
   it("génère le pack sans certificat si generateCertificate est false", async () => {

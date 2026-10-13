@@ -4,6 +4,8 @@ import { invokeAdminEdgeFunction } from "@/lib/admin-edge-invoke";
 
 export type SendTrainingCompletionPackInput = {
   inscriptionId: string;
+  /** Copies visibles (ex. parent) — « Nom <email> » ou email. */
+  cc?: string[];
 };
 
 export type SendTrainingCompletionPackResult = {
@@ -11,6 +13,7 @@ export type SendTrainingCompletionPackResult = {
   sent?: boolean;
   resendId?: string | null;
   to?: string;
+  cc?: string[];
   subject?: string;
   attachments?: string[];
   error?: string;
@@ -30,7 +33,10 @@ export function useSendTrainingCompletionPack() {
       const result =
         await invokeAdminEdgeFunction<SendTrainingCompletionPackResult>(
           "send-training-completion-pack",
-          { inscriptionId: input.inscriptionId }
+          {
+            inscriptionId: input.inscriptionId,
+            ...(input.cc?.length ? { cc: input.cc } : {}),
+          }
         );
 
       if (result?.success === false || result?.error) {

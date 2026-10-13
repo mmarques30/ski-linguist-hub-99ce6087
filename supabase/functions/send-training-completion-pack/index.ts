@@ -84,11 +84,18 @@ Deno.serve(async (req) => {
   try {
     const payload = (await req.json().catch(() => ({}))) as {
       inscriptionId?: string;
+      /** Copies visibles (ex. parent) — format « Nom <email> » ou email seul. */
+      cc?: string[] | string;
     };
     const inscriptionId = (payload.inscriptionId || "").trim();
     if (!inscriptionId) {
       return json(400, { success: false, error: "inscriptionId requis" });
     }
+    const ccList = Array.isArray(payload.cc)
+      ? payload.cc
+      : typeof payload.cc === "string" && payload.cc.trim()
+        ? payload.cc.split(/[,;\n]+/).map((s) => s.trim()).filter(Boolean)
+        : [];
 
     const { adminClient } = auth;
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
@@ -237,6 +244,7 @@ Deno.serve(async (req) => {
     const send = await sendFliEmail({
       resendApiKey,
       to: email,
+      cc: ccList,
       subject: rendered.subject,
       html: rendered.html,
       attachments,
@@ -254,6 +262,7 @@ Deno.serve(async (req) => {
         attachments: attachments.map((a) => a.filename),
         manual_send: true,
         certificate_included: includeCertificate,
+        cc: ccList,
       },
     });
 
@@ -274,6 +283,7 @@ Deno.serve(async (req) => {
       success: true,
       sent: true,
       to: email,
+      cc: ccList,
       subject: rendered.subject,
       attachments: attachments.map((a) => a.filename),
       certificate_included: includeCertificate,
