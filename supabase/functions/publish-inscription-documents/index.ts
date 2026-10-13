@@ -170,7 +170,7 @@ Deno.serve(async (req) => {
       return json(404, { success: false, error: "Inscription introuvable" });
     }
 
-    const student = (inscription as unknown as { students?: Record<string, unknown> | null })
+    const student = (inscription as { students?: Record<string, unknown> | null })
       .students;
     const studentId =
       (typeof student?.id === "string" && student.id) ||
