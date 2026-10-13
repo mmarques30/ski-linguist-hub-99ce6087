@@ -94,6 +94,16 @@ async function main() {
       throwIfError(error, "insert invoice");
       return data!;
     },
+    async markInvoicePaid(id, fields) {
+      const { error } = await supabase
+        .from("invoices")
+        .update({
+          status: "paid",
+          payment_date: fields.payment_date,
+        } as never)
+        .eq("id", id);
+      throwIfError(error, "mark paid");
+    },
     async findExistingCertificate(inscriptionId) {
       const { data, error } = await supabase
         .from("certificates")

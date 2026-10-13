@@ -141,8 +141,14 @@ export interface EndPackStore {
     invoice_type: "formation";
     amount_ht: number;
     payment_type: "saldo" | "integral";
-    status: "draft";
+    status: "draft" | "paid";
+    payment_date?: string | null;
   }): Promise<{ id: string; invoice_number: string | null }>;
+  /** Marque une facture existante comme payée (pack fin, règlement déjà encaissé). */
+  markInvoicePaid(
+    id: string,
+    fields: { payment_date: string | null }
+  ): Promise<void>;
   findExistingCertificate(
     inscriptionId: string
   ): Promise<{ id: string; pdf_url: string | null } | null>;
@@ -380,9 +386,26 @@ export async function generateEndPack(
     if (data.generateInvoice) {
       step = "invoice";
       invoiceRow = await store.findExistingInvoice(data.inscriptionId);
+      const wantPaid = data.invoicePdfContext?.status === "paid";
+      const paidDate =
+        data.invoicePdfContext?.paymentDate ||
+        new Date().toISOString().slice(0, 10);
       if (invoiceRow) {
         result.invoiceId = invoiceRow.id;
         result.invoiceNumber = invoiceRow.invoice_number;
+        if (
+          wantPaid &&
+          (invoiceRow.status || "").toLowerCase() !== "paid"
+        ) {
+          await store.markInvoicePaid(invoiceRow.id, {
+            payment_date: paidDate,
+          });
+          invoiceRow = {
+            ...invoiceRow,
+            status: "paid",
+            payment_date: paidDate,
+          };
+        }
       } else {
         amountsRow = await store.getInscriptionAmounts(data.inscriptionId);
         if (!amountsRow) {
@@ -396,7 +419,8 @@ export async function generateEndPack(
           invoice_type: "formation",
           amount_ht: finalAmount > 0 ? finalAmount : amount,
           payment_type: deposit > 0 ? "saldo" : "integral",
-          status: "draft",
+          status: wantPaid ? "paid" : "draft",
+          payment_date: wantPaid ? paidDate : null,
         });
         created.invoiceId = invoice.id;
         result.invoiceId = invoice.id;
@@ -405,7 +429,8 @@ export async function generateEndPack(
           id: invoice.id,
           invoice_number: invoice.invoice_number,
           amount_ht: finalAmount > 0 ? finalAmount : amount,
-          status: "draft",
+          status: wantPaid ? "paid" : "draft",
+          payment_date: wantPaid ? paidDate : null,
         };
       }
 
@@ -442,9 +467,11 @@ export async function generateEndPack(
           invoiceNumber,
           invoiceDate,
           dueDate: ctx.dueDate ?? invoiceDate,
+          // Le contexte pack (règlement déjà encaissé) prime sur le statut DB
+          // brouillon — sinon le PDF omet « Facture acquittée ».
           status:
-            (invoiceRow?.status as InvoicePdfInput["status"]) ||
             ctx.status ||
+            (invoiceRow?.status as InvoicePdfInput["status"]) ||
             "paid",
           clientName: ctx.clientName || data.studentName,
           clientAddress: ctx.clientAddress ?? null,
@@ -474,7 +501,7 @@ export async function generateEndPack(
           acompteDate:
             ctx.acompteDate ?? amountsRow?.deposit_date ?? null,
           paymentDate:
-            ctx.paymentDate ?? invoiceRow?.payment_date ?? null,
+            ctx.paymentDate || invoiceRow?.payment_date || null,
           paymentMethodLabel: ctx.paymentMethodLabel ?? null,
         };
         const invoiceBlob =
