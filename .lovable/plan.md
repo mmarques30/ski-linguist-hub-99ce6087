@@ -1,18 +1,15 @@
-# Rotation de `edge_dispatch_jwt` : réponses et étape suivante proposée
+# Documenter la procédure ops `edge_dispatch_jwt` pour Paula
 
-## Réponses (aucun changement effectué)
-1. Gérer les secrets : **More → Cloud → Secrets** (sur mobile : Chat → `...` en bas à droite → Cloud → Secrets).
-2. Cet écran gère **uniquement les secrets des fonctions Edge**, pas le Vault Postgres (`vault.secrets`). Les valeurs ne peuvent qu'être écrites, jamais relues après enregistrement.
-3. **Non.** `SUPABASE_SERVICE_ROLE_KEY` est fournie automatiquement aux fonctions Edge. Aucun écran ne permet de la voir ni de la copier, et on ne peut ni la créer ni la remplacer dans Secrets.
-4. Il n'existe aucune méthode prise en charge pour copier la clé service_role dans le Vault :
-   - (a) **Non** : la plateforme a refusé à l'agent la modification du Vault (« Agent access to secrets is not allowed »).
-   - (b) Le SQL editor (**More → Cloud → SQL editor**) peut exécuter `vault.update_secret`, mais il faut y coller la valeur, et personne n'y a accès. Il ne règle donc pas le problème.
-   - (c) **Le support Lovable est la seule voie** si vous tenez à utiliser la clé service_role elle-même.
-5. **Non**, il n'y a pas d'écran Vault. On y trouve Database, Users, Storage, Edge Functions, Secrets, SQL editor, Emails, etc.
+Une seule action : créer une fiche ops `docs/OPS_EDGE_DISPATCH_JWT.md`. Aucun changement de code, de secrets, de base ni de cron. Aucune modification de `docs/BACKLOG.md` ou `docs/ETAT_APP_*.md`.
 
-## Étape suivante proposée (option 2, sans clé service_role)
-- Générer côté serveur un jeton aléatoire `CRON_DISPATCH_TOKEN`, enregistré dans les secrets des fonctions, sans que personne n'ait à le copier.
-- Paula ne colle rien : le jeton n'est écrit dans le Vault que par une opération lancée depuis une fonction Edge, avec l'accord de Paula. Si la plateforme refuse aussi cette écriture, la réponse sera « bloqué », sans contournement.
-- `isServiceRoleCall` dans `_shared/admin-auth.ts` accepte ce jeton en plus de la clé service_role. Il faut ensuite redéployer les fonctions appelées par cron.
-- Vérification : `send-daily-ops-digest?dry_run=true`, sans aucun envoi d'e-mail. Les crons e-mail ne sont pas activés.
-- À reporter dans main sur GitHub, sinon le prochain push l'écrasera.
+## Contenu de la fiche
+1. **Situation** : les crons appellent les fonctions via `dispatch_edge_function()`, qui lit le secret Vault `edge_dispatch_jwt` (id `db561408-…`). Ce secret contient encore la clé anon. Les fonctions protégées refusent donc les appels cron (401/403).
+2. **Où sont les écrans** :
+   - Secrets des fonctions : More → Cloud → Secrets. Sur mobile : Chat → `...` en bas à droite → Cloud → Secrets. Cet écran ne gère pas le Vault Postgres, et les valeurs ne peuvent pas être relues.
+   - SQL : More → Cloud → SQL editor, qui demande une confirmation pour les requêtes sensibles.
+   - Il n'y a aucun écran Vault.
+3. **Clé service_role** : elle n'est ni visible ni copiable dans Lovable Cloud. Elle n'existe que dans l'environnement des fonctions. Ni Paula ni l'agent ne peuvent la coller dans le Vault : la plateforme a refusé l'écriture par l'agent (« Agent access to secrets is not allowed »).
+4. **Procédure retenue** : contacter le support Lovable et lui demander de remplacer la valeur du secret Vault `edge_dispatch_jwt` (id fourni) par la clé service_role du projet, avec la description « JWT service_role pour dispatch_edge_function (cron dispatch). ». Le SQL de référence est fourni sans aucune valeur réelle.
+5. **Vérification après rotation**, sans aucun e-mail : la requête du SQL editor qui ne renvoie que le rôle du jeton (attendu : `service_role`), puis le contrôle `send-daily-ops-digest?dry_run=true`. Les crons e-mail restent désactivés.
+6. **Alternative écartée pour l'instant** : un jeton cron dédié (option 2). Elle est notée pour plus tard, sans être mise en œuvre.
+7. **Fonctions qui échouent en cron tant que le Vault n'a pas été mis à jour** : la liste des fonctions protégées appelées par cron.
