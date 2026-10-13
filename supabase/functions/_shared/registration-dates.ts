@@ -11,11 +11,74 @@
 
 export const DATES_A_PLANIFIER_LABEL = "À planifier";
 
+/**
+ * Cours individuels en ligne : le début souhaité ne peut pas être à moins de
+ * 7 jours (décision Paula 13/10/2026).
+ */
+export const ONLINE_INDIVIDUAL_MIN_START_DAYS = 7;
+
 export function isIsoDate(value: unknown): value is string {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T00:00:00Z`);
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
+
+/** Date du jour au format ISO court, dans le fuseau du navigateur. */
+export function todayIso(now: Date = new Date()): string {
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 10);
+}
+
+/** Ajoute des jours à une date ISO courte, sans passer par le fuseau local. */
+export function addDaysIso(iso: string, days: number): string {
+  const date = new Date(`${iso}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+export function isOnlineIndividualModality(modality?: string | null): boolean {
+  return modality === "online_individual" || modality === "en_ligne_individuel";
+}
+
+/** Première date de début autorisée (ISO) pour un délai minimum en jours. */
+export function minRequestedStartDateIso(
+  today: string = todayIso(),
+  minDaysAhead: number = 0
+): string {
+  if (minDaysAhead <= 0) return today;
+  return addDaysIso(today, minDaysAhead);
+}
+
+export type RequestedStartDateProblem =
+  | "manquante"
+  | "invalide"
+  | "passee"
+  | "trop_proche";
+
+/**
+ * Contrôle la date de début souhaitée. Une date passée est refusée : elle
+ * placerait l'inscription en retard dans la liste J-10 dès sa création.
+ * Pour l'individuel en ligne, `minDaysAhead` impose aussi un délai (J+7).
+ */
+export function requestedStartDateProblem(
+  value: string | null | undefined,
+  today: string = todayIso(),
+  options?: { minDaysAhead?: number }
+): RequestedStartDateProblem | null {
+  if (!value) return "manquante";
+  if (!isIsoDate(value)) return "invalide";
+  if (value < today) return "passee";
+  const minDays = options?.minDaysAhead ?? 0;
+  if (minDays > 0 && value < addDaysIso(today, minDays)) return "trop_proche";
+  return null;
+}
+
+export const REQUESTED_START_DATE_MESSAGES: Record<RequestedStartDateProblem, string> = {
+  manquante: "Merci d'indiquer la date à laquelle vous souhaitez commencer.",
+  invalide: "La date de début souhaitée n'est pas une date valide.",
+  passee: "La date de début souhaitée doit être aujourd'hui ou plus tard.",
+  trop_proche: `Choisissez une date au moins ${ONLINE_INDIVIDUAL_MIN_START_DAYS} jours après aujourd'hui.`,
+};
 
 /**
  * Ajoute des mois calendaires à une date ISO courte (UTC), en rabattant le jour
