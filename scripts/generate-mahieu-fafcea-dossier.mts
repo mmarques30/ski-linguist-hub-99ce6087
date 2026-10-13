@@ -5,9 +5,11 @@
  * Usage :
  *   npx tsx scripts/generate-mahieu-fafcea-dossier.mts
  *   npx tsx scripts/generate-mahieu-fafcea-dossier.mts --send
+ *   npx tsx scripts/generate-mahieu-fafcea-dossier.mts --send-client
  *
  * Sans --send : écrit seulement les PDF dans /opt/cursor/artifacts/mahieu-fafcea/
- * Avec --send : envoie à info@fli.fr (jamais au client).
+ * Avec --send : envoie le brouillon à info@fli.fr.
+ * Avec --send-client : envoie au stagiaire (après OK Paula explicite).
  */
 import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -70,7 +72,7 @@ Le parcours comprend :
 
 Tarif : 60 € de l'heure, soit 1 200 € pour les 20 heures.
 
-Vous trouverez ci-joint le programme et le devis pour constituer votre dossier auprès du FAFCEA. FLI est certifié Qualiopi, ce qui est obligatoire pour obtenir un financement.
+Vous trouverez ci-joint le programme, le devis et la convention pour constituer votre dossier auprès du FAFCEA. FLI est certifié Qualiopi, ce qui est obligatoire pour obtenir un financement.
 
 Le montant de la prise en charge dépend de la façon dont le FAFCEA classera la formation. Selon les informations dont je dispose, une formation en langue peut être prise en charge comme formation « transverse » (environ 25 € de l'heure) ou, dans certains cas, comme « parcours individualisé », avec un taux nettement plus élevé. Dans le second cas, le parcours pourrait être couvert en totalité. Je ne peux pas vous le garantir, c'est le FAFCEA qui décide.
 
@@ -113,6 +115,7 @@ function plainTextToHtml(bodyText: string): string {
 
 async function main() {
   const shouldSend = process.argv.includes("--send");
+  const shouldSendClient = process.argv.includes("--send-client");
   mkdirSync(OUT_DIR, { recursive: true });
 
   const generatedAt = new Date();
@@ -185,7 +188,7 @@ async function main() {
 ## Adaptations documents
 - **Programme** : objectifs et contenu taxi + moniteur de ski / clientèle russophone ; 20 h en ligne ; évaluation entrée/sortie.
 - **Devis** : 20 × 60 € = 1 200 € ; mention FAFCEA / Qualiopi.
-- **Convention** (jointe pour votre relecture, pas dans le mail client prévu) :
+- **Convention** (jointe au mail client) :
   - Article II : objectif ciblé métiers + clientèle russophone ;
   - Article VI : financement FAFCEA, pas d'acompte 150 €, reste à charge selon décision du fonds.
 
@@ -208,14 +211,77 @@ ${clientBody}
   console.log(" -", conventionPath, conventionBytes.byteLength, "o");
   console.log(" -", notePath);
 
-  if (!shouldSend) {
-    console.log("Mode dry-run : pas d'envoi. Relancer avec --send pour info@fli.fr.");
+  if (!shouldSend && !shouldSendClient) {
+    console.log(
+      "Mode dry-run : pas d'envoi. Relancer avec --send (info@fli.fr) ou --send-client."
+    );
     return;
   }
 
   const resendApiKey = process.env.RESEND_API_KEY;
   if (!resendApiKey) {
     throw new Error("RESEND_API_KEY absente — aucun envoi.");
+  }
+
+  const attachments = [
+    {
+      filename: "Programme-formation-FLI-FAFCEA-2026-MAHIEU.pdf",
+      content: bytesToBase64(programmeBytes),
+    },
+    {
+      filename: devisFormationFilename(input.dossierCode),
+      content: bytesToBase64(devisBytes),
+    },
+    {
+      filename: "Convention-formation-FLI-FAFCEA-2026-MAHIEU.pdf",
+      content: bytesToBase64(conventionBytes),
+    },
+  ];
+
+  const footerHtml = `<p style="margin-top:24px">Cordialement,</p>
+<p>
+  <strong>FLI — France Langues International</strong><br/>
+  25 avenue de la Gare<br/>
+  73800 Montmélian<br/>
+  Tél. : 04 79 28 21 09<br/>
+  <a href="mailto:info@fli.fr">info@fli.fr</a>
+</p>`;
+
+  if (shouldSendClient) {
+    // Corps déjà signé « Paula / France Langues International » — pas de double footer.
+    const clientHtml = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f6f6">
+<tr><td align="center" style="padding:24px 12px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #e8e8e8">
+<tr><td style="padding:28px 24px 24px;font-size:15px;line-height:1.55;font-family:Georgia,'Times New Roman',serif;color:#111">
+${plainTextToHtml(clientBody)}
+</td></tr>
+</table>
+</td></tr>
+</table>`;
+
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "FLI — France Langues International <noreply@fli.fr>",
+        to: [CLIENT_EMAIL],
+        reply_to: [VALIDATION_TO],
+        bcc: [VALIDATION_TO],
+        subject: clientSubject,
+        html: clientHtml,
+        attachments,
+      }),
+    });
+    const text = await response.text();
+    if (!response.ok) {
+      throw new Error(`Resend client ${response.status}: ${text}`);
+    }
+    console.log("Envoyé au client", CLIENT_EMAIL, text);
+    writeFileSync(join(OUT_DIR, "resend-client-response.json"), text);
+    return;
   }
 
   const validationSubject = `[VALIDATION — ne pas transférer] ${clientSubject}`;
@@ -226,12 +292,11 @@ ${clientBody}
 <tr><td style="padding:28px 24px 24px;font-size:15px;line-height:1.55;font-family:Georgia,'Times New Roman',serif;color:#111">
 <p style="margin:0 0 16px;padding:12px 14px;background:#fff8e6;border:1px solid #f0d78c"><strong>Brouillon pour validation Paula</strong><br/>
 Destinataire final prévu : <code>${CLIENT_EMAIL}</code><br/>
-Aucun envoi au client tant que vous n'avez pas donné votre OK.<br/>
-PJ jointes : programme + devis (comme prévu dans le mail client) + convention adaptée pour relecture.</p>
+PJ jointes : programme + devis + convention.</p>
 <p style="margin:0 0 8px;color:#555;font-size:13px">——— Début du mail client ———</p>
 ${plainTextToHtml(clientBody)}
 <p style="margin:24px 0 0;color:#555;font-size:13px">——— Fin du mail client ———</p>
-<p style="margin:16px 0 0;font-size:13px;color:#555"><strong>Note convention</strong> : Article II ciblé taxi + moniteur / clientèle russophone ; Article VI FAFCEA sans acompte 150 €. Confirmez si on joint aussi la convention au client, ou seulement programme + devis.</p>
+${footerHtml}
 </td></tr>
 </table>
 </td></tr>
@@ -249,20 +314,7 @@ ${plainTextToHtml(clientBody)}
       reply_to: [VALIDATION_TO],
       subject: validationSubject,
       html: validationHtml,
-      attachments: [
-        {
-          filename: "Programme-formation-FLI-FAFCEA-2026-MAHIEU.pdf",
-          content: bytesToBase64(programmeBytes),
-        },
-        {
-          filename: devisFormationFilename(input.dossierCode),
-          content: bytesToBase64(devisBytes),
-        },
-        {
-          filename: "Convention-formation-FLI-FAFCEA-2026-MAHIEU.pdf",
-          content: bytesToBase64(conventionBytes),
-        },
-      ],
+      attachments,
     }),
   });
 
