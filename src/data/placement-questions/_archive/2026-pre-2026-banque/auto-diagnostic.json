@@ -1,0 +1,132 @@
+[
+  {
+    "order_index": 1,
+    "section": "Historique",
+    "response_type": "Oui/Non",
+    "question": "Avez-vous déjà pris des cours de [langue] ?",
+    "options": "Oui / Non",
+    "required": true,
+    "condition": null,
+    "notes": null
+  },
+  {
+    "order_index": 2,
+    "section": "Historique",
+    "response_type": "Texte libre",
+    "question": "Si vous le souhaitez, précisez où et il y a combien de temps :",
+    "options": null,
+    "required": false,
+    "condition": "Si Q1 = Oui",
+    "notes": null
+  },
+  {
+    "order_index": 3,
+    "section": "Historique",
+    "response_type": "Oui/Non",
+    "question": "Avez-vous déjà suivi une formation chez FLI ?",
+    "options": "Oui / Non",
+    "required": true,
+    "condition": null,
+    "notes": null
+  },
+  {
+    "order_index": 4,
+    "section": "Historique",
+    "response_type": "Texte libre",
+    "question": "Si vous vous en souvenez, indiquez l'année et le/la formateur·rice :",
+    "options": null,
+    "required": false,
+    "condition": "Si Q3 = Oui",
+    "notes": null
+  },
+  {
+    "order_index": 5,
+    "section": "Difficultés",
+    "response_type": "Ranking",
+    "question": "Classez vos difficultés de la plus importante (1) à la moins importante :",
+    "options": "Expression orale (parler) / Compréhension orale (écouter) / Grammaire / Vocabulaire général / Prononciation / Vocabulaire technique ski / Autre",
+    "required": true,
+    "condition": null,
+    "notes": "Drag and drop - 7 items"
+  },
+  {
+    "order_index": 6,
+    "section": "Difficultés",
+    "response_type": "Texte libre",
+    "question": "Si vous avez choisi « Autre », précisez :",
+    "options": null,
+    "required": false,
+    "condition": "Si 'Autre' classé",
+    "notes": null
+  },
+  {
+    "order_index": 7,
+    "section": "Motivation",
+    "response_type": "Texte libre",
+    "question": "Pourquoi souhaitez-vous apprendre [langue] ?",
+    "options": null,
+    "required": true,
+    "condition": null,
+    "notes": null
+  },
+  {
+    "order_index": 8,
+    "section": "Motivation",
+    "response_type": "Texte libre",
+    "question": "Qu'attendez-vous de cette formation ?",
+    "options": null,
+    "required": true,
+    "condition": null,
+    "notes": null
+  },
+  {
+    "order_index": 9,
+    "section": "Confiance",
+    "response_type": "Choix unique",
+    "question": "Quel est votre niveau de confiance pour vous exprimer en [langue] ?",
+    "options": "Très confiant(e) / Assez confiant(e) / Peu confiant(e) / Pas du tout confiant(e)",
+    "required": true,
+    "condition": null,
+    "notes": null
+  },
+  {
+    "order_index": 10,
+    "section": "Culture",
+    "response_type": "Oui/Non",
+    "question": "Avez-vous déjà visité un pays où l'on parle [langue] ?",
+    "options": "Oui / Non",
+    "required": true,
+    "condition": null,
+    "notes": null
+  },
+  {
+    "order_index": 11,
+    "section": "Culture",
+    "response_type": "Texte libre",
+    "question": "Lequel / Lesquels ?",
+    "options": null,
+    "required": false,
+    "condition": "Si Q10 = Oui",
+    "notes": null
+  },
+  {
+    "order_index": 12,
+    "section": "Culture",
+    "response_type": "Choix unique",
+    "question": "Connaissez-vous des personnes qui parlent [langue] ?",
+    "options": "Oui, dans mon entourage proche (famille, amis) / Oui, des collègues ou connaissances / Non",
+    "required": true,
+    "condition": null,
+    "notes": null
+  },
+  {
+    "order_index": 13,
+    "section": "Culture",
+    "response_type": "Texte libre",
+    "question": "Y a-t-il un artiste, film, série ou livre en [langue] que vous appréciez ?",
+    "options": null,
+    "required": false,
+    "condition": null,
+    "notes": null
+  }
+]

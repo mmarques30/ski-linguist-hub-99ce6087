@@ -1,0 +1,13 @@
+Sujet : Votre dossier de formation {{language}} — {{inscription_code}}
+
+Bonjour {{student_name}},
+
+Vous trouverez en pièces jointes les documents de votre formation {{language}} (inscription {{inscription_code}}) :
+
+- Convention de formation — à nous retourner signée
+- Programme de la formation
+
+Merci de nous renvoyer la convention signée en répondant à ce message (info@fli.fr).
+
+Cordialement,
+L'équipe FLI

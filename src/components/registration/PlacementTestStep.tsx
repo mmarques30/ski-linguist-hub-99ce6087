@@ -1,9 +1,10 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, Loader2, Phone, Mountain } from "lucide-react";
+import { CheckCircle, ClipboardList, Loader2, Mountain } from "lucide-react";
 import type { RegistrationData } from "@/pages/register/Index";
 import { usePlacementQuestions } from "@/hooks/usePlacementQuestions";
 import { MeterRow, StatusPill, SurfaceCard } from "@/components/ui-kit";
@@ -12,7 +13,10 @@ import {
   buildAdaptiveTestResult,
   evaluateSlope,
   getNextSlopeAfterSlope,
+  getPresentationQuestion,
   getQuestionsForSlope,
+  PASS_THRESHOLD,
+  PRESENTATION_MAX_CHARS,
   QUESTIONS_PER_SLOPE,
   SLOPE_LABELS,
   studentFacingPisteLabel,
@@ -22,18 +26,19 @@ import {
   type SlopeResult,
 } from "@/lib/placement-test-engine";
 import {
+  buildAutoDiagnosticPayload,
+  expectationsFromAutoDiagnostic,
+  type AutoDiagnosticAnswers,
+} from "@/lib/auto-diagnostic";
+import {
   expectsStationGroupAssignment,
   STATION_GROUP_NOTICE_AFTER_TEST,
   STATION_GROUP_NOTICE_BEFORE_TEST,
   STATION_GROUP_SIGNATURE,
 } from "@/lib/registration-group-notice";
+import { AutoDiagnosticForm } from "./AutoDiagnosticForm";
 import { StepActions, StepCard, SummaryPanel } from "./StepLayout";
 
-/**
- * Teinte de pastille par piste. Les couleurs en dur de `SLOPE_COLORS`
- * (bg-emerald-500…) ne passent pas en thème sombre : on garde le libellé du
- * moteur métier et on habille avec les jetons du design system.
- */
 const SLOPE_TONES: Record<SlopeLevel, PillTone> = {
   verte: "success",
   bleue: "info",
@@ -41,6 +46,8 @@ const SLOPE_TONES: Record<SlopeLevel, PillTone> = {
   noire: "neutral",
   vocab_ski: "warning",
 };
+
+type Phase = "intro" | "auto_diagnostic" | "mcq" | "presentation" | "results";
 
 interface PlacementTestStepProps {
   data: Partial<RegistrationData>;
@@ -50,57 +57,57 @@ interface PlacementTestStepProps {
 
 export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepProps) {
   const isStationGroup = expectsStationGroupAssignment(data.modality);
-  const [testStarted, setTestStarted] = useState(false);
+  const [phase, setPhase] = useState<Phase>("intro");
   const [currentSlope, setCurrentSlope] = useState<SlopeLevel>("verte");
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [slopeResults, setSlopeResults] = useState<SlopeResult[]>([]);
   const [passedSlopes, setPassedSlopes] = useState<SlopeLevel[]>([]);
-  const [testCompleted, setTestCompleted] = useState(false);
+  const [presentationText, setPresentationText] = useState("");
   const [result, setResult] = useState<AdaptiveTestResult | null>(null);
+  const startedAtRef = useRef<string | null>(null);
 
   const { data: allQuestions = [], isLoading } = usePlacementQuestions(data.language);
+
+  const scoredQuestions = useMemo(
+    () => allQuestions.filter((q) => q.slope !== "presentation"),
+    [allQuestions]
+  );
 
   const slopeQuestions = useMemo(
     () => getQuestionsForSlope(allQuestions, currentSlope),
     [allQuestions, currentSlope]
   );
 
+  const presentationQuestion = useMemo(
+    () => getPresentationQuestion(allQuestions),
+    [allQuestions]
+  );
+
   const currentQuestion: PlacementQuestion | undefined = slopeQuestions[questionIndex];
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onNext();
-  };
+  useEffect(() => {
+    if (phase === "mcq" && !startedAtRef.current) {
+      startedAtRef.current = new Date().toISOString();
+    }
+  }, [phase]);
 
-  const startTest = () => {
-    if (allQuestions.length === 0) return;
-    setTestStarted(true);
-    setCurrentSlope("verte");
-    setQuestionIndex(0);
-    setAnswers({});
-    setSlopeResults([]);
-    setPassedSlopes([]);
-    setResult(null);
-  };
-
-  const finishTest = (
-    finalAnswers: Record<string, string>,
-    finalSlopeResults: SlopeResult[],
-    finalPassedSlopes: SlopeLevel[],
-    endedAtVocab: boolean
-  ) => {
+  useEffect(() => {
+    if (phase !== "presentation" || presentationQuestion) return;
     const testResult = buildAdaptiveTestResult(
       allQuestions,
-      finalAnswers,
-      finalSlopeResults,
-      finalPassedSlopes,
-      endedAtVocab
+      answers,
+      slopeResults,
+      passedSlopes,
+      ""
     );
     setResult(testResult);
+    const completedAt = new Date().toISOString();
     onUpdate({
       hasBeenEvaluated: false,
-      testScore: Math.round((testResult.correctAnswers / testResult.totalAnswered) * 100),
+      testScore: Math.round(
+        (testResult.correctAnswers / Math.max(testResult.totalAnswered, 1)) * 100
+      ),
       correctAnswers: testResult.correctAnswers,
       totalAnswered: testResult.totalAnswered,
       currentLevel: testResult.determinedLevel,
@@ -110,10 +117,107 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
         slopeResults: testResult.slopeResults,
         passedSlopes: testResult.passedSlopes,
         highestSlopeReached: testResult.highestSlopeReached,
-        endedAtVocab: testResult.endedAtVocab,
+        vocabScore: testResult.vocabScore,
+        vocabAnswers: testResult.vocabAnswers,
+        presentationText: testResult.presentationText,
+        startedAt: startedAtRef.current,
+        completedAt,
       },
     });
-    setTestCompleted(true);
+    setPhase("results");
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot bank fallback
+  }, [phase, presentationQuestion]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onNext();
+  };
+
+  const startAutoDiagnostic = () => {
+    setPhase("auto_diagnostic");
+  };
+
+  const handleAutoDiagnosticComplete = (diagAnswers: AutoDiagnosticAnswers) => {
+    const payload = buildAutoDiagnosticPayload(diagAnswers);
+    const expectations = expectationsFromAutoDiagnostic(diagAnswers);
+    onUpdate({
+      autoDiagnostic: payload,
+      ...(expectations ? { expectations } : {}),
+    });
+    setPhase("mcq");
+    setCurrentSlope("verte");
+    setQuestionIndex(0);
+    setAnswers({});
+    setSlopeResults([]);
+    setPassedSlopes([]);
+    setPresentationText("");
+    setResult(null);
+    startedAtRef.current = null;
+  };
+
+  const startMcq = () => {
+    if (scoredQuestions.length === 0) return;
+    if (!data.autoDiagnostic) {
+      setPhase("auto_diagnostic");
+      return;
+    }
+    setPhase("mcq");
+    setCurrentSlope("verte");
+    setQuestionIndex(0);
+    setAnswers({});
+    setSlopeResults([]);
+    setPassedSlopes([]);
+    setPresentationText("");
+    setResult(null);
+    startedAtRef.current = null;
+  };
+
+  const finishTest = (
+    finalAnswers: Record<string, string>,
+    finalSlopeResults: SlopeResult[],
+    finalPassedSlopes: SlopeLevel[],
+    finalPresentation: string
+  ) => {
+    const testResult = buildAdaptiveTestResult(
+      allQuestions,
+      finalAnswers,
+      finalSlopeResults,
+      finalPassedSlopes,
+      finalPresentation
+    );
+    setResult(testResult);
+    const completedAt = new Date().toISOString();
+    onUpdate({
+      hasBeenEvaluated: false,
+      testScore: Math.round((testResult.correctAnswers / Math.max(testResult.totalAnswered, 1)) * 100),
+      correctAnswers: testResult.correctAnswers,
+      totalAnswered: testResult.totalAnswered,
+      currentLevel: testResult.determinedLevel,
+      needsAdminCall: testResult.needsAdminCall,
+      testAnswers: testResult.answers,
+      testSummary: {
+        slopeResults: testResult.slopeResults,
+        passedSlopes: testResult.passedSlopes,
+        highestSlopeReached: testResult.highestSlopeReached,
+        vocabScore: testResult.vocabScore,
+        vocabAnswers: testResult.vocabAnswers,
+        presentationText: testResult.presentationText,
+        startedAt: startedAtRef.current,
+        completedAt,
+      },
+    });
+    setPhase("results");
+  };
+
+  const goToPresentation = (
+    finalAnswers: Record<string, string>,
+    finalSlopeResults: SlopeResult[],
+    finalPassedSlopes: SlopeLevel[]
+  ) => {
+    setAnswers(finalAnswers);
+    setSlopeResults(finalSlopeResults);
+    setPassedSlopes(finalPassedSlopes);
+    setPhase("presentation");
   };
 
   const completeSlope = (
@@ -130,14 +234,10 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
     const newPassedSlopes = passed ? [...prevPassedSlopes, slope] : prevPassedSlopes;
     const next = getNextSlopeAfterSlope(slope, passed);
 
-    if (next === "done") {
-      finishTest(slopeAnswers, newSlopeResults, newPassedSlopes, false);
-      return;
-    }
-
     if (next === "vocab_ski") {
       setSlopeResults(newSlopeResults);
       setPassedSlopes(newPassedSlopes);
+      setAnswers(slopeAnswers);
       setCurrentSlope("vocab_ski");
       setQuestionIndex(0);
       return;
@@ -145,6 +245,7 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
 
     setSlopeResults(newSlopeResults);
     setPassedSlopes(newPassedSlopes);
+    setAnswers(slopeAnswers);
     setCurrentSlope(next);
     setQuestionIndex(0);
   };
@@ -160,7 +261,6 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
       return;
     }
 
-    // Last question in current slope
     setAnswers(newAnswers);
 
     if (currentSlope === "vocab_ski") {
@@ -174,19 +274,28 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
         total: vocabQuestions.length,
         passed: evaluateSlope(correct),
       };
-      finishTest(
-        newAnswers,
-        [...slopeResults, vocabResult],
-        passedSlopes,
-        true
-      );
+      goToPresentation(newAnswers, [...slopeResults, vocabResult], passedSlopes);
       return;
     }
 
     completeSlope(currentSlope, newAnswers, slopeResults, passedSlopes);
   };
 
-  if (testCompleted && result) {
+  const submitPresentation = () => {
+    finishTest(answers, slopeResults, passedSlopes, presentationText.trim());
+  };
+
+  if (phase === "auto_diagnostic") {
+    return (
+      <AutoDiagnosticForm
+        languageKey={data.language}
+        initialAnswers={data.autoDiagnostic?.answers}
+        onComplete={handleAutoDiagnosticComplete}
+      />
+    );
+  }
+
+  if (phase === "results" && result) {
     return (
       <form onSubmit={handleSubmit} className="space-y-4">
         <StepCard
@@ -196,58 +305,28 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
               Test terminé
             </span>
           }
-          description="Votre niveau a été évalué selon le parcours adaptatif FLI"
+          description="Votre parcours adaptatif FLI est enregistré"
         >
           <div className="space-y-6">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <SummaryPanel className="space-y-2 text-center">
-                <p className="text-sm text-muted-foreground">Votre piste</p>
-                <div className="flex justify-center">
-                  <StatusPill
-                    tone={
-                      SLOPE_TONES[result.highestSlopeReached as SlopeLevel] ?? "neutral"
-                    }
-                    className="px-4 py-1.5 text-base"
-                  >
-                    {studentFacingPisteLabel({
-                      passedSlopes: result.passedSlopes,
-                      highestSlopeReached: result.highestSlopeReached,
-                      endedAtVocab: result.endedAtVocab,
-                    })}
-                  </StatusPill>
-                </div>
-              </SummaryPanel>
-              <SummaryPanel className="space-y-2 text-center">
-                <p className="text-sm text-muted-foreground">Score global</p>
-                <p className="text-metric tabular text-foreground">
-                  {result.correctAnswers}/{result.totalAnswered}
-                </p>
-              </SummaryPanel>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Parcours des pistes</p>
-              <div className="flex flex-wrap gap-2">
-                {result.slopeResults.map((sr) => (
-                  <StatusPill
-                    key={sr.slope}
-                    tone={sr.passed ? SLOPE_TONES[sr.slope] : "neutral"}
-                    dot
-                  >
-                    {SLOPE_LABELS[sr.slope]} · {sr.correct}/{sr.total}
-                  </StatusPill>
-                ))}
+            <SummaryPanel className="space-y-2 text-center">
+              <p className="text-sm text-muted-foreground">Votre piste</p>
+              <div className="flex justify-center">
+                <StatusPill
+                  tone={
+                    SLOPE_TONES[
+                      (result.passedSlopes[result.passedSlopes.length - 1] as SlopeLevel) ||
+                        "verte"
+                    ]
+                  }
+                  className="px-4 py-1.5 text-base"
+                >
+                  {studentFacingPisteLabel({
+                    passedSlopes: result.passedSlopes,
+                    highestSlopeReached: result.highestSlopeReached,
+                  })}
+                </StatusPill>
               </div>
-            </div>
-
-            {result.needsAdminCall && (
-              <Alert variant="destructive">
-                <Phone className="h-4 w-4" />
-                <AlertDescription>
-                  Notre équipe vous contactera par téléphone pour affiner votre niveau.
-                </AlertDescription>
-              </Alert>
-            )}
+            </SummaryPanel>
 
             {isStationGroup && (
               <Alert>
@@ -262,23 +341,83 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
 
         <StepActions>
           <Button type="submit" className="h-12 w-full text-base sm:w-auto">
-            Continuer vers les attentes
+            {data.profession === "ski_instructor"
+              ? "Continuer vers le paiement"
+              : "Continuer vers la certification"}
           </Button>
         </StepActions>
       </form>
     );
   }
 
-  if (testStarted && currentQuestion) {
-    const progressInSlope = ((questionIndex) / slopeQuestions.length) * 100;
+  if (phase === "presentation" && presentationQuestion) {
+    return (
+      <SurfaceCard
+        title="Présentation (facultative)"
+        description="Quelques phrases dans la langue du test — lues par le formateur avant la 1re séance"
+      >
+        <div className="space-y-4">
+          <p className="text-base leading-snug text-foreground">
+            {presentationQuestion.question_text}
+          </p>
+          <Textarea
+            value={presentationText}
+            onChange={(e) =>
+              setPresentationText(e.target.value.slice(0, PRESENTATION_MAX_CHARS))
+            }
+            maxLength={PRESENTATION_MAX_CHARS}
+            className="min-h-[140px]"
+            placeholder="Votre présentation (facultatif)"
+          />
+          <p className="text-xs text-muted-foreground tabular-nums">
+            {presentationText.length}/{PRESENTATION_MAX_CHARS}
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button type="button" variant="outline" onClick={submitPresentation}>
+              Passer
+            </Button>
+            <Button type="button" onClick={submitPresentation}>
+              Terminer le test
+            </Button>
+          </div>
+        </div>
+      </SurfaceCard>
+    );
+  }
+
+  if (phase === "presentation" && !presentationQuestion) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        Finalisation…
+      </div>
+    );
+  }
+
+  if (phase === "mcq") {
+    if (!currentQuestion) {
+      return (
+        <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          Préparation du test de niveau…
+        </div>
+      );
+    }
+
+    const questionNumber = questionIndex + 1;
+    const questionsInSlope = slopeQuestions.length;
+    const slopeLabelLower = SLOPE_LABELS[currentSlope].toLowerCase();
+    const progressLabel = `${questionNumber}/${questionsInSlope} ${slopeLabelLower}`;
+    const progressValue = (questionNumber / questionsInSlope) * 100;
+    const options = currentQuestion.options ?? [];
 
     return (
       <SurfaceCard
         title="Test de niveau adaptatif"
         description={
           currentSlope === "vocab_ski"
-            ? "Vocabulaire technique du ski"
-            : `Répondez à ${QUESTIONS_PER_SLOPE} questions — il faut ${QUESTIONS_PER_SLOPE - 2} bonnes réponses ou plus pour passer à la piste suivante`
+            ? "Partie commune à tous les niveaux — vocabulaire technique du ski"
+            : `Comme au ski : ${QUESTIONS_PER_SLOPE} questions sur cette piste. Il faut au moins ${PASS_THRESHOLD} bonnes réponses pour passer à la suivante.`
         }
         actions={
           <StatusPill tone={SLOPE_TONES[currentSlope]} dot>
@@ -287,9 +426,9 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
         }
         toolbar={
           <MeterRow
-            label={`Question ${questionIndex + 1} / ${slopeQuestions.length}`}
-            value={progressInSlope}
-            display={`${Math.round(progressInSlope)} %`}
+            label="Progression"
+            value={progressValue}
+            display={progressLabel}
           />
         }
       >
@@ -300,17 +439,21 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
             </p>
           </div>
 
-          <RadioGroup onValueChange={selectAnswer} className="space-y-3">
-            {currentQuestion.options.map((option, index) => (
+          <RadioGroup key={currentQuestion.id} onValueChange={selectAnswer} className="space-y-3">
+            {options.map((option, index) => (
               <div
                 key={index}
                 className="rounded-[var(--radius-card)] border border-border bg-card transition-colors hover:bg-[hsl(var(--surface-sunken))]"
               >
                 <Label
-                  htmlFor={`option-${index}`}
+                  htmlFor={`option-${currentQuestion.id}-${index}`}
                   className="flex min-h-14 cursor-pointer items-center gap-3 p-4 text-base font-normal leading-snug"
                 >
-                  <RadioGroupItem value={option} id={`option-${index}`} className="shrink-0" />
+                  <RadioGroupItem
+                    value={option}
+                    id={`option-${currentQuestion.id}-${index}`}
+                    className="shrink-0"
+                  />
                   <span className="min-w-0">{option}</span>
                 </Label>
               </div>
@@ -321,18 +464,38 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
     );
   }
 
+  const autoDone = Boolean(data.autoDiagnostic);
+
   return (
     <StepCard
       title="Test de niveau obligatoire"
-      description="Test adaptatif par pistes (verte → bleue → rouge → noire) — requis pour toutes les inscriptions, même si vous connaissez déjà votre niveau"
+      description="D’abord un auto-diagnostic, puis le parcours adaptatif par pistes de ski"
       icon={Mountain}
     >
       <div className="space-y-5">
         <Alert>
           <Mountain className="h-4 w-4" />
-          <AlertDescription>
-            Ce test permet à FLI de placer chaque stagiaire dans le groupe adapté. Il est
-            obligatoire et ne peut pas être remplacé par une auto-évaluation.
+          <AlertDescription className="space-y-3">
+            <p>
+              <strong className="font-medium text-foreground">1. Auto-diagnostic</strong> — vos
+              besoins, votre parcours et votre aisance. Il prépare l’équipe FLI et ne remplace pas
+              le test.
+            </p>
+            <p>
+              <strong className="font-medium text-foreground">2. Test de niveau</strong> — où vous
+              commencez en{" "}
+              <strong className="font-medium text-foreground">piste verte</strong>, puis{" "}
+              <strong className="font-medium text-foreground">bleue</strong>,{" "}
+              <strong className="font-medium text-foreground">rouge</strong> et{" "}
+              <strong className="font-medium text-foreground">noire</strong> si vous validez chaque
+              étape ({PASS_THRESHOLD} bonnes réponses sur {QUESTIONS_PER_SLOPE}).
+            </p>
+            <p>
+              Ensuite, tous les stagiaires passent le{" "}
+              <strong className="font-medium text-foreground">Vocabulaire du ski</strong> (score
+              séparé), puis une présentation facultative. Comment ça fonctionne : comme les pistes
+              de ski.
+            </p>
           </AlertDescription>
         </Alert>
 
@@ -349,16 +512,38 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
             <Loader2 className="h-5 w-5 animate-spin" />
             Chargement des questions…
           </div>
-        ) : allQuestions.length === 0 ? (
+        ) : scoredQuestions.length === 0 ? (
           <Alert variant="destructive">
             <AlertDescription>
-              Le test n'est pas disponible pour cette langue pour le moment. Merci de contacter
-              FLI à info@fli.fr.
+              Le test n&apos;est pas disponible pour cette langue pour le moment. Merci de
+              contacter FLI à info@fli.fr.
             </AlertDescription>
           </Alert>
+        ) : autoDone ? (
+          <div className="space-y-3">
+            <Alert>
+              <ClipboardList className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                Auto-diagnostic enregistré. Vous pouvez passer au test de niveau.
+              </AlertDescription>
+            </Alert>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={startAutoDiagnostic}
+                className="h-12 w-full text-base sm:w-auto"
+              >
+                Modifier l&apos;auto-diagnostic
+              </Button>
+              <Button type="button" onClick={startMcq} className="h-12 w-full text-base sm:w-auto">
+                Commencer le test (piste verte)
+              </Button>
+            </div>
+          </div>
         ) : (
-          <Button type="button" onClick={startTest} className="h-12 w-full text-base">
-            Commencer le test (piste verte)
+          <Button type="button" onClick={startAutoDiagnostic} className="h-12 w-full text-base">
+            Commencer l&apos;auto-diagnostic
           </Button>
         )}
       </div>

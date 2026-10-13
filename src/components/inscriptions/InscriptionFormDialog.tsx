@@ -43,6 +43,10 @@ import { studentEmailLabel } from "@/lib/email-guards";
 import { buildStudentSearchFilter } from "@/hooks/useStudents";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
 import { FUNDING_ORGANIZATION_OPTIONS } from "@/lib/opco-funding";
+import {
+  PISTE_ENTRY_OPTIONS,
+  pisteEntrySelectValue,
+} from "@/lib/placement-test-engine";
 
 const translations = {
   titleCreate: {
@@ -240,6 +244,7 @@ const languages = [
   { value: "Espagnol", label: { fr: "Espagnol", "pt-BR": "Espanhol", en: "Spanish" } },
 ];
 
+/** Sortie / certificat : échelle CECRL (SNMSF). L'entrée utilise les pistes. */
 const levels = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
 const inscriptionSchema = z.object({
@@ -674,23 +679,26 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
                 )}
               />
 
-              {/* Entry Level */}
+              {/* Entry Level — couleur de piste (CECRL stocké en base, BL-002) */}
               <FormField
                 control={form.control}
                 name="entry_level"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t(translations.entryLevel)}</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value ? pisteEntrySelectValue(field.value) : undefined}
+                    >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="CECRL" />
+                          <SelectValue placeholder="Couleur de piste" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {levels.map((level) => (
-                          <SelectItem key={level} value={level}>
-                            {level}
+                        {PISTE_ENTRY_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.cecrl} value={opt.cecrl}>
+                            {opt.label}
                           </SelectItem>
                         ))}
                       </SelectContent>

@@ -35,6 +35,7 @@ import {
   type ProposalPayerType,
   type ProposalPaymentFormula,
 } from "@/lib/opco-funding";
+import { estimateFifplRights } from "@/lib/fifpl-funding";
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
 import {
   useCreateFundingProposal,
@@ -129,6 +130,7 @@ export function InscriptionFundingCard({
 
   const parsed = useMemo(() => parseFundingDetails(fundingDetails), [fundingDetails]);
   const opco = parsed?.opco;
+  const fifpl = parsed?.fifpl;
 
   const [orgSelect, setOrgSelect] = useState(() => {
     const known = FUNDING_ORGANIZATION_OPTIONS.some((o) => o.value === fundingOrganization);
@@ -201,6 +203,7 @@ export function InscriptionFundingCard({
             version: 1,
             source: "admin",
             opco: next,
+            fifpl: parsed?.fifpl,
           }),
         });
       },
@@ -328,6 +331,12 @@ export function InscriptionFundingCard({
     (orgSelect === "__custom__" && /opco/i.test(orgCustom)) ||
     fundingOrganization === "OPCO" ||
     !!opco;
+
+  const showFifpl =
+    orgSelect === "FIFPL" ||
+    (orgSelect === "__custom__" && /fifpl/i.test(orgCustom)) ||
+    fundingOrganization === "FIFPL" ||
+    !!fifpl;
 
   return (
     <SurfaceCard
@@ -462,6 +471,46 @@ export function InscriptionFundingCard({
             saving={updateFunding.isPending}
             onSave={saveOpcoDetails}
           />
+        )}
+
+        {showFifpl && fifpl && (
+          <div className="space-y-2 rounded-[var(--radius)] border border-border p-3 text-sm">
+            <p className="font-medium">Attestation CFP / droits FIFPL</p>
+            <ul className="space-y-1 text-muted-foreground">
+              <li>
+                Statut :{" "}
+                {fifpl.status === "independant"
+                  ? "Indépendant (100 %)"
+                  : fifpl.status === "micro_entrepreneur"
+                    ? `Micro-entrepreneur — CFP ${fifpl.cfpContributionEur ?? "?"} €`
+                    : "—"}
+              </li>
+              <li>Année attestation : {fifpl.cfpAttestationYear ?? "—"}</li>
+              <li>Fichier : {fifpl.cfpAttestationFileName || "—"}</li>
+              <li>
+                Autre formation FIFPL cette année :{" "}
+                {fifpl.hadOtherFifplTrainingThisYear === true
+                  ? `oui — ${fifpl.otherFifplAmountAlreadyCoveredEur ?? 0} € déjà pris en charge`
+                  : fifpl.hadOtherFifplTrainingThisYear === false
+                    ? "non"
+                    : "—"}
+              </li>
+              <li>
+                Droits restants estimés :{" "}
+                {fifpl.estimatedRights?.remainingRightsEur ??
+                  estimateFifplRights({
+                    status: fifpl.status,
+                    cfpContributionEur: fifpl.cfpContributionEur,
+                    alreadyCoveredEur:
+                      fifpl.hadOtherFifplTrainingThisYear === true
+                        ? fifpl.otherFifplAmountAlreadyCoveredEur
+                        : 0,
+                  })?.remainingRightsEur ??
+                  "—"}{" "}
+                €
+              </li>
+            </ul>
+          </div>
         )}
 
         <div className="space-y-3">

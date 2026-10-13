@@ -1,0 +1,352 @@
+[
+  {
+    "order_index": 1,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "Su cliente llega a la escuela de esquí. Usted dice:",
+    "options": [
+      "¡Buenos días! ¿Cómo está usted?",
+      "¡Buenos días! ¿Cómo es usted?",
+      "¡Buenos días! ¿Cómo tiene usted?",
+      "¡Buenos días! ¿Cómo estar usted?",
+      "je ne sais pas"
+    ],
+    "correct_answer": "¡Buenos días! ¿Cómo está usted?"
+  },
+  {
+    "order_index": 2,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "La familia tiene 5 personas. Usted dice: \"_____ cinco personas en su grupo.\"",
+    "options": [
+      "Son",
+      "Están",
+      "Hay",
+      "Tienen",
+      "je ne sais pas"
+    ],
+    "correct_answer": "Hay"
+  },
+  {
+    "order_index": 3,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "Usted pregunta la edad del niño: \"¿Cuántos años _____?\"",
+    "options": [
+      "es",
+      "está",
+      "tiene",
+      "hace",
+      "je ne sais pas"
+    ],
+    "correct_answer": "tiene"
+  },
+  {
+    "order_index": 4,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "Hace mucho frío hoy. Usted dice: \"Hoy _____ 10 grados bajo cero.\"",
+    "options": [
+      "es",
+      "hace",
+      "está",
+      "tiene",
+      "je ne sais pas"
+    ],
+    "correct_answer": "hace"
+  },
+  {
+    "order_index": 5,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "Usted se presenta: \"Yo _____ instructor de esquí desde hace 5 años.\"",
+    "options": [
+      "estoy",
+      "soy",
+      "tengo",
+      "hago",
+      "je ne sais pas"
+    ],
+    "correct_answer": "soy"
+  },
+  {
+    "order_index": 6,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "Usted pregunta sobre la clase de ayer: \"¿Cómo _____ la clase de esquí ayer?\"",
+    "options": [
+      "era",
+      "fue",
+      "estaba",
+      "ha sido",
+      "je ne sais pas"
+    ],
+    "correct_answer": "fue"
+  },
+  {
+    "order_index": 7,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "Usted explica dónde encontrarse: \"Nos vemos _____ de la escuela de esquí, al lado del telesilla.\"",
+    "options": [
+      "delante",
+      "en frente",
+      "adelante",
+      "ante",
+      "je ne sais pas"
+    ],
+    "correct_answer": "delante"
+  },
+  {
+    "order_index": 8,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "El tiempo ha cambiado. Usted dice: \"Ayer _____ sol todo el día, pero hoy está nevando.\"",
+    "options": [
+      "hacía",
+      "hizo",
+      "ha hecho",
+      "A ou B",
+      "je ne sais pas"
+    ],
+    "correct_answer": "A ou B"
+  },
+  {
+    "order_index": 9,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "El cliente cuenta sobre el pasado: \"Cuando yo _____ niño, nunca había visto la nieve.\"",
+    "options": [
+      "fui",
+      "era",
+      "estaba",
+      "estuve",
+      "je ne sais pas"
+    ],
+    "correct_answer": "era"
+  },
+  {
+    "order_index": 10,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "Usted describe la pista: \"Esta pista es mucho _____ que la otra.\"",
+    "options": [
+      "más fácil",
+      "fácil más",
+      "muy fácil",
+      "mayor fácil",
+      "je ne sais pas"
+    ],
+    "correct_answer": "más fácil"
+  },
+  {
+    "order_index": 11,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "El cliente quiere ir a una pista negra. Usted dice: \"Usted _____ calentar antes de esquiar en esta pista.\"",
+    "options": [
+      "puede",
+      "debe",
+      "quiere",
+      "va a",
+      "je ne sais pas"
+    ],
+    "correct_answer": "debe"
+  },
+  {
+    "order_index": 12,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "Usted pregunta sobre los hábitos del cliente: \"Cuando usted _____ en España, ¿practicaba algún deporte de invierno?\"",
+    "options": [
+      "vivió",
+      "vivía",
+      "vive",
+      "ha vivido",
+      "je ne sais pas"
+    ],
+    "correct_answer": "vivía"
+  },
+  {
+    "order_index": 13,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "El tiempo está cambiando. Usted avisa: \"La visibilidad _____ peor por la tarde. Es mejor que bajemos temprano.\"",
+    "options": [
+      "será",
+      "va a ser",
+      "es",
+      "A ou B",
+      "je ne sais pas"
+    ],
+    "correct_answer": "A ou B"
+  },
+  {
+    "order_index": 14,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "El cliente cuenta: \"Cuando era joven, _____ a las montañas cada invierno con mis padres.\"",
+    "options": [
+      "iba",
+      "fui",
+      "iría",
+      "voy",
+      "je ne sais pas"
+    ],
+    "correct_answer": "iba"
+  },
+  {
+    "order_index": 15,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "Usted explica qué hacer: \"Cuando _____ la señal roja, pare inmediatamente.\"",
+    "options": [
+      "ve",
+      "vea",
+      "verá",
+      "veía",
+      "je ne sais pas"
+    ],
+    "correct_answer": "ve"
+  },
+  {
+    "order_index": 16,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "Explicando la técnica: \"Si usted _____ más presión en el esquí de abajo, giraría con más facilidad.\"",
+    "options": [
+      "pone",
+      "pusiera",
+      "pondría",
+      "puso",
+      "je ne sais pas"
+    ],
+    "correct_answer": "pusiera"
+  },
+  {
+    "order_index": 17,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "Un cliente pregunta sobre riesgo de avalancha. Usted explica: \"Si _____ nieve fresca por la noche, la estación _____ algunas pistas mañana.\"",
+    "options": [
+      "hay / cierra",
+      "hubiera / cerraría",
+      "haya / cerrará",
+      "habrá / cierra",
+      "je ne sais pas"
+    ],
+    "correct_answer": "hay / cierra"
+  },
+  {
+    "order_index": 18,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "Describiendo lo que pasó: \"El cliente no se _____ lastimado si _____ las instrucciones de seguridad.\"",
+    "options": [
+      "habría / hubiera seguido",
+      "había / había seguido",
+      "habría / siguiera",
+      "hubo / siguió",
+      "je ne sais pas"
+    ],
+    "correct_answer": "habría / hubiera seguido"
+  },
+  {
+    "order_index": 19,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "Usted pregunta sobre el pasado: \"Antes de venir aquí, ¿_____ alguna idea de cómo era esquiar?\"",
+    "options": [
+      "tiene",
+      "tuvo",
+      "tenía",
+      "tenga",
+      "je ne sais pas"
+    ],
+    "correct_answer": "tenía"
+  },
+  {
+    "order_index": 20,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "Explicando una situación: \"Aunque la pista _____ difícil, creo que usted puede hacerlo si _____ con calma.\"",
+    "options": [
+      "sea / va",
+      "es / va",
+      "sea / vaya",
+      "fuera / fuera",
+      "je ne sais pas"
+    ],
+    "correct_answer": "es / va"
+  },
+  {
+    "order_index": 21,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "El esquí de su cliente se suelta. Usted revisa el equipo y dice: \"Creo que sus _____ están muy flojas. Déjeme ajustarlas.\"",
+    "options": [
+      "bastones",
+      "fijaciones",
+      "cantos",
+      "botas",
+      "je ne sais pas"
+    ],
+    "correct_answer": "fijaciones"
+  },
+  {
+    "order_index": 22,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Usted enseña la cuña. Dice: \"Flexione más las _____ y mantenga el peso hacia adelante.\"",
+    "options": [
+      "tobillos",
+      "hombros",
+      "caderas",
+      "rodillas",
+      "je ne sais pas"
+    ],
+    "correct_answer": "rodillas"
+  },
+  {
+    "order_index": 23,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Su cliente se cae mucho en las curvas. Usted explica: \"Necesita poner más presión en el _____ - es el esquí más cercano al valle.\"",
+    "options": [
+      "esquí de arriba",
+      "esquí interior",
+      "esquí de abajo",
+      "esquí exterior",
+      "je ne sais pas"
+    ],
+    "correct_answer": "esquí de abajo"
+  },
+  {
+    "order_index": 24,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Nevó 30cm durante la noche. Usted dice al cliente emocionado: \"¡Buenas noticias! Tenemos _____ fresca hoy - ¡perfecto para fuera de pista!\"",
+    "options": [
+      "hielo",
+      "nieve polvo",
+      "nieve dura",
+      "niebla",
+      "je ne sais pas"
+    ],
+    "correct_answer": "nieve polvo"
+  },
+  {
+    "order_index": 25,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Un niño llega sin protección en la cabeza. Usted dice a los padres: \"Por seguridad, su hijo necesita usar _____ en las pistas.\"",
+    "options": [
+      "forfait",
+      "gafas",
+      "casco",
+      "guantes",
+      "je ne sais pas"
+    ],
+    "correct_answer": "casco"
+  }
+]

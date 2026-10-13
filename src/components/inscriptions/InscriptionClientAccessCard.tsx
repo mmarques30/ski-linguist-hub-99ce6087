@@ -6,7 +6,7 @@ import { StatusPill, SurfaceCard, toneForStatus } from "@/components/ui-kit";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, Mail, Link2, CreditCard, Copy, Check, Eye, RefreshCw } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CopyLinkRow } from "@/components/shared/CopyLinkRow";

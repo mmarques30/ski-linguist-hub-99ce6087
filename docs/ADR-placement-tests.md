@@ -6,23 +6,31 @@ O projeto FLI possui dois sistemas de avaliação de nível com propósitos dist
 
 | Sistema | Tabelas | Uso |
 |---------|---------|-----|
-| **Teste de posicionamento (self-service)** | `placement_tests`, `placement_test_questions` | Inscrição pública `/register` — teste adaptatif par pistes |
+| **Teste de posicionamento (self-service)** | `placement_tests`, banque JSON `src/data/placement-questions/` | Inscription publique `/register` — teste adaptatif par pistes |
 | **Avaliação formal (compte-rendu)** | `test_bookings`, `test_evaluations` | Interface formateur — avaliação presencial/online |
 
-## Teste adaptatif (documentação FLI 2026)
+La table SQL `placement_test_questions` n’est **pas** utilisée par le test adaptatif.
 
-### Parcours par pistes
+## Teste adaptatif (FLI_Tests_Positionnement_2026 — banque 2026)
 
-1. **Piste verte** — 5 questions de grammaire
-2. Si ≥ 3 bonnes réponses → **Piste bleue** (5 questions)
-3. Si < 3 → **Vocabulaire ski** (5 questions) → fin du test
-4. Même logique pour bleue → rouge → noire
-5. Si échec sur une piste intermédiaire → vocabulaire ski
+### Parcours
 
-### Niveau CEFR
+1. **Auto-diagnostic** (13 questions, conditions + multi-choix Q5 / Q7 max 3)
+2. **Pistes adaptatives** — verte → bleue → rouge → noire (5 questions chacune)
+3. Avec ≥ 3 bonnes réponses sur 5, la piste est validée et on passe à la suivante
+4. Avec &lt; 3, la partie adaptative s’arrête
+5. **Vocabulaire ski** — 5 questions pour **tous** les stagiaires (score séparé `vocabScore`, n’influence pas la piste), y compris si la noire est validée
+6. **Présentation** (Q26) — texte libre facultatif, 1 000 caractères max, stocké dans `summary.presentationText`
+
+### Niveau CEFR (back-office uniquement)
 
 Déterminé par la piste la plus élevée validée (≥ 3/5) :
-- Verte → A2 | Bleue → B1 | Rouge → B2 | Noire → C1 | Échec verte → A1
+- Verte → A2 | Bleue → B1 | Rouge → B2 | Noire → C1 | Échec verte → A1 (affiche « Piste verte » au stagiaire — RG05)
+
+### Échelle adaptée
+
+Allemand, néerlandais, russe, chinois : verte = traduction, bleue = grammaire simple.
+Mention « Échelle adaptée » en back-office uniquement (`hasAdaptedScale`).
 
 ### Affectation matin / après-midi
 
@@ -39,7 +47,8 @@ Manter os dois sistemas separados. O teste adaptatif alimenta `entry_level` e `p
 
 ## Consequências
 
-- Questões importadas de `FLI_Tests_Complet_CORRIGE.xlsx` em `src/data/placement-questions/`
-- UI admin: `ScheduleApprovalDialog` em `/inscriptions/:id`
-- Email automático J-10: edge function `process-schedule-reminders` (cron diário 08:00 UTC) → `info@fli.fr`
+- Banque active : `FLI_Tests_Positionnement_2026.xlsx` → `src/data/placement-questions/`
+- Archive de l’ancienne banque : `src/data/placement-questions/_archive/`
+- UI admin : `ScheduleApprovalDialog` em `/inscriptions/:id`
+- Email automatique J-10: edge function `process-schedule-reminders` (cron diário 08:00 UTC) → `info@fli.fr`
 - Futura Onda 3: vista consolidada dos inscritos pendentes J-10 para decisão em lote

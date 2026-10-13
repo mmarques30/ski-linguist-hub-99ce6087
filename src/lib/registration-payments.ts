@@ -1,12 +1,27 @@
-import { formatPriceEUR } from "@/lib/registration-offerings";
+import {
+  formatPriceEUR,
+  hidesDepositPaymentOptions,
+  type SessionFundingMode,
+} from "@/lib/registration-offerings";
 
 export const FRAIS_DOSSIER_EUR = 150;
+
+/**
+ * Seuil Paula : option « 3 fois avec Klarna » à partir de 500 € (part / tarif).
+ * Alma est inéligible (secteur éducation) — Klarna seul BNPL Stripe pour FLI.
+ */
+export const STRIPE_KLARNA_3X_MIN_EUR = 500;
+export const STRIPE_KLARNA_3X_INSTALLMENTS = 3;
 
 export const REGISTRATION_PAYMENT_OPTIONS = {
   STRIPE_DEPOSIT_CHEQUE: "stripe_deposit_cheque",
   VIREMENT_DEPOSIT: "virement_deposit",
   STRIPE_FULL: "stripe_full",
+  /** Payez en 3 fois avec Klarna — stagiaire individuel, montant ≥ 500 €. */
+  STRIPE_KLARNA_3X: "stripe_klarna_3x",
   VIREMENT_FULL: "virement_full",
+  /** Méribel / La Rosière : chèque FIF-PL envoyé à FLI (Montmélian), encaissé après la formation. */
+  SCHOOL_FIFPL_CHEQUE: "school_fifpl_cheque",
 } as const;
 
 export type RegistrationPaymentOption =
@@ -19,6 +34,50 @@ export const FLI_BANK_DETAILS = {
   bank: "Crédit Agricole",
 };
 
+/**
+ * Bloc HTML RIB FLI pour les e-mails.
+ * Règle Paula (08/10/2026) : dès qu'un lien de paiement part, joindre aussi
+ * ces coordonnées bancaires (alternative virement).
+ */
+export function buildFliBankDetailsEmailHtml(reference?: string | null): string {
+  const ref = (reference || "").trim();
+  const refLine = ref
+    ? `<p style="margin:0 0 4px">Référence à indiquer&nbsp;: <strong>${ref}</strong></p>`
+    : "";
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 16px;font-size:15px;background:#f9f9f9;width:100%">
+<tr><td style="padding:12px 14px">
+<p style="margin:0 0 6px"><strong>Coordonnées bancaires FLI</strong></p>
+<p style="margin:0 0 4px">Bénéficiaire&nbsp;: ${FLI_BANK_DETAILS.beneficiary}</p>
+<p style="margin:0 0 4px">IBAN&nbsp;: ${FLI_BANK_DETAILS.iban}</p>
+<p style="margin:0 0 4px">BIC&nbsp;: ${FLI_BANK_DETAILS.bic}</p>
+<p style="margin:0 0 4px">Banque&nbsp;: ${FLI_BANK_DETAILS.bank}</p>
+${refLine}
+</td></tr>
+</table>`;
+}
+
+/**
+ * Lien de paiement Stripe + RIB (toujours les deux).
+ * À utiliser pour tout e-mail qui propose un checkout en ligne.
+ */
+export function buildPaymentLinkWithBankDetailsEmailHtml(input: {
+  checkoutUrl: string;
+  amountLabel: string;
+  reference?: string | null;
+  onlineIntroHtml?: string;
+}): string {
+  const url = input.checkoutUrl.trim();
+  if (!url) {
+    throw new Error("buildPaymentLinkWithBankDetailsEmailHtml: checkoutUrl requis");
+  }
+  const intro =
+    input.onlineIntroHtml?.trim() ||
+    `Pour régler <strong>${input.amountLabel}</strong> en ligne (carte ou Klarna), utilisez ce lien sécurisé&nbsp;:`;
+  return `<p style="margin:0 0 12px">${intro}<br/><a href="${url}" style="color:#111">${url}</a></p>
+<p style="margin:0 0 12px">Vous pouvez aussi régler par virement&nbsp;:</p>
+${buildFliBankDetailsEmailHtml(input.reference)}`;
+}
+
 export interface RegistrationPaymentSummary {
   coursePrice: number;
   dossierFee: number;
@@ -27,12 +86,100 @@ export interface RegistrationPaymentSummary {
   amountDueNowLabel: string;
 }
 
+/** Montant ≥ 500 € — Klarna 3× (jamais pour ESF / forfait école / B2B). */
+export function isStripeKlarna3xEligible(
+  amountEur: number,
+  fundingMode: SessionFundingMode = "individuel"
+): boolean {
+  if (hidesDepositPaymentOptions(fundingMode)) return false;
+  return Number.isFinite(amountEur) && amountEur >= STRIPE_KLARNA_3X_MIN_EUR;
+}
+
+/** Échéance indicative (affichage) — Klarna peut ajuster selon l'éligibilité. */
+export function stripeKlarna3xInstallmentEur(totalEur: number): number {
+  return Math.round((totalEur / STRIPE_KLARNA_3X_INSTALLMENTS) * 100) / 100;
+}
+
+/** Options affichées selon le mode de financement session (SESSIONS §3.3 / §3.4 / §4.8). */
+export function getAvailablePaymentOptions(
+  fundingMode: SessionFundingMode = "individuel",
+  payableAmountEur = 0
+): RegistrationPaymentOption[] {
+  const withKlarna3x = (options: RegistrationPaymentOption[]): RegistrationPaymentOption[] => {
+    if (!isStripeKlarna3xEligible(payableAmountEur, fundingMode)) return options;
+    const fullIdx = options.indexOf(REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL);
+    if (fullIdx < 0) return [...options, REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X];
+    return [
+      ...options.slice(0, fullIdx + 1),
+      REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X,
+      ...options.slice(fullIdx + 1),
+    ];
+  };
+
+  if (hidesDepositPaymentOptions(fundingMode)) {
+    // Pas de Klarna pour ESF / forfait école (B2B) — OPCO ou échéancier virement.
+    return [
+      REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL,
+      REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL,
+      REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE,
+    ];
+  }
+  return withKlarna3x([
+    REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE,
+    REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT,
+    REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL,
+    REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL,
+  ]);
+}
+
+/**
+ * Part moniteur (chèque FIF-PL) pour Méribel / La Rosière.
+ * Utilise l'estimation FIF-PL (`coveredOnCourseEur`) quand elle est connue ;
+ * sinon le tarif formation (comportement historique).
+ * Aligné sur `supabase/functions/_shared/registration-payments.ts`.
+ */
+export function resolveSchoolFifplStudentShareEur(
+  coursePrice: number,
+  studentShareEur?: number | null
+): number {
+  const share = Number(studentShareEur);
+  if (Number.isFinite(share) && share > 0 && share <= coursePrice) {
+    return Math.round(share);
+  }
+  return coursePrice;
+}
+
 export function getRegistrationPaymentSummary(
   coursePrice: number,
-  option: RegistrationPaymentOption
+  option: RegistrationPaymentOption,
+  options?: { studentShareEur?: number | null }
 ): RegistrationPaymentSummary {
+  if (option === REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE) {
+    const studentShare = resolveSchoolFifplStudentShareEur(
+      coursePrice,
+      options?.studentShareEur
+    );
+    return {
+      coursePrice,
+      dossierFee: 0,
+      balanceAfterDossier: studentShare,
+      amountDueNow: 0,
+      amountDueNowLabel: "Aucun acompte — chèque FIF-PL à envoyer à FLI",
+    };
+  }
+
   const dossierFee = FRAIS_DOSSIER_EUR;
   const balanceAfterDossier = Math.max(coursePrice - dossierFee, 0);
+
+  if (option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X) {
+    return {
+      coursePrice,
+      dossierFee: 0,
+      balanceAfterDossier: 0,
+      amountDueNow: coursePrice,
+      amountDueNowLabel: `3 échéances Klarna — total ${formatPriceEUR(coursePrice)}`,
+    };
+  }
 
   if (
     option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL ||
@@ -40,7 +187,7 @@ export function getRegistrationPaymentSummary(
   ) {
     return {
       coursePrice,
-      dossierFee,
+      dossierFee: 0,
       balanceAfterDossier: 0,
       amountDueNow: coursePrice,
       amountDueNowLabel: "Paiement intégral",
@@ -58,41 +205,53 @@ export function getRegistrationPaymentSummary(
 
 /** Libellé du solde chèque dans le récapitulatif paiement */
 export const CHEQUE_BALANCE_SUMMARY_LABEL =
-  "Solde par chèque (à envoyer à l'inscription)";
+  "Solde par chèque (avant le début de la formation)";
 
 /** Instruction affichée lorsque le solde est réglé par chèque */
 export const CHEQUE_BALANCE_INSTRUCTION =
-  "Le chèque pour le solde est à envoyer lors de l'inscription. Il sera encaissé uniquement après la clôture de votre dossier.";
+  "Le chèque pour le solde est à envoyer avant le début de la formation.";
+
+export const SCHOOL_FIFPL_CHEQUE_INSTRUCTION =
+  "Envoyez le chèque FIF-PL (votre part) à l'ordre de France Langues International, à : France Langues International — 25 avenue de la Gare, 73800 Montmélian. Il sera encaissé après la formation ; l'ESF règle le solde de son côté.";
 
 export const PAYMENT_OPTION_LABELS: Record<RegistrationPaymentOption, string> = {
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]:
-    "150 € en ligne (Stripe) + solde par chèque à l'inscription",
+    "150 € paiement sécurisé en ligne + solde par chèque avant le début de la formation",
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]:
-    "150 € par virement bancaire + solde par chèque à l'inscription",
-  [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]: "Paiement intégral en ligne (Stripe)",
+    "150 € par virement bancaire + solde par chèque avant le début de la formation",
+  [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]:
+    "Règlement intégral en ligne",
+  [REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X]:
+    "Payez en 3 fois avec Klarna",
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]: "Paiement intégral par virement bancaire",
+  [REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE]:
+    "Chèque FIF-PL à envoyer à FLI (Montmélian)",
 };
 
 export const PAYMENT_OPTION_DESCRIPTIONS: Record<RegistrationPaymentOption, string> = {
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]:
-    `Réglez les frais de dossier maintenant par carte. ${CHEQUE_BALANCE_INSTRUCTION}`,
+    `Réglez les frais de dossier maintenant par paiement sécurisé en ligne (plusieurs fois si éligible). ${CHEQUE_BALANCE_INSTRUCTION}`,
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT]:
     `Effectuez un virement de 150 € pour les frais de dossier. ${CHEQUE_BALANCE_INSTRUCTION}`,
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL]:
-    "Réglez la totalité du tarif formation en une seule fois par carte bancaire.",
+    "Réglez la totalité de votre part par paiement sécurisé en ligne — carte ou Klarna si éligible.",
+  [REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X]:
+    `Même prix qu'en une fois — 3 échéances via Klarna (à partir de ${formatPriceEUR(STRIPE_KLARNA_3X_MIN_EUR)}). Réservé aux particuliers ; pas pour une entreprise ou une ESF.`,
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]:
-    "Effectuez un virement bancaire pour le montant total de la formation.",
+    "Effectuez un virement bancaire pour le montant total de votre part.",
+  [REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE]: SCHOOL_FIFPL_CHEQUE_INSTRUCTION,
 };
 
 export function formatPaymentBreakdown(summary: RegistrationPaymentSummary): string {
-  const lines = [
-    `Tarif formation : ${formatPriceEUR(summary.coursePrice)}`,
-    `Frais de dossier (déduits du total) : ${formatPriceEUR(summary.dossierFee)}`,
-  ];
+  const lines = [`Tarif / part formation : ${formatPriceEUR(summary.coursePrice)}`];
+
+  if (summary.dossierFee > 0) {
+    lines.push(`Frais de dossier (déduits du total) : ${formatPriceEUR(summary.dossierFee)}`);
+  }
 
   if (summary.balanceAfterDossier > 0) {
     lines.push(
-      `${CHEQUE_BALANCE_SUMMARY_LABEL} : ${formatPriceEUR(summary.balanceAfterDossier)} (encaissement après clôture du dossier)`
+      `${CHEQUE_BALANCE_SUMMARY_LABEL} : ${formatPriceEUR(summary.balanceAfterDossier)}`
     );
   }
 
@@ -109,8 +268,42 @@ export type MaybePaymentOption = RegistrationPaymentOption | null | undefined;
 export function requiresStripeCheckout(option: MaybePaymentOption): boolean {
   return (
     option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE ||
-    option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL
+    option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL ||
+    option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X
   );
+}
+
+/** Paiement en ligne qui solde la part stagiaire (intégral ou 3× Klarna). */
+export function isStripeTotalSettlement(option: MaybePaymentOption): boolean {
+  return (
+    option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL ||
+    option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X
+  );
+}
+
+/**
+ * Montant Stripe pour un règlement intégral / Klarna 3×.
+ * Si `balance_after_deposit` est une part stagiaire strictement inférieure au
+ * tarif formation (ex. La Rosière : 900 € / 1 500 €), on facture cette part
+ * — jamais le forfait école.
+ */
+export function resolveStripeCheckoutAmountEur(input: {
+  coursePrice: number;
+  balanceAfterDeposit?: number | null;
+  paymentOption: RegistrationPaymentOption;
+}): number {
+  const summary = getRegistrationPaymentSummary(
+    input.coursePrice,
+    input.paymentOption
+  );
+  if (!isStripeTotalSettlement(input.paymentOption)) {
+    return summary.amountDueNow;
+  }
+  const share = Number(input.balanceAfterDeposit);
+  if (Number.isFinite(share) && share > 0 && share < input.coursePrice) {
+    return share;
+  }
+  return summary.amountDueNow;
 }
 
 export function requiresVirementInstructions(option: MaybePaymentOption): boolean {
@@ -123,6 +316,11 @@ export function requiresVirementInstructions(option: MaybePaymentOption): boolea
 export function hasChequeBalance(option: MaybePaymentOption): boolean {
   return (
     option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE ||
-    option === REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT
+    option === REGISTRATION_PAYMENT_OPTIONS.VIREMENT_DEPOSIT ||
+    option === REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE
   );
+}
+
+export function isSchoolFifplCheque(option: MaybePaymentOption): boolean {
+  return option === REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE;
 }

@@ -1,0 +1,17 @@
+Sujet : Votre dossier de formation {{language}} (FIF-PL) — {{inscription_code}}
+
+Bonjour {{student_name}},
+
+Vous trouverez en pièces jointes votre dossier FIF-PL pour la formation {{language}} (inscription {{inscription_code}}) :
+
+- Convention de formation — à nous retourner signée
+- Programme de la formation
+- Critères de prise en charge FIF-PL
+- Tutoriel pour la demande de prise en charge FIF-PL
+
+Pensez à faire votre demande de prise en charge avant le début de la formation. Sans elle, le FIF-PL ne rembourse pas.
+
+Pour nous retourner la convention signée, répondez à ce message avec le document en pièce jointe : il arrive directement à info@fli.fr.
+
+Cordialement,
+L'équipe FLI

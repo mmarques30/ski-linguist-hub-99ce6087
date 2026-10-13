@@ -1,14 +1,14 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  adminCorsHeaders,
+  requireServiceRoleOrAdmin,
+} from "../_shared/admin-auth.ts";
 import {
   outreachFreezeState,
   verifierConformiteRgpd,
 } from "../_shared/outreach-freeze.ts";
 import { isFliPlaceholderEmail } from "../_shared/email-guards.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const corsHeaders = adminCorsHeaders;
 
 interface SkiMonitor {
   id: string;
@@ -57,18 +57,25 @@ async function sendEmail(
     console.error("Adresse @fli.placeholder exclue de tout envoi:", to);
     return false;
   }
+  const toNormalized = to.trim().toLowerCase();
+  const payload: Record<string, unknown> = {
+    from: "FLI Formation <noreply@fli.fr>",
+    to: [to],
+    reply_to: ["info@fli.fr"],
+    subject,
+    html,
+  };
+  // Même règle que sendFliEmail : Paula en BCC sur tout envoi.
+  if (toNormalized !== "info@fli.fr") {
+    payload.bcc = ["info@fli.fr"];
+  }
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${resendApiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      from: "FLI Formation <noreply@fli.fr>",
-      to: [to],
-      subject,
-      html,
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
@@ -83,6 +90,11 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Auth avant gel / dry_run : la clé anon franchit verify_jwt et exposait
+  // la liste nominative des moniteurs (finding sécurité #1).
+  const auth = await requireServiceRoleOrAdmin(req);
+  if (auth instanceof Response) return auth;
 
   // Gel de la prospection : refus avant toute lecture de la base moniteurs,
   // y compris en dry_run (un dry_run renvoie la liste nominative des destinataires).
@@ -106,8 +118,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     const appBaseUrl = Deno.env.get("APP_BASE_URL") || "https://id-preview--34e71e1a-49f7-433e-bb36-fc4d26e86f8e.lovable.app";
 
@@ -121,7 +131,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = auth.adminClient;
 
     const { data: intakeRow, error: intakeError } = await supabase
       .from("course_intakes")

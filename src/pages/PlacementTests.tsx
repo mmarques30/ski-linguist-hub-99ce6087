@@ -17,7 +17,7 @@ import { useMemo, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { REGISTRATION_LANGUAGES } from "@/lib/registration-languages";
 import { NIVEAU_NON_RENSEIGNE, usePlacementTestStats } from "@/hooks/usePlacementTestStats";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import {
   CardGrid,
   DonutChart,
@@ -56,9 +56,9 @@ const translations = {
     en: "Public links (adaptive test)",
   },
   publicLinksDesc: {
-    fr: "Chaque lien pré-sélectionne la langue. Le test commence à la piste verte (5 questions/piste, ≥3 pour continuer).",
-    "pt-BR": "Cada link pré-seleciona o idioma. O teste começa na pista verde.",
-    en: "Each link pre-selects the language. Test starts on green slope.",
+    fr: "Chaque lien pré-sélectionne la langue. Parcours progressif (verte → bleue → rouge → noire, ≥3/5 pour avancer) puis vocabulaire ski pour tous + présentation facultative.",
+    "pt-BR": "Cada link pré-seleciona o idioma. Percurso progressivo (verde → azul → vermelha → preta) depois vocabulário de esqui para todos + apresentação opcional.",
+    en: "Each link pre-selects the language. Progressive slopes (green → blue → red → black, ≥3/5 to advance) then ski vocab for everyone + optional presentation.",
   },
   copyLink: {
     fr: "Copier le lien",

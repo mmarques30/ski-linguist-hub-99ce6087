@@ -4,6 +4,7 @@ import { join } from "node:path";
 import {
   describeEndPackRollback,
   generateEndPack,
+  pickEndPackInvoice,
   resolveEndPackDeposit,
   type EndPackCloseFields,
   type EndPackInput,
@@ -20,10 +21,22 @@ type FailAt = keyof Pick<
   | "closeInscription"
 >;
 
-type MemoryInvoice = { id: string; invoice_number: string | null; inscription_id: string };
+type MemoryInvoice = {
+  id: string;
+  invoice_number: string | null;
+  inscription_id: string;
+  status?: string | null;
+  amount_ht?: number | null;
+  payment_date?: string | null;
+};
 type MemoryCertificate = { id: string; inscription_id: string; pdf_url: string | null };
 type MemorySurvey = { id: string; token: string; inscription_id: string };
-type MemorySending = { id: string; inscription_id: string };
+type MemorySending = {
+  id: string;
+  inscription_id: string;
+  document_type?: string;
+  pdf_url?: string | null;
+};
 type MemoryInscription = {
   id: string;
   price: number | null;
@@ -56,8 +69,11 @@ function input(overrides: Partial<EndPackInput> = {}): EndPackInput {
     attendanceRate: 100,
     generateInvoice: true,
     generateCertificate: true,
+    generateAttestation: true,
     sendSurvey: true,
     certificatePdfBlob: new Blob(["pdf"], { type: "application/pdf" }),
+    attestationPdfBlob: new Blob(["attestation"], { type: "application/pdf" }),
+    invoicePdfBlob: new Blob(["invoice"], { type: "application/pdf" }),
     ...overrides,
   };
 }
@@ -77,6 +93,8 @@ function createMemoryStore(options?: {
   const surveys: MemorySurvey[] = [...(options?.seed?.surveys ?? [])];
   const sendings: MemorySending[] = [];
   const pdfs = new Set<string>();
+  const attestationPdfs = new Set<string>();
+  const invoicePdfs = new Set<string>();
   const inscription: MemoryInscription = {
     id: "ins-1",
     price: 1200,
@@ -112,9 +130,20 @@ function createMemoryStore(options?: {
         id: `inv-${nextId++}`,
         invoice_number: `26-27.${14000 + nextId}`,
         inscription_id: row.inscription_id,
+        status: row.status,
+        amount_ht: row.amount_ht,
+        payment_date: row.payment_date ?? null,
       };
       invoices.push(created);
       return created;
+    },
+    async markInvoicePaid(id, fields) {
+      calls.push("markInvoicePaid");
+      const row = invoices.find((item) => item.id === id);
+      if (row) {
+        row.status = "paid";
+        row.payment_date = fields.payment_date;
+      }
     },
     async findExistingCertificate(inscriptionId) {
       calls.push("findExistingCertificate");
@@ -139,14 +168,56 @@ function createMemoryStore(options?: {
     async insertDocumentSending(row) {
       calls.push("insertDocumentSending");
       fail("insertDocumentSending");
-      const created = { id: `snd-${nextId++}`, inscription_id: row.inscription_id };
+      const created = {
+        id: `snd-${nextId++}`,
+        inscription_id: row.inscription_id,
+        document_type: row.document_type,
+        pdf_url: row.pdf_url,
+      };
       sendings.push(created);
       return created;
+    },
+    async updateDocumentSendingPdfUrl(id, path) {
+      calls.push("updateDocumentSendingPdfUrl");
+      const row = sendings.find((item) => item.id === id);
+      if (row) row.pdf_url = path;
     },
     async uploadCertificatePdf(path) {
       calls.push("uploadCertificatePdf");
       fail("uploadCertificatePdf");
       pdfs.add(path);
+    },
+    async findExistingAttestation(inscriptionId) {
+      calls.push("findExistingAttestation");
+      return (
+        sendings.find(
+          (s) =>
+            s.inscription_id === inscriptionId &&
+            s.document_type === "ATTESTATION_PRESENCE"
+        ) ?? null
+      );
+    },
+    async findExistingInvoiceSending(inscriptionId) {
+      calls.push("findExistingInvoiceSending");
+      return (
+        sendings.find(
+          (s) =>
+            s.inscription_id === inscriptionId && s.document_type === "FACTURE"
+        ) ?? null
+      );
+    },
+    async uploadAttestationPdf(path) {
+      calls.push("uploadAttestationPdf");
+      attestationPdfs.add(path);
+    },
+    async uploadInvoicePdf(path) {
+      calls.push("uploadInvoicePdf");
+      invoicePdfs.add(path);
+    },
+    async removeAttestationPdf(path) {
+      calls.push("removeAttestationPdf");
+      attestationPdfs.delete(path);
+      invoicePdfs.delete(path);
     },
     async findExistingSurvey(inscriptionId) {
       calls.push("findExistingSurvey");
@@ -196,7 +267,17 @@ function createMemoryStore(options?: {
     },
   };
 
-  return { store, calls, invoices, certificates, surveys, sendings, pdfs, inscription };
+  return {
+    store,
+    calls,
+    invoices,
+    certificates,
+    surveys,
+    sendings,
+    pdfs,
+    attestationPdfs,
+    inscription,
+  };
 }
 
 describe("describeEndPackRollback", () => {
@@ -215,12 +296,13 @@ describe("describeEndPackRollback", () => {
 });
 
 describe("generateEndPack — ordre et compensation", () => {
-  it("crée facture, certificat et enquête avant de passer à Terminée", async () => {
+  it("crée facture, certificat, attestation et enquête avant de passer à Terminée", async () => {
     const memory = createMemoryStore();
     const result = await generateEndPack(memory.store, input());
 
     expect(result.invoiceId).toBeTruthy();
     expect(result.certificateId).toBeTruthy();
+    expect(result.attestationPath).toBeTruthy();
     expect(result.surveyToken).toBeTruthy();
     expect(memory.inscription.status).toBe("terminee");
     expect(memory.inscription.end_pack_sent_at).toBeTruthy();
@@ -228,18 +310,24 @@ describe("generateEndPack — ordre et compensation", () => {
     const mutations = memory.calls.filter((name) =>
       [
         "insertInvoice",
+        "uploadInvoicePdf",
         "insertCertificate",
         "uploadCertificatePdf",
         "insertDocumentSending",
+        "uploadAttestationPdf",
         "insertSurvey",
         "closeInscription",
       ].includes(name)
     );
     expect(mutations).toEqual([
       "insertInvoice",
+      "uploadInvoicePdf",
+      "insertDocumentSending", // FACTURE
       "insertCertificate",
       "uploadCertificatePdf",
-      "insertDocumentSending",
+      "insertDocumentSending", // CERTIFICAT
+      "uploadAttestationPdf",
+      "insertDocumentSending", // ATTESTATION
       "insertSurvey",
       "closeInscription",
     ]);
@@ -249,7 +337,7 @@ describe("generateEndPack — ordre et compensation", () => {
     const memory = createMemoryStore({ failAt: "insertCertificate" });
 
     await expect(generateEndPack(memory.store, input())).rejects.toThrow(
-      /étape « certificat »[\s\S]*n'est pas passée à « Terminée »[\s\S]*Annulé : facture brouillon/
+      /étape « certificat »[\s\S]*n'est pas passée à « Terminée »[\s\S]*Annulé :[\s\S]*facture brouillon/
     );
 
     expect(memory.invoices).toHaveLength(0);
@@ -280,6 +368,7 @@ describe("generateEndPack — ordre et compensation", () => {
     expect(memory.surveys).toHaveLength(0);
     expect(memory.sendings).toHaveLength(0);
     expect(memory.pdfs.size).toBe(0);
+    expect(memory.attestationPdfs.size).toBe(0);
     expect(memory.inscription.status).toBe("en_cours");
     expect(memory.calls).not.toContain("closeInscription");
   });
@@ -309,13 +398,16 @@ describe("generateEndPack — ordre et compensation", () => {
     });
 
     await expect(generateEndPack(memory.store, input())).rejects.toThrow(
-      /Rien n'avait encore été créé/
+      /étape « certificat »[\s\S]*n'est pas passée à « Terminée »/
     );
 
     expect(memory.invoices).toEqual([
       { id: "inv-existant", invoice_number: "26-27.14298", inscription_id: "ins-1" },
     ]);
+    // La facture DB existante n'est pas supprimée ; seuls les PDF créés dans
+    // cette course (FACTURE) sont annulés.
     expect(memory.calls).not.toContain("deleteInvoice");
+    expect(memory.calls).toContain("deleteDocumentSending");
     expect(memory.inscription.status).toBe("en_cours");
   });
 
@@ -329,6 +421,67 @@ describe("generateEndPack — ordre et compensation", () => {
     ).rejects.toThrow(/formulaire de sortie formateur incomplet/);
     expect(memory.calls).toEqual([]);
     expect(memory.inscription.status).toBe("en_cours");
+  });
+
+  it("marque la facture payée quand le contexte pack dit paid", async () => {
+    const memory = createMemoryStore({
+      seed: {
+        invoices: [
+          {
+            id: "inv-draft",
+            invoice_number: "26-27.14324",
+            inscription_id: "ins-1",
+            status: "draft",
+            amount_ht: 900,
+          },
+        ],
+      },
+    });
+
+    const result = await generateEndPack(
+      memory.store,
+      input({
+        generateCertificate: false,
+        generateAttestation: false,
+        sendSurvey: false,
+        invoicePdfContext: {
+          status: "paid",
+          paymentDate: "2026-01-17",
+          paymentMethodLabel: "Chèque",
+          amountHt: 900,
+          amountTtc: 900,
+        },
+      })
+    );
+
+    expect(memory.calls).toContain("markInvoicePaid");
+    expect(memory.invoices[0].status).toBe("paid");
+    expect(memory.invoices[0].payment_date).toBe("2026-01-17");
+    expect(result.invoiceId).toBe("inv-draft");
+    expect(result.invoicePath).toBeTruthy();
+  });
+
+  it("génère le pack sans certificat si generateCertificate est false", async () => {
+    const memory = createMemoryStore();
+    const result = await generateEndPack(
+      memory.store,
+      input({
+        generateCertificate: false,
+        niveauGeneralSortie: null,
+        niveauTechniqueSortie: null,
+        objectifAtteint: null,
+        commentaireSortie: null,
+      })
+    );
+
+    expect(result.invoiceId).toBeTruthy();
+    expect(result.invoicePath).toBeTruthy();
+    expect(result.attestationPath).toBeTruthy();
+    expect(result.surveyToken).toBeTruthy();
+    expect(result.certificateId).toBeUndefined();
+    expect(memory.certificates).toHaveLength(0);
+    expect(memory.inscription.status).toBe("terminee");
+    expect(memory.calls).not.toContain("insertCertificate");
   });
 
   it("déduit l'acompte même si deposit_amount est null (repli balance_after_deposit)", async () => {
@@ -346,7 +499,11 @@ describe("generateEndPack — ordre et compensation", () => {
 
     await generateEndPack(
       memory.store,
-      input({ generateCertificate: false, sendSurvey: false })
+      input({
+        generateCertificate: false,
+        generateAttestation: false,
+        sendSurvey: false,
+      })
     );
     expect(inserted).toEqual({ amount_ht: 150, payment_type: "saldo" });
   });
@@ -354,7 +511,29 @@ describe("generateEndPack — ordre et compensation", () => {
   it("le hook délègue au module et n'écrit plus le statut en premier", () => {
     const hook = readFileSync(join(process.cwd(), "src/hooks/useEndPack.ts"), "utf8");
     expect(hook).toContain("generateEndPack(createSupabaseEndPackStore(), data)");
+    expect(hook).toContain("pickEndPackInvoice");
     expect(hook).not.toMatch(/status:\s*"terminee"[\s\S]*generateInvoice/);
+  });
+});
+
+describe("pickEndPackInvoice", () => {
+  it("ignore les annulées et les avoirs, préfère une payée", () => {
+    const picked = pickEndPackInvoice([
+      { id: "a", status: "cancelled", amount_ht: 900 },
+      { id: "b", status: "paid", amount_ht: -900 },
+      { id: "c", status: "draft", amount_ht: 900 },
+      { id: "d", status: "paid", amount_ht: 900 },
+    ]);
+    expect(picked?.id).toBe("d");
+  });
+
+  it("renvoie null s'il ne reste que annulées / avoirs", () => {
+    expect(
+      pickEndPackInvoice([
+        { id: "a", status: "cancelled", amount_ht: 900 },
+        { id: "b", status: "paid", amount_ht: -900 },
+      ])
+    ).toBeNull();
   });
 });
 

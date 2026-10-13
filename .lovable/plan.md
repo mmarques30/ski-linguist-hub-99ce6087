@@ -1,42 +1,34 @@
+# Triage des findings Critical — scan du 13 oct. 2026 (aucun correctif)
 
-# Plano — Recuperar acesso de teste
+Source : le scan détaillé (« deep », statut incomplete) cumule ses findings du 7, 12 et 13 oct. Le Quick scan base (lov_pgscan) : 0 finding. Les 51 lignes Critical se ramènent à **19 trous distincts**.
 
-## Diagnóstico (já verificado)
+| # | Finding (dédoublonné) | Cible | Lignes | Statut |
+|---|---|---|---|---|
+| 1 | Envoi de prospection en masse / lecture des contacts moniteurs | edge process-intake-outreach | 7 | Corrigé en prod (#182, admin ou service_role) |
+| 2 | Envoi des documents d'inscription à n'importe quel stagiaire / insertion de documents | edge send-inscription-documents | 7 | Corrigé (#182, staff ou service_role) |
+| 3 | Lecture et modification des rappels planning | edge process-schedule-reminders (+ config.toml) | 4 | Corrigé (#182) |
+| 4 | Détail des factures impayées | edge process-invoice-reminders | 1 | Corrigé (#182) |
+| 5 | Actions de paiement dans le digest | edge send-daily-ops-digest | 1 | Corrigé (#182) |
+| 6 | Modification des rappels d'enquête | edge process-survey-reminders | 1 | Corrigé (#183, testé : anon → 403) |
+| 7 | Génération des charges mensuelles | edge generate-monthly-charges | 1 | Corrigé (#183) |
+| 8 | Mails de demande CFP Rosière | edge send-rosiere-cfp-request | 2 | Corrigé (#183) |
+| 9 | Dépôt dans le dossier d'un autre stagiaire | edge upload-registration-document | 3 | Corrigé (#183, testé) |
+| 10 | Changement de la saison active | RPC activate_season | 1 | Corrigé (migration is_staff appliquée) |
+| 11 | Prix de la formation choisi par le client | edge submit-registration | 2 | Corrigé (#182, prix recalculé serveur) |
+| 12 | Écrasement des coordonnées d'un stagiaire existant | edge submit-registration | 2 | Corrigé (#182, plus de mise à jour) |
+| 13 | Estimation FIF-PL réduite par le client | edge submit-registration | 7 | Faux positif probable : estimation indicative, recopiée en note ; seul « coveredOnCourseEur » mérite une vérification |
+| 14 | Niveau d'entrée choisi par le client | edge submit-registration (entry_level) | 3 | Faux positif probable : niveau déclaratif, remplacé par le test de placement |
+| 15 | Confirmation d'inscription via le retour de paiement | edge verify-registration-checkout | 1 | Faux positif probable : la session est relue chez Stripe et doit être « paid » ; on ne peut confirmer sans avoir payé |
+| 16 | Lecture des statuts Stripe | edge check-stripe-config | 1 | Vrai reste, faible : aucun contrôle de connexion ; renvoie des infos de config, pas les clés |
+| 17 | Tout formateur télécharge tous les PDF d'évaluation | edge sign-private-download | 2 | Vrai reste (contrôle de connexion, mais pas « ce formateur, ce dossier ») ; conforme à la règle « formateurs = accès global », donc à arbitrer par Paula |
+| 18 | Taux de présence d'un autre stagiaire | RPC compute_attendance_rate (GRANT authenticated) | 2 | Vrai reste : un stagiaire connecté peut interroger n'importe quelle inscription |
+| 19 | Lecture de dossiers d'autres inscrits avec un ID et un e-mail / prix des cours modifiables | create-registration-checkout ; pricing_rules (useSeasons) | 2 | Checkout : corrigé (#182). pricing_rules : faux positif (staff seulement, règle voulue) |
+| 20 | « Injection » dans la recherche globale | front GlobalSearch (.or ilike) | 2 | Faux positif : filtre de lecture côté staff, la RLS s'applique quand même |
 
-Consultei o backend agora:
+## Ops Vault
+Aucun finding ne vise `edge_dispatch_jwt`. Mais tant que le support n'a pas fait la rotation, les tâches automatiques des fonctions 1 à 7 sont refusées (403) : sécurité OK, fonctionnement en panne.
 
-- `info@fli.fr` **existe** e **já está confirmado** (`email_confirmed_at = 2026-04-06`).
-- Último login bem-sucedido: 12/abr/2026.
-- Os erros recentes são `invalid_credentials` (HTTP 400) — ou seja, **senha errada**, não problema de confirmação nem de proxy. As senhas tentadas (`fli2025`, `Fli2025`, `Senha@2670`, `aplica2025`) não batem com a que está no banco.
-- `teste@fli.fr` **não existe**.
-
-Portanto o problema real é: senha esquecida. Nada a "confirmar".
-
-## O que farei ao entrar em build mode
-
-1. **Desativar exigência de confirmação de email para novos cadastros** (ambiente de teste)
-   - `configure_auth` com `auto_confirm_email: true`, mantendo `disable_signup: true` (registro público continua fechado conforme regra do projeto — só admin cria usuários; a mudança afeta usuários criados via admin/edge function, que já entram confirmados).
-
-2. **Resetar a senha de `info@fli.fr` E criar `teste@fli.fr`** — via edge function descartável
-   - Como não há tool direto para "set password", criarei uma edge function temporária `admin-bootstrap` que usa `SUPABASE_SERVICE_ROLE_KEY` para:
-     - `auth.admin.updateUserById(<info-id>, { password: "<nova-senha>", email_confirm: true })`
-     - `auth.admin.createUser({ email: "teste@fli.fr", password: "<senha>", email_confirm: true })` + inserir role `admin` em `user_roles` + `profiles`
-   - Protegida por um `BOOTSTRAP_TOKEN` (secret gerado) para não ficar aberta.
-   - Chamo a função uma vez via `curl_edge_functions`, confirmo sucesso, e **apago a função** logo em seguida com `delete_edge_functions` (não fica resíduo no projeto).
-
-3. **Devolver as credenciais no chat**
-   - `info@fli.fr` → nova senha
-   - `teste@fli.fr` → senha (usuário admin, já confirmado)
-   - As senhas serão geradas pelo próprio agente (fortes, ~16 chars) e mostradas uma única vez aqui.
-
-## O que NÃO farei
-
-- Não vou reabrir cadastro público (fere regra do projeto).
-- Não vou tocar em `auth.users` direto por SQL (proibido tocar schema `auth`).
-- Não vou expor `SERVICE_ROLE_KEY` — ela fica só dentro da edge function temporária.
-
-## Riscos
-
-- A edge function temporária existe por ~1 turno; se algo falhar entre criação e deleção, aviso e removo manualmente. Só aceita chamadas com o token de bootstrap.
-
-Aprove para eu executar.
+## Que veulent dire « 46 » et « 27 Critical » ?
+Ce sont surtout des **doublons**. Le scan détaillé n'a jamais fini, et il garde ses findings du 7, 12 et 13 oct. sans fermer ceux qui sont corrigés : 51 lignes pour environ 19 sujets, et une seule date (13 oct.) pour les mêmes cibles. Les lignes du 13 oct. sont des redétections sur des fonctions déjà corrigées (le scan lit peut-être une version antérieure du code), pas des nouvelles cibles.
+**Vrais restes** : #18 (taux de présence), #17 (à arbitrer), #16 (faible). À vérifier : la partie « coveredOnCourseEur » de #13.
+Pour faire baisser le compteur, il faut qu'un scan détaillé aille au bout, puis marquer comme corrigés les findings 1 à 12.

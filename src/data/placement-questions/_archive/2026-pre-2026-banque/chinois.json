@@ -1,0 +1,352 @@
+[
+  {
+    "order_index": 1,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "Votre client arrive à l'école de ski. Quelle salutation est correcte pour \"Comment allez-vous ?\"",
+    "options": [
+      "早上好！你好吗？",
+      "早上好！你是好？",
+      "早上好！你有好？",
+      "早上好！你怎么是？",
+      "je ne sais pas"
+    ],
+    "correct_answer": "早上好！你好吗？"
+  },
+  {
+    "order_index": 2,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "La famille a 5 personnes. Complétez avec le verbe correct : \"你们组___五个人。\"",
+    "options": [
+      "是",
+      "有",
+      "在",
+      "得",
+      "je ne sais pas"
+    ],
+    "correct_answer": "有"
+  },
+  {
+    "order_index": 3,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "Vous demandez l'âge : \"Elle a quel âge ?\" Quelle formulation pour \"___岁了?\"",
+    "options": [
+      "多少",
+      "几",
+      "多大",
+      "B ou C",
+      "je ne sais pas"
+    ],
+    "correct_answer": "B ou C"
+  },
+  {
+    "order_index": 4,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "Il fait -10 degrés. Complétez : \"今天___零下10度。\"",
+    "options": [
+      "是",
+      "有",
+      "在",
+      "做",
+      "je ne sais pas"
+    ],
+    "correct_answer": "是"
+  },
+  {
+    "order_index": 5,
+    "slope": "verte",
+    "category": "grammaire",
+    "question_text": "Vous vous présentez : \"Je suis moniteur de ski depuis 5 ans.\" Complétez : \"我___滑雪教练已经5年了。\"",
+    "options": [
+      "是",
+      "做",
+      "当",
+      "A ou B ou C",
+      "je ne sais pas"
+    ],
+    "correct_answer": "A ou B ou C"
+  },
+  {
+    "order_index": 6,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "Vous demandez comment était le cours hier. Quelle formulation pour \"昨天的滑雪课___？\"",
+    "options": [
+      "怎么样",
+      "好不好",
+      "怎么了",
+      "A ou B",
+      "je ne sais pas"
+    ],
+    "correct_answer": "A ou B"
+  },
+  {
+    "order_index": 7,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "Vous expliquez le point de rencontre : \"Devant l'école de ski.\" Quel mot signifie \"devant\" ?",
+    "options": [
+      "前面",
+      "外面",
+      "对面",
+      "里面",
+      "je ne sais pas"
+    ],
+    "correct_answer": "前面"
+  },
+  {
+    "order_index": 8,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "Hier il y avait du soleil. Complétez : \"昨天___太阳，但是今天在下雪。\"",
+    "options": [
+      "有",
+      "出",
+      "是",
+      "出了",
+      "je ne sais pas"
+    ],
+    "correct_answer": "出了"
+  },
+  {
+    "order_index": 9,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "Le client dit : \"Je n'avais jamais vu la neige.\" Quel adverbe signifie \"jamais\" ?",
+    "options": [
+      "从来",
+      "一直",
+      "常常",
+      "已经",
+      "je ne sais pas"
+    ],
+    "correct_answer": "从来"
+  },
+  {
+    "order_index": 10,
+    "slope": "bleue",
+    "category": "grammaire",
+    "question_text": "Vous dites : \"Cette piste est beaucoup plus facile.\" Comment exprimer \"plus facile\" ?",
+    "options": [
+      "容易",
+      "更容易",
+      "容易得",
+      "最容易",
+      "je ne sais pas"
+    ],
+    "correct_answer": "更容易"
+  },
+  {
+    "order_index": 11,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "客人想去黑道。您说：\"在滑这条雪道之前，您___热身。\"",
+    "options": [
+      "可以",
+      "应该",
+      "想要",
+      "会",
+      "je ne sais pas"
+    ],
+    "correct_answer": "应该"
+  },
+  {
+    "order_index": 12,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "您问客人的习惯：\"您在中国___的时候，做过冬季运动吗？\"",
+    "options": [
+      "住",
+      "住着",
+      "住了",
+      "住过",
+      "je ne sais pas"
+    ],
+    "correct_answer": "住"
+  },
+  {
+    "order_index": 13,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "天气在变化。您提醒：\"下午能见度会___。我们最好早点下山。\"",
+    "options": [
+      "变差",
+      "差了",
+      "更差",
+      "变得差",
+      "je ne sais pas"
+    ],
+    "correct_answer": "变差"
+  },
+  {
+    "order_index": 14,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "客人讲述：\"我年轻的时候，每年冬天都___父母去山里。\"",
+    "options": [
+      "跟",
+      "和",
+      "跟着",
+      "A ou B",
+      "je ne sais pas"
+    ],
+    "correct_answer": "A ou B"
+  },
+  {
+    "order_index": 15,
+    "slope": "rouge",
+    "category": "grammaire",
+    "question_text": "您解释该怎么做：\"___红色标志的时候，马上停下来。\"",
+    "options": [
+      "看到",
+      "看见",
+      "见到",
+      "A ou B",
+      "je ne sais pas"
+    ],
+    "correct_answer": "A ou B"
+  },
+  {
+    "order_index": 16,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "解释技术：\"如果您___更多的压力放在下面的滑雪板上，转弯会更容易。\"",
+    "options": [
+      "把",
+      "将",
+      "给",
+      "A ou B",
+      "je ne sais pas"
+    ],
+    "correct_answer": "A ou B"
+  },
+  {
+    "order_index": 17,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "客人问雪崩风险。您解释：\"如果晚上___新雪，雪站明天___关闭一些雪道。\"",
+    "options": [
+      "下了 / 会",
+      "下 / 要",
+      "下过 / 可能",
+      "A ou B",
+      "je ne sais pas"
+    ],
+    "correct_answer": "A ou B"
+  },
+  {
+    "order_index": 18,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "描述发生的事情：\"如果那位客人___安全指示，就不会受伤了。\"",
+    "options": [
+      "听了",
+      "听从了",
+      "遵守了",
+      "B ou C",
+      "je ne sais pas"
+    ],
+    "correct_answer": "B ou C"
+  },
+  {
+    "order_index": 19,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "您问过去的情况：\"来这里之前，您对滑雪___了解吗？\"",
+    "options": [
+      "有没有",
+      "有",
+      "是不是",
+      "有一些",
+      "je ne sais pas"
+    ],
+    "correct_answer": "有没有"
+  },
+  {
+    "order_index": 20,
+    "slope": "noire",
+    "category": "grammaire",
+    "question_text": "解释情况：\"___这条雪道很难，但我相信如果您保持冷静，您___做到的。\"",
+    "options": [
+      "虽然 / 能",
+      "虽然 / 是能",
+      "尽管 / 会",
+      "A ou C",
+      "je ne sais pas"
+    ],
+    "correct_answer": "A ou C"
+  },
+  {
+    "order_index": 21,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Le ski de votre client se détache. Comment dit-on \"fixations\" ?",
+    "options": [
+      "雪杖",
+      "固定器",
+      "刃",
+      "雪靴",
+      "je ne sais pas"
+    ],
+    "correct_answer": "固定器"
+  },
+  {
+    "order_index": 22,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Vous enseignez le chasse-neige et demandez de plier les \"genoux\". Comment dit-on \"genoux\" ?",
+    "options": [
+      "脚踝",
+      "肩膀",
+      "臀部",
+      "膝盖",
+      "je ne sais pas"
+    ],
+    "correct_answer": "膝盖"
+  },
+  {
+    "order_index": 23,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Comment dit-on \"ski aval\" (le ski le plus proche de la vallée) ?",
+    "options": [
+      "山上板",
+      "内侧板",
+      "山下板",
+      "外侧板",
+      "je ne sais pas"
+    ],
+    "correct_answer": "山下板"
+  },
+  {
+    "order_index": 24,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Il a neigé 30cm. Comment dit-on \"poudreuse\" ?",
+    "options": [
+      "冰",
+      "粉雪",
+      "硬雪",
+      "雾",
+      "je ne sais pas"
+    ],
+    "correct_answer": "粉雪"
+  },
+  {
+    "order_index": 25,
+    "slope": "vocab_ski",
+    "category": "vocabulaire",
+    "question_text": "Un enfant arrive sans protection. Comment dit-on \"casque\" ?",
+    "options": [
+      "雪票",
+      "雪镜",
+      "头盔",
+      "手套",
+      "je ne sais pas"
+    ],
+    "correct_answer": "头盔"
+  }
+]
