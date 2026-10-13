@@ -15,6 +15,11 @@ describe("Edge cron/admin auth — refuse anon JWT", () => {
     expect(auth).toContain("readJwtRoleClaim");
     expect(auth).toContain('=== "anon"');
     expect(auth).toContain('=== "service_role"');
+    // Pas de doublon Lovable/Cursor après merge (sinon Deno refuse le module).
+    expect(auth.match(/export async function requireServiceRoleOrStaff/g)).toHaveLength(1);
+    expect(auth.match(/export async function requireServiceRoleOrAdmin/g)).toHaveLength(1);
+    expect(auth.match(/export function requireServiceRoleOrStaff/g)).toBeNull();
+    expect(auth.match(/export function requireServiceRoleOrAdmin/g)).toBeNull();
   });
 
   it("finding #1 process-intake-outreach exige admin ou service_role", () => {
