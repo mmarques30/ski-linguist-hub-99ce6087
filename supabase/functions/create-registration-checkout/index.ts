@@ -90,10 +90,15 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Montant uniquement depuis la fiche inscription (fixée côté
+    // submit-registration via catalogue / pricing_rules — jamais un prix client).
     const coursePrice = Number(inscription.price) || 0;
     if (coursePrice <= 0) {
       return new Response(
-        JSON.stringify({ success: false, error: "Montant de formation invalide" }),
+        JSON.stringify({
+          success: false,
+          error: "Montant de formation invalide ou tarif en attente de confirmation FLI",
+        }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
