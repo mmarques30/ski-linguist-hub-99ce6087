@@ -376,15 +376,15 @@ export async function buildAttestationPresencePdfBytes(
   // Fait à / le + nom du signataire (juste au-dessus du tireté signature)
   draw(FLI_DEFAULTS.city, 72, 670.5, { size });
   draw(issue, 58, 691, { size: sizeSmall });
-  draw(FLI_DEFAULTS.signatory, 400, 712, { size: 8, bold: true });
+  draw(FLI_DEFAULTS.signatory, 400, 718, { size: 8, bold: true });
 
   /**
    * Zones calées sur les rectangles tiretés du blank FIF-PL
    * (sous le libellé cachet / sous le nom du signataire).
-   * Images en « contain » avec marge intérieure ~2 %.
+   * Images en « contain » avec une légère marge pour ne pas chevaucher le cadre.
    */
-  const CACHET_BOX = { x: 210, y: 66, w: 166, h: 96 };
-  const SIGNATURE_BOX = { x: 390, y: 64, w: 140, h: 48 };
+  const CACHET_BOX = { x: 218, y: 70, w: 152, h: 88 };
+  const SIGNATURE_BOX = { x: 392, y: 66, w: 136, h: 46 };
 
   const drawContainedImage = (
     embedded: { width: number; height: number },
@@ -393,7 +393,7 @@ export async function buildAttestationPresencePdfBytes(
       x: number; y: number; width: number; height: number;
     }) => void
   ) => {
-    const pad = 1;
+    const pad = 0.94;
     const scale =
       Math.min(box.w / embedded.width, box.h / embedded.height) * pad;
     const w = embedded.width * scale;
