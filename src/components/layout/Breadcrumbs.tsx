@@ -3,6 +3,7 @@ import { ChevronRight, Home } from "lucide-react";
 import { Fragment } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { CHROME_BREADCRUMB, CHROME_UI } from "@/lib/chrome-i18n";
+import { ADMIN_HOME_PATH } from "@/lib/admin-home";
 
 /**
  * Préfixes qui n'ont pas de page dédiée : les afficher en texte, pas en lien,
@@ -20,7 +21,7 @@ const NON_NAVIGABLE_PATHS = new Set([
 export function Breadcrumbs() {
   const { pathname } = useLocation();
   const { t } = useLanguage();
-  if (pathname === "/" || pathname === "/auth") return null;
+  if (pathname === "/" || pathname === "/auth" || pathname === "/app") return null;
 
   const segments = pathname.split("/").filter(Boolean);
   if (segments.length === 0) return null;
@@ -50,7 +51,7 @@ export function Breadcrumbs() {
       className="flex items-center gap-1 overflow-x-auto border-b border-border bg-[hsl(var(--surface-page))] px-3 py-2 text-sm text-muted-foreground scrollbar-thin sm:px-4 lg:px-6"
     >
       <Link
-        to="/"
+        to={ADMIN_HOME_PATH}
         className="flex shrink-0 items-center gap-1 rounded-md px-1 transition-colors hover:text-foreground"
       >
         <Home className="h-3.5 w-3.5" />
