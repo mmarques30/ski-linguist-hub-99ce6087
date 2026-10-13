@@ -10,7 +10,10 @@ import {
   inscriptionDatesSentenceFr,
   inscriptionStartDateLabel,
   isIsoDate,
+  isOnlineIndividualModality,
+  minRequestedStartDateIso,
   offeringHasFixedDates,
+  ONLINE_INDIVIDUAL_MIN_START_DAYS,
   onlineFlexibleWindowMonths,
   REQUESTED_START_DATE_MESSAGES,
   requestedStartDateNotice,
@@ -113,6 +116,27 @@ describe("dates d'inscription /register", () => {
     expect(REQUESTED_START_DATE_MESSAGES.manquante).toMatch(/souhaitez commencer/);
   });
 
+  it("refuse un début à moins de 7 jours pour l'individuel en ligne", () => {
+    expect(ONLINE_INDIVIDUAL_MIN_START_DAYS).toBe(7);
+    expect(isOnlineIndividualModality("online_individual")).toBe(true);
+    expect(isOnlineIndividualModality("en_ligne_individuel")).toBe(true);
+    expect(isOnlineIndividualModality("online_group")).toBe(false);
+    expect(minRequestedStartDateIso("2026-10-13", 7)).toBe("2026-10-20");
+    expect(
+      requestedStartDateProblem("2026-10-19", "2026-10-13", { minDaysAhead: 7 })
+    ).toBe("trop_proche");
+    expect(
+      requestedStartDateProblem("2026-10-20", "2026-10-13", { minDaysAhead: 7 })
+    ).toBeNull();
+    expect(REQUESTED_START_DATE_MESSAGES.trop_proche).toMatch(/7 jours/);
+    const etape = source("src/components/registration/CourseSelectionStep.tsx");
+    expect(etape).toContain("ONLINE_INDIVIDUAL_MIN_START_DAYS");
+    expect(etape).toContain("minRequestedStart");
+    const edge = source("supabase/functions/submit-registration/index.ts");
+    expect(edge).toContain("ONLINE_INDIVIDUAL_MIN_START_DAYS");
+    expect(edge).toContain("isOnlineIndividualModality");
+  });
+
   it("prévient sans bloquer quand le début est dans moins de dix jours", () => {
     expect(requestedStartDateNotice("2026-09-20", "2026-09-15")).toMatch(/moins de 10 jours/);
     expect(requestedStartDateNotice("2026-09-25", "2026-09-15")).toBeNull();
@@ -193,8 +217,12 @@ describe("dates d'inscription /register", () => {
       return texte.slice(debut, fin === -1 ? undefined : fin);
     };
     expect(extraire(deno, "addMonthsIso")).toBe(extraire(front, "addMonthsIso"));
+    expect(extraire(deno, "addDaysIso")).toBe(extraire(front, "addDaysIso"));
     expect(extraire(deno, "onlineFlexibleWindowMonths")).toBe(
       extraire(front, "onlineFlexibleWindowMonths")
+    );
+    expect(extraire(deno, "requestedStartDateProblem")).toBe(
+      extraire(front, "requestedStartDateProblem")
     );
     expect(extraire(deno, "resolveInscriptionDates")).toBe(
       extraire(front, "resolveInscriptionDates")
@@ -202,6 +230,8 @@ describe("dates d'inscription /register", () => {
     expect(extraire(deno, "inscriptionDatesSentenceFr")).toBe(
       extraire(front, "inscriptionDatesSentenceFr")
     );
+    expect(deno).toContain("ONLINE_INDIVIDUAL_MIN_START_DAYS = 7");
+    expect(front).toContain("ONLINE_INDIVIDUAL_MIN_START_DAYS = 7");
   });
 
   it("passe durationHours depuis submit-registration", () => {

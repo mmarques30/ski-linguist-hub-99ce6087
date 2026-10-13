@@ -2,13 +2,6 @@ import { useMemo, useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,7 +29,11 @@ import {
   type RegistrationOffering,
 } from "@/lib/registration-offerings";
 import {
+  formatDateFr,
+  isOnlineIndividualModality,
+  minRequestedStartDateIso,
   offeringHasFixedDates,
+  ONLINE_INDIVIDUAL_MIN_START_DAYS,
   REQUESTED_START_DATE_MESSAGES,
   requestedStartDateNotice,
   requestedStartDateProblem,
@@ -139,8 +136,14 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
   const needsRequestedStartDate =
     isCustomFormat || (!!selectedOffering && !offeringHasFixedDates(selectedOffering));
   const today = todayIso();
+  const onlineIndividualMinDays = isOnlineIndividualModality(data.modality)
+    ? ONLINE_INDIVIDUAL_MIN_START_DAYS
+    : 0;
+  const minRequestedStart = minRequestedStartDateIso(today, onlineIndividualMinDays);
   const requestedStartDateError = needsRequestedStartDate
-    ? requestedStartDateProblem(data.requestedStartDate, today)
+    ? requestedStartDateProblem(data.requestedStartDate, today, {
+        minDaysAhead: onlineIndividualMinDays,
+      })
     : null;
   const requestedStartDateHint = needsRequestedStartDate
     ? requestedStartDateNotice(data.requestedStartDate, today)
@@ -571,9 +574,12 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
 
           {pathMode === "online" && onlineKind === "individual" && (
             <div className="animate-in fade-in slide-in-from-top-2 space-y-4">
-              <div className="space-y-2">
-                <Label>Langue *</Label>
-                <Select
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <Languages className="h-4 w-4" />
+                  Langue *
+                </Label>
+                <RadioGroup
                   value={data.language || ""}
                   onValueChange={(value) => {
                     resetCourseFields({
@@ -583,18 +589,20 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                       language: value,
                     });
                   }}
+                  className="grid gap-2 sm:grid-cols-2"
                 >
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Sélectionnez une langue" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {individualLanguages.map((lang) => (
-                      <SelectItem key={lang.key} value={lang.key}>
-                        {lang.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  {individualLanguages.map((lang) => (
+                    <OptionCard key={lang.key} selected={data.language === lang.key}>
+                      <Label
+                        htmlFor={`oi-lang-${lang.key}`}
+                        className="flex min-h-12 cursor-pointer items-center gap-3 px-4 py-3 font-normal"
+                      >
+                        <RadioGroupItem value={lang.key} id={`oi-lang-${lang.key}`} />
+                        <span className="font-medium">{lang.label}</span>
+                      </Label>
+                    </OptionCard>
+                  ))}
+                </RadioGroup>
               </div>
 
               {data.language && (
@@ -767,17 +775,22 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
             </div>
           )}
 
-          {/* Date souhaitée — packs flexibles */}
+          {/* Date souhaitée — packs flexibles (individuel en ligne : min J+7) */}
           {selectedOffering && !selectedIsWaitlist && needsRequestedStartDate && (
             <div className="animate-in fade-in slide-in-from-top-2 space-y-2">
               <Label htmlFor="requested-start-date" className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 Date de début souhaitée *
               </Label>
+              {onlineIndividualMinDays > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Au plus tôt dans {onlineIndividualMinDays} jours ({formatDateFr(minRequestedStart)}).
+                </p>
+              )}
               <Input
                 id="requested-start-date"
                 type="date"
-                min={today}
+                min={minRequestedStart}
                 value={data.requestedStartDate || ""}
                 onChange={(e) => onUpdate({ requestedStartDate: e.target.value })}
                 className="h-11"
@@ -787,7 +800,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                   {REQUESTED_START_DATE_MESSAGES[requestedStartDateError]}
                 </p>
               )}
-              {requestedStartDateHint && (
+              {requestedStartDateHint && !requestedStartDateError && (
                 <p className="text-xs text-[hsl(var(--status-warning))]">{requestedStartDateHint}</p>
               )}
             </div>

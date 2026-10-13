@@ -10,8 +10,13 @@ import { applyEmailTemplate, sendFliEmail } from "../_shared/fli-email.ts";
 import { describeCaughtError } from "../_shared/supabase-error.ts";
 import {
   inscriptionDatesSentenceFr,
+  isOnlineIndividualModality,
+  ONLINE_INDIVIDUAL_MIN_START_DAYS,
+  REQUESTED_START_DATE_MESSAGES,
   REQUESTED_START_DATE_REQUIRED_MESSAGE,
+  requestedStartDateProblem,
   resolveInscriptionDates,
+  todayIso,
 } from "../_shared/registration-dates.ts";
 import { enqueueInscriptionDocuments } from "../_shared/enqueue-inscription-documents.ts";
 import {
@@ -565,6 +570,24 @@ Deno.serve(async (req) => {
         JSON.stringify({ success: false, error: REQUESTED_START_DATE_REQUIRED_MESSAGE }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Individuel en ligne : début souhaité au plus tôt J+7.
+    if (isOnlineIndividualModality(registration.modality) && dates.dates_to_confirm) {
+      const startProblem = requestedStartDateProblem(
+        registration.requestedStartDate || dates.start_date,
+        todayIso(),
+        { minDaysAhead: ONLINE_INDIVIDUAL_MIN_START_DAYS }
+      );
+      if (startProblem) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: REQUESTED_START_DATE_MESSAGES[startProblem],
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     const { start_date: startDate, end_date: endDate, dates_to_confirm: datesToConfirm } = dates;
