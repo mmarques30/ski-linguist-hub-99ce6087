@@ -42,7 +42,7 @@ describe("LP institutionnelle — conformité spec", () => {
 
   it("couvre les ancres et le CTA Accès FLI, entièrement en français", () => {
     const src = landing();
-    for (const id of ["inicio", "metodo", "parceiros", "formacoes", "faq"]) {
+    for (const id of ["inicio", "metodo", "parceiros", "formacoes", "stages", "faq"]) {
       expect(src).toContain(`id="${id}"`);
     }
     expect(src).toContain("Accès FLI");
@@ -57,6 +57,22 @@ describe("LP institutionnelle — conformité spec", () => {
     expect(src).toContain('to="/auth"');
     expect(src).toContain("Réserver mon stage");
     expect(src).toContain("YOUTUBE_VIDEO_ID");
+  });
+
+  it("affiche les groupes à 8 personnes maximum (plus 6)", () => {
+    const src = landing();
+    expect(src).toContain("Groupes de 8 max");
+    expect(src).toContain("Groupes de 8 maximum");
+    expect(src).not.toContain("Groupes de 6");
+  });
+
+  it("liste les stages par langue, avec lieu et dates, à partir du catalogue public", () => {
+    const src = landing();
+    expect(src).toContain("useRegistrationOfferings");
+    expect(src).toContain("groupSessionsByLanguage");
+    expect(src).toContain("location_label");
+    expect(src).toContain("date_label");
+    expect(src).toContain('to="/register"');
   });
 
   it("place la FAQ après le footer dans le flux", () => {

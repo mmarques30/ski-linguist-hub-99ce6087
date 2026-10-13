@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import {
   ArrowRight,
   Award,
+  CalendarDays,
   ChartLine,
   GraduationCap,
   Laptop,
   Mail,
+  MapPin,
   Menu,
   Phone,
   Play,
@@ -20,16 +22,24 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   RECOMMENDED,
   YOUTUBE_TITLE,
   YOUTUBE_VIDEO_ID,
 } from "@/components/landing/landing-assets";
+import { useRegistrationOfferings } from "@/hooks/useRegistrationOfferings";
+import {
+  isOpenOffering,
+  sortOfferingsByDateThenLocation,
+  type RegistrationOffering,
+} from "@/lib/registration-offerings";
 
 const NAV = [
   { label: "Notre méthode", href: "#metodo" },
   { label: "Partenaires", href: "#parceiros" },
   { label: "Formations", href: "#formacoes" },
+  { label: "Nos stages", href: "#stages" },
   { label: "FAQ", href: "#faq" },
 ] as const;
 
@@ -40,7 +50,7 @@ const INDICATORS = [
   { value: "Depuis 2018", label: "formations montagne" },
 ] as const;
 
-const BADGES = ["Groupes de 6 max", "Financement FIFPL", "Certifié Qualiopi"] as const;
+const BADGES = ["Groupes de 8 max", "Financement FIFPL", "Certifié Qualiopi"] as const;
 
 const METHOD_STEPS = [
   "Test de niveau à l'inscription",
@@ -69,7 +79,7 @@ const PARTNERS = [
 const FORMATIONS = [
   {
     icon: Users,
-    title: "Groupes de 6 maximum",
+    title: "Groupes de 8 maximum",
     text: "Chaque stagiaire participe activement, sans se noyer dans la masse.",
   },
   {
@@ -146,6 +156,36 @@ const FAQ_ITEMS = [
   },
 ] as const;
 
+interface LanguageSessionsGroup {
+  key: string;
+  label: string;
+  sessions: RegistrationOffering[];
+}
+
+/** Stages à dates fixes (présentiel + en ligne groupe), regroupés par langue — hors individuel à la demande. */
+function groupSessionsByLanguage(offerings: RegistrationOffering[]): LanguageSessionsGroup[] {
+  const scheduled = offerings.filter(
+    (o) => o.modality_key !== "online_individual" && isOpenOffering(o)
+  );
+  const groups = new Map<string, LanguageSessionsGroup>();
+  for (const offering of scheduled) {
+    const existing = groups.get(offering.language_key);
+    if (existing) {
+      existing.sessions.push(offering);
+    } else {
+      groups.set(offering.language_key, {
+        key: offering.language_key,
+        label: offering.language_label,
+        sessions: [offering],
+      });
+    }
+  }
+  for (const group of groups.values()) {
+    group.sessions = sortOfferingsByDateThenLocation(group.sessions);
+  }
+  return Array.from(groups.values()).sort((a, b) => a.label.localeCompare(b.label, "fr"));
+}
+
 /**
  * Landing institutionnelle publique — conforme `docs/FLI-LP-institucional-spec.md`.
  * `/` = LP ; `/auth` = login inchangé ; CTA « Accès FLI ».
@@ -154,6 +194,8 @@ export default function InstitutionalLanding() {
   const [scrolled, setScrolled] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { data: offerings = [], isLoading: offeringsLoading } = useRegistrationOfferings();
+  const sessionsByLanguage = useMemo(() => groupSessionsByLanguage(offerings), [offerings]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
@@ -491,6 +533,78 @@ export default function InstitutionalLanding() {
                   Demander un devis
                 </a>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* —— Section stages : par langue, lieux et dates, catalogue public /register */}
+        <section id="stages" className="scroll-mt-24 bg-[hsl(var(--surface-raised))]">
+          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
+            <div className="max-w-2xl">
+              <h2 className="lp-display text-3xl font-bold tracking-tight text-[hsl(var(--fli-navy))] sm:text-4xl">
+                Nos prochains stages, par langue
+              </h2>
+              <p className="mt-3 text-muted-foreground">
+                Lieux et dates des sessions ouvertes à l&apos;inscription cette saison. Le
+                catalogue complet, avec les tarifs selon votre école, est disponible sur le
+                formulaire d&apos;inscription.
+              </p>
+            </div>
+
+            {offeringsLoading ? (
+              <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {[0, 1, 2].map((i) => (
+                  <Skeleton key={i} className="h-44 rounded-[var(--radius-card)]" />
+                ))}
+              </div>
+            ) : sessionsByLanguage.length > 0 ? (
+              <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {sessionsByLanguage.map((group) => (
+                  <div
+                    key={group.key}
+                    className="rounded-[var(--radius-card)] border border-border bg-[hsl(var(--surface-page))] p-6 shadow-xs"
+                  >
+                    <h3 className="lp-display text-lg font-bold text-[hsl(var(--fli-navy))]">
+                      {group.label}
+                    </h3>
+                    <ul className="mt-4 space-y-3">
+                      {group.sessions.map((session) => (
+                        <li
+                          key={session.id}
+                          className="border-t border-border/60 pt-3 text-sm first:border-t-0 first:pt-0"
+                        >
+                          <p className="flex items-center gap-1.5 font-semibold text-foreground">
+                            <MapPin
+                              className="h-3.5 w-3.5 shrink-0 text-[hsl(var(--fli-orange))]"
+                              aria-hidden
+                            />
+                            {session.location_label}
+                          </p>
+                          <p className="mt-1 flex items-center gap-1.5 text-muted-foreground">
+                            <CalendarDays className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                            {session.date_label || "Dates à confirmer"}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-10 text-sm text-muted-foreground">
+                Le calendrier des prochains stages est en cours de mise à jour — consultez le
+                formulaire d&apos;inscription pour les dates disponibles.
+              </p>
+            )}
+
+            <div className="mt-10">
+              <Link
+                to="/register"
+                className="inline-flex items-center gap-2 rounded-full bg-[hsl(var(--fli-yellow))] px-6 py-3 text-sm font-semibold text-[hsl(var(--fli-navy))] transition hover:brightness-105"
+              >
+                Voir le calendrier complet et m&apos;inscrire
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </Link>
             </div>
           </div>
         </section>
