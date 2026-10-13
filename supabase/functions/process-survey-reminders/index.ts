@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
     // Point 8 : aucune relance ne part si son modèle n'est pas validé et actif.
     const templates = new Map<ReminderLevel, Awaited<ReturnType<typeof loadEmailTemplate>>>()
     for (const level of [1, 2] as ReminderLevel[]) {
-      templates.set(level, await loadEmailTemplate(supabase, REMINDER_SLUGS[level]))
+      templates.set(level, await loadEmailTemplate(supabase as any, REMINDER_SLUGS[level]))
     }
 
     const missingTemplates = ([1, 2] as ReminderLevel[])

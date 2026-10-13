@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
     }
 
     const rows: DigestInscriptionRow[] = (inscriptions || []).map((raw) => {
-      const studentRaw = (raw as { students?: Record<string, unknown> | null })
+      const studentRaw = (raw as unknown as { students?: Record<string, unknown> | null })
         .students;
       const pays = payByInscription.get(raw.id) || [];
       let amount_received = 0;

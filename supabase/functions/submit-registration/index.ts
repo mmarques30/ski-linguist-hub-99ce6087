@@ -699,7 +699,7 @@ Deno.serve(async (req) => {
 
     const { data: inscriptionCode, error: codeError } = await supabase.rpc("generate_inscription_code");
     if (codeError) {
-      await deleteNewStudent(supabase, studentId, createdStudent);
+      await deleteNewStudent(supabase as any, studentId, createdStudent);
       throw codeError;
     }
 
@@ -753,7 +753,7 @@ Deno.serve(async (req) => {
 
     const paymentFlow = paymentFields?.paymentFlow ?? "none";
     const sessionFundingMode = getSessionFundingMode({
-      funding_mode: offeringFundingMode,
+      funding_mode: offeringFundingMode as any,
     });
     const omitDossierFee = hidesDepositPaymentOptions(sessionFundingMode);
 
@@ -849,7 +849,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (inscriptionError) {
-      await deleteNewStudent(supabase, studentId, createdStudent);
+      await deleteNewStudent(supabase as any, studentId, createdStudent);
       throw inscriptionError;
     }
 

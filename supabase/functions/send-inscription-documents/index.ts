@@ -139,7 +139,7 @@ Deno.serve(async (req) => {
 
     // Au moins un modèle dossier doit être actif (variante ou fallback).
     const anyTemplate = await loadEmailTemplate(
-      supabase,
+      supabase as any,
       FUNDING_DOSSIER_EMAIL_FALLBACK_SLUG,
     );
 
@@ -352,7 +352,7 @@ Deno.serve(async (req) => {
           }
         }
 
-        const student = (inscription as { students?: Record<string, unknown> }).students || {};
+        const student = (inscription as unknown as { students?: Record<string, unknown> }).students || {};
         const email = typeof student.email === "string" ? student.email.trim() : "";
         const studentName = [student.first_name, student.last_name]
           .filter((p) => typeof p === "string" && p.trim())
