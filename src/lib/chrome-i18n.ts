@@ -215,6 +215,7 @@ export const CHROME_UI: Record<string, Translations> = {
 
 /** Segments d'URL → libellé fil d'Ariane. */
 export const CHROME_BREADCRUMB: Record<string, Translations> = {
+  app: { fr: "Tableau de bord", "pt-BR": "Painel", en: "Dashboard" },
   finance: CHROME_SECTIONS.finance,
   analyses: { fr: "Analyses", "pt-BR": "Análises", en: "Analytics" },
   rentabilite: { fr: "Rentabilité", "pt-BR": "Rentabilidade", en: "Profitability" },
