@@ -21,9 +21,15 @@ import {
   inferFormationKindFifpl,
   type FormationKindFifpl,
 } from "@/lib/attestation-presence-pdf";
+import {
+  buildInvoicePdfBlob,
+  buildInvoicePdfPath,
+  type InvoicePdfInput,
+} from "@/lib/invoice-pdf";
 
 export type EndPackStep =
   | "invoice"
+  | "invoice_pdf"
   | "certificate"
   | "pdf"
   | "sending"
@@ -33,6 +39,7 @@ export type EndPackStep =
 
 const STEP_LABELS: Record<EndPackStep, string> = {
   invoice: "facture",
+  invoice_pdf: "PDF de la facture",
   certificate: "certificat",
   pdf: "dépôt du PDF du certificat",
   sending: "enregistrement du certificat",
@@ -66,8 +73,15 @@ export interface EndPackInput {
   /** Attestation de présence FIF-PL (dossier de remboursement). */
   generateAttestation: boolean;
   sendSurvey: boolean;
+  /**
+   * Régénère les PDF même s'ils existent déjà (tampon/signature, facture
+   * officielle, etc.). Les lignes DB (facture, certificat, enquête) sont
+   * réutilisées ; seuls les fichiers Storage sont réécrits.
+   */
+  forceRegenerate?: boolean;
   certificatePdfBlob?: Blob | null;
   attestationPdfBlob?: Blob | null;
+  invoicePdfBlob?: Blob | null;
   fundingOrganization?: string | null;
   /** Montant pédagogique (sinon lu via getInscriptionAmounts.price). */
   pedagogicalAmount?: number | null;
@@ -76,12 +90,16 @@ export interface EndPackInput {
   /** Collective : valeurs convention (ignorées si individuelle). */
   joursEntiersConvention?: number | null;
   demiJourneesConvention?: number | null;
+  /** Contexte client / règlement pour le PDF facture officiel. */
+  invoicePdfContext?: Partial<InvoicePdfInput> | null;
 }
 
 export interface EndPackResult {
   invoiceId?: string;
   invoiceNumber?: string | null;
+  invoicePath?: string;
   certificateId?: string;
+  certificatePath?: string;
   attestationPath?: string;
   surveyToken?: string;
   certificateSkippedReason?: string;
@@ -101,13 +119,21 @@ export type EndPackCloseFields = {
 export interface EndPackStore {
   findExistingInvoice(
     inscriptionId: string
-  ): Promise<{ id: string; invoice_number: string | null } | null>;
+  ): Promise<{
+    id: string;
+    invoice_number: string | null;
+    amount_ht?: number | null;
+    invoice_date?: string | null;
+    payment_date?: string | null;
+    status?: string | null;
+  } | null>;
   getInscriptionAmounts(
     inscriptionId: string
   ): Promise<{
     price: number | null;
     deposit_amount: number | null;
     balance_after_deposit?: number | null;
+    deposit_date?: string | null;
   } | null>;
   insertInvoice(row: {
     inscription_id: string;
@@ -132,15 +158,20 @@ export interface EndPackStore {
   updateCertificatePdfUrl(id: string, path: string): Promise<void>;
   insertDocumentSending(row: {
     inscription_id: string;
-    document_type: "CERTIFICAT" | "ATTESTATION_PRESENCE";
+    document_type: "CERTIFICAT" | "ATTESTATION_PRESENCE" | "FACTURE";
     sent_to: string;
     pdf_url: string;
   }): Promise<{ id: string }>;
+  updateDocumentSendingPdfUrl(id: string, path: string): Promise<void>;
   uploadCertificatePdf(path: string, blob: Blob): Promise<void>;
   findExistingAttestation(
     inscriptionId: string
   ): Promise<{ id: string; pdf_url: string | null } | null>;
+  findExistingInvoiceSending(
+    inscriptionId: string
+  ): Promise<{ id: string; pdf_url: string | null } | null>;
   uploadAttestationPdf(path: string, blob: Blob): Promise<void>;
+  uploadInvoicePdf(path: string, blob: Blob): Promise<void>;
   removeAttestationPdf(path: string): Promise<void>;
   findExistingSurvey(
     inscriptionId: string
@@ -162,6 +193,8 @@ export interface EndPackStore {
 
 type CreatedInRun = {
   invoiceId?: string;
+  invoicePath?: string;
+  invoiceSendingId?: string;
   certificateId?: string;
   attestationPath?: string;
   attestationSendingId?: string;
@@ -213,6 +246,16 @@ async function rollbackCreated(
   if (created.surveyId) {
     await tryUndo("enquête de satisfaction", () =>
       store.deleteSurvey(created.surveyId!)
+    );
+  }
+  if (created.invoiceSendingId) {
+    await tryUndo("enregistrement de la facture PDF", () =>
+      store.deleteDocumentSending(created.invoiceSendingId!)
+    );
+  }
+  if (created.invoicePath) {
+    await tryUndo("fichier PDF de la facture", () =>
+      store.removeAttestationPdf(created.invoicePath!)
     );
   }
   if (created.attestationSendingId) {
@@ -298,20 +341,28 @@ export async function generateEndPack(
     );
   }
 
+  const force = data.forceRegenerate === true;
+
   try {
+    let invoiceRow: Awaited<ReturnType<EndPackStore["findExistingInvoice"]>> =
+      null;
+    let amountsRow: Awaited<
+      ReturnType<EndPackStore["getInscriptionAmounts"]>
+    > = null;
+
     if (data.generateInvoice) {
       step = "invoice";
-      const existing = await store.findExistingInvoice(data.inscriptionId);
-      if (existing) {
-        result.invoiceId = existing.id;
-        result.invoiceNumber = existing.invoice_number;
+      invoiceRow = await store.findExistingInvoice(data.inscriptionId);
+      if (invoiceRow) {
+        result.invoiceId = invoiceRow.id;
+        result.invoiceNumber = invoiceRow.invoice_number;
       } else {
-        const amounts = await store.getInscriptionAmounts(data.inscriptionId);
-        if (!amounts) {
+        amountsRow = await store.getInscriptionAmounts(data.inscriptionId);
+        if (!amountsRow) {
           throw new Error("Inscription introuvable, facture impossible.");
         }
-        const amount = amounts.price || 0;
-        const deposit = resolveEndPackDeposit(amounts);
+        const amount = amountsRow.price || 0;
+        const deposit = resolveEndPackDeposit(amountsRow);
         const finalAmount = amount - deposit;
         const invoice = await store.insertInvoice({
           inscription_id: data.inscriptionId,
@@ -323,6 +374,106 @@ export async function generateEndPack(
         created.invoiceId = invoice.id;
         result.invoiceId = invoice.id;
         result.invoiceNumber = invoice.invoice_number;
+        invoiceRow = {
+          id: invoice.id,
+          invoice_number: invoice.invoice_number,
+          amount_ht: finalAmount > 0 ? finalAmount : amount,
+          status: "draft",
+        };
+      }
+
+      // PDF facture au format officiel (InvoiceTemplate) — toujours généré /
+      // régénéré pour la PJ e-mail.
+      step = "invoice_pdf";
+      const existingInvoiceSending = await store.findExistingInvoiceSending(
+        data.inscriptionId
+      );
+      if (existingInvoiceSending?.pdf_url && !force && !data.invoicePdfBlob) {
+        result.invoicePath = existingInvoiceSending.pdf_url;
+      } else {
+        amountsRow =
+          amountsRow ||
+          (await store.getInscriptionAmounts(data.inscriptionId));
+        const price = amountsRow?.price ?? data.pedagogicalAmount ?? 0;
+        const deposit = resolveEndPackDeposit(
+          amountsRow || {
+            price,
+            deposit_amount: null,
+            balance_after_deposit: null,
+          }
+        );
+        const invoiceNumber =
+          result.invoiceNumber ||
+          invoiceRow?.invoice_number ||
+          data.code ||
+          "facture";
+        const invoiceDate =
+          invoiceRow?.invoice_date ||
+          new Date().toISOString().slice(0, 10);
+        const ctx = data.invoicePdfContext || {};
+        const pdfInput: InvoicePdfInput = {
+          invoiceNumber,
+          invoiceDate,
+          dueDate: ctx.dueDate ?? invoiceDate,
+          status:
+            (invoiceRow?.status as InvoicePdfInput["status"]) ||
+            ctx.status ||
+            "paid",
+          clientName: ctx.clientName || data.studentName,
+          clientAddress: ctx.clientAddress ?? null,
+          clientPostalCode: ctx.clientPostalCode ?? null,
+          clientCity: ctx.clientCity ?? null,
+          clientCompany: ctx.clientCompany ?? null,
+          courseDescription:
+            ctx.courseDescription ||
+            `Formation ${data.language || ""}`.trim(),
+          courseDateStart: ctx.courseDateStart || data.startDate,
+          courseDateEnd: ctx.courseDateEnd || data.endDate,
+          courseDurationHours:
+            ctx.courseDurationHours ?? data.durationHours ?? null,
+          courseLocation:
+            ctx.courseLocation ||
+            formatLocationOrModality({
+              course_location: data.courseLocation,
+              modality: data.modality,
+            }),
+          amountHt: Number(
+            ctx.amountHt ?? price ?? invoiceRow?.amount_ht ?? 0
+          ),
+          amountTtc: Number(
+            ctx.amountTtc ?? ctx.amountHt ?? price ?? invoiceRow?.amount_ht ?? 0
+          ),
+          acompteAmount: ctx.acompteAmount ?? deposit,
+          acompteDate:
+            ctx.acompteDate ?? amountsRow?.deposit_date ?? null,
+          paymentDate:
+            ctx.paymentDate ?? invoiceRow?.payment_date ?? null,
+          paymentMethodLabel: ctx.paymentMethodLabel ?? null,
+        };
+        const invoiceBlob =
+          data.invoicePdfBlob || (await buildInvoicePdfBlob(pdfInput));
+        const invoicePath = buildInvoicePdfPath(
+          data.studentId,
+          data.inscriptionId,
+          invoiceNumber
+        );
+        await store.uploadInvoicePdf(invoicePath, invoiceBlob);
+        if (!existingInvoiceSending) {
+          created.invoicePath = invoicePath;
+          const sending = await store.insertDocumentSending({
+            inscription_id: data.inscriptionId,
+            document_type: "FACTURE",
+            sent_to: "portail-stagiaire",
+            pdf_url: invoicePath,
+          });
+          created.invoiceSendingId = sending.id;
+        } else {
+          await store.updateDocumentSendingPdfUrl(
+            existingInvoiceSending.id,
+            invoicePath
+          );
+        }
+        result.invoicePath = invoicePath;
       }
     }
 
@@ -331,32 +482,48 @@ export async function generateEndPack(
       const existingCert = await store.findExistingCertificate(
         data.inscriptionId
       );
-      if (existingCert) {
-        result.certificateId = existingCert.id;
-      } else {
-        const issueDate = new Date().toISOString().split("T")[0];
-        const bilan: CertificateBilanData = {
-          studentName: data.studentName,
-          language: data.language,
-          startDate: data.startDate,
-          endDate: data.endDate,
-          durationHoursPlanned: data.durationHours,
-          hoursFollowed: data.hoursFollowed,
-          locationOrModality: formatLocationOrModality({
-            course_location: data.courseLocation,
-            modality: data.modality,
-          }),
-          formateurName: data.formateurName,
-          niveauGeneralEntree: data.niveauGeneralEntree,
-          niveauTechniqueEntree: data.niveauTechniqueEntree,
-          niveauGeneralSortie: data.niveauGeneralSortie,
-          niveauTechniqueSortie: data.niveauTechniqueSortie,
-          objectifAtteint: data.objectifAtteint,
-          commentaire: data.commentaireSortie,
-          issueDate,
-          inscriptionCode: data.code,
-        };
+      const issueDate = new Date().toISOString().split("T")[0];
+      const bilan: CertificateBilanData = {
+        studentName: data.studentName,
+        language: data.language,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        durationHoursPlanned: data.durationHours,
+        hoursFollowed: data.hoursFollowed,
+        locationOrModality: formatLocationOrModality({
+          course_location: data.courseLocation,
+          modality: data.modality,
+        }),
+        formateurName: data.formateurName,
+        niveauGeneralEntree: data.niveauGeneralEntree,
+        niveauTechniqueEntree: data.niveauTechniqueEntree,
+        niveauGeneralSortie: data.niveauGeneralSortie,
+        niveauTechniqueSortie: data.niveauTechniqueSortie,
+        objectifAtteint: data.objectifAtteint,
+        commentaire: data.commentaireSortie,
+        issueDate,
+        inscriptionCode: data.code,
+      };
 
+      if (existingCert && !force) {
+        result.certificateId = existingCert.id;
+        result.certificatePath = existingCert.pdf_url || undefined;
+      } else if (existingCert && force) {
+        result.certificateId = existingCert.id;
+        step = "pdf";
+        const pdfBlob =
+          data.certificatePdfBlob || (await buildCertificatePdfBlob(bilan));
+        const storagePath =
+          existingCert.pdf_url ||
+          buildCertificatePath(
+            data.studentId,
+            data.inscriptionId,
+            existingCert.id
+          );
+        await store.uploadCertificatePdf(storagePath, pdfBlob);
+        await store.updateCertificatePdfUrl(existingCert.id, storagePath);
+        result.certificatePath = storagePath;
+      } else {
         const certificate = await store.insertCertificate({
           inscription_id: data.inscriptionId,
           student_id: data.studentId,
@@ -381,6 +548,7 @@ export async function generateEndPack(
         await store.uploadCertificatePdf(storagePath, pdfBlob);
         created.certificatePath = storagePath;
         await store.updateCertificatePdfUrl(certificate.id, storagePath);
+        result.certificatePath = storagePath;
 
         step = "sending";
         const sending = await store.insertDocumentSending({
@@ -398,14 +566,16 @@ export async function generateEndPack(
       const existingAttestation = await store.findExistingAttestation(
         data.inscriptionId
       );
-      if (existingAttestation?.pdf_url) {
+      if (existingAttestation?.pdf_url && !force && !data.attestationPdfBlob) {
         result.attestationPath = existingAttestation.pdf_url;
       } else {
         const issueDate = new Date().toISOString().split("T")[0];
         let amount = data.pedagogicalAmount ?? null;
         if (amount == null) {
-          const amounts = await store.getInscriptionAmounts(data.inscriptionId);
-          amount = amounts?.price ?? null;
+          amountsRow =
+            amountsRow ||
+            (await store.getInscriptionAmounts(data.inscriptionId));
+          amount = amountsRow?.price ?? null;
         }
         const formationKind = inferFormationKindFifpl({
           formationKind: data.formationKind,
@@ -436,21 +606,30 @@ export async function generateEndPack(
             joursEntiersConvention: data.joursEntiersConvention,
             demiJourneesConvention: data.demiJourneesConvention,
           }));
-        const attestationPath = buildAttestationPresencePath(
-          data.studentId,
-          data.inscriptionId,
-          data.code || data.inscriptionId
-        );
+        const attestationPath =
+          existingAttestation?.pdf_url ||
+          buildAttestationPresencePath(
+            data.studentId,
+            data.inscriptionId,
+            data.code || data.inscriptionId
+          );
         await store.uploadAttestationPdf(attestationPath, attestationBlob);
-        created.attestationPath = attestationPath;
         result.attestationPath = attestationPath;
-        const attestationSending = await store.insertDocumentSending({
-          inscription_id: data.inscriptionId,
-          document_type: "ATTESTATION_PRESENCE",
-          sent_to: "portail-stagiaire",
-          pdf_url: attestationPath,
-        });
-        created.attestationSendingId = attestationSending.id;
+        if (!existingAttestation) {
+          created.attestationPath = attestationPath;
+          const attestationSending = await store.insertDocumentSending({
+            inscription_id: data.inscriptionId,
+            document_type: "ATTESTATION_PRESENCE",
+            sent_to: "portail-stagiaire",
+            pdf_url: attestationPath,
+          });
+          created.attestationSendingId = attestationSending.id;
+        } else {
+          await store.updateDocumentSendingPdfUrl(
+            existingAttestation.id,
+            attestationPath
+          );
+        }
       }
     }
 

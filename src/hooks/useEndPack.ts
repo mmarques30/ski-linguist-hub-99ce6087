@@ -25,18 +25,18 @@ function createSupabaseEndPackStore(): EndPackStore {
     async findExistingInvoice(inscriptionId) {
       const { data, error } = await supabase
         .from("invoices")
-        .select("id, invoice_number")
+        .select("id, invoice_number, amount_ht, invoice_date, payment_date, status")
         .eq("inscription_id", inscriptionId)
         .in("payment_type", ["integral", "saldo", "solde"]);
       throwIfError(error, "Lecture des factures impossible.");
       if (!data || data.length === 0) return null;
-      return { id: data[0].id, invoice_number: data[0].invoice_number };
+      return data[0];
     },
 
     async getInscriptionAmounts(inscriptionId) {
       const { data, error } = await supabase
         .from("inscriptions")
-        .select("price, deposit_amount, balance_after_deposit")
+        .select("price, deposit_amount, balance_after_deposit, deposit_date")
         .eq("id", inscriptionId)
         .maybeSingle();
       throwIfError(error, "Lecture de l'inscription impossible.");
@@ -89,9 +89,17 @@ function createSupabaseEndPackStore(): EndPackStore {
         .insert(row as never)
         .select("id")
         .single();
-      throwIfError(error, "Enregistrement du certificat impossible.");
-      if (!data) throw new Error("Enregistrement du certificat impossible.");
+      throwIfError(error, "Enregistrement du document impossible.");
+      if (!data) throw new Error("Enregistrement du document impossible.");
       return { id: data.id };
+    },
+
+    async updateDocumentSendingPdfUrl(id, path) {
+      const { error } = await supabase
+        .from("document_sendings")
+        .update({ pdf_url: path } as never)
+        .eq("id", id);
+      throwIfError(error, "Mise à jour du chemin PDF impossible.");
     },
 
     async uploadCertificatePdf(path, blob) {
@@ -115,6 +123,17 @@ function createSupabaseEndPackStore(): EndPackStore {
       return { id: data[0].id, pdf_url: data[0].pdf_url };
     },
 
+    async findExistingInvoiceSending(inscriptionId) {
+      const { data, error } = await supabase
+        .from("document_sendings")
+        .select("id, pdf_url")
+        .eq("inscription_id", inscriptionId)
+        .eq("document_type", "FACTURE");
+      throwIfError(error, "Lecture des factures PDF impossible.");
+      if (!data || data.length === 0) return null;
+      return { id: data[0].id, pdf_url: data[0].pdf_url };
+    },
+
     async uploadAttestationPdf(path, blob) {
       const { error } = await supabase.storage
         .from(DOCUMENTS_BUCKET)
@@ -123,6 +142,16 @@ function createSupabaseEndPackStore(): EndPackStore {
           upsert: true,
         });
       throwIfError(error, "Dépôt du PDF de l'attestation impossible.");
+    },
+
+    async uploadInvoicePdf(path, blob) {
+      const { error } = await supabase.storage
+        .from(DOCUMENTS_BUCKET)
+        .upload(path, blob, {
+          contentType: "application/pdf",
+          upsert: true,
+        });
+      throwIfError(error, "Dépôt du PDF de la facture impossible.");
     },
 
     async removeAttestationPdf(path) {

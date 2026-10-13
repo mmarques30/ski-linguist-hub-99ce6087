@@ -66,9 +66,17 @@ describe("Edge cron/admin auth — refuse anon JWT", () => {
     expect(cfg).toContain("[functions.process-survey-reminders]");
     expect(cfg).toContain("[functions.generate-monthly-charges]");
     expect(cfg).toContain("[functions.send-inscription-documents]");
+    expect(cfg).toContain("[functions.send-training-completion-pack]");
     expect(cfg).toContain("[functions.send-daily-ops-digest]");
     expect(cfg).toContain("[functions.process-intake-outreach]");
     expect(cfg).toContain("[functions.send-rosiere-cfp-request]");
+  });
+
+  it("send-training-completion-pack exige staff ou service_role", () => {
+    const edge = source(
+      "supabase/functions/send-training-completion-pack/index.ts"
+    );
+    expect(edge).toContain("requireServiceRoleOrStaff");
   });
 });
 
