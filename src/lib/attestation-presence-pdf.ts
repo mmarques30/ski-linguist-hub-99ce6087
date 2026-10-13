@@ -373,10 +373,38 @@ export async function buildAttestationPresencePdfBytes(
     drawCenteredInBox(amountTtc, { x0: 294.8, x1: 382.7, topY: 597.9 });
   }
 
-  // Fait à / le + nom du signataire (au-dessus de la case signature)
+  // Fait à / le + nom du signataire (juste au-dessus du tireté signature)
   draw(FLI_DEFAULTS.city, 72, 670.5, { size });
   draw(issue, 58, 691, { size: sizeSmall });
-  draw(FLI_DEFAULTS.signatory, 402, 708, { size: sizeSmall, bold: true });
+  draw(FLI_DEFAULTS.signatory, 400, 712, { size: 8, bold: true });
+
+  /**
+   * Zones calées sur les rectangles tiretés du blank FIF-PL
+   * (sous le libellé cachet / sous le nom du signataire).
+   * Images en « contain » avec marge intérieure ~2 %.
+   */
+  const CACHET_BOX = { x: 210, y: 66, w: 166, h: 96 };
+  const SIGNATURE_BOX = { x: 390, y: 64, w: 140, h: 48 };
+
+  const drawContainedImage = (
+    embedded: { width: number; height: number },
+    box: { x: number; y: number; w: number; h: number },
+    drawImage: (img: typeof embedded, opts: {
+      x: number; y: number; width: number; height: number;
+    }) => void
+  ) => {
+    const pad = 1;
+    const scale =
+      Math.min(box.w / embedded.width, box.h / embedded.height) * pad;
+    const w = embedded.width * scale;
+    const h = embedded.height * scale;
+    drawImage(embedded, {
+      x: box.x + (box.w - w) / 2,
+      y: box.y + (box.h - h) / 2,
+      width: w,
+      height: h,
+    });
+  };
 
   // Signature manuscrite Paula (case signature à droite)
   const signatureBytes = await loadPublicAssetBytes(
@@ -386,16 +414,9 @@ export async function buildAttestationPresencePdfBytes(
   if (signatureBytes?.byteLength) {
     try {
       const signature = await doc.embedPng(signatureBytes);
-      const box = { x: 385, y: PAGE_H - 790, w: 150, h: 70 };
-      const scale = Math.min(box.w / signature.width, box.h / signature.height);
-      const w = signature.width * scale;
-      const h = signature.height * scale;
-      page.drawImage(signature, {
-        x: box.x + (box.w - w) / 2,
-        y: box.y + (box.h - h) / 2,
-        width: w,
-        height: h,
-      });
+      drawContainedImage(signature, SIGNATURE_BOX, (img, opts) =>
+        page.drawImage(img, opts)
+      );
     } catch {
       /* signature optionnelle — ne bloque pas l'attestation */
     }
@@ -409,17 +430,9 @@ export async function buildAttestationPresencePdfBytes(
   if (cachetBytes?.byteLength) {
     try {
       const cachet = await doc.embedPng(cachetBytes);
-      // 65×35 mm ≈ 184×99 pt ; on tient dans la case pointillée
-      const box = { x: 200, y: PAGE_H - 780, w: 170, h: 92 };
-      const scale = Math.min(box.w / cachet.width, box.h / cachet.height);
-      const w = cachet.width * scale;
-      const h = cachet.height * scale;
-      page.drawImage(cachet, {
-        x: box.x + (box.w - w) / 2,
-        y: box.y + (box.h - h) / 2,
-        width: w,
-        height: h,
-      });
+      drawContainedImage(cachet, CACHET_BOX, (img, opts) =>
+        page.drawImage(img, opts)
+      );
     } catch {
       /* cachet optionnel — ne bloque pas l'attestation */
     }
