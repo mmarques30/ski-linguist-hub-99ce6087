@@ -19,7 +19,7 @@ const SPEC_PICKS = [
   {
     role: "Badges flottants",
     file: "texte",
-    why: "Groupes de 6 max · Financement FIFPL · Certifié Qualiopi",
+    why: "Groupes de 8 max · Financement FIFPL · Certifié Qualiopi",
   },
   {
     role: "Vidéo #metodo",
