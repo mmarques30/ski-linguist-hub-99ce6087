@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireServiceRoleOrAdmin } from "../_shared/admin-auth.ts";
 import {
   outreachFreezeState,
   verifierConformiteRgpd,
@@ -89,6 +90,11 @@ async function sendEmail(
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  const auth = await requireServiceRoleOrAdmin(req);
+  if (auth instanceof Response) {
+    return new Response(await auth.text(), { status: auth.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
   // Gel de la prospection : refus avant toute lecture de la base moniteurs,

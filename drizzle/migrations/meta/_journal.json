@@ -29,6 +29,13 @@
       "when": 1790763586937,
       "tag": "0003_tighten_permissive_staff_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791879762038,
+      "tag": "0004_activate_season_staff_guard",
+      "breakpoints": true
     }
   ]
 }

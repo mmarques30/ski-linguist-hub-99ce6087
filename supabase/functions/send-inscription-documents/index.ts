@@ -16,6 +16,7 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireServiceRoleOrStaff } from "../_shared/admin-auth.ts";
 import { loadEmailTemplate, renderEmailTemplate } from "../_shared/email-model-templates.ts";
 import { sendFliEmail } from "../_shared/fli-email.ts";
 import { isStudentPayer } from "../_shared/inscription-payer.ts";
@@ -99,6 +100,11 @@ async function loadDossierTemplate(
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  const auth = await requireServiceRoleOrStaff(req);
+  if (auth instanceof Response) {
+    return new Response(await auth.text(), { status: auth.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
   try {

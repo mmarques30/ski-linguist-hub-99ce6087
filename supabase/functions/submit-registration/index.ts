@@ -573,7 +573,9 @@ Deno.serve(async (req) => {
       .eq("is_current", true)
       .maybeSingle();
 
-    let price: number | null = registration.price ?? null;
+    // Sécurité : registration.price (envoyé par le navigateur) n'est jamais
+    // retenu ; le prix vient uniquement de l'offre catalogue ou des pricing_rules.
+    let price: number | null = null;
     let pricePending = Boolean(registration.pricePending);
     let offeringFundingMode: string | null = null;
     let offeringLocationKey: string | null = registration.location || null;
@@ -663,21 +665,10 @@ Deno.serve(async (req) => {
       carte_syndicale_pending: Boolean(registration.carteSyndicalePending),
     };
 
-    if (studentId) {
-      await supabase
-        .from("students")
-        .update({
-          civility: registration.civility?.trim() || null,
-          first_name: registration.firstName,
-          last_name: registration.lastName,
-          phone: registration.phone,
-          street_address: registration.address,
-          postal_code: registration.postalCode,
-          city: registration.city,
-          ...studentSchoolFields,
-        })
-        .eq("id", studentId);
-    } else {
+    // Sécurité : un formulaire public ne prouve pas la possession de l'e-mail.
+    // On ne met donc JAMAIS à jour une fiche stagiaire existante ici ; l'équipe
+    // FLI corrige les coordonnées si besoin.
+    if (!studentId) {
       const { data: newStudent, error: studentError } = await supabase
         .from("students")
         .insert({
