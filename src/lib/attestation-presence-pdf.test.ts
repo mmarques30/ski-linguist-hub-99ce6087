@@ -7,6 +7,8 @@ import {
   buildAttestationPresencePath,
   buildAttestationPresencePdfBytes,
   demiJourneesFromHoursIndividuelle,
+  FIFPL_ATTESTATION_CACHET_PUBLIC_PATH,
+  FIFPL_ATTESTATION_SIGNATURE_PUBLIC_PATH,
   FIFPL_ATTESTATION_TEMPLATE_PUBLIC_PATH,
   fifplFormationTitle,
   formatFifplAttestationDate,
@@ -71,7 +73,26 @@ describe("attestation-presence-pdf", () => {
     );
   });
 
-  it("produit un PDF sur le modèle officiel avec 6 demi-journées / 18 h / 900 €", async () => {
+  it("pointe le carimbo institutionnel et la signature Paula", () => {
+    expect(FIFPL_ATTESTATION_CACHET_PUBLIC_PATH).toBe(
+      "registration-documents/fli-cachet-fifpl.png"
+    );
+    expect(FIFPL_ATTESTATION_SIGNATURE_PUBLIC_PATH).toBe(
+      "registration-documents/fli-signature-paula.png"
+    );
+  });
+
+  it("produit un PDF sur le modèle officiel avec cachet + signature", async () => {
+    const cachetPngBytes = new Uint8Array(
+      readFileSync(
+        join(process.cwd(), "public", FIFPL_ATTESTATION_CACHET_PUBLIC_PATH)
+      )
+    );
+    const signaturePngBytes = new Uint8Array(
+      readFileSync(
+        join(process.cwd(), "public", FIFPL_ATTESTATION_SIGNATURE_PUBLIC_PATH)
+      )
+    );
     const bytes = await buildAttestationPresencePdfBytes({
       studentName: "Montaine Gros-Deleglise",
       language: "Anglais",
@@ -89,13 +110,15 @@ describe("attestation-presence-pdf", () => {
       amountTtc: 900,
       formationKind: "individuelle",
       templateBytes,
+      cachetPngBytes,
+      signaturePngBytes,
     });
     expect(Buffer.from(bytes.slice(0, 5)).toString()).toBe("%PDF-");
-    expect(bytes.byteLength).toBeGreaterThan(20_000);
+    // Plus lourd avec cachet + signature embarqués.
+    expect(bytes.byteLength).toBeGreaterThan(40_000);
 
     const doc = await PDFDocument.load(bytes);
     expect(doc.getPageCount()).toBe(1);
-    // Le modèle officiel reste la base (1 page A4).
     const page = doc.getPage(0);
     expect(Math.round(page.getWidth())).toBe(595);
     expect(Math.round(page.getHeight())).toBe(842);

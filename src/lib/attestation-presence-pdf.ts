@@ -12,9 +12,16 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 export const FIFPL_ATTESTATION_TEMPLATE_PUBLIC_PATH =
   "registration-documents/fifpl-attestation-presence-reglement.pdf";
 
-/** Cachet FLI (case « Cachet obligatoire » du modèle). */
+/**
+ * Cachet institutionnel FLI (case « Cachet obligatoire »).
+ * Source : carimbo_institucional_fli_65x35mm.
+ */
 export const FIFPL_ATTESTATION_CACHET_PUBLIC_PATH =
-  "evaluation-pdf/fli-cachet.png";
+  "registration-documents/fli-cachet-fifpl.png";
+
+/** Signature manuscrite Paula (case signature du modèle). */
+export const FIFPL_ATTESTATION_SIGNATURE_PUBLIC_PATH =
+  "registration-documents/fli-signature-paula.png";
 
 export type FormationKindFifpl = "individuelle" | "collective";
 
@@ -46,6 +53,8 @@ export interface AttestationPresenceData {
   templateBytes?: Uint8Array | null;
   /** PNG cachet (tests / scripts) ; sinon chargé depuis public/. */
   cachetPngBytes?: Uint8Array | null;
+  /** PNG signature Paula (tests / scripts) ; sinon chargé depuis public/. */
+  signaturePngBytes?: Uint8Array | null;
 }
 
 /** Coordonnées calées sur le PDF blank A4 (origine bas-gauche, pt). */
@@ -364,12 +373,35 @@ export async function buildAttestationPresencePdfBytes(
     drawCenteredInBox(amountTtc, { x0: 294.8, x1: 382.7, topY: 597.9 });
   }
 
-  // Fait à / le + signataire
+  // Fait à / le + nom du signataire (au-dessus de la case signature)
   draw(FLI_DEFAULTS.city, 72, 670.5, { size });
   draw(issue, 58, 691, { size: sizeSmall });
   draw(FLI_DEFAULTS.signatory, 402, 708, { size: sizeSmall, bold: true });
 
-  // Cachet obligatoire (case pointillée)
+  // Signature manuscrite Paula (case signature à droite)
+  const signatureBytes = await loadPublicAssetBytes(
+    FIFPL_ATTESTATION_SIGNATURE_PUBLIC_PATH,
+    data.signaturePngBytes
+  );
+  if (signatureBytes?.byteLength) {
+    try {
+      const signature = await doc.embedPng(signatureBytes);
+      const box = { x: 385, y: PAGE_H - 790, w: 150, h: 70 };
+      const scale = Math.min(box.w / signature.width, box.h / signature.height);
+      const w = signature.width * scale;
+      const h = signature.height * scale;
+      page.drawImage(signature, {
+        x: box.x + (box.w - w) / 2,
+        y: box.y + (box.h - h) / 2,
+        width: w,
+        height: h,
+      });
+    } catch {
+      /* signature optionnelle — ne bloque pas l'attestation */
+    }
+  }
+
+  // Cachet obligatoire (case pointillée — carimbo institutionnel 65×35 mm)
   const cachetBytes = await loadPublicAssetBytes(
     FIFPL_ATTESTATION_CACHET_PUBLIC_PATH,
     data.cachetPngBytes
@@ -377,7 +409,8 @@ export async function buildAttestationPresencePdfBytes(
   if (cachetBytes?.byteLength) {
     try {
       const cachet = await doc.embedPng(cachetBytes);
-      const box = { x: 228, y: PAGE_H - 760, w: 130, h: 72 };
+      // 65×35 mm ≈ 184×99 pt ; on tient dans la case pointillée
+      const box = { x: 200, y: PAGE_H - 780, w: 170, h: 92 };
       const scale = Math.min(box.w / cachet.width, box.h / cachet.height);
       const w = cachet.width * scale;
       const h = cachet.height * scale;
