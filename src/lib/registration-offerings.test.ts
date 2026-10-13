@@ -5,6 +5,7 @@ import {
   CHATEL_PENDING_PRICE_MESSAGE,
   PENDING_PARTNER_PRICE_MESSAGE,
   WAITLIST_MESSAGE,
+  filterByLanguage,
   formatOfferingPriceHint,
   formatPartnerConditionalPriceHint,
   getSessionFundingMode,
@@ -15,6 +16,9 @@ import {
   isWaitlistOffering,
   requiresMandatoryFifplEstimate,
   resolveOfferingPrice,
+  sortOfferingsByDateThenLocation,
+  uniqueLanguages,
+  type RegistrationOffering,
 } from "./registration-offerings";
 
 /**
@@ -131,5 +135,99 @@ describe("copie Deno registration-offerings", () => {
     expect(deno).toContain('skiSchoolCode !== "__autre__"');
     expect(deno).toContain("codes.includes(skiSchoolCode)");
     expect(deno).toContain("partner_price_pending");
+  });
+});
+
+const cascadeSample: RegistrationOffering[] = [
+  {
+    id: "a",
+    season_id: null,
+    location_key: "meribel",
+    location_label: "Méribel",
+    language_key: "english",
+    language_label: "Anglais",
+    modality_key: "in_person",
+    modality_label: "Présentiel",
+    duration_hours: 24,
+    start_date: "2026-11-30",
+    end_date: "2026-12-04",
+    date_label: "30 nov.–4 déc. 2026",
+    base_price: 900,
+    sort_order: 1,
+  },
+  {
+    id: "b",
+    season_id: null,
+    location_key: "chatel",
+    location_label: "Châtel",
+    language_key: "english",
+    language_label: "Anglais",
+    modality_key: "in_person",
+    modality_label: "Présentiel",
+    duration_hours: 24,
+    start_date: "2026-12-08",
+    end_date: "2026-12-12",
+    date_label: "8–12 déc. 2026",
+    base_price: 900,
+    sort_order: 2,
+  },
+  {
+    id: "c",
+    season_id: null,
+    location_key: "sainte-foy",
+    location_label: "Sainte-Foy",
+    language_key: "portuguese",
+    language_label: "Portugais brésilien",
+    modality_key: "in_person",
+    modality_label: "Présentiel",
+    duration_hours: 24,
+    start_date: "2026-11-23",
+    end_date: "2026-11-27",
+    date_label: "23–27 nov. 2026",
+    base_price: 950,
+    sort_order: 3,
+  },
+  {
+    id: "d",
+    season_id: null,
+    location_key: "oz",
+    location_label: "Oz en Oisans",
+    language_key: "english",
+    language_label: "Anglais",
+    modality_key: "in_person",
+    modality_label: "Présentiel",
+    duration_hours: 24,
+    start_date: "2026-11-30",
+    end_date: "2026-12-04",
+    date_label: "30 nov.–4 déc. 2026",
+    base_price: 900,
+    sort_order: 4,
+  },
+];
+
+describe("cascade /register langue puis sessions dates+lieux", () => {
+  it("liste les langues distinctes triées", () => {
+    const langs = uniqueLanguages(cascadeSample);
+    expect(langs.map((l) => l.key)).toEqual(["english", "portuguese"]);
+  });
+
+  it("filtre une langue puis trie par date puis lieu", () => {
+    const forEn = sortOfferingsByDateThenLocation(filterByLanguage(cascadeSample, "english"));
+    expect(forEn.map((o) => o.id)).toEqual(["a", "d", "b"]);
+    expect(forEn.map((o) => `${o.date_label} · ${o.location_label}`)).toEqual([
+      "30 nov.–4 déc. 2026 · Méribel",
+      "30 nov.–4 déc. 2026 · Oz en Oisans",
+      "8–12 déc. 2026 · Châtel",
+    ]);
+  });
+
+  it("CourseSelectionStep : langue puis liste dates+lieux", () => {
+    const step = source("src/components/registration/CourseSelectionStep.tsx");
+    expect(step).toContain("handleInPersonLanguage");
+    expect(step).toContain("Session (dates et lieu)");
+    expect(step).toContain("dates et lieux affichés ensemble");
+    expect(step).not.toContain("handleInPersonDate");
+    expect(step).not.toContain("handleInPersonLocation");
+    expect(step).toContain("handleOnlineGroupLanguage");
   });
 });
