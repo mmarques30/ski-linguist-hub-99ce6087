@@ -83,3 +83,41 @@ async function requireRole(
 
   return { adminClient, userId };
 }
+
+/**
+ * Vrai si l'appel porte la clé service_role (pg_cron via dispatch_edge_function).
+ * La clé anon (publique) n'est JAMAIS acceptée ici.
+ */
+function isServiceRoleCall(req: Request): boolean {
+  const authHeader = req.headers.get("Authorization") ?? "";
+  if (!authHeader.startsWith("Bearer ")) return false;
+  const token = authHeader.slice(7).trim();
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  if (serviceRoleKey && token === serviceRoleKey) return true;
+  return false;
+}
+
+async function requireServiceRoleOr(
+  req: Request,
+  roles: Array<"admin" | "user">,
+  forbiddenMessage: string
+): Promise<{ adminClient: SupabaseClient; userId: string | null } | Response> {
+  if (isServiceRoleCall(req)) {
+    const adminClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+    return { adminClient, userId: null };
+  }
+  return requireRole(req, roles, forbiddenMessage);
+}
+
+/** Cron (service_role) ou staff back-office (admin / user). */
+export function requireServiceRoleOrStaff(req: Request) {
+  return requireServiceRoleOr(req, ["admin", "user"], "Forbidden: staff only");
+}
+
+/** Cron (service_role) ou admin. */
+export function requireServiceRoleOrAdmin(req: Request) {
+  return requireServiceRoleOr(req, ["admin"], "Forbidden: admin only");
+}
