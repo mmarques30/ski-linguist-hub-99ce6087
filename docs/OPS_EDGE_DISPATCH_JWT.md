@@ -57,5 +57,5 @@ Jeton cron dédié (`CRON_DISPATCH_TOKEN` accepté par `isServiceRoleCall`) — 
 
 ## 7. Fonctions en échec cron tant que le Vault n'est pas tourné
 process-intake-outreach, send-inscription-documents, process-invoice-reminders,
-process-schedule-reminders, process-survey-reminders, send-daily-ops-digest,
-generate-monthly-charges.
+process-schedule-reminders, send-daily-ops-digest.
+(process-survey-reminders et generate-monthly-charges n'ont pas ce contrôle : non concernées.)
