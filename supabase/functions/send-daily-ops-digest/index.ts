@@ -1,9 +1,12 @@
 /**
  * Digest ops matinal → info@fli.fr (dossiers + actions).
  * Cron : 0 6 * * * (≈ 7h/8h Europe/Paris selon saison).
- * ?dry_run=true : calcule sans envoyer.
+ * ?dry_run=true : calcule sans envoyer (staff / service_role only).
  */
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  adminCorsHeaders,
+  requireServiceRoleOrStaff,
+} from "../_shared/admin-auth.ts";
 import { sendFliEmail } from "../_shared/fli-email.ts";
 import {
   buildDailyOpsDigest,
@@ -12,11 +15,7 @@ import {
   type DigestInscriptionRow,
 } from "../_shared/daily-ops-digest.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+const corsHeaders = adminCorsHeaders;
 
 const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") || "info@fli.fr";
 const LOOKBACK_DAYS = 45;
@@ -26,11 +25,13 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Cron / staff only — dry_run ne doit pas fuiter vers anon (finding #6).
+  const auth = await requireServiceRoleOrStaff(req);
+  if (auth instanceof Response) return auth;
+
   try {
     const url = new URL(req.url);
     const dryRun = url.searchParams.get("dry_run") === "true";
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
     if (!dryRun && !resendApiKey) {
@@ -46,7 +47,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const supabase = createClient(supabaseUrl, serviceKey);
+    const supabase = auth.adminClient;
     const since = new Date();
     since.setUTCDate(since.getUTCDate() - LOOKBACK_DAYS);
 
