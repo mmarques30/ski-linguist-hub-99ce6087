@@ -20,12 +20,15 @@ import {
 import { Loader2 } from "lucide-react";
 import { useSaveEntryForm } from "@/hooks/useInscriptionProgression";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
-import { CECRL_LEVELS } from "@/lib/certificate-progression";
+import {
+  CECRL_LEVELS,
+  type ProgressionEntryFields,
+} from "@/lib/certificate-progression";
 import {
   emptyFormulaireEntree,
   FORMATION_TYPE_LABELS,
   FORMATION_TYPE_VALUES,
-  parseFormulaireEntree,
+  resolveFormulaireEntree,
   type FormationTypeFormateur,
   type FormulaireEntreeFormateur,
 } from "@/lib/formateur-formation-forms";
@@ -36,6 +39,8 @@ interface FormateurEntryFormDialogProps {
   inscriptionId: string;
   suggestedGeneralEntry?: string | null;
   initialFormulaire?: unknown;
+  /** Colonnes plates pré-JSONB — repli si formulaire_entree est null. */
+  legacyFlat?: ProgressionEntryFields | null;
 }
 
 function LevelSelect({
@@ -74,6 +79,7 @@ export function FormateurEntryFormDialog({
   inscriptionId,
   suggestedGeneralEntry,
   initialFormulaire,
+  legacyFlat,
 }: FormateurEntryFormDialogProps) {
   const save = useSaveEntryForm();
   const { confirm, dialog: confirmDialog } = useConfirmAction();
@@ -85,10 +91,8 @@ export function FormateurEntryFormDialog({
     if (!open) return;
     // Jamais de préremplissage depuis le test de placement : le niveau d'entrée
     // est un constat formateur en début de formation.
-    setFields(
-      parseFormulaireEntree(initialFormulaire) || emptyFormulaireEntree()
-    );
-  }, [open, initialFormulaire]);
+    setFields(resolveFormulaireEntree(initialFormulaire, legacyFlat));
+  }, [open, initialFormulaire, legacyFlat]);
 
   const set = <K extends keyof FormulaireEntreeFormateur>(
     key: K,

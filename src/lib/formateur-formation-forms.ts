@@ -64,7 +64,7 @@ export interface FormulaireEntreeFormateur extends FormateurSkillLevels {
   /** Commun */
   adequation_moyens: string | null;
   formateur_nom: string | null;
-  source: "app" | "google_form";
+  source: "app" | "google_form" | "legacy_flat";
   submitted_at: string | null;
 }
 
@@ -89,7 +89,7 @@ export interface FormulaireSortieFormateur {
   objectifs_groupe_ecarts: string | null;
   commentaire_dynamique_groupe: string | null;
   formateur_nom: string | null;
-  source: "app" | "google_form";
+  source: "app" | "google_form" | "legacy_flat";
   submitted_at: string | null;
 }
 
@@ -164,6 +164,64 @@ export function parseFormulaireSortie(
   const raw = value as Partial<FormulaireSortieFormateur>;
   if (raw.version !== 1) return null;
   return emptyFormulaireSortie(raw);
+}
+
+/**
+ * Réouvre un formulaire d'entrée : JSONB v1 si présent, sinon hydrate depuis
+ * les anciennes colonnes plates (pré-migration 2026-10-09) pour ne pas afficher
+ * un formulaire vide alors que la synthèse certificat est encore remplie.
+ */
+export function resolveFormulaireEntree(
+  jsonb: unknown,
+  flat?: ProgressionEntryFields | null
+): FormulaireEntreeFormateur {
+  const parsed = parseFormulaireEntree(jsonb);
+  if (parsed) return parsed;
+
+  const hasFlat =
+    !!flat &&
+    (!isBlank(flat.niveau_general_entree) ||
+      !isBlank(flat.niveau_technique_entree) ||
+      !isBlank(flat.remarques_entree));
+  if (!hasFlat || !flat) return emptyFormulaireEntree();
+
+  return emptyFormulaireEntree({
+    // Meilleur effort : les colonnes plates n'avaient qu'un niveau général /
+    // technique, pas les 5 compétences CECRL.
+    expression_orale: flat.niveau_general_entree,
+    comprehension_orale: flat.niveau_general_entree,
+    connaissances_grammaticales: flat.niveau_technique_entree,
+    expression_ecrite: flat.niveau_technique_entree,
+    attentes_stagiaire: flat.remarques_entree,
+    source: "legacy_flat",
+  });
+}
+
+/** Idem pour le formulaire de sortie (mapping 1:1 vers la synthèse certificat). */
+export function resolveFormulaireSortie(
+  jsonb: unknown,
+  flat?: ProgressionExitFields | null
+): FormulaireSortieFormateur {
+  const parsed = parseFormulaireSortie(jsonb);
+  if (parsed) return parsed;
+
+  const hasFlat =
+    !!flat &&
+    (!isBlank(flat.niveau_general_sortie) ||
+      !isBlank(flat.niveau_technique_sortie) ||
+      !isBlank(flat.objectif_atteint) ||
+      !isBlank(flat.commentaire_sortie));
+  if (!hasFlat || !flat) {
+    return emptyFormulaireSortie({ objectif_atteint: "oui" });
+  }
+
+  return emptyFormulaireSortie({
+    niveau_general: flat.niveau_general_sortie,
+    niveau_specifique: flat.niveau_technique_sortie,
+    objectif_atteint: normalizeObjectifAtteint(flat.objectif_atteint) ?? "oui",
+    commentaire_assiduite: flat.commentaire_sortie,
+    source: "legacy_flat",
+  });
 }
 
 export function normalizeObjectifAtteint(

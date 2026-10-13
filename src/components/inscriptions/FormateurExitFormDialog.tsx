@@ -26,13 +26,14 @@ import {
   OBJECTIF_ATTEINT_VALUES,
   type ObjectifAtteint,
   type ProgressionEntryFields,
+  type ProgressionExitFields,
 } from "@/lib/certificate-progression";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
 import {
   emptyFormulaireSortie,
   FORMATION_TYPE_LABELS,
   FORMATION_TYPE_VALUES,
-  parseFormulaireSortie,
+  resolveFormulaireSortie,
   type FormationTypeFormateur,
   type FormulaireSortieFormateur,
 } from "@/lib/formateur-formation-forms";
@@ -45,6 +46,8 @@ interface FormateurExitFormDialogProps {
   hoursFollowed?: number | null;
   initialFormulaire?: unknown;
   existingEntry?: ProgressionEntryFields | null;
+  /** Colonnes plates pré-JSONB — repli si formulaire_sortie est null. */
+  legacyFlat?: ProgressionExitFields | null;
 }
 
 function LevelSelect({
@@ -85,6 +88,7 @@ export function FormateurExitFormDialog({
   hoursFollowed,
   initialFormulaire,
   existingEntry,
+  legacyFlat,
 }: FormateurExitFormDialogProps) {
   const save = useSaveExitForm();
   const { confirm, dialog: confirmDialog } = useConfirmAction();
@@ -95,12 +99,9 @@ export function FormateurExitFormDialog({
 
   useEffect(() => {
     if (!open) return;
-    setFields(
-      parseFormulaireSortie(initialFormulaire) ||
-        emptyFormulaireSortie({ objectif_atteint: "oui" })
-    );
+    setFields(resolveFormulaireSortie(initialFormulaire, legacyFlat));
     setHours(hoursFollowed ?? durationHours ?? "");
-  }, [open, initialFormulaire, hoursFollowed, durationHours]);
+  }, [open, initialFormulaire, legacyFlat, hoursFollowed, durationHours]);
 
   const set = <K extends keyof FormulaireSortieFormateur>(
     key: K,
