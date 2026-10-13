@@ -40,12 +40,18 @@ describe("LP institutionnelle — conformité spec", () => {
   const landing = () =>
     readFileSync(join(process.cwd(), "src/pages/landing/InstitutionalLanding.tsx"), "utf8");
 
-  it("couvre les ancres et le CTA Acesso FLI du sitemap", () => {
+  it("couvre les ancres et le CTA Accès FLI, entièrement en français", () => {
     const src = landing();
     for (const id of ["inicio", "metodo", "parceiros", "formacoes", "faq"]) {
       expect(src).toContain(`id="${id}"`);
     }
-    expect(src).toContain("Acesso FLI");
+    expect(src).toContain("Accès FLI");
+    expect(src).toContain("Notre méthode");
+    expect(src).toContain("Partenaires");
+    expect(src).toContain("Formations");
+    for (const portuguese of ["Acesso FLI", "Nosso Método", "Parceiros", "Formações"]) {
+      expect(src).not.toContain(portuguese);
+    }
     expect(src).toContain('from "react-router"');
     expect(src).not.toContain("react-router-dom");
     expect(src).toContain('to="/auth"');

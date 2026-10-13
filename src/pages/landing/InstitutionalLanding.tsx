@@ -27,9 +27,9 @@ import {
 } from "@/components/landing/landing-assets";
 
 const NAV = [
-  { label: "Nosso Método", href: "#metodo" },
-  { label: "Parceiros", href: "#parceiros" },
-  { label: "Formações", href: "#formacoes" },
+  { label: "Notre méthode", href: "#metodo" },
+  { label: "Partenaires", href: "#parceiros" },
+  { label: "Formations", href: "#formacoes" },
   { label: "FAQ", href: "#faq" },
 ] as const;
 
@@ -148,7 +148,7 @@ const FAQ_ITEMS = [
 
 /**
  * Landing institutionnelle publique — conforme `docs/FLI-LP-institucional-spec.md`.
- * `/` = LP ; `/auth` = login inchangé ; CTA « Acesso FLI ».
+ * `/` = LP ; `/auth` = login inchangé ; CTA « Accès FLI ».
  */
 export default function InstitutionalLanding() {
   const [scrolled, setScrolled] = useState(false);
@@ -194,7 +194,7 @@ export default function InstitutionalLanding() {
         .lp-float-delay { animation-delay: 1.2s; }
       `}</style>
 
-      {/* —— Header sticky —— */}
+      {/* —— Menu fixe —— */}
       <header
         className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
           scrolled
@@ -238,7 +238,7 @@ export default function InstitutionalLanding() {
               to="/auth"
               className="inline-flex items-center gap-1.5 rounded-full bg-[hsl(var(--fli-yellow))] px-4 py-2 text-sm font-semibold text-[hsl(var(--fli-navy))] shadow-sm transition hover:brightness-105"
             >
-              Acesso FLI
+              Accès FLI
               <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
             <button
@@ -277,7 +277,7 @@ export default function InstitutionalLanding() {
       </header>
 
       <main>
-        {/* —— Dobra 1 : Hero —— fond gris foncé uni, sans photo de fond */}
+        {/* —— Section 1 : tête de page —— fond gris foncé uni, sans photo de fond */}
         <section
           id="inicio"
           className="relative overflow-hidden bg-[#2c2c2e] pt-16 text-white sm:pt-[4.25rem]"
@@ -346,7 +346,7 @@ export default function InstitutionalLanding() {
           </div>
         </section>
 
-        {/* —— Dobra 2 : Méthode / Vidéo —— */}
+        {/* —— Section 2 : méthode / vidéo —— */}
         <section id="metodo" className="scroll-mt-24 bg-[hsl(var(--surface-raised))]">
           <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:items-center lg:py-20">
             <div>
@@ -411,7 +411,7 @@ export default function InstitutionalLanding() {
           </div>
         </section>
 
-        {/* —— Dobra 3 : Parceiros —— */}
+        {/* —— Section 3 : partenaires —— */}
         <section
           id="parceiros"
           className="scroll-mt-24 overflow-hidden border-y border-border bg-[hsl(var(--fli-navy))] py-14 text-white"
@@ -421,8 +421,7 @@ export default function InstitutionalLanding() {
               Ils nous font confiance
             </h2>
             <p className="mx-auto mt-2 max-w-xl text-center text-sm text-white/60">
-              Logos partenaires en attente des fichiers HD (spec §7) — noms affichés en
-              placeholder.
+              Écoles, stations et organismes qui forment avec FLI.
             </p>
           </div>
           <div className="relative mt-10 mask-[linear-gradient(90deg,transparent,black_8%,black_92%,transparent)]">
@@ -439,7 +438,7 @@ export default function InstitutionalLanding() {
           </div>
         </section>
 
-        {/* —— Dobra 4 : Formações —— */}
+        {/* —— Section 4 : formations —— */}
         <section id="formacoes" className="scroll-mt-24 bg-[hsl(var(--surface-page))]">
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
             <div className="max-w-2xl">
@@ -530,10 +529,10 @@ export default function InstitutionalLanding() {
                 Conditions générales
               </Link>
               <Link to="/mockup/lp-assets" className="hover:text-white/80">
-                Validation assets
+                Validation des visuels
               </Link>
               <Link to="/auth" className="hover:text-white/80">
-                Acesso FLI
+                Accès FLI
               </Link>
             </div>
           </div>
@@ -543,7 +542,7 @@ export default function InstitutionalLanding() {
         </div>
       </footer>
 
-      {/* —— Dobra 5 : FAQ (après footer) —— */}
+      {/* —— Section 5 : FAQ (après le pied de page) —— */}
       <section id="faq" className="scroll-mt-24 bg-[hsl(var(--surface-raised))]">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[0.85fr_1.15fr] lg:py-20">
           <div>
