@@ -5,7 +5,6 @@ import {
   CHATEL_PENDING_PRICE_MESSAGE,
   PENDING_PARTNER_PRICE_MESSAGE,
   WAITLIST_MESSAGE,
-  filterByDateKey,
   filterByLanguage,
   formatOfferingPriceHint,
   formatPartnerConditionalPriceHint,
@@ -15,13 +14,10 @@ import {
   isPartnerPricePending,
   isPartnerSchool,
   isWaitlistOffering,
-  matchOffering,
-  offeringDateKey,
   requiresMandatoryFifplEstimate,
   resolveOfferingPrice,
-  uniqueDateOptions,
+  sortOfferingsByDateThenLocation,
   uniqueLanguages,
-  uniqueLocations,
   type RegistrationOffering,
 } from "./registration-offerings";
 
@@ -209,45 +205,29 @@ const cascadeSample: RegistrationOffering[] = [
   },
 ];
 
-describe("cascade /register langue → dates → lieu", () => {
+describe("cascade /register langue puis sessions dates+lieux", () => {
   it("liste les langues distinctes triées", () => {
     const langs = uniqueLanguages(cascadeSample);
     expect(langs.map((l) => l.key)).toEqual(["english", "portuguese"]);
   });
 
-  it("filtre puis propose les dates chronologiques pour une langue", () => {
-    const forEn = filterByLanguage(cascadeSample, "english");
-    const dates = uniqueDateOptions(forEn);
-    expect(dates.map((d) => d.key)).toEqual([
-      "2026-11-30_2026-12-04",
-      "2026-12-08_2026-12-12",
+  it("filtre une langue puis trie par date puis lieu", () => {
+    const forEn = sortOfferingsByDateThenLocation(filterByLanguage(cascadeSample, "english"));
+    expect(forEn.map((o) => o.id)).toEqual(["a", "d", "b"]);
+    expect(forEn.map((o) => `${o.date_label} · ${o.location_label}`)).toEqual([
+      "30 nov.–4 déc. 2026 · Méribel",
+      "30 nov.–4 déc. 2026 · Oz en Oisans",
+      "8–12 déc. 2026 · Châtel",
     ]);
   });
 
-  it("propose les lieux pour une langue + une période", () => {
-    const forEn = filterByLanguage(cascadeSample, "english");
-    const week = filterByDateKey(forEn, "2026-11-30_2026-12-04");
-    const locs = uniqueLocations(week);
-    expect(locs.map((l) => l.key).sort()).toEqual(["meribel", "oz"]);
-  });
-
-  it("résout une offre unique via matchOffering", () => {
-    const o = matchOffering(cascadeSample, {
-      locationKey: "chatel",
-      modalityKey: "in_person",
-      languageKey: "english",
-      dateKey: "2026-12-08_2026-12-12",
-    });
-    expect(o?.id).toBe("b");
-    expect(offeringDateKey(o!)).toBe("2026-12-08_2026-12-12");
-  });
-
-  it("CourseSelectionStep enchaîne langue, dates et lieu", () => {
+  it("CourseSelectionStep : langue puis liste dates+lieux", () => {
     const step = source("src/components/registration/CourseSelectionStep.tsx");
     expect(step).toContain("handleInPersonLanguage");
-    expect(step).toContain("handleInPersonDate");
-    expect(step).toContain("handleInPersonLocation");
-    expect(step).toContain("Puis les dates, puis le lieu");
+    expect(step).toContain("Session (dates et lieu)");
+    expect(step).toContain("dates et lieux affichés ensemble");
+    expect(step).not.toContain("handleInPersonDate");
+    expect(step).not.toContain("handleInPersonLocation");
     expect(step).toContain("handleOnlineGroupLanguage");
   });
 });

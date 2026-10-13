@@ -247,6 +247,21 @@ export function filterByDateKey(offerings: RegistrationOffering[], dateKey: stri
   return offerings.filter((o) => offeringDateKey(o) === dateKey);
 }
 
+/** Sessions d’une langue : dates chronologiques, puis lieu. */
+export function sortOfferingsByDateThenLocation(
+  offerings: RegistrationOffering[]
+): RegistrationOffering[] {
+  return [...offerings].sort((a, b) => {
+    const aStart = a.start_date || a.date_label || "";
+    const bStart = b.start_date || b.date_label || "";
+    const byDate = aStart.localeCompare(bStart, "fr");
+    if (byDate !== 0) return byDate;
+    const byLoc = a.location_label.localeCompare(b.location_label, "fr");
+    if (byLoc !== 0) return byLoc;
+    return a.sort_order - b.sort_order;
+  });
+}
+
 export function uniqueDurations(offerings: RegistrationOffering[]) {
   const hours = [...new Set(offerings.map((o) => o.duration_hours))].sort((a, b) => a - b);
   const modality = offerings[0]?.modality_key;
