@@ -39,7 +39,7 @@
     "email": "maxence.cesar@icloud.com",
     "partner_id": "d6753f10-9cea-43cb-a8d2-f5986650feb5",
     "payment": "unknown",
-    "note": "Email mis à jour ; aucun paiement Stripe 45€ trouvé pour maxence.cesar@icloud.com (ni nom Cesar/Maxence)"
+    "note": "Email OK ; aucun Stripe ni virement 45€ (payments) pour Cesar/Maxence — paiement introuvable"
   },
   {
     "evaluation_id": "287717b6-dbf7-4dae-a149-1e599b78ecd4",
