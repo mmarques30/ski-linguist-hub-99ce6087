@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, Loader2, Mountain, UserRound } from "lucide-react";
+import { toast } from "sonner";
 import { MeterRow } from "@/components/ui-kit";
 import fliLogo from "@/assets/fli-logo.png";
 import { PlacementTestStep } from "@/components/registration/PlacementTestStep";
@@ -21,6 +22,7 @@ import {
   formatSchoolOption,
 } from "@/lib/ski-school-directory";
 import { REGISTRATION_LANGUAGES } from "@/lib/registration-languages";
+import { isValidRegistrationEmail } from "@/lib/registration-personal-formats";
 import {
   studentFacingPisteFromCecrl,
   studentFacingPisteLabel,
@@ -29,6 +31,11 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
 import type { RegistrationData } from "@/pages/register/Index";
+
+function isValidSalonPhone(value: string): boolean {
+  const digits = value.replace(/\D/g, "");
+  return digits.length >= 8 && digits.length <= 15;
+}
 
 type SalonStep = "identity" | "test" | "done";
 
@@ -63,6 +70,8 @@ export default function SalonDirecteursPage() {
   const identityReady = Boolean(
     formData.firstName?.trim() &&
       formData.lastName?.trim() &&
+      formData.email?.trim() &&
+      formData.phone?.trim() &&
       formData.language &&
       selectedCode &&
       (!isOtherSchool || formData.skiSchoolOther?.trim())
@@ -75,6 +84,14 @@ export default function SalonDirecteursPage() {
   const handleIdentitySubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!identityReady) return;
+    if (!isValidRegistrationEmail(formData.email || "")) {
+      toast.error("Indiquez une adresse e-mail valide (avec un @).");
+      return;
+    }
+    if (!isValidSalonPhone(formData.phone || "")) {
+      toast.error("Indiquez un numéro de portable valide.");
+      return;
+    }
     setStep("test");
   };
 
@@ -95,6 +112,8 @@ export default function SalonDirecteursPage() {
     const { error } = await supabase.rpc("submit_salon_demo_test", {
       p_first_name: (formData.firstName || "").trim(),
       p_last_name: (formData.lastName || "").trim(),
+      p_email: (formData.email || "").trim(),
+      p_phone: (formData.phone || "").trim(),
       p_ski_school_code: selectedCode || null,
       p_ski_school_name: schoolName,
       p_language: formData.language || "english",
@@ -168,7 +187,7 @@ export default function SalonDirecteursPage() {
             <form onSubmit={handleIdentitySubmit} className="space-y-4" noValidate>
               <StepCard
                 title="Qui êtes-vous ?"
-                description="Quelques infos pour personnaliser la démo — écoles ESF uniquement"
+                description="Coordonnées + école ESF — pour vous recontacter après le salon"
                 icon={UserRound}
               >
                 <div className="space-y-6">
@@ -193,6 +212,37 @@ export default function SalonDirecteursPage() {
                         onChange={(e) => updateFormData({ lastName: e.target.value })}
                         placeholder="Votre nom"
                         autoComplete="family-name"
+                        className="h-11"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="salon-email">E-mail</Label>
+                      <Input
+                        id="salon-email"
+                        type="email"
+                        inputMode="email"
+                        autoComplete="email"
+                        value={formData.email || ""}
+                        onChange={(e) => updateFormData({ email: e.target.value })}
+                        placeholder="votre.email@exemple.com"
+                        className="h-11"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="salon-phone">Portable</Label>
+                      <Input
+                        id="salon-phone"
+                        type="tel"
+                        inputMode="tel"
+                        autoComplete="tel"
+                        value={formData.phone || ""}
+                        onChange={(e) => updateFormData({ phone: e.target.value })}
+                        placeholder="06 12 34 56 78"
                         className="h-11"
                         required
                       />
