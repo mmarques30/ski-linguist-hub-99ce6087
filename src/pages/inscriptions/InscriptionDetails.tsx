@@ -1168,16 +1168,28 @@ export default function InscriptionDetails() {
             fundingOrganization={opsFields?.funding_organization ?? inscription.funding_organization ?? null}
             studentEmail={inscription.student_email}
             inscriptionCode={inscription.code}
+            inscriptionStatus={inscription.status}
             courseLanguage={inscription.language}
             startDate={inscription.start_date}
             endDate={inscription.end_date}
             durationHours={inscription.duration_hours}
             studentName={inscription.student_name}
+            studentFirstName={
+              (inscription as { student_first_name?: string | null }).student_first_name ||
+              (inscription.student_name || "").trim().split(/\s+/)[0] ||
+              null
+            }
             studentId={inscription.student_id}
             studentCity={inscription.student_city}
             formateurName={
               inscription.instructor_name || inscription.formateur || null
             }
+            formateurEmail={
+              inscription.instructor_email ||
+              (inscription as { formateur_email?: string | null }).formateur_email ||
+              null
+            }
+            formateurPhone={inscription.instructor_phone || null}
           />
         )}
       </PageShell>
