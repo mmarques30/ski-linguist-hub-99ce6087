@@ -11,10 +11,12 @@ Journaux : `c5_evaluation_pdf`, `c5_evaluation_pdf_generated`, `c5_score_general
 Edge function : `generate-evaluation-pdf` (staff / admin, clé service pour le dépôt).
 Paula déploie la fonction — ne pas sonder 403/404.
 
-Les `.dotx` ne sont **pas** dans le dépôt. Tableau cours ESF et sections régionales
-transcrits dans `src/lib/evaluation-pdf.ts` (copie Deno : `_shared/evaluation-pdf-model.ts`).
-Logos d’habillage : `public/evaluation-pdf/` et
-`supabase/functions/_shared/evaluation-pdf-assets/` (aucune donnée de test).
+Les `.dotx` de référence sont versionnés dans `docs/evaluation-resultats/`
+(voir aussi `docs/OPS_ENVOI_RESULTATS_EVAL.md` pour les process d’envoi).
+Tableau cours ESF et sections régionales transcrits dans `src/lib/evaluation-pdf.ts`
+(copie Deno : `_shared/evaluation-pdf-model.ts`). Logos d’habillage :
+`public/evaluation-pdf/` et `supabase/functions/_shared/evaluation-pdf-assets/`
+(aucune donnée de test).
 
 ## Habillage = `test_bookings.sponsor_type`
 

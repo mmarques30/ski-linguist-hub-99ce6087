@@ -11,10 +11,9 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
 OUT = Path("/opt/cursor/artifacts/mollard-oct-2026/dsf-mandica")
-DOTX = Path(
-    "/home/ubuntu/.cursor/projects/workspace/uploads/Re_sultat_d_e_val_DSF_forms_f700.dotx"
-)
+DOTX = REPO_ROOT / "docs/evaluation-resultats/Resultat_eval_DSF_forms.dotx"
 
 
 def set_run_font(run, size=11, bold=False, color=None):

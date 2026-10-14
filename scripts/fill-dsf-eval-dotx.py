@@ -14,9 +14,8 @@ import zipfile
 from pathlib import Path
 from xml.sax.saxutils import escape
 
-DEFAULT_DOTX = Path(
-    "/home/ubuntu/.cursor/projects/workspace/uploads/Re_sultat_d_e_val_DSF_forms_f700.dotx"
-)
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_DOTX = REPO_ROOT / "docs/evaluation-resultats/Resultat_eval_DSF_forms.dotx"
 
 W_T_OPEN = '<w:t xml:space="preserve">'
 
