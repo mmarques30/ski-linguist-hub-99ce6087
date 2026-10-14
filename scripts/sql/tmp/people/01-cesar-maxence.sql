@@ -4,7 +4,7 @@ INSERT INTO public.test_candidates (id, name, email, phone, profession, professi
 VALUES (
   'a820224d-3d74-4d2e-a361-dd836f32b337',
   'Maxence Cesar',
-  'maxence-cesar@fli.placeholder.local',
+  'maxence.cesar@icloud.com',
   NULL,
   'moniteur',
   NULL,
