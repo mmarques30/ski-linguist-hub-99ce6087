@@ -6,7 +6,7 @@
     "school": "ESF COURCHEVEL 1850",
     "partner_id": "d6753f10-9cea-43cb-a8d2-f5986650feb5",
     "sponsor_type": "esf",
-    "payment": "unknown",
+    "payment": "hors_lot",
     "cecrl": "A2+",
     "scores": [
       1.5,
@@ -19,7 +19,8 @@
     "candidate_id": "a820224d-3d74-4d2e-a361-dd836f32b337",
     "booking_id": "257e9ea9-81d9-454b-bc16-82f7c27b9411",
     "evaluation_id": "0c8f12f2-fd55-4e50-b712-1ad62a5ed178",
-    "scoring_system": "sur_5"
+    "scoring_system": "sur_5",
+    "note": "Traité hors lot Mollard (processus séparé, Paula 14/10)"
   },
   {
     "key": "lisa-roch",
@@ -96,7 +97,7 @@
     "school": null,
     "partner_id": "eb5e168c-c9e2-4414-a81e-27d5d1f216f9",
     "sponsor_type": "dsf",
-    "payment": "unknown",
+    "payment": "hors_lot",
     "cecrl": "B2+",
     "scores": [
       3.5,
@@ -109,7 +110,8 @@
     "candidate_id": "385e364b-feee-4bff-9656-6656df0cd43c",
     "booking_id": "33fbfce0-3a12-4406-9a76-2836bdd0c5f0",
     "evaluation_id": "4f215b5b-0015-4747-a3fa-de90445870d9",
-    "scoring_system": "sur_5"
+    "scoring_system": "sur_5",
+    "note": "Traité hors lot Mollard (processus séparé, Paula 14/10)"
   },
   {
     "key": "sacha-mir",
@@ -366,7 +368,7 @@
     "school": "ESF COURCHEVEL 1850",
     "partner_id": "d6753f10-9cea-43cb-a8d2-f5986650feb5",
     "sponsor_type": "esf",
-    "payment": "card_claimed_not_found_stripe",
+    "payment": "bank_0309",
     "cecrl": "B1",
     "scores": [
       4.0,
@@ -380,6 +382,6 @@
     "booking_id": "2493ed23-8d34-4fc2-86b9-d621d1346534",
     "evaluation_id": "deed3466-ef12-4918-bff1-57750b655c05",
     "scoring_system": "sur_5",
-    "note": "Réservation « paiement par carte » mais aucun charge 45€ Stripe pour goninporquezsasha@gmail.com ni nom Gonin/Porquez/Sasha"
+    "note": "Paiement virement 03/09/2026 (confirmé Paula)"
   }
 ]

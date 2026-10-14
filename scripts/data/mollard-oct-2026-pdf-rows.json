@@ -38,7 +38,8 @@
     "verified_at": "2026-10-14T07:32:40+00",
     "email": "maxence-cesar@fli.placeholder.local",
     "partner_id": "d6753f10-9cea-43cb-a8d2-f5986650feb5",
-    "payment": "unknown"
+    "payment": "hors_lot",
+    "note": "Traité hors lot Mollard (processus séparé, Paula 14/10)"
   },
   {
     "evaluation_id": "287717b6-dbf7-4dae-a149-1e599b78ecd4",
@@ -204,7 +205,8 @@
     "verified_at": "2026-10-14T07:32:40+00",
     "email": "steven-mandica@fli.placeholder.local",
     "partner_id": "eb5e168c-c9e2-4414-a81e-27d5d1f216f9",
-    "payment": "unknown"
+    "payment": "hors_lot",
+    "note": "Traité hors lot Mollard (processus séparé, Paula 14/10)"
   },
   {
     "evaluation_id": "c60e0f81-5572-4809-85e9-184e6ec7a121",
@@ -702,7 +704,7 @@
     "verified_at": "2026-10-14T07:32:40+00",
     "email": "goninporquezsasha@gmail.com",
     "partner_id": "d6753f10-9cea-43cb-a8d2-f5986650feb5",
-    "payment": "card_claimed_not_found_stripe",
-    "note": "Réservation « paiement par carte » mais aucun charge 45€ Stripe pour goninporquezsasha@gmail.com ni nom Gonin/Porquez/Sasha"
+    "payment": "bank_0309",
+    "note": "Paiement virement 03/09/2026 (confirmé Paula)"
   }
 ]

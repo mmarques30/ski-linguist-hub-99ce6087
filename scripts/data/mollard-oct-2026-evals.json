@@ -12,7 +12,7 @@
     "profession": "moniteur",
     "test_at": "2026-10-05T12:00:00+00",
     "previous_test": false,
-    "payment": "unknown",
+    "payment": "hors_lot",
     "scores": [
       1.5,
       1.5,
@@ -29,7 +29,8 @@
     "points": "Utilisez le PRESENT -ing pour parler de ce qui se déroule maintenant ou temporairement. Utilisez le PRESENT SIMPLE pour parler des vérités permanentes, de votre routine, des règles de sécurité, etc. Apprenez à utiliser les temps du passé PRETERIT (action datée/terminée) et PRESENT PERFECT (l'action continue dans le présent). Revoyez MUST et HAVE TO pour exprimer l'obligation. Revoyez CAN et TO BE ABLE TO pour exprimer la capacité au présent et au futur. Ex. : I can ski but I'll be able to ski even better at the end of the day!",
     "concl": "En conclusion vous avez un niveau faible mais en travaillant vous pouvez arriver à progresser et à combler progressivement vos lacunes grammaticales et lexicales. Et cela vous permettra de vous sentir plus à l'aise sur le terrain.",
     "scoring_system": "sur_5",
-    "note_methodologique": null
+    "note_methodologique": null,
+    "note": "Traité hors lot Mollard (processus séparé, Paula 14/10)"
   },
   {
     "key": "lisa-roch",
@@ -159,7 +160,7 @@
     "profession_autre": "Autres",
     "test_at": "2026-10-08T12:00:00+00",
     "previous_test": false,
-    "payment": "unknown",
+    "payment": "hors_lot",
     "scores": [
       3.5,
       3.5,
@@ -176,7 +177,8 @@
     "points": null,
     "concl": "En conclusion vous avez un niveau opérationnel qui vous permet de communiquer correctement avec la clientèle anglophone. Continuez néanmoins à développer l'apprentissage de vos connaissances, vous gagnerez en aisance et en fluidité.",
     "scoring_system": "sur_5",
-    "note_methodologique": null
+    "note_methodologique": null,
+    "note": "Traité hors lot Mollard (processus séparé, Paula 14/10)"
   },
   {
     "key": "sacha-mir",
@@ -552,7 +554,7 @@
     "test_at": "2026-10-12T14:30:00+00",
     "previous_test": true,
     "previous_result": "A2",
-    "payment": "card_claimed_not_found_stripe",
+    "payment": "bank_0309",
     "scores": [
       4.0,
       2.0,
@@ -570,6 +572,6 @@
     "concl": "Votre niveau de compréhension est bon ; travaillez grammaire et lexique technique pour être mieux compris.",
     "scoring_system": "sur_5",
     "note_methodologique": null,
-    "note": "Réservation « paiement par carte » mais aucun charge 45€ Stripe pour goninporquezsasha@gmail.com ni nom Gonin/Porquez/Sasha"
+    "note": "Paiement virement 03/09/2026 (confirmé Paula)"
   }
 ]
