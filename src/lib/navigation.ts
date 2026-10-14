@@ -148,39 +148,49 @@ export const NAV_SECTIONS: NavSection[] = [
     icon: Wallet,
     items: [
       {
-        id: "facturation",
-        label: G.facturation,
+        id: "invoices",
+        label: L["/invoices"],
         icon: Receipt,
         href: "/invoices",
-        children: [
-          { href: "/invoices", label: L["/invoices"], routeKey: "invoices" },
-          {
-            href: "/finance/payments",
-            label: L["/finance/payments"],
-            routeKey: "finance.payments",
-          },
-        ],
+        routeKey: "invoices",
+      },
+      {
+        id: "payments",
+        label: L["/finance/payments"],
+        icon: Wallet,
+        href: "/finance/payments",
+        routeKey: "finance.payments",
       },
       {
         id: "pilotage",
-        label: L["/finance"],
+        label: G.financeOverview,
         icon: LayoutDashboard,
         href: "/finance",
-        children: [
-          { href: "/finance", label: G.financeOverview },
-          { href: "/finance/analyses", label: G.financeAnalyses },
-          { href: "/finance/rentabilite", label: G.financeRentabilite },
-        ],
+      },
+      {
+        id: "analyses",
+        label: G.financeAnalyses,
+        icon: BarChart3,
+        href: "/finance/analyses",
+      },
+      {
+        id: "rentabilite",
+        label: G.financeRentabilite,
+        icon: TrendingUp,
+        href: "/finance/rentabilite",
       },
       {
         id: "tresorerie",
         label: L["/finance/tresorerie"],
         icon: Landmark,
         href: "/finance/tresorerie",
-        children: [
-          { href: "/finance/tresorerie", label: G.tresoreriePrevisionnel },
-          { href: "/finance/tresorerie?tab=charges", label: G.tresorerieCharges },
-        ],
+      },
+      {
+        id: "charges",
+        label: G.tresorerieCharges,
+        icon: Landmark,
+        href: "/finance/charges-fixes",
+        routeKey: "finance.tresorerie",
       },
     ],
   },
@@ -429,10 +439,10 @@ export function isPathActive(pathname: string, path: string): boolean {
     return pathname === "/monitoramento";
   }
   if (path === "/finance/tresorerie") {
-    return (
-      pathname.startsWith("/finance/tresorerie") ||
-      pathname.startsWith("/finance/charges-fixes")
-    );
+    return pathname.startsWith("/finance/tresorerie");
+  }
+  if (path === "/finance/charges-fixes") {
+    return pathname.startsWith("/finance/charges-fixes");
   }
   if (path === "/formateur/evaluations") {
     return pathname.startsWith("/formateur/");
