@@ -195,7 +195,7 @@ function createMemoryStore(options?: {
             s.inscription_id === inscriptionId &&
             s.document_type === "ATTESTATION_PRESENCE"
         ) ?? null
-      );
+      ) as { id: string; pdf_url: string } | null;
     },
     async findExistingInvoiceSending(inscriptionId) {
       calls.push("findExistingInvoiceSending");
