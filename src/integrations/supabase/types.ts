@@ -4286,6 +4286,25 @@ export type Database = {
         Args: { p_data: Json; p_token: string }
         Returns: undefined
       }
+      create_formateur_evaluation_booking: {
+        Args: {
+          p_name: string
+          p_email: string
+          p_phone: string
+          p_profession: string
+          p_profession_autre: string
+          p_ski_school_id: string
+          p_carte_syndicale: string
+          p_ski_discipline: string
+          p_training_cycle: string
+          p_language: string
+          p_datetime: string
+          p_sponsor_type: string
+          p_payment_type?: string
+          p_instructor_id?: string | null
+        }
+        Returns: string
+      }
       submit_test_booking_candidate: {
         Args: {
           p_carte_syndicale: string

@@ -104,6 +104,19 @@ Détail des champs : `docs/evaluation-resultats/README.md`.
 
 ---
 
+## Création d’une évaluation (espace formateur)
+
+Sur `/formateur/evaluations` → bouton **Nouvelle évaluation** :
+
+1. Saisie identité candidat, école, langue, date du test, commanditaire (ESF / école / DSF)
+2. RPC `create_formateur_evaluation_booking` → candidat + réservation `completed` (`source = formateur_ui`)
+3. Redirection vers `/formateur/evaluation/:bookingId` pour la saisie des notes
+
+Staff (hors mode Assister) : même bouton, avec choix du formateur·rice.  
+Migration : `20261014140000_create_formateur_evaluation_booking.sql`.
+
+---
+
 ## Checklist avant envoi
 
 1. [ ] PDF / Word / facture / tableau relus  

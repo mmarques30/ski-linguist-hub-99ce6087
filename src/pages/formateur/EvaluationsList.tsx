@@ -25,8 +25,10 @@ import {
   ShieldCheck,
   Download,
   Loader2,
+  Plus,
 } from "lucide-react";
 import { useTestBookingsToEvaluate } from "@/hooks/useTestEvaluations";
+import { CreateEvaluationBookingDialog } from "@/components/evaluations/CreateEvaluationBookingDialog";
 import { LANGUAGE_FLAGS, LANGUAGE_LABELS } from "@/lib/evaluation-utils";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -104,11 +106,13 @@ export default function EvaluationsList() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"pending" | "completed">("pending");
   const [showQRDialog, setShowQRDialog] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [filters, setFilters] = useState<EvaluationListFilters>(emptyFilters);
   const [exporting, setExporting] = useState(false);
   const { canEdit, isFormateur, isAdmin } = useUserPermissions();
   const { basePath, isAssistMode } = useFormateurView();
   const editable = canEdit("evaluations") && !isAssistMode;
+  const canCreateEvaluation = editable;
   const canExportDsf = !isFormateur && !isAssistMode;
 
   const { data: allCompleted, isLoading: pendingLoading, refetch: refetchPending } =
@@ -239,6 +243,12 @@ export default function EvaluationsList() {
           tone="gold"
           actions={
             <>
+              {canCreateEvaluation && (
+                <Button onClick={() => setShowCreateDialog(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nouvelle évaluation
+                </Button>
+              )}
               {canExportDsf && (
                 <Button variant="outline" onClick={handleExportDsf} disabled={exporting}>
                   {exporting ? (
@@ -269,6 +279,18 @@ export default function EvaluationsList() {
             </>
           }
         />
+
+        {canCreateEvaluation && (
+          <CreateEvaluationBookingDialog
+            open={showCreateDialog}
+            onOpenChange={setShowCreateDialog}
+            requireInstructorPick={!isFormateur}
+            onCreated={(bookingId) => {
+              void refetchPending();
+              navigate(`${basePath}/evaluation/${bookingId}`);
+            }}
+          />
+        )}
 
         {!isFormateur && (
           <SurveyQRCodeDialog open={showQRDialog} onOpenChange={setShowQRDialog} />
