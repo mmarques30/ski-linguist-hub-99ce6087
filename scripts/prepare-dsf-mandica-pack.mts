@@ -1,6 +1,8 @@
 /**
- * Pack DSF Steven Mandica — PDF + artefacts (facture).
- * Word + tableau + brouillon mail : scripts/prepare-dsf-mandica-word.py
+ * Pack DSF Steven Mandica — facture + contrat.
+ * Résultat PDF/Word : mise en page = .dotx rempli
+ *   → python3 scripts/fill-dsf-eval-dotx.py
+ *   → python3 scripts/prepare-dsf-mandica-word.py
  *
  *   ./node_modules/.bin/tsx scripts/prepare-dsf-mandica-pack.mts
  * Aucun envoi Resend.
@@ -351,12 +353,12 @@ async function main() {
     verifiedAt: new Date("2026-10-14T07:32:40+00:00"),
   };
 
-  const assets = await loadAssets();
-  const model = buildEvaluationPdfModel(input);
-  const pdfBytes = await renderEvaluationPdf(model, assets);
+  // Ne pas écraser le PDF issu du .dotx (fill-dsf-eval-dotx.py).
   const pdfName = "evaluation-Steven-Mandica-anglais-DSF.pdf";
-  await writeFile(join(OUT, pdfName), pdfBytes);
-  console.log("PDF", pdfName, pdfBytes.length);
+  console.log(
+    "PDF résultat : générer via python3 scripts/fill-dsf-eval-dotx.py →",
+    pdfName
+  );
 
   const invBytes = await buildInvoicePdf();
   const invName = "Facture-26-27.14335-DSF-Mandica.pdf";
