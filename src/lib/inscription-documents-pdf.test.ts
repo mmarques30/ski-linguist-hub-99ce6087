@@ -291,6 +291,40 @@ describe("PDF dossier inscription", () => {
     expect(model.studentAddressLines.join(" ")).toMatch(/Beaufort/);
     expect(model.paymentTermsLabel).toMatch(/virement/);
 
+    const withWindow = buildConventionPdfModel({
+      inscription: {
+        code: "FLI-260047",
+        language: "Russe",
+        start_date: "2026-11-16",
+        end_date: "2027-03-16",
+        dates_to_confirm: true,
+        duration_hours: 12,
+        course_location: "Google Meet",
+        modality: "en_ligne",
+        price: 600,
+        deposit_amount: 150,
+        balance_after_deposit: 450,
+        group_size: 1,
+        funding_organization: "FIFPL",
+        payment_method: null,
+      },
+      student: {
+        civility: "Madame",
+        first_name: "Florence",
+        last_name: "Guillemot",
+        street_address: "340 chemin du moulin",
+        postal_code: "40660",
+        city: "Messanges",
+        email: "floxguillemot@gmail.com",
+        phone: "06 89 77 62 31",
+        company: null,
+      },
+      identity: IDENTITY,
+    });
+    expect(withWindow.datesLabel).toBe(
+      "À planifier — début souhaité le 16 novembre 2026, à réaliser avant le 16 mars 2027"
+    );
+
     const bytes = await renderInscriptionDocumentPdf(model, {
       letterheadPng: loadLetterheadPng(),
     });
