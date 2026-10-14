@@ -3574,13 +3574,13 @@ export type Database = {
           email: string
           id: string
           name: string
-          phone: string
+          phone: string | null
           photo_face_url: string | null
           photo_id_url: string | null
-          profession: string
+          profession: string | null
           profession_autre: string | null
           ski_discipline: string | null
-          ski_school_id: string
+          ski_school_id: string | null
           student_id: string | null
           training_cycle: string | null
         }
@@ -3590,13 +3590,13 @@ export type Database = {
           email: string
           id?: string
           name: string
-          phone: string
+          phone?: string | null
           photo_face_url?: string | null
           photo_id_url?: string | null
-          profession: string
+          profession?: string | null
           profession_autre?: string | null
           ski_discipline?: string | null
-          ski_school_id: string
+          ski_school_id?: string | null
           student_id?: string | null
           training_cycle?: string | null
         }
@@ -3606,13 +3606,13 @@ export type Database = {
           email?: string
           id?: string
           name?: string
-          phone?: string
+          phone?: string | null
           photo_face_url?: string | null
           photo_id_url?: string | null
-          profession?: string
+          profession?: string | null
           profession_autre?: string | null
           ski_discipline?: string | null
-          ski_school_id?: string
+          ski_school_id?: string | null
           student_id?: string | null
           training_cycle?: string | null
         }
