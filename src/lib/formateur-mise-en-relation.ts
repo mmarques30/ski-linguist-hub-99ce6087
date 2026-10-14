@@ -78,7 +78,7 @@ Nous sommes ravis de pouvoir démarrer cette formation avec vous. Voici les coor
 ${input.formateurFullName}
 E-mail : ${input.formateurEmail}${phoneLine}
 
-Vous trouverez en pièces jointes les fiches de présence (FORMATEUR et STAGIAIRE), déjà préremplies. Merci de les faire signer à chaque cours, puis de nous les renvoyer à la fin des séances (en réponse à ce message ou à info@fli.fr).
+Vous trouverez en pièce jointe votre fiche de présence STAGIAIRE, déjà préremplie. Merci de la faire signer à chaque cours, puis de nous la renvoyer à la fin des séances (en réponse à ce message ou à info@fli.fr).
 
 Nous vous souhaitons une très belle formation. N'hésitez pas à nous écrire si vous avez la moindre question.
 
@@ -124,8 +124,8 @@ export function buildFormateurMissionBodyText(input: FormateurMissionEmailInput)
     : "";
 
   const pjLine = input.contractNumber?.trim()
-    ? "Pièces jointes : contrat de prestation à me retourner signé, et fiches de présence préremplies."
-    : "Pièces jointes : fiches de présence préremplies.";
+    ? "Pièces jointes : contrat de prestation à me retourner signé, et ta fiche de présence FORMATEUR (préremplie)."
+    : "Pièce jointe : ta fiche de présence FORMATEUR (préremplie).";
 
   // Tutoiement systématique envers les formateurs (consigne Paula).
   return `Bonjour ${first},
@@ -144,7 +144,7 @@ Merci de contacter le stagiaire pour convenir ensemble des créneaux (Google Mee
 
 ${pjLine}
 
-Je te souhaite une très belle collaboration et une excellente formation. Merci d'avance pour ton suivi et pour le renvoi des fiches signées en fin de séances.
+Je te souhaite une très belle collaboration et une excellente formation. Merci d'avance pour ton suivi et pour le renvoi de ta fiche signée en fin de séances.
 
 Bien cordialement,
 Paula Rangel Halbwachs

@@ -41,7 +41,7 @@ describe("formateur-mise-en-relation", () => {
     expect(body).toMatch(/Bonjour Michael/);
     expect(body).toMatch(/tatiana1\.samoilova@gmail\.com/);
     expect(body).toMatch(/06 87 56 86 61/);
-    expect(body).toMatch(/fiches de présence/);
+    expect(body).toMatch(/fiche de présence STAGIAIRE/);
     expect(body).not.toMatch(/en copie/);
   });
 

@@ -214,26 +214,7 @@ export function PresenceFichesCard(props: PresenceFichesCardProps) {
         blobToBase64(stagiaireBlob),
       ]);
 
-      const ficheAttachments = [
-        {
-          filename: presenceFicheFilename(
-            "formateur",
-            input.studentName,
-            props.inscriptionCode
-          ),
-          content: formateurB64,
-        },
-        {
-          filename: presenceFicheFilename(
-            "stagiaire",
-            input.studentName,
-            props.inscriptionCode
-          ),
-          content: stagiaireB64,
-        },
-      ];
-
-      // 1) Mail stagiaire (sans CC) — coordonnées formateur + fiches
+      // 1) Mail stagiaire — coordonnées formateur + fiche STAGIAIRE uniquement
       await sendEmail.mutateAsync({
         to: props.studentEmail.trim(),
         subject: subject.trim(),
@@ -242,10 +223,19 @@ export function PresenceFichesCard(props: PresenceFichesCardProps) {
         studentId: props.studentId,
         inscriptionId: props.inscriptionId,
         templateSlug: FORMATEUR_MISE_EN_RELATION_SLUG,
-        attachments: ficheAttachments,
+        attachments: [
+          {
+            filename: presenceFicheFilename(
+              "stagiaire",
+              input.studentName,
+              props.inscriptionCode
+            ),
+            content: stagiaireB64,
+          },
+        ],
       });
 
-      // 2) Mail formateur·rice séparé — mission + fiches
+      // 2) Mail formateur·rice — mission + fiche FORMATEUR uniquement
       // (contrat PDF généré hors app pour l’instant — à joindre manuellement si besoin)
       const formateurFirst =
         (props.formateurName || "").trim().split(/\s+/)[0] || "Bonjour";
@@ -278,7 +268,16 @@ export function PresenceFichesCard(props: PresenceFichesCardProps) {
         studentId: props.studentId,
         inscriptionId: props.inscriptionId,
         templateSlug: "formateur_mise_en_relation",
-        attachments: ficheAttachments,
+        attachments: [
+          {
+            filename: presenceFicheFilename(
+              "formateur",
+              input.studentName,
+              props.inscriptionCode
+            ),
+            content: formateurB64,
+          },
+        ],
       });
 
       if (props.inscriptionId && props.inscriptionStatus === "en_attente") {
@@ -315,8 +314,9 @@ export function PresenceFichesCard(props: PresenceFichesCardProps) {
           PDF préremplis (identité, dates, durée, lieu). Les lignes de cours restent
           vides pour la date, la durée et la signature manuscrite. Après règlement
           complet, le bouton envoie <strong>deux e-mails séparés</strong> : stagiaire
-          (coordonnées + fiches) et formateur·rice (mission + fiches). Le contrat de
-          prestation se joint encore manuellement au mail formateur si besoin.
+          (coordonnées + fiche STAGIAIRE) et formateur·rice (mission + fiche
+          FORMATEUR). Le contrat de prestation se joint encore manuellement au mail
+          formateur si besoin.
         </p>
         <div className="flex flex-wrap gap-2">
           <Button
@@ -376,10 +376,10 @@ export function PresenceFichesCard(props: PresenceFichesCardProps) {
             <AlertDialogTitle>Mettre en relation + envoyer fiches</AlertDialogTitle>
             <AlertDialogDescription>
               Deux envois séparés (BCC info@fli.fr) : 1) stagiaire{" "}
-              {props.studentEmail || "…"} — 2) formateur·rice{" "}
-              {props.formateurEmail || "…"}. Les deux fiches PDF sont jointes à chaque
-              mail. Le contrat formateur n’est pas généré ici. Si l’inscription est
-              encore « En attente », elle passera en « Confirmée ».
+              {props.studentEmail || "…"} avec la fiche STAGIAIRE — 2) formateur·rice{" "}
+              {props.formateurEmail || "…"} avec la fiche FORMATEUR. Le contrat
+              formateur n’est pas généré ici. Si l’inscription est encore « En
+              attente », elle passera en « Confirmée ».
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-3 py-2">
