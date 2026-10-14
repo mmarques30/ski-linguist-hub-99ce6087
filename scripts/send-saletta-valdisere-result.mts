@@ -1,12 +1,15 @@
 /**
  * Résultat Mattia Saletta — ESF Val d'Isère — portugais brésilien — 08/10/2026 (Paula).
- * TO candidat · CC contact + direction école · BCC info@fli.fr · PJ résultat (pas de facture).
+ * TO candidat · CC contact + direction · BCC info@fli.fr · PJ résultat + facture acquittée.
+ * Stripe vérifié : ch_3UPknPQBleN6FLtS0O7A1NCO / pi_3UPknPQBleN6FLtS0fa45E8i — 45 € — 12/10/2026.
  *
  *   ./node_modules/.bin/tsx scripts/send-saletta-valdisere-result.mts
- *   SEND=1 CANDIDATE_EMAIL=… ./node_modules/.bin/tsx scripts/send-saletta-valdisere-result.mts
+ *   SEND=1 ./node_modules/.bin/tsx scripts/send-saletta-valdisere-result.mts
  */
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { PDFDocument, StandardFonts, rgb, type PDFFont } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
 import {
   buildEvaluationPdfModel,
   type CecrlScaleRow,
@@ -22,7 +25,31 @@ import { renderEvaluationPdf } from "../src/lib/evaluation-pdf-render.ts";
 const OUT = "/opt/cursor/artifacts/mollard-oct-2026/saletta-valdisere";
 const BCC = "info@fli.fr";
 const SCHOOL_CC = ["contact@esfvaldisere.com", "direction@esfvaldisere.com"];
+const CANDIDATE_EMAIL = "matti.salez@gmail.com";
 const PDF_NAME = "evaluation-Mattia-Saletta-portugais-valdisere.pdf";
+const INV_NAME = "Facture-26-27.14336-Saletta-acquittee.pdf";
+const INVOICE_NUMBER = "26-27.14336";
+const INVOICE_SEQ = 14336;
+const STRIPE_CHARGE = "ch_3UPknPQBleN6FLtS0O7A1NCO";
+const STRIPE_PI = "pi_3UPknPQBleN6FLtS0fa45E8i";
+const PAYMENT_DATE = "2026-10-12";
+const INVOICE_DATE = "2026-10-08";
+
+const YELLOW = rgb(252 / 255, 175 / 255, 23 / 255);
+const INK = rgb(0.12, 0.12, 0.12);
+const MUTED = rgb(0.35, 0.35, 0.35);
+const GREEN = rgb(0.1, 0.45, 0.2);
+
+const FLI = {
+  name: "France Langues International",
+  address: "25 avenue de la gare",
+  city: "73800 Montmélian",
+  phone: "04 79 28 21 09",
+  email: "info@fli.fr",
+  siret: "484 772 041 00048",
+  tvaNumber: "FR 44 484772041",
+  activity: "82 73 01 366 73",
+} as const;
 
 const IDENTITY: FliIdentity = {
   legal_name: "France Langues International",
@@ -47,7 +74,6 @@ const SCALE: CecrlScaleRow[] = [
   { score: 5, cecrl_label: "C2", base_label: "C2", niveau: 5, description: "Maîtrise" },
 ];
 
-/** Texte Paula — coquilles mineures corrigées pour le CR officiel. */
 const BLOCS = {
   introduction:
     "Grâce à vos connaissances de diverses langues latines et votre intérêt pour le portugais brésilien, vous arrivez très bien à communiquer. Vous êtes capable d'aborder différents sujets, de vous faire comprendre quand il vous manque du vocabulaire. Bravo !",
@@ -58,6 +84,232 @@ const BLOCS = {
   conclusion:
     "Continuez à discuter avec les Brésiliens et essayez de regarder des émissions / podcasts. Je vous conseille une chaîne YouTube (humoristique) qui s'appelle Porta dos Fundos : essayez de regarder une vidéo par jour, ça va vous aider à progresser.",
 };
+
+function formatFr(iso: string): string {
+  const [y, m, d] = iso.slice(0, 10).split("-");
+  return `${d}/${m}/${y}`;
+}
+
+function formatEuro(amount: number): string {
+  const fixed = amount.toFixed(2).replace(".", ",");
+  const [intPart, dec] = fixed.split(",");
+  const withSpaces = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, "\u202f");
+  return `${withSpaces},${dec}\u00a0€`;
+}
+
+async function loadPublic(path: string): Promise<Uint8Array | null> {
+  try {
+    return new Uint8Array(await readFile(join(process.cwd(), "public", path)));
+  } catch {
+    return null;
+  }
+}
+
+async function embedFonts(doc: PDFDocument): Promise<{
+  font: PDFFont;
+  fontBold: PDFFont;
+}> {
+  doc.registerFontkit(fontkit);
+  const regular = await loadPublic("fonts/Inter-Regular.ttf");
+  const bold = await loadPublic("fonts/Inter-SemiBold.ttf");
+  if (regular?.byteLength && bold?.byteLength) {
+    return {
+      font: await doc.embedFont(regular, { subset: true }),
+      fontBold: await doc.embedFont(bold, { subset: true }),
+    };
+  }
+  return {
+    font: await doc.embedFont(StandardFonts.Helvetica),
+    fontBold: await doc.embedFont(StandardFonts.HelveticaBold),
+  };
+}
+
+async function buildPaidTestInvoicePdf(): Promise<Uint8Array> {
+  const amountHt = 37.5;
+  const tvaRate = 20;
+  const amountTtc = 45;
+  const tvaAmount = (amountHt * tvaRate) / 100;
+
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([595.28, 841.89]);
+  const { font, fontBold } = await embedFonts(doc);
+  const left = 48;
+  const right = 595.28 - 48;
+  let y = 841.89 - 48;
+
+  const draw = (
+    text: string,
+    x: number,
+    baseline: number,
+    opts?: { bold?: boolean; size?: number; color?: typeof INK }
+  ) => {
+    page.drawText(text, {
+      x,
+      y: baseline,
+      size: opts?.size ?? 10,
+      font: opts?.bold ? fontBold : font,
+      color: opts?.color ?? INK,
+    });
+  };
+
+  const logoBytes = await loadPublic("inscription-documents/fli-invoice-logo.png");
+  if (logoBytes?.byteLength) {
+    try {
+      const logo = await doc.embedPng(logoBytes);
+      const w = 140;
+      const h = (logo.height / logo.width) * w;
+      page.drawImage(logo, { x: left, y: y - h, width: w, height: h });
+      y -= h + 8;
+    } catch {
+      draw(FLI.name, left, y - 14, { bold: true, size: 12 });
+      y -= 20;
+    }
+  }
+
+  const headerTop = 841.89 - 52;
+  draw("FACTURE - Test de niveau", right - 200, headerTop - 4, {
+    bold: true,
+    size: 14,
+    color: YELLOW,
+  });
+  draw(`N°: ${INVOICE_NUMBER}`, right - 140, headerTop - 24, { bold: true, size: 10 });
+  draw(`Date: ${formatFr(INVOICE_DATE)}`, right - 140, headerTop - 38, {
+    size: 9,
+    color: MUTED,
+  });
+
+  for (const line of [FLI.name, FLI.address, FLI.city, `Tél: ${FLI.phone}`, FLI.email]) {
+    draw(line, left, y, {
+      size: 9,
+      color: line === FLI.name ? INK : MUTED,
+      bold: line === FLI.name,
+    });
+    y -= 12;
+  }
+  y -= 10;
+  page.drawRectangle({
+    x: left,
+    y: y - 2,
+    width: right - left,
+    height: 2.5,
+    color: YELLOW,
+  });
+  y -= 24;
+
+  page.drawRectangle({
+    x: left,
+    y: y - 50,
+    width: right - left,
+    height: 58,
+    color: rgb(0.96, 0.96, 0.96),
+  });
+  draw("CLIENT", left + 12, y - 14, { size: 8, color: MUTED, bold: true });
+  draw("Mattia Saletta", left + 12, y - 30, { bold: true, size: 11 });
+  y -= 76;
+
+  page.drawLine({
+    start: { x: left, y },
+    end: { x: right, y },
+    thickness: 2,
+    color: YELLOW,
+  });
+  y -= 16;
+  draw("Description", left, y, { bold: true, size: 9, color: MUTED });
+  draw("Qté", left + 280, y, { bold: true, size: 9, color: MUTED });
+  draw("Prix unit.", left + 330, y, { bold: true, size: 9, color: MUTED });
+  draw("Montant", right - 60, y, { bold: true, size: 9, color: MUTED });
+  y -= 8;
+  page.drawLine({
+    start: { x: left, y },
+    end: { x: right, y },
+    thickness: 0.5,
+    color: rgb(0.85, 0.85, 0.85),
+  });
+  y -= 18;
+  draw("Test de portugais brésilien", left, y, { size: 10 });
+  draw("1", left + 290, y, { size: 10 });
+  draw(formatEuro(amountHt), left + 330, y, { size: 10 });
+  const tot = formatEuro(amountHt);
+  draw(tot, right - fontBold.widthOfTextAtSize(tot, 10), y, { bold: true, size: 10 });
+  y -= 36;
+
+  const boxX = right - 220;
+  const row = (
+    label: string,
+    value: string,
+    opts?: { bold?: boolean; color?: typeof INK; size?: number }
+  ) => {
+    draw(label, boxX, y, {
+      size: opts?.size ?? 10,
+      bold: opts?.bold,
+      color: opts?.color ?? MUTED,
+    });
+    const vw = (opts?.bold ? fontBold : font).widthOfTextAtSize(value, opts?.size ?? 10);
+    draw(value, right - vw, y, {
+      size: opts?.size ?? 10,
+      bold: opts?.bold,
+      color: opts?.color ?? INK,
+    });
+    y -= 16;
+  };
+  row("Total HT", formatEuro(amountHt));
+  row(`TVA (${tvaRate}%)`, formatEuro(tvaAmount));
+  page.drawLine({
+    start: { x: boxX, y },
+    end: { x: right, y },
+    thickness: 2,
+    color: YELLOW,
+  });
+  y -= 18;
+  row("Total TTC", formatEuro(amountTtc), { bold: true, color: YELLOW, size: 12 });
+  row("Net à payer", formatEuro(0), { bold: true, color: GREEN, size: 12 });
+
+  const stampBytes = await loadPublic("inscription-documents/facture-acquittee-stamp.png");
+  if (stampBytes?.byteLength) {
+    try {
+      const stamp = await doc.embedPng(stampBytes);
+      const w = 120;
+      const h = (stamp.height / stamp.width) * w;
+      page.drawImage(stamp, {
+        x: 595.28 / 2 - w / 2,
+        y: 280,
+        width: w,
+        height: h,
+        opacity: 0.35,
+      });
+    } catch {
+      /* optional */
+    }
+  }
+
+  y = Math.min(y - 24, 220);
+  page.drawLine({
+    start: { x: left, y: y + 12 },
+    end: { x: right, y: y + 12 },
+    thickness: 0.5,
+    color: rgb(0.8, 0.8, 0.8),
+  });
+  draw("RÈGLEMENT", left, y, { size: 8, color: MUTED, bold: true });
+  draw("Facture acquittée", left, y - 14, { bold: true, size: 11, color: GREEN });
+  draw(`Date : ${formatFr(PAYMENT_DATE)}`, left, y - 28, { size: 9 });
+  draw("Moyen : Carte bancaire en ligne (Stripe)", left, y - 40, { size: 9 });
+  draw(`SIRET: ${FLI.siret}`, right - 160, y - 14, { size: 9, color: MUTED });
+  draw(`N° TVA: ${FLI.tvaNumber}`, right - 160, y - 28, { size: 9, color: MUTED });
+
+  const footer = [
+    "France Langues International - organisme de formation",
+    "SARL au capital de 5000 euros — 25 avenue de la gare, 73800 Montmélian",
+    `Siret : ${FLI.siret} - RCS Chambéry - NAF : 8559A — Organisme n° ${FLI.activity}`,
+    "Version 5 du 10 janvier 2026",
+  ];
+  let fy = 70;
+  for (const line of footer) {
+    const w = font.widthOfTextAtSize(line, 7);
+    draw(line, (595.28 - w) / 2, fy, { size: 7, color: MUTED });
+    fy -= 10;
+  }
+  return doc.save();
+}
 
 async function loadAssets(): Promise<EvaluationPdfAssets> {
   const dir = join(process.cwd(), "public/evaluation-pdf");
@@ -81,11 +333,12 @@ async function loadAssets(): Promise<EvaluationPdfAssets> {
   };
 }
 
-function emailHtml(name: string, cecrl: string): string {
+function emailHtml(): string {
   const body = `
 <p style="margin:0 0 16px">Bonjour,</p>
-<p style="margin:0 0 16px">veuillez trouver ci-joint le résultat de votre test de portugais brésilien (${cecrl}).</p>
+<p style="margin:0 0 16px">veuillez trouver ci-joint le résultat de votre test de portugais brésilien (B2).</p>
 <p style="margin:0 0 16px">Une copie est adressée à votre école de ski (ESF Val d'Isère).</p>
+<p style="margin:0 0 16px">La facture acquittée n°&nbsp;${INVOICE_NUMBER} est jointe.</p>
 <p style="margin:0 0 4px">Cordialement,</p>
 <p style="margin:0">
   <strong>FLI — France Langues International</strong><br/>
@@ -107,7 +360,6 @@ ${body}
 
 async function main() {
   const doSend = process.env.SEND === "1";
-  const candidateEmail = (process.env.CANDIDATE_EMAIL || "").trim();
   await mkdir(OUT, { recursive: true });
 
   const input: EvaluationPdfInput = {
@@ -142,73 +394,37 @@ async function main() {
 
   const assets = await loadAssets();
   const model = buildEvaluationPdfModel(input);
-  const bytes = await renderEvaluationPdf(model, assets);
-  const pdfPath = join(OUT, PDF_NAME);
-  await writeFile(pdfPath, bytes);
+  const evalBytes = await renderEvaluationPdf(model, assets);
+  await writeFile(join(OUT, PDF_NAME), evalBytes);
+
+  const invBytes = await buildPaidTestInvoicePdf();
+  await writeFile(join(OUT, INV_NAME), invBytes);
 
   const subject = "Résultat de votre test de langue — Mattia Saletta";
   const draft = {
     send: false,
-    awaiting_paula_validation: true,
-    missing_candidate_email: !candidateEmail,
-    to: candidateEmail || null,
+    to: CANDIDATE_EMAIL,
     cc: SCHOOL_CC,
     bcc: BCC,
     subject,
     cecrl: "B2",
-    school: "ESF VAL D ISERE",
-    language: "portugais",
-    test_date: "08/10/2026",
-    evaluator: "Paula Rangel-Halbwachs",
-    scores: {
-      comprehension: "3 - B2",
-      expression: "3 - B2",
-      structure: "2 - B1",
-      technique: "3 - B2",
-      conversation: "3 - B2",
-      general: "3 - B2",
-    },
-    attachment: PDF_NAME,
-    pdf_bytes: bytes.length,
-    no_invoice: true,
+    invoice_number: INVOICE_NUMBER,
+    stripe_charge: STRIPE_CHARGE,
+    stripe_pi: STRIPE_PI,
+    payment_date: PAYMENT_DATE,
+    attachments: [PDF_NAME, INV_NAME],
     prepared_at: new Date().toISOString(),
   };
-
   await writeFile(join(OUT, "email-draft.json"), JSON.stringify(draft, null, 2));
-  await writeFile(
-    join(OUT, "email-draft.md"),
-    `# Brouillon — Mattia Saletta (ESF Val d'Isère) — **À VALIDER — PAS ENVOYÉ**
-
-- **À :** ${candidateEmail || "⚠️ MANQUANT — indiquer CANDIDATE_EMAIL"}
-- **CC :** ${SCHOOL_CC.join(", ")}
-- **BCC :** ${BCC}
-- **Objet :** ${subject}
-- **Niveau :** B2 (appréciation générale 3)
-- **PJ :** \`${PDF_NAME}\` (${bytes.length} o) — pas de facture
-
-## Corps
-
-Bonjour,
-
-veuillez trouver ci-joint le résultat de votre test de portugais brésilien (B2).
-
-Une copie est adressée à votre école de ski (ESF Val d'Isère).
-
-Cordialement,
-FLI — France Langues International
-`
-  );
-
-  console.log(`PDF ${pdfPath} (${bytes.length} o)`);
-  console.log(`DRAFT ${join(OUT, "email-draft.md")}`);
+  console.log(`PDF ${PDF_NAME} (${evalBytes.length} o)`);
+  console.log(`INV ${INV_NAME} (${invBytes.length} o)`);
+  console.log(`STRIPE ${STRIPE_CHARGE} 45€ paid ${PAYMENT_DATE}`);
 
   if (!doSend) {
-    console.log("DRY_RUN — aucun envoi. Relancer avec SEND=1 CANDIDATE_EMAIL=… après OK Paula.");
+    console.log("DRY_RUN — relancer avec SEND=1 après insert facture DB");
     return;
   }
-  if (!candidateEmail) {
-    throw new Error("CANDIDATE_EMAIL obligatoire pour l'envoi");
-  }
+
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) throw new Error("RESEND_API_KEY absente");
 
@@ -221,17 +437,15 @@ FLI — France Langues International
     },
     body: JSON.stringify({
       from: "FLI — France Langues International <noreply@fli.fr>",
-      to: [candidateEmail],
+      to: [CANDIDATE_EMAIL],
       cc: SCHOOL_CC,
       bcc: [BCC],
       reply_to: ["info@fli.fr"],
       subject,
-      html: emailHtml("Mattia Saletta", "B2"),
+      html: emailHtml(),
       attachments: [
-        {
-          filename: PDF_NAME,
-          content: Buffer.from(bytes).toString("base64"),
-        },
+        { filename: PDF_NAME, content: Buffer.from(evalBytes).toString("base64") },
+        { filename: INV_NAME, content: Buffer.from(invBytes).toString("base64") },
       ],
     }),
   });
@@ -244,11 +458,13 @@ FLI — France Langues International
   } catch {
     /* ignore */
   }
-  draft.send = true;
-  draft.awaiting_paula_validation = false;
-  (draft as Record<string, unknown>).resend_id = resendId;
-  (draft as Record<string, unknown>).sent_at = new Date().toISOString();
-  await writeFile(join(OUT, "email-draft.json"), JSON.stringify(draft, null, 2));
+  const sent = {
+    ...draft,
+    send: true,
+    resend_id: resendId,
+    sent_at: new Date().toISOString(),
+  };
+  await writeFile(join(OUT, "email-draft.json"), JSON.stringify(sent, null, 2));
   console.log(`ENVOYE ${resendId}`);
 }
 
