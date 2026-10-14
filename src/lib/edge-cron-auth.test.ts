@@ -142,3 +142,12 @@ describe("restes faibles sécurité — attendance / stripe / FIF-PL", () => {
     );
   });
 });
+
+describe("jeton cron dédié (sans Vault)", () => {
+  it("admin-auth accepte x-cron-dispatch-token comparé à cron_dispatch_secret", () => {
+    const auth = source("supabase/functions/_shared/admin-auth.ts");
+    expect(auth).toContain('req.headers.get("x-cron-dispatch-token")');
+    expect(auth).toContain('.from("cron_dispatch_secret")');
+    expect(auth).toContain("Forbidden: invalid cron token");
+  });
+});
