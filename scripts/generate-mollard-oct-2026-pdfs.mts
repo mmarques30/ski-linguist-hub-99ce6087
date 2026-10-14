@@ -17,7 +17,7 @@ import {
   type EvaluationPdfAssets,
 } from "../src/lib/evaluation-pdf-assets.ts";
 import { renderEvaluationPdf } from "../src/lib/evaluation-pdf-render.ts";
-import { scoreToLevel } from "../src/lib/evaluation-utils.ts";
+import { alpeDhuezFromScore20 } from "../src/lib/evaluation-utils.ts";
 
 const OUT_DIR = "/opt/cursor/artifacts/mollard-oct-2026/pdfs";
 const ROWS_PATH = join(process.cwd(), "scripts/data/mollard-oct-2026-pdf-rows.json");
@@ -159,22 +159,25 @@ async function main() {
 
   for (const row of rows) {
     const model = buildEvaluationPdfModel(buildInput(row));
-    // Alpe d'Huez : affichage « Niveau - note /20 » (ex. B2 - 10,5)
+    // Alpe d'Huez : affichage « Niveau - note /20 » + qualificatif du tableau
     if (row.scoring_system === "sur_20" && row.display_scores?.length === 6) {
       model.skillRows = SKILL_ORDER.map(({ label }, i) => {
         const score = row.display_scores![i];
-        const level = scoreToLevel(score, "sur_20");
-        return { label, value: `${level} - ${formatScoreFr(score)}` };
+        const band = alpeDhuezFromScore20(score);
+        return {
+          label,
+          value: `${band.cecrl} - ${formatScoreFr(score)} (${band.qualifier})`,
+        };
       });
       const g = row.display_scores[5];
-      const gLevel = scoreToLevel(g, "sur_20");
+      const gBand = alpeDhuezFromScore20(g);
       model.subtitle = model.subtitle.replace(
         /— [\d,]+ \/ [A-C]\d\+?/,
-        `— ${formatScoreFr(g)} / 20 (${gLevel})`
+        `— ${formatScoreFr(g)} / 20 (${gBand.cecrl} · ${gBand.keyword} · ${gBand.qualifier})`
       );
-      if (row.note_methodologique?.trim()) {
-        model.noteMethodologique = row.note_methodologique.trim();
-      }
+      model.noteMethodologique =
+        row.note_methodologique?.trim() ||
+        `Barème Alpe d'Huez /20 — ${gBand.cecrl} Niveau ${gBand.niveau} ${gBand.keyword} (${gBand.qualifier}).`;
     }
     const bytes = await renderEvaluationPdf(model, assets);
     const filename = slugName(row.candidate_name, row.language, row.key);
