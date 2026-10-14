@@ -14,7 +14,7 @@ describe("Edge cron/admin auth — refuse anon JWT", () => {
     expect(auth).toContain("Forbidden: anon key is not sufficient");
     expect(auth).toContain("readJwtRoleClaim");
     expect(auth).toContain('=== "anon"');
-    expect(auth).toContain('=== "service_role"');
+    expect(auth).not.toContain('readJwtRoleClaim(token) === "service_role"');
     // Pas de doublon Lovable/Cursor après merge (sinon Deno refuse le module).
     expect(auth.match(/export async function requireServiceRoleOrStaff/g)).toHaveLength(1);
     expect(auth.match(/export async function requireServiceRoleOrAdmin/g)).toHaveLength(1);
@@ -140,5 +140,14 @@ describe("restes faibles sécurité — attendance / stripe / FIF-PL", () => {
     expect(edge).not.toMatch(
       /const coursePrice\s*=\s*\n?\s*registration\.price/
     );
+  });
+});
+
+describe("jeton cron dédié (sans Vault)", () => {
+  it("admin-auth accepte x-cron-dispatch-token comparé à cron_dispatch_secret", () => {
+    const auth = source("supabase/functions/_shared/admin-auth.ts");
+    expect(auth).toContain('req.headers.get("x-cron-dispatch-token")');
+    expect(auth).toContain('.from("cron_dispatch_secret")');
+    expect(auth).toContain("Forbidden: invalid cron token");
   });
 });

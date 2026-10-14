@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { toast } from "sonner";
 import { useParams, useNavigate, useLocation } from "react-router";
 import { FormateurPageShell } from "@/components/layout/FormateurPageShell";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,6 @@ import {
   SurfaceCard,
   TableEmpty,
 } from "@/components/ui-kit";
-import { useToast } from "@/hooks/use-toast";
 import {
   useTestBookingForEvaluation,
   useTestEvaluation,
@@ -80,7 +80,6 @@ export default function EvaluationForm() {
   const { bookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast();
   const isEditMode = location.pathname.includes("/edit");
 
   const { data: booking, isLoading: bookingLoading } = useTestBookingForEvaluation(bookingId || "");
@@ -187,28 +186,17 @@ export default function EvaluationForm() {
 
   const handleSave = async (submitForReview: boolean) => {
     if (isAssistMode) {
-      toast({
-        variant: "destructive",
-        title: "Mode Assister",
-        description: "Lecture seule — aucune modification n'est enregistrée.",
-      });
+      toast.error("Mode Assister", { description: "Lecture seule — aucune modification n'est enregistrée." });
       return;
     }
     if (!bookingId || !booking) return;
 
     if (!adjustmentOk) {
-      toast({
-        variant: "destructive",
-        title: SCORE_GENERAL_INCOHERENT,
-      });
+      toast.error(SCORE_GENERAL_INCOHERENT);
       return;
     }
     if (submitForReview && hasVouvoiementIssue) {
-      toast({
-        variant: "destructive",
-        title: "Vouvoiement",
-        description: "Corrigez le tutoiement avant de soumettre pour vérification.",
-      });
+      toast.error("Vouvoiement", { description: "Corrigez le tutoiement avant de soumettre pour vérification." });
       return;
     }
 

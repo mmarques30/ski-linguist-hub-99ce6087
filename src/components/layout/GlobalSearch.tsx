@@ -213,7 +213,7 @@ export function GlobalSearch() {
 
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput
-          placeholder="Stagiaires, inscriptions, factures, partenaires, leads…"
+          placeholder="Stagiaires, inscriptions, factures, partenaires, prospects…"
           value={query}
           onValueChange={setQuery}
         />
@@ -318,11 +318,11 @@ export function GlobalSearch() {
               )}
 
               {results?.leads && results.leads.length > 0 && (
-                <CommandGroup heading="Leads">
+                <CommandGroup heading="Prospects">
                   {results.leads.map((l) => (
                     <CommandItem
                       key={l.id}
-                      value={`lead-${l.id}`}
+                      value={`prospect-${l.id}`}
                       onSelect={() => go(`/gestion/commercial`)}
                     >
                       <Target className="mr-2 h-4 w-4 text-[hsl(var(--chart-2))]" />

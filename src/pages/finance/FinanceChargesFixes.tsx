@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { toast } from "sonner";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,6 @@ import {
   useGenerateMonthlyCharges,
   useUpdateFixedCost,
 } from "@/hooks/useFinancialDashboard";
-import { useToast } from "@/hooks/use-toast";
 import {
   RefreshCw,
   AlertTriangle,
@@ -62,7 +62,6 @@ const costTypeLabels: Record<string, string> = {
 };
 
 export default function FinanceChargesFixes() {
-  const { toast } = useToast();
   const { canEdit } = useUserPermissions();
   const editable = canEdit("finance.charges_fixes");
   const { confirm, dialog: confirmDialog } = useConfirmAction();
@@ -150,9 +149,9 @@ export default function FinanceChargesFixes() {
   const handleToggleTemplate = async (id: string, currentActive: boolean) => {
     try {
       await updateTemplate.mutateAsync({ id, actif: !currentActive });
-      toast({ title: "Modèle mis à jour" });
+      toast.success("Modèle mis à jour");
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Erreur", description: error.message });
+      toast.error("Erreur", { description: error.message });
     }
   };
 
@@ -160,18 +159,18 @@ export default function FinanceChargesFixes() {
     try {
       await updateTemplate.mutateAsync({ id, montant_mensuel: Number(editedAmount) });
       setEditingTemplate(null);
-      toast({ title: "Montant mis à jour" });
+      toast.success("Montant mis à jour");
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Erreur", description: error.message });
+      toast.error("Erreur", { description: error.message });
     }
   };
 
   const handleGenerateCharges = async () => {
     try {
       await generateCharges.mutateAsync(selectedMonth);
-      toast({ title: "Charges générées", description: `Charges du mois générées avec succès` });
+      toast.success("Charges générées", { description: `Charges du mois générées avec succès` });
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Erreur", description: error.message });
+      toast.error("Erreur", { description: error.message });
     }
   };
 
@@ -182,9 +181,9 @@ export default function FinanceChargesFixes() {
         paye: !currentPaid,
         date_paiement: !currentPaid ? format(new Date(), 'yyyy-MM-dd') : null,
       });
-      toast({ title: currentPaid ? "Marqué comme non payé" : "Marqué comme payé" });
+      toast.success(currentPaid ? "Marqué comme non payé" : "Marqué comme payé");
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Erreur", description: error.message });
+      toast.error("Erreur", { description: error.message });
     }
   };
 

@@ -13,7 +13,7 @@ interface Props {
 }
 
 /**
- * Carte de lead du kanban — profondeur du kit, jetons uniquement.
+ * Carte de prospect du kanban — profondeur du kit, jetons uniquement.
  * Une action en retard passe la carte en teinte « danger » (bordure + fond),
  * doublée d'une icône et d'un libellé : la couleur n'est jamais seule.
  */

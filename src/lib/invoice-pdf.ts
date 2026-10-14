@@ -447,5 +447,5 @@ export async function buildInvoicePdfBlob(
   input: InvoicePdfInput
 ): Promise<Blob> {
   const bytes = await buildInvoicePdfBytes(input);
-  return new Blob([bytes], { type: "application/pdf" });
+  return new Blob([bytes as BlobPart], { type: "application/pdf" });
 }

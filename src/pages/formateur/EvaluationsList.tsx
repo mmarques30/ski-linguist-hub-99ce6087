@@ -1,4 +1,5 @@
 import { ReactNode, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useNavigate, Link } from "react-router";
 import { FormateurPageShell } from "@/components/layout/FormateurPageShell";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,6 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { SurveyQRCodeDialog } from "@/components/survey/SurveyQRCodeDialog";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
-import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { EVALUATION_PDF_BUCKET } from "@/lib/evaluation-pdf";
 import {
@@ -102,7 +102,6 @@ function FilterField({
 
 export default function EvaluationsList() {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"pending" | "completed">("pending");
   const [showQRDialog, setShowQRDialog] = useState(false);
   const [filters, setFilters] = useState<EvaluationListFilters>(emptyFilters);
@@ -181,10 +180,7 @@ export default function EvaluationsList() {
     try {
       const source = filtered.filter((row) => row.sponsor_type === "dsf");
       if (source.length === 0) {
-        toast({
-          title: "Aucune ligne DSF",
-          description: "Aucun test DSF ne correspond aux filtres.",
-        });
+        toast.success("Aucune ligne DSF", { description: "Aucun test DSF ne correspond aux filtres." });
         return;
       }
       const pdfLinks: Record<string, string> = {};
@@ -210,13 +206,9 @@ export default function EvaluationsList() {
       a.download = dsfExportFilename();
       a.click();
       URL.revokeObjectURL(url);
-      toast({ title: `Export DSF : ${rows.length} ligne(s)` });
+      toast.success(`Export DSF : ${rows.length} ligne(s)`);
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Export DSF",
-        description: error instanceof Error ? error.message : "Échec de l'export",
-      });
+      toast.error("Export DSF", { description: error instanceof Error ? error.message : "Échec de l'export" });
     } finally {
       setExporting(false);
     }

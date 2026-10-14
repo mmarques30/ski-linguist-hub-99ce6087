@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 import { useFormateurView } from "@/contexts/FormateurViewContext";
 import { notifyAdmins } from "@/lib/notify-admins";
@@ -150,7 +150,6 @@ export interface CreateEvaluationData {
 
 export function useCreateTestEvaluation() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: async (evaluation: CreateEvaluationData) => {
@@ -175,26 +174,20 @@ export function useCreateTestEvaluation() {
       queryClient.invalidateQueries({ queryKey: ["test-bookings-to-evaluate"] });
       queryClient.invalidateQueries({ queryKey: ["completed-evaluations"] });
       queryClient.invalidateQueries({ queryKey: ["test-evaluation"] });
-      toast({
-        title:
-          data.status === "a_verifier"
-            ? "Évaluation soumise pour vérification"
-            : "Brouillon enregistré",
-      });
+      toast.success(
+        data.status === "a_verifier"
+          ? "Évaluation soumise pour vérification"
+          : "Brouillon enregistré",
+      );
     },
     onError: (error: Error) => {
-      toast({ 
-        variant: "destructive", 
-        title: "Erreur", 
-        description: error.message 
-      });
+      toast.error("Erreur", { description: error.message });
     },
   });
 }
 
 export function useUpdateTestEvaluation() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<TestEvaluation> & { id: string }) => {
@@ -220,21 +213,16 @@ export function useUpdateTestEvaluation() {
       queryClient.invalidateQueries({ queryKey: ["test-evaluation"] });
       queryClient.invalidateQueries({ queryKey: ["evaluation-with-booking"] });
       queryClient.invalidateQueries({ queryKey: ["test-bookings-to-evaluate"] });
-      toast({ title: "Évaluation mise à jour" });
+      toast.success("Évaluation mise à jour");
     },
     onError: (error: Error) => {
-      toast({ 
-        variant: "destructive", 
-        title: "Erreur", 
-        description: error.message 
-      });
+      toast.error("Erreur", { description: error.message });
     },
   });
 }
 
 export function useGenerateEvaluationPdf() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: async (evaluationId: string) => {
@@ -256,20 +244,13 @@ export function useGenerateEvaluationPdf() {
       queryClient.invalidateQueries({ queryKey: ["test-evaluation"] });
       queryClient.invalidateQueries({ queryKey: ["evaluation-with-booking"] });
       queryClient.invalidateQueries({ queryKey: ["completed-evaluations"] });
-      toast({
-        title: "PDF enregistré",
-        description: "Le statut reste validé tant que le courriel n'est pas parti.",
-      });
+      toast.success("PDF enregistré", { description: "Le statut reste validé tant que le courriel n'est pas parti." });
       if (data.signedUrl) {
         window.open(data.signedUrl, "_blank", "noopener,noreferrer");
       }
     },
     onError: (error: Error) => {
-      toast({
-        variant: "destructive",
-        title: "Génération PDF",
-        description: error.message,
-      });
+      toast.error("Génération PDF", { description: error.message });
     },
   });
 }

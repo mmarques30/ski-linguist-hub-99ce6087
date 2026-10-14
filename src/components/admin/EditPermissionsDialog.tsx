@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -16,7 +17,6 @@ import {
   useUserPermissionsForUser,
 } from "@/hooks/useUserManagement";
 import { ALL_ROUTE_KEYS } from "@/lib/route-permissions";
-import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ShieldCheck } from "lucide-react";
 
@@ -31,7 +31,6 @@ export function EditPermissionsDialog({ userId, open, onOpenChange }: Props) {
     open ? userId : null
   );
   const { updatePermissions } = useUserManagement();
-  const { toast } = useToast();
   const [permissions, setPermissions] = useState<PermissionEntry[]>([]);
 
   useEffect(() => {
@@ -63,10 +62,10 @@ export function EditPermissionsDialog({ userId, open, onOpenChange }: Props) {
         userId,
         permissions: permissions.filter((p) => p.can_view || p.can_edit),
       });
-      toast({ title: "Permissions mises à jour" });
+      toast.success("Permissions mises à jour");
       onOpenChange(false);
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Erreur", description: err.message });
+      toast.error("Erreur", { description: err.message });
     }
   };
 

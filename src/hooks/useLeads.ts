@@ -238,7 +238,7 @@ export function useConvertLead() {
   return useMutation({
     mutationFn: async (lead: Lead) => {
       if (!lead.contact_email) {
-        throw new Error("Email requis pour convertir le lead en inscription");
+        throw new Error("E-mail requis pour convertir le prospect en inscription");
       }
 
       const email = lead.contact_email.trim().toLowerCase();

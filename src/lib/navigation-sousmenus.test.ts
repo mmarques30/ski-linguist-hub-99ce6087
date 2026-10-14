@@ -76,68 +76,48 @@ describe("arborescence de navigation — 3 niveaux", () => {
   });
 
   it("réserve à l'admin les sous-menus sensibles", () => {
-    const phrases = item("evaluations").children?.find(
-      (c) => c.href === "/admin/phrases",
-    );
+    const phrases = item("donnees").children?.find((c) => c.href === "/admin/phrases");
     expect(phrases?.adminOnly).toBe(true);
+  });
+
+  it("ne duplique pas les filtres de statut déjà dans les pages", () => {
+    const hrefs = ALL_HREFS.join("\n");
+    expect(hrefs).not.toContain("status=en_attente");
+    expect(hrefs).not.toContain("status=terminee");
+    expect(hrefs).not.toContain("status=a_verifier");
+    expect(hrefs).not.toContain("status=a_relancer");
   });
 });
 
 describe("état actif — chemins et paramètres d'URL", () => {
-  it("distingue les filtres frères d'une même page", () => {
-    const inscriptions = item("inscriptions");
-    expect(activeChildHref(inscriptions, "/inscriptions", "")).toBe("/inscriptions");
-    expect(activeChildHref(inscriptions, "/inscriptions", "?status=en_attente")).toBe(
-      "/inscriptions?status=en_attente",
-    );
-    expect(activeChildHref(inscriptions, "/inscriptions", "?status=terminee")).toBe(
-      "/inscriptions?status=terminee",
-    );
-  });
-
-  it("sort la constitution des groupes du lien « toutes les inscriptions »", () => {
+  it("sépare inscriptions et constitution des groupes", () => {
     expect(matchScore("/inscriptions", "/inscriptions/schedule-validation", "")).toBe(-1);
-    expect(
-      activeChildHref(item("inscriptions"), "/inscriptions/schedule-validation", ""),
-    ).toBe("/inscriptions/schedule-validation");
-    expect(matchScore("/inscriptions", "/inscriptions/abc-123", "")).toBe(0);
-  });
-
-  it("suit les sous-routes finance", () => {
-    const pilotage = item("pilotage");
-    expect(activeChildHref(pilotage, "/finance", "")).toBe("/finance");
-    expect(activeChildHref(pilotage, "/finance/analyses", "")).toBe("/finance/analyses");
-    expect(activeChildHref(pilotage, "/finance/rentabilite", "")).toBe(
-      "/finance/rentabilite",
+    expect(isItemActive(item("inscriptions"), "/inscriptions", "")).toBe(true);
+    expect(isItemActive(item("inscriptions"), "/inscriptions/abc-123", "")).toBe(true);
+    expect(isItemActive(item("schedule-validation"), "/inscriptions/schedule-validation", "")).toBe(
+      true,
     );
-    expect(isItemActive(pilotage, "/finance/tresorerie", "")).toBe(false);
-
-    const tresorerie = item("tresorerie");
-    expect(activeChildHref(tresorerie, "/finance/tresorerie", "")).toBe(
-      "/finance/tresorerie",
-    );
-    expect(activeChildHref(tresorerie, "/finance/tresorerie", "?tab=charges")).toBe(
-      "/finance/tresorerie?tab=charges",
+    expect(isItemActive(item("inscriptions"), "/inscriptions/schedule-validation", "")).toBe(
+      false,
     );
   });
 
-  it("garde la facturation active sur les paiements et les files de statut", () => {
-    const facturation = item("facturation");
-    expect(isItemActive(facturation, "/finance/payments", "")).toBe(true);
-    expect(activeChildHref(facturation, "/invoices", "?status=a_verifier")).toBe(
-      "/invoices?status=a_verifier",
-    );
-    expect(activeChildHref(facturation, "/invoices", "?status=en_attente")).toBe(
-      "/invoices?status=en_attente",
-    );
-    expect(activeChildHref(facturation, "/invoices", "?status=a_relancer")).toBe(
-      "/invoices?status=a_relancer",
-    );
+  it("expose la finance en liens plats", () => {
+    expect(isItemActive(item("pilotage"), "/finance", "")).toBe(true);
+    expect(isItemActive(item("analyses"), "/finance/analyses", "")).toBe(true);
+    expect(isItemActive(item("rentabilite"), "/finance/rentabilite", "")).toBe(true);
+    expect(isItemActive(item("pilotage"), "/finance/tresorerie", "")).toBe(false);
+    expect(isItemActive(item("tresorerie"), "/finance/tresorerie", "")).toBe(true);
+    expect(isItemActive(item("charges"), "/finance/charges-fixes", "")).toBe(true);
+    expect(isItemActive(item("tresorerie"), "/finance/charges-fixes", "")).toBe(false);
+    expect(isItemActive(item("invoices"), "/invoices", "")).toBe(true);
+    expect(isItemActive(item("payments"), "/finance/payments", "")).toBe(true);
   });
 
-  it("garde le groupe Tests & évaluations actif sur les sous-pages formateur", () => {
+  it("active évaluations sur les sous-pages formateur", () => {
     expect(isItemActive(item("evaluations"), "/formateur/evaluation/abc", "")).toBe(true);
-    expect(isItemActive(item("evaluations"), "/tests", "")).toBe(true);
+    expect(isItemActive(item("evaluations"), "/formateur/evaluations", "")).toBe(true);
+    expect(isItemActive(item("tests"), "/tests", "")).toBe(true);
   });
 
   it("ouvre Planning depuis l'ancienne route /classes", () => {

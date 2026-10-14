@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { assertProspectionNonGelee } from "@/lib/prospection-gel";
 import { buildPartnerNeedsReviewFilter } from "@/lib/partner-name-quality";
 
@@ -105,7 +105,6 @@ export function usePartnerDetails(id: string | undefined) {
 
 export function useCreatePartner() {
   const qc = useQueryClient();
-  const { toast } = useToast();
   return useMutation({
     mutationFn: async (partner: Partial<Partner>) => {
       assertProspectionNonGelee();
@@ -115,15 +114,14 @@ export function useCreatePartner() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["partners"] });
-      toast({ title: "Partenaire créé" });
+      toast.success("Partenaire créé");
     },
-    onError: (e: Error) => toast({ variant: "destructive", title: "Erreur", description: e.message }),
+    onError: (e: Error) => toast.error("Erreur", { description: e.message }),
   });
 }
 
 export function useUpdatePartner() {
   const qc = useQueryClient();
-  const { toast } = useToast();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Partner> & { id: string }) => {
       assertProspectionNonGelee();
@@ -133,15 +131,14 @@ export function useUpdatePartner() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["partners"] });
       qc.invalidateQueries({ queryKey: ["partner"] });
-      toast({ title: "Partenaire mis à jour" });
+      toast.success("Partenaire mis à jour");
     },
-    onError: (e: Error) => toast({ variant: "destructive", title: "Erreur", description: e.message }),
+    onError: (e: Error) => toast.error("Erreur", { description: e.message }),
   });
 }
 
 export function useDeletePartner() {
   const qc = useQueryClient();
-  const { toast } = useToast();
   return useMutation({
     mutationFn: async (id: string) => {
       assertProspectionNonGelee();
@@ -150,9 +147,9 @@ export function useDeletePartner() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["partners"] });
-      toast({ title: "Partenaire supprimé" });
+      toast.success("Partenaire supprimé");
     },
-    onError: (e: Error) => toast({ variant: "destructive", title: "Erreur", description: e.message }),
+    onError: (e: Error) => toast.error("Erreur", { description: e.message }),
   });
 }
 
@@ -176,7 +173,6 @@ export function usePartnerContracts(partnerId: string | undefined) {
 
 export function useCreatePartnerContract() {
   const qc = useQueryClient();
-  const { toast } = useToast();
   return useMutation({
     mutationFn: async (contract: Partial<PartnerContract>) => {
       const { data, error } = await supabase.from("partner_contracts").insert(contract as any).select().single();
@@ -185,9 +181,9 @@ export function useCreatePartnerContract() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["partner-contracts"] });
-      toast({ title: "Contrat ajouté" });
+      toast.success("Contrat ajouté");
     },
-    onError: (e: Error) => toast({ variant: "destructive", title: "Erreur", description: e.message }),
+    onError: (e: Error) => toast.error("Erreur", { description: e.message }),
   });
 }
 
@@ -222,7 +218,6 @@ export function usePartnerContacts(partnerId: string | undefined) {
 
 export function useCreatePartnerContact() {
   const qc = useQueryClient();
-  const { toast } = useToast();
   return useMutation({
     mutationFn: async (contact: Partial<PartnerContact>) => {
       const { data, error } = await supabase.from("partner_contacts").insert(contact as any).select().single();
@@ -231,9 +226,9 @@ export function useCreatePartnerContact() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["partner-contacts"] });
-      toast({ title: "Contact ajouté" });
+      toast.success("Contact ajouté");
     },
-    onError: (e: Error) => toast({ variant: "destructive", title: "Erreur", description: e.message }),
+    onError: (e: Error) => toast.error("Erreur", { description: e.message }),
   });
 }
 

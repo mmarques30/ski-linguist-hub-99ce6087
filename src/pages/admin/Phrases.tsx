@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,7 +62,6 @@ import {
   Download,
   MessageSquareQuote,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
 import {
   useTestPhrases,
@@ -106,7 +106,6 @@ interface PhraseFormData {
 }
 
 export default function AdminPhrases() {
-  const { toast } = useToast();
   const { confirm, dialog: confirmDialog } = useConfirmAction();
   
   // Filters
@@ -247,11 +246,7 @@ export default function AdminPhrases() {
       const phrasesToImport = parsed.phrases || parsed;
       setImportPreview(Array.isArray(phrasesToImport) ? phrasesToImport : []);
     } catch {
-      toast({
-        variant: "destructive",
-        title: "JSON invalide",
-        description: "Veuillez vérifier le format du fichier.",
-      });
+      toast.error("JSON invalide", { description: "Veuillez vérifier le format du fichier." });
     }
   };
 

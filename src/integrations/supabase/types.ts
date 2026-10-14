@@ -606,6 +606,24 @@ export type Database = {
           },
         ]
       }
+      cron_dispatch_secret: {
+        Row: {
+          id: boolean
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          id?: boolean
+          token?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: boolean
+          token?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       document_sendings: {
         Row: {
           created_at: string
@@ -3574,13 +3592,13 @@ export type Database = {
           email: string
           id: string
           name: string
-          phone: string
+          phone: string | null
           photo_face_url: string | null
           photo_id_url: string | null
-          profession: string
+          profession: string | null
           profession_autre: string | null
           ski_discipline: string | null
-          ski_school_id: string
+          ski_school_id: string | null
           student_id: string | null
           training_cycle: string | null
         }
@@ -3590,13 +3608,13 @@ export type Database = {
           email: string
           id?: string
           name: string
-          phone: string
+          phone?: string | null
           photo_face_url?: string | null
           photo_id_url?: string | null
-          profession: string
+          profession?: string | null
           profession_autre?: string | null
           ski_discipline?: string | null
-          ski_school_id: string
+          ski_school_id?: string | null
           student_id?: string | null
           training_cycle?: string | null
         }
@@ -3606,13 +3624,13 @@ export type Database = {
           email?: string
           id?: string
           name?: string
-          phone?: string
+          phone?: string | null
           photo_face_url?: string | null
           photo_id_url?: string | null
-          profession?: string
+          profession?: string | null
           profession_autre?: string | null
           ski_discipline?: string | null
-          ski_school_id?: string
+          ski_school_id?: string | null
           student_id?: string | null
           training_cycle?: string | null
         }
