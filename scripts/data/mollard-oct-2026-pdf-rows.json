@@ -40,8 +40,8 @@
     "partner_id": "d6753f10-9cea-43cb-a8d2-f5986650feb5",
     "payment": "pending_reminder_sent",
     "note": "Relance paiement envoyée 14/10 Resend 01a139aa-46ba-7c8e-9041-5229100c24ab ; checkout cs_live_a1UJ00fGaTdi3DM1Fs8ADaVSPF6CWyCOEVL4qWtDga7ja8hL6b82oyFxUx",
-    "habillage_note": "FLI ecole_ski (Paula: pas le modèle ESF)",
-    "pdf_habillage": "ecole_ski"
+    "habillage_note": "ESF .dotx saison 2026 (Paula: modèle à respecter)",
+    "pdf_habillage": "esf"
   },
   {
     "evaluation_id": "287717b6-dbf7-4dae-a149-1e599b78ecd4",
@@ -83,8 +83,8 @@
     "email": "lisa.roch247@gmail.com",
     "partner_id": "46a2d62b-1b7c-4650-82d6-bb90dd32c2b6",
     "payment": "school",
-    "habillage_note": "FLI ecole_ski (Paula: pas le modèle ESF)",
-    "pdf_habillage": "ecole_ski"
+    "habillage_note": "ESF .dotx saison 2026 (Paula: modèle à respecter)",
+    "pdf_habillage": "esf"
   },
   {
     "evaluation_id": "277afb29-633d-4d3f-848c-41b797223768",
@@ -126,8 +126,8 @@
     "email": "deski.grosdeleglisemontaine@gmail.com",
     "partner_id": "4508792a-bf5c-4fdc-a95c-02f18ae8290a",
     "payment": "bank_2309",
-    "habillage_note": "FLI ecole_ski (Paula: pas le modèle ESF)",
-    "pdf_habillage": "ecole_ski"
+    "habillage_note": "ESF .dotx saison 2026 (Paula: modèle à respecter)",
+    "pdf_habillage": "esf"
   },
   {
     "evaluation_id": "60e75a80-e569-4f89-a5a2-d89049813289",
@@ -171,8 +171,8 @@
     "payment": "stripe",
     "stripe_payment_id": "pi_3UI3ExQBleN6FLtS02mOgyCe",
     "stripe_charge_id": "ch_3UI3ExQBleN6FLtS0b7i9Z76",
-    "habillage_note": "FLI ecole_ski (Paula: pas le modèle ESF)",
-    "pdf_habillage": "ecole_ski"
+    "habillage_note": "ESF .dotx saison 2026 (Paula: modèle à respecter)",
+    "pdf_habillage": "esf"
   },
   {
     "evaluation_id": "4f215b5b-0015-4747-a3fa-de90445870d9",
@@ -257,8 +257,8 @@
     "email": "sachafmir@gmail.com",
     "partner_id": "54dcaa7a-0fb1-43fd-a1e8-c291cb5c0e18",
     "payment": "school_st_gervais_batch",
-    "habillage_note": "FLI ecole_ski (Paula: pas le modèle ESF)",
-    "pdf_habillage": "ecole_ski"
+    "habillage_note": "ESF .dotx saison 2026 (Paula: modèle à respecter)",
+    "pdf_habillage": "esf"
   },
   {
     "evaluation_id": "14370a9b-9f66-4c7a-a818-3c7ba77fad85",
@@ -302,8 +302,8 @@
     "payment": "stripe",
     "stripe_payment_id": "pi_3UKaWyQBleN6FLtS0m1TVisx",
     "stripe_charge_id": "ch_3UKaWyQBleN6FLtS0Q6DmMpN",
-    "habillage_note": "FLI ecole_ski (Paula: pas le modèle ESF)",
-    "pdf_habillage": "ecole_ski"
+    "habillage_note": "ESF .dotx saison 2026 (Paula: modèle à respecter)",
+    "pdf_habillage": "esf"
   },
   {
     "evaluation_id": "e6b8ba5f-5008-41ff-9d02-f31c0a990cf8",
@@ -345,8 +345,8 @@
     "email": "charlottepautot@gmail.com",
     "partner_id": "c6978ead-813b-4646-bf23-01f7877af4d0",
     "payment": "bank_0210",
-    "habillage_note": "FLI ecole_ski (Paula: pas le modèle ESF)",
-    "pdf_habillage": "ecole_ski"
+    "habillage_note": "ESF .dotx saison 2026 (Paula: modèle à respecter)",
+    "pdf_habillage": "esf"
   },
   {
     "evaluation_id": "d4e018de-4571-4309-9498-b753385c6cc7",
@@ -390,8 +390,8 @@
     "payment": "stripe",
     "stripe_payment_id": "pi_3UNRwpQBleN6FLtS0y9Fq7oO",
     "stripe_charge_id": "ch_3UNRwpQBleN6FLtS0luvdsNg",
-    "habillage_note": "FLI ecole_ski (Paula: pas le modèle ESF)",
-    "pdf_habillage": "ecole_ski"
+    "habillage_note": "ESF .dotx saison 2026 (Paula: modèle à respecter)",
+    "pdf_habillage": "esf"
   },
   {
     "evaluation_id": "9c8c4ede-6d2b-4894-a334-354accd9daa2",
@@ -433,8 +433,8 @@
     "email": "anouk.leynaud@gmail.com",
     "partner_id": "54dcaa7a-0fb1-43fd-a1e8-c291cb5c0e18",
     "payment": "school_st_gervais_batch",
-    "habillage_note": "FLI ecole_ski (Paula: pas le modèle ESF)",
-    "pdf_habillage": "ecole_ski"
+    "habillage_note": "ESF .dotx saison 2026 (Paula: modèle à respecter)",
+    "pdf_habillage": "esf"
   },
   {
     "evaluation_id": "f0ad3680-bff5-4dbc-9c04-4514688a4215",
@@ -478,8 +478,8 @@
     "payment": "stripe_double",
     "stripe_payment_id": "pi_3UNs0XQBleN6FLtS1d8BvFoZ",
     "note": "2 paiements Stripe 45€ réussis (06/10 et 07/10) — possible double paiement",
-    "habillage_note": "FLI ecole_ski (Paula: pas le modèle ESF)",
-    "pdf_habillage": "ecole_ski"
+    "habillage_note": "ESF .dotx saison 2026 (Paula: modèle à respecter)",
+    "pdf_habillage": "esf"
   },
   {
     "evaluation_id": "09126139-ae70-4f64-ad73-add9362b0bfc",
@@ -521,8 +521,8 @@
     "email": "louise.labrousse@gmail.com",
     "partner_id": "54dcaa7a-0fb1-43fd-a1e8-c291cb5c0e18",
     "payment": "school_st_gervais_batch",
-    "habillage_note": "FLI ecole_ski (Paula: pas le modèle ESF)",
-    "pdf_habillage": "ecole_ski"
+    "habillage_note": "ESF .dotx saison 2026 (Paula: modèle à respecter)",
+    "pdf_habillage": "esf"
   },
   {
     "evaluation_id": "b80999ea-cdf4-4fe5-ba69-fa65850b15ee",
@@ -564,8 +564,8 @@
     "email": "zoetollet@icloud.com",
     "partner_id": "54dcaa7a-0fb1-43fd-a1e8-c291cb5c0e18",
     "payment": "school_st_gervais_batch",
-    "habillage_note": "FLI ecole_ski (Paula: pas le modèle ESF)",
-    "pdf_habillage": "ecole_ski"
+    "habillage_note": "ESF .dotx saison 2026 (Paula: modèle à respecter)",
+    "pdf_habillage": "esf"
   },
   {
     "evaluation_id": "c807ba3c-0e7c-4469-b966-ea14a1de5ba2",
@@ -607,8 +607,8 @@
     "email": "deski.grosdeleglisemontaine@gmail.com",
     "partner_id": "4508792a-bf5c-4fdc-a95c-02f18ae8290a",
     "payment": "bank_1210",
-    "habillage_note": "FLI ecole_ski (Paula: pas le modèle ESF)",
-    "pdf_habillage": "ecole_ski"
+    "habillage_note": "ESF .dotx saison 2026 (Paula: modèle à respecter)",
+    "pdf_habillage": "esf"
   },
   {
     "evaluation_id": "824c7d4c-8d16-471c-947c-52bfdff0eaff",
@@ -650,8 +650,8 @@
     "email": "anouck.benamor@gmail.com",
     "partner_id": "54dcaa7a-0fb1-43fd-a1e8-c291cb5c0e18",
     "payment": "school_st_gervais_batch",
-    "habillage_note": "FLI ecole_ski (Paula: pas le modèle ESF)",
-    "pdf_habillage": "ecole_ski"
+    "habillage_note": "ESF .dotx saison 2026 (Paula: modèle à respecter)",
+    "pdf_habillage": "esf"
   },
   {
     "evaluation_id": "36eceb4c-f81a-4211-9b3d-1997ff88123a",
@@ -693,8 +693,8 @@
     "email": "bujard.pierre@orange.fr",
     "partner_id": "46a2d62b-1b7c-4650-82d6-bb90dd32c2b6",
     "payment": "school",
-    "habillage_note": "FLI ecole_ski (Paula: pas le modèle ESF)",
-    "pdf_habillage": "ecole_ski"
+    "habillage_note": "ESF .dotx saison 2026 (Paula: modèle à respecter)",
+    "pdf_habillage": "esf"
   },
   {
     "evaluation_id": "deed3466-ef12-4918-bff1-57750b655c05",
@@ -737,7 +737,7 @@
     "partner_id": "d6753f10-9cea-43cb-a8d2-f5986650feb5",
     "payment": "bank_0309",
     "note": "Paiement virement 03/09/2026 (confirmé Paula)",
-    "habillage_note": "FLI ecole_ski (Paula: pas le modèle ESF)",
-    "pdf_habillage": "ecole_ski"
+    "habillage_note": "ESF .dotx saison 2026 (Paula: modèle à respecter)",
+    "pdf_habillage": "esf"
   }
 ]

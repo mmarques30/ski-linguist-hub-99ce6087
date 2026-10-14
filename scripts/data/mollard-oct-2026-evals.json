@@ -31,7 +31,7 @@
     "scoring_system": "sur_5",
     "note_methodologique": null,
     "note": "Relance paiement envoyée 14/10 Resend 01a139aa-46ba-7c8e-9041-5229100c24ab ; checkout cs_live_a1UJ00fGaTdi3DM1Fs8ADaVSPF6CWyCOEVL4qWtDga7ja8hL6b82oyFxUx",
-    "pdf_habillage": "ecole_ski"
+    "pdf_habillage": "esf"
   },
   {
     "key": "lisa-roch",
@@ -64,7 +64,7 @@
     "concl": "Vous avez un bon niveau de compréhension mais vous avez besoin de revoir les points de grammaire et d'apprendre du vocabulaire pour être mieux comprise.",
     "scoring_system": "sur_5",
     "note_methodologique": null,
-    "pdf_habillage": "ecole_ski"
+    "pdf_habillage": "esf"
   },
   {
     "key": "montaine-1",
@@ -99,7 +99,7 @@
     "note_methodologique": null,
     "send_to_school": false,
     "send_note": "Moins bon résultat — envoi candidate seule (Paula 14/10)",
-    "pdf_habillage": "ecole_ski"
+    "pdf_habillage": "esf"
   },
   {
     "key": "maelys-pietri",
@@ -150,7 +150,7 @@
     "note_methodologique": "Barème Alpe d'Huez /20 (tableau de correspondance) : 10,5 · 10,5 · 10,5 · 10 · 11,5 · 10,5 → B2 Niveau 3 OPÉRATIONNEL (Moyen). Notes Mollard +0,5 ; originaux 10 · 10 · 10 · 9,5 · 11 · 10.",
     "stripe_payment_id": "pi_3UI3ExQBleN6FLtS02mOgyCe",
     "stripe_charge_id": "ch_3UI3ExQBleN6FLtS0b7i9Z76",
-    "pdf_habillage": "ecole_ski"
+    "pdf_habillage": "esf"
   },
   {
     "key": "steven-mandica",
@@ -184,7 +184,8 @@
     "concl": "En conclusion vous avez un niveau opérationnel qui vous permet de communiquer correctement avec la clientèle anglophone. Continuez néanmoins à développer l'apprentissage de vos connaissances, vous gagnerez en aisance et en fluidité.",
     "scoring_system": "sur_5",
     "note_methodologique": null,
-    "note": "Traité hors lot Mollard (processus séparé, Paula 14/10)"
+    "note": "Traité hors lot Mollard (processus séparé, Paula 14/10)",
+    "pdf_habillage": "dsf"
   },
   {
     "key": "sacha-mir",
@@ -217,7 +218,7 @@
     "concl": "En conclusion vous avez un niveau de fluidité qui vous permet de communiquer avec la clientèle anglophone de manière satisfaisante.",
     "scoring_system": "sur_5",
     "note_methodologique": null,
-    "pdf_habillage": "ecole_ski"
+    "pdf_habillage": "esf"
   },
   {
     "key": "leo-lamon",
@@ -252,7 +253,7 @@
     "note_methodologique": null,
     "stripe_payment_id": "pi_3UKaWyQBleN6FLtS0m1TVisx",
     "stripe_charge_id": "ch_3UKaWyQBleN6FLtS0Q6DmMpN",
-    "pdf_habillage": "ecole_ski"
+    "pdf_habillage": "esf"
   },
   {
     "key": "charlotte-pautot",
@@ -286,7 +287,7 @@
     "concl": "Votre niveau vous permet de comprendre globalement et de vous exprimer en général.",
     "scoring_system": "sur_5",
     "note_methodologique": null,
-    "pdf_habillage": "ecole_ski"
+    "pdf_habillage": "esf"
   },
   {
     "key": "chloe-merloz",
@@ -321,7 +322,7 @@
     "note_methodologique": null,
     "stripe_payment_id": "pi_3UNRwpQBleN6FLtS0y9Fq7oO",
     "stripe_charge_id": "ch_3UNRwpQBleN6FLtS0luvdsNg",
-    "pdf_habillage": "ecole_ski"
+    "pdf_habillage": "esf"
   },
   {
     "key": "anouk-leynaud",
@@ -354,7 +355,7 @@
     "concl": "Vous pouvez communiquer mais devez améliorer les structures de vos phrases et la fluidité pour être mieux comprise.",
     "scoring_system": "sur_5",
     "note_methodologique": null,
-    "pdf_habillage": "ecole_ski"
+    "pdf_habillage": "esf"
   },
   {
     "key": "gregoire-roulleaux",
@@ -389,7 +390,7 @@
     "note_methodologique": null,
     "stripe_payment_id": "pi_3UNs0XQBleN6FLtS1d8BvFoZ",
     "note": "2 paiements Stripe 45€ réussis (06/10 et 07/10) — possible double paiement",
-    "pdf_habillage": "ecole_ski"
+    "pdf_habillage": "esf"
   },
   {
     "key": "louise-labrousse",
@@ -422,7 +423,7 @@
     "concl": "Vous avez un niveau autonome qui demande à être amélioré sur le plan de la grammaire.",
     "scoring_system": "sur_5",
     "note_methodologique": null,
-    "pdf_habillage": "ecole_ski"
+    "pdf_habillage": "esf"
   },
   {
     "key": "zoe-tollet",
@@ -455,7 +456,7 @@
     "concl": "Vous avez un niveau autonome qui demande à être amélioré sur le plan du lexique.",
     "scoring_system": "sur_5",
     "note_methodologique": null,
-    "pdf_habillage": "ecole_ski"
+    "pdf_habillage": "esf"
   },
   {
     "key": "montaine-2",
@@ -491,7 +492,7 @@
     "note_methodologique": null,
     "send_to_school": true,
     "send_note": "Meilleur résultat — TO candidate + CC école (Paula 14/10)",
-    "pdf_habillage": "ecole_ski"
+    "pdf_habillage": "esf"
   },
   {
     "key": "anouk-benamor",
@@ -524,7 +525,7 @@
     "concl": "Vous avez un niveau autonome qui demande à être amélioré sur le plan du lexique.",
     "scoring_system": "sur_5",
     "note_methodologique": null,
-    "pdf_habillage": "ecole_ski"
+    "pdf_habillage": "esf"
   },
   {
     "key": "pierre-bujard",
@@ -557,7 +558,7 @@
     "concl": "Votre niveau vous permet de comprendre globalement et de vous exprimer en général.",
     "scoring_system": "sur_5",
     "note_methodologique": null,
-    "pdf_habillage": "ecole_ski"
+    "pdf_habillage": "esf"
   },
   {
     "key": "sasha-gonin",
@@ -592,6 +593,6 @@
     "scoring_system": "sur_5",
     "note_methodologique": null,
     "note": "Paiement virement 03/09/2026 (confirmé Paula)",
-    "pdf_habillage": "ecole_ski"
+    "pdf_habillage": "esf"
   }
 ]
