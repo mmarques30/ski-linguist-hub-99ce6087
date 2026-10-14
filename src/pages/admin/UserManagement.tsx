@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +15,6 @@ import {
 import { useUserManagement } from "@/hooks/useUserManagement";
 import { UserFormDialog } from "@/components/admin/UserFormDialog";
 import { EditPermissionsDialog } from "@/components/admin/EditPermissionsDialog";
-import { useToast } from "@/hooks/use-toast";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
 import {
   CardList,
@@ -46,7 +46,6 @@ export default function UserManagement() {
   const { users, isLoading, createUser, toggleUserActive } = useUserManagement();
   const [formOpen, setFormOpen] = useState(false);
   const [editUserId, setEditUserId] = useState<string | null>(null);
-  const { toast } = useToast();
   const { confirm, dialog: confirmDialog } = useConfirmAction();
 
   const handleCreate = (data: Parameters<typeof createUser.mutateAsync>[0]) => {
@@ -56,14 +55,10 @@ export default function UserManagement() {
       run: async () => {
         try {
           await createUser.mutateAsync(data);
-          toast({ title: "Utilisateur créé avec succès" });
+          toast.success("Utilisateur créé avec succès");
           setFormOpen(false);
         } catch (err: unknown) {
-          toast({
-            variant: "destructive",
-            title: "Erreur",
-            description: err instanceof Error ? err.message : "Erreur",
-          });
+          toast.error("Erreur", { description: err instanceof Error ? err.message : "Erreur" });
         }
       },
     });
@@ -78,13 +73,9 @@ export default function UserManagement() {
       run: async () => {
         try {
           await toggleUserActive.mutateAsync({ userId, isActive: !currentActive });
-          toast({ title: currentActive ? "Utilisateur désactivé" : "Utilisateur activé" });
+          toast.success(currentActive ? "Utilisateur désactivé" : "Utilisateur activé");
         } catch (err: unknown) {
-          toast({
-            variant: "destructive",
-            title: "Erreur",
-            description: err instanceof Error ? err.message : "Erreur",
-          });
+          toast.error("Erreur", { description: err instanceof Error ? err.message : "Erreur" });
         }
       },
     });

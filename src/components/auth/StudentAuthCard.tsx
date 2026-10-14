@@ -1,11 +1,11 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Loader2, Mail } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
 import { IconChip } from "@/components/ui-kit";
 import fliLogo from "@/assets/fli-marca-black.png";
 import fliLogoDark from "@/assets/fli-marca-yellow.png";
@@ -19,17 +19,12 @@ export function StudentAuthCard() {
   const [isLoading, setIsLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const { signInWithMagicLink } = useAuth();
-  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const validation = emailSchema.safeParse({ email });
     if (!validation.success) {
-      toast({
-        variant: "destructive",
-        title: "Email invalide",
-        description: validation.error.errors[0].message,
-      });
+      toast.error("Email invalide", { description: validation.error.errors[0].message });
       return;
     }
 
@@ -37,11 +32,7 @@ export function StudentAuthCard() {
     try {
       const { error } = await signInWithMagicLink(email);
       if (error) {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: error.message,
-        });
+        toast.error("Erreur", { description: error.message });
       } else {
         setSent(true);
       }

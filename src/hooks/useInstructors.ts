@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { languagesInclude } from "@/lib/taught-languages";
 
 export interface Instructor {
@@ -199,7 +199,6 @@ export function useInstructorPayments(instructorId: string | undefined) {
 
 export function useCreateInstructor() {
   const qc = useQueryClient();
-  const { toast } = useToast();
   return useMutation({
     mutationFn: async (values: Partial<Instructor>) => {
       const { data, error } = await supabase
@@ -212,17 +211,16 @@ export function useCreateInstructor() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["instructors"] });
-      toast({ title: "Formateur créé" });
+      toast.success("Formateur créé");
     },
     onError: (e: any) => {
-      toast({ variant: "destructive", title: "Erreur", description: e.message });
+      toast.error("Erreur", { description: e.message });
     },
   });
 }
 
 export function useUpdateInstructor() {
   const qc = useQueryClient();
-  const { toast } = useToast();
   return useMutation({
     mutationFn: async ({ id, ...values }: Partial<Instructor> & { id: string }) => {
       const { error } = await supabase
@@ -234,17 +232,16 @@ export function useUpdateInstructor() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["instructors"] });
       qc.invalidateQueries({ queryKey: ["instructor"] });
-      toast({ title: "Formateur mis à jour" });
+      toast.success("Formateur mis à jour");
     },
     onError: (e: any) => {
-      toast({ variant: "destructive", title: "Erreur", description: e.message });
+      toast.error("Erreur", { description: e.message });
     },
   });
 }
 
 export function useDeleteInstructor() {
   const qc = useQueryClient();
-  const { toast } = useToast();
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("instructors").delete().eq("id", id);
@@ -252,17 +249,16 @@ export function useDeleteInstructor() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["instructors"] });
-      toast({ title: "Formateur supprimé" });
+      toast.success("Formateur supprimé");
     },
     onError: (e: any) => {
-      toast({ variant: "destructive", title: "Erreur", description: e.message });
+      toast.error("Erreur", { description: e.message });
     },
   });
 }
 
 export function useCreateInstructorSession() {
   const qc = useQueryClient();
-  const { toast } = useToast();
   return useMutation({
     mutationFn: async (values: Omit<InstructorSession, "id" | "created_at">) => {
       const { data, error } = await supabase
@@ -275,10 +271,10 @@ export function useCreateInstructorSession() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["instructor-sessions"] });
-      toast({ title: "Session créée" });
+      toast.success("Session créée");
     },
     onError: (e: any) => {
-      toast({ variant: "destructive", title: "Erreur", description: e.message });
+      toast.error("Erreur", { description: e.message });
     },
   });
 }

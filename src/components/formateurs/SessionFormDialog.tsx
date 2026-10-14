@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateInstructorSession, checkScheduleConflict } from "@/hooks/useInstructors";
-import { useToast } from "@/hooks/use-toast";
 
 interface Props {
   open: boolean;
@@ -21,7 +21,6 @@ interface Props {
 
 export function SessionFormDialog({ open, onOpenChange, instructorId, instructorName }: Props) {
   const create = useCreateInstructorSession();
-  const { toast } = useToast();
   const [form, setForm] = useState({
     session_date: "",
     start_time: "09:00",
@@ -38,11 +37,7 @@ export function SessionFormDialog({ open, onOpenChange, instructorId, instructor
       form.end_time
     );
     if (conflict) {
-      toast({
-        variant: "destructive",
-        title: "Conflit d'horaire",
-        description: "Ce formateur a déjà une session sur ce créneau.",
-      });
+      toast.error("Conflit d'horaire", { description: "Ce formateur a déjà une session sur ce créneau." });
       return;
     }
 
