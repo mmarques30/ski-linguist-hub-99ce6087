@@ -204,7 +204,7 @@ function createMemoryStore(options?: {
           (s) =>
             s.inscription_id === inscriptionId && s.document_type === "FACTURE"
         ) ?? null
-      );
+      ) as { id: string; pdf_url: string } | null;
     },
     async uploadAttestationPdf(path) {
       calls.push("uploadAttestationPdf");
