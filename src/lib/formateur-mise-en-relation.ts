@@ -71,14 +71,16 @@ export function buildFormateurMiseEnRelationBodyText(
 
   return `Bonjour ${first},
 
-Nous avons bien reçu le règlement de votre formation ${input.formationLabel} (inscription ${input.inscriptionCode}).
+Nous avons bien reçu le règlement de votre formation ${input.formationLabel} (inscription ${input.inscriptionCode}). Merci pour votre confiance et pour avoir finalisé votre dossier.
 
-Voici les coordonnées de votre ${contactWord} pour organiser le planning des cours :
+Nous sommes ravis de pouvoir démarrer cette formation avec vous. Voici les coordonnées de votre ${contactWord}, avec qui vous pourrez organiser directement le planning de vos cours :
 
 ${input.formateurFullName}
 E-mail : ${input.formateurEmail}${phoneLine}
 
-Vous trouverez en pièces jointes les fiches de présence (FORMATEUR et STAGIAIRE), préremplies. Merci de les faire signer à chaque cours, puis de nous les renvoyer à la fin des séances (réponse à ce message ou info@fli.fr).
+Vous trouverez en pièces jointes les fiches de présence (FORMATEUR et STAGIAIRE), déjà préremplies. Merci de les faire signer à chaque cours, puis de nous les renvoyer à la fin des séances (en réponse à ce message ou à info@fli.fr).
+
+Nous vous souhaitons une très belle formation. N'hésitez pas à nous écrire si vous avez la moindre question.
 
 Bien cordialement,
 Paula Rangel Halbwachs
@@ -121,9 +123,15 @@ export function buildFormateurMissionBodyText(input: FormateurMissionEmailInput)
       }`
     : "";
 
+  const pjLine = input.contractNumber?.trim()
+    ? "Pièces jointes : contrat de prestation à nous retourner signé, et fiches de présence préremplies."
+    : "Pièces jointes : fiches de présence préremplies.";
+
   return `Bonjour ${first},
 
-Nous vous confions une nouvelle mission de formation individualisée en ligne :
+Nous avons le plaisir de vous confier une nouvelle mission de formation individualisée en ligne. Merci encore pour votre engagement à nos côtés.
+
+Voici les informations du stagiaire :
 
 • Stagiaire : ${input.studentFullName}
 • E-mail : ${input.studentEmail}${phone}
@@ -131,11 +139,11 @@ Nous vous confions une nouvelle mission de formation individualisée en ligne :
 • Période : ${input.periodLabel || "selon planning convenu"}
 • Référence dossier : ${input.inscriptionCode}${contratLine}
 
-Merci de contacter le stagiaire pour fixer les créneaux (Google Meet).
+Merci de contacter le stagiaire pour convenir ensemble des créneaux (Google Meet) et démarrer les cours dans les meilleures conditions.
 
-Pièces jointes : fiches de présence préremplies${
-    input.contractNumber?.trim() ? " et contrat de prestation à nous retourner signé" : ""
-  }.
+${pjLine}
+
+Nous vous souhaitons une très belle collaboration et une excellente formation. Merci d'avance pour votre suivi et pour le renvoi des fiches signées en fin de séances.
 
 Bien cordialement,
 Paula Rangel Halbwachs
