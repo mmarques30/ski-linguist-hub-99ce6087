@@ -46,7 +46,7 @@ const INDICATORS = [
   { value: "87 %", label: "stagiaires satisfait·es ou très satisfait·es" },
   { value: "0,6 %", label: "taux d'abandon" },
   { value: "4,72 / 5", label: "qualité d'animation" },
-  { value: "Depuis 2018", label: "formations montagne" },
+  { value: "+ de 40 ans", label: "FLI" },
 ] as const;
 
 const BADGES = ["Groupes de 8 personnes", "Financement FIFPL", "Certifié Qualiopi"] as const;

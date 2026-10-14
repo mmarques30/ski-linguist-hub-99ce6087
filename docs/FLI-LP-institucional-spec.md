@@ -65,7 +65,7 @@ Menu do header (scroll suave para cada âncora, exceto o CTA):
 - 87% de stagiaires satisfait·es ou très satisfait·es
 - 0,6% de taux d'abandon
 - 4,72/5 en qualité d'animation
-- Depuis 2018
+- FLI a + de 40 ans
 
 ⚠️ **A confirmar com Paula** : nombre total de moniteur·rices formé·es à ce jour, nombre d'écoles de ski partenaires — si dispo, remplacer un des 4 indicateurs ci-dessus par un chiffre plus parlant en acquisition (ex. "+X moniteurs formés chaque saison").
 

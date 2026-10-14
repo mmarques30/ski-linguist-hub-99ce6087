@@ -60,6 +60,12 @@ describe("LP institutionnelle — conformité spec", () => {
     expect(src).toContain("YOUTUBE_VIDEO_ID");
   });
 
+  it("indique que FLI a plus de 40 ans", () => {
+    const src = landing();
+    expect(src).toContain("+ de 40 ans");
+    expect(src).not.toContain("Depuis 2018");
+  });
+
   it("ne publie pas le tarif dans la FAQ", () => {
     const src = landing();
     expect(src).not.toContain("Le coût est-il élevé");
