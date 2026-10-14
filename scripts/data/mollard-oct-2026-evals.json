@@ -98,7 +98,7 @@
   {
     "key": "maelys-pietri",
     "name": "Maelys Pietri",
-    "email": "maelys-pietri@fli.placeholder.local",
+    "email": "maelys.pietri@gmail.com",
     "phone": null,
     "school": "ESF ALPE D'HUEZ (L')",
     "school_id": "86ffc4e5-995c-47dd-be10-21cc583fecb2",
@@ -108,7 +108,7 @@
     "profession": "moniteur",
     "test_at": "2026-10-08T11:00:00+00",
     "previous_test": false,
-    "payment": "unknown",
+    "payment": "stripe",
     "scores": [
       10.5,
       10.5,
@@ -141,7 +141,9 @@
       10
     ],
     "scoring_system": "sur_20",
-    "note_methodologique": "Barème Alpe d'Huez /20 (tableau de correspondance) : 10,5 · 10,5 · 10,5 · 10 · 11,5 · 10,5 → B2 Niveau 3 OPÉRATIONNEL (Moyen). Notes Mollard +0,5 ; originaux 10 · 10 · 10 · 9,5 · 11 · 10."
+    "note_methodologique": "Barème Alpe d'Huez /20 (tableau de correspondance) : 10,5 · 10,5 · 10,5 · 10 · 11,5 · 10,5 → B2 Niveau 3 OPÉRATIONNEL (Moyen). Notes Mollard +0,5 ; originaux 10 · 10 · 10 · 9,5 · 11 · 10.",
+    "stripe_payment_id": "pi_3UI3ExQBleN6FLtS02mOgyCe",
+    "stripe_charge_id": "ch_3UI3ExQBleN6FLtS0b7i9Z76"
   },
   {
     "key": "steven-mandica",
@@ -211,7 +213,7 @@
   {
     "key": "leo-lamon",
     "name": "Léo Lamon",
-    "email": "leo-lamon@fli.placeholder.local",
+    "email": "leolamon5@gmail.com",
     "phone": null,
     "school": "ESF Courchevel 1550",
     "school_id": "a33b266c-230c-41a3-b2e4-796b2d59701f",
@@ -221,7 +223,7 @@
     "profession": "moniteur",
     "test_at": "2026-10-08T13:00:00+00",
     "previous_test": false,
-    "payment": "unknown",
+    "payment": "stripe",
     "scores": [
       1.5,
       1.5,
@@ -238,7 +240,9 @@
     "points": "Apprenez à utiliser les temps du passé PRETERIT et PRESENT PERFECT. Revoyez MUST et HAVE TO, CAN et TO BE ABLE TO. Utilisez SHOULD pour donner des conseils.",
     "concl": "Votre niveau vous permet de comprendre globalement et de vous exprimer en général.",
     "scoring_system": "sur_5",
-    "note_methodologique": null
+    "note_methodologique": null,
+    "stripe_payment_id": "pi_3UKaWyQBleN6FLtS0m1TVisx",
+    "stripe_charge_id": "ch_3UKaWyQBleN6FLtS0Q6DmMpN"
   },
   {
     "key": "charlotte-pautot",
@@ -276,7 +280,7 @@
   {
     "key": "chloe-merloz",
     "name": "Chloé Merloz",
-    "email": "chloe-merloz@fli.placeholder.local",
+    "email": "cloeski@gmail.com",
     "phone": null,
     "school": "ESF Courchevel 1550",
     "school_id": "a33b266c-230c-41a3-b2e4-796b2d59701f",
@@ -286,7 +290,7 @@
     "profession": "moniteur",
     "test_at": "2026-10-08T14:00:00+00",
     "previous_test": false,
-    "payment": "unknown",
+    "payment": "stripe",
     "scores": [
       3.5,
       2.5,
@@ -303,7 +307,9 @@
     "points": "Utilisez le PRESENT SIMPLE pour les vérités permanentes, la routine et les règles de sécurité. Apprenez PRETERIT et PRESENT PERFECT.",
     "concl": "Vous pouvez communiquer et donner des consignes en anglais mais pouvez améliorer votre conversation générale en revoyant les temps cités.",
     "scoring_system": "sur_5",
-    "note_methodologique": null
+    "note_methodologique": null,
+    "stripe_payment_id": "pi_3UNRwpQBleN6FLtS0y9Fq7oO",
+    "stripe_charge_id": "ch_3UNRwpQBleN6FLtS0luvdsNg"
   },
   {
     "key": "anouk-leynaud",
@@ -350,7 +356,7 @@
     "profession": "moniteur",
     "test_at": "2026-10-12T18:00:00+00",
     "previous_test": false,
-    "payment": "unknown",
+    "payment": "stripe_double",
     "scores": [
       3.5,
       2.0,
@@ -367,7 +373,9 @@
     "points": "Utilisez PRESENT -ing et PRESENT SIMPLE selon le contexte. Apprenez PRETERIT et PRESENT PERFECT. « Dans le but de » = TO (ex. : To get better at skiing, you need to...).",
     "concl": "Vous arrivez à vous faire comprendre mais votre accent gène par moments ; vous utilisez parfois le passé et parfois pas — à revoir.",
     "scoring_system": "sur_5",
-    "note_methodologique": null
+    "note_methodologique": null,
+    "stripe_payment_id": "pi_3UNs0XQBleN6FLtS1d8BvFoZ",
+    "note": "2 paiements Stripe 45€ réussis (06/10 et 07/10) — possible double paiement"
   },
   {
     "key": "louise-labrousse",
@@ -544,7 +552,7 @@
     "test_at": "2026-10-12T14:30:00+00",
     "previous_test": true,
     "previous_result": "A2",
-    "payment": "card",
+    "payment": "card_claimed_not_found_stripe",
     "scores": [
       4.0,
       2.0,
@@ -561,6 +569,7 @@
     "points": "Utilisez PRESENT -ing et PRESENT SIMPLE. Apprenez PRETERIT et PRESENT PERFECT. Revoir SHOULD pour donner un conseil.",
     "concl": "Votre niveau de compréhension est bon ; travaillez grammaire et lexique technique pour être mieux compris.",
     "scoring_system": "sur_5",
-    "note_methodologique": null
+    "note_methodologique": null,
+    "note": "Réservation « paiement par carte » mais aucun charge 45€ Stripe pour goninporquezsasha@gmail.com ni nom Gonin/Porquez/Sasha"
   }
 ]

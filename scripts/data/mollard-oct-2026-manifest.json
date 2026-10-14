@@ -68,11 +68,11 @@
   {
     "key": "maelys-pietri",
     "name": "Maelys Pietri",
-    "email": "maelys-pietri@fli.placeholder.local",
+    "email": "maelys.pietri@gmail.com",
     "school": "ESF ALPE D'HUEZ (L')",
     "partner_id": "aeed0587-472e-4c81-8cbd-901895891ac6",
     "sponsor_type": "esf",
-    "payment": "unknown",
+    "payment": "stripe",
     "cecrl": "B2",
     "scores": [
       10.5,
@@ -85,7 +85,9 @@
     "candidate_id": "206bf560-b0bf-445a-baa8-37226d95b3dd",
     "booking_id": "5973cc7a-c740-465c-b9f7-7d2478e055a6",
     "evaluation_id": "60e75a80-e569-4f89-a5a2-d89049813289",
-    "scoring_system": "sur_20"
+    "scoring_system": "sur_20",
+    "stripe_payment_id": "pi_3UI3ExQBleN6FLtS02mOgyCe",
+    "stripe_charge_id": "ch_3UI3ExQBleN6FLtS0b7i9Z76"
   },
   {
     "key": "steven-mandica",
@@ -134,11 +136,11 @@
   {
     "key": "leo-lamon",
     "name": "Léo Lamon",
-    "email": "leo-lamon@fli.placeholder.local",
+    "email": "leolamon5@gmail.com",
     "school": "ESF Courchevel 1550",
     "partner_id": "b475774d-e0c4-4651-9f7f-0be03c560de8",
     "sponsor_type": "esf",
-    "payment": "unknown",
+    "payment": "stripe",
     "cecrl": "B1",
     "scores": [
       1.5,
@@ -151,7 +153,9 @@
     "candidate_id": "f182d2a7-3397-4b40-8438-7483ee0e9907",
     "booking_id": "9d386ee7-9394-47c7-853a-a1a2b74a186c",
     "evaluation_id": "14370a9b-9f66-4c7a-a818-3c7ba77fad85",
-    "scoring_system": "sur_5"
+    "scoring_system": "sur_5",
+    "stripe_payment_id": "pi_3UKaWyQBleN6FLtS0m1TVisx",
+    "stripe_charge_id": "ch_3UKaWyQBleN6FLtS0Q6DmMpN"
   },
   {
     "key": "charlotte-pautot",
@@ -178,11 +182,11 @@
   {
     "key": "chloe-merloz",
     "name": "Chloé Merloz",
-    "email": "chloe-merloz@fli.placeholder.local",
+    "email": "cloeski@gmail.com",
     "school": "ESF Courchevel 1550",
     "partner_id": "b475774d-e0c4-4651-9f7f-0be03c560de8",
     "sponsor_type": "esf",
-    "payment": "unknown",
+    "payment": "stripe",
     "cecrl": "B1+",
     "scores": [
       3.5,
@@ -195,7 +199,9 @@
     "candidate_id": "e830229a-ddc6-43f7-a879-cddcd5e5c46d",
     "booking_id": "7bc92b86-c7c6-4c82-bf41-a7316e17bca6",
     "evaluation_id": "d4e018de-4571-4309-9498-b753385c6cc7",
-    "scoring_system": "sur_5"
+    "scoring_system": "sur_5",
+    "stripe_payment_id": "pi_3UNRwpQBleN6FLtS0y9Fq7oO",
+    "stripe_charge_id": "ch_3UNRwpQBleN6FLtS0luvdsNg"
   },
   {
     "key": "anouk-leynaud",
@@ -226,7 +232,7 @@
     "school": "ESF FLAINE",
     "partner_id": "65445a12-68a4-4eb2-9dc4-184834a92b6a",
     "sponsor_type": "esf",
-    "payment": "unknown",
+    "payment": "stripe_double",
     "cecrl": "B1",
     "scores": [
       3.5,
@@ -239,7 +245,9 @@
     "candidate_id": "95e6cefa-aba3-4cf1-ac38-5ae0abbc0b20",
     "booking_id": "b2e462c4-333f-4116-a464-2704f6a6df60",
     "evaluation_id": "f0ad3680-bff5-4dbc-9c04-4514688a4215",
-    "scoring_system": "sur_5"
+    "scoring_system": "sur_5",
+    "stripe_payment_id": "pi_3UNs0XQBleN6FLtS1d8BvFoZ",
+    "note": "2 paiements Stripe 45€ réussis (06/10 et 07/10) — possible double paiement"
   },
   {
     "key": "louise-labrousse",
@@ -358,7 +366,7 @@
     "school": "ESF COURCHEVEL 1850",
     "partner_id": "d6753f10-9cea-43cb-a8d2-f5986650feb5",
     "sponsor_type": "esf",
-    "payment": "card",
+    "payment": "card_claimed_not_found_stripe",
     "cecrl": "B1",
     "scores": [
       4.0,
@@ -371,6 +379,7 @@
     "candidate_id": "d7682627-7c6b-4ff4-9ece-dcf9c46c2340",
     "booking_id": "2493ed23-8d34-4fc2-86b9-d621d1346534",
     "evaluation_id": "deed3466-ef12-4918-bff1-57750b655c05",
-    "scoring_system": "sur_5"
+    "scoring_system": "sur_5",
+    "note": "Réservation « paiement par carte » mais aucun charge 45€ Stripe pour goninporquezsasha@gmail.com ni nom Gonin/Porquez/Sasha"
   }
 ]

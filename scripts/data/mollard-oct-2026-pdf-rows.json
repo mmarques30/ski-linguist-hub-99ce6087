@@ -159,9 +159,11 @@
     "bloc_conclusion": "Vous avez un niveau autonome qui demande à être amélioré sur le plan du lexique.",
     "note_methodologique": "Barème Alpe d'Huez /20 (tableau de correspondance) : 10,5 · 10,5 · 10,5 · 10 · 11,5 · 10,5 → B2 Niveau 3 OPÉRATIONNEL (Moyen). Notes Mollard +0,5 ; originaux 10 · 10 · 10 · 9,5 · 11 · 10.",
     "verified_at": "2026-10-14T07:32:40+00",
-    "email": "maelys-pietri@fli.placeholder.local",
+    "email": "maelys.pietri@gmail.com",
     "partner_id": "aeed0587-472e-4c81-8cbd-901895891ac6",
-    "payment": "unknown"
+    "payment": "stripe",
+    "stripe_payment_id": "pi_3UI3ExQBleN6FLtS02mOgyCe",
+    "stripe_charge_id": "ch_3UI3ExQBleN6FLtS0b7i9Z76"
   },
   {
     "evaluation_id": "4f215b5b-0015-4747-a3fa-de90445870d9",
@@ -282,9 +284,11 @@
     "bloc_conclusion": "Votre niveau vous permet de comprendre globalement et de vous exprimer en général.",
     "note_methodologique": null,
     "verified_at": "2026-10-14T07:32:40+00",
-    "email": "leo-lamon@fli.placeholder.local",
+    "email": "leolamon5@gmail.com",
     "partner_id": "b475774d-e0c4-4651-9f7f-0be03c560de8",
-    "payment": "unknown"
+    "payment": "stripe",
+    "stripe_payment_id": "pi_3UKaWyQBleN6FLtS0m1TVisx",
+    "stripe_charge_id": "ch_3UKaWyQBleN6FLtS0Q6DmMpN"
   },
   {
     "evaluation_id": "e6b8ba5f-5008-41ff-9d02-f31c0a990cf8",
@@ -364,9 +368,11 @@
     "bloc_conclusion": "Vous pouvez communiquer et donner des consignes en anglais mais pouvez améliorer votre conversation générale en revoyant les temps cités.",
     "note_methodologique": null,
     "verified_at": "2026-10-14T07:32:40+00",
-    "email": "chloe-merloz@fli.placeholder.local",
+    "email": "cloeski@gmail.com",
     "partner_id": "b475774d-e0c4-4651-9f7f-0be03c560de8",
-    "payment": "unknown"
+    "payment": "stripe",
+    "stripe_payment_id": "pi_3UNRwpQBleN6FLtS0y9Fq7oO",
+    "stripe_charge_id": "ch_3UNRwpQBleN6FLtS0luvdsNg"
   },
   {
     "evaluation_id": "9c8c4ede-6d2b-4894-a334-354accd9daa2",
@@ -448,7 +454,9 @@
     "verified_at": "2026-10-14T07:32:40+00",
     "email": "roulleauxgregoire@gmail.com",
     "partner_id": "65445a12-68a4-4eb2-9dc4-184834a92b6a",
-    "payment": "unknown"
+    "payment": "stripe_double",
+    "stripe_payment_id": "pi_3UNs0XQBleN6FLtS1d8BvFoZ",
+    "note": "2 paiements Stripe 45€ réussis (06/10 et 07/10) — possible double paiement"
   },
   {
     "evaluation_id": "09126139-ae70-4f64-ad73-add9362b0bfc",
@@ -694,6 +702,7 @@
     "verified_at": "2026-10-14T07:32:40+00",
     "email": "goninporquezsasha@gmail.com",
     "partner_id": "d6753f10-9cea-43cb-a8d2-f5986650feb5",
-    "payment": "card"
+    "payment": "card_claimed_not_found_stripe",
+    "note": "Réservation « paiement par carte » mais aucun charge 45€ Stripe pour goninporquezsasha@gmail.com ni nom Gonin/Porquez/Sasha"
   }
 ]
