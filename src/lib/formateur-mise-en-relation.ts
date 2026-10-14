@@ -124,12 +124,13 @@ export function buildFormateurMissionBodyText(input: FormateurMissionEmailInput)
     : "";
 
   const pjLine = input.contractNumber?.trim()
-    ? "Pièces jointes : contrat de prestation à nous retourner signé, et fiches de présence préremplies."
+    ? "Pièces jointes : contrat de prestation à me retourner signé, et fiches de présence préremplies."
     : "Pièces jointes : fiches de présence préremplies.";
 
+  // Tutoiement systématique envers les formateurs (consigne Paula).
   return `Bonjour ${first},
 
-Nous avons le plaisir de vous confier une nouvelle mission de formation individualisée en ligne. Merci encore pour votre engagement à nos côtés.
+J'ai le plaisir de te confier une nouvelle mission de formation individualisée en ligne. Merci encore pour ton engagement à nos côtés.
 
 Voici les informations du stagiaire :
 
@@ -143,7 +144,7 @@ Merci de contacter le stagiaire pour convenir ensemble des créneaux (Google Mee
 
 ${pjLine}
 
-Nous vous souhaitons une très belle collaboration et une excellente formation. Merci d'avance pour votre suivi et pour le renvoi des fiches signées en fin de séances.
+Je te souhaite une très belle collaboration et une excellente formation. Merci d'avance pour ton suivi et pour le renvoi des fiches signées en fin de séances.
 
 Bien cordialement,
 Paula Rangel Halbwachs

@@ -97,6 +97,10 @@ describe("formateur-mise-en-relation", () => {
       totalAmountHt: 360,
     });
     expect(body).toMatch(/Bonjour Tatiana/);
+    expect(body).toMatch(/te confier/);
+    expect(body).toMatch(/ton engagement/);
+    expect(body).toMatch(/Je te souhaite/);
+    expect(body).not.toMatch(/\bvous\b/);
     expect(body).toMatch(/colonna\.michael@hotmail\.fr/);
     expect(body).toMatch(/CTR-2026-0002/);
     expect(body).toMatch(/360 € HT/);
