@@ -101,6 +101,15 @@ describe("Onda D3 — SeasonContext", () => {
     expect(source("src/pages/Sessions.tsx")).toContain("seasonStart");
     expect(source("src/pages/commercial/CommercialDashboard.tsx")).toContain("seasonEnd");
     expect(source("src/components/layout/TopHeader.tsx")).toContain("SeasonFilterControl");
+    const control = source("src/components/layout/SeasonFilterControl.tsx");
+    expect(control).toContain("periodMenuOptions");
+    expect(control).toContain("Année comptable");
+    expect(control).toContain("Toutes les périodes");
+    expect(control).not.toContain("Toutes les saisons");
+    const period = source("src/lib/period-filter.ts");
+    expect(period).toContain("fiscal-current");
+    expect(period).toContain("season-previous");
+    expect(period).toContain("month-previous");
   });
 });
 
