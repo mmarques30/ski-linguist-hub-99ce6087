@@ -62,11 +62,13 @@ function bytesToBase64(bytes: Uint8Array): string {
 function clientEmailBody(): string {
   return `Bonjour Sébastien,
 
-Merci pour votre demande. Comme vous avez déjà des bases en russe, je vous propose un parcours individuel de 20 heures en visio, construit autour de vos besoins concrets : l'accueil et le transport de clients russophones en taxi, et les échanges avec eux pendant les cours de ski.
+Suite à votre appel, je vous renvoie votre dossier de formation en russe, recentré sur votre activité de chauffeur de taxi et l'accueil d'une clientèle russophone.
+
+Comme vous avez déjà des bases en russe, je vous propose un parcours individuel de 20 heures en visio, construit autour de vos besoins concrets : l'accueil et le transport de clients russophones en taxi (destination, itinéraire, tarifs / paiement, attentes, petites conversations pendant le trajet).
 
 Le parcours comprend :
 - un test de positionnement au départ, pour partir de votre niveau réel ;
-- des objectifs et un programme adaptés à vos deux activités ;
+- des objectifs et un programme adaptés à votre activité de taxi ;
 - des séances individuelles en ligne, à des horaires définis ensemble ;
 - une évaluation à la fin du parcours.
 
@@ -90,7 +92,8 @@ Pouvez-vous me dire à partir de quand vous aimeriez commencer et quels créneau
 Bien cordialement,
 
 Paula
-France Langues International`;
+France Langues International
+info@fli.fr — 04 79 28 21 09`;
 }
 
 function escapeHtml(value: string): string {
@@ -148,7 +151,7 @@ async function main() {
       clientPhone: input.student.phone || undefined,
       title: "Formation individualisée en russe — 20 h en ligne",
       descriptionLines: [
-        "Parcours individuel en visioconférence, ciblé sur l'accueil d'une clientèle russophone dans deux activités : chauffeur de taxi et moniteur de ski.",
+        "Parcours individuel en visioconférence, ciblé sur l'accueil d'une clientèle russophone dans l'activité de chauffeur de taxi.",
         "Inclut test de positionnement, séances individuelles, évaluation de fin de parcours.",
         "Organisme certifié Qualiopi.",
       ],
@@ -186,10 +189,10 @@ async function main() {
 - Objet : ${clientSubject}
 
 ## Adaptations documents
-- **Programme** : objectifs et contenu taxi + moniteur de ski / clientèle russophone ; 20 h en ligne ; évaluation entrée/sortie.
+- **Programme** : objectifs et contenu **taxi uniquement** / clientèle russophone ; 20 h en ligne ; évaluation entrée/sortie (plus de volet moniteur de ski).
 - **Devis** : 20 × 60 € = 1 200 € ; mention FAFCEA / Qualiopi.
 - **Convention** (jointe au mail client) :
-  - Article II : objectif ciblé métiers + clientèle russophone ;
+  - Article II : objectif ciblé chauffeur de taxi + clientèle russophone ;
   - Article VI : financement FAFCEA, pas d'acompte 150 €, reste à charge selon décision du fonds.
 
 ## Fichiers
