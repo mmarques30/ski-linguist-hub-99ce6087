@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateInstructorPayment } from "@/hooks/useFinancialDashboard";
-import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
 interface InstructorPaymentDialogProps {
@@ -21,7 +21,6 @@ interface InstructorPaymentDialogProps {
 }
 
 export function InstructorPaymentDialog({ open, onOpenChange, instructor }: InstructorPaymentDialogProps) {
-  const { toast } = useToast();
   const createPayment = useCreateInstructorPayment();
   
   const today = format(new Date(), 'yyyy-MM-dd');
@@ -37,11 +36,7 @@ export function InstructorPaymentDialog({ open, onOpenChange, instructor }: Inst
 
   const handleSubmit = async () => {
     if (!instructor || !montant || !periodeDebut || !periodeFin) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Veuillez remplir tous les champs obligatoires",
-      });
+      toast.error("Erreur", { description: "Veuillez remplir tous les champs obligatoires" });
       return;
     }
 
@@ -58,18 +53,11 @@ export function InstructorPaymentDialog({ open, onOpenChange, instructor }: Inst
         notes: notes || null,
       });
 
-      toast({
-        title: "Succès",
-        description: "Paiement enregistré avec succès",
-      });
+      toast.success("Succès", { description: "Paiement enregistré avec succès" });
 
       onOpenChange(false);
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: error.message,
-      });
+      toast.error("Erreur", { description: error.message });
     }
   };
 

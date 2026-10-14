@@ -34,20 +34,18 @@ describe("Vague C — permissions", () => {
 });
 
 describe("Vague C — sidebar & pilotage", () => {
-  it("expose Trésorerie et Portails, garde Analyses/Rentabilité en sous-menus", () => {
+  it("expose Trésorerie, Analyses et Portails au premier niveau finance", () => {
     const items = NAV_SECTIONS.flatMap((s) => s.items);
     const premierNiveau = items.map((i) => i.href);
     expect(items.map((i) => i.id)).toContain("tresorerie");
     expect(premierNiveau).toContain("/portails/stagiaire");
     expect(premierNiveau).toContain("/portails/formateur");
-    expect(premierNiveau).not.toContain("/finance/analyses");
-    expect(premierNiveau).not.toContain("/finance/rentabilite");
+    expect(premierNiveau).toContain("/finance/analyses");
+    expect(premierNiveau).toContain("/finance/rentabilite");
+    expect(premierNiveau).toContain("/finance/charges-fixes");
 
     const tresorerie = items.find((i) => i.id === "tresorerie");
-    expect(tresorerie?.children?.map((c) => c.href)).toEqual([
-      "/finance/tresorerie",
-      "/finance/tresorerie?tab=charges",
-    ]);
+    expect(tresorerie?.children).toBeUndefined();
   });
 
   it("PilotageSubnav active la bonne onglet", () => {

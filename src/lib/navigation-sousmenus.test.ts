@@ -102,29 +102,16 @@ describe("état actif — chemins et paramètres d'URL", () => {
     );
   });
 
-  it("suit les sous-routes finance", () => {
-    const pilotage = item("pilotage");
-    expect(activeChildHref(pilotage, "/finance", "")).toBe("/finance");
-    expect(activeChildHref(pilotage, "/finance/analyses", "")).toBe("/finance/analyses");
-    expect(activeChildHref(pilotage, "/finance/rentabilite", "")).toBe(
-      "/finance/rentabilite",
-    );
-    expect(isItemActive(pilotage, "/finance/tresorerie", "")).toBe(false);
-
-    const tresorerie = item("tresorerie");
-    expect(activeChildHref(tresorerie, "/finance/tresorerie", "")).toBe(
-      "/finance/tresorerie",
-    );
-    expect(activeChildHref(tresorerie, "/finance/tresorerie", "?tab=charges")).toBe(
-      "/finance/tresorerie?tab=charges",
-    );
-  });
-
-  it("garde la facturation active sur les paiements", () => {
-    const facturation = item("facturation");
-    expect(isItemActive(facturation, "/finance/payments", "")).toBe(true);
-    expect(activeChildHref(facturation, "/invoices", "")).toBe("/invoices");
-    expect(activeChildHref(facturation, "/finance/payments", "")).toBe("/finance/payments");
+  it("expose la finance en liens plats", () => {
+    expect(isItemActive(item("pilotage"), "/finance", "")).toBe(true);
+    expect(isItemActive(item("analyses"), "/finance/analyses", "")).toBe(true);
+    expect(isItemActive(item("rentabilite"), "/finance/rentabilite", "")).toBe(true);
+    expect(isItemActive(item("pilotage"), "/finance/tresorerie", "")).toBe(false);
+    expect(isItemActive(item("tresorerie"), "/finance/tresorerie", "")).toBe(true);
+    expect(isItemActive(item("charges"), "/finance/charges-fixes", "")).toBe(true);
+    expect(isItemActive(item("tresorerie"), "/finance/charges-fixes", "")).toBe(false);
+    expect(isItemActive(item("invoices"), "/invoices", "")).toBe(true);
+    expect(isItemActive(item("payments"), "/finance/payments", "")).toBe(true);
   });
 
   it("active évaluations sur les sous-pages formateur", () => {

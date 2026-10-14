@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import type {
   FundingProposalStatus,
   ProposalPayerType,
@@ -63,7 +63,6 @@ export interface FundingProposalInput {
 
 export function useCreateFundingProposal() {
   const qc = useQueryClient();
-  const { toast } = useToast();
   return useMutation({
     mutationFn: async (input: FundingProposalInput) => {
       const { data, error } = await supabase
@@ -91,16 +90,15 @@ export function useCreateFundingProposal() {
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ["funding-proposals", vars.inscription_id] });
-      toast({ title: "Proposition enregistrée", description: "La nouvelle proposition a été créée." });
+      toast.success("Proposition enregistrée", { description: "La nouvelle proposition a été créée." });
     },
     onError: (e: Error) =>
-      toast({ variant: "destructive", title: "Erreur", description: e.message }),
+      toast.error("Erreur", { description: e.message }),
   });
 }
 
 export function useUpdateFundingProposal() {
   const qc = useQueryClient();
-  const { toast } = useToast();
   return useMutation({
     mutationFn: async ({
       id,
@@ -119,16 +117,15 @@ export function useUpdateFundingProposal() {
     },
     onSuccess: (inscriptionId) => {
       qc.invalidateQueries({ queryKey: ["funding-proposals", inscriptionId] });
-      toast({ title: "Proposition mise à jour", description: "Les modifications ont bien été prises en compte." });
+      toast.success("Proposition mise à jour", { description: "Les modifications ont bien été prises en compte." });
     },
     onError: (e: Error) =>
-      toast({ variant: "destructive", title: "Erreur", description: e.message }),
+      toast.error("Erreur", { description: e.message }),
   });
 }
 
 export function useDeleteFundingProposal() {
   const qc = useQueryClient();
-  const { toast } = useToast();
   return useMutation({
     mutationFn: async ({ id, inscriptionId }: { id: string; inscriptionId: string }) => {
       const { error } = await supabase.from("funding_requests").delete().eq("id", id);
@@ -137,16 +134,15 @@ export function useDeleteFundingProposal() {
     },
     onSuccess: (inscriptionId) => {
       qc.invalidateQueries({ queryKey: ["funding-proposals", inscriptionId] });
-      toast({ title: "Proposition supprimée", description: "La proposition a été retirée." });
+      toast.success("Proposition supprimée", { description: "La proposition a été retirée." });
     },
     onError: (e: Error) =>
-      toast({ variant: "destructive", title: "Erreur", description: e.message }),
+      toast.error("Erreur", { description: e.message }),
   });
 }
 
 export function useUpdateInscriptionFunding() {
   const qc = useQueryClient();
-  const { toast } = useToast();
   return useMutation({
     mutationFn: async ({
       id,
@@ -175,12 +171,9 @@ export function useUpdateInscriptionFunding() {
       qc.invalidateQueries({ queryKey: ["inscription-details", vars.id] });
       qc.invalidateQueries({ queryKey: ["inscription-ops-fields", vars.id] });
       qc.invalidateQueries({ queryKey: ["inscriptions"] });
-      toast({
-        title: "Enregistré",
-        description: "Les modifications ont bien été prises en compte.",
-      });
+      toast.success("Enregistré", { description: "Les modifications ont bien été prises en compte." });
     },
     onError: (e: Error) =>
-      toast({ variant: "destructive", title: "Erreur", description: e.message }),
+      toast.error("Erreur", { description: e.message }),
   });
 }

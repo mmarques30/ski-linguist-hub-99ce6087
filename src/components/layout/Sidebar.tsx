@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { NavLink, useLocation, useNavigate } from "react-router";
 import { ChevronRight, LayoutDashboard, LogOut, PanelLeft } from "lucide-react";
 import fliLogo from "@/assets/fli-marca-yellow.png";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { ThemeToggle } from "./ThemeToggle";
@@ -89,7 +89,6 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { signOut } = useAuth();
-  const { toast } = useToast();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
   const { isAdmin, isFormateur, canView } = useUserPermissions();
@@ -151,11 +150,7 @@ export function AppSidebar() {
   const handleLogout = async () => {
     const { error } = await signOut();
     if (error) {
-      toast({
-        variant: "destructive",
-        title: "Erreur de déconnexion",
-        description: error.message,
-      });
+      toast.error("Erreur de déconnexion", { description: error.message });
     } else {
       navigate("/auth", { replace: true });
     }
