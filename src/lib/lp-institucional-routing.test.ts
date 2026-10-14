@@ -60,6 +60,12 @@ describe("LP institutionnelle — conformité spec", () => {
     expect(src).toContain("YOUTUBE_VIDEO_ID");
   });
 
+  it("ne publie pas le tarif dans la FAQ", () => {
+    const src = landing();
+    expect(src).not.toContain("Le coût est-il élevé");
+    expect(src).not.toContain("750 €");
+  });
+
   it("affiche les groupes de 8 personnes", () => {
     const src = landing();
     expect(src).toContain("Groupes de 8 personnes");

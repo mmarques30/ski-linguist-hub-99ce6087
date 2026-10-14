@@ -138,7 +138,7 @@ Menu do header (scroll suave para cada âncora, exceto o CTA):
 
 **Titre :** "Une question ?"
 
-**Questions/réponses proposées** (adaptées des 11 de l'Empregga au contexte FLI) :
+**Questions/réponses proposées** (adaptées de l'Empregga au contexte FLI) :
 
 1. **Je n'ai jamais suivi de formation en langues, c'est fait pour moi ?**
    Oui. Un test de niveau à l'inscription permet de vous placer dans le bon groupe, quel que soit votre point de départ.
@@ -149,28 +149,25 @@ Menu do header (scroll suave para cada âncora, exceto o CTA):
 3. **Puis-je concilier la formation avec ma saison de ski ?**
    Oui : stages intensifs en automne, cours individuels ou en ligne à la demande toute l'année.
 
-4. **Le coût est-il élevé ?**
-   750 €/personne pour un stage intensif de 20h. Le FIFPL peut financer jusqu'à 900 €/an pour les formations individuelles.
-
-5. **Et si je dois annuler mon inscription ?**
+4. **Et si je dois annuler mon inscription ?**
    Les frais de dossier (150 €) sont remboursables en cas d'annulation justifiée ou d'insuffisance de participants, sous 7 jours après inscription.
 
-6. **Faut-il déjà avoir le BE (Brevet d'État) pour s'inscrire ?**
+5. **Faut-il déjà avoir le BE (Brevet d'État) pour s'inscrire ?**
    Oui pour le stage moniteurs de ski — être titulaire du BE ou en formation.
 
-7. **Combien de temps avant de commencer les cours ?**
+6. **Combien de temps avant de commencer les cours ?**
    Les inscriptions se clôturent 7 jours avant le début du stage ; au-delà, nous contacter directement selon les places restantes.
 
-8. **Puis-je suivre une formation tout en étant en poste ?**
+7. **Puis-je suivre une formation tout en étant en poste ?**
    Oui, les formules individuelles en ligne (6h à 18h) s'organisent à votre rythme.
 
-9. **Ça fonctionne dans toutes les stations ?**
+8. **Ça fonctionne dans toutes les stations ?**
    Nous intervenons dans l'ensemble du réseau ESF et auprès des stations partenaires ; contactez-nous pour organiser une formation dans votre station.
 
-10. **Et si j'ai un handicap ou besoin d'un aménagement ?**
+9. **Et si j'ai un handicap ou besoin d'un aménagement ?**
     Parlez-en dès l'inscription à notre référente handicap, Paula Rangel Halbwachs — nous étudions ensemble les adaptations possibles, avec l'appui du réseau RHF.
 
-11. **Quel suivi est proposé pendant et après la formation ?**
+10. **Quel suivi est proposé pendant et après la formation ?**
     Test de progression en fin de stage, questionnaire de satisfaction, et transmission des résultats à votre école de ski.
 
 **Encart contact (comme l'encart Empregga "Não encontrou o que gostaria?"):**

@@ -106,10 +106,6 @@ const FAQ_ITEMS = [
     a: "Oui : stages intensifs en automne, cours individuels ou en ligne à la demande toute l'année.",
   },
   {
-    q: "Le coût est-il élevé ?",
-    a: "750 €/personne pour un stage intensif de 20h. Le FIFPL peut financer jusqu'à 900 €/an pour les formations individuelles.",
-  },
-  {
     q: "Et si je dois annuler mon inscription ?",
     a: "Les frais de dossier (150 €) sont remboursables en cas d'annulation justifiée ou d'insuffisance de participants, sous 7 jours après inscription.",
   },
