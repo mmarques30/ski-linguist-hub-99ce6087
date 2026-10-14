@@ -202,6 +202,28 @@ export const ESF_BAREME_HEADING = "Barème Européen";
 export const ESF_APPRECIATION_HEADING = "Appréciation sur les capacités du stagiaire :";
 export const ESF_PAGE_LABEL = (index: number, total: number) => `Page ${index} sur ${total}`;
 
+/** Cases à cocher cycle (.dotx). */
+export type EsfCycleChecks = {
+  preparatoire: boolean;
+  premier: boolean;
+  deuxieme: boolean;
+  titulaireDe: boolean;
+};
+
+/** Interprète `training_cycle` libre pour cocher la case .dotx la plus proche. */
+export function esfCycleChecks(trainingCycle: string | null | undefined): EsfCycleChecks {
+  const raw = (trainingCycle || "").trim().toLowerCase();
+  const preparatoire = /pr[eé]paratoire|prep/.test(raw);
+  const titulaireDe = /titulaire/.test(raw);
+  const deuxieme = /2|deuxi[eè]me|2eme|2ème/.test(raw);
+  const premier =
+    !preparatoire &&
+    !titulaireDe &&
+    !deuxieme &&
+    (/^1$|1er|premier|cycle\s*1|\b1\b/.test(raw) || raw === "1");
+  return { preparatoire, premier, deuxieme, titulaireDe };
+}
+
 export function isSponsorType(value: string): value is SponsorType {
   return value === "esf" || value === "ecole_ski" || value === "dsf";
 }

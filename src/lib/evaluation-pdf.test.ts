@@ -1,4 +1,5 @@
-import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { readFileSync, writeFileSync, mkdtempSync } from "node:fs";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -44,6 +45,18 @@ function pdfVisibleText(bytes: Uint8Array): string {
     .replace(/<([0-9A-Fa-f]+)>/g, (_, hex: string) =>
       Buffer.from(hex, "hex").toString("latin1")
     );
+}
+
+/** Extraction fiable avec polices CID (Liberation Sans ESF). */
+function pdfExtractedText(bytes: Uint8Array): string {
+  try {
+    const dir = mkdtempSync(join(tmpdir(), "fli-pdf-"));
+    const file = join(dir, "doc.pdf");
+    writeFileSync(file, bytes);
+    return execFileSync("pdftotext", ["-layout", file, "-"], { encoding: "utf8" });
+  } catch {
+    return pdfVisibleText(bytes);
+  }
 }
 
 const identity = DEFAULT_FLI_IDENTITY;
@@ -109,6 +122,11 @@ async function loadAssets(): Promise<EvaluationPdfAssets> {
     partnerLogos: await Promise.all(
       EVALUATION_PDF_ASSET_FILES.partners.map((name) => read(name))
     ),
+    fonts: {
+      regular: await read(EVALUATION_PDF_ASSET_FILES.fonts.regular),
+      bold: await read(EVALUATION_PDF_ASSET_FILES.fonts.bold),
+      italic: await read(EVALUATION_PDF_ASSET_FILES.fonts.italic),
+    },
   };
 }
 
@@ -154,6 +172,7 @@ describe("titre et saison PDF", () => {
     expect(sliceFn(deno, "formatSeasonLabel")).toBe(sliceFn(front, "formatSeasonLabel"));
     expect(sliceFn(deno, "evaluationTitle")).toBe(sliceFn(front, "evaluationTitle"));
     expect(sliceFn(deno, "formatEsfTarifLabel")).toBe(sliceFn(front, "formatEsfTarifLabel"));
+    expect(sliceFn(deno, "esfCycleChecks")).toBe(sliceFn(front, "esfCycleChecks"));
     expect(front).toContain("assertValidDate");
     expect(deno).toContain("assertValidDate");
     expect(front).toContain("ESF_GENERAL_SKILL_LABEL");
@@ -343,7 +362,7 @@ describe("octets PDF", () => {
       const bytes = await renderEvaluationPdf(model, assets);
       expect(bytes.byteLength).toBeGreaterThan(5000);
       const doc = await PDFDocument.load(bytes);
-      const ascii = pdfVisibleText(bytes);
+      const ascii = pdfExtractedText(bytes);
       expect(Buffer.from(bytes).toString("latin1")).toContain("%PDF");
       expect(ascii).toContain("ZZTEST CANDIDATC5");
       expect(ascii).not.toContain("EVALUATION EN LANGUE VIVANTE");
@@ -377,20 +396,24 @@ describe("octets PDF", () => {
         expect(ascii).not.toContain("le 15/01/2026");
       }
       if (sponsor === "esf") {
-        // .dotx : 2 pages, barème p.1, appréciations p.2, « Page X sur Y »
+        // .dotx : 2 pages, formulaire à cases, barème p.1, appréciations p.2
         expect(doc.getPageCount()).toBe(2);
         expect(ascii).toContain("Tarif");
         expect(ascii).not.toContain("TTC");
         expect(ascii).toContain("Cours collectifs enfants");
-        expect(ascii).toContain("Bar");
-        expect(ascii).toContain("Europ");
+        expect(ascii).toContain("Barème Européen");
         expect(ascii).toContain("T.S.V.P.");
         expect(ascii).toContain("Page 1 sur 2");
         expect(ascii).toContain("Page 2 sur 2");
         expect(ascii).toContain("Alpin");
-        expect(ascii).toContain("ZZTEST Cycle 2");
+        expect(ascii).toContain("1er Cycle");
+        expect(ascii).toContain("Nordique");
+        expect(ascii).toContain("demand");
         expect(ascii).toContain("FLI");
         expect(ascii).toContain("BOURG SAINT MAURICE");
+        expect(ascii).toContain("Carte Syndicale");
+        expect(ascii).toContain("OUI");
+        expect(ascii).toContain("NON");
         expect(ascii).not.toContain("Organismes agr");
         expect(ascii).not.toContain("Points forts");
         expect(ascii).not.toContain("objectif C1");

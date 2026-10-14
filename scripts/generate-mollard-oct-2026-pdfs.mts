@@ -108,6 +108,11 @@ async function loadAssets(): Promise<EvaluationPdfAssets> {
     fliCompact: await read(EVALUATION_PDF_ASSET_FILES.fliCompact),
     dsfLetterhead: await read(EVALUATION_PDF_ASSET_FILES.dsfLetterhead),
     partnerLogos: partners,
+    fonts: {
+      regular: await read(EVALUATION_PDF_ASSET_FILES.fonts.regular),
+      bold: await read(EVALUATION_PDF_ASSET_FILES.fonts.bold),
+      italic: await read(EVALUATION_PDF_ASSET_FILES.fonts.italic),
+    },
   };
 }
 
