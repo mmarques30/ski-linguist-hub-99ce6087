@@ -1,42 +1,65 @@
-# Correções de segurança — plano em português (nada executado ainda)
+# Prompt para o Cursor — correções de segurança (scan Lovable 14/10/2026)
 
-## Situação
-- Você pediu para corrigir 79 alertas de segurança.
-- Muitas são repetições de alertas já corrigidas no site (PR #182, #183, #189 e a falha do "crachá falso" corrigida ontem).
-- Quase todas tocam no cadastro, no pagamento e nos e-mails. São os arquivos que devem ficar iguais ao GitHub (main): uma correção feita só aqui é apagada no próximo envio do GitHub.
+Copie o bloco abaixo e cole no Cursor.
 
-## Etapa 1 — Marcar as já corrigidas (sem mudar nada)
-Marcar como corrigidas as alertas que já estão resolvidas no site: crachá falso, ficha de aluno sobrescrita pelo e-mail, taxa de presença, preço enviado pelo navegador, configuração do Stripe, funções de lembrete e prospecção protegidas.
+```text
+PROJETO FLI Formation (Vite + React + Supabase/Lovable Cloud). Trabalhe numa branch nova
+cursor/security-scan-2026-10-14 a partir de origin/main. Respeite AGENTS.md (copias
+src/lib <-> supabase/functions/_shared + teste de drift; nao mexer em docs/BACKLOG.md
+nem docs/ETAT_APP_*.md; merge origin/main antes de entregar). NAO enviar e-mail,
+NAO ligar cron, NAO alterar secrets. Sem casts "as any" / "as unknown as".
 
-## Etapa 2 — Dúvidas para você decidir (antes de qualquer correção)
+0) PRE-REQUISITO — trazer para o GitHub a correcao feita so no Lovable:
+   supabase/functions/_shared/admin-auth.ts
+   - isServiceRoleToken: igualdade estrita em tempo constante com
+     SUPABASE_SERVICE_ROLE_KEY. NUNCA confiar no claim "role" decodificado do JWT
+     (JWT forjado nao assinado era aceito).
+   - isValidCronDispatchToken: header x-cron-dispatch-token comparado em tempo
+     constante com public.cron_dispatch_secret.token (min 32 chars); token errado -> 403.
+   - Teste em src/lib/edge-cron-auth.test.ts (JWT forjado role=service_role -> recusado).
+   Migration ja aplicada em prod (nao recriar): cron_dispatch_token_no_vault
+   (tabela cron_dispatch_secret + dispatch_edge_function sem Vault). Apenas
+   adicionar o arquivo de migration ao repo se faltar.
 
-1. **Retorno do pagamento confirma a inscrição**
-   Hoje: a página depois do pagamento confirma a inscrição, mas só se o Stripe disser que está paga.
-   Minha sugestão: deixar como está (alarme falso). Alternativa: confirmar só pelo aviso automático do Stripe (alguns segundos de atraso).
+1) Login de administrador de teste (PRIORIDADE)
+   - Procurar contas/credenciais de teste admin no repo (scripts/sql/zztest_roles_logins.sql,
+     docs/TESTING_GUIDE.md, /admin/testing, .env, seeds) e qualquer senha em claro.
+   - Remover senhas do repo; documentar que a conta deve ser desativada ou ter a senha
+     trocada em prod (listar o e-mail encontrado no relatorio, nao a senha).
 
-2. **Login de administrador de teste**
-   Pode ser um risco real: uma conta de teste com poderes de admin poderia ser usada.
-   Minha sugestão: verificar primeiro e, se existir, desativar ou trocar a senha.
+2) Retorno do pagamento (verify-registration-checkout)
+   - Manter a revalidacao da sessao no Stripe (status paid + payment_status paid).
+   - Exigir que session.metadata.inscription_id corresponda a uma inscricao existente
+     e que o valor pago corresponda ao valor esperado no banco; idempotente
+     (nao duplicar payments se o webhook ja gravou).
 
-3. **Preço de parceiro e parte FIF-PL**
-   Hoje: o aluno escolhe a escola parceira e declara sua situação, e isso muda o preço.
-   Pergunta: o preço deve ser recalculado pela equipe depois, ou o valor declarado vale?
+3) Preco de parceiro / parte FIF-PL (submit-registration, create-registration-checkout)
+   - O preco final vem SO do servidor (offerings / pricing_rules). A escola parceira
+     e a situacao FIF-PL declaradas pelo aluno nao podem reduzir o valor cobrado
+     sem validacao: gravar como "declarado" e deixar o desconto para validacao staff,
+     ou validar a escola contra ski_schools/partners no servidor.
 
-4. **Endereços de retorno do Stripe livres**
-   Hoje: o site diz para onde o Stripe volta depois do pagamento; alguém poderia trocar por outro site.
-   Minha sugestão: aceitar só endereços do site FLI (plateforme.fli.fr e o site publicado).
+4) URLs de retorno do Stripe (create-registration-checkout)
+   - successUrl / cancelUrl: allowlist de origem (https://plateforme.fli.fr,
+     https://ski-linguist-hub.lovable.app, preview *.lovable.app, http://localhost:8080).
+     Fora da lista -> 400.
 
-5. **Conteúdo dos e-mails sem proteção**
-   Hoje: nomes e textos digitados entram nos e-mails sem limpeza; dá para inserir código.
-   Minha sugestão: limpar esses textos antes de enviar.
+5) Conteudo dos e-mails sem escape (fli-email.ts, applyEmailTemplate, send-staff-email,
+   send-inscription-documents, process-*-reminders)
+   - Escapar HTML de toda variavel vinda do usuario (nomes, textos livres) antes de
+     inserir no template. Manter src/lib/email-template-apply.ts e a copia _shared
+     identicas + teste de drift + teste "<script> vira &lt;script&gt;".
 
-6. **Buscas e PDFs de avaliação**
-   Hoje: formadores veem todos os PDFs de avaliação e podem buscar alunos e pagamentos.
-   Segue a regra "formadores têm acesso total". Pergunta: manter assim ou limitar aos alunos de cada formador?
+6) Buscas (GlobalSearch, alunos/formadores/pagamentos) e PDFs de avaliacao
+   (sign-private-download, generate-evaluation-pdf)
+   - Politica atual FLI: formadores = acesso global. NAO restringir; apenas garantir
+     que anon e student nao acessam (student so os proprios). Listar no relatorio.
 
-## Etapa 3 — Onde corrigir
-- As correções reais (itens 2, 4, 5 e o que você decidir em 1, 3, 6) são feitas no GitHub (Cursor) e depois reimplantadas aqui, para não serem apagadas.
-- Ou, se você preferir, faço aqui no Lovable e você leva para o GitHub logo depois.
+7) Testes: npm test deve passar. tsgo/tsc sem erros.
 
-## O que preciso de você
-Responder as 6 dúvidas e dizer onde corrigir (GitHub ou Lovable). Nenhum e-mail será enviado, nenhum cron ligado, nenhum segredo alterado.
+8) Entrega: PR com lista, por item, de arquivo alterado e o que mudou; lista das
+   Edge Functions a reimplantar no Lovable Cloud depois do merge.
+```
+
+## Depois do merge
+Me avise o commit: eu confiro os arquivos e reimplanto só as funções listadas pelo Cursor, e marco as alertas como corrigidas.
