@@ -6,7 +6,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { generateScoreOptions, scoreToLevel } from "@/lib/evaluation-utils";
+import {
+  alpeDhuezFromScore20,
+  generateScoreOptions,
+  scoreToLevel,
+} from "@/lib/evaluation-utils";
 import { StatusPill } from "@/components/ui-kit";
 
 interface ScoreInputProps {
@@ -19,6 +23,8 @@ interface ScoreInputProps {
 export function ScoreInput({ label, value, onChange, scoringSystem }: ScoreInputProps) {
   const options = generateScoreOptions(scoringSystem);
   const level = scoreToLevel(value, scoringSystem);
+  const alpe =
+    scoringSystem === "sur_20" ? alpeDhuezFromScore20(value) : null;
 
   return (
     <div className="space-y-2">
@@ -42,6 +48,11 @@ export function ScoreInput({ label, value, onChange, scoringSystem }: ScoreInput
         <StatusPill tone="neutral" size="sm">
           {level}
         </StatusPill>
+        {alpe ? (
+          <span className="text-xs text-muted-foreground">
+            {alpe.qualifier} · {alpe.keyword}
+          </span>
+        ) : null}
       </div>
     </div>
   );

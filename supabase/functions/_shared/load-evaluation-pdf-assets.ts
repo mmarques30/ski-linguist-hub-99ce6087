@@ -23,5 +23,10 @@ export async function loadEvaluationPdfAssets(): Promise<EvaluationPdfAssets> {
     fliCompact: await readAsset(EVALUATION_PDF_ASSET_FILES.fliCompact),
     dsfLetterhead: await readAsset(EVALUATION_PDF_ASSET_FILES.dsfLetterhead),
     partnerLogos,
+    fonts: {
+      regular: await readAsset(EVALUATION_PDF_ASSET_FILES.fonts.regular),
+      bold: await readAsset(EVALUATION_PDF_ASSET_FILES.fonts.bold),
+      italic: await readAsset(EVALUATION_PDF_ASSET_FILES.fonts.italic),
+    },
   };
 }
