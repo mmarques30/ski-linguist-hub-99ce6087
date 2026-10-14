@@ -2,6 +2,19 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      Lien public déjà envoyé : https://plateforme.fli.fr/register
+      doit ouvrir https://www.fli.fr/register (Paula, 14/10/2026).
+      Exécuté avant React. /register/payment-success et payment-cancel restent ici.
+    -->
+    <script>
+      (function () {
+        if (location.hostname !== "plateforme.fli.fr") return;
+        var path = location.pathname.replace(/\/+$/, "") || "/";
+        if (path !== "/register") return;
+        location.replace("https://www.fli.fr/register" + location.search + location.hash);
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FLI - France Langues International</title>
     <meta name="description" content="Formez-vous dans la langue de votre métier, sans sacrifier votre saison. Formations linguistiques sur mesure pour moniteur·rices de ski et professionnels de la montagne — France Langues International.">

@@ -7,6 +7,8 @@ const LOCAL_DEV_ORIGINS = new Set(["http://localhost:8080", "http://127.0.0.1:80
 
 const EXACT_ORIGINS = new Set([
   "https://plateforme.fli.fr",
+  "https://www.fli.fr",
+  "https://fli.fr",
   "https://ski-linguist-hub.lovable.app",
   ...LOCAL_DEV_ORIGINS,
 ]);
