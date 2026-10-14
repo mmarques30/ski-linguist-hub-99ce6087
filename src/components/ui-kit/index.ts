@@ -2,6 +2,7 @@
  * Kit d'interface FLI — briques visuelles partagées par tout le back-office.
  *
  * Point d'entrée unique : `import { PageShell, StatTile } from "@/components/ui-kit"`.
+ * Règles « utiliser / ne pas utiliser » : `docs/DESIGN_SYSTEM.md`.
  *
  * Les composants ne portent aucune logique métier : ils reçoivent des données
  * déjà calculées et des libellés déjà traduits. Les helpers existants
