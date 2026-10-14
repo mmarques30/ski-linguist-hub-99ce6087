@@ -6,7 +6,7 @@
     "school": "ESF COURCHEVEL 1850",
     "partner_id": "d6753f10-9cea-43cb-a8d2-f5986650feb5",
     "sponsor_type": "esf",
-    "payment": "hors_lot",
+    "payment": "unknown",
     "cecrl": "A2+",
     "scores": [
       1.5,
@@ -20,7 +20,7 @@
     "booking_id": "257e9ea9-81d9-454b-bc16-82f7c27b9411",
     "evaluation_id": "0c8f12f2-fd55-4e50-b712-1ad62a5ed178",
     "scoring_system": "sur_5",
-    "note": "Traité hors lot Mollard (processus séparé, Paula 14/10)"
+    "note": "Email candidat manquant (placeholder) — TO à confirmer avant envoi"
   },
   {
     "key": "lisa-roch",

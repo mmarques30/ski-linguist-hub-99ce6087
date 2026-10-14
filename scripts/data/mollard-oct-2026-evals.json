@@ -12,7 +12,7 @@
     "profession": "moniteur",
     "test_at": "2026-10-05T12:00:00+00",
     "previous_test": false,
-    "payment": "hors_lot",
+    "payment": "unknown",
     "scores": [
       1.5,
       1.5,
@@ -30,7 +30,7 @@
     "concl": "En conclusion vous avez un niveau faible mais en travaillant vous pouvez arriver à progresser et à combler progressivement vos lacunes grammaticales et lexicales. Et cela vous permettra de vous sentir plus à l'aise sur le terrain.",
     "scoring_system": "sur_5",
     "note_methodologique": null,
-    "note": "Traité hors lot Mollard (processus séparé, Paula 14/10)"
+    "note": "Email candidat manquant (placeholder) — TO à confirmer avant envoi"
   },
   {
     "key": "lisa-roch",
