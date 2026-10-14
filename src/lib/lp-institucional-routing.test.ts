@@ -42,12 +42,13 @@ describe("LP institutionnelle — conformité spec", () => {
 
   it("couvre les ancres et le CTA Accès FLI, entièrement en français", () => {
     const src = landing();
-    for (const id of ["inicio", "metodo", "parceiros", "formacoes", "stages", "faq"]) {
+    for (const id of ["inicio", "metodo", "formacoes", "stages", "faq"]) {
       expect(src).toContain(`id="${id}"`);
     }
+    expect(src).not.toContain('id="parceiros"');
+    expect(src).not.toContain("Ils nous font confiance");
     expect(src).toContain("Accès FLI");
     expect(src).toContain("Notre méthode");
-    expect(src).toContain("Partenaires");
     expect(src).toContain("Formations");
     for (const portuguese of ["Acesso FLI", "Nosso Método", "Parceiros", "Formações"]) {
       expect(src).not.toContain(portuguese);
@@ -76,11 +77,12 @@ describe("LP institutionnelle — conformité spec", () => {
     expect(src).toContain('to="/register"');
   });
 
-  it("place la FAQ après le footer dans le flux", () => {
+  it("place le footer après la FAQ, en bas de page", () => {
     const src = landing();
     const footerIdx = src.indexOf("<footer");
     const faqIdx = src.indexOf('id="faq"');
-    expect(footerIdx).toBeGreaterThan(0);
-    expect(faqIdx).toBeGreaterThan(footerIdx);
+    expect(faqIdx).toBeGreaterThan(0);
+    expect(footerIdx).toBeGreaterThan(faqIdx);
+    expect(src).toContain("mt-auto");
   });
 });
