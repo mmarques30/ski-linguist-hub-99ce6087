@@ -46,14 +46,18 @@ interface InscriptionDocumentsCardProps {
   fundingOrganization?: string | null;
   studentEmail?: string | null;
   inscriptionCode?: string | null;
+  inscriptionStatus?: string | null;
   courseLanguage?: string | null;
   startDate?: string | null;
   endDate?: string | null;
   durationHours?: number | null;
   studentName?: string | null;
+  studentFirstName?: string | null;
   studentId?: string | null;
   studentCity?: string | null;
   formateurName?: string | null;
+  formateurEmail?: string | null;
+  formateurPhone?: string | null;
 }
 
 export function InscriptionDocumentsCard({
@@ -64,14 +68,18 @@ export function InscriptionDocumentsCard({
   fundingOrganization,
   studentEmail,
   inscriptionCode,
+  inscriptionStatus,
   courseLanguage,
   startDate,
   endDate,
   durationHours,
   studentName,
+  studentFirstName,
   studentId,
   studentCity,
   formateurName,
+  formateurEmail,
+  formateurPhone,
 }: InscriptionDocumentsCardProps) {
   const { language } = useLanguage();
   const queryClient = useQueryClient();
@@ -178,7 +186,9 @@ export function InscriptionDocumentsCard({
   return (
     <div className="space-y-4">
       <PresenceFichesCard
+        inscriptionId={inscriptionId}
         inscriptionCode={inscriptionCode}
+        inscriptionStatus={inscriptionStatus}
         language={courseLanguage}
         startDate={startDate}
         endDate={endDate}
@@ -186,9 +196,13 @@ export function InscriptionDocumentsCard({
         modality={modality}
         courseLocation={courseLocation}
         studentName={studentName}
+        studentFirstName={studentFirstName}
         studentId={studentId}
         studentCity={studentCity}
+        studentEmail={studentEmail}
         formateurName={formateurName}
+        formateurEmail={formateurEmail}
+        formateurPhone={formateurPhone}
       />
 
       {missingDocs.length > 0 && (
