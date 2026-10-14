@@ -76,31 +76,30 @@ describe("arborescence de navigation — 3 niveaux", () => {
   });
 
   it("réserve à l'admin les sous-menus sensibles", () => {
-    const phrases = item("evaluations").children?.find(
-      (c) => c.href === "/admin/phrases",
-    );
+    const phrases = item("donnees").children?.find((c) => c.href === "/admin/phrases");
     expect(phrases?.adminOnly).toBe(true);
+  });
+
+  it("ne duplique pas les filtres de statut déjà dans les pages", () => {
+    const hrefs = ALL_HREFS.join("\n");
+    expect(hrefs).not.toContain("status=en_attente");
+    expect(hrefs).not.toContain("status=terminee");
+    expect(hrefs).not.toContain("status=a_verifier");
+    expect(hrefs).not.toContain("status=a_relancer");
   });
 });
 
 describe("état actif — chemins et paramètres d'URL", () => {
-  it("distingue les filtres frères d'une même page", () => {
-    const inscriptions = item("inscriptions");
-    expect(activeChildHref(inscriptions, "/inscriptions", "")).toBe("/inscriptions");
-    expect(activeChildHref(inscriptions, "/inscriptions", "?status=en_attente")).toBe(
-      "/inscriptions?status=en_attente",
-    );
-    expect(activeChildHref(inscriptions, "/inscriptions", "?status=terminee")).toBe(
-      "/inscriptions?status=terminee",
-    );
-  });
-
-  it("sort la constitution des groupes du lien « toutes les inscriptions »", () => {
+  it("sépare inscriptions et constitution des groupes", () => {
     expect(matchScore("/inscriptions", "/inscriptions/schedule-validation", "")).toBe(-1);
-    expect(
-      activeChildHref(item("inscriptions"), "/inscriptions/schedule-validation", ""),
-    ).toBe("/inscriptions/schedule-validation");
-    expect(matchScore("/inscriptions", "/inscriptions/abc-123", "")).toBe(0);
+    expect(isItemActive(item("inscriptions"), "/inscriptions", "")).toBe(true);
+    expect(isItemActive(item("inscriptions"), "/inscriptions/abc-123", "")).toBe(true);
+    expect(isItemActive(item("schedule-validation"), "/inscriptions/schedule-validation", "")).toBe(
+      true,
+    );
+    expect(isItemActive(item("inscriptions"), "/inscriptions/schedule-validation", "")).toBe(
+      false,
+    );
   });
 
   it("suit les sous-routes finance", () => {
@@ -121,23 +120,17 @@ describe("état actif — chemins et paramètres d'URL", () => {
     );
   });
 
-  it("garde la facturation active sur les paiements et les files de statut", () => {
+  it("garde la facturation active sur les paiements", () => {
     const facturation = item("facturation");
     expect(isItemActive(facturation, "/finance/payments", "")).toBe(true);
-    expect(activeChildHref(facturation, "/invoices", "?status=a_verifier")).toBe(
-      "/invoices?status=a_verifier",
-    );
-    expect(activeChildHref(facturation, "/invoices", "?status=en_attente")).toBe(
-      "/invoices?status=en_attente",
-    );
-    expect(activeChildHref(facturation, "/invoices", "?status=a_relancer")).toBe(
-      "/invoices?status=a_relancer",
-    );
+    expect(activeChildHref(facturation, "/invoices", "")).toBe("/invoices");
+    expect(activeChildHref(facturation, "/finance/payments", "")).toBe("/finance/payments");
   });
 
-  it("garde le groupe Tests & évaluations actif sur les sous-pages formateur", () => {
+  it("active évaluations sur les sous-pages formateur", () => {
     expect(isItemActive(item("evaluations"), "/formateur/evaluation/abc", "")).toBe(true);
-    expect(isItemActive(item("evaluations"), "/tests", "")).toBe(true);
+    expect(isItemActive(item("evaluations"), "/formateur/evaluations", "")).toBe(true);
+    expect(isItemActive(item("tests"), "/tests", "")).toBe(true);
   });
 
   it("ouvre Planning depuis l'ancienne route /classes", () => {
