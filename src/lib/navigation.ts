@@ -35,7 +35,7 @@ type Icon = ComponentType<{ className?: string }>;
 
 /** Feuille de sous-menu : une destination réelle (chemin + éventuels `?param=`). */
 export interface NavChild {
-  /** URL complète, paramètres compris — ex. `/invoices?status=a_verifier`. */
+  /** URL complète, paramètres compris — ex. `/finance/tresorerie?tab=charges`. */
   href: string;
   label: Translations;
   /** Clé de permission ; déduite du chemin si absente. */
@@ -72,11 +72,10 @@ const L = CHROME_NAV;
 const G = CHROME_NAV_GROUPS;
 
 /**
- * Arborescence produit — 3 niveaux : section (titre fixe) ·
- * entrée repliable · sous-menus pointant vers de vraies destinations.
+ * Arborescence produit — sections · pages · sous-pages réelles uniquement.
  *
- * Règle : tout sous-menu est une URL partageable (sous-route ou `?tab=` /
- * `?status=` honoré par la page), jamais un onglet purement local.
+ * Les filtres de statut (`?status=`) et onglets déjà gérés dans la page
+ * (FilterBar, SegmentedControl) ne sont **pas** dupliqués ici.
  */
 export const NAV_SECTIONS: NavSection[] = [
   {
@@ -84,21 +83,13 @@ export const NAV_SECTIONS: NavSection[] = [
     label: CHROME_SECTIONS.operations,
     icon: Layers,
     items: [
+      { id: "inscriptions", label: L["/inscriptions"], icon: ClipboardList, href: "/inscriptions" },
       {
-        id: "inscriptions",
-        label: L["/inscriptions"],
-        icon: ClipboardList,
-        href: "/inscriptions",
-        children: [
-          { href: "/inscriptions", label: G.inscriptionsAll },
-          { href: "/inscriptions?status=en_attente", label: G.inscriptionsPending },
-          {
-            href: "/inscriptions/schedule-validation",
-            label: L["/inscriptions/schedule-validation"],
-            routeKey: "inscriptions.schedule",
-          },
-          { href: "/inscriptions?status=terminee", label: G.inscriptionsDone },
-        ],
+        id: "schedule-validation",
+        label: L["/inscriptions/schedule-validation"],
+        icon: ClipboardCheck,
+        href: "/inscriptions/schedule-validation",
+        routeKey: "inscriptions.schedule",
       },
       { id: "students", label: L["/students"], icon: Users, href: "/students" },
       { id: "formateurs", label: L["/formateurs"], icon: UserCog, href: "/formateurs" },
@@ -110,19 +101,18 @@ export const NAV_SECTIONS: NavSection[] = [
         routeKey: "inscriptions",
       },
       {
-        id: "evaluations",
-        label: G.evaluations,
+        id: "tests",
+        label: L["/tests"],
         icon: GraduationCap,
         href: "/tests",
-        children: [
-          { href: "/tests", label: L["/tests"], routeKey: "tests" },
-          {
-            href: "/formateur/evaluations",
-            label: L["/formateur/evaluations"],
-            routeKey: "evaluations",
-          },
-          { href: "/admin/phrases", label: L["/admin/phrases"], adminOnly: true },
-        ],
+        routeKey: "tests",
+      },
+      {
+        id: "evaluations",
+        label: L["/formateur/evaluations"],
+        icon: ClipboardCheck,
+        href: "/formateur/evaluations",
+        routeKey: "evaluations",
       },
     ],
   },
@@ -136,10 +126,6 @@ export const NAV_SECTIONS: NavSection[] = [
         label: L["/gestion/commercial"],
         icon: TrendingUp,
         href: "/gestion/commercial",
-        children: [
-          { href: "/gestion/commercial", label: G.commercialPipeline },
-          { href: "/gestion/commercial?tab=analytics", label: G.commercialAnalytics },
-        ],
       },
       {
         id: "partenaires",
@@ -153,11 +139,6 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: Users,
         href: "/gestion/moniteurs",
         badgeKey: "frozen",
-        children: [
-          { href: "/gestion/moniteurs", label: G.moniteursDates },
-          { href: "/gestion/moniteurs?tab=ecoles", label: G.moniteursEcoles },
-          { href: "/gestion/moniteurs?tab=base", label: G.moniteursBase },
-        ],
       },
     ],
   },
@@ -173,21 +154,6 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/invoices",
         children: [
           { href: "/invoices", label: L["/invoices"], routeKey: "invoices" },
-          {
-            href: "/invoices?status=en_attente",
-            label: G.invoicesPending,
-            routeKey: "invoices",
-          },
-          {
-            href: "/invoices?status=a_relancer",
-            label: G.invoicesToChase,
-            routeKey: "invoices",
-          },
-          {
-            href: "/invoices?status=a_verifier",
-            label: G.invoicesToCheck,
-            routeKey: "invoices",
-          },
           {
             href: "/finance/payments",
             label: L["/finance/payments"],
@@ -228,10 +194,6 @@ export const NAV_SECTIONS: NavSection[] = [
         label: L["/satisfaction-stats"],
         icon: Smile,
         href: "/satisfaction-stats",
-        children: [
-          { href: "/satisfaction-stats", label: G.satisfactionStats },
-          { href: "/satisfaction-stats?tab=comparison", label: G.satisfactionComparison },
-        ],
       },
       {
         id: "amelioration",
@@ -302,6 +264,7 @@ export const NAV_SECTIONS: NavSection[] = [
         children: [
           { href: "/admin/import", label: L["/admin/import"] },
           { href: "/admin/import-phrases", label: G.importPhrases },
+          { href: "/admin/phrases", label: L["/admin/phrases"], adminOnly: true },
           { href: "/admin/testing", label: L["/admin/testing"] },
         ],
       },
@@ -313,9 +276,6 @@ export const NAV_SECTIONS: NavSection[] = [
         children: [
           { href: "/settings", label: G.settingsOrganisation },
           { href: "/admin/seasons", label: L["/admin/seasons"] },
-          { href: "/settings?tab=languages", label: G.settingsLanguages },
-          { href: "/settings?tab=notifications", label: G.settingsNotifications },
-          { href: "/settings?tab=integrations", label: G.settingsIntegrations },
           { href: "/admin/users", label: L["/admin/users"] },
         ],
       },
@@ -328,33 +288,32 @@ export const NAV_SECTIONS: NavSection[] = [
     adminOnly: true,
     items: [
       {
-        id: "monitoramento-hub",
-        label: G.monitoramentoHub,
+        id: "monitoramento-overview",
+        label: G.monitoramentoOverview,
         icon: LayoutDashboard,
         href: "/monitoramento",
         routeKey: "monitoramento",
-        children: [
-          {
-            href: "/monitoramento",
-            label: G.monitoramentoOverview,
-            routeKey: "monitoramento",
-          },
-          {
-            href: "/monitoramento/seguranca",
-            label: G.monitoramentoSecurite,
-            routeKey: "monitoramento",
-          },
-          {
-            href: "/monitoramento/qualidade",
-            label: G.monitoramentoQualidade,
-            routeKey: "monitoramento",
-          },
-          {
-            href: "/monitoramento/acessos",
-            label: G.monitoramentoAcessos,
-            routeKey: "monitoramento",
-          },
-        ],
+      },
+      {
+        id: "monitoramento-securite",
+        label: G.monitoramentoSecurite,
+        icon: ShieldCheck,
+        href: "/monitoramento/seguranca",
+        routeKey: "monitoramento",
+      },
+      {
+        id: "monitoramento-qualidade",
+        label: G.monitoramentoQualidade,
+        icon: BadgeCheck,
+        href: "/monitoramento/qualidade",
+        routeKey: "monitoramento",
+      },
+      {
+        id: "monitoramento-acessos",
+        label: G.monitoramentoAcessos,
+        icon: Users,
+        href: "/monitoramento/acessos",
+        routeKey: "monitoramento",
       },
     ],
   },
@@ -487,7 +446,7 @@ export function isPathActive(pathname: string, path: string): boolean {
 /**
  * Score de correspondance d'une destination : -1 si hors sujet, sinon le
  * nombre de paramètres d'URL satisfaits (le plus précis l'emporte entre
- * frères — `?status=x` bat le lien nu quand le paramètre est présent).
+ * frères — `?tab=x` bat le lien nu quand le paramètre est présent).
  */
 export function matchScore(href: string, pathname: string, search: string): number {
   const { path, params } = splitHref(href);
