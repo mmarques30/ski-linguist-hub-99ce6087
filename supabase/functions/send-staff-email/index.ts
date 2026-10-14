@@ -9,7 +9,10 @@
  *     "bodyText": "texte brut (sauts de ligne OK)",
  *     "recipientName"?: "Prénom Nom",
  *     "studentId"?: "uuid",
- *     "inscriptionId"?: "uuid"
+ *     "inscriptionId"?: "uuid",
+ *     "cc"?: ["formateur@…"],
+ *     "attachments"?: [{ "filename": "…pdf", "content": "<base64>" }],
+ *     "templateSlug"?: "staff_manual" | "formateur_mise_en_relation"
  *   }
  */
 import { adminCorsHeaders, requireStaff } from "../_shared/admin-auth.ts";
@@ -21,7 +24,13 @@ import {
 import { isFliPlaceholderEmail } from "../_shared/email-guards.ts";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const TEMPLATE_SLUG = "staff_manual";
+const DEFAULT_TEMPLATE_SLUG = "staff_manual";
+const ALLOWED_TEMPLATE_SLUGS = new Set([
+  "staff_manual",
+  "formateur_mise_en_relation",
+]);
+const MAX_ATTACHMENT_BYTES = 4_500_000;
+const MAX_ATTACHMENTS = 6;
 
 function escapeHtml(value: string): string {
   return value
@@ -93,6 +102,63 @@ Deno.serve(async (req) => {
     const studentId = typeof body?.studentId === "string" ? body.studentId : null;
     const inscriptionId =
       typeof body?.inscriptionId === "string" ? body.inscriptionId : null;
+    const templateSlugRaw =
+      typeof body?.templateSlug === "string" ? body.templateSlug.trim() : DEFAULT_TEMPLATE_SLUG;
+    const templateSlug = ALLOWED_TEMPLATE_SLUGS.has(templateSlugRaw)
+      ? templateSlugRaw
+      : DEFAULT_TEMPLATE_SLUG;
+
+    const ccRaw = Array.isArray(body?.cc) ? body.cc : [];
+    const cc = ccRaw
+      .filter((v: unknown): v is string => typeof v === "string")
+      .map((v: string) => v.trim())
+      .filter((v: string) => EMAIL_RE.test(v) && !isFliPlaceholderEmail(v));
+
+    type AttachmentIn = { filename?: unknown; content?: unknown };
+    const attachmentsIn: AttachmentIn[] = Array.isArray(body?.attachments)
+      ? body.attachments
+      : [];
+    if (attachmentsIn.length > MAX_ATTACHMENTS) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Trop de pièces jointes (max ${MAX_ATTACHMENTS})`,
+        }),
+        { status: 400, headers: { ...adminCorsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const attachments: Array<{ filename: string; content: string }> = [];
+    for (const att of attachmentsIn) {
+      const filename = typeof att?.filename === "string" ? att.filename.trim() : "";
+      const content = typeof att?.content === "string" ? att.content.replace(/\s+/g, "") : "";
+      if (!filename || !/^[A-Za-z0-9._ -]+\.pdf$/i.test(filename)) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "Nom de pièce jointe PDF invalide",
+          }),
+          { status: 400, headers: { ...adminCorsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (!content || !/^[A-Za-z0-9+/=]+$/.test(content)) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Contenu PJ base64 invalide" }),
+          { status: 400, headers: { ...adminCorsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      // Approximation taille décodée
+      const approxBytes = Math.floor((content.length * 3) / 4);
+      if (approxBytes > MAX_ATTACHMENT_BYTES) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: `Pièce jointe trop volumineuse : ${filename}`,
+          }),
+          { status: 400, headers: { ...adminCorsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      attachments.push({ filename, content });
+    }
 
     if (!to || !EMAIL_RE.test(to) || isFliPlaceholderEmail(to)) {
       return new Response(
@@ -128,21 +194,26 @@ Deno.serve(async (req) => {
       to,
       subject,
       html,
+      cc: cc.length ? cc : undefined,
+      attachments: attachments.length ? attachments : undefined,
     });
 
     await adminClient.from("email_log").insert({
-      template_slug: TEMPLATE_SLUG,
+      template_slug: templateSlug,
       recipient_email: to,
       recipient_name: recipientName,
       status: send.ok ? "sent" : "failed",
       error_message: send.error ?? null,
       inscription_id: inscriptionId,
       variables_used: {
-        staff_manual: true,
+        staff_manual: templateSlug === DEFAULT_TEMPLATE_SLUG,
+        formateur_mise_en_relation: templateSlug === "formateur_mise_en_relation",
         student_id: studentId,
         sent_by: userId,
         subject,
         body_preview: bodyText.slice(0, 500),
+        cc,
+        attachments: attachments.map((a) => a.filename),
       },
     });
 
@@ -161,7 +232,16 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, data: { to, subject } }),
+      JSON.stringify({
+        success: true,
+        data: {
+          to,
+          subject,
+          cc,
+          attachments: attachments.map((a) => a.filename),
+          templateSlug,
+        },
+      }),
       { headers: { ...adminCorsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
