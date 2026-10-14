@@ -1,5 +1,6 @@
 /**
  * Rendu PDF (pdf-lib) des trois habillages C.5.
+ * Habillage ESF : ordre et libellés du .dotx « Évaluation en langue vivante ».
  * Prix, saison, barème et identité viennent du modèle — jamais d'année ni de
  * montant écrits en dur dans le rendu.
  */
@@ -7,10 +8,14 @@
 import { PDFDocument, PDFFont, PDFImage, PDFPage, rgb, StandardFonts } from "https://esm.sh/pdf-lib@1.17.1";
 import type { EvaluationPdfAssets } from "./evaluation-pdf-assets.ts";
 import {
+  ESF_APPRECIATION_HEADING,
+  ESF_BAREME_HEADING,
+  ESF_CACHET_CAPTION,
   ESF_COURSE_HEADING,
   ESF_COURSE_TABLE,
   ESF_DIRECTOR_NOTE,
-  ESF_ORGANISMES_CAPTION,
+  ESF_ORGANISM_NAME,
+  ESF_PAGE_LABEL,
   ESF_REGIONAL_SECTIONS,
   ESF_RETEST_NOTE,
   formatNiveauTableLabel,
@@ -18,7 +23,9 @@ import {
 } from "./evaluation-pdf-model.ts";
 
 const PAGE = { width: 595.28, height: 841.89 };
+/** Marges .dotx = 720 twips ≈ 36 pt. */
 const MARGIN = 42;
+const MARGIN_ESF = 36;
 const NAVY = rgb(0.07, 0.18, 0.38);
 const TEAL = rgb(0.05, 0.32, 0.4);
 const GOLD = rgb(0.85, 0.58, 0.08);
@@ -35,6 +42,8 @@ function pdfSafe(text: string): string {
     .replace(/\u2192/g, "->")
     .replace(/\u2019/g, "'")
     .replace(/\u2018/g, "'")
+    .replace(/\u2013/g, "-")
+    .replace(/\u2014/g, "-")
     .replace(/\u00A0/g, " ");
 }
 
@@ -153,6 +162,7 @@ class Cursor {
       x?: number;
       maxWidth?: number;
       gap?: number;
+      align?: "left" | "center" | "right";
     } = {}
   ) {
     const size = opts.size ?? 10;
@@ -162,12 +172,18 @@ class Cursor {
         ? this.fonts.bold
         : this.fonts.regular;
     const color = opts.color ?? INK;
-    const x = opts.x ?? this.bounds.left;
-    const maxWidth = opts.maxWidth ?? this.bounds.right - x;
+    const x0 = opts.x ?? this.bounds.left;
+    const maxWidth = opts.maxWidth ?? this.bounds.right - x0;
     const lines = wrapText(font, value, size, maxWidth);
     const gap = opts.gap ?? 3;
     for (const line of lines) {
       this.ensure(size + gap);
+      let x = x0;
+      if (opts.align === "center") {
+        x = x0 + (maxWidth - font.widthOfTextAtSize(line, size)) / 2;
+      } else if (opts.align === "right") {
+        x = x0 + maxWidth - font.widthOfTextAtSize(line, size);
+      }
       this.page.drawText(line, { x, y: this.y - size, size, font, color });
       this.y -= size + gap;
     }
@@ -281,6 +297,92 @@ function drawTable(
   }
 }
 
+/** Barème .dotx : une ligne d'en-tête fusionnée, puis colonnes A1→C2. */
+function drawEsfBaremeHorizontal(cursor: Cursor, fonts: Fonts, model: EvaluationPdfModel) {
+  const rows = model.baremeRows;
+  const cols = Math.max(1, rows.length);
+  const tableW = cursor.width;
+  const colW = tableW / cols;
+  const pad = 2.5;
+  const titleSize = 9;
+  const cellSize = 7;
+  const titleH = titleSize + pad * 2 + 2;
+
+  const cellLines = rows.map((row) => {
+    const labels = row.labels
+      .split(/\s*\/\s*/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return {
+      cecrl: row.cecrl,
+      niveau: formatNiveauTableLabel(row.niveau),
+      labels,
+    };
+  });
+  const labelLineCount = Math.max(1, ...cellLines.map((c) => c.labels.length));
+  const cecrlH = cellSize + pad * 2 + 2;
+  const niveauH = cellSize + pad * 2 + 2;
+  const labelsH = labelLineCount * (cellSize + 1.5) + pad * 2;
+
+  cursor.ensure(titleH + cecrlH + niveauH + labelsH);
+  const x0 = cursor.bounds.left;
+
+  cursor.page.drawRectangle({
+    x: x0,
+    y: cursor.y - titleH,
+    width: tableW,
+    height: titleH,
+    borderWidth: 0.5,
+    borderColor: RULE,
+    color: BAND,
+  });
+  const title = pdfSafe(ESF_BAREME_HEADING);
+  const titleWidth = fonts.bold.widthOfTextAtSize(title, titleSize);
+  cursor.page.drawText(title, {
+    x: x0 + (tableW - titleWidth) / 2,
+    y: cursor.y - pad - titleSize,
+    size: titleSize,
+    font: fonts.bold,
+    color: NAVY,
+  });
+  cursor.y -= titleH;
+
+  const drawRow = (getText: (i: number) => string | string[], size: number, rowH: number, bold = false) => {
+    let x = x0;
+    for (let i = 0; i < cols; i++) {
+      cursor.page.drawRectangle({
+        x,
+        y: cursor.y - rowH,
+        width: colW,
+        height: rowH,
+        borderWidth: 0.5,
+        borderColor: RULE,
+      });
+      const raw = getText(i);
+      const lines = Array.isArray(raw)
+        ? raw.map((l) => pdfSafe(l))
+        : wrapText(bold ? fonts.bold : fonts.regular, raw, size, colW - pad * 2);
+      lines.forEach((line, li) => {
+        const tw = (bold ? fonts.bold : fonts.regular).widthOfTextAtSize(line, size);
+        cursor.page.drawText(line, {
+          x: x + Math.max(pad, (colW - tw) / 2),
+          y: cursor.y - pad - size - li * (size + 1.5),
+          size,
+          font: bold ? fonts.bold : fonts.regular,
+          color: INK,
+        });
+      });
+      x += colW;
+    }
+    cursor.y -= rowH;
+  };
+
+  drawRow((i) => cellLines[i].cecrl, cellSize, cecrlH, true);
+  drawRow((i) => cellLines[i].niveau, cellSize, niveauH, false);
+  drawRow((i) => cellLines[i].labels, cellSize, labelsH, false);
+  cursor.space(6);
+}
+
 function drawDsfChrome(page: PDFPage, letterhead: PDFImage | null) {
   if (letterhead) {
     page.drawImage(letterhead, {
@@ -292,36 +394,6 @@ function drawDsfChrome(page: PDFPage, letterhead: PDFImage | null) {
   }
 }
 
-function drawPartnerBand(
-  page: PDFPage,
-  fonts: Fonts,
-  logos: PDFImage[],
-  left: number,
-  right: number
-) {
-  const captionY = 92;
-  page.drawText(ESF_ORGANISMES_CAPTION, {
-    x: left,
-    y: captionY,
-    size: 8,
-    font: fonts.bold,
-    color: NAVY,
-  });
-  const bandY = 28;
-  const bandH = 58;
-  const gap = 6;
-  const count = Math.max(1, logos.length);
-  const boxW = (right - left - gap * (count - 1)) / count;
-  logos.forEach((logo, i) => {
-    drawFitted(page, logo, {
-      x: left + i * (boxW + gap),
-      y: bandY,
-      width: boxW,
-      height: bandH,
-    });
-  });
-}
-
 function drawFooter(
   page: PDFPage,
   fonts: Fonts,
@@ -330,8 +402,9 @@ function drawFooter(
   total: number,
   bounds: Bounds
 ) {
-  const pageLabel = `Page ${index} / ${total}`;
-  const pageWidth = fonts.regular.widthOfTextAtSize(pageLabel, 8);
+  const pageLabel =
+    model.habillage === "esf" ? ESF_PAGE_LABEL(index, total) : `Page ${index} / ${total}`;
+  const pageWidth = fonts.regular.widthOfTextAtSize(pdfSafe(pageLabel), 8);
   if (model.showFliHeaderFooter) {
     const maxWidth = bounds.right - bounds.left - pageWidth - 12;
     const lines = wrapText(fonts.regular, model.identityLine, 7, maxWidth);
@@ -347,8 +420,8 @@ function drawFooter(
       y -= 8;
     }
   }
-  page.drawText(pageLabel, {
-    x: PAGE.width - MARGIN - pageWidth,
+  page.drawText(pdfSafe(pageLabel), {
+    x: PAGE.width - (model.habillage === "esf" ? MARGIN_ESF : MARGIN) - pageWidth,
     y: 18,
     size: 8,
     font: fonts.regular,
@@ -433,6 +506,134 @@ function drawMeta(cursor: Cursor, model: EvaluationPdfModel) {
   cursor.space(4);
 }
 
+/** Identité page 1 du .dotx ESF (champs et ordre). */
+function drawEsfMeta(
+  cursor: Cursor,
+  fonts: Fonts,
+  model: EvaluationPdfModel,
+  fliCachet: PDFImage | null
+) {
+  cursor.kv("Nom – Prénom :", model.candidateDisplayName);
+  cursor.kv("Adresse :", "—");
+  cursor.kv("ESF :", model.skiSchoolName);
+  cursor.kv("N° Carte Syndicale :", model.carteSyndicale);
+  cursor.kv("Langue(s) :", model.languageLabel);
+  cursor.kv("Avez-vous déjà été évalué(e) ?", model.previousTestLabel);
+  cursor.kv(
+    "Pour quelle(s) langue(s) ?",
+    model.previousTestLabel === "OUI" ? model.languageLabel : "—"
+  );
+  cursor.kv("A quel niveau de formation êtes-vous ?", model.skiDisciplineLabel);
+  cursor.kv("Cycle de formation :", model.trainingCycle);
+
+  const orgLabel = "Nom de l'organisme de formation :";
+  const orgValue = ESF_ORGANISM_NAME;
+  const stampW = 70;
+  const stampH = 34;
+  const labelSize = 9;
+  const valueSize = 10;
+  const rowH = Math.max(stampH + 4, valueSize + 8);
+  cursor.ensure(rowH + 12);
+  cursor.page.drawText(pdfSafe(orgLabel), {
+    x: cursor.bounds.left,
+    y: cursor.y - valueSize,
+    size: labelSize,
+    font: fonts.bold,
+    color: MUTED,
+  });
+  const labelW = fonts.bold.widthOfTextAtSize(pdfSafe(orgLabel), labelSize);
+  cursor.page.drawText(pdfSafe(orgValue), {
+    x: cursor.bounds.left + labelW + 6,
+    y: cursor.y - valueSize,
+    size: valueSize,
+    font: fonts.regular,
+    color: INK,
+  });
+  if (fliCachet) {
+    drawFitted(cursor.page, fliCachet, {
+      x: cursor.bounds.right - stampW,
+      y: cursor.y - stampH,
+      width: stampW,
+      height: stampH,
+    });
+    const cap = pdfSafe(ESF_CACHET_CAPTION);
+    const capW = fonts.regular.widthOfTextAtSize(cap, 7);
+    cursor.page.drawText(cap, {
+      x: cursor.bounds.right - stampW + (stampW - capW) / 2,
+      y: cursor.y - stampH - 9,
+      size: 7,
+      font: fonts.regular,
+      color: MUTED,
+    });
+    cursor.y -= rowH + 10;
+  } else {
+    cursor.y -= rowH;
+  }
+
+  cursor.kv("Date de l'évaluation :", model.evaluatedOn);
+  cursor.kv("Nom de l'évaluateur / formateur :", model.instructorName);
+  cursor.space(6);
+}
+
+function drawEsfSkillsTable(cursor: Cursor, fonts: Fonts, model: EvaluationPdfModel) {
+  drawTable(
+    cursor,
+    fonts,
+    [
+      ["", "Niveau de 0 à 5"],
+      ...model.skillRows.map((row) => [row.label, row.value]),
+    ],
+    [cursor.width * 0.68, cursor.width * 0.32],
+    true,
+    9
+  );
+  cursor.space(8);
+}
+
+function drawEsfComments(cursor: Cursor, model: EvaluationPdfModel) {
+  cursor.text(ESF_APPRECIATION_HEADING, { size: 11, bold: true, color: NAVY });
+  cursor.space(6);
+  for (const bloc of model.blocs) {
+    cursor.text(bloc.text || "—", { size: 9.5, gap: 3 });
+    cursor.space(6);
+  }
+}
+
+function drawEsfRegionalSections(
+  cursor: Cursor,
+  fonts: Fonts,
+  partnerLogos: PDFImage[]
+) {
+  const logoBox = 28;
+  for (let i = 0; i < ESF_REGIONAL_SECTIONS.length; i++) {
+    const section = ESF_REGIONAL_SECTIONS[i];
+    const logo = partnerLogos[i] ?? null;
+    const line = `${section.phone} - ${section.places}`;
+    const textX = cursor.bounds.left + (logo ? logoBox + 8 : 0);
+    const lines = wrapText(fonts.regular, line, 8.5, cursor.bounds.right - textX);
+    const rowH = Math.max(logoBox, lines.length * 11);
+    cursor.ensure(rowH + 4);
+    if (logo) {
+      drawFitted(cursor.page, logo, {
+        x: cursor.bounds.left,
+        y: cursor.y - logoBox,
+        width: logoBox,
+        height: logoBox,
+      });
+    }
+    lines.forEach((textLine, li) => {
+      cursor.page.drawText(textLine, {
+        x: textX,
+        y: cursor.y - 10 - li * 11,
+        size: 8.5,
+        font: fonts.regular,
+        color: INK,
+      });
+    });
+    cursor.y -= rowH + 4;
+  }
+}
+
 function drawComments(cursor: Cursor, model: EvaluationPdfModel, accent: ReturnType<typeof rgb>) {
   const compact = model.showDsfLetterhead;
   cursor.text(
@@ -443,10 +644,101 @@ function drawComments(cursor: Cursor, model: EvaluationPdfModel, accent: ReturnT
   );
   cursor.space(compact ? 2 : 4);
   for (const bloc of model.blocs) {
-    cursor.text(bloc.label, { size: compact ? 8 : 9, bold: true, color: MUTED });
+    if (bloc.label) {
+      cursor.text(bloc.label, { size: compact ? 8 : 9, bold: true, color: MUTED });
+    }
     cursor.text(bloc.text || "—", { size: compact ? 8 : 9.5 });
     cursor.space(compact ? 2 : 3);
   }
+}
+
+function drawEsfDocument(
+  cursor: Cursor,
+  fonts: Fonts,
+  model: EvaluationPdfModel,
+  esfLogo: PDFImage | null,
+  fliCachet: PDFImage | null,
+  partnerLogos: PDFImage[]
+) {
+  // —— Page 1 : en-tête ESF, identité, notes, barème, tarif, T.S.V.P. ——
+  const logoSize = 56;
+  if (esfLogo) {
+    cursor.page.drawImage(esfLogo, {
+      x: cursor.bounds.left,
+      y: cursor.y - logoSize,
+      width: logoSize,
+      height: logoSize,
+    });
+  }
+  cursor.text(model.title, {
+    size: 13,
+    bold: true,
+    color: NAVY,
+    align: "center",
+    gap: 2,
+  });
+  cursor.y = Math.min(cursor.y, cursor.bounds.top - logoSize - 6);
+  cursor.space(4);
+
+  if (model.noteMethodologique) {
+    cursor.text(model.noteMethodologique, {
+      size: 8,
+      italic: true,
+      color: MUTED,
+      gap: 2,
+    });
+    cursor.space(2);
+  }
+
+  drawEsfMeta(cursor, fonts, model, fliCachet);
+  drawEsfSkillsTable(cursor, fonts, model);
+  drawEsfBaremeHorizontal(cursor, fonts, model);
+
+  if (model.showPrice && model.priceLabel) {
+    cursor.text(`Tarif ${model.priceLabel}`, { size: 11, bold: true, color: INK });
+    cursor.space(4);
+  }
+  cursor.text(ESF_DIRECTOR_NOTE, { size: 9, color: MUTED });
+  cursor.space(10);
+  cursor.text("T.S.V.P.", {
+    size: 10,
+    bold: true,
+    align: "right",
+  });
+
+  // —— Page 2 : appréciations libres, cours, sections régionales ——
+  cursor.setBottom(MARGIN_ESF + 24);
+  cursor.forceNewPage();
+  if (esfLogo) {
+    const small = 40;
+    cursor.page.drawImage(esfLogo, {
+      x: cursor.bounds.left,
+      y: cursor.y - small,
+      width: small,
+      height: small,
+    });
+    cursor.y -= small + 10;
+  }
+
+  drawEsfComments(cursor, model);
+  cursor.space(8);
+  cursor.text(ESF_COURSE_HEADING, { size: 10, bold: true });
+  cursor.space(4);
+  drawTable(
+    cursor,
+    fonts,
+    [
+      ["", "Niveau d'anglais requis"],
+      ...ESF_COURSE_TABLE.map((row) => [row.course, row.level]),
+    ],
+    [cursor.width * 0.72, cursor.width * 0.28],
+    true,
+    8
+  );
+  cursor.space(8);
+  cursor.text(ESF_RETEST_NOTE, { size: 9, color: MUTED });
+  cursor.space(10);
+  drawEsfRegionalSections(cursor, fonts, partnerLogos);
 }
 
 export async function renderEvaluationPdf(
@@ -475,44 +767,23 @@ export async function renderEvaluationPdf(
       ? TEAL
       : NAVY;
 
+  const margin = model.habillage === "esf" ? MARGIN_ESF : MARGIN;
   const bounds: Bounds = model.showDsfLetterhead
     ? { left: 50, right: PAGE.width - 50, top: PAGE.height - 152, bottom: 130 }
-    : model.showFliHeaderFooter
-      ? { left: MARGIN, right: PAGE.width - MARGIN, top: PAGE.height - MARGIN, bottom: 48 }
-      : { left: MARGIN, right: PAGE.width - MARGIN, top: PAGE.height - MARGIN, bottom: 108 };
+    : model.habillage === "esf"
+      ? { left: margin, right: PAGE.width - margin, top: PAGE.height - margin, bottom: margin + 28 }
+      : model.showFliHeaderFooter
+        ? { left: MARGIN, right: PAGE.width - MARGIN, top: PAGE.height - MARGIN, bottom: 48 }
+        : { left: MARGIN, right: PAGE.width - MARGIN, top: PAGE.height - MARGIN, bottom: 108 };
 
   const onPage = (page: PDFPage) => {
     if (model.showDsfLetterhead) drawDsfChrome(page, dsfLetterhead);
   };
 
   const cursor = new Cursor(doc, fonts, bounds, undefined, onPage);
-  const firstPage = cursor.page;
 
-  if (model.showSyndicateHeader) {
-    const logoSize = 62;
-    if (esfLogo) {
-      cursor.page.drawImage(esfLogo, {
-        x: cursor.bounds.left,
-        y: cursor.y - logoSize,
-        width: logoSize,
-        height: logoSize,
-      });
-    }
-    const titleX = cursor.bounds.left + (esfLogo ? logoSize + 12 : 0);
-    const titleWidth = cursor.bounds.right - titleX;
-    const titleLines = wrapText(fonts.bold, model.title, 13, titleWidth);
-    let ty = cursor.y - 16;
-    for (const line of titleLines) {
-      cursor.page.drawText(line, {
-        x: titleX,
-        y: ty,
-        size: 13,
-        font: fonts.bold,
-        color: NAVY,
-      });
-      ty -= 16;
-    }
-    cursor.y -= Math.max(logoSize, titleLines.length * 16) + 8;
+  if (model.habillage === "esf") {
+    drawEsfDocument(cursor, fonts, model, esfLogo, fliCachet, partnerLogos);
   } else if (model.showFliHeaderFooter && fliHeader) {
     const headerH = 58;
     cursor.page.drawRectangle({
@@ -531,162 +802,103 @@ export async function renderEvaluationPdf(
     cursor.y -= headerH + 8;
     cursor.text(model.title, { size: 12, bold: true, color: TEAL });
     cursor.space(3);
-  } else {
-    cursor.text(model.title, { size: 14, bold: true, color: accent });
-    cursor.space(4);
-  }
-
-  cursor.text(model.subtitle, { size: 9, bold: true, color: INK, gap: 2 });
-  if (model.noteMethodologique) {
-    cursor.text(model.noteMethodologique, {
-      size: 8,
-      italic: true,
-      color: MUTED,
-      gap: 2,
-    });
-  }
-  cursor.space(4);
-  cursor.rule();
-  drawMeta(cursor, model);
-
-  if (model.habillage === "esf") {
-    const accentNavy = NAVY;
-    cursor.text("Niveau de 0 à 5 et équivalence CECRL", {
-      size: 11,
-      bold: true,
-      color: accentNavy,
-    });
-    cursor.space(4);
-    drawTable(
-      cursor,
-      fonts,
-      [
-        ["Compétence évaluée", "Niveau"],
-        ...model.skillRows.map((row) => [row.label, row.value]),
-      ],
-      [cursor.width * 0.68, cursor.width * 0.32],
-      true
-    );
-    cursor.space(6);
-    if (model.showPrice && model.priceLabel) {
-      cursor.text(`Tarif ${model.priceLabel}`, { size: 11, bold: true, color: TEAL });
-      cursor.space(4);
+    if (model.subtitle) {
+      cursor.text(model.subtitle, { size: 9, bold: true, color: INK, gap: 2 });
     }
-    drawComments(cursor, model, accentNavy);
-    cursor.space(4);
-    cursor.text("T.S.V.P.", { size: 9, bold: true });
-    if (partnerLogos.length) {
-      drawPartnerBand(
-        firstPage,
-        fonts,
-        partnerLogos,
-        cursor.bounds.left,
-        cursor.bounds.right
-      );
-    }
-
-    cursor.setBottom(MARGIN + 28);
-    cursor.forceNewPage();
-    if (esfLogo) {
-      const logoSize = 36;
-      cursor.page.drawImage(esfLogo, {
-        x: cursor.bounds.left,
-        y: cursor.y - logoSize,
-        width: logoSize,
-        height: logoSize,
+    if (model.noteMethodologique) {
+      cursor.text(model.noteMethodologique, {
+        size: 8,
+        italic: true,
+        color: MUTED,
+        gap: 2,
       });
-      cursor.text(model.title, {
-        size: 11,
-        bold: true,
-        color: NAVY,
-        x: cursor.bounds.left + logoSize + 8,
-        maxWidth: cursor.width - logoSize - 8,
-      });
-      cursor.y = Math.min(cursor.y, cursor.bounds.top - logoSize - 8);
-    } else {
-      cursor.text(model.title, { size: 11, bold: true, color: NAVY });
     }
-    cursor.space(6);
-    cursor.text("Barème européen", { size: 11, bold: true, color: NAVY });
-    cursor.space(3);
-    drawTable(
-      cursor,
-      fonts,
-      [
-        ["CECRL", "Niveau", "Libellés"],
-        ...model.baremeRows.map((row) => [
-          row.cecrl,
-          formatNiveauTableLabel(row.niveau),
-          row.labels,
-        ]),
-      ],
-      [cursor.width * 0.14, cursor.width * 0.28, cursor.width * 0.58],
-      true
-    );
-    cursor.space(8);
-    cursor.text(ESF_DIRECTOR_NOTE, { size: 8.5, color: MUTED });
     cursor.space(4);
-    cursor.text(ESF_COURSE_HEADING, { size: 10, bold: true });
-    cursor.space(3);
-    drawTable(
-      cursor,
-      fonts,
-      [
-        ["Type de cours", "Niveau d'anglais requis"],
-        ...ESF_COURSE_TABLE.map((row) => [row.course, row.level]),
-      ],
-      [cursor.width * 0.72, cursor.width * 0.28],
-      true
-    );
-    cursor.space(6);
-    cursor.text(ESF_RETEST_NOTE, { size: 8.5, color: MUTED });
-    cursor.space(8);
-    cursor.text("Sections régionales", { size: 11, bold: true, color: NAVY });
-    cursor.space(3);
-    for (const section of ESF_REGIONAL_SECTIONS) {
-      cursor.text(`${section.phone} – ${section.places}`, { size: 8.5 });
-    }
-  } else if (model.showDsfLetterhead) {
-    drawSkillsTable(cursor, fonts, model, accent);
-    drawBaremeTable(cursor, fonts, model, accent, true);
-    drawComments(cursor, model, accent);
-  } else {
+    cursor.rule();
+    drawMeta(cursor, model);
     drawSkillsAndBareme(cursor, fonts, model);
     if (model.showPrice && model.priceLabel) {
       cursor.text(`Tarif ${model.priceLabel}`, {
         size: 11,
         bold: true,
-        color: model.showFliHeaderFooter ? TEAL : accent,
+        color: TEAL,
       });
       cursor.space(4);
     }
     drawComments(cursor, model, accent);
-    if (model.showFliHeaderFooter) {
-      const stampW = 120;
-      const stampH = 58;
-      if (fliCachet) {
-        drawFitted(cursor.page, fliCachet, {
-          x: cursor.bounds.right - stampW,
-          y: Math.max(cursor.bounds.bottom + 2, cursor.y - stampH),
-          width: stampW,
-          height: stampH,
-        });
-      }
-      cursor.text(`Fait à ${model.identity.city}, le ${model.verifiedOn ?? "—"}`, {
-        size: 9,
-        maxWidth: cursor.width - (fliCachet ? stampW + 8 : 0),
+    const stampW = 120;
+    const stampH = 58;
+    if (fliCachet) {
+      drawFitted(cursor.page, fliCachet, {
+        x: cursor.bounds.right - stampW,
+        y: Math.max(cursor.bounds.bottom + 2, cursor.y - stampH),
+        width: stampW,
+        height: stampH,
       });
     }
+    cursor.text(`Fait à ${model.identity.city}, le ${model.verifiedOn ?? "—"}`, {
+      size: 9,
+      maxWidth: cursor.width - (fliCachet ? stampW + 8 : 0),
+    });
+  } else if (model.showDsfLetterhead) {
+    cursor.text(model.title, { size: 14, bold: true, color: accent });
+    cursor.space(4);
+    if (model.subtitle) {
+      cursor.text(model.subtitle, { size: 9, bold: true, color: INK, gap: 2 });
+    }
+    if (model.noteMethodologique) {
+      cursor.text(model.noteMethodologique, {
+        size: 8,
+        italic: true,
+        color: MUTED,
+        gap: 2,
+      });
+    }
+    cursor.space(4);
+    cursor.rule();
+    drawMeta(cursor, model);
+    drawSkillsTable(cursor, fonts, model, accent);
+    drawBaremeTable(cursor, fonts, model, accent, true);
+    drawComments(cursor, model, accent);
+  } else {
+    cursor.text(model.title, { size: 14, bold: true, color: accent });
+    cursor.space(4);
+    if (model.subtitle) {
+      cursor.text(model.subtitle, { size: 9, bold: true, color: INK, gap: 2 });
+    }
+    if (model.noteMethodologique) {
+      cursor.text(model.noteMethodologique, {
+        size: 8,
+        italic: true,
+        color: MUTED,
+        gap: 2,
+      });
+    }
+    cursor.space(4);
+    cursor.rule();
+    drawMeta(cursor, model);
+    drawSkillsAndBareme(cursor, fonts, model);
+    if (model.showPrice && model.priceLabel) {
+      cursor.text(`Tarif ${model.priceLabel}`, {
+        size: 11,
+        bold: true,
+        color: accent,
+      });
+      cursor.space(4);
+    }
+    drawComments(cursor, model, accent);
   }
 
   const pages = doc.getPages();
   const footerBounds: Bounds = model.showDsfLetterhead
     ? bounds
-    : { left: MARGIN, right: PAGE.width - MARGIN, top: PAGE.height - MARGIN, bottom: 28 };
+    : {
+        left: margin,
+        right: PAGE.width - margin,
+        top: PAGE.height - margin,
+        bottom: 28,
+      };
   pages.forEach((page, i) => {
-    if (model.habillage === "esf" && i === 0 && partnerLogos.length) {
-      // bande déjà posée en pied de première page
-    }
     if (model.showDsfLetterhead) return;
     drawFooter(page, fonts, model, i + 1, pages.length, footerBounds);
   });

@@ -18,13 +18,14 @@ export const EVALUATION_PDF_ASSET_FILES = {
   fliCachet: "fli-cachet.png",
   fliCompact: "fli-logo-compact.png",
   dsfLetterhead: "dsf-papier-entete-A4.png",
+  /** Ordre aligné sur ESF_REGIONAL_SECTIONS (.dotx). */
   partners: [
-    "orga-alpes-inter-langues.jpg",
-    "orga-cci-lorraine.jpg",
-    "orga-cite-des-langues.jpg",
-    "orga-cret-hautes-alpes.png",
-    "orga-greta-midi-pyrenees.jpg",
-    "orga-words-to-the-world.png",
-    "fli-logo-compact.png",
+    "orga-alpes-inter-langues.jpg", // Bourg Saint Maurice
+    "orga-cret-hautes-alpes.png", // Briançon
+    "orga-cci-lorraine.jpg", // Épinal
+    "orga-cite-des-langues.jpg", // Chambéry
+    "fli-logo-compact.png", // Francin / FLI
+    "orga-greta-midi-pyrenees.jpg", // Tarbes
+    "orga-words-to-the-world.png", // Megève / Albertville / Chamonix
   ],
 } as const;
