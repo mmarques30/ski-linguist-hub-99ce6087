@@ -26,11 +26,6 @@ const SPEC_PICKS = [
     file: "YouTube 1cIivE5ggCk",
     why: "Vidéo déjà en ligne sur stages-langues.fr",
   },
-  {
-    role: "Carrousel partenaires",
-    file: "noms en texte",
-    why: "Logos HD ESF / stations / Qualiopi / FIFPL / Linguaskill / Bright à fournir",
-  },
 ];
 
 /**
@@ -73,9 +68,10 @@ export default function AssetValidationMockupPage() {
             Aligné sur docs/FLI-LP-institucional-spec.md
           </h2>
           <p className="mt-2 max-w-3xl text-sm text-white/75">
-            Parcours : tête de page, méthode et vidéo, partenaires, formations, pied de page,
-            FAQ. Bouton « Accès FLI » vers <code className="text-[#FCAF17]">/auth</code>. En
-            attente : photo réelle, logos partenaires, chiffres des moniteurs formés.
+            Parcours : tête de page, méthode et vidéo, formations, stages, FAQ, puis le pied de
+            page. Bouton « Accès FLI » vers <code className="text-[#FCAF17]">/auth</code>. En
+            attente : photo réelle, chiffres des moniteurs formés. Les logos partenaires ne sont
+            pas affichés pour le moment.
           </p>
           <ul className="mt-5 grid gap-3 sm:grid-cols-2">
             {SPEC_PICKS.map((p) => (

@@ -37,7 +37,6 @@ import {
 
 const NAV = [
   { label: "Notre méthode", href: "#metodo" },
-  { label: "Partenaires", href: "#parceiros" },
   { label: "Formations", href: "#formacoes" },
   { label: "Nos stages", href: "#stages" },
   { label: "FAQ", href: "#faq" },
@@ -58,22 +57,6 @@ const METHOD_STEPS = [
   "Formation adaptée aux niveaux et besoins",
   "Nouveau test en fin de formation",
   "Questionnaire de satisfaction",
-] as const;
-
-const PARTNERS = [
-  "Réseau ESF",
-  "Courchevel 1850",
-  "Val Cenis",
-  "Valmorel",
-  "St Sorlin d'Arves",
-  "La Rosière",
-  "Saint-Gervais",
-  "La Clusaz",
-  "Piau Engaly",
-  "Qualiopi",
-  "FIFPL / OPCO",
-  "Linguaskill",
-  "Bright",
 ] as const;
 
 const FORMATIONS = [
@@ -121,10 +104,6 @@ const FAQ_ITEMS = [
   {
     q: "Puis-je concilier la formation avec ma saison de ski ?",
     a: "Oui : stages intensifs en automne, cours individuels ou en ligne à la demande toute l'année.",
-  },
-  {
-    q: "Le coût est-il élevé ?",
-    a: "750 €/personne pour un stage intensif de 20h. Le FIFPL peut financer jusqu'à 900 €/an pour les formations individuelles.",
   },
   {
     q: "Et si je dois annuler mon inscription ?",
@@ -214,20 +193,10 @@ export default function InstitutionalLanding() {
   const closeMenu = () => setMenuOpen(false);
 
   return (
-    <div className="lp-root min-h-screen bg-[hsl(var(--surface-page))] text-[hsl(var(--foreground))] antialiased">
+    <div className="lp-root flex min-h-screen flex-col bg-[hsl(var(--surface-page))] text-[hsl(var(--foreground))] antialiased">
       <style>{`
         .lp-root { font-family: "Outfit", ui-sans-serif, system-ui, sans-serif; }
         .lp-display { font-family: "Syne", "Outfit", sans-serif; }
-        @keyframes lp-marquee {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
-        }
-        .lp-marquee-track {
-          display: flex;
-          width: max-content;
-          animation: lp-marquee 40s linear infinite;
-        }
-        .lp-marquee-track:hover { animation-play-state: paused; }
         @keyframes lp-float {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-6px); }
@@ -318,7 +287,7 @@ export default function InstitutionalLanding() {
         )}
       </header>
 
-      <main>
+      <main className="flex-1">
         {/* —— Section 1 : tête de page —— fond gris foncé uni, sans photo de fond */}
         <section
           id="inicio"
@@ -453,34 +422,7 @@ export default function InstitutionalLanding() {
           </div>
         </section>
 
-        {/* —— Section 3 : partenaires —— */}
-        <section
-          id="parceiros"
-          className="scroll-mt-24 overflow-hidden border-y border-border bg-[hsl(var(--fli-navy))] py-14 text-white"
-        >
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <h2 className="lp-display text-center text-2xl font-bold tracking-tight sm:text-3xl">
-              Ils nous font confiance
-            </h2>
-            <p className="mx-auto mt-2 max-w-xl text-center text-sm text-white/60">
-              Écoles, stations et organismes qui forment avec FLI.
-            </p>
-          </div>
-          <div className="relative mt-10 mask-[linear-gradient(90deg,transparent,black_8%,black_92%,transparent)]">
-            <div className="lp-marquee-track gap-4 px-4">
-              {[...PARTNERS, ...PARTNERS].map((name, i) => (
-                <div
-                  key={`${name}-${i}`}
-                  className="flex h-14 min-w-[9.5rem] items-center justify-center rounded-xl border border-white/15 bg-white/5 px-5 text-center text-sm font-semibold tracking-wide text-white/80"
-                >
-                  {name}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* —— Section 4 : formations —— */}
+        {/* —— Section formations —— */}
         <section id="formacoes" className="scroll-mt-24 bg-[hsl(var(--surface-page))]">
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
             <div className="max-w-2xl">
@@ -608,10 +550,51 @@ export default function InstitutionalLanding() {
             </div>
           </div>
         </section>
+
+        {/* —— FAQ —— */}
+        <section id="faq" className="scroll-mt-24 bg-[hsl(var(--surface-raised))]">
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[0.85fr_1.15fr] lg:py-20">
+          <div>
+            <h2 className="lp-display text-3xl font-bold tracking-tight text-[hsl(var(--fli-navy))] sm:text-4xl">
+              Une question ?
+            </h2>
+            <div className="mt-8 rounded-[var(--radius-card)] border border-border bg-[hsl(var(--surface-page))] p-6">
+              <p className="font-semibold text-[hsl(var(--fli-navy))]">
+                Vous n&apos;avez pas trouvé votre réponse ?
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Écrivez-nous ou appelez l&apos;équipe FLI — nous répondons rapidement.
+              </p>
+              <a
+                href="mailto:info@fli.fr"
+                className="mt-5 inline-flex items-center gap-2 rounded-full bg-[hsl(var(--fli-yellow))] px-5 py-2.5 text-sm font-semibold text-[hsl(var(--fli-navy))]"
+              >
+                Nous contacter
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </a>
+              <p className="mt-3 text-xs text-muted-foreground">
+                info@fli.fr · 04 79 28 21 09
+              </p>
+            </div>
+          </div>
+
+          <Accordion type="single" collapsible className="w-full">
+            {FAQ_ITEMS.map((item, i) => (
+              <AccordionItem key={item.q} value={`faq-${i}`}>
+                <AccordionTrigger className="text-left text-sm font-semibold text-[hsl(var(--fli-navy))] sm:text-base">
+                  {item.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
+                  {item.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </section>
       </main>
 
-      {/* —— Footer (avant FAQ) —— */}
-      <footer className="border-t border-border bg-[hsl(var(--fli-navy))] text-white">
+      <footer className="mt-auto border-t border-border bg-[hsl(var(--fli-navy))] text-white">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-[1.2fr_1fr]">
           <div>
             <img src={RECOMMENDED.navLogo} alt="FLI" className="h-9 w-auto" />
@@ -655,48 +638,6 @@ export default function InstitutionalLanding() {
           © {new Date().getFullYear()} France Langues International
         </div>
       </footer>
-
-      {/* —— Section 5 : FAQ (après le pied de page) —— */}
-      <section id="faq" className="scroll-mt-24 bg-[hsl(var(--surface-raised))]">
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[0.85fr_1.15fr] lg:py-20">
-          <div>
-            <h2 className="lp-display text-3xl font-bold tracking-tight text-[hsl(var(--fli-navy))] sm:text-4xl">
-              Une question ?
-            </h2>
-            <div className="mt-8 rounded-[var(--radius-card)] border border-border bg-[hsl(var(--surface-page))] p-6">
-              <p className="font-semibold text-[hsl(var(--fli-navy))]">
-                Vous n&apos;avez pas trouvé votre réponse ?
-              </p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Écrivez-nous ou appelez l&apos;équipe FLI — nous répondons rapidement.
-              </p>
-              <a
-                href="mailto:info@fli.fr"
-                className="mt-5 inline-flex items-center gap-2 rounded-full bg-[hsl(var(--fli-yellow))] px-5 py-2.5 text-sm font-semibold text-[hsl(var(--fli-navy))]"
-              >
-                Nous contacter
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </a>
-              <p className="mt-3 text-xs text-muted-foreground">
-                info@fli.fr · 04 79 28 21 09
-              </p>
-            </div>
-          </div>
-
-          <Accordion type="single" collapsible className="w-full">
-            {FAQ_ITEMS.map((item, i) => (
-              <AccordionItem key={item.q} value={`faq-${i}`}>
-                <AccordionTrigger className="text-left text-sm font-semibold text-[hsl(var(--fli-navy))] sm:text-base">
-                  {item.q}
-                </AccordionTrigger>
-                <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
-                  {item.a}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </div>
-      </section>
     </div>
   );
 }
