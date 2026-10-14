@@ -606,6 +606,24 @@ export type Database = {
           },
         ]
       }
+      cron_dispatch_secret: {
+        Row: {
+          id: boolean
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          id?: boolean
+          token?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: boolean
+          token?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       document_sendings: {
         Row: {
           created_at: string
