@@ -925,10 +925,11 @@ export default function Inscriptions() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogTitle>
+              Supprimer l&apos;inscription de {inscriptionToDelete?.name} ?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer l'inscription de{" "}
-              <strong>{inscriptionToDelete?.name}</strong> ? Cette action est irréversible.
+              Cette action est définitive : l&apos;inscription ne pourra pas être récupérée.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

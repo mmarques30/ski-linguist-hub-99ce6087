@@ -7,11 +7,16 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Mail } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { IconChip } from "@/components/ui-kit";
+import {
+  authEmailLabel,
+  authValidationToastTitle,
+  describeAuthError,
+} from "@/lib/auth-copy";
 import fliLogo from "@/assets/fli-marca-black.png";
 import fliLogoDark from "@/assets/fli-marca-yellow.png";
 
 const emailSchema = z.object({
-  email: z.string().trim().email("Format d'email invalide"),
+  email: z.string().trim().email("Adresse e-mail invalide"),
 });
 
 export function StudentAuthCard() {
@@ -24,7 +29,9 @@ export function StudentAuthCard() {
     e.preventDefault();
     const validation = emailSchema.safeParse({ email });
     if (!validation.success) {
-      toast.error("Email invalide", { description: validation.error.errors[0].message });
+      toast.error(authValidationToastTitle(), {
+        description: validation.error.errors[0].message,
+      });
       return;
     }
 
@@ -32,7 +39,9 @@ export function StudentAuthCard() {
     try {
       const { error } = await signInWithMagicLink(email);
       if (error) {
-        toast.error("Erreur", { description: error.message });
+        toast.error("Envoi impossible", {
+          description: describeAuthError(error.message),
+        });
       } else {
         setSent(true);
       }
@@ -56,7 +65,8 @@ export function StudentAuthCard() {
             Espace stagiaire
           </h1>
           <p className="text-sm text-muted-foreground">
-            Connectez-vous avec le lien reçu par email, ou demandez un nouveau lien ci-dessous.
+            Connectez-vous avec le lien reçu par e-mail, ou demandez un nouveau lien
+            ci-dessous.
           </p>
         </div>
       </div>
@@ -67,13 +77,13 @@ export function StudentAuthCard() {
             <IconChip icon={Mail} tone="teal" size="sm" />
             <p className="min-w-0 text-sm text-foreground">
               Si un compte existe pour <strong className="break-all">{email}</strong>, vous
-              recevrez un email avec un lien de connexion sécurisé. Vérifiez vos spams.
+              recevrez un e-mail avec un lien de connexion sécurisé. Vérifiez vos spams.
             </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div className="space-y-2">
-              <Label htmlFor="student-email">Email</Label>
+              <Label htmlFor="student-email">{authEmailLabel()}</Label>
               <Input
                 id="student-email"
                 type="email"

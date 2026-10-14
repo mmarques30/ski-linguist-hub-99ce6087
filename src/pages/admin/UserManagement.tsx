@@ -58,7 +58,9 @@ export default function UserManagement() {
           toast.success("Utilisateur créé avec succès");
           setFormOpen(false);
         } catch (err: unknown) {
-          toast.error("Erreur", { description: err instanceof Error ? err.message : "Erreur" });
+          toast.error("Création impossible", {
+            description: err instanceof Error ? err.message : "Réessayez dans un instant.",
+          });
         }
       },
     });
@@ -75,7 +77,9 @@ export default function UserManagement() {
           await toggleUserActive.mutateAsync({ userId, isActive: !currentActive });
           toast.success(currentActive ? "Utilisateur désactivé" : "Utilisateur activé");
         } catch (err: unknown) {
-          toast.error("Erreur", { description: err instanceof Error ? err.message : "Erreur" });
+          toast.error(currentActive ? "Désactivation impossible" : "Activation impossible", {
+            description: err instanceof Error ? err.message : "Réessayez dans un instant.",
+          });
         }
       },
     });
@@ -134,7 +138,7 @@ export default function UserManagement() {
           ) : users.length === 0 ? (
             <TableEmpty
               title="Aucun utilisateur"
-              description="Aucun compte d'accès n'est encore provisionné."
+              description="Aucun compte d'accès n'a encore été créé."
               icon={Users}
               action={
                 <Button onClick={() => setFormOpen(true)}>

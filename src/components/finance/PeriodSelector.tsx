@@ -74,12 +74,13 @@ export function PeriodSelector({ startDate, endDate, onPeriodChange }: PeriodSel
     }
   };
 
+  // Vocabulaire aligné sur le filtre période du header (année comptable / mois).
   const periods: { value: Period; label: string }[] = [
-    { value: 'this-month', label: 'Ce mois' },
-    { value: 'last-month', label: 'Mois dernier' },
-    { value: 'this-season', label: 'Cet exercice' },
-    { value: 'last-season', label: 'Exercice précédent' },
-    { value: 'this-year', label: 'Cette année civile' },
+    { value: 'this-month', label: 'Mois en cours' },
+    { value: 'last-month', label: 'Mois N-1' },
+    { value: 'this-season', label: 'Année comptable' },
+    { value: 'last-season', label: 'Année comptable N-1' },
+    { value: 'this-year', label: 'Année civile' },
     { value: 'custom', label: 'Personnalisé' },
   ];
 

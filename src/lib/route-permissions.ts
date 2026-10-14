@@ -24,7 +24,7 @@ export const ROUTE_GROUPS: RouteGroup[] = [
   {
     label: "Commercial & partenaires",
     routes: [
-      { key: "commercial", label: "Pipeline commercial" },
+      { key: "commercial", label: "Prospects commerciaux" },
       { key: "partenaires", label: "Partenaires" },
       { key: "moniteurs", label: "Moniteurs de ski" },
     ],
