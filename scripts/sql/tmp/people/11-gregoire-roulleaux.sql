@@ -50,7 +50,7 @@ INSERT INTO public.test_evaluations (
   'Vous arrivez à interagir mais l''ensemble manque de fluidité et de justesse.',
   'Vous avez plutôt bien compris le texte audio et moi-même. Prononciation : « ze » pour THE ; vous oubliez d''expirer le H. Pour la partie grammaticale vous avez tendance à mélanger les temps, on voit que vous avez quelques connaissances mais il faut les comprendre pour pouvoir employer les bons temps dans le bon contexte.',
   'Vous connaissez le vocabulaire mais les explications ne sont pas toujours claires. Vocabulaire : entreprise = company. Utilisez PRESENT -ing et PRESENT SIMPLE selon le contexte. Apprenez PRETERIT et PRESENT PERFECT. « Dans le but de » = TO (ex. : To get better at skiing, you need to...).',
-  'Vous arrivez à vous faire comprendre mais votre accent gène par moments ; vous utilisez parfois le passé et parfois pas — à revoir.',
+  'Vous arrivez à vous faire comprendre mais votre accent gêne par moments ; vous utilisez parfois le passé et parfois pas — à revoir.',
   NULL,
   'valide',
   now()

@@ -50,7 +50,7 @@ INSERT INTO public.test_evaluations (
   'Vous vous exprimez avec une certaine aisance et parvenez facilement à vous faire comprendre. Votre vocabulaire est assez riche et les échanges sont agréables.',
   'Vous avez très bien compris le texte audio. Votre niveau de compréhension permet une interaction fluide et agréable. Pour la partie grammaticale vous avez de bonnes bases, attention à quelques petites fautes.',
   'Concernant l''explication technique vous avez bien su expliquer les détails et anticiper les erreurs des débutants. Revoyez MUST et HAVE TO pour exprimer l''obligation ; utilisez SHOULD pour donner un conseil.',
-  'En conclusion vous avez un niveau opérationnel qui vous permet de communiquer avec la clientèle anglophone de manière satisfaisante.',
+  'En conclusion vous avez un niveau de fluidité qui vous permet de communiquer avec la clientèle anglophone de manière satisfaisante.',
   NULL,
   'valide',
   now()

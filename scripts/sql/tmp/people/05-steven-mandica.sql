@@ -48,7 +48,7 @@ INSERT INTO public.test_evaluations (
   3, 3, 3, 3, 3, 3,
   'B2',
   'Vous vous exprimez d''une façon assez claire et autonome.',
-  'Vous avez plutôt bien compris le texte audio et moi-même. Vous avez des bonnes bases en grammaire et vous êtes capable de vous exprimer dans tous les temps.',
+  'Vous avez plutôt bien compris le texte audio et moi-même. Vous avez de bonnes bases en grammaire et vous êtes capable de vous exprimer dans tous les temps.',
   'En ce qui concerne la partie spécifique à votre métier, vous vous exprimez avec enthousiasme et précision.',
   'En conclusion vous avez un niveau opérationnel qui vous permet de communiquer correctement avec la clientèle anglophone. Continuez néanmoins à développer l''apprentissage de vos connaissances, vous gagnerez en aisance et en fluidité.',
   NULL,
