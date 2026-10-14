@@ -14,9 +14,8 @@ import zipfile
 from pathlib import Path
 from xml.sax.saxutils import escape
 
-DEFAULT_DOTX = Path(
-    "/home/ubuntu/.cursor/projects/workspace/uploads/Re_sultat_d_e_val_DSF_forms_f700.dotx"
-)
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_DOTX = REPO_ROOT / "docs/evaluation-resultats/Resultat_eval_DSF_forms.dotx"
 
 W_T_OPEN = '<w:t xml:space="preserve">'
 
@@ -146,10 +145,20 @@ def fill_document_xml(xml: str, data: dict[str, str]) -> str:
         if name in data:
             xml = replace_all_fldsimple(xml, name, data[name])
     for name, value in data.items():
-        if name in ("Prénom__NOM__du_candidat", "Introduction", "title_year"):
+        if name in (
+            "Prénom__NOM__du_candidat",
+            "Introduction",
+            "title_year",
+            "footer_version",
+        ):
             continue
         xml = set_complex_field_value(xml, name, value)
     return xml
+
+
+def fill_footer_xml(xml: str, version_label: str) -> str:
+    """Remplace « Version 1 du 28/04/2021 » (pied de page modèle)."""
+    return xml.replace("Version 1 du 28/04/2021", version_label)
 
 
 def build_pack(
@@ -165,6 +174,14 @@ def build_pack(
         doc_xml = tmp_path / "word" / "document.xml"
         filled = fill_document_xml(doc_xml.read_text(encoding="utf-8"), data)
         doc_xml.write_text(filled, encoding="utf-8")
+        footer = tmp_path / "word" / "footer1.xml"
+        if footer.exists() and data.get("footer_version"):
+            footer.write_text(
+                fill_footer_xml(
+                    footer.read_text(encoding="utf-8"), data["footer_version"]
+                ),
+                encoding="utf-8",
+            )
         out_docx.parent.mkdir(parents=True, exist_ok=True)
         if out_docx.exists():
             out_docx.unlink()
@@ -202,6 +219,7 @@ def build_pack(
 def mandica_data() -> dict[str, str]:
     return {
         "title_year": "2026",
+        "footer_version": "Version du 13/10/2026",
         "Prénom__NOM__du_candidat": "Steven Mandica",
         "École_de_ski": "Téléphérique du Salève",
         "Langue_évaluée": "Anglais",

@@ -11,10 +11,9 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
 OUT = Path("/opt/cursor/artifacts/mollard-oct-2026/dsf-mandica")
-DOTX = Path(
-    "/home/ubuntu/.cursor/projects/workspace/uploads/Re_sultat_d_e_val_DSF_forms_f700.dotx"
-)
+DOTX = REPO_ROOT / "docs/evaluation-resultats/Resultat_eval_DSF_forms.dotx"
 
 
 def set_run_font(run, size=11, bold=False, color=None):
@@ -113,16 +112,16 @@ def build_email_draft() -> Path:
 
 voici le résultat du test d'anglais de Steven Mandica (Téléphérique du Salève), passé le 08/10/2026 — niveau B2+ (opérationnel).
 
+C'est le premier résultat que je t'envoie depuis notre nouveau système de gestion. Les e-mails partent aussi de façon automatique : comme on est en phase de test, il peut y avoir quelques coquilles. N'hésite pas à revenir vers moi s'il y a des modifications à apporter.
+
 Je joins :
 - le résultat en PDF (mise en page modèle DSF) ;
-- le même document en Word modifiable (fichier .dotx rempli) ;
+- le même document en Word modifiable ;
 - le tableau des niveaux de la session ;
 - la facture n° 26-27.14335 (42 € HT / 50,40 € TTC) à régler — échéance 30/11/2026 ;
 - pour mémoire, le contrat de prestation n° 26 338.
 
 Coordonnées bancaires FLI sur la facture (réf. à indiquer : 26-27.14335 / Contrat 26 338).
-
-N'hésite pas si tu as besoin d'un ajustement sur le document Word.
 
 À bientôt,
 Paula
