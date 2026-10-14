@@ -152,14 +152,16 @@ export function LeadFormDialog({ open, onOpenChange, lead, defaultChannel = "cpf
     try {
       if (isEdit && lead) {
         await updateLead.mutateAsync({ id: lead.id, ...payload });
-        toast.success("Lead mis à jour");
+        toast.success("Prospect mis à jour");
       } else {
         await createLead.mutateAsync(payload as Parameters<typeof createLead.mutateAsync>[0]);
-        toast.success("Lead créé");
+        toast.success("Prospect créé");
       }
       onOpenChange(false);
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Erreur");
+      toast.error("Enregistrement impossible", {
+        description: err instanceof Error ? err.message : "Réessayez dans un instant.",
+      });
     }
   };
 
@@ -168,15 +170,17 @@ export function LeadFormDialog({ open, onOpenChange, lead, defaultChannel = "cpf
     if (!form.contact_name.trim()) return;
 
     if (form.status === "perdu" && !form.loss_reason.trim()) {
-      toast.error("Motif de perte requis pour un lead perdu");
+      toast.error("Motif de perte requis", {
+        description: "Indiquez pourquoi ce prospect est perdu.",
+      });
       return;
     }
 
     confirm({
-      title: isEdit ? "Enregistrer les modifications ?" : "Créer ce lead ?",
+      title: isEdit ? "Enregistrer les modifications ?" : "Créer ce prospect ?",
       description: isEdit
-        ? "Les informations du lead seront mises à jour."
-        : "Un nouveau lead sera ajouté au pipeline.",
+        ? "Les informations du prospect seront mises à jour."
+        : "Un nouveau prospect sera ajouté au tableau commercial.",
       actionLabel: isEdit ? "Enregistrer" : "Créer",
       run: () => persistLead(),
     });
@@ -189,7 +193,9 @@ export function LeadFormDialog({ open, onOpenChange, lead, defaultChannel = "cpf
       toast.success(`Inscription ${result.inscriptionCode} créée`);
       onOpenChange(false);
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Erreur de conversion");
+      toast.error("Conversion impossible", {
+        description: err instanceof Error ? err.message : "Réessayez dans un instant.",
+      });
     }
   };
 
@@ -197,11 +203,13 @@ export function LeadFormDialog({ open, onOpenChange, lead, defaultChannel = "cpf
     if (!lead) return;
     try {
       await deleteLead.mutateAsync(lead.id);
-      toast.success("Lead supprimé");
+      toast.success("Prospect supprimé");
       setDeleteOpen(false);
       onOpenChange(false);
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Erreur de suppression");
+      toast.error("Suppression impossible", {
+        description: err instanceof Error ? err.message : "Réessayez dans un instant.",
+      });
     }
   };
 
@@ -210,7 +218,7 @@ export function LeadFormDialog({ open, onOpenChange, lead, defaultChannel = "cpf
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{isEdit ? "Modifier le lead" : "Nouveau lead"}</DialogTitle>
+            <DialogTitle>{isEdit ? "Modifier le prospect" : "Nouveau prospect"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -483,9 +491,10 @@ export function LeadFormDialog({ open, onOpenChange, lead, defaultChannel = "cpf
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer ce lead ?</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer ce prospect ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. Le lead « {lead?.contact_name} » sera définitivement supprimé.
+              Cette action est définitive. Le prospect « {lead?.contact_name} » sera
+              définitivement supprimé.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -71,9 +71,9 @@ function ChannelKPIs({
         onClick={onOpenAnalytics}
       />
       <StatTile
-        label="Pipeline actif"
+        label="Portefeuille actif"
         value={formatEuros(kpis?.totalPipelineRevenue ?? 0)}
-        hint={`${(kpis?.total ?? 0) - (kpis?.convertedCount ?? 0) - (kpis?.lostCount ?? 0)} leads en cours`}
+        hint={`${(kpis?.total ?? 0) - (kpis?.convertedCount ?? 0) - (kpis?.lostCount ?? 0)} prospects en cours`}
         icon={Euro}
         tone="gold"
         loading={isLoading}
@@ -88,7 +88,7 @@ function ChannelKPIs({
         loading={isLoading}
       />
       <StatTile
-        label="Total leads"
+        label="Total prospects"
         value={kpis?.total ?? 0}
         hint={`canal ${channelMeta.label}`}
         icon={TrendingUp}
@@ -144,8 +144,8 @@ function ChannelPipeline({
     const statusLabel =
       LEAD_STATUSES.find((s) => s.key === newStatus)?.label || newStatus;
     confirm({
-      title: `Passer le lead en « ${statusLabel} » ?`,
-      description: "Le statut commercial du lead sera mis à jour.",
+      title: `Passer le prospect en « ${statusLabel} » ?`,
+      description: "Le statut commercial du prospect sera mis à jour.",
       run: async () => {
         try {
           await updateLead.mutateAsync({
@@ -154,7 +154,9 @@ function ChannelPipeline({
           } as Partial<Lead> & { id: string });
           toast.success("Statut mis à jour");
         } catch (err: unknown) {
-          toast.error(err instanceof Error ? err.message : "Erreur");
+          toast.error("Mise à jour impossible", {
+            description: err instanceof Error ? err.message : "Réessayez dans un instant.",
+          });
         }
       },
     });
@@ -165,11 +167,15 @@ function ChannelPipeline({
   const handleMarkLost = (lead: Lead) => {
     const reason = window.prompt("Motif de perte (obligatoire) :");
     if (!reason?.trim()) {
-      if (reason !== null) toast.error("Motif de perte requis");
+      if (reason !== null) {
+        toast.error("Motif de perte requis", {
+          description: "Indiquez pourquoi ce prospect est perdu.",
+        });
+      }
       return;
     }
     confirm({
-      title: "Marquer ce lead comme perdu ?",
+      title: "Marquer ce prospect comme perdu ?",
       description: `Motif : ${reason.trim()}`,
       destructive: true,
       actionLabel: "Marquer perdu",
@@ -180,9 +186,11 @@ function ChannelPipeline({
             status: "perdu",
             loss_reason: reason.trim(),
           });
-          toast.success("Lead marqué comme perdu");
+          toast.success("Prospect marqué comme perdu");
         } catch (err: unknown) {
-          toast.error(err instanceof Error ? err.message : "Erreur");
+          toast.error("Mise à jour impossible", {
+            description: err instanceof Error ? err.message : "Réessayez dans un instant.",
+          });
         }
       },
     });
@@ -260,7 +268,7 @@ function ChannelPipeline({
                         ))}
                       </div>
                     ) : colLeads.length === 0 ? (
-                      <p className="py-8 text-center text-xs text-muted-foreground">Aucun lead</p>
+                      <p className="py-8 text-center text-xs text-muted-foreground">Aucun prospect</p>
                     ) : (
                       colLeads.map((lead) => (
                         <div key={lead.id} className="space-y-1">
@@ -297,7 +305,7 @@ function ChannelPipeline({
           {lostLeads.length > 0 && (
             <div className="space-y-3">
               <SectionHeading
-                title={`Leads perdus (${lostLeads.length})`}
+                title={`Prospects perdus (${lostLeads.length})`}
                 description="Les 8 dernières fiches perdues de ce canal, avec leur motif."
               />
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -320,7 +328,7 @@ function ChannelPipeline({
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5">
           <SurfaceCard
             title="CA par statut"
-            description="CA estimé cumulé des leads de ce canal, par statut commercial."
+            description="CA estimé cumulé des prospects de ce canal, par statut commercial."
             icon={BarChart3}
           >
             <BarsChart
@@ -331,21 +339,21 @@ function ChannelPipeline({
               ariaLabel="CA estimé par statut commercial"
               formatValue={(value) => formatEuros(Number(value))}
               formatAxisValue={(value) => Number(value).toLocaleString("fr-FR")}
-              emptyMessage="Aucun lead sur ce canal"
+              emptyMessage="Aucun prospect sur ce canal"
             />
           </SurfaceCard>
 
           <SurfaceCard
             title="Sources d'acquisition"
-            description="Répartition des leads par origine ; au-delà de 6 sources, le reste est replié sur « Autre »."
+            description="Répartition des prospects par origine ; au-delà de 6 sources, le reste est replié sur « Autre »."
             icon={Target}
           >
             <DonutChart
               data={sourceChartData}
               height={220}
-              centerLabel="leads"
-              ariaLabel="Répartition des leads par source d'acquisition"
-              emptyMessage="Aucun lead sur ce canal"
+              centerLabel="prospects"
+              ariaLabel="Répartition des prospects par source d'acquisition"
+              emptyMessage="Aucun prospect sur ce canal"
             />
           </SurfaceCard>
         </div>
@@ -377,7 +385,7 @@ export default function CommercialDashboard() {
     <MainLayout>
       <PageShell>
         <PageHeader
-          title="Pipeline Commercial"
+          title="Prospects commerciaux"
           description="CPF · B2B Alpespace · DSF — prospection et conversions"
           icon={TrendingUp}
           tone="gold"
@@ -385,7 +393,7 @@ export default function CommercialDashboard() {
           actions={
             editable ? (
               <Button onClick={() => { setEditLead(null); setFormOpen(true); }}>
-                <Plus className="mr-2 h-4 w-4" /> Nouveau lead
+                <Plus className="mr-2 h-4 w-4" /> Nouveau prospect
               </Button>
             ) : undefined
           }
@@ -409,17 +417,17 @@ export default function CommercialDashboard() {
           search={{
             value: search,
             onChange: setSearch,
-            placeholder: "Rechercher un lead...",
-            ariaLabel: "Rechercher un lead",
+            placeholder: "Rechercher un prospect…",
+            ariaLabel: "Rechercher un prospect",
           }}
           actions={
             <SegmentedControl<PipelineView>
               value={commercialTab}
               onChange={setCommercialTab}
               size="sm"
-              ariaLabel="Vue du pipeline"
+              ariaLabel="Vue commerciale"
               options={[
-                { value: "kanban", label: "Pipeline", icon: KanbanSquare },
+                { value: "kanban", label: "Tableau", icon: KanbanSquare },
                 { value: "analytics", label: "Analyses", icon: BarChart3 },
               ]}
             />

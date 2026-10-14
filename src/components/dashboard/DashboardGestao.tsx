@@ -198,9 +198,9 @@ const translations = {
     en: "Funnel",
   },
   funnelDesc: {
-    fr: "Du lead au dossier facturé — conversion d'une étape à la suivante",
-    "pt-BR": "Do lead à inscrição faturada — conversão de etapa em etapa",
-    en: "From lead to billed file — stage-to-stage conversion",
+    fr: "Du prospect au dossier facturé — conversion d'une étape à la suivante",
+    "pt-BR": "Do prospecto à inscrição faturada — conversão de etapa em etapa",
+    en: "From prospect to billed file — stage-to-stage conversion",
   },
   byModality: {
     fr: "Répartition par modalité",

@@ -9,6 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
 import { useAuth } from "@/hooks/useAuth";
+import {
+  authEmailLabel,
+  authValidationToastTitle,
+  describeAuthError,
+} from "@/lib/auth-copy";
 import fliLogo from "@/assets/fli-marca-black.png";
 import fliLogoDark from "@/assets/fli-marca-yellow.png";
 
@@ -49,7 +54,7 @@ export function AuthCard() {
     const validation = authSchema.safeParse({ email, password });
     if (!validation.success) {
       const firstError = validation.error.errors[0];
-      toast.error("Saisie incomplète", { description: firstError.message });
+      toast.error(authValidationToastTitle(), { description: firstError.message });
       return;
     }
 
@@ -58,11 +63,9 @@ export function AuthCard() {
     try {
       const { error } = await signIn(email, password);
       if (error) {
-        toast.error("Connexion impossible", { description: error.message === "Invalid login credentials"
-              ? "Adresse e-mail ou mot de passe incorrect"
-              : error.message === "Email not confirmed"
-                ? "Cette adresse n'a pas encore été confirmée"
-                : error.message });
+        toast.error("Connexion impossible", {
+          description: describeAuthError(error.message),
+        });
       } else {
         setLoginSuccess(true);
         triggerConfetti();
@@ -141,7 +144,7 @@ export function AuthCard() {
         <form onSubmit={handleSubmit} className="mt-6 space-y-4" noValidate>
           <div className="space-y-2">
             <Label htmlFor="email-login" className="text-foreground">
-              Email
+              {authEmailLabel()}
             </Label>
             <Input
               id="email-login"
