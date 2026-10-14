@@ -4208,6 +4208,25 @@ export type Database = {
         Args: { p_inscription_id: string }
         Returns: number
       }
+      create_formateur_evaluation_booking: {
+        Args: {
+          p_carte_syndicale: string
+          p_datetime: string
+          p_email: string
+          p_instructor_id?: string
+          p_language: string
+          p_name: string
+          p_payment_type?: string
+          p_phone: string
+          p_profession: string
+          p_profession_autre: string
+          p_ski_discipline: string
+          p_ski_school_id: string
+          p_sponsor_type: string
+          p_training_cycle: string
+        }
+        Returns: string
+      }
       dispatch_edge_function: {
         Args: {
           p_body?: Json
