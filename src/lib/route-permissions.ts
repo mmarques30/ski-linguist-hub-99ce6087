@@ -24,7 +24,7 @@ export const ROUTE_GROUPS: RouteGroup[] = [
   {
     label: "Commercial & partenaires",
     routes: [
-      { key: "commercial", label: "Pipeline commercial" },
+      { key: "commercial", label: "Prospects commerciaux" },
       { key: "partenaires", label: "Partenaires" },
       { key: "moniteurs", label: "Moniteurs de ski" },
     ],
@@ -68,7 +68,7 @@ export const ALL_ROUTE_KEYS = ROUTE_GROUPS.flatMap((g) =>
 
 /** Chemins exacts → clé (les plus longs d'abord pour resolveRouteKey). */
 export const PATH_TO_ROUTE_KEY: Record<string, string> = {
-  "/": "dashboard",
+  "/app": "dashboard",
   "/finance": "finance",
   "/finance/analyses": "finance",
   "/finance/rentabilite": "finance",

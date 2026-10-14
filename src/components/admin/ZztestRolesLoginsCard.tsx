@@ -22,8 +22,8 @@ export function ZztestRolesLoginsCard() {
         <>
           Rôles déjà en base (<code>formateur</code>, <code>student</code>). Ces comptes
           ZZTEST permettent de voir chaque espace. Emails @example.invalid : aucun envoi
-          réel. Utilisez la carte Administration sur /auth (mot de passe), pas le magic
-          link stagiaire.
+          réel. Utilisez la carte Administration sur /auth (mot de passe hors dépôt — voir
+          <code> scripts/sql/zztest_roles_logins.sql</code>), pas le magic link stagiaire.
         </>
       }
     >
@@ -45,19 +45,10 @@ export function ZztestRolesLoginsCard() {
                 <Copy className="h-3.5 w-3.5" />
               </Button>
             </div>
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="text-muted-foreground">Mot de passe</span>
-              <code className="rounded-[var(--radius-pill)] bg-[hsl(var(--surface-sunken))] px-2 py-0.5 ring-1 ring-inset ring-border">{account.password}</code>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                aria-label={`Copier le mot de passe de ${account.roleLabel}`}
-                onClick={() => void copy("Mot de passe", account.password)}
-              >
-                <Copy className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+            <p className="text-xs text-muted-foreground">
+              Mot de passe : non stocké dans le dépôt (secret d&apos;équipe / vault). En
+              production : désactiver le compte ou rotationner le mot de passe.
+            </p>
             <p className="text-xs text-muted-foreground">
               Accueil attendu : <code>{account.homePath}</code>
             </p>

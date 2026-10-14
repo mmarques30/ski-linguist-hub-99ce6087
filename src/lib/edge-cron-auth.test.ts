@@ -14,7 +14,7 @@ describe("Edge cron/admin auth — refuse anon JWT", () => {
     expect(auth).toContain("Forbidden: anon key is not sufficient");
     expect(auth).toContain("readJwtRoleClaim");
     expect(auth).toContain('=== "anon"');
-    expect(auth).toContain('=== "service_role"');
+    expect(auth).not.toContain('readJwtRoleClaim(token) === "service_role"');
     // Pas de doublon Lovable/Cursor après merge (sinon Deno refuse le module).
     expect(auth.match(/export async function requireServiceRoleOrStaff/g)).toHaveLength(1);
     expect(auth.match(/export async function requireServiceRoleOrAdmin/g)).toHaveLength(1);
@@ -135,10 +135,74 @@ describe("restes faibles sécurité — attendance / stripe / FIF-PL", () => {
   it("coveredOnCourseEur utilise le prix serveur, pas registration.price", () => {
     const edge = source("supabase/functions/submit-registration/index.ts");
     expect(edge).toContain("serverCoursePrice");
-    expect(edge).toContain("buildFifplFundingDetails(registration, price)");
     expect(edge).toContain("buildFundingDetails(registration, price)");
+    expect(edge).toContain("buildFifplFundingDetails(registration, serverCoursePrice)");
     expect(edge).not.toMatch(
       /const coursePrice\s*=\s*\n?\s*registration\.price/
+    );
+  });
+});
+
+describe("jeton cron dédié (sans Vault)", () => {
+  it("admin-auth accepte x-cron-dispatch-token comparé à cron_dispatch_secret", () => {
+    const auth = source("supabase/functions/_shared/admin-auth.ts");
+    expect(auth).toContain('req.headers.get("x-cron-dispatch-token")');
+    expect(auth).toContain('.from("cron_dispatch_secret")');
+    expect(auth).toContain("Forbidden: invalid cron token");
+    expect(auth).toContain("expected.length < 32");
+  });
+});
+
+describe("service_role — jamais le claim JWT décodé", () => {
+  it("isServiceRoleToken compare en temps constant à SUPABASE_SERVICE_ROLE_KEY", () => {
+    const auth = source("supabase/functions/_shared/admin-auth.ts");
+    expect(auth).toContain("function isServiceRoleToken");
+    expect(auth).toContain("SUPABASE_SERVICE_ROLE_KEY");
+    expect(auth).toContain("charCodeAt(i) ^ serviceRoleKey.charCodeAt(i)");
+    // JWT forgé non signé avec role=service_role : refusé (pas de confiance au claim).
+    expect(auth).not.toMatch(
+      /isServiceRoleToken[\s\S]*readJwtRoleClaim|readJwtRoleClaim\(token\)\s*===\s*"service_role"/
+    );
+    expect(auth).toContain('Ne JAMAIS se fier au claim `role`');
+  });
+
+  it("migration cron_dispatch_token_no_vault est versionnée", () => {
+    const mig = source(
+      "drizzle/migrations/0005_cron_dispatch_token_no_vault.sql"
+    );
+    expect(mig).toContain("cron_dispatch_secret");
+    expect(mig).toContain("x-cron-dispatch-token");
+    expect(mig).toContain("dispatch_edge_function");
+  });
+});
+
+describe(" hardening checkout / partenaire / FIF-PL (scan 14/10/2026)", () => {
+  it("verify-registration-checkout exige paid + inscription + montant", () => {
+    const edge = source("supabase/functions/verify-registration-checkout/index.ts");
+    const recorder = source(
+      "supabase/functions/_shared/record-stripe-checkout-payment.ts"
+    );
+    expect(edge).toContain('paymentStatus !== "paid"');
+    expect(recorder).toContain("Inscription introuvable");
+    expect(recorder).toContain("expectedStripeCheckoutAmountEur");
+    expect(recorder).toContain("stripe_checkout_session_id");
+    expect(recorder).toContain("Montant Stripe");
+  });
+
+  it("create-registration-checkout allowlist successUrl/cancelUrl", () => {
+    const edge = source("supabase/functions/create-registration-checkout/index.ts");
+    expect(edge).toContain("isAllowedStripeCheckoutReturnUrl");
+    expect(edge).toContain("URL de retour Stripe non autorisée");
+  });
+
+  it("submit-registration valide l'école partenaire et n'applique pas le FIF-PL déclaré", () => {
+    const edge = source("supabase/functions/submit-registration/index.ts");
+    expect(edge).toContain("ski_school_directory");
+    expect(edge).toContain("validatedPartnerCode");
+    expect(edge).toContain("pendingStaffValidation");
+    expect(edge).toContain("pendingStaffValidation");
+    expect(edge).not.toMatch(
+      /getInscriptionPaymentFields\(\s*price,\s*normalizePaymentOption\([^)]+\),\s*\{\s*studentShareEur:/
     );
   });
 });

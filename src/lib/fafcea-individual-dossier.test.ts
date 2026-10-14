@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildFafceaConventionSections,
   buildFafceaProgrammeSections,
+  buildFafceaContenuPrevisionnelBullets,
   buildFafceaProgrammePdfModel,
   buildFafceaConventionPdfModel,
   fafceaTotalEur,
@@ -30,19 +31,29 @@ describe("fafcea-individual-dossier", () => {
     expect(formatEurFr(1200)).toMatch(/1\s?200/);
   });
 
-  it("adapte le programme taxi + ski / clientèle russophone", () => {
+  it("adapte le programme taxi seul / clientèle russophone (sans ski)", () => {
     const sections = buildFafceaProgrammeSections({
       language: "Russe",
       durationHoursLabel: "20 heures",
-      professionalActivities: ["chauffeur de taxi", "moniteur de ski"],
+      professionalActivities: ["chauffeur de taxi"],
       targetClientele: "russophone",
     });
     const blob = sections.flatMap((s) => s.paragraphs).join("\n");
     expect(blob).toMatch(/taxi/i);
-    expect(blob).toMatch(/moniteur de ski/i);
     expect(blob).toMatch(/russophone/i);
     expect(blob).toMatch(/Russe/);
     expect(blob).toMatch(/positionnement/i);
+    expect(blob).not.toMatch(/moniteur de ski/i);
+    expect(blob).not.toMatch(/enseignement du ski/i);
+  });
+
+  it("conserve le volet ski quand l'activité est déclarée", () => {
+    const bullets = buildFafceaContenuPrevisionnelBullets({
+      professionalActivities: ["chauffeur de taxi", "moniteur de ski"],
+      targetClientele: "russophone",
+    }).join("\n");
+    expect(bullets).toMatch(/taxi/i);
+    expect(bullets).toMatch(/Moniteur de ski/i);
   });
 
   it("adapte la convention FAFCEA (objectifs métier + article financier)", () => {
@@ -53,28 +64,36 @@ describe("fafcea-individual-dossier", () => {
       studentAddressLines: ["623 Rue De L'Aiguille Du Fruit", "73120 Courchevel"],
       pedagogicalContact: "Paula Rangel-Halbwachs",
       priceLabel: "1 200 €",
-      professionalActivities: ["chauffeur de taxi", "moniteur de ski"],
+      professionalActivities: ["chauffeur de taxi"],
       targetClientele: "russophone",
     });
     const article2 = sections.find((s) => s.title.startsWith("Article II"));
     expect(article2?.paragraphs.join(" ")).toMatch(/russophone/);
     expect(article2?.paragraphs.join(" ")).toMatch(/taxi/);
+    expect(article2?.paragraphs.join(" ")).not.toMatch(/moniteur de ski/i);
+    const moyens = sections.find((s) => s.title.startsWith("Moyens pédagogiques"));
+    expect(moyens?.paragraphs.join(" ")).toMatch(/taxi/i);
+    expect(moyens?.paragraphs.join(" ")).not.toMatch(/enseignement du ski/i);
     const article6 = sections.find((s) => s.title.startsWith("Article VI"));
     expect(article6?.paragraphs.join(" ")).toMatch(/FAFCEA/);
     expect(article6?.paragraphs.join(" ")).toMatch(/Aucun frais de dossier de 150/);
   });
 
-  it("construit les modèles PDF Mahieu", () => {
+  it("construit les modèles PDF Mahieu (taxi seul)", () => {
     const input = mahieuFafceaDossierInput(
       IDENTITY,
       new Date("2026-10-13T12:00:00.000Z")
     );
+    expect(input.professionalActivities).toEqual(["chauffeur de taxi"]);
     const programme = buildFafceaProgrammePdfModel(input);
     const convention = buildFafceaConventionPdfModel(input);
     expect(programme.title).toMatch(/Russe/);
     expect(programme.fundingLabel).toBe("FAFCEA");
     expect(programme.studentDisplayName).toBe("Sébastien Mahieu");
     expect(programme.priceLabel).toMatch(/1\s?200/);
+    const programmeBlob = programme.sections.flatMap((s) => s.paragraphs).join("\n");
+    expect(programmeBlob).toMatch(/taxi/i);
+    expect(programmeBlob).not.toMatch(/moniteur de ski/i);
     expect(convention.onlineSignatureBlock).toBe(true);
     expect(convention.sections[0]?.title).toBe("Entre les soussignés");
     expect(convention.studentPhone).toBe("0784203064");

@@ -36,6 +36,13 @@
       "when": 1791879762038,
       "tag": "0004_activate_season_staff_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791975227125,
+      "tag": "0005_cron_dispatch_token_no_vault",
+      "breakpoints": true
     }
   ]
 }

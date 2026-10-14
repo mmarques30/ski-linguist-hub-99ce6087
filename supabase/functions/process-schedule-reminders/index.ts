@@ -43,6 +43,14 @@ function formatDateFr(dateStr: string): string {
   });
 }
 
+function escapeGroupsHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
 function buildGroupsHtml(
   inscriptions: PendingInscription[],
   appBaseUrl: string
@@ -58,7 +66,7 @@ function buildGroupsHtml(
   let html = "";
 
   for (const [language, group] of byLanguage.entries()) {
-    html += `<h3>${language} (${group.length} stagiaire${group.length > 1 ? "s" : ""})</h3>`;
+    html += `<h3>${escapeGroupsHtml(language)} (${group.length} stagiaire${group.length > 1 ? "s" : ""})</h3>`;
     html += `<table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%;margin-bottom:16px">`;
     html += `<tr style="background:#f4f4f5"><th>Code</th><th>Stagiaire</th><th>Niveau</th><th>Action</th></tr>`;
 
@@ -68,10 +76,10 @@ function buildGroupsHtml(
         : "—";
       const link = `${appBaseUrl}/inscriptions/${insc.id}`;
       html += `<tr>
-        <td>${insc.code || "—"}</td>
-        <td>${name}</td>
-        <td>${insc.entry_level || "—"}</td>
-        <td><a href="${link}">Valider l'horaire</a></td>
+        <td>${escapeGroupsHtml(insc.code || "—")}</td>
+        <td>${escapeGroupsHtml(name)}</td>
+        <td>${escapeGroupsHtml(insc.entry_level || "—")}</td>
+        <td><a href="${escapeGroupsHtml(link)}">Valider l'horaire</a></td>
       </tr>`;
     }
 

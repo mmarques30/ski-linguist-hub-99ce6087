@@ -161,7 +161,7 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
     }
 
     if (hasPaymentStep && !data.paymentOption) {
-      toast.error("Veuillez choisir un mode de paiement.");
+      toast.error("Veuillez choisir un mode de règlement.");
       return;
     }
 

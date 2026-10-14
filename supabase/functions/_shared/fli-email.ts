@@ -100,18 +100,39 @@ export function normalizeFliEmailCc(
   return out;
 }
 
+/** Échappe &, <, >, " pour insertion sûre dans un corps HTML d'e-mail. */
+export function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
 /**
- * Substitue {{variable}} (doubles accolades, Option A).
- * Si une variable reste non remplacée, lève une erreur : l'appelant doit
- * journaliser `failed` et ne pas appeler Resend (consignes 17/09/2026).
+ * Clés dont la valeur est déjà du HTML généré côté serveur (pas de saisie utilisateur brute).
+ * Les fragments internes doivent eux-mêmes échapper les noms / textes libres.
  */
+const TRUSTED_HTML_KEYS = new Set(["groups_html", "funding_next_steps"]);
+
+export function isTrustedEmailHtmlKey(key: string): boolean {
+  return key.endsWith("_html") || TRUSTED_HTML_KEYS.has(key);
+}
+
+export function escapeEmailTemplateValue(key: string, value: string): string {
+  if (isTrustedEmailHtmlKey(key)) return value ?? "";
+  return escapeHtml(value ?? "");
+}
+
 export function applyEmailTemplate(
   template: string,
   variables: Record<string, string>
 ): string {
   let rendered = template;
   for (const [key, value] of Object.entries(variables)) {
-    rendered = rendered.replaceAll(`{{${key}}}`, value ?? "");
+    rendered = rendered
+      .split(`{{${key}}}`)
+      .join(escapeEmailTemplateValue(key, value ?? ""));
   }
   const leftover = rendered.match(/\{\{[a-zA-Z0-9_]+\}\}/g);
   if (leftover?.length) {

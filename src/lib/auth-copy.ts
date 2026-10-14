@@ -1,0 +1,48 @@
+/**
+ * Libellés auth FR — évite les messages Supabase bruts (souvent en anglais).
+ */
+
+export function authEmailLabel(): string {
+  return "Adresse e-mail";
+}
+
+/** Titre toast quand la saisie Zod échoue. */
+export function authValidationToastTitle(): string {
+  return "Saisie invalide";
+}
+
+/** Message utilisateur pour une erreur Auth Supabase. */
+export function describeAuthError(message: string | undefined | null): string {
+  const raw = (message ?? "").trim();
+  if (!raw) return "Une erreur est survenue. Réessayez dans un instant.";
+
+  const lower = raw.toLowerCase();
+  if (
+    lower.includes("invalid login credentials") ||
+    lower.includes("invalid credentials")
+  ) {
+    return "Adresse e-mail ou mot de passe incorrect";
+  }
+  if (lower.includes("email not confirmed")) {
+    return "Cette adresse n'a pas encore été confirmée";
+  }
+  if (lower.includes("user not found") || lower.includes("user_not_found")) {
+    return "Aucun compte ne correspond à cette adresse";
+  }
+  if (lower.includes("rate limit") || lower.includes("too many requests")) {
+    return "Trop de tentatives. Réessayez dans quelques minutes";
+  }
+  if (lower.includes("network") || lower.includes("fetch")) {
+    return "Connexion impossible. Vérifiez votre réseau et réessayez";
+  }
+  // Masquer uniquement un message clairement technique / anglais.
+  const looksTechnicalEnglish =
+    /\b(jwt|token|oauth|supabase|postgres|sql|stack|exception|undefined|null)\b/i.test(
+      raw,
+    ) ||
+    /\b(error|failed|invalid|denied|forbidden|unauthorized|expired)\b/i.test(raw);
+  if (looksTechnicalEnglish && !/[àâäéèêëïîôùûüç]/i.test(raw)) {
+    return "Connexion impossible. Réessayez ou contactez FLI.";
+  }
+  return raw;
+}

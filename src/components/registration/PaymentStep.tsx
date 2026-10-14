@@ -305,7 +305,7 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
             onClick={handleOpcoContinue}
             className="h-12 w-full text-base sm:w-auto"
           >
-            Continuer
+            Continuer vers la confirmation
           </Button>
         </StepActions>
       </div>
@@ -415,7 +415,7 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
             onClick={handleContinueWithoutPrice}
             className="h-12 w-full text-base sm:w-auto"
           >
-            Continuer
+            Continuer vers la confirmation
           </Button>
         </StepActions>
       </div>
