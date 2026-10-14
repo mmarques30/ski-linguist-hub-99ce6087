@@ -261,6 +261,13 @@ export default function PlacementTests() {
     setTimeout(() => setCopiedLink(null), 2000);
   };
 
+  const copySalonLink = () => {
+    const link = `${window.location.origin}/salon`;
+    navigator.clipboard.writeText(link);
+    setCopiedLink("salon");
+    setTimeout(() => setCopiedLink(null), 2000);
+  };
+
   return (
     <MainLayout>
       <PageShell>
@@ -366,6 +373,34 @@ export default function PlacementTests() {
             )}
           </SurfaceCard>
         </div>
+
+        <SurfaceCard
+          title="Salon des directeurs"
+          description="Formulaire léger (nom, prénom, école ESF, test) — lien pour QR code stand."
+          icon={Mountain}
+          actions={
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/salon">
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Ouvrir
+                </Link>
+              </Button>
+              <Button variant="ghost" size="sm" onClick={copySalonLink} aria-label="Copier le lien salon">
+                {copiedLink === "salon" ? (
+                  <Check className="h-4 w-4 text-[hsl(var(--status-good))]" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          }
+        >
+          <p className="text-sm text-muted-foreground">
+            URL publique : <code className="text-foreground">/salon</code> — résultats stockés dans{" "}
+            <code className="text-foreground">salon_demo_tests</code> (hors inscriptions).
+          </p>
+        </SurfaceCard>
 
         <SurfaceCard
           title={t(translations.publicLinksTitle)}

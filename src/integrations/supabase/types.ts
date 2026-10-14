@@ -2924,6 +2924,60 @@ export type Database = {
           },
         ]
       }
+      salon_demo_tests: {
+        Row: {
+          answers: Json | null
+          correct_answers: number | null
+          created_at: string
+          determined_level: string | null
+          first_name: string
+          id: string
+          language: string
+          last_name: string
+          score_percentage: number | null
+          ski_network: string
+          ski_school_code: string | null
+          ski_school_name: string
+          source: string
+          summary: Json | null
+          total_questions: number | null
+        }
+        Insert: {
+          answers?: Json | null
+          correct_answers?: number | null
+          created_at?: string
+          determined_level?: string | null
+          first_name: string
+          id?: string
+          language: string
+          last_name: string
+          score_percentage?: number | null
+          ski_network?: string
+          ski_school_code?: string | null
+          ski_school_name: string
+          source?: string
+          summary?: Json | null
+          total_questions?: number | null
+        }
+        Update: {
+          answers?: Json | null
+          correct_answers?: number | null
+          created_at?: string
+          determined_level?: string | null
+          first_name?: string
+          id?: string
+          language?: string
+          last_name?: string
+          score_percentage?: number | null
+          ski_network?: string
+          ski_school_code?: string | null
+          ski_school_name?: string
+          source?: string
+          summary?: Json | null
+          total_questions?: number | null
+        }
+        Relationships: []
+      }
       satisfaction_surveys: {
         Row: {
           completed_at: string | null
@@ -4281,6 +4335,22 @@ export type Database = {
       storage_object_belongs_to_me: {
         Args: { _name: string }
         Returns: boolean
+      }
+      submit_salon_demo_test: {
+        Args: {
+          p_answers?: Json | null
+          p_correct_answers?: number | null
+          p_determined_level?: string | null
+          p_first_name: string
+          p_language: string
+          p_last_name: string
+          p_score_percentage?: number | null
+          p_ski_school_code: string | null
+          p_ski_school_name: string
+          p_summary?: Json | null
+          p_total_questions?: number | null
+        }
+        Returns: string
       }
       submit_satisfaction_survey_by_token: {
         Args: { p_data: Json; p_token: string }
