@@ -5,7 +5,9 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
+  SKILL_ORDER,
   buildEvaluationPdfModel,
+  formatScoreFr,
   type CecrlScaleRow,
   type EvaluationPdfInput,
   type FliIdentity,
@@ -15,6 +17,7 @@ import {
   type EvaluationPdfAssets,
 } from "../src/lib/evaluation-pdf-assets.ts";
 import { renderEvaluationPdf } from "../src/lib/evaluation-pdf-render.ts";
+import { scoreToLevel } from "../src/lib/evaluation-utils.ts";
 
 const OUT_DIR = "/opt/cursor/artifacts/mollard-oct-2026/pdfs";
 const ROWS_PATH = join(process.cwd(), "scripts/data/mollard-oct-2026-pdf-rows.json");
@@ -70,6 +73,9 @@ type EvalRow = {
   note_methodologique: string | null;
   verified_at: string | null;
   key: string;
+  scoring_system?: "sur_5" | "sur_20";
+  /** Notes affichées (ex. /20 Alpe d'Huez) — distinctes des scores PDF /5 internes. */
+  display_scores?: number[];
 };
 
 function n(v: string): number {
@@ -153,6 +159,23 @@ async function main() {
 
   for (const row of rows) {
     const model = buildEvaluationPdfModel(buildInput(row));
+    // Alpe d'Huez : affichage « Niveau - note /20 » (ex. B2 - 10,5)
+    if (row.scoring_system === "sur_20" && row.display_scores?.length === 6) {
+      model.skillRows = SKILL_ORDER.map(({ label }, i) => {
+        const score = row.display_scores![i];
+        const level = scoreToLevel(score, "sur_20");
+        return { label, value: `${level} - ${formatScoreFr(score)}` };
+      });
+      const g = row.display_scores[5];
+      const gLevel = scoreToLevel(g, "sur_20");
+      model.subtitle = model.subtitle.replace(
+        /— [\d,]+ \/ [A-C]\d\+?/,
+        `— ${formatScoreFr(g)} / 20 (${gLevel})`
+      );
+      if (row.note_methodologique?.trim()) {
+        model.noteMethodologique = row.note_methodologique.trim();
+      }
+    }
     const bytes = await renderEvaluationPdf(model, assets);
     const filename = slugName(row.candidate_name, row.language, row.key);
     const path = join(OUT_DIR, filename);

@@ -7,18 +7,19 @@
     "partner_id": "d6753f10-9cea-43cb-a8d2-f5986650feb5",
     "sponsor_type": "esf",
     "payment": "unknown",
-    "cecrl": "A2",
+    "cecrl": "A2+",
     "scores": [
-      1,
-      1,
-      1,
-      1,
-      1,
-      1
+      1.5,
+      1.5,
+      1.5,
+      1.5,
+      1.5,
+      1.5
     ],
     "candidate_id": "a820224d-3d74-4d2e-a361-dd836f32b337",
     "booking_id": "257e9ea9-81d9-454b-bc16-82f7c27b9411",
-    "evaluation_id": "0c8f12f2-fd55-4e50-b712-1ad62a5ed178"
+    "evaluation_id": "0c8f12f2-fd55-4e50-b712-1ad62a5ed178",
+    "scoring_system": "sur_5"
   },
   {
     "key": "lisa-roch",
@@ -28,18 +29,19 @@
     "partner_id": "46a2d62b-1b7c-4650-82d6-bb90dd32c2b6",
     "sponsor_type": "esf",
     "payment": "school",
-    "cecrl": "B1",
+    "cecrl": "B1+",
     "scores": [
-      3.5,
-      1,
-      1,
-      1,
+      4.0,
       1.5,
-      2
+      1.5,
+      1.5,
+      2.0,
+      2.5
     ],
     "candidate_id": "b67e895b-334b-4dac-8ff6-a9cf31c84c23",
     "booking_id": "32b29a84-dc57-4de5-9fb5-04bbd5180090",
-    "evaluation_id": "287717b6-dbf7-4dae-a149-1e599b78ecd4"
+    "evaluation_id": "287717b6-dbf7-4dae-a149-1e599b78ecd4",
+    "scoring_system": "sur_5"
   },
   {
     "key": "montaine-1",
@@ -49,18 +51,19 @@
     "partner_id": "4508792a-bf5c-4fdc-a95c-02f18ae8290a",
     "sponsor_type": "esf",
     "payment": "bank_2309",
-    "cecrl": "A2+",
+    "cecrl": "B1",
     "scores": [
-      1,
       1.5,
-      1,
-      2,
+      2.0,
       1.5,
-      1.5
+      2.5,
+      2.0,
+      2.0
     ],
     "candidate_id": "1b4dc936-7658-48d1-9c02-3ecae4ebef43",
     "booking_id": "b795962e-b1d1-4afa-aecf-a8e4dd8946b6",
-    "evaluation_id": "277afb29-633d-4d3f-848c-41b797223768"
+    "evaluation_id": "277afb29-633d-4d3f-848c-41b797223768",
+    "scoring_system": "sur_5"
   },
   {
     "key": "maelys-pietri",
@@ -72,16 +75,17 @@
     "payment": "unknown",
     "cecrl": "B2",
     "scores": [
-      3,
-      3,
-      3,
-      2.5,
-      3,
-      3
+      10.5,
+      10.5,
+      10.5,
+      10.0,
+      11.5,
+      10.5
     ],
     "candidate_id": "206bf560-b0bf-445a-baa8-37226d95b3dd",
     "booking_id": "5973cc7a-c740-465c-b9f7-7d2478e055a6",
-    "evaluation_id": "60e75a80-e569-4f89-a5a2-d89049813289"
+    "evaluation_id": "60e75a80-e569-4f89-a5a2-d89049813289",
+    "scoring_system": "sur_20"
   },
   {
     "key": "steven-mandica",
@@ -91,18 +95,19 @@
     "partner_id": "eb5e168c-c9e2-4414-a81e-27d5d1f216f9",
     "sponsor_type": "dsf",
     "payment": "unknown",
-    "cecrl": "B2",
+    "cecrl": "B2+",
     "scores": [
-      3,
-      3,
-      3,
-      3,
-      3,
-      3
+      3.5,
+      3.5,
+      3.5,
+      3.5,
+      3.5,
+      3.5
     ],
     "candidate_id": "385e364b-feee-4bff-9656-6656df0cd43c",
     "booking_id": "33fbfce0-3a12-4406-9a76-2836bdd0c5f0",
-    "evaluation_id": "4f215b5b-0015-4747-a3fa-de90445870d9"
+    "evaluation_id": "4f215b5b-0015-4747-a3fa-de90445870d9",
+    "scoring_system": "sur_5"
   },
   {
     "key": "sacha-mir",
@@ -112,18 +117,19 @@
     "partner_id": "54dcaa7a-0fb1-43fd-a1e8-c291cb5c0e18",
     "sponsor_type": "esf",
     "payment": "school_st_gervais_batch",
-    "cecrl": "B2+",
+    "cecrl": "C1",
     "scores": [
-      3.5,
-      3.5,
-      3.5,
-      3.5,
-      4,
-      3.5
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.5,
+      4.0
     ],
     "candidate_id": "ab038adf-47ed-4e1f-a75c-fdb365fffa7f",
     "booking_id": "c19a315f-fae0-41c6-9ae7-9ed66ddbb202",
-    "evaluation_id": "c60e0f81-5572-4809-85e9-184e6ec7a121"
+    "evaluation_id": "c60e0f81-5572-4809-85e9-184e6ec7a121",
+    "scoring_system": "sur_5"
   },
   {
     "key": "leo-lamon",
@@ -133,18 +139,19 @@
     "partner_id": "b475774d-e0c4-4651-9f7f-0be03c560de8",
     "sponsor_type": "esf",
     "payment": "unknown",
-    "cecrl": "A2+",
+    "cecrl": "B1",
     "scores": [
-      1,
-      1,
-      1,
       1.5,
-      1,
-      1.5
+      1.5,
+      1.5,
+      2.0,
+      1.5,
+      2.0
     ],
     "candidate_id": "f182d2a7-3397-4b40-8438-7483ee0e9907",
     "booking_id": "9d386ee7-9394-47c7-853a-a1a2b74a186c",
-    "evaluation_id": "14370a9b-9f66-4c7a-a818-3c7ba77fad85"
+    "evaluation_id": "14370a9b-9f66-4c7a-a818-3c7ba77fad85",
+    "scoring_system": "sur_5"
   },
   {
     "key": "charlotte-pautot",
@@ -154,18 +161,19 @@
     "partner_id": "c6978ead-813b-4646-bf23-01f7877af4d0",
     "sponsor_type": "esf",
     "payment": "bank_0210",
-    "cecrl": "A2+",
+    "cecrl": "B1",
     "scores": [
-      1,
       1.5,
-      1.5,
-      1.5,
-      1.5,
-      1.5
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0
     ],
     "candidate_id": "2151a7ca-2119-4c76-a784-3dcc3b25ab5f",
     "booking_id": "222b5f1b-c058-4538-a0cf-42ee2e6082ef",
-    "evaluation_id": "e6b8ba5f-5008-41ff-9d02-f31c0a990cf8"
+    "evaluation_id": "e6b8ba5f-5008-41ff-9d02-f31c0a990cf8",
+    "scoring_system": "sur_5"
   },
   {
     "key": "chloe-merloz",
@@ -175,18 +183,19 @@
     "partner_id": "b475774d-e0c4-4651-9f7f-0be03c560de8",
     "sponsor_type": "esf",
     "payment": "unknown",
-    "cecrl": "B1",
+    "cecrl": "B1+",
     "scores": [
-      3,
-      2,
-      2,
-      2,
-      2,
-      2
+      3.5,
+      2.5,
+      2.5,
+      2.5,
+      2.5,
+      2.5
     ],
     "candidate_id": "e830229a-ddc6-43f7-a879-cddcd5e5c46d",
     "booking_id": "7bc92b86-c7c6-4c82-bf41-a7316e17bca6",
-    "evaluation_id": "d4e018de-4571-4309-9498-b753385c6cc7"
+    "evaluation_id": "d4e018de-4571-4309-9498-b753385c6cc7",
+    "scoring_system": "sur_5"
   },
   {
     "key": "anouk-leynaud",
@@ -196,18 +205,19 @@
     "partner_id": "54dcaa7a-0fb1-43fd-a1e8-c291cb5c0e18",
     "sponsor_type": "esf",
     "payment": "school_st_gervais_batch",
-    "cecrl": "B1+",
+    "cecrl": "B2",
     "scores": [
-      3.5,
-      2,
-      1.5,
-      2,
-      1.5,
-      2.5
+      4.0,
+      2.5,
+      2.0,
+      2.5,
+      2.0,
+      3.0
     ],
     "candidate_id": "e1473a94-f00c-49b7-b6aa-9966acd9a4c7",
     "booking_id": "316cfeb7-883c-4a7f-83eb-9a6e5cb253f0",
-    "evaluation_id": "9c8c4ede-6d2b-4894-a334-354accd9daa2"
+    "evaluation_id": "9c8c4ede-6d2b-4894-a334-354accd9daa2",
+    "scoring_system": "sur_5"
   },
   {
     "key": "gregoire-roulleaux",
@@ -217,18 +227,19 @@
     "partner_id": "65445a12-68a4-4eb2-9dc4-184834a92b6a",
     "sponsor_type": "esf",
     "payment": "unknown",
-    "cecrl": "A2+",
+    "cecrl": "B1",
     "scores": [
-      3,
-      1.5,
-      1.5,
-      1.5,
-      1.5,
-      1.5
+      3.5,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0
     ],
     "candidate_id": "95e6cefa-aba3-4cf1-ac38-5ae0abbc0b20",
     "booking_id": "b2e462c4-333f-4116-a464-2704f6a6df60",
-    "evaluation_id": "f0ad3680-bff5-4dbc-9c04-4514688a4215"
+    "evaluation_id": "f0ad3680-bff5-4dbc-9c04-4514688a4215",
+    "scoring_system": "sur_5"
   },
   {
     "key": "louise-labrousse",
@@ -238,18 +249,19 @@
     "partner_id": "54dcaa7a-0fb1-43fd-a1e8-c291cb5c0e18",
     "sponsor_type": "esf",
     "payment": "school_st_gervais_batch",
-    "cecrl": "B1+",
+    "cecrl": "B2",
     "scores": [
-      3,
-      2,
-      1,
+      3.5,
       2.5,
-      2,
-      2.5
+      1.5,
+      3.0,
+      2.5,
+      3.0
     ],
     "candidate_id": "bbc68d82-0d94-4e8a-820e-da1d486d4a4d",
     "booking_id": "cca99be6-6635-461c-881b-4fab8c09600d",
-    "evaluation_id": "09126139-ae70-4f64-ad73-add9362b0bfc"
+    "evaluation_id": "09126139-ae70-4f64-ad73-add9362b0bfc",
+    "scoring_system": "sur_5"
   },
   {
     "key": "zoe-tollet",
@@ -259,18 +271,19 @@
     "partner_id": "54dcaa7a-0fb1-43fd-a1e8-c291cb5c0e18",
     "sponsor_type": "esf",
     "payment": "school_st_gervais_batch",
-    "cecrl": "B1+",
+    "cecrl": "B2",
     "scores": [
-      3,
-      2,
+      3.5,
       2.5,
-      1.5,
-      2.5,
-      2.5
+      3.0,
+      2.0,
+      3.0,
+      3.0
     ],
     "candidate_id": "23921c18-3749-4775-8a33-eeb58351b048",
     "booking_id": "50d74ded-b4f1-46e1-9155-9b48f9fd02f6",
-    "evaluation_id": "b80999ea-cdf4-4fe5-ba69-fa65850b15ee"
+    "evaluation_id": "b80999ea-cdf4-4fe5-ba69-fa65850b15ee",
+    "scoring_system": "sur_5"
   },
   {
     "key": "montaine-2",
@@ -280,18 +293,19 @@
     "partner_id": "4508792a-bf5c-4fdc-a95c-02f18ae8290a",
     "sponsor_type": "esf",
     "payment": "bank_1210",
-    "cecrl": "B1+",
+    "cecrl": "B2",
     "scores": [
-      2.5,
-      2.5,
-      2.5,
-      2.5,
-      2.5,
-      2.5
+      3.0,
+      3.0,
+      3.0,
+      3.0,
+      3.0,
+      3.0
     ],
     "candidate_id": "1b4dc936-7658-48d1-9c02-3ecae4ebef43",
     "booking_id": "fbf77cf3-6830-46fd-aad3-f3017b8541ca",
-    "evaluation_id": "c807ba3c-0e7c-4469-b966-ea14a1de5ba2"
+    "evaluation_id": "c807ba3c-0e7c-4469-b966-ea14a1de5ba2",
+    "scoring_system": "sur_5"
   },
   {
     "key": "anouk-benamor",
@@ -301,18 +315,19 @@
     "partner_id": "54dcaa7a-0fb1-43fd-a1e8-c291cb5c0e18",
     "sponsor_type": "esf",
     "payment": "school_st_gervais_batch",
-    "cecrl": "B1+",
+    "cecrl": "B2",
     "scores": [
-      3,
+      3.5,
+      3.0,
+      3.0,
       2.5,
       2.5,
-      2,
-      2,
-      2.5
+      3.0
     ],
     "candidate_id": "618e7657-795c-48b2-8f77-4cec1dee531e",
     "booking_id": "f03e0855-1751-47ba-ad14-fc6e13d87525",
-    "evaluation_id": "824c7d4c-8d16-471c-947c-52bfdff0eaff"
+    "evaluation_id": "824c7d4c-8d16-471c-947c-52bfdff0eaff",
+    "scoring_system": "sur_5"
   },
   {
     "key": "pierre-bujard",
@@ -322,18 +337,19 @@
     "partner_id": "46a2d62b-1b7c-4650-82d6-bb90dd32c2b6",
     "sponsor_type": "esf",
     "payment": "school",
-    "cecrl": "A2",
+    "cecrl": "A2+",
     "scores": [
+      2.0,
+      2.0,
+      2.0,
       1.5,
       1.5,
-      1.5,
-      1,
-      1,
-      1
+      1.5
     ],
     "candidate_id": "ea3a2605-9038-48dd-a330-8572974057a4",
     "booking_id": "8f5d829b-faa7-4ab1-8f90-e9d7d01a1994",
-    "evaluation_id": "36eceb4c-f81a-4211-9b3d-1997ff88123a"
+    "evaluation_id": "36eceb4c-f81a-4211-9b3d-1997ff88123a",
+    "scoring_system": "sur_5"
   },
   {
     "key": "sasha-gonin",
@@ -343,17 +359,18 @@
     "partner_id": "d6753f10-9cea-43cb-a8d2-f5986650feb5",
     "sponsor_type": "esf",
     "payment": "card",
-    "cecrl": "A2+",
+    "cecrl": "B1",
     "scores": [
-      3.5,
-      1.5,
-      1.5,
-      1.5,
-      1.5,
-      1.5
+      4.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0
     ],
     "candidate_id": "d7682627-7c6b-4ff4-9ece-dcf9c46c2340",
     "booking_id": "2493ed23-8d34-4fc2-86b9-d621d1346534",
-    "evaluation_id": "deed3466-ef12-4918-bff1-57750b655c05"
+    "evaluation_id": "deed3466-ef12-4918-bff1-57750b655c05",
+    "scoring_system": "sur_5"
   }
 ]

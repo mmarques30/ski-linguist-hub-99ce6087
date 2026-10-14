@@ -14,20 +14,22 @@
     "previous_test": false,
     "payment": "unknown",
     "scores": [
-      1,
-      1,
-      1,
-      1,
-      1,
-      1
+      1.5,
+      1.5,
+      1.5,
+      1.5,
+      1.5,
+      1.5
     ],
-    "cecrl": "A2",
+    "cecrl": "A2+",
     "intro": "Vous avez envie de vous exprimer mais vous êtes gêné(e) par des erreurs syntaxiques (construction de phrases), grammaticales et lexicales.",
     "comp": "Votre compréhension du texte audio était trop juste et incomplète.",
     "grammar": "Sur le plan grammatical, vous avez besoin de travailler encore les bases pour utiliser de manière plus spontanée et avec plus de justesse les différents temps et des structures plus justes, il faut automatiser certaines structures pour améliorer le débit et la fluidité.",
     "tech": "En ce qui concerne la partie spécifique à votre métier, il faut absolument que vous sachiez les termes techniques et les expressions car vous en avez besoin pour communiquer avec la clientèle anglophone. Vocabulaire : « station » = la gare ; la station de ski = « ski resort » ; obligatoire = mandatory.",
     "points": "Utilisez le PRESENT -ing pour parler de ce qui se déroule maintenant ou temporairement. Utilisez le PRESENT SIMPLE pour parler des vérités permanentes, de votre routine, des règles de sécurité, etc. Apprenez à utiliser les temps du passé PRETERIT (action datée/terminée) et PRESENT PERFECT (l'action continue dans le présent). Revoyez MUST et HAVE TO pour exprimer l'obligation. Revoyez CAN et TO BE ABLE TO pour exprimer la capacité au présent et au futur. Ex. : I can ski but I'll be able to ski even better at the end of the day!",
-    "concl": "En conclusion vous avez un niveau faible mais en travaillant vous pouvez arriver à progresser et à combler progressivement vos lacunes grammaticales et lexicales. Et cela vous permettra de vous sentir plus à l'aise sur le terrain."
+    "concl": "En conclusion vous avez un niveau faible mais en travaillant vous pouvez arriver à progresser et à combler progressivement vos lacunes grammaticales et lexicales. Et cela vous permettra de vous sentir plus à l'aise sur le terrain.",
+    "scoring_system": "sur_5",
+    "note_methodologique": null
   },
   {
     "key": "lisa-roch",
@@ -44,20 +46,22 @@
     "previous_test": false,
     "payment": "school",
     "scores": [
-      3.5,
-      1,
-      1,
-      1,
+      4.0,
       1.5,
-      2
+      1.5,
+      1.5,
+      2.0,
+      2.5
     ],
-    "cecrl": "B1",
+    "cecrl": "B1+",
     "intro": "Votre prononciation et votre accent sont corrects dans l'ensemble, mais il semble que vous manquez de pratique.",
     "comp": "Vous avez très bien compris le texte audio. Votre niveau de compréhension permet une interaction fluide et agréable.",
     "grammar": "Pour la partie grammaticale vous avez tendance à mélanger les temps, on voit que vous avez quelques connaissances mais il faut les comprendre pour pouvoir employer les bons temps dans le bon contexte.",
     "tech": "En ce qui concerne la partie spécifique à votre métier, il faut absolument que vous sachiez les termes techniques et les expressions car vous en avez besoin pour communiquer avec la clientèle anglophone. Vocabulaire : « station » = la gare ; la station de ski = « ski resort » ; chasse-neige = snowplough.",
     "points": "Apprenez à utiliser les temps du passé PRETERIT (action datée/terminée) et PRESENT PERFECT (l'action continue dans le présent).",
-    "concl": "Vous avez un bon niveau de compréhension mais vous avez besoin de revoir les points de grammaire et d'apprendre du vocabulaire pour être mieux comprise."
+    "concl": "Vous avez un bon niveau de compréhension mais vous avez besoin de revoir les points de grammaire et d'apprendre du vocabulaire pour être mieux comprise.",
+    "scoring_system": "sur_5",
+    "note_methodologique": null
   },
   {
     "key": "montaine-1",
@@ -74,20 +78,22 @@
     "previous_test": false,
     "payment": "bank_2309",
     "scores": [
-      1,
       1.5,
-      1,
-      2,
+      2.0,
       1.5,
-      1.5
+      2.5,
+      2.0,
+      2.0
     ],
-    "cecrl": "A2+",
+    "cecrl": "B1",
     "intro": "Votre prononciation et votre accent sont corrects dans l'ensemble, mais il semble que vous manquez de pratique.",
     "comp": "Vous comprenez seulement quelques informations. Prononciation : on entend « ze » pour THE — mettez la langue sur les dents du haut pour produire un son anglais TH.",
     "grammar": "Vous avez acquis les bases, mais vous avez encore du mal à les utiliser. Il vous manque de la pratique.",
     "tech": "Vous avez su utiliser un vocabulaire technique plutôt approprié lors de l'explication du mouvement technique et avez pris le temps d'en préciser les différentes étapes. Vocabulaire : inconvénients = drawbacks ; selon = depending on.",
     "points": null,
-    "concl": "Votre niveau vous permet de comprendre globalement et de vous exprimer en général."
+    "concl": "Votre niveau vous permet de comprendre globalement et de vous exprimer en général.",
+    "scoring_system": "sur_5",
+    "note_methodologique": null
   },
   {
     "key": "maelys-pietri",
@@ -104,12 +110,12 @@
     "previous_test": false,
     "payment": "unknown",
     "scores": [
-      3,
-      3,
-      3,
-      2.5,
-      3,
-      3
+      10.5,
+      10.5,
+      10.5,
+      10.0,
+      11.5,
+      10.5
     ],
     "cecrl": "B2",
     "note_sur_20": [
@@ -125,7 +131,17 @@
     "grammar": "Dans l'ensemble, vous avez une bonne maîtrise des structures simples et complexes mais faites également quelques maladresses ou inexactitudes. Cependant, ces erreurs ne gênent pas la communication.",
     "tech": "Concernant la partie spécifique à votre métier, il vous faut vraiment étoffer ce vocabulaire et utiliser les termes et expressions justes et précises de façon à être parfaitement compris par la clientèle anglophone. Vocabulaire : resserrer = to tighten.",
     "points": "Barème école Alpe d'Huez /20 d'origine : compréhension 10, expression 10, structures 10, technique 9,5, conversation 11, générale 10.",
-    "concl": "Vous avez un niveau autonome qui demande à être amélioré sur le plan du lexique."
+    "concl": "Vous avez un niveau autonome qui demande à être amélioré sur le plan du lexique.",
+    "scores_sur20_original": [
+      10,
+      10,
+      10,
+      9.5,
+      11,
+      10
+    ],
+    "scoring_system": "sur_20",
+    "note_methodologique": "Barème Alpe d'Huez /20 (notes Mollard +0,5) : 10,5, 10,5, 10,5, 10,0, 11,5, 10,5. Originaux : 10, 10, 10, 9,5, 11, 10."
   },
   {
     "key": "steven-mandica",
@@ -143,20 +159,22 @@
     "previous_test": false,
     "payment": "unknown",
     "scores": [
-      3,
-      3,
-      3,
-      3,
-      3,
-      3
+      3.5,
+      3.5,
+      3.5,
+      3.5,
+      3.5,
+      3.5
     ],
-    "cecrl": "B2",
+    "cecrl": "B2+",
     "intro": "Vous vous exprimez d'une façon assez claire et autonome.",
     "comp": "Vous avez plutôt bien compris le texte audio et moi-même.",
     "grammar": "Vous avez des bonnes bases en grammaire et vous êtes capable de vous exprimer dans tous les temps.",
     "tech": "En ce qui concerne la partie spécifique à votre métier, vous vous exprimez avec enthousiasme et précision.",
     "points": null,
-    "concl": "En conclusion vous avez un niveau opérationnel qui vous permet de communiquer correctement avec la clientèle anglophone. Continuez néanmoins à développer l'apprentissage de vos connaissances, vous gagnerez en aisance et en fluidité."
+    "concl": "En conclusion vous avez un niveau opérationnel qui vous permet de communiquer correctement avec la clientèle anglophone. Continuez néanmoins à développer l'apprentissage de vos connaissances, vous gagnerez en aisance et en fluidité.",
+    "scoring_system": "sur_5",
+    "note_methodologique": null
   },
   {
     "key": "sacha-mir",
@@ -173,20 +191,22 @@
     "previous_test": false,
     "payment": "school_st_gervais_batch",
     "scores": [
-      3.5,
-      3.5,
-      3.5,
-      3.5,
-      4,
-      3.5
+      4.0,
+      4.0,
+      4.0,
+      4.0,
+      4.5,
+      4.0
     ],
-    "cecrl": "B2+",
+    "cecrl": "C1",
     "intro": "Vous vous exprimez avec une certaine aisance et parvenez facilement à vous faire comprendre. Votre vocabulaire est assez riche et les échanges sont agréables.",
     "comp": "Vous avez très bien compris le texte audio. Votre niveau de compréhension permet une interaction fluide et agréable.",
     "grammar": "Pour la partie grammaticale vous avez de bonnes bases, attention à quelques petites fautes.",
     "tech": "Concernant l'explication technique vous avez bien su expliquer les détails et anticiper les erreurs des débutants.",
     "points": "Revoyez MUST et HAVE TO pour exprimer l'obligation ; utilisez SHOULD pour donner un conseil.",
-    "concl": "En conclusion vous avez un niveau opérationnel qui vous permet de communiquer avec la clientèle anglophone de manière satisfaisante."
+    "concl": "En conclusion vous avez un niveau opérationnel qui vous permet de communiquer avec la clientèle anglophone de manière satisfaisante.",
+    "scoring_system": "sur_5",
+    "note_methodologique": null
   },
   {
     "key": "leo-lamon",
@@ -203,20 +223,22 @@
     "previous_test": false,
     "payment": "unknown",
     "scores": [
-      1,
-      1,
-      1,
       1.5,
-      1,
-      1.5
+      1.5,
+      1.5,
+      2.0,
+      1.5,
+      2.0
     ],
-    "cecrl": "A2+",
+    "cecrl": "B1",
     "intro": "Vous arrivez à interagir mais l'ensemble manque de fluidité et de justesse.",
     "comp": "Votre compréhension du texte audio était trop juste et incomplète. Prononciation : on entend « ze » pour THE — mettez la langue sur les dents du haut pour produire un son anglais TH. Vous oubliez d'expirer le H ce qui nuit parfois à une bonne compréhension.",
     "grammar": "Sur le plan grammatical, vous avez besoin de travailler encore les bases pour utiliser de manière plus spontanée et avec plus de justesse les différents temps et des structures plus justes, il faut automatiser certaines structures pour améliorer le débit et la fluidité.",
     "tech": "Vous connaissez le vocabulaire mais les explications ne sont pas toujours claires.",
     "points": "Apprenez à utiliser les temps du passé PRETERIT et PRESENT PERFECT. Revoyez MUST et HAVE TO, CAN et TO BE ABLE TO. Utilisez SHOULD pour donner des conseils.",
-    "concl": "Votre niveau vous permet de comprendre globalement et de vous exprimer en général."
+    "concl": "Votre niveau vous permet de comprendre globalement et de vous exprimer en général.",
+    "scoring_system": "sur_5",
+    "note_methodologique": null
   },
   {
     "key": "charlotte-pautot",
@@ -234,20 +256,22 @@
     "previous_result": "A1/A2",
     "payment": "bank_0210",
     "scores": [
-      1,
       1.5,
-      1.5,
-      1.5,
-      1.5,
-      1.5
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0
     ],
-    "cecrl": "A2+",
+    "cecrl": "B1",
     "intro": "Votre prononciation et votre accent sont corrects dans l'ensemble, mais il semble que vous manquez de pratique.",
     "comp": "Votre compréhension du texte audio était trop juste et incomplète. Vous oubliez d'expirer le H ce qui nuit parfois à une bonne compréhension.",
     "grammar": "Pour la partie grammaticale vous avez tendance à mélanger les temps, on voit que vous avez quelques connaissances mais il faut les comprendre pour pouvoir employer les bons temps dans le bon contexte.",
     "tech": "Vous avez su utiliser un vocabulaire technique plutôt approprié lors de l'explication du mouvement technique et avez pris le temps d'en préciser les différentes étapes. Vocabulaire : talon = heel.",
     "points": "Utilisez le PRESENT -ing et le PRESENT SIMPLE selon le contexte. Apprenez PRETERIT et PRESENT PERFECT. Revoyez MUST/HAVE TO et CAN/TO BE ABLE TO.",
-    "concl": "Votre niveau vous permet de comprendre globalement et de vous exprimer en général."
+    "concl": "Votre niveau vous permet de comprendre globalement et de vous exprimer en général.",
+    "scoring_system": "sur_5",
+    "note_methodologique": null
   },
   {
     "key": "chloe-merloz",
@@ -264,20 +288,22 @@
     "previous_test": false,
     "payment": "unknown",
     "scores": [
-      3,
-      2,
-      2,
-      2,
-      2,
-      2
+      3.5,
+      2.5,
+      2.5,
+      2.5,
+      2.5,
+      2.5
     ],
-    "cecrl": "B1",
+    "cecrl": "B1+",
     "intro": "Vous vous exprimez d'une façon assez claire et autonome.",
     "comp": "Vous avez plutôt bien compris le texte audio et moi-même.",
     "grammar": "Pour la partie grammaticale vous avez tendance à mélanger les temps, on voit que vous avez quelques connaissances mais il faut les comprendre pour pouvoir employer les bons temps dans le bon contexte.",
     "tech": "Vous avez su utiliser un vocabulaire technique plutôt approprié lors de l'explication du mouvement technique et avez pris le temps d'en préciser les différentes étapes.",
     "points": "Utilisez le PRESENT SIMPLE pour les vérités permanentes, la routine et les règles de sécurité. Apprenez PRETERIT et PRESENT PERFECT.",
-    "concl": "Vous pouvez communiquer et donner des consignes en anglais mais pouvez améliorer votre conversation générale en revoyant les temps cités."
+    "concl": "Vous pouvez communiquer et donner des consignes en anglais mais pouvez améliorer votre conversation générale en revoyant les temps cités.",
+    "scoring_system": "sur_5",
+    "note_methodologique": null
   },
   {
     "key": "anouk-leynaud",
@@ -294,20 +320,22 @@
     "previous_test": false,
     "payment": "school_st_gervais_batch",
     "scores": [
-      3.5,
-      2,
-      1.5,
-      2,
-      1.5,
-      2.5
+      4.0,
+      2.5,
+      2.0,
+      2.5,
+      2.0,
+      3.0
     ],
-    "cecrl": "B1+",
+    "cecrl": "B2",
     "intro": "Vous avez envie de vous exprimer mais vous êtes gêné(e) par des erreurs grammaticales et lexicales.",
     "comp": "Vous avez très bien compris l'audio. Prononciation : vous oubliez d'expirer le H ; votre accent français est très marqué.",
     "grammar": "Pour la partie grammaticale vous avez tendance à mélanger les temps, on voit que vous avez quelques connaissances mais il faut les comprendre pour pouvoir employer les bons temps dans le bon contexte.",
     "tech": "Vous avez su utiliser un vocabulaire technique plutôt approprié lors de l'explication du mouvement technique et avez pris le temps d'en préciser les différentes étapes. Vocabulaire : perche = tow bar.",
     "points": "Apprenez à utiliser les temps du passé PRETERIT et PRESENT PERFECT.",
-    "concl": "Vous pouvez communiquer mais devez améliorer les structures de vos phrases et la fluidité pour être mieux comprise."
+    "concl": "Vous pouvez communiquer mais devez améliorer les structures de vos phrases et la fluidité pour être mieux comprise.",
+    "scoring_system": "sur_5",
+    "note_methodologique": null
   },
   {
     "key": "gregoire-roulleaux",
@@ -324,20 +352,22 @@
     "previous_test": false,
     "payment": "unknown",
     "scores": [
-      3,
-      1.5,
-      1.5,
-      1.5,
-      1.5,
-      1.5
+      3.5,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0
     ],
-    "cecrl": "A2+",
+    "cecrl": "B1",
     "intro": "Vous arrivez à interagir mais l'ensemble manque de fluidité et de justesse.",
     "comp": "Vous avez plutôt bien compris le texte audio et moi-même. Prononciation : « ze » pour THE ; vous oubliez d'expirer le H.",
     "grammar": "Pour la partie grammaticale vous avez tendance à mélanger les temps, on voit que vous avez quelques connaissances mais il faut les comprendre pour pouvoir employer les bons temps dans le bon contexte.",
     "tech": "Vous connaissez le vocabulaire mais les explications ne sont pas toujours claires. Vocabulaire : entreprise = company.",
     "points": "Utilisez PRESENT -ing et PRESENT SIMPLE selon le contexte. Apprenez PRETERIT et PRESENT PERFECT. « Dans le but de » = TO (ex. : To get better at skiing, you need to...).",
-    "concl": "Vous arrivez à vous faire comprendre mais votre accent gène par moments ; vous utilisez parfois le passé et parfois pas — à revoir."
+    "concl": "Vous arrivez à vous faire comprendre mais votre accent gène par moments ; vous utilisez parfois le passé et parfois pas — à revoir.",
+    "scoring_system": "sur_5",
+    "note_methodologique": null
   },
   {
     "key": "louise-labrousse",
@@ -354,20 +384,22 @@
     "previous_test": false,
     "payment": "school_st_gervais_batch",
     "scores": [
-      3,
-      2,
-      1,
+      3.5,
       2.5,
-      2,
-      2.5
+      1.5,
+      3.0,
+      2.5,
+      3.0
     ],
-    "cecrl": "B1+",
+    "cecrl": "B2",
     "intro": "Le vocabulaire technique et spécifique a vraisemblablement été appris. Vous prenez le temps d'expliquer les différentes étapes du mouvement technique avec précision mais les maladresses syntaxiques et grammaticales peuvent faire obstacle à une bonne compréhension de vos explications. Vous vous exprimez sans hésitation dans la langue et parvenez globalement à vous faire comprendre.",
     "comp": "Vous avez très bien compris le texte audio. Votre niveau de compréhension permet une interaction fluide et agréable. Prononciation : on entend « ze » pour THE.",
     "grammar": "Pour la partie grammaticale vous avez tendance à mélanger les temps, on voit que vous avez quelques connaissances mais il faut les comprendre pour pouvoir employer les bons temps dans le bon contexte.",
     "tech": "Vous avez su utiliser un vocabulaire technique plutôt approprié lors de l'explication du mouvement technique et avez pris le temps d'en préciser les différentes étapes. Vocabulaire : learn = apprendre, teach = enseigner.",
     "points": "Utilisez PRESENT -ing et PRESENT SIMPLE. Apprenez PRETERIT et PRESENT PERFECT. Dites « to turn » pour « Pour tourner... » (pas « for turn »).",
-    "concl": "Vous avez un niveau autonome qui demande à être amélioré sur le plan de la grammaire."
+    "concl": "Vous avez un niveau autonome qui demande à être amélioré sur le plan de la grammaire.",
+    "scoring_system": "sur_5",
+    "note_methodologique": null
   },
   {
     "key": "zoe-tollet",
@@ -384,20 +416,22 @@
     "previous_test": false,
     "payment": "school_st_gervais_batch",
     "scores": [
-      3,
-      2,
+      3.5,
       2.5,
-      1.5,
-      2.5,
-      2.5
+      3.0,
+      2.0,
+      3.0,
+      3.0
     ],
-    "cecrl": "B1+",
+    "cecrl": "B2",
     "intro": "Vous vous exprimez avec une certaine facilité. Votre vocabulaire est assez riche et les échanges sont agréables.",
     "comp": "Vous avez très bien compris le texte audio. Votre niveau de compréhension permet une interaction fluide et agréable.",
     "grammar": "Les structures grammaticales simples et complexes sont bien maîtrisées malgré quelques rares erreurs d'inattention qui ne gênent pas la communication.",
     "tech": "En ce qui concerne la partie spécifique à votre métier, vous pouvez communiquer mais il faut que vous appreniez les mots et expressions précises car actuellement vous manquez de vocabulaire. Vocabulaire : téléski = draglift, perche = tow bar ; selon = depending on.",
     "points": null,
-    "concl": "Vous avez un niveau autonome qui demande à être amélioré sur le plan du lexique."
+    "concl": "Vous avez un niveau autonome qui demande à être amélioré sur le plan du lexique.",
+    "scoring_system": "sur_5",
+    "note_methodologique": null
   },
   {
     "key": "montaine-2",
@@ -415,20 +449,22 @@
     "previous_result": "A2+",
     "payment": "bank_1210",
     "scores": [
-      2.5,
-      2.5,
-      2.5,
-      2.5,
-      2.5,
-      2.5
+      3.0,
+      3.0,
+      3.0,
+      3.0,
+      3.0,
+      3.0
     ],
-    "cecrl": "B1+",
+    "cecrl": "B2",
     "intro": "Vous vous exprimez d'une façon assez claire et autonome. Votre débit est plutôt lent et hésitant.",
     "comp": "Vous avez plutôt bien compris le texte audio et moi-même.",
     "grammar": "Les structures grammaticales simples et complexes sont bien maîtrisées malgré quelques rares erreurs d'inattention qui ne gênent pas la communication.",
     "tech": "Vous avez su utiliser un vocabulaire technique plutôt approprié lors de l'explication du mouvement technique et avez pris le temps d'en préciser les différentes étapes.",
     "points": "Revoir les prépositions AT et TO (ex. : I start at 9AM), ainsi que FOR (ex. : you wait FOR the chairlift).",
-    "concl": "Vous avez un niveau autonome qui demande à être amélioré sur le plan de la fluidité."
+    "concl": "Vous avez un niveau autonome qui demande à être amélioré sur le plan de la fluidité.",
+    "scoring_system": "sur_5",
+    "note_methodologique": null
   },
   {
     "key": "anouk-benamor",
@@ -445,20 +481,22 @@
     "previous_test": false,
     "payment": "school_st_gervais_batch",
     "scores": [
-      3,
+      3.5,
+      3.0,
+      3.0,
       2.5,
       2.5,
-      2,
-      2,
-      2.5
+      3.0
     ],
-    "cecrl": "B1+",
+    "cecrl": "B2",
     "intro": "Vous vous exprimez d'une façon assez claire et autonome.",
     "comp": "Vous avez plutôt bien compris le texte audio et moi-même. Vous oubliez d'expirer le H ce qui nuit parfois à une bonne compréhension.",
     "grammar": "Pour la partie grammaticale vous avez de bonnes bases, attention à quelques petites fautes.",
     "tech": "En ce qui concerne la partie spécifique à votre métier, vous pouvez communiquer mais il faut que vous appreniez les mots et expressions précises car actuellement vous manquez de vocabulaire. Vocabulaire : chasse-neige = snowplough, virage = turn.",
     "points": "Apprenez PRETERIT et PRESENT PERFECT. Fortement recommandé = highly recommended.",
-    "concl": "Vous avez un niveau autonome qui demande à être amélioré sur le plan du lexique."
+    "concl": "Vous avez un niveau autonome qui demande à être amélioré sur le plan du lexique.",
+    "scoring_system": "sur_5",
+    "note_methodologique": null
   },
   {
     "key": "pierre-bujard",
@@ -475,20 +513,22 @@
     "previous_test": false,
     "payment": "school",
     "scores": [
+      2.0,
+      2.0,
+      2.0,
       1.5,
       1.5,
-      1.5,
-      1,
-      1,
-      1
+      1.5
     ],
-    "cecrl": "A2",
+    "cecrl": "A2+",
     "intro": "Vous avez envie de vous exprimer mais vous êtes gêné(e) par des erreurs syntaxiques (construction de phrases), grammaticales et lexicales.",
     "comp": "Vous comprenez dans la globalité, il manque des informations secondaires. Prononciation : « ze » pour THE ; vous oubliez d'expirer le H.",
     "grammar": "Sur le plan grammatical, vous avez besoin de travailler encore les bases pour utiliser de manière plus spontanée et avec plus de justesse les différents temps et des structures plus justes, il faut automatiser certaines structures pour améliorer le débit et la fluidité.",
     "tech": "Vous connaissez le vocabulaire mais les explications ne sont pas toujours claires. Vocabulaire : fortement recommandé = highly recommended ; obligatoire = mandatory.",
     "points": "Utilisez PRESENT -ing et PRESENT SIMPLE. Apprenez PRETERIT et PRESENT PERFECT.",
-    "concl": "Votre niveau vous permet de comprendre globalement et de vous exprimer en général."
+    "concl": "Votre niveau vous permet de comprendre globalement et de vous exprimer en général.",
+    "scoring_system": "sur_5",
+    "note_methodologique": null
   },
   {
     "key": "sasha-gonin",
@@ -506,19 +546,21 @@
     "previous_result": "A2",
     "payment": "card",
     "scores": [
-      3.5,
-      1.5,
-      1.5,
-      1.5,
-      1.5,
-      1.5
+      4.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0,
+      2.0
     ],
-    "cecrl": "A2+",
+    "cecrl": "B1",
     "intro": "Vous avez envie de vous exprimer mais vous êtes gêné(e) par des erreurs syntaxiques (construction de phrases), grammaticales et lexicales. Votre prononciation et votre accent sont corrects dans l'ensemble, mais il semble que vous manquez de pratique.",
     "comp": "Vous avez très bien compris le texte audio. Votre niveau de compréhension permet une interaction fluide et agréable. Vous oubliez d'expirer le H ce qui nuit parfois à une bonne compréhension.",
     "grammar": "Pour la partie grammaticale vous avez tendance à mélanger les temps, on voit que vous avez quelques connaissances mais il faut les comprendre pour pouvoir employer les bons temps dans le bon contexte.",
     "tech": "Concernant la partie spécifique à votre métier, il vous faut vraiment étoffer ce vocabulaire et utiliser les termes et expressions justes et précises de façon à être parfaitement compris par la clientèle anglophone. Vocabulaire : ski lifts = remontées mécaniques ; draglift = téléski.",
     "points": "Utilisez PRESENT -ing et PRESENT SIMPLE. Apprenez PRETERIT et PRESENT PERFECT. Revoir SHOULD pour donner un conseil.",
-    "concl": "Votre niveau de compréhension est bon ; travaillez grammaire et lexique technique pour être mieux compris."
+    "concl": "Votre niveau de compréhension est bon ; travaillez grammaire et lexique technique pour être mieux compris.",
+    "scoring_system": "sur_5",
+    "note_methodologique": null
   }
 ]
