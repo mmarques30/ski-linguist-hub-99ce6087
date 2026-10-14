@@ -64,7 +64,9 @@
     "candidate_id": "1b4dc936-7658-48d1-9c02-3ecae4ebef43",
     "booking_id": "b795962e-b1d1-4afa-aecf-a8e4dd8946b6",
     "evaluation_id": "277afb29-633d-4d3f-848c-41b797223768",
-    "scoring_system": "sur_5"
+    "scoring_system": "sur_5",
+    "send_to_school": false,
+    "send_note": "Moins bon résultat — envoi candidate seule (Paula 14/10)"
   },
   {
     "key": "maelys-pietri",
@@ -315,7 +317,9 @@
     "candidate_id": "1b4dc936-7658-48d1-9c02-3ecae4ebef43",
     "booking_id": "fbf77cf3-6830-46fd-aad3-f3017b8541ca",
     "evaluation_id": "c807ba3c-0e7c-4469-b966-ea14a1de5ba2",
-    "scoring_system": "sur_5"
+    "scoring_system": "sur_5",
+    "send_to_school": true,
+    "send_note": "Meilleur résultat — TO candidate + CC école (Paula 14/10)"
   },
   {
     "key": "anouk-benamor",

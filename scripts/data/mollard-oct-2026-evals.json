@@ -94,7 +94,9 @@
     "points": null,
     "concl": "Votre niveau vous permet de comprendre globalement et de vous exprimer en général.",
     "scoring_system": "sur_5",
-    "note_methodologique": null
+    "note_methodologique": null,
+    "send_to_school": false,
+    "send_note": "Moins bon résultat — envoi candidate seule (Paula 14/10)"
   },
   {
     "key": "maelys-pietri",
@@ -474,7 +476,9 @@
     "points": "Revoir les prépositions AT et TO (ex. : I start at 9AM), ainsi que FOR (ex. : you wait FOR the chairlift).",
     "concl": "Vous avez un niveau autonome qui demande à être amélioré sur le plan de la fluidité.",
     "scoring_system": "sur_5",
-    "note_methodologique": null
+    "note_methodologique": null,
+    "send_to_school": true,
+    "send_note": "Meilleur résultat — TO candidate + CC école (Paula 14/10)"
   },
   {
     "key": "anouk-benamor",
