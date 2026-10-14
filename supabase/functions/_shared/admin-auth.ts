@@ -42,9 +42,18 @@ function isAnonToken(token: string, anonKey: string): boolean {
   return readJwtRoleClaim(token) === "anon";
 }
 
+/**
+ * Égalité stricte (temps constant) avec la vraie clé service_role.
+ * Ne JAMAIS se fier au claim `role` décodé : un JWT forgé non signé
+ * pourrait l'annoncer (finding « forged token »).
+ */
 function isServiceRoleToken(token: string, serviceRoleKey: string): boolean {
-  if (token === serviceRoleKey) return true;
-  return readJwtRoleClaim(token) === "service_role";
+  if (!serviceRoleKey || token.length !== serviceRoleKey.length) return false;
+  let diff = 0;
+  for (let i = 0; i < token.length; i++) {
+    diff |= token.charCodeAt(i) ^ serviceRoleKey.charCodeAt(i);
+  }
+  return diff === 0;
 }
 
 /** Comparaison à temps constant du jeton cron avec la valeur en base. */
