@@ -3,6 +3,11 @@ import { Drawer as DrawerPrimitive } from "vaul";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * @deprecated Non utilisé dans l’app. Panneaux latéraux : `Sheet` (sidebar)
+ * ou `Dialog` / `AlertDialog` pour les flux métier.
+ */
+
 const Drawer = ({ shouldScaleBackground = true, ...props }: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
   <DrawerPrimitive.Root shouldScaleBackground={shouldScaleBackground} {...props} />
 );

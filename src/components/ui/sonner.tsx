@@ -1,10 +1,14 @@
-import { useTheme } from "next-themes";
 import { Toaster as Sonner, toast } from "sonner";
+import { useTheme } from "@/components/layout/ThemeToggle";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
+/**
+ * Toaster unique de l’app. Suit le thème FLI (`ThemeToggle` / classe `dark`),
+ * pas `next-themes`.
+ */
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme();
+  const { theme } = useTheme();
 
   return (
     <Sonner
