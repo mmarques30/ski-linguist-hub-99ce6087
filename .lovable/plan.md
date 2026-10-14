@@ -1,30 +1,42 @@
-# Derniers paiements Stripe live (lecture seule, 13/10/2026 19:44 UTC)
+# Correções de segurança — plano em português (nada executado ainda)
 
-Rien n'a été modifié. Les noms et métadonnées Stripe sont masqués par l'outil ; les noms viennent de la base FLI (rattachement par session de paiement).
+## Situação
+- Você pediu para corrigir 79 alertas de segurança.
+- Muitas são repetições de alertas já corrigidas no site (PR #182, #183, #189 e a falha do "crachá falso" corrigida ontem).
+- Quase todas tocam no cadastro, no pagamento e nos e-mails. São os arquivos que devem ficar iguais ao GitHub (main): uma correção feita só aqui é apagada no próximo envio do GitHub.
 
-## Après le 13/10 18:30 UTC
+## Etapa 1 — Marcar as já corrigidas (sem mudar nada)
+Marcar como corrigidas as alertas que já estão resolvidas no site: crachá falso, ficha de aluno sobrescrita pelo e-mail, taxa de presença, preço enviado pelo navegador, configuração do Stripe, funções de lembrete e prospecção protegidas.
 
-| Heure UTC | Charge | PaymentIntent | Montant | Session | Lien fixe | Inscription (base FLI) |
-|---|---|---|---|---|---|---|
-| 19:32:31 | ch_3UQBR3QBleN6FLtS00op1LLH | pi_3UQBR3QBleN6FLtS00iiFBNL | 150 € | cs_live_a1VxGrmYupEVaQnmEtVUCCWscOlMOzPMrserst9rUJxeu6DW7O985KJLdD | aucun (formulaire plateforme.fli.fr/register) | FLI-260046 Pascale Gachet-Mauroz — enregistré auto 19:32:36, « reçu » |
-| 19:28:18 | ch_3UQBMxQBleN6FLtS0nXJobKf | pi_3UQBMxQBleN6FLtS0RQ9gw6X | 150 € | cs_live_a1DFxMsJprPMCDa0YCm5WcmGWMaZqQj1foGEEptIarcnhSkCtg1uvuCOSM | aucun (ancienne adresse formation.fli.fr/register, session créée vers 17:20 UTC) | FLI-260033 Pierre-Bastien Courtie — enregistré 19:28:22, « reçu » |
+## Etapa 2 — Dúvidas para você decidir (antes de qualquer correção)
 
-## Juste avant (déjà vus)
+1. **Retorno do pagamento confirma a inscrição**
+   Hoje: a página depois do pagamento confirma a inscrição, mas só se o Stripe disser que está paga.
+   Minha sugestão: deixar como está (alarme falso). Alternativa: confirmar só pelo aviso automático do Stripe (alguns segundos de atraso).
 
-| Heure UTC | Charge | Montant | Inscription |
-|---|---|---|---|
-| 18:22:43 | ch_3UQALUQBleN6FLtS0CFoxNAW | 150 € | FLI-260021 Didier Angelloz Nicoud — auto |
-| 18:19:56 | ch_3UQAIiQBleN6FLtS1RonYoer | 150 € (lien fixe plink_1Q9SlI…) | FLI-260028 Lisa Filliol — rattaché à 18:33:51 |
-| 12/10 15:05:47 | ch_3UPknPQBleN6FLtS0O7A1NCO | 45 € | non vérifié |
+2. **Login de administrador de teste**
+   Pode ser um risco real: uma conta de teste com poderes de admin poderia ser usada.
+   Minha sugestão: verificar primeiro e, se existir, desativar ou trocar a senha.
 
-Les 5 sont « succeeded », mode live, non remboursés, sans client Stripe.
+3. **Preço de parceiro e parte FIF-PL**
+   Hoje: o aluno escolhe a escola parceira e declara sua situação, e isso muda o preço.
+   Pergunta: o preço deve ser recalculado pela equipe depois, ou o valor declarado vale?
 
-## Constats
+4. **Endereços de retorno do Stripe livres**
+   Hoje: o site diz para onde o Stripe volta depois do pagamento; alguém poderia trocar por outro site.
+   Minha sugestão: aceitar só endereços do site FLI (plateforme.fli.fr e o site publicado).
 
-- Les deux nouveaux paiements sont déjà dans la base FLI : rien à rattacher.
-- Alexis Demortiere (FLI-260024, paiement du 08/10) est désormais rattaché aussi (18:58:43), avec un solde de 600 € « en attente ». Idem Lisa Filliol (600 € en attente).
-- Le paiement de Pierre-Bastien Courtie vient d'une page sur l'ancienne adresse formation.fli.fr.
+5. **Conteúdo dos e-mails sem proteção**
+   Hoje: nomes e textos digitados entram nos e-mails sem limpeza; dá para inserir código.
+   Minha sugestão: limpar esses textos antes de enviar.
 
-## Prochaine étape
+6. **Buscas e PDFs de avaliação**
+   Hoje: formadores veem todos os PDFs de avaliação e podem buscar alunos e pagamentos.
+   Segue a regra "formadores têm acesso total". Pergunta: manter assim ou limitar aos alunos de cada formador?
 
-Aucune action proposée. Approuver ne déclenche rien.
+## Etapa 3 — Onde corrigir
+- As correções reais (itens 2, 4, 5 e o que você decidir em 1, 3, 6) são feitas no GitHub (Cursor) e depois reimplantadas aqui, para não serem apagadas.
+- Ou, se você preferir, faço aqui no Lovable e você leva para o GitHub logo depois.
+
+## O que preciso de você
+Responder as 6 dúvidas e dizer onde corrigir (GitHub ou Lovable). Nenhum e-mail será enviado, nenhum cron ligado, nenhum segredo alterado.
