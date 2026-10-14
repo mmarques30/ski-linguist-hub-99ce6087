@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
 import { useAuth } from "@/hooks/useAuth";
+import { ADMIN_HOME_PATH } from "@/lib/admin-home";
 import {
   authEmailLabel,
   authValidationToastTitle,
@@ -70,7 +71,7 @@ export function AuthCard() {
         setLoginSuccess(true);
         triggerConfetti();
         setTimeout(() => {
-          navigate("/");
+          navigate(ADMIN_HOME_PATH);
         }, 1500);
       }
     } finally {

@@ -84,6 +84,8 @@ import CommercialDashboard from "./pages/commercial/CommercialDashboard";
 import MoniteursSki from "./pages/moniteurs/MoniteursSki";
 import DashboardGestaoMockupPage from "./pages/mockup/DashboardGestaoMockup";
 import ConditionsGenerales from "./pages/legal/ConditionsGenerales";
+import InstitutionalLanding from "./pages/landing/InstitutionalLanding";
+import AssetValidationMockupPage from "./pages/landing/AssetValidationMockup";
 
 function StudentPortalPreviewRedirect() {
   const { id } = useParams<{ id: string }>();
@@ -103,6 +105,8 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             {/* Public routes */}
+            <Route path="/" element={<InstitutionalLanding />} />
+            <Route path="/mockup/lp-assets" element={<AssetValidationMockupPage />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/register" element={<Register />} />
             <Route path="/reserver-test" element={<BookTest />} />
@@ -121,8 +125,8 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            {/* Protected admin routes */}
-            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            {/* Protected admin routes — dashboard moved off `/` for the public LP */}
+            <Route path="/app" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/finance" element={<ProtectedRoute><FinanceDashboard /></ProtectedRoute>} />
             <Route path="/finance/analyses" element={<ProtectedRoute><FinanceAnalyses /></ProtectedRoute>} />
             <Route path="/finance/rentabilite" element={<ProtectedRoute><FinanceRentabilite /></ProtectedRoute>} />
