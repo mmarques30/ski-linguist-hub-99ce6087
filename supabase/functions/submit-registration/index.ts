@@ -313,6 +313,8 @@ function buildFifplFundingDetails(
     source: "register",
     fifpl: {
       status,
+      declaredByStudent: true,
+      pendingStaffValidation: true,
       cfpAttestationYear: registration.fifplCfpAttestationYear ?? null,
       cfpContributionEur: contribution,
       cfpAttestationPath: registration.fifplCfpAttestationPath ?? null,
@@ -333,6 +335,8 @@ function buildFifplFundingDetails(
         coveredOnCourseEur: coveredOnCourse,
         remainingChargeEur: remainingCharge,
         hasCfpAttestation: hasAttestation,
+        // Estimation déclarative uniquement — n'impacte pas le montant encaissé.
+        doesNotReduceChargedAmount: true,
       },
     },
   });
@@ -635,7 +639,22 @@ Deno.serve(async (req) => {
           registration.skiSchoolCode && registration.skiSchoolCode !== "__autre__"
             ? registration.skiSchoolCode
             : null;
-        const resolved = resolveOfferingPrice(offering, skiCode);
+        // Tarif partenaire uniquement si l'école est validée dans le référentiel
+        // (ski_school_directory). Sinon on conserve le code déclaré mais on
+        // facture base_price — le staff valide le rabais ensuite.
+        let validatedPartnerCode: string | null = null;
+        if (skiCode) {
+          const { data: directorySchool } = await supabase
+            .from("ski_school_directory")
+            .select("code")
+            .eq("code", skiCode)
+            .eq("is_active", true)
+            .maybeSingle();
+          if (directorySchool?.code) {
+            validatedPartnerCode = directorySchool.code;
+          }
+        }
+        const resolved = resolveOfferingPrice(offering, validatedPartnerCode);
         if (resolved == null) {
           pricePending = true;
           price = null;
@@ -744,33 +763,9 @@ Deno.serve(async (req) => {
       registration.location ||
       null;
 
-    // Part moniteur La Rosière / Méribel = droits FIF-PL restants sur la formation
-    // (coveredOnCourseEur), pas le tarif plein — sinon la convention affiche 1 500 €
-    // au lieu de 300 € + 1 200 € ESF (cas Gobert FLI-260039).
-    let schoolFifplStudentShareEur: number | null = null;
-    if (
-      registration.paymentOption &&
-      isValidPaymentOption(registration.paymentOption) &&
-      normalizePaymentOption(registration.paymentOption) ===
-        REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE &&
-      (isFifpl || hasFifplAnswers(registration))
-    ) {
-      try {
-        const details = buildFifplFundingDetails(registration, price);
-        if (details) {
-          const parsed = JSON.parse(details) as {
-            fifpl?: { estimatedRights?: { coveredOnCourseEur?: number | null } };
-          };
-          const covered = parsed.fifpl?.estimatedRights?.coveredOnCourseEur;
-          if (covered != null && Number.isFinite(Number(covered))) {
-            schoolFifplStudentShareEur = Number(covered);
-          }
-        }
-      } catch {
-        schoolFifplStudentShareEur = null;
-      }
-    }
-
+    // FIF-PL déclaré par le stagiaire : estimation dans funding_details seulement.
+    // On ne réduit PAS le solde / montant tant que le staff n'a pas validé
+    // (scan 14/10/2026) — part = tarif catalogue (pas de studentShareEur client).
     const paymentFields =
       !isCustomFormat &&
       !isOpco &&
@@ -781,8 +776,7 @@ Deno.serve(async (req) => {
       isValidPaymentOption(registration.paymentOption)
         ? getInscriptionPaymentFields(
             price,
-            normalizePaymentOption(registration.paymentOption),
-            { studentShareEur: schoolFifplStudentShareEur }
+            normalizePaymentOption(registration.paymentOption)
           )
         : null;
 

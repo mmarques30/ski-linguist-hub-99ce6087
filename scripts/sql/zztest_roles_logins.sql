@@ -1,7 +1,11 @@
 -- Comptes ZZTEST formateur + stagiaire pour tester les vues.
--- Emails @example.invalid, mots de passe documentés dans
--- src/lib/zztest-roles-logins.ts et /admin/testing.
+-- Emails @example.invalid. Aucun mot de passe en clair dans ce fichier.
+-- Avant exécution, définir les secrets en session (hors dépôt) :
+--   SELECT set_config('zztest.pwd_formateur', '<secret>', false);
+--   SELECT set_config('zztest.pwd_stagiaire', '<secret>', false);
 -- Idempotent : recrée les deux comptes et un jeu minimal (booking + inscription).
+-- Prod : rotationner ou désactiver zztest.formateur@ / zztest.stagiaire@ /
+-- zztest.admin@example.invalid s'ils existent encore avec d'anciens secrets.
 
 CREATE OR REPLACE FUNCTION public._zztest_make_auth_user(_email text, _password text)
 RETURNS uuid
@@ -108,8 +112,20 @@ BEGIN
   );
   DELETE FROM auth.users WHERE email IN ('zztest.formateur@example.invalid','zztest.stagiaire@example.invalid');
 
-  uid_f := public._zztest_make_auth_user('zztest.formateur@example.invalid', 'ZZTEST-Formateur1!');
-  uid_s := public._zztest_make_auth_user('zztest.stagiaire@example.invalid', 'ZZTEST-Stagiaire1!');
+  IF coalesce(current_setting('zztest.pwd_formateur', true), '') = ''
+     OR coalesce(current_setting('zztest.pwd_stagiaire', true), '') = '' THEN
+    RAISE EXCEPTION
+      'Définir zztest.pwd_formateur et zztest.pwd_stagiaire via set_config avant exécution (pas de secret dans le dépôt)';
+  END IF;
+
+  uid_f := public._zztest_make_auth_user(
+    'zztest.formateur@example.invalid',
+    current_setting('zztest.pwd_formateur', true)
+  );
+  uid_s := public._zztest_make_auth_user(
+    'zztest.stagiaire@example.invalid',
+    current_setting('zztest.pwd_stagiaire', true)
+  );
 
   INSERT INTO public.user_roles (user_id, role) VALUES
     (uid_f, 'formateur'),
