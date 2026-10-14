@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -125,6 +126,35 @@ describe("titre et saison PDF", () => {
     expect(evaluationTitle(new Date("2026-07-02"))).toBe(
       "Évaluation en langue vivante saison 2026 / 2027"
     );
+  });
+
+  it("refuse une Date invalide (évite saison NaN / NaN)", () => {
+    expect(() => skiSeasonYears(new Date("2026-10-05T14:00:00+00"))).toThrow(
+      /invalide/
+    );
+    expect(() => skiSeasonYears(new Date("invalid"))).toThrow(/invalide/);
+  });
+
+  it("garde la copie Deno d'accord avec le module front (saison)", () => {
+    const front = readFileSync(
+      join(process.cwd(), "src/lib/evaluation-pdf.ts"),
+      "utf8"
+    );
+    const deno = readFileSync(
+      join(process.cwd(), "supabase/functions/_shared/evaluation-pdf-model.ts"),
+      "utf8"
+    );
+    const sliceFn = (texte: string, nom: string) => {
+      const debut = texte.indexOf(`export function ${nom}`);
+      expect(debut).toBeGreaterThan(-1);
+      const fin = texte.indexOf("\nexport ", debut + 1);
+      return texte.slice(debut, fin === -1 ? undefined : fin);
+    };
+    expect(sliceFn(deno, "skiSeasonYears")).toBe(sliceFn(front, "skiSeasonYears"));
+    expect(sliceFn(deno, "formatSeasonLabel")).toBe(sliceFn(front, "formatSeasonLabel"));
+    expect(sliceFn(deno, "evaluationTitle")).toBe(sliceFn(front, "evaluationTitle"));
+    expect(front).toContain("assertValidDate");
+    expect(deno).toContain("assertValidDate");
   });
 });
 

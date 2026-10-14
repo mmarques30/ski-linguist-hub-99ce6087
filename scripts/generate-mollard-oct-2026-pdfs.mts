@@ -109,6 +109,16 @@ async function loadAssets(): Promise<EvaluationPdfAssets> {
   };
 }
 
+/** Node refuse `…+00` ; normaliser en `…+00:00` (sinon saison/date → NaN). */
+function parseIsoDate(value: string): Date {
+  const normalized = value.replace(/([+-]\d{2})$/, "$1:00");
+  const d = new Date(normalized);
+  if (Number.isNaN(d.getTime())) {
+    throw new Error(`Date invalide : ${value}`);
+  }
+  return d;
+}
+
 function buildInput(row: EvalRow): EvaluationPdfInput {
   const instructor = [row.instructor_first_name, row.instructor_last_name]
     .filter(Boolean)
@@ -116,7 +126,7 @@ function buildInput(row: EvalRow): EvaluationPdfInput {
     .trim();
   return {
     sponsorType: row.sponsor_type,
-    evaluatedAt: new Date(row.datetime),
+    evaluatedAt: parseIsoDate(row.datetime),
     candidateName: row.candidate_name,
     candidateProfession: row.profession,
     skiDiscipline: row.ski_discipline,
@@ -146,7 +156,7 @@ function buildInput(row: EvalRow): EvaluationPdfInput {
     priceTtc: 45,
     identity: IDENTITY,
     cecrlScale: SCALE,
-    verifiedAt: row.verified_at ? new Date(row.verified_at) : null,
+    verifiedAt: row.verified_at ? parseIsoDate(row.verified_at) : null,
   };
 }
 

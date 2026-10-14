@@ -248,8 +248,15 @@ export function habillageFromSponsorType(value: string): SponsorType {
   return value;
 }
 
+function assertValidDate(date: Date, label: string): void {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    throw new Error(`${label} invalide (Date NaN)`);
+  }
+}
+
 /** Saison ski : 1er juillet N → 30 juin N+1 = saison N / N+1. */
 export function skiSeasonYears(date: Date): { start: number; end: number } {
+  assertValidDate(date, "date d'évaluation");
   const year = date.getFullYear();
   const month = date.getMonth();
   if (month >= 6) return { start: year, end: year + 1 };
@@ -323,6 +330,7 @@ export function formatIdentityLine(identity: FliIdentity): string {
 }
 
 function formatDateFr(date: Date): string {
+  assertValidDate(date, "date");
   const dd = String(date.getDate()).padStart(2, "0");
   const mm = String(date.getMonth() + 1).padStart(2, "0");
   return `${dd}/${mm}/${date.getFullYear()}`;
