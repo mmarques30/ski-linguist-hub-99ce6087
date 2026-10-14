@@ -74,6 +74,8 @@ type EvalRow = {
   verified_at: string | null;
   key: string;
   scoring_system?: "sur_5" | "sur_20";
+  /** Habillage PDF forcé (sinon sponsor_type). */
+  pdf_habillage?: "esf" | "ecole_ski" | "dsf";
   /** Notes affichées (ex. /20 Alpe d'Huez) — distinctes des scores PDF /5 internes. */
   display_scores?: number[];
 };
@@ -125,7 +127,7 @@ function buildInput(row: EvalRow): EvaluationPdfInput {
     .join(" ")
     .trim();
   return {
-    sponsorType: row.sponsor_type,
+    sponsorType: row.pdf_habillage || row.sponsor_type,
     evaluatedAt: parseIsoDate(row.datetime),
     candidateName: row.candidate_name,
     candidateProfession: row.profession,
