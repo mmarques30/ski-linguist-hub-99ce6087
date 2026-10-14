@@ -30,6 +30,8 @@ import {
 import {
   buildFormateurMiseEnRelationBodyText,
   buildFormateurMiseEnRelationSubject,
+  buildFormateurMissionBodyText,
+  buildFormateurMissionSubject,
   canSendFormateurMiseEnRelation,
   FORMATEUR_MISE_EN_RELATION_SLUG,
   formateurContactWord,
@@ -212,33 +214,71 @@ export function PresenceFichesCard(props: PresenceFichesCardProps) {
         blobToBase64(stagiaireBlob),
       ]);
 
+      const ficheAttachments = [
+        {
+          filename: presenceFicheFilename(
+            "formateur",
+            input.studentName,
+            props.inscriptionCode
+          ),
+          content: formateurB64,
+        },
+        {
+          filename: presenceFicheFilename(
+            "stagiaire",
+            input.studentName,
+            props.inscriptionCode
+          ),
+          content: stagiaireB64,
+        },
+      ];
+
+      // 1) Mail stagiaire (sans CC) — coordonnées formateur + fiches
       await sendEmail.mutateAsync({
         to: props.studentEmail.trim(),
-        cc: [props.formateurEmail.trim()],
         subject: subject.trim(),
         bodyText: bodyText.trim(),
         recipientName: props.studentName,
         studentId: props.studentId,
         inscriptionId: props.inscriptionId,
         templateSlug: FORMATEUR_MISE_EN_RELATION_SLUG,
-        attachments: [
-          {
-            filename: presenceFicheFilename(
-              "formateur",
-              input.studentName,
-              props.inscriptionCode
-            ),
-            content: formateurB64,
-          },
-          {
-            filename: presenceFicheFilename(
-              "stagiaire",
-              input.studentName,
-              props.inscriptionCode
-            ),
-            content: stagiaireB64,
-          },
-        ],
+        attachments: ficheAttachments,
+      });
+
+      // 2) Mail formateur·rice séparé — mission + fiches
+      // (contrat PDF généré hors app pour l’instant — à joindre manuellement si besoin)
+      const formateurFirst =
+        (props.formateurName || "").trim().split(/\s+/)[0] || "Bonjour";
+      const missionSubject = buildFormateurMissionSubject({
+        inscriptionCode: props.inscriptionCode || "FLI",
+        language: props.language || "formation",
+        studentFullName: props.studentName || "stagiaire",
+      });
+      const periodMatch = formationLabelForMiseEnRelation({
+        language: props.language,
+        modality: props.modality,
+        startDate: props.startDate,
+        endDate: props.endDate,
+      }).match(/\(([^)]+)\)/);
+      const missionBody = buildFormateurMissionBodyText({
+        formateurFirstName: formateurFirst,
+        studentFullName: props.studentName || "",
+        studentEmail: props.studentEmail.trim(),
+        studentPhone: null,
+        language: props.language || "",
+        durationHours: props.durationHours ?? null,
+        periodLabel: periodMatch?.[1] || "selon planning convenu",
+        inscriptionCode: props.inscriptionCode || "",
+      });
+      await sendEmail.mutateAsync({
+        to: props.formateurEmail.trim(),
+        subject: missionSubject,
+        bodyText: missionBody,
+        recipientName: props.formateurName,
+        studentId: props.studentId,
+        inscriptionId: props.inscriptionId,
+        templateSlug: "formateur_mise_en_relation",
+        attachments: ficheAttachments,
       });
 
       if (props.inscriptionId && props.inscriptionStatus === "en_attente") {
@@ -249,12 +289,12 @@ export function PresenceFichesCard(props: PresenceFichesCardProps) {
           });
         } catch (statusErr) {
           console.warn("Mise en relation OK mais statut non passé en confirmée", statusErr);
-          toast.message("E-mail envoyé — passez manuellement le statut en Confirmée si besoin");
+          toast.message("E-mails envoyés — passez manuellement le statut en Confirmée si besoin");
         }
       }
 
       toast.success(
-        `Mise en relation envoyée à ${props.studentEmail} (CC ${props.formateurEmail})`
+        `2 e-mails envoyés : ${props.studentEmail} et ${props.formateurEmail}`
       );
       setConfirmOpen(false);
     } catch (e: unknown) {
@@ -274,8 +314,9 @@ export function PresenceFichesCard(props: PresenceFichesCardProps) {
         <p className="mb-3 text-sm text-muted-foreground">
           PDF préremplis (identité, dates, durée, lieu). Les lignes de cours restent
           vides pour la date, la durée et la signature manuscrite. Après règlement
-          complet, utilisez le bouton de mise en relation pour envoyer les fiches au
-          stagiaire avec la formatrice / le formateur en copie.
+          complet, le bouton envoie <strong>deux e-mails séparés</strong> : stagiaire
+          (coordonnées + fiches) et formateur·rice (mission + fiches). Le contrat de
+          prestation se joint encore manuellement au mail formateur si besoin.
         </p>
         <div className="flex flex-wrap gap-2">
           <Button
@@ -334,10 +375,11 @@ export function PresenceFichesCard(props: PresenceFichesCardProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Mettre en relation + envoyer fiches</AlertDialogTitle>
             <AlertDialogDescription>
-              Envoi à {props.studentEmail || "…"} avec copie à{" "}
-              {props.formateurEmail || "…"} (BCC info@fli.fr). Les deux fiches PDF
-              sont jointes. Si l’inscription est encore « En attente », elle passera
-              en « Confirmée ».
+              Deux envois séparés (BCC info@fli.fr) : 1) stagiaire{" "}
+              {props.studentEmail || "…"} — 2) formateur·rice{" "}
+              {props.formateurEmail || "…"}. Les deux fiches PDF sont jointes à chaque
+              mail. Le contrat formateur n’est pas généré ici. Si l’inscription est
+              encore « En attente », elle passera en « Confirmée ».
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-3 py-2">

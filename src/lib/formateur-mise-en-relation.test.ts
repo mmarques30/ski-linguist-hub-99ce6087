@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   buildFormateurMiseEnRelationBodyText,
   buildFormateurMiseEnRelationSubject,
+  buildFormateurMissionBodyText,
+  buildFormateurMissionSubject,
   canSendFormateurMiseEnRelation,
   FORMATEUR_MISE_EN_RELATION_SLUG,
   formateurContactWord,
@@ -40,7 +42,7 @@ describe("formateur-mise-en-relation", () => {
     expect(body).toMatch(/tatiana1\.samoilova@gmail\.com/);
     expect(body).toMatch(/06 87 56 86 61/);
     expect(body).toMatch(/fiches de présence/);
-    expect(body).toMatch(/en copie/);
+    expect(body).not.toMatch(/en copie/);
   });
 
   it("garde le bouton désactivé sans e-mails", () => {
@@ -69,5 +71,35 @@ describe("formateur-mise-en-relation", () => {
         endDate: "2027-03-31",
       })
     ).toBe("russe en ligne (du 12/10/2026 au 31/03/2027)");
+  });
+
+  it("construit le mail mission formateur séparé avec contrat", () => {
+    const subject = buildFormateurMissionSubject({
+      inscriptionCode: "FLI-260022",
+      language: "Russe",
+      studentFullName: "Michael colonna cesari",
+      contractNumber: "CTR-2026-0002",
+    });
+    expect(subject).toMatch(/CTR-2026-0002/);
+    expect(subject).toMatch(/Michael/);
+
+    const body = buildFormateurMissionBodyText({
+      formateurFirstName: "Tatiana",
+      studentFullName: "Michael colonna cesari",
+      studentEmail: "colonna.michael@hotmail.fr",
+      studentPhone: "06 16 01 48 55",
+      language: "Russe",
+      durationHours: 12,
+      periodLabel: "du 12/10/2026 au 31/03/2027",
+      inscriptionCode: "FLI-260022",
+      contractNumber: "CTR-2026-0002",
+      hourlyRate: 30,
+      totalAmountHt: 360,
+    });
+    expect(body).toMatch(/Bonjour Tatiana/);
+    expect(body).toMatch(/colonna\.michael@hotmail\.fr/);
+    expect(body).toMatch(/CTR-2026-0002/);
+    expect(body).toMatch(/360 € HT/);
+    expect(body).toMatch(/contrat de prestation/);
   });
 });
