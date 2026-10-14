@@ -57,7 +57,7 @@ Menu do header (scroll suave para cada âncora, exceto o CTA):
 - CTA secundário (link texto): "Découvrir la méthode" → `#metodo`
 
 **Badges flutuantes na foto** (substituindo "Rapidez / 100% Digital / Acessível"):
-- "Groupes de 8 max"
+- "Groupes de 8 personnes"
 - "Financement FIFPL"
 - "Certifié Qualiopi"
 
@@ -119,7 +119,7 @@ Menu do header (scroll suave para cada âncora, exceto o CTA):
 
 | Icône | Titre | Texte |
 |---|---|---|
-| Groupe | Groupes de 8 maximum | Chaque stagiaire participe activement, sans se noyer dans la masse. |
+| Groupe | Groupes de 8 personnes | Chaque stagiaire participe activement, sans se noyer dans la masse. |
 | Formateur | Un formateur dédié | Mise en situation directement liée à votre métier : ski, accueil, remontées. |
 | Financement | Financement facilité | FIFPL, OPCO : FLI gère le dossier administratif pour vous. |
 | Flexibilité | Présentiel ou en ligne | Cours individuels, en binôme, ou stages intensifs — à la demande. |

@@ -59,10 +59,11 @@ describe("LP institutionnelle — conformité spec", () => {
     expect(src).toContain("YOUTUBE_VIDEO_ID");
   });
 
-  it("affiche les groupes à 8 personnes maximum (plus 6)", () => {
+  it("affiche les groupes de 8 personnes", () => {
     const src = landing();
-    expect(src).toContain("Groupes de 8 max");
-    expect(src).toContain("Groupes de 8 maximum");
+    expect(src).toContain("Groupes de 8 personnes");
+    expect(src).not.toContain("Groupes de 8 max");
+    expect(src).not.toContain("Groupes de 8 maximum");
     expect(src).not.toContain("Groupes de 6");
   });
 

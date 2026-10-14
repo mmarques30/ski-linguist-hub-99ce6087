@@ -50,7 +50,7 @@ const INDICATORS = [
   { value: "Depuis 2018", label: "formations montagne" },
 ] as const;
 
-const BADGES = ["Groupes de 8 max", "Financement FIFPL", "Certifié Qualiopi"] as const;
+const BADGES = ["Groupes de 8 personnes", "Financement FIFPL", "Certifié Qualiopi"] as const;
 
 const METHOD_STEPS = [
   "Test de niveau à l'inscription",
@@ -79,7 +79,7 @@ const PARTNERS = [
 const FORMATIONS = [
   {
     icon: Users,
-    title: "Groupes de 8 maximum",
+    title: "Groupes de 8 personnes",
     text: "Chaque stagiaire participe activement, sans se noyer dans la masse.",
   },
   {
