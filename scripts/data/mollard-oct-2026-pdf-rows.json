@@ -38,8 +38,8 @@
     "verified_at": "2026-10-14T07:32:40+00",
     "email": "maxence.cesar@icloud.com",
     "partner_id": "d6753f10-9cea-43cb-a8d2-f5986650feb5",
-    "payment": "unknown",
-    "note": "Email OK ; aucun Stripe ni virement 45€ (payments) pour Cesar/Maxence — paiement introuvable"
+    "payment": "pending_reminder_sent",
+    "note": "Relance paiement envoyée 14/10 Resend 01a139aa-46ba-7c8e-9041-5229100c24ab ; checkout cs_live_a1UJ00fGaTdi3DM1Fs8ADaVSPF6CWyCOEVL4qWtDga7ja8hL6b82oyFxUx"
   },
   {
     "evaluation_id": "287717b6-dbf7-4dae-a149-1e599b78ecd4",

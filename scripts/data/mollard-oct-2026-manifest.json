@@ -6,7 +6,7 @@
     "school": "ESF COURCHEVEL 1850",
     "partner_id": "d6753f10-9cea-43cb-a8d2-f5986650feb5",
     "sponsor_type": "esf",
-    "payment": "unknown",
+    "payment": "pending_reminder_sent",
     "cecrl": "A2+",
     "scores": [
       1.5,
@@ -20,7 +20,7 @@
     "booking_id": "257e9ea9-81d9-454b-bc16-82f7c27b9411",
     "evaluation_id": "0c8f12f2-fd55-4e50-b712-1ad62a5ed178",
     "scoring_system": "sur_5",
-    "note": "Email OK ; aucun Stripe ni virement 45€ (payments) pour Cesar/Maxence — paiement introuvable"
+    "note": "Relance paiement envoyée 14/10 Resend 01a139aa-46ba-7c8e-9041-5229100c24ab ; checkout cs_live_a1UJ00fGaTdi3DM1Fs8ADaVSPF6CWyCOEVL4qWtDga7ja8hL6b82oyFxUx"
   },
   {
     "key": "lisa-roch",
