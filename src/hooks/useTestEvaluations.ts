@@ -254,3 +254,55 @@ export function useGenerateEvaluationPdf() {
     },
   });
 }
+
+export interface CreateFormateurEvaluationBookingInput {
+  name: string;
+  email: string;
+  phone: string;
+  profession: string;
+  professionAutre: string;
+  skiSchoolId: string;
+  carteSyndicale: string;
+  skiDiscipline: string;
+  trainingCycle: string;
+  language: string;
+  datetimeIso: string;
+  sponsorType: "esf" | "ecole_ski" | "dsf";
+  paymentType: string;
+  instructorId?: string | null;
+}
+
+/** Crée candidat + réservation `completed` (RPC) pour ouvrir la saisie. */
+export function useCreateFormateurEvaluationBooking() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: CreateFormateurEvaluationBookingInput) => {
+      const { data, error } = await supabase.rpc(
+        "create_formateur_evaluation_booking",
+        {
+          p_name: input.name,
+          p_email: input.email,
+          p_phone: input.phone,
+          p_profession: input.profession,
+          p_profession_autre: input.professionAutre,
+          p_ski_school_id: input.skiSchoolId,
+          p_carte_syndicale: input.carteSyndicale,
+          p_ski_discipline: input.skiDiscipline,
+          p_training_cycle: input.trainingCycle,
+          p_language: input.language,
+          p_datetime: input.datetimeIso,
+          p_sponsor_type: input.sponsorType,
+          p_payment_type: input.paymentType,
+          p_instructor_id: input.instructorId ?? null,
+        }
+      );
+      if (error) throw error;
+      if (!data) throw new Error("Identifiant de réservation manquant");
+      return data as string;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["test-bookings-to-evaluate"] });
+    },
+  });
+}
