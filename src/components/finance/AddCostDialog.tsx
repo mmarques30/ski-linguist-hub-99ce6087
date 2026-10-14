@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCreateFormationCost } from "@/hooks/useFinancialDashboard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 
 interface AddCostDialogProps {
   open: boolean;
@@ -34,7 +34,6 @@ const tvaRates = [
 ];
 
 export function AddCostDialog({ open, onOpenChange, inscriptionId }: AddCostDialogProps) {
-  const { toast } = useToast();
   const createCost = useCreateFormationCost();
   
   const [costType, setCostType] = useState<string>('');
@@ -74,11 +73,7 @@ export function AddCostDialog({ open, onOpenChange, inscriptionId }: AddCostDial
 
   const handleSubmit = async () => {
     if (!costType || !montantHT || !selectedInscription) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Veuillez remplir tous les champs obligatoires",
-      });
+      toast.error("Erreur", { description: "Veuillez remplir tous les champs obligatoires" });
       return;
     }
 
@@ -95,10 +90,7 @@ export function AddCostDialog({ open, onOpenChange, inscriptionId }: AddCostDial
         document_url: null,
       });
 
-      toast({
-        title: "Succès",
-        description: "Coût ajouté avec succès",
-      });
+      toast.success("Succès", { description: "Coût ajouté avec succès" });
 
       // Reset form
       setCostType('');
@@ -110,11 +102,7 @@ export function AddCostDialog({ open, onOpenChange, inscriptionId }: AddCostDial
       setSelectedInscription(inscriptionId || '');
       onOpenChange(false);
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: error.message,
-      });
+      toast.error("Erreur", { description: error.message });
     }
   };
 

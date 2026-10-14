@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -48,7 +49,6 @@ import {
 } from "@/components/ui-kit";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { FliInscriptionsImportCard } from "@/components/admin/FliInscriptionsImportCard";
 import { FliFormResponsesImportCard } from "@/components/admin/FliFormResponsesImportCard";
@@ -131,7 +131,6 @@ export default function Import() {
   const [purgeOpen, setPurgeOpen] = useState(false);
   const [purgeConfirmText, setPurgeConfirmText] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
   const { user } = useAuth();
 
   const refreshCounts = useCallback(async () => {
@@ -145,11 +144,7 @@ export default function Import() {
       );
       setCounts(Object.fromEntries(entries) as TableCounts);
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Impossible de compter les lignes",
-        description: error instanceof Error ? error.message : "Erreur inconnue",
-      });
+      toast.error("Impossible de compter les lignes", { description: error instanceof Error ? error.message : "Erreur inconnue" });
     } finally {
       setCountsLoading(false);
     }
@@ -180,18 +175,10 @@ export default function Import() {
       setPreview(rows.slice(0, 10));
       setEncodingNotes(notes);
       if (rows.length === 0) {
-        toast({
-          variant: "destructive",
-          title: "Fichier vide ou illisible",
-          description: "Vérifiez le délimiteur point-virgule et l'encodage UTF-8.",
-        });
+        toast.error("Fichier vide ou illisible", { description: "Vérifiez le délimiteur point-virgule et l'encodage UTF-8." });
       }
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Lecture du fichier impossible",
-        description: error instanceof Error ? error.message : "Erreur inconnue",
-      });
+      toast.error("Lecture du fichier impossible", { description: error instanceof Error ? error.message : "Erreur inconnue" });
     }
   };
 
@@ -223,16 +210,11 @@ export default function Import() {
         },
       });
 
-      toast({
-        title: "Dry-run terminé",
+      toast.success("Dry-run terminé", {
         description: `${result.acceptedCount} acceptée(s), ${result.rejectedCount} rejetée(s). Aucune écriture en base.`,
       });
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Échec du dry-run",
-        description: error instanceof Error ? error.message : "Erreur inconnue",
-      });
+      toast.error("Échec du dry-run", { description: error instanceof Error ? error.message : "Erreur inconnue" });
     } finally {
       setIsDryRunning(false);
     }
@@ -251,11 +233,7 @@ export default function Import() {
   const handleImport = async () => {
     if (!prepared || !dryRunDone || !file) return;
     if (prepared.acceptedCount === 0) {
-      toast({
-        variant: "destructive",
-        title: "Rien à importer",
-        description: "Le dry-run n'a accepté aucune ligne.",
-      });
+      toast.error("Rien à importer", { description: "Le dry-run n'a accepté aucune ligne." });
       return;
     }
 
@@ -307,8 +285,7 @@ export default function Import() {
     setIsImporting(false);
     await refreshCounts();
 
-    toast({
-      title: "Import terminé",
+    toast.success("Import terminé", {
       description: `${imported} enregistrement(s) écrit(s) (insert/upsert) dans ${selectedTable}.`,
     });
   };
@@ -328,11 +305,7 @@ export default function Import() {
         .select("*")
         .limit(10000);
       if (exportSelectError) {
-        toast({
-          variant: "destructive",
-          title: "Export avant purge impossible",
-          description: exportSelectError.message,
-        });
+        toast.error("Export avant purge impossible", { description: exportSelectError.message });
         return;
       }
 
@@ -341,12 +314,7 @@ export default function Import() {
         const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
         downloadTextFile(`purge-backup-${selectedTable}-${stamp}.csv`, csv);
       } catch (exportError) {
-        toast({
-          variant: "destructive",
-          title: "Export avant purge impossible",
-          description:
-            exportError instanceof Error ? exportError.message : "Erreur inconnue",
-        });
+        toast.error("Export avant purge impossible", { description: exportError instanceof Error ? exportError.message : "Erreur inconnue" });
         return;
       }
 
@@ -368,19 +336,14 @@ export default function Import() {
         },
       });
 
-      toast({
-        title: "Purge effectuée",
+      toast.success("Purge effectuée", {
         description: `Table ${selectedTable} : ${beforeCount} ligne(s) supprimée(s).`,
       });
       setPurgeOpen(false);
       setPurgeConfirmText("");
       await refreshCounts();
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erreur de purge",
-        description: error instanceof Error ? error.message : "Erreur inconnue",
-      });
+      toast.error("Erreur de purge", { description: error instanceof Error ? error.message : "Erreur inconnue" });
     } finally {
       setIsPurging(false);
     }

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 
 export interface QualiopiIndicator {
   id: string;
@@ -50,7 +50,6 @@ export function useQualiopiIndicators(seasonId?: string) {
 
 export function useUpsertIndicator() {
   const qc = useQueryClient();
-  const { toast } = useToast();
   return useMutation({
     mutationFn: async (values: Partial<QualiopiIndicator> & { id?: string }) => {
       if (values.id) {
@@ -69,10 +68,10 @@ export function useUpsertIndicator() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["qualiopi-indicators"] });
-      toast({ title: "Indicateur enregistré" });
+      toast.success("Indicateur enregistré");
     },
     onError: (e: any) => {
-      toast({ variant: "destructive", title: "Erreur", description: e.message });
+      toast.error("Erreur", { description: e.message });
     },
   });
 }

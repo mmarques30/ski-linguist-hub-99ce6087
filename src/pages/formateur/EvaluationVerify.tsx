@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useNavigate, useParams } from "react-router";
 import { FormateurPageShell } from "@/components/layout/FormateurPageShell";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,6 @@ import {
   findSpellingProposals,
   type SpellingProposal,
 } from "@/lib/evaluation-spellcheck";
-import { useToast } from "@/hooks/use-toast";
 import { useFormateurView } from "@/contexts/FormateurViewContext";
 import {
   PageHeader,
@@ -56,7 +56,6 @@ export default function EvaluationVerify() {
   const { basePath, isAssistMode } = useFormateurView();
   const { user } = useAuth();
   const { isAdmin, isFormateur } = useUserPermissions();
-  const { toast } = useToast();
   const { data, isLoading } = useEvaluationWithBooking(id || "");
   const updateMutation = useUpdateTestEvaluation();
   const [refuseComment, setRefuseComment] = useState("");
@@ -100,11 +99,7 @@ export default function EvaluationVerify() {
   const handleValidate = async () => {
     if (!evaluation || !user) return;
     if (!canValidate) {
-      toast({
-        variant: "destructive",
-        title: "Structure non conforme",
-        description: "Corrigez les motifs listés ou refusez avec un commentaire.",
-      });
+      toast.error("Structure non conforme", { description: "Corrigez les motifs listés ou refusez avec un commentaire." });
       return;
     }
     await updateMutation.mutateAsync({
@@ -114,18 +109,14 @@ export default function EvaluationVerify() {
       reviewed_by: user.id,
       verified_at: new Date().toISOString(),
     });
-    toast({ title: "Évaluation validée" });
+    toast.success("Évaluation validée");
     navigate(`${basePath}/evaluations`);
   };
 
   const handleRefuse = async () => {
     if (!evaluation || !user) return;
     if (!refuseComment.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Commentaire obligatoire",
-        description: "Expliquez au formateur pourquoi le compte-rendu revient en brouillon.",
-      });
+      toast.error("Commentaire obligatoire", { description: "Expliquez au formateur pourquoi le compte-rendu revient en brouillon." });
       return;
     }
     await updateMutation.mutateAsync({
@@ -135,7 +126,7 @@ export default function EvaluationVerify() {
       reviewed_at: new Date().toISOString(),
       reviewed_by: user.id,
     });
-    toast({ title: "Renvoyée en brouillon" });
+    toast.success("Renvoyée en brouillon");
     navigate(`${basePath}/evaluations`);
   };
 

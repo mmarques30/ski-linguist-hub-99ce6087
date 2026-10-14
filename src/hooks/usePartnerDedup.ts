@@ -1,7 +1,7 @@
 import { useMemo } from "react";
+import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import {
   assertProspectionNonGelee,
   PROSPECTION_MONITEURS_GELEE,
@@ -150,7 +150,6 @@ export function usePartnerDedupIndex() {
 
 export function useMergePartners() {
   const qc = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: async ({
@@ -204,15 +203,12 @@ export function useMergePartners() {
       qc.invalidateQueries({ queryKey: ["partner-contacts"] });
       qc.invalidateQueries({ queryKey: ["partner-contracts"] });
       qc.invalidateQueries({ queryKey: ["partner-inscriptions"] });
-      toast({
-        title: "Fusion effectuée",
-        description: result.deleted
+      toast.success("Fusion effectuée", { description: result.deleted
           ? "La fiche doublon a été fusionnée et supprimée."
-          : "Liens et contact repris. La fiche fantôme reste visible tant que le gel prospection n’est pas levé (elle est masquée dans la liste).",
-      });
+          : "Liens et contact repris. La fiche fantôme reste visible tant que le gel prospection n’est pas levé (elle est masquée dans la liste)." });
     },
     onError: (e: Error) =>
-      toast({ variant: "destructive", title: "Fusion impossible", description: e.message }),
+      toast.error("Fusion impossible", { description: e.message }),
   });
 }
 

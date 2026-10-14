@@ -22,8 +22,7 @@ on ne recrée pas une carte, une tuile ou un graphique à la main.
 | Graphique | kit `ui-kit/charts` | Recharts brut |
 | Couleur / ombre / rayon | jetons CSS | hex ou `text-[11px]` |
 
-Nouveau code : **Sonner uniquement**  
-(`import { toast } from "sonner"` ou `toast` via `@/hooks/use-toast`, qui délègue à Sonner).
+Notifications : **Sonner uniquement** — `import { toast } from "sonner"`.
 
 ---
 

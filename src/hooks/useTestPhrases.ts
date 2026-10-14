@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { PHRASE_BANK_ALL, PHRASE_BANK_COMMON } from "@/lib/test-phrases-bank";
 
 export interface TestPhrase {
@@ -96,7 +96,6 @@ export function useTestPhrase(id: string) {
 
 export function useCreateTestPhrase() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: async (phrase: Omit<TestPhrase, "id" | "created_at" | "updated_at">) => {
@@ -111,21 +110,16 @@ export function useCreateTestPhrase() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["test-phrases"] });
-      toast({ title: "Phrase créée avec succès" });
+      toast.success("Phrase créée avec succès");
     },
     onError: (error: Error) => {
-      toast({ 
-        variant: "destructive", 
-        title: "Erreur", 
-        description: error.message 
-      });
+      toast.error("Erreur", { description: error.message });
     },
   });
 }
 
 export function useUpdateTestPhrase() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<TestPhrase> & { id: string }) => {
@@ -141,21 +135,16 @@ export function useUpdateTestPhrase() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["test-phrases"] });
-      toast({ title: "Phrase mise à jour" });
+      toast.success("Phrase mise à jour");
     },
     onError: (error: Error) => {
-      toast({ 
-        variant: "destructive", 
-        title: "Erreur", 
-        description: error.message 
-      });
+      toast.error("Erreur", { description: error.message });
     },
   });
 }
 
 export function useDeleteTestPhrase() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: async (id: string) => {
@@ -168,21 +157,16 @@ export function useDeleteTestPhrase() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["test-phrases"] });
-      toast({ title: "Phrase supprimée" });
+      toast.success("Phrase supprimée");
     },
     onError: (error: Error) => {
-      toast({ 
-        variant: "destructive", 
-        title: "Erreur", 
-        description: error.message 
-      });
+      toast.error("Erreur", { description: error.message });
     },
   });
 }
 
 export function useBulkImportPhrases() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: async (phrases: Omit<TestPhrase, "id" | "created_at" | "updated_at">[]) => {
@@ -197,14 +181,10 @@ export function useBulkImportPhrases() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["test-phrases"] });
-      toast({ title: `${data.length} phrases importées avec succès` });
+      toast.success(`${data.length} phrases importées avec succès`);
     },
     onError: (error: Error) => {
-      toast({ 
-        variant: "destructive", 
-        title: "Erreur d'import", 
-        description: error.message 
-      });
+      toast.error("Erreur d'import", { description: error.message });
     },
   });
 }
