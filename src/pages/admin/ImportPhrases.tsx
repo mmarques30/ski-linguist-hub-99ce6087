@@ -79,8 +79,7 @@ export default function ImportPhrasesPage() {
       const phrasesToImport = replaceExisting ? phrases : newPhrases;
 
       if (phrasesToImport.length === 0) {
-        toast.success("Rien à importer", { description: "Toutes les phrases existent déjà dans la base de données.",
-          variant: "destructive" });
+        toast.info("Rien à importer", { description: "Toutes les phrases existent déjà dans la base de données." });
         setImporting(false);
         return;
       }
@@ -95,8 +94,7 @@ export default function ImportPhrasesPage() {
       });
     } catch (error) {
       console.error("Import error:", error);
-      toast.success("Erreur d'import", { description: error instanceof Error ? error.message : "Une erreur est survenue",
-        variant: "destructive" });
+      toast.error("Erreur d'import", { description: error instanceof Error ? error.message : "Une erreur est survenue" });
     } finally {
       setImporting(false);
     }
