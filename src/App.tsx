@@ -23,6 +23,7 @@ import Dashboard from "./pages/Dashboard";
 import Inscriptions from "./pages/Inscriptions";
 import InscriptionDetails from "./pages/inscriptions/InscriptionDetails";
 import ScheduleValidation from "./pages/inscriptions/ScheduleValidation";
+import InscriptionsByFormation from "./pages/inscriptions/InscriptionsByFormation";
 import Invoices from "./pages/Invoices";
 import Students from "./pages/Students";
 import StudentDetails from "./pages/students/StudentDetails";
@@ -140,6 +141,7 @@ const App = () => (
             <Route path="/gestion/partenaires" element={<ProtectedRoute><PartnersList /></ProtectedRoute>} />
             <Route path="/gestion/partenaires/:id" element={<ProtectedRoute><PartnerDetails /></ProtectedRoute>} />
             <Route path="/inscriptions" element={<ProtectedRoute><Inscriptions /></ProtectedRoute>} />
+            <Route path="/inscriptions/par-formation" element={<ProtectedRoute><InscriptionsByFormation /></ProtectedRoute>} />
             <Route path="/inscriptions/schedule-validation" element={<ProtectedRoute><ScheduleValidation /></ProtectedRoute>} />
             <Route path="/inscriptions/:id" element={<ProtectedRoute><InscriptionDetails /></ProtectedRoute>} />
             <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
