@@ -90,11 +90,13 @@ describe("arborescence de navigation — 3 niveaux", () => {
 });
 
 describe("état actif — chemins et paramètres d'URL", () => {
-  it("sépare inscriptions et constitution des groupes", () => {
+  it("sépare inscriptions, par formation et constitution des groupes", () => {
     expect(matchScore("/inscriptions", "/inscriptions/schedule-validation", "")).toBe(-1);
+    expect(matchScore("/inscriptions", "/inscriptions/par-formation", "")).toBe(-1);
     expect(isItemActive(item("inscriptions"), "/inscriptions", "")).toBe(true);
     expect(isItemActive(item("inscriptions"), "/inscriptions/abc-123", "")).toBe(true);
-    expect(isItemActive(item("inscriptions"), "/inscriptions/par-formation", "")).toBe(true);
+    expect(isItemActive(item("par-formation"), "/inscriptions/par-formation", "")).toBe(true);
+    expect(isItemActive(item("inscriptions"), "/inscriptions/par-formation", "")).toBe(false);
     expect(isItemActive(item("schedule-validation"), "/inscriptions/schedule-validation", "")).toBe(
       true,
     );

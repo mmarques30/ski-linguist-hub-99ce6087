@@ -85,6 +85,13 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { id: "inscriptions", label: L["/inscriptions"], icon: ClipboardList, href: "/inscriptions" },
       {
+        id: "par-formation",
+        label: L["/inscriptions/par-formation"],
+        icon: Layers,
+        href: "/inscriptions/par-formation",
+        routeKey: "inscriptions",
+      },
+      {
         id: "schedule-validation",
         label: L["/inscriptions/schedule-validation"],
         icon: ClipboardCheck,
@@ -429,14 +436,14 @@ export function navRouteKey(node: { href: string; routeKey?: string }): string |
 export function isPathActive(pathname: string, path: string): boolean {
   if (path === "/app") return pathname === "/app";
   if (path === "/inscriptions") {
-    // Sous-pages opérationnelles hors fiche : constitution des groupes a son
-    // propre item de menu ; « par formation » reste sous Inscriptions.
-    if (pathname === "/inscriptions/schedule-validation") return false;
-    return (
-      pathname === "/inscriptions" ||
-      pathname === "/inscriptions/par-formation" ||
-      /^\/inscriptions\/[^/]+$/.test(pathname)
-    );
+    // Sous-pages avec entrée de menu dédiée : ne pas activer « Inscriptions ».
+    if (
+      pathname === "/inscriptions/schedule-validation" ||
+      pathname === "/inscriptions/par-formation"
+    ) {
+      return false;
+    }
+    return pathname === "/inscriptions" || /^\/inscriptions\/[^/]+$/.test(pathname);
   }
   if (path === "/finance") {
     return pathname === "/finance";
