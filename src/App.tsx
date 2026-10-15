@@ -54,7 +54,7 @@ import FormateurStagiaires from "./pages/formateur/FormateurStagiaires";
 import FormateurProfil from "./pages/formateur/FormateurProfil";
 import FormateurPaiements from "./pages/formateur/FormateurPaiements";
 import FormateurDocuments from "./pages/formateur/FormateurDocuments";
-import Register from "./pages/register/Index";
+import PublicRegistrationRoute from "./pages/register/PublicRegistrationRoute";
 import BookTest from "./pages/test/BookTest";
 import SalonDirecteursPage from "./pages/salon/Index";
 import { PaymentSuccessPage, PaymentCancelPage } from "./pages/register/PaymentReturn";
@@ -110,7 +110,7 @@ const App = () => (
             <Route path="/" element={<InstitutionalLanding />} />
             <Route path="/mockup/lp-assets" element={<AssetValidationMockupPage />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/register" element={<PublicRegistrationRoute />} />
             <Route path="/salon" element={<SalonDirecteursPage />} />
             <Route path="/reserver-test" element={<BookTest />} />
             <Route path="/register/payment-success" element={<PaymentSuccessPage />} />

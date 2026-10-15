@@ -16,6 +16,14 @@ describe("isAllowedStripeCheckoutReturnUrl", () => {
     ).toBe(true);
     expect(
       isAllowedStripeCheckoutReturnUrl(
+        "https://www.fli.fr/register/payment-success?session_id={CHECKOUT_SESSION_ID}"
+      )
+    ).toBe(true);
+    expect(
+      isAllowedStripeCheckoutReturnUrl("https://fli.fr/register/payment-cancel")
+    ).toBe(true);
+    expect(
+      isAllowedStripeCheckoutReturnUrl(
         "https://ski-linguist-hub.lovable.app/register?cancel=1"
       )
     ).toBe(true);
@@ -52,5 +60,11 @@ describe("isAllowedStripeCheckoutReturnUrl", () => {
     expect(extraire(deno, "isAllowedStripeCheckoutReturnUrl")).toBe(
       extraire(front, "isAllowedStripeCheckoutReturnUrl")
     );
+    const origines = (texte: string) => {
+      const debut = texte.indexOf("const EXACT_ORIGINS");
+      const fin = texte.indexOf("function isLovablePreviewHost");
+      return texte.slice(debut, fin);
+    };
+    expect(origines(deno)).toBe(origines(front));
   });
 });

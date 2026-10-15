@@ -8,6 +8,8 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    // Permet de vérifier en local la redirection plateforme.fli.fr/register.
+    allowedHosts: ["plateforme.fli.fr"],
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
