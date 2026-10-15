@@ -116,6 +116,8 @@ export async function loadSkiMonitorWelcomeDocument(
   internalFile: string,
   // deno-lint-ignore no-explicit-any
   supabase?: any,
+  /** URL du index.ts de la fonction appelante : les PDF sont dans son dossier registration-documents/. */
+  functionRootUrl: URL = new URL(import.meta.url),
 ): Promise<Uint8Array> {
   if (internalFile.toLowerCase().endsWith(".dotx")) {
     throw new Error(
@@ -136,7 +138,7 @@ export async function loadSkiMonitorWelcomeDocument(
     }
   }
 
-  const fileUrl = new URL(`./registration-documents/${internalFile}`, import.meta.url);
+  const fileUrl = new URL(`./registration-documents/${internalFile}`, functionRootUrl);
   return await Deno.readFile(fileUrl);
 }
 
@@ -147,13 +149,14 @@ export async function loadSkiMonitorWelcomeDocument(
 export async function buildSkiMonitorWelcomeAttachments(
   // deno-lint-ignore no-explicit-any
   supabase?: any,
+  functionRootUrl: URL = new URL(import.meta.url),
 ): Promise<
   Array<{ filename: string; content: string }>
 > {
   const attachments: Array<{ filename: string; content: string }> = [];
 
   for (const doc of SKI_MONITOR_STATIC_PACK_DOCUMENTS) {
-    const bytes = await loadSkiMonitorWelcomeDocument(doc.internalFile, supabase);
+    const bytes = await loadSkiMonitorWelcomeDocument(doc.internalFile, supabase, functionRootUrl);
     attachments.push({
       filename: doc.filename,
       content: bytesToBase64(bytes),
