@@ -61,14 +61,16 @@ describe("placement-test-engine", () => {
     expect(evaluateSlope(2)).toBe(false);
   });
 
-  it("salon short: 2/3 pour valider, max verte→bleue, puis done", () => {
+  it("salon: adaptatif 4 pistes, 2/3 pour valider, fin sans vocab", () => {
     expect(SALON_QUESTIONS_PER_SLOPE).toBe(3);
     expect(SALON_PASS_THRESHOLD).toBe(2);
     expect(evaluateSalonSlope(2)).toBe(true);
     expect(evaluateSalonSlope(1)).toBe(false);
     expect(getNextSalonSlopeAfterSlope("verte", true)).toBe("bleue");
+    expect(getNextSalonSlopeAfterSlope("bleue", true)).toBe("rouge");
+    expect(getNextSalonSlopeAfterSlope("rouge", true)).toBe("noire");
+    expect(getNextSalonSlopeAfterSlope("noire", true)).toBe("done");
     expect(getNextSalonSlopeAfterSlope("verte", false)).toBe("done");
-    expect(getNextSalonSlopeAfterSlope("bleue", true)).toBe("done");
     expect(getNextSalonSlopeAfterSlope("bleue", false)).toBe("done");
   });
 

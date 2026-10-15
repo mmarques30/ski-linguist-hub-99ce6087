@@ -41,10 +41,11 @@ describe("Salon des directeurs — /salon", () => {
     expect(step).toContain("Commencer le test (piste verte)");
   });
 
-  it("utilise une version courte (3 questions × 2 pistes, sans vocab)", () => {
+  it("utilise un test adaptatif salon (3 questions × 4 pistes, sans vocab)", () => {
     expect(step).toContain("SALON_QUESTIONS_PER_SLOPE");
     expect(step).toContain("getNextSalonSlopeAfterSlope");
-    expect(step).toContain("Pas de vocabulaire ski");
+    expect(step).toContain("Adaptatif 4 pistes");
+    expect(step).toContain("pas de vocabulaire ski");
     expect(step).toContain("version salon");
   });
 
