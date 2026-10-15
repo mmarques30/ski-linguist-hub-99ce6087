@@ -88,6 +88,8 @@ export interface RegistrationData {
     presentationText: string;
     startedAt?: string | null;
     completedAt?: string | null;
+    /** Version courte /salon (pas le parcours inscription complet). */
+    salonShort?: boolean;
   };
   /** Auto-diagnostic (feuille Excel) — avant le QCM pistes. */
   autoDiagnostic?: {

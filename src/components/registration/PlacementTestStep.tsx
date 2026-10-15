@@ -11,13 +11,17 @@ import { MeterRow, StatusPill, SurfaceCard } from "@/components/ui-kit";
 import type { PillTone } from "@/components/ui-kit";
 import {
   buildAdaptiveTestResult,
+  evaluateSalonSlope,
   evaluateSlope,
+  getNextSalonSlopeAfterSlope,
   getNextSlopeAfterSlope,
   getPresentationQuestion,
   getQuestionsForSlope,
   PASS_THRESHOLD,
   PRESENTATION_MAX_CHARS,
   QUESTIONS_PER_SLOPE,
+  SALON_PASS_THRESHOLD,
+  SALON_QUESTIONS_PER_SLOPE,
   SLOPE_LABELS,
   studentFacingPisteLabel,
   type AdaptiveTestResult,
@@ -84,9 +88,17 @@ export function PlacementTestStep({
     [allQuestions]
   );
 
+  const questionsPerSlope = isSalon ? SALON_QUESTIONS_PER_SLOPE : QUESTIONS_PER_SLOPE;
+  const passThreshold = isSalon ? SALON_PASS_THRESHOLD : PASS_THRESHOLD;
+
   const slopeQuestions = useMemo(
-    () => getQuestionsForSlope(allQuestions, currentSlope),
-    [allQuestions, currentSlope]
+    () =>
+      getQuestionsForSlope(
+        allQuestions,
+        currentSlope,
+        isSalon ? SALON_QUESTIONS_PER_SLOPE : undefined
+      ),
+    [allQuestions, currentSlope, isSalon]
   );
 
   const presentationQuestion = useMemo(
@@ -214,6 +226,7 @@ export function PlacementTestStep({
         presentationText: testResult.presentationText,
         startedAt: startedAtRef.current,
         completedAt,
+        ...(isSalon ? { salonShort: true } : {}),
       },
     });
     setPhase("results");
@@ -236,12 +249,31 @@ export function PlacementTestStep({
     prevSlopeResults: SlopeResult[],
     prevPassedSlopes: SlopeLevel[]
   ) => {
-    const questions = getQuestionsForSlope(allQuestions, slope);
+    const questions = getQuestionsForSlope(
+      allQuestions,
+      slope,
+      isSalon ? SALON_QUESTIONS_PER_SLOPE : undefined
+    );
     const correct = questions.filter((q) => slopeAnswers[q.id] === q.correct_answer).length;
-    const passed = evaluateSlope(correct);
+    const passed = isSalon ? evaluateSalonSlope(correct) : evaluateSlope(correct);
     const slopeResult: SlopeResult = { slope, correct, total: questions.length, passed };
     const newSlopeResults = [...prevSlopeResults, slopeResult];
     const newPassedSlopes = passed ? [...prevPassedSlopes, slope] : prevPassedSlopes;
+
+    if (isSalon) {
+      const nextSalon = getNextSalonSlopeAfterSlope(slope, passed);
+      if (nextSalon === "done") {
+        finishTest(slopeAnswers, newSlopeResults, newPassedSlopes, "");
+        return;
+      }
+      setSlopeResults(newSlopeResults);
+      setPassedSlopes(newPassedSlopes);
+      setAnswers(slopeAnswers);
+      setCurrentSlope(nextSalon);
+      setQuestionIndex(0);
+      return;
+    }
+
     const next = getNextSlopeAfterSlope(slope, passed);
 
     if (next === "vocab_ski") {
@@ -317,7 +349,7 @@ export function PlacementTestStep({
           }
           description={
             isSalon
-              ? "Voici le niveau estimé par le parcours adaptatif FLI"
+              ? "Estimation rapide (version salon) — piste indicative"
               : "Votre parcours adaptatif FLI est enregistré"
           }
         >
@@ -433,7 +465,7 @@ export function PlacementTestStep({
         description={
           currentSlope === "vocab_ski"
             ? "Partie commune à tous les niveaux — vocabulaire technique du ski"
-            : `Comme au ski : ${QUESTIONS_PER_SLOPE} questions sur cette piste. Il faut au moins ${PASS_THRESHOLD} bonnes réponses pour passer à la suivante.`
+            : `Comme au ski : ${questionsPerSlope} questions sur cette piste. Il faut au moins ${passThreshold} bonnes réponses pour passer à la suivante.`
         }
         actions={
           <StatusPill tone={SLOPE_TONES[currentSlope]} dot>
@@ -484,10 +516,10 @@ export function PlacementTestStep({
 
   return (
     <StepCard
-      title={isSalon ? "Test de niveau FLI" : "Test de niveau obligatoire"}
+      title={isSalon ? "Test de niveau FLI — version salon" : "Test de niveau obligatoire"}
       description={
         isSalon
-          ? "Parcours adaptatif par pistes de ski — comme pour vos moniteurs"
+          ? `Version courte : ${SALON_QUESTIONS_PER_SLOPE} questions × 2 pistes max (~2 min)`
           : "D’abord un auto-diagnostic, puis le parcours adaptatif par pistes de ski"
       }
       icon={Mountain}
@@ -503,30 +535,37 @@ export function PlacementTestStep({
                 le test.
               </p>
             )}
-            <p>
-              {!isSalon && (
-                <>
+            {isSalon ? (
+              <>
+                <p>
+                  Démo rapide du test moniteurs :{" "}
+                  <strong className="font-medium text-foreground">piste verte</strong>
+                  {", puis "}
+                  <strong className="font-medium text-foreground">bleue</strong> si vous validez (
+                  {SALON_PASS_THRESHOLD}/{SALON_QUESTIONS_PER_SLOPE}). Pas de vocabulaire ski ni de
+                  présentation.
+                </p>
+                <p>Comment ça fonctionne : comme les pistes de ski — en version salon condensée.</p>
+              </>
+            ) : (
+              <>
+                <p>
                   <strong className="font-medium text-foreground">2. Test de niveau</strong> — où vous
                   commencez en{" "}
-                </>
-              )}
-              {isSalon && (
-                <>
-                  Vous commencez en{" "}
-                </>
-              )}
-              <strong className="font-medium text-foreground">piste verte</strong>, puis{" "}
-              <strong className="font-medium text-foreground">bleue</strong>,{" "}
-              <strong className="font-medium text-foreground">rouge</strong> et{" "}
-              <strong className="font-medium text-foreground">noire</strong> si vous validez chaque
-              étape ({PASS_THRESHOLD} bonnes réponses sur {QUESTIONS_PER_SLOPE}).
-            </p>
-            <p>
-              Ensuite, {isSalon ? "vous passez" : "tous les stagiaires passent"} le{" "}
-              <strong className="font-medium text-foreground">Vocabulaire du ski</strong> (score
-              séparé), puis une présentation facultative. Comment ça fonctionne : comme les pistes
-              de ski.
-            </p>
+                  <strong className="font-medium text-foreground">piste verte</strong>, puis{" "}
+                  <strong className="font-medium text-foreground">bleue</strong>,{" "}
+                  <strong className="font-medium text-foreground">rouge</strong> et{" "}
+                  <strong className="font-medium text-foreground">noire</strong> si vous validez chaque
+                  étape ({PASS_THRESHOLD} bonnes réponses sur {QUESTIONS_PER_SLOPE}).
+                </p>
+                <p>
+                  Ensuite, tous les stagiaires passent le{" "}
+                  <strong className="font-medium text-foreground">Vocabulaire du ski</strong> (score
+                  séparé), puis une présentation facultative. Comment ça fonctionne : comme les pistes
+                  de ski.
+                </p>
+              </>
+            )}
           </AlertDescription>
         </Alert>
 

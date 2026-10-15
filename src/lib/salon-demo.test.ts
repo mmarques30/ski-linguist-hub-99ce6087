@@ -41,6 +41,13 @@ describe("Salon des directeurs — /salon", () => {
     expect(step).toContain("Commencer le test (piste verte)");
   });
 
+  it("utilise une version courte (3 questions × 2 pistes, sans vocab)", () => {
+    expect(step).toContain("SALON_QUESTIONS_PER_SLOPE");
+    expect(step).toContain("getNextSalonSlopeAfterSlope");
+    expect(step).toContain("Pas de vocabulaire ski");
+    expect(step).toContain("version salon");
+  });
+
   it("persiste via RPC SECURITY DEFINER (pas d'INSERT anon direct)", () => {
     expect(migration).toContain("CREATE TABLE IF NOT EXISTS public.salon_demo_tests");
     expect(migration).toContain("submit_salon_demo_test");
