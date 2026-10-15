@@ -4363,44 +4363,25 @@ export type Database = {
       }
       submit_salon_demo_test: {
         Args: {
-          p_answers?: Json | null
-          p_correct_answers?: number | null
-          p_determined_level?: string | null
+          p_answers?: Json
+          p_correct_answers?: number
+          p_determined_level?: string
           p_email: string
           p_first_name: string
           p_language: string
           p_last_name: string
           p_phone: string
-          p_score_percentage?: number | null
-          p_ski_school_code: string | null
+          p_score_percentage?: number
+          p_ski_school_code: string
           p_ski_school_name: string
-          p_summary?: Json | null
-          p_total_questions?: number | null
+          p_summary?: Json
+          p_total_questions?: number
         }
         Returns: string
       }
       submit_satisfaction_survey_by_token: {
         Args: { p_data: Json; p_token: string }
         Returns: undefined
-      }
-      create_formateur_evaluation_booking: {
-        Args: {
-          p_name: string
-          p_email: string
-          p_phone: string
-          p_profession: string
-          p_profession_autre: string
-          p_ski_school_id: string
-          p_carte_syndicale: string
-          p_ski_discipline: string
-          p_training_cycle: string
-          p_language: string
-          p_datetime: string
-          p_sponsor_type: string
-          p_payment_type?: string
-          p_instructor_id?: string | null
-        }
-        Returns: string
       }
       submit_test_booking_candidate: {
         Args: {
