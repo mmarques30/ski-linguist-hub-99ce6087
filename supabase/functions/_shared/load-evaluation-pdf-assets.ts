@@ -1,5 +1,5 @@
 /**
- * Charge les logos C.5 depuis _shared/evaluation-pdf-assets (habillage uniquement).
+ * Charge les logos C.5 depuis generate-evaluation-pdf/evaluation-pdf-assets (habillage uniquement).
  */
 
 import {
@@ -7,14 +7,14 @@ import {
   type EvaluationPdfAssets,
 } from "./evaluation-pdf-assets.ts";
 
-async function readAsset(name: string): Promise<Uint8Array> {
-  return await Deno.readFile(new URL(`./evaluation-pdf-assets/${name}`, import.meta.url));
+async function readAsset(name: string, rootUrl: URL): Promise<Uint8Array> {
+  return await Deno.readFile(new URL(`./evaluation-pdf-assets/${name}`, rootUrl));
 }
 
-export async function loadEvaluationPdfAssets(): Promise<EvaluationPdfAssets> {
+export async function loadEvaluationPdfAssets(rootUrl: URL): Promise<EvaluationPdfAssets> {
   const partnerLogos: Uint8Array[] = [];
   for (const name of EVALUATION_PDF_ASSET_FILES.partners) {
-    partnerLogos.push(await readAsset(name));
+    partnerLogos.push(await readAsset(name, rootUrl));
   }
   return {
     esfLogo: await readAsset(EVALUATION_PDF_ASSET_FILES.esfLogo),
