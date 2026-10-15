@@ -429,8 +429,14 @@ export function navRouteKey(node: { href: string; routeKey?: string }): string |
 export function isPathActive(pathname: string, path: string): boolean {
   if (path === "/app") return pathname === "/app";
   if (path === "/inscriptions") {
+    // Sous-pages opérationnelles hors fiche : constitution des groupes a son
+    // propre item de menu ; « par formation » reste sous Inscriptions.
     if (pathname === "/inscriptions/schedule-validation") return false;
-    return pathname === "/inscriptions" || /^\/inscriptions\/[^/]+$/.test(pathname);
+    return (
+      pathname === "/inscriptions" ||
+      pathname === "/inscriptions/par-formation" ||
+      /^\/inscriptions\/[^/]+$/.test(pathname)
+    );
   }
   if (path === "/finance") {
     return pathname === "/finance";

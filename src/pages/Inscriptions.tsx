@@ -53,6 +53,7 @@ import {
 import { DATES_A_PLANIFIER_LABEL } from "@/lib/registration-dates";
 import { DueStatusAdvanceCard } from "@/components/inscriptions/DueStatusAdvanceCard";
 import { InscriptionStatusMenu } from "@/components/inscriptions/InscriptionStatusMenu";
+import { InscriptionsSubnav } from "@/components/inscriptions/InscriptionsSubnav";
 import { Link, useSearchParams } from "react-router";
 import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
@@ -701,6 +702,7 @@ export default function Inscriptions() {
           meta={
             season ? <StatusPill tone="info">{season.name}</StatusPill> : undefined
           }
+          tabs={<InscriptionsSubnav />}
           actions={
             <>
               {editable && (
