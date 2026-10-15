@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   EMPTY_FIFPL_QUESTIONNAIRE,
@@ -5,6 +7,7 @@ import {
   FIFPL_ACCEPTED_CFP_ATTESTATION_YEARS,
   FIFPL_ANNUAL_CEILING_EUR,
   FIFPL_CRITERIA_YEAR,
+  FIFPL_MICRO_CFP_BRACKETS,
   FIFPL_REGISTER_COPY,
   formatAcceptedCfpAttestationYears,
   formatFifplQuestionnaireSummary,
@@ -15,15 +18,55 @@ import {
 } from "./fifpl-funding";
 
 describe("fifpl-funding — grille micro CFP 2026", () => {
-  it("applique le tableau page 3 des critères Moniteurs de ski", () => {
+  it("applique les plafonds 2026 proportionnels à la cotisation CFP", () => {
+    expect(FIFPL_MICRO_CFP_BRACKETS.map((b) => [b.minEur, b.maxEur, b.percent])).toEqual([
+      [1, 20, 20],
+      [21, 40, 60],
+      [41, 80, 80],
+      [81, null, 100],
+    ]);
+    expect(microPercentFromCfpContribution(1)).toBe(20);
     expect(microPercentFromCfpContribution(10)).toBe(20);
-    expect(microPercentFromCfpContribution(21)).toBe(40);
-    expect(microPercentFromCfpContribution(80)).toBe(60);
-    expect(microPercentFromCfpContribution(100)).toBe(80);
-    expect(microPercentFromCfpContribution(115)).toBe(90);
+    expect(microPercentFromCfpContribution(20)).toBe(20);
+    expect(microPercentFromCfpContribution(20.5)).toBe(20);
+    expect(microPercentFromCfpContribution(21)).toBe(60);
+    expect(microPercentFromCfpContribution(40)).toBe(60);
+    expect(microPercentFromCfpContribution(40.99)).toBe(60);
+    expect(microPercentFromCfpContribution(41)).toBe(80);
+    expect(microPercentFromCfpContribution(50)).toBe(80);
+    expect(microPercentFromCfpContribution(80)).toBe(80);
+    expect(microPercentFromCfpContribution(80.5)).toBe(80);
+    expect(microPercentFromCfpContribution(81)).toBe(100);
+    expect(microPercentFromCfpContribution(100)).toBe(100);
+    expect(microPercentFromCfpContribution(115)).toBe(100);
     expect(microPercentFromCfpContribution(116)).toBe(100);
     expect(microPercentFromCfpContribution(200)).toBe(100);
     expect(microPercentFromCfpContribution(0)).toBeNull();
+    expect(microPercentFromCfpContribution(0.99)).toBeNull();
+  });
+
+  it("convertit chaque tranche en droits annuels (900 € × taux)", () => {
+    const gross = (cfp: number) =>
+      estimateFifplRights({
+        status: "micro_entrepreneur",
+        cfpContributionEur: cfp,
+      })?.grossRightsEur;
+    expect(gross(15)).toBe(180);
+    expect(gross(30)).toBe(540);
+    expect(gross(50)).toBe(720);
+    expect(gross(87.5)).toBe(900);
+  });
+
+  it("garde la copie Deno de submit-registration sur la même grille", () => {
+    const deno = readFileSync(
+      join(process.cwd(), "supabase/functions/submit-registration/index.ts"),
+      "utf8"
+    );
+    expect(deno).toContain("if (c >= 81) percent = 100;");
+    expect(deno).toContain("else if (c >= 41) percent = 80;");
+    expect(deno).toContain("else if (c >= 21) percent = 60;");
+    expect(deno).toContain("else if (c >= 1) percent = 20;");
+    expect(deno).not.toMatch(/c >= 116|c >= 101|percent = 90|percent = 40/);
   });
 
   it("donne 100 % aux indépendants et déduit une prise en charge antérieure", () => {
@@ -66,13 +109,14 @@ describe("fifpl-funding — grille micro CFP 2026", () => {
   it("réduit le plafond uniquement pour l’e-learning asynchrone", () => {
     const rights = estimateFifplRights({
       status: "micro_entrepreneur",
-      cfpContributionEur: 50, // 60 %
+      cfpContributionEur: 50, // 41–80 € → 80 %
       modality: "elearning",
       alreadyCoveredEur: 0,
     });
-    // base 450 × 60 % = 270
+    // base 450 × 80 % = 360
     expect(rights?.annualCeilingBaseEur).toBe(450);
-    expect(rights?.grossRightsEur).toBe(270);
+    expect(rights?.rightsPercent).toBe(80);
+    expect(rights?.grossRightsEur).toBe(360);
     expect(rights?.isElearning).toBe(true);
   });
 
@@ -221,6 +265,7 @@ describe("fifpl-funding — validation (pas de dépôt « plus tard »)", () => 
     });
     const summary = formatFifplQuestionnaireSummary(q, rights);
     expect(summary).toContain("micro-entrepreneur");
+    expect(summary).toContain("80 %");
     expect(summary).toContain("100 €");
     expect(summary).toContain("reste");
     expect(summary).toContain("prise en charge estimée");

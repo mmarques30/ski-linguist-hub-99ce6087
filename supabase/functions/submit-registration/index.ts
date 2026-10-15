@@ -273,17 +273,16 @@ function buildFifplFundingDetails(
       : 0;
   // Estimation alignée sur src/lib/fifpl-funding.ts (copie Deno volontairement
   // allégée — le détail complet reste dans funding_details.fifpl).
+  // Plafonds micro 2026 : 1–20 € → 20 % ; 21–40 → 60 % ; 41–80 → 80 % ; ≥ 81 → 100 %.
   // Visio FLI = présentiel FIFPL (pas e-learning asynchrone → pas de plafond 450 €).
   const annualBase = 900;
   let percent = 100;
   let provisionalMicro = false;
   if (status === "micro_entrepreneur") {
     const c = Number(contribution) || 0;
-    if (c >= 116) percent = 100;
-    else if (c >= 101) percent = 90;
-    else if (c >= 81) percent = 80;
-    else if (c >= 41) percent = 60;
-    else if (c >= 21) percent = 40;
+    if (c >= 81) percent = 100;
+    else if (c >= 41) percent = 80;
+    else if (c >= 21) percent = 60;
     else if (c >= 1) percent = 20;
     else {
       // Sans cotisation : pire cas 20 % (aligné src/lib/fifpl-funding.ts)

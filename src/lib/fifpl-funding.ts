@@ -8,7 +8,9 @@
  * - E-learning asynchrone : 50 % des critères journaliers et annuels
  *   (la visio FLI synchrone compte comme du présentiel — plafond 900 €)
  * - Indépendants : 100 % des critères
- * - Micro-entrepreneurs : % selon cotisation CFP (tableau page 3)
+ * - Micro-entrepreneurs : % selon cotisation CFP (plafonds 2026)
+ *   1–20 € → 20 % ; 21–40 € → 60 % ; 41–80 € → 80 % ; ≥ 81 € → 100 %
+ *   des critères journaliers et du plafond annuel
  * - Autre formation déjà prise en charge sur le forfait annuel : déduite des droits
  */
 
@@ -50,18 +52,20 @@ export const FIFPL_ELEARNING_FACTOR = 0.5;
 
 export type FifplProfessionalStatus = "independant" | "micro_entrepreneur";
 
-/** Tranches page 3 — micro-entrepreneurs, proportionnel à la cotisation CFP. */
+/**
+ * Plafonds 2026 des micro-entrepreneurs, proportionnels à la cotisation CFP.
+ * `maxEur` est le libellé du tableau (inclus). Le taux change au `minEur`
+ * de la tranche suivante : 20,50 € reste à 20 %, 80,50 € reste à 80 %.
+ */
 export const FIFPL_MICRO_CFP_BRACKETS: ReadonlyArray<{
   minEur: number;
   maxEur: number | null;
   percent: number;
 }> = [
   { minEur: 1, maxEur: 20, percent: 20 },
-  { minEur: 21, maxEur: 40, percent: 40 },
-  { minEur: 41, maxEur: 80, percent: 60 },
-  { minEur: 81, maxEur: 100, percent: 80 },
-  { minEur: 101, maxEur: 115, percent: 90 },
-  { minEur: 116, maxEur: null, percent: 100 },
+  { minEur: 21, maxEur: 40, percent: 60 },
+  { minEur: 41, maxEur: 80, percent: 80 },
+  { minEur: 81, maxEur: null, percent: 100 },
 ];
 
 export interface FifplQuestionnaire {
@@ -141,13 +145,11 @@ export function isElearningModality(modality: string | null | undefined): boolea
 
 export function microPercentFromCfpContribution(contributionEur: number): number | null {
   if (!Number.isFinite(contributionEur) || contributionEur < 1) return null;
+  let percent: number | null = null;
   for (const bracket of FIFPL_MICRO_CFP_BRACKETS) {
-    if (contributionEur < bracket.minEur) continue;
-    if (bracket.maxEur == null || contributionEur <= bracket.maxEur) {
-      return bracket.percent;
-    }
+    if (contributionEur >= bracket.minEur) percent = bracket.percent;
   }
-  return null;
+  return percent;
 }
 
 export function rightsPercentForStatus(
