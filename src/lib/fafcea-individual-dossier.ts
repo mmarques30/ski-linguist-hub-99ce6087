@@ -2,7 +2,8 @@
  * Dossier formation individualisée financée FAFCEA
  * (programme + convention adaptés métier, hors pack FIF-PL / AGEFICE).
  *
- * Cas type : accueil clientèle russophone — taxi + moniteur de ski.
+ * Cas type Mahieu : accueil clientèle russophone — chauffeur de taxi
+ * (les bullets métier suivent `professionalActivities`).
  */
 
 import {
@@ -75,6 +76,60 @@ function activitiesLabel(activities: string[]): string {
   return `${activities.slice(0, -1).join(", ")} et ${activities[activities.length - 1]}`;
 }
 
+function activityBlob(activities: string[]): string {
+  return activities.join(" ").toLowerCase();
+}
+
+function hasTaxiActivity(activities: string[]): boolean {
+  return /taxi/.test(activityBlob(activities));
+}
+
+function hasSkiInstructorActivity(activities: string[]): boolean {
+  return /ski|moniteur/.test(activityBlob(activities));
+}
+
+/** Bullets « Contenu prévisionnel » selon les métiers déclarés. */
+export function buildFafceaContenuPrevisionnelBullets(input: {
+  professionalActivities: string[];
+  targetClientele: string;
+}): string[] {
+  const clientele = input.targetClientele.trim() || "étrangère";
+  const bullets = [
+    "• Bases linguistiques et grammaire utile à l'oral.",
+    `• Accueil et prise de contact avec une clientèle ${clientele}.`,
+  ];
+  if (hasTaxiActivity(input.professionalActivities)) {
+    bullets.push(
+      "• Taxi : compréhension de la destination, confirmation d'itinéraire, tarifs / moyens de paiement, attentes, petites conversations pendant le trajet."
+    );
+  }
+  if (hasSkiInstructorActivity(input.professionalActivities)) {
+    bullets.push(
+      "• Moniteur de ski : consignes de sécurité, conseils techniques simples, organisation du cours, gestion d'un imprévu, échanges de courtoisie."
+    );
+  }
+  bullets.push(
+    "• Expression orale : donner des informations et instructions précises et brèves.",
+    "• Expression écrite légère : messages courts (SMS / e-mail) efficaces avec les clients.",
+    "• Compréhension orale : questions, demandes et instructions brèves.",
+    `• Repères culturels utiles à une meilleure communication avec la clientèle ${clientele}.`
+  );
+  return bullets;
+}
+
+function misesEnSituationLabel(activities: string[]): string {
+  if (hasTaxiActivity(activities) && hasSkiInstructorActivity(activities)) {
+    return "• mises en situation professionnelles (taxi et enseignement du ski),";
+  }
+  if (hasTaxiActivity(activities)) {
+    return "• mises en situation professionnelles (accueil et trajet en taxi),";
+  }
+  if (hasSkiInstructorActivity(activities)) {
+    return "• mises en situation professionnelles (enseignement du ski),";
+  }
+  return "• mises en situation professionnelles adaptées aux métiers ciblés,";
+}
+
 /** Objectifs / contenu métier pour le programme FAFCEA. */
 export function buildFafceaProgrammeSections(input: {
   language: string;
@@ -135,14 +190,10 @@ export function buildFafceaProgrammeSections(input: {
       title: "Contenu prévisionnel",
       paragraphs: [
         "Ce stage permet notamment de travailler les fonctions langagières suivantes :",
-        "• Bases linguistiques et grammaire utile à l'oral.",
-        "• Accueil et prise de contact avec une clientèle russophone.",
-        "• Taxi : compréhension de la destination, confirmation d'itinéraire, tarifs / moyens de paiement, attentes, petites conversations pendant le trajet.",
-        "• Moniteur de ski : consignes de sécurité, conseils techniques simples, organisation du cours, gestion d'un imprévu, échanges de courtoisie.",
-        "• Expression orale : donner des informations et instructions précises et brèves.",
-        "• Expression écrite légère : messages courts (SMS / e-mail) efficaces avec les clients.",
-        "• Compréhension orale : questions, demandes et instructions brèves.",
-        "• Repères culturels utiles à une meilleure communication avec la clientèle russophone.",
+        ...buildFafceaContenuPrevisionnelBullets({
+          professionalActivities: input.professionalActivities,
+          targetClientele: clientele,
+        }),
         "Contenu prévisionnel, réajusté tout au long de la formation selon le niveau, la progression et les besoins.",
       ],
     },
@@ -224,7 +275,7 @@ export function buildFafceaConventionSections(input: {
         "• cours en face à face en ligne avec le formateur via visioconférence,",
         "• remise d'un fascicule support de cours,",
         "• exercices en ligne,",
-        "• mises en situation professionnelles (taxi et enseignement du ski),",
+        misesEnSituationLabel(input.professionalActivities),
         "• travaux d'écoute et de compréhension orale (support audio fourni).",
         "Évaluation en continue de la progression via des exercices écrits et oraux adaptés aux besoins de l'apprenant.",
         `Personne assurant le suivi pédagogique : ${contact}.`,
@@ -463,7 +514,9 @@ export function mahieuFafceaDossierInput(
     language: "Russe",
     durationHours: 20,
     hourlyRateEur: 60,
-    professionalActivities: ["chauffeur de taxi", "moniteur de ski"],
+    // Paula 14/10/2026 : programme recentré sur le taxi / accueil clientèle russophone
+    // (plus de volet moniteur de ski dans ce dossier).
+    professionalActivities: ["chauffeur de taxi"],
     targetClientele: "russophone",
     dossierCode: "FLI-FAFCEA-2026-MAHIEU",
     datesLabel: "Dates à confirmer avec le stagiaire (après décision FAFCEA)",

@@ -33,14 +33,17 @@ Deno.serve(async (req) => {
 
     const session = await retrieveStripeCheckoutSession(stripeSecretKey, sessionId);
     const paymentStatus = session.payment_status || "unpaid";
+    const sessionStatus = session.status || null;
     const stripeMode = getStripeMode(stripeSecretKey);
 
-    if (paymentStatus !== "paid") {
+    // Revalidation Stripe : payment_status paid + session complete.
+    if (paymentStatus !== "paid" || (sessionStatus != null && sessionStatus !== "complete")) {
       return new Response(
         JSON.stringify({
           success: true,
           data: {
             paymentStatus,
+            sessionStatus,
             recorded: false,
             inscriptionCode: session.metadata?.inscription_code || null,
             stripeMode,

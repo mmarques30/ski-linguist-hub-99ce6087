@@ -4,6 +4,7 @@ import {
   isStripeTotalSettlement,
   normalizePaymentOption,
   REGISTRATION_PAYMENT_OPTIONS,
+  resolveStripeCheckoutAmountEur,
   type RegistrationPaymentOption,
 } from "./registration-payments.ts";
 import { enqueueInscriptionDocuments } from "./enqueue-inscription-documents.ts";
@@ -11,10 +12,38 @@ import { paymentTriggersDocumentEnqueue } from "./funding-flows.ts";
 
 export interface StripeCheckoutSessionLike {
   id: string;
+  status?: string | null;
   payment_status?: string;
   amount_total?: number | null;
   payment_intent?: string | null;
   metadata?: Record<string, string | undefined>;
+}
+
+const AMOUNT_TOLERANCE_EUR = 0.01;
+
+function amountsMatchEur(paid: number, expected: number): boolean {
+  return Math.abs(paid - expected) <= AMOUNT_TOLERANCE_EUR;
+}
+
+/**
+ * Montant attendu pour la session : métadonnée posée à la création du checkout,
+ * sinon recalcul depuis le tarif inscription + option de paiement.
+ */
+export function expectedStripeCheckoutAmountEur(input: {
+  coursePrice: number;
+  balanceAfterDeposit?: number | null;
+  paymentOption: RegistrationPaymentOption;
+  metadataAmountEur?: string | null;
+}): number {
+  const fromMeta = Number(input.metadataAmountEur);
+  if (Number.isFinite(fromMeta) && fromMeta > 0) {
+    return fromMeta;
+  }
+  return resolveStripeCheckoutAmountEur({
+    coursePrice: input.coursePrice,
+    balanceAfterDeposit: input.balanceAfterDeposit,
+    paymentOption: input.paymentOption,
+  });
 }
 
 export async function recordStripeCheckoutPayment(
@@ -27,6 +56,15 @@ export async function recordStripeCheckoutPayment(
 
   if (!inscriptionId || !paymentOption) {
     throw new Error("Session Stripe sans métadonnées d'inscription");
+  }
+
+  if (session.payment_status !== "paid") {
+    throw new Error("Session Stripe non payée");
+  }
+
+  // Stripe Checkout : status « complete » une fois payé (pas « paid »).
+  if (session.status && session.status !== "complete") {
+    throw new Error("Session Stripe non finalisée");
   }
 
   const normalizedOption = normalizePaymentOption(paymentOption) as RegistrationPaymentOption;
@@ -43,7 +81,7 @@ export async function recordStripeCheckoutPayment(
 
   const { data: inscription } = await supabase
     .from("inscriptions")
-    .select("id, price, code, funding_organization")
+    .select("id, price, code, funding_organization, balance_after_deposit")
     .eq("id", inscriptionId)
     .maybeSingle();
 
@@ -54,6 +92,19 @@ export async function recordStripeCheckoutPayment(
   const coursePrice = Number(inscription.price) || 0;
   const paymentFields = getInscriptionPaymentFields(coursePrice, normalizedOption);
   const amountPaid = (session.amount_total || 0) / 100;
+  const expectedAmount = expectedStripeCheckoutAmountEur({
+    coursePrice,
+    balanceAfterDeposit: inscription.balance_after_deposit,
+    paymentOption: normalizedOption,
+    metadataAmountEur: session.metadata?.stripe_amount_eur,
+  });
+
+  if (!amountsMatchEur(amountPaid, expectedAmount)) {
+    throw new Error(
+      `Montant Stripe (${amountPaid} €) différent du montant attendu (${expectedAmount} €)`
+    );
+  }
+
   const today = new Date().toISOString().split("T")[0];
   const settledTotal = isStripeTotalSettlement(normalizedOption);
   const resolvedPaymentType =

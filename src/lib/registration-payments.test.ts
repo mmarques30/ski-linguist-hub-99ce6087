@@ -314,8 +314,10 @@ describe("modes de règlement /register", () => {
     expect(submit).toContain("deposit_amount: paymentFields?.depositAmount ?? null");
     expect(submit).toContain("STRIPE_KLARNA_3X");
     expect(submit).toContain("Payez en 3 fois avec Klarna");
-    expect(submit).toContain("studentShareEur: schoolFifplStudentShareEur");
+    // Scan 14/10/2026 : FIF-PL déclaré ne réduit plus le montant à la soumission.
+    expect(submit).not.toContain("studentShareEur: schoolFifplStudentShareEur");
     expect(submit).toContain("coveredOnCourseEur");
+    expect(submit).toContain("pendingStaffValidation");
   });
 
   it("passe le montant payable à getAvailablePaymentOptions dans PaymentStep", () => {
