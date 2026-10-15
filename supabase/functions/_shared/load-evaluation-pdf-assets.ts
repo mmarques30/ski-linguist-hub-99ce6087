@@ -17,16 +17,16 @@ export async function loadEvaluationPdfAssets(rootUrl: URL): Promise<EvaluationP
     partnerLogos.push(await readAsset(name, rootUrl));
   }
   return {
-    esfLogo: await readAsset(EVALUATION_PDF_ASSET_FILES.esfLogo),
-    fliHeader: await readAsset(EVALUATION_PDF_ASSET_FILES.fliHeader),
-    fliCachet: await readAsset(EVALUATION_PDF_ASSET_FILES.fliCachet),
-    fliCompact: await readAsset(EVALUATION_PDF_ASSET_FILES.fliCompact),
-    dsfLetterhead: await readAsset(EVALUATION_PDF_ASSET_FILES.dsfLetterhead),
+    esfLogo: await readAsset(EVALUATION_PDF_ASSET_FILES.esfLogo, rootUrl),
+    fliHeader: await readAsset(EVALUATION_PDF_ASSET_FILES.fliHeader, rootUrl),
+    fliCachet: await readAsset(EVALUATION_PDF_ASSET_FILES.fliCachet, rootUrl),
+    fliCompact: await readAsset(EVALUATION_PDF_ASSET_FILES.fliCompact, rootUrl),
+    dsfLetterhead: await readAsset(EVALUATION_PDF_ASSET_FILES.dsfLetterhead, rootUrl),
     partnerLogos,
     fonts: {
-      regular: await readAsset(EVALUATION_PDF_ASSET_FILES.fonts.regular),
-      bold: await readAsset(EVALUATION_PDF_ASSET_FILES.fonts.bold),
-      italic: await readAsset(EVALUATION_PDF_ASSET_FILES.fonts.italic),
+      regular: await readAsset(EVALUATION_PDF_ASSET_FILES.fonts.regular, rootUrl),
+      bold: await readAsset(EVALUATION_PDF_ASSET_FILES.fonts.bold, rootUrl),
+      italic: await readAsset(EVALUATION_PDF_ASSET_FILES.fonts.italic, rootUrl),
     },
   };
 }
