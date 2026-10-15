@@ -2930,10 +2930,12 @@ export type Database = {
           correct_answers: number | null
           created_at: string
           determined_level: string | null
+          email: string
           first_name: string
           id: string
           language: string
           last_name: string
+          phone: string
           score_percentage: number | null
           ski_network: string
           ski_school_code: string | null
@@ -2947,10 +2949,12 @@ export type Database = {
           correct_answers?: number | null
           created_at?: string
           determined_level?: string | null
+          email: string
           first_name: string
           id?: string
           language: string
           last_name: string
+          phone: string
           score_percentage?: number | null
           ski_network?: string
           ski_school_code?: string | null
@@ -2964,10 +2968,12 @@ export type Database = {
           correct_answers?: number | null
           created_at?: string
           determined_level?: string | null
+          email?: string
           first_name?: string
           id?: string
           language?: string
           last_name?: string
+          phone?: string
           score_percentage?: number | null
           ski_network?: string
           ski_school_code?: string | null
@@ -4357,17 +4363,19 @@ export type Database = {
       }
       submit_salon_demo_test: {
         Args: {
-          p_answers?: Json
-          p_correct_answers?: number
-          p_determined_level?: string
+          p_answers?: Json | null
+          p_correct_answers?: number | null
+          p_determined_level?: string | null
+          p_email: string
           p_first_name: string
           p_language: string
           p_last_name: string
-          p_score_percentage?: number
-          p_ski_school_code: string
+          p_phone: string
+          p_score_percentage?: number | null
+          p_ski_school_code: string | null
           p_ski_school_name: string
-          p_summary?: Json
-          p_total_questions?: number
+          p_summary?: Json | null
+          p_total_questions?: number | null
         }
         Returns: string
       }

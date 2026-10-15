@@ -17,10 +17,16 @@ describe("PlacementTestStep — UX progressif pistes", () => {
     expect(step).toContain("rouge");
     expect(step).toContain("noire");
     expect(step).toContain("Vocabulaire du ski");
-    expect(step).toContain("tous les stagiaires");
+    expect(step).toContain("tous les stagiaires passent");
     expect(step).toContain("PASS_THRESHOLD");
     expect(step).toContain("QUESTIONS_PER_SLOPE");
     expect(step).toContain("Auto-diagnostic");
+  });
+
+  it("supporte le mode salon sans auto-diagnostic", () => {
+    expect(step).toContain('variant?: "register" | "salon"');
+    expect(step).toContain("isSalon");
+    expect(step).toContain("!isSalon && !data.autoDiagnostic");
   });
 
   it("affiche la progression au format n/total piste X", () => {
