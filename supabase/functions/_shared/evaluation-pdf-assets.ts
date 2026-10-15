@@ -1,6 +1,7 @@
 /**
  * Logos d'habillage C.5 (aucune donnée de test).
- * Node : public/evaluation-pdf. Deno : _shared/evaluation-pdf-assets.
+ * Node : public/evaluation-pdf.
+ * Deno : supabase/functions/generate-evaluation-pdf/evaluation-pdf-assets.
  */
 
 export type EvaluationPdfAssets = {

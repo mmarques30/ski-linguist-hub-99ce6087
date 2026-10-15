@@ -116,6 +116,12 @@ export async function loadSkiMonitorWelcomeDocument(
   internalFile: string,
   // deno-lint-ignore no-explicit-any
   supabase?: any,
+  /**
+   * URL du module appelant (import.meta.url). Les PDF statiques vivent à côté
+   * de cet index, pas dans _shared : tout _shared part avec chaque déploiement
+   * et dépasse sinon la limite d'environ 4,5 Mo.
+   */
+  assetRoot?: URL,
 ): Promise<Uint8Array> {
   if (internalFile.toLowerCase().endsWith(".dotx")) {
     throw new Error(
@@ -136,7 +142,12 @@ export async function loadSkiMonitorWelcomeDocument(
     }
   }
 
-  const fileUrl = new URL(`./registration-documents/${internalFile}`, import.meta.url);
+  if (!assetRoot) {
+    throw new Error(
+      "Racine des documents d'inscription absente : passer import.meta.url de la fonction.",
+    );
+  }
+  const fileUrl = new URL(`registration-documents/${internalFile}`, assetRoot);
   return await Deno.readFile(fileUrl);
 }
 
@@ -147,13 +158,14 @@ export async function loadSkiMonitorWelcomeDocument(
 export async function buildSkiMonitorWelcomeAttachments(
   // deno-lint-ignore no-explicit-any
   supabase?: any,
+  assetRoot?: URL,
 ): Promise<
   Array<{ filename: string; content: string }>
 > {
   const attachments: Array<{ filename: string; content: string }> = [];
 
   for (const doc of SKI_MONITOR_STATIC_PACK_DOCUMENTS) {
-    const bytes = await loadSkiMonitorWelcomeDocument(doc.internalFile, supabase);
+    const bytes = await loadSkiMonitorWelcomeDocument(doc.internalFile, supabase, assetRoot);
     attachments.push({
       filename: doc.filename,
       content: bytesToBase64(bytes),

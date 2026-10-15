@@ -201,7 +201,7 @@ Deno.serve(async (req) => {
     };
 
     const model = buildEvaluationPdfModel(input);
-    const assets = await loadEvaluationPdfAssets();
+    const assets = await loadEvaluationPdfAssets(new URL(import.meta.url));
     const bytes = await renderEvaluationPdf(model, assets);
     const path = evaluationPdfStoragePath(evaluationId);
 

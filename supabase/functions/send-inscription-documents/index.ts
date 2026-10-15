@@ -447,7 +447,11 @@ Deno.serve(async (req) => {
           }),
           renderInscriptionDocumentPdf(programmeModel, { letterheadPng }),
           ...needsStatic.map((t) =>
-            loadSkiMonitorWelcomeDocument(staticMetaFor(t).internalFile, supabase),
+            loadSkiMonitorWelcomeDocument(
+              staticMetaFor(t).internalFile,
+              supabase,
+              new URL(import.meta.url),
+            ),
           ),
         ]);
         if (conventionBytes.byteLength < 20_000) {

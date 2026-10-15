@@ -1,5 +1,8 @@
 /**
- * Charge les logos C.5 depuis _shared/evaluation-pdf-assets (habillage uniquement).
+ * Charge les logos C.5 (habillage uniquement).
+ * Les fichiers sont dans le dossier de generate-evaluation-pdf, pas dans
+ * _shared : Lovable envoie tout _shared avec chaque fonction, et la limite
+ * d'envoi est d'environ 4,5 Mo.
  */
 
 import {
@@ -7,26 +10,26 @@ import {
   type EvaluationPdfAssets,
 } from "./evaluation-pdf-assets.ts";
 
-async function readAsset(name: string): Promise<Uint8Array> {
-  return await Deno.readFile(new URL(`./evaluation-pdf-assets/${name}`, import.meta.url));
+async function readAsset(assetRoot: URL, name: string): Promise<Uint8Array> {
+  return await Deno.readFile(new URL(`evaluation-pdf-assets/${name}`, assetRoot));
 }
 
-export async function loadEvaluationPdfAssets(): Promise<EvaluationPdfAssets> {
+export async function loadEvaluationPdfAssets(assetRoot: URL): Promise<EvaluationPdfAssets> {
   const partnerLogos: Uint8Array[] = [];
   for (const name of EVALUATION_PDF_ASSET_FILES.partners) {
-    partnerLogos.push(await readAsset(name));
+    partnerLogos.push(await readAsset(assetRoot, name));
   }
   return {
-    esfLogo: await readAsset(EVALUATION_PDF_ASSET_FILES.esfLogo),
-    fliHeader: await readAsset(EVALUATION_PDF_ASSET_FILES.fliHeader),
-    fliCachet: await readAsset(EVALUATION_PDF_ASSET_FILES.fliCachet),
-    fliCompact: await readAsset(EVALUATION_PDF_ASSET_FILES.fliCompact),
-    dsfLetterhead: await readAsset(EVALUATION_PDF_ASSET_FILES.dsfLetterhead),
+    esfLogo: await readAsset(assetRoot, EVALUATION_PDF_ASSET_FILES.esfLogo),
+    fliHeader: await readAsset(assetRoot, EVALUATION_PDF_ASSET_FILES.fliHeader),
+    fliCachet: await readAsset(assetRoot, EVALUATION_PDF_ASSET_FILES.fliCachet),
+    fliCompact: await readAsset(assetRoot, EVALUATION_PDF_ASSET_FILES.fliCompact),
+    dsfLetterhead: await readAsset(assetRoot, EVALUATION_PDF_ASSET_FILES.dsfLetterhead),
     partnerLogos,
     fonts: {
-      regular: await readAsset(EVALUATION_PDF_ASSET_FILES.fonts.regular),
-      bold: await readAsset(EVALUATION_PDF_ASSET_FILES.fonts.bold),
-      italic: await readAsset(EVALUATION_PDF_ASSET_FILES.fonts.italic),
+      regular: await readAsset(assetRoot, EVALUATION_PDF_ASSET_FILES.fonts.regular),
+      bold: await readAsset(assetRoot, EVALUATION_PDF_ASSET_FILES.fonts.bold),
+      italic: await readAsset(assetRoot, EVALUATION_PDF_ASSET_FILES.fonts.italic),
     },
   };
 }
