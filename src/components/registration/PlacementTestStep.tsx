@@ -519,7 +519,7 @@ export function PlacementTestStep({
       title={isSalon ? "Test de niveau FLI — version salon" : "Test de niveau obligatoire"}
       description={
         isSalon
-          ? `Version courte : ${SALON_QUESTIONS_PER_SLOPE} questions × 2 pistes max (~2 min)`
+          ? `Adaptatif 4 pistes, ${SALON_QUESTIONS_PER_SLOPE} questions chacune (seuil ${SALON_PASS_THRESHOLD}/${SALON_QUESTIONS_PER_SLOPE})`
           : "D’abord un auto-diagnostic, puis le parcours adaptatif par pistes de ski"
       }
       icon={Mountain}
@@ -538,14 +538,17 @@ export function PlacementTestStep({
             {isSalon ? (
               <>
                 <p>
-                  Démo rapide du test moniteurs :{" "}
-                  <strong className="font-medium text-foreground">piste verte</strong>
-                  {", puis "}
-                  <strong className="font-medium text-foreground">bleue</strong> si vous validez (
-                  {SALON_PASS_THRESHOLD}/{SALON_QUESTIONS_PER_SLOPE}). Pas de vocabulaire ski ni de
-                  présentation.
+                  Même logique que pour vos moniteurs : vous commencez en{" "}
+                  <strong className="font-medium text-foreground">piste verte</strong>, puis{" "}
+                  <strong className="font-medium text-foreground">bleue</strong>,{" "}
+                  <strong className="font-medium text-foreground">rouge</strong> et{" "}
+                  <strong className="font-medium text-foreground">noire</strong> si vous validez chaque
+                  étape ({SALON_PASS_THRESHOLD} bonnes réponses sur {SALON_QUESTIONS_PER_SLOPE}).
                 </p>
-                <p>Comment ça fonctionne : comme les pistes de ski — en version salon condensée.</p>
+                <p>
+                  Version salon : pas de vocabulaire ski ni de présentation — uniquement les pistes.
+                  Comment ça fonctionne : comme les pistes de ski.
+                </p>
               </>
             ) : (
               <>

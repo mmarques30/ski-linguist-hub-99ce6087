@@ -35,12 +35,13 @@ describe("PlacementTestStep — UX progressif pistes", () => {
     expect(step).toContain("!isSalon && !data.autoDiagnostic");
   });
 
-  it("utilise une version courte au salon (3 Q × 2 pistes, pas de vocab)", () => {
+  it("utilise une version salon adaptative (3 Q × 4 pistes, pas de vocab)", () => {
     expect(step).toContain("SALON_QUESTIONS_PER_SLOPE");
     expect(step).toContain("SALON_PASS_THRESHOLD");
     expect(step).toContain("getNextSalonSlopeAfterSlope");
     expect(step).toContain("version salon");
-    expect(step).toContain("Pas de vocabulaire ski");
+    expect(step).toContain("Adaptatif 4 pistes");
+    expect(step).toContain("pas de vocabulaire ski");
     expect(SALON_QUESTIONS_PER_SLOPE).toBe(3);
     expect(SALON_PASS_THRESHOLD).toBe(2);
   });

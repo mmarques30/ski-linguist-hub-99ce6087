@@ -14,10 +14,13 @@ export const PASS_THRESHOLD = 3;
 export const QUESTIONS_PER_SLOPE = 5;
 export const PRESENTATION_MAX_CHARS = 1000;
 
-/** Version courte salon des directeurs — max ~6 questions, sans vocab ni présentation. */
+/**
+ * Version salon des directeurs : adaptatif 4 pistes, 3 questions / piste,
+ * sans vocabulaire ski ni présentation (max 12 questions).
+ */
 export const SALON_QUESTIONS_PER_SLOPE = 3;
 export const SALON_PASS_THRESHOLD = 2;
-export const SALON_SLOPE_ORDER: SlopeLevel[] = ["verte", "bleue"];
+export const SALON_SLOPE_ORDER: SlopeLevel[] = ["verte", "bleue", "rouge", "noire"];
 
 /** Languages whose piste scale is not comparable to EN/ES/… (verte = traduction). */
 export const ADAPTED_SCALE_BANK_KEYS = new Set([
@@ -124,8 +127,8 @@ export function getNextSlopeAfterSlope(
 }
 
 /**
- * Parcours salon : verte → bleue si validée, puis fin (pas de rouge/noire/vocab).
- * Échec d'une piste → fin immédiate.
+ * Parcours salon : adaptatif verte → bleue → rouge → noire (3 Q, seuil 2/3).
+ * Échec ou validation noire → fin (pas de vocab / présentation).
  */
 export function getNextSalonSlopeAfterSlope(
   currentSlope: SlopeLevel,
