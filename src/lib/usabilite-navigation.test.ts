@@ -16,6 +16,7 @@ describe("usabilité — navigation et intégration", () => {
     expect(NAV_SECTIONS.map((s) => s.id)).toContain("finance");
     expect(sidebar).toContain('collapsible="icon"');
     expect(arbre).toContain("/inscriptions/schedule-validation");
+    expect(arbre).toContain("/inscriptions/par-formation");
     expect(arbre).toContain("/admin/registration-documents");
     expect(arbre).not.toContain("Horaires J-10");
     expect(arbre).not.toMatch(/href: "\/documents"/);
