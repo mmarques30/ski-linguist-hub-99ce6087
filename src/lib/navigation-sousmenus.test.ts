@@ -94,6 +94,7 @@ describe("état actif — chemins et paramètres d'URL", () => {
     expect(matchScore("/inscriptions", "/inscriptions/schedule-validation", "")).toBe(-1);
     expect(isItemActive(item("inscriptions"), "/inscriptions", "")).toBe(true);
     expect(isItemActive(item("inscriptions"), "/inscriptions/abc-123", "")).toBe(true);
+    expect(isItemActive(item("inscriptions"), "/inscriptions/par-formation", "")).toBe(true);
     expect(isItemActive(item("schedule-validation"), "/inscriptions/schedule-validation", "")).toBe(
       true,
     );

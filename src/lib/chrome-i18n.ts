@@ -20,6 +20,11 @@ export const CHROME_SECTIONS: Record<string, Translations> = {
 
 export const CHROME_NAV: Record<string, Translations> = {
   "/inscriptions": { fr: "Inscriptions", "pt-BR": "Inscrições", en: "Registrations" },
+  "/inscriptions/par-formation": {
+    fr: "Par formation",
+    "pt-BR": "Por formação",
+    en: "By training",
+  },
   "/inscriptions/schedule-validation": {
     fr: "Constitution des groupes",
     "pt-BR": "Constituição dos grupos",
@@ -226,6 +231,7 @@ export const CHROME_BREADCRUMB: Record<string, Translations> = {
   partenaires: CHROME_NAV["/gestion/partenaires"],
   moniteurs: { fr: "Moniteurs", "pt-BR": "Monitores", en: "Monitors" },
   inscriptions: CHROME_NAV["/inscriptions"],
+  "par-formation": CHROME_NAV["/inscriptions/par-formation"],
   "schedule-validation": CHROME_NAV["/inscriptions/schedule-validation"],
   invoices: CHROME_NAV["/invoices"],
   students: CHROME_NAV["/students"],
