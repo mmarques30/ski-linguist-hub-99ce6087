@@ -31,6 +31,8 @@ Footer
 ├── #faq            → Dobra 5: FAQ (após o footer, fora do fluxo principal)
 ```
 
+Footer : marque officielle Qualiopi (catégorie « Actions de formation »), sur fond blanc.
+
 Menu do header (scroll suave para cada âncora, exceto o CTA):
 
 | Label do menu | Âncora | Dobra |

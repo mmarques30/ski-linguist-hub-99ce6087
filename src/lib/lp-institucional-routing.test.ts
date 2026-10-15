@@ -89,6 +89,14 @@ describe("LP institutionnelle — conformité spec", () => {
     expect(src).toContain('to="/register"');
   });
 
+  it("affiche la marque Qualiopi dans le footer", () => {
+    const src = landing();
+    const footer = src.slice(src.indexOf("<footer"));
+    expect(footer).toContain("qualiopiCertification");
+    expect(footer).toContain("Actions de formation");
+    expect(src).toContain("qualiopi-certification.png");
+  });
+
   it("place le footer après la FAQ, en bas de page", () => {
     const src = landing();
     const footerIdx = src.indexOf("<footer");

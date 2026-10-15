@@ -28,6 +28,7 @@ import {
   YOUTUBE_TITLE,
   YOUTUBE_VIDEO_ID,
 } from "@/components/landing/landing-assets";
+import qualiopiCertification from "@/assets/qualiopi-certification.png";
 import { useRegistrationOfferings } from "@/hooks/useRegistrationOfferings";
 import {
   isOpenOffering,
@@ -602,6 +603,11 @@ export default function InstitutionalLanding() {
               Centre de formation professionnelle pour les moniteurs de ski et les professionnels
               de la montagne.
             </p>
+            <img
+              src={qualiopiCertification}
+              alt="Qualiopi, processus certifié. La certification qualité a été délivrée au titre de la catégorie d'action suivante : Actions de formation."
+              className="mt-6 h-auto w-full max-w-md rounded-lg bg-white p-3"
+            />
           </div>
           <div className="space-y-3 text-sm text-white/80">
             <p className="flex items-center gap-2">
