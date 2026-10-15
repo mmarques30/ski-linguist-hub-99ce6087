@@ -150,6 +150,9 @@ describe("registration welcome document templates", () => {
     expect(deno).toContain("SKI_MONITOR_STATIC_PACK_DOCUMENTS");
     expect(deno).toContain("FIFPL_REGLEMENT_MOUNTAIN_GUIDE");
     expect(deno).toContain("criteres-prise-en-charge-guides-montagne-2026.pdf");
+    expect(deno).toContain("registration-documents/${internalFile}");
+    expect(deno).toContain("assetRoot");
+    expect(deno).not.toContain("./registration-documents/");
     expect(deno).not.toMatch(
       /buildSkiMonitorWelcomeAttachments[\s\S]*\.dotx/,
     );
