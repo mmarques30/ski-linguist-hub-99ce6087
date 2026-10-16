@@ -220,8 +220,24 @@ export function isSchoolFifplChequeMethod(
   return method.includes("cheque_fifpl_ecole") || method.includes("school_fifpl");
 }
 
-/** Convention moniteur ESF Méribel / La Rosière : pas de frais de dossier 150 €. */
+/** Autofinancement : le stagiaire règle 100 % — pas le barème FIF-PL / ESF. */
+export function isSelfFundedOrganization(
+  funding: string | null | undefined
+): boolean {
+  const raw = (funding || "").trim().toLowerCase();
+  return (
+    raw === "self" ||
+    raw.includes("autofinancement") ||
+    raw.includes("auto-financement")
+  );
+}
+
+/**
+ * Convention moniteur ESF Méribel / La Rosière : pas de frais de dossier 150 €.
+ * L'autofinancement intégral reste un règlement stagiaire, même en station.
+ */
 export function isSchoolStationConvention(row: InscriptionDocumentsRow): boolean {
+  if (isSelfFundedOrganization(row.funding_organization)) return false;
   return (
     isSchoolFifplChequeMethod(row.payment_method) ||
     isPartnerSchoolStationLocation(row.course_location)
@@ -240,6 +256,14 @@ function buildPaymentTermsLabel(input: {
   omitDossierFee?: boolean;
 }): string {
   const methodRaw = (input.payment_method || "").toLowerCase();
+  if (isSelfFundedOrganization(input.fundingLabel)) {
+    const method = paymentMethodLabelFr(input.payment_method);
+    return [
+      `Coût pédagogique total : ${input.priceLabel}.`,
+      "Prise en charge : 100 % à la charge du stagiaire (autofinancement). Aucune part n'est facturée à l'école de ski.",
+      `Règlement : paiement intégral de ${input.priceLabel} par ${method}.`,
+    ].join(" ");
+  }
   const schoolFifplCheque = isSchoolFifplChequeMethod(input.payment_method);
   const schoolStationTerms = schoolFifplCheque || Boolean(input.omitDossierFee);
 
@@ -596,9 +620,13 @@ export function buildConventionPdfModel(input: {
   const depositLabel = formatEuros(input.inscription.deposit_amount);
   const balanceLabel = formatEuros(balanceAmount(input.inscription));
   const fundingLabel = texte(input.inscription.funding_organization) || "—";
+  const selfFunded = isSelfFundedOrganization(input.inscription.funding_organization);
   const schoolStation = isSchoolStationConvention(input.inscription);
   const laRosiere = isLaRosiereStationLocation(input.inscription.course_location);
   const schoolShareLabel = formatEuros(schoolShareAmount(input.inscription));
+  const depositAmount = asNumber(input.inscription.deposit_amount);
+  const hideDepositFee =
+    schoolStation || (selfFunded && (depositAmount == null || depositAmount === 0));
   const paymentTermsLabel = buildPaymentTermsLabel({
     priceLabel,
     depositLabel,
@@ -609,7 +637,7 @@ export function buildConventionPdfModel(input: {
     omitDossierFee: schoolStation,
   });
   const cgvSections = conditionsGeneralesSectionsForConvention({
-    omitDossierFee: schoolStation,
+    omitDossierFee: schoolStation || selfFunded,
   });
 
   const sections = online
@@ -681,10 +709,14 @@ export function buildConventionPdfModel(input: {
     balanceLabel,
     fundingLabel,
     paymentTermsLabel,
-    hideDepositFee: schoolStation,
-    balanceRowLabel: schoolStation ? "Votre part" : "Solde",
+    hideDepositFee,
+    balanceRowLabel: selfFunded
+      ? "À votre charge"
+      : schoolStation
+        ? "Votre part"
+        : "Solde",
     schoolCoverageLabel:
-      laRosiere && schoolShareLabel !== "—" ? schoolShareLabel : null,
+      !selfFunded && laRosiere && schoolShareLabel !== "—" ? schoolShareLabel : null,
     organization,
     organizationAddress: formatOrganizationAddress(organization),
     organizationLegalLines: organizationLegalMentions(organization),
