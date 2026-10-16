@@ -479,6 +479,48 @@ describe("PDF dossier inscription", () => {
     ).toBe(false);
   });
 
+  it("facture 100 % au stagiaire en autofinancement à La Rosière", () => {
+    const model = buildConventionPdfModel({
+      inscription: {
+        code: "FLI-260016",
+        language: "Portugais brésilien",
+        start_date: "2026-11-30",
+        end_date: "2026-12-11",
+        duration_hours: 40,
+        course_location: "ESF La Rosière",
+        modality: "presentiel",
+        price: 1500,
+        deposit_amount: null,
+        balance_after_deposit: 1500,
+        group_size: 1,
+        funding_organization: "Autofinancement",
+        payment_method: "virement",
+      },
+      student: {
+        first_name: "Benoit",
+        last_name: "Oudart",
+      },
+      identity: IDENTITY,
+    });
+    expect(model.hideDepositFee).toBe(true);
+    expect(model.balanceRowLabel).toBe("À votre charge");
+    expect(model.balanceLabel).toMatch(/1\s?500|1500/);
+    expect(model.schoolCoverageLabel).toBeNull();
+    expect(model.paymentTermsLabel).toMatch(/100 %/);
+    expect(model.paymentTermsLabel).toMatch(/autofinancement/i);
+    expect(model.paymentTermsLabel).toMatch(/virement bancaire/i);
+    expect(model.paymentTermsLabel).not.toMatch(/FIF-PL/i);
+    expect(model.paymentTermsLabel).not.toMatch(/prise en charge ESF/i);
+    expect(model.paymentTermsLabel).not.toMatch(/150/);
+    expect(
+      model.sections.some(
+        (s) =>
+          s.title === "Tarif et règlement" &&
+          s.paragraphs.some((p) => p.includes("150 €"))
+      )
+    ).toBe(false);
+  });
+
   it("masque les 150 € sur convention Méribel (forfait école)", () => {
     const model = buildConventionPdfModel({
       inscription: {
@@ -602,6 +644,9 @@ describe("PDF dossier inscription", () => {
     );
     expect(extraire(deno, "buildProgrammePdfModel")).toBe(
       extraire(front, "buildProgrammePdfModel")
+    );
+    expect(extraire(deno, "isSelfFundedOrganization")).toBe(
+      extraire(front, "isSelfFundedOrganization")
     );
     expect(extraire(deno, "isSchoolStationConvention")).toBe(
       extraire(front, "isSchoolStationConvention")
