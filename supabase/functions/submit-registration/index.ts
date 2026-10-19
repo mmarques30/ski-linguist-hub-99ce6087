@@ -279,11 +279,11 @@ function buildFifplFundingDetails(
   let provisionalMicro = false;
   if (status === "micro_entrepreneur") {
     const c = Number(contribution) || 0;
-    if (c >= 116) percent = 100;
-    else if (c >= 101) percent = 90;
-    else if (c >= 81) percent = 80;
-    else if (c >= 41) percent = 60;
-    else if (c >= 21) percent = 40;
+    // Grille micro 2026 réévaluée (conseils du 23/04 et du 24/06/2026),
+    // alignée sur FIFPL_MICRO_CFP_BRACKETS dans src/lib/fifpl-funding.ts.
+    if (c >= 81) percent = 100;
+    else if (c >= 41) percent = 80;
+    else if (c >= 21) percent = 60;
     else if (c >= 1) percent = 20;
     else {
       // Sans cotisation : pire cas 20 % (aligné src/lib/fifpl-funding.ts)
