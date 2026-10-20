@@ -7,7 +7,7 @@
  *   ./node_modules/.bin/tsx scripts/send-st-gervais-italien-1310.mts
  *   SEND=1 ./node_modules/.bin/tsx scripts/send-st-gervais-italien-1310.mts
  *
- * Eliane : poser ELIANE_EMAIL=… (absente en base).
+ * Eliane : TO école seule (pas d'e-mail candidat — validé Paula 20/10).
  */
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -63,7 +63,11 @@ function cecrlFromScore(score: number): string {
 type Row = {
   key: string;
   name: string;
-  email: string | null;
+  /** Destinataire principal (candidat ou école). */
+  to: string[];
+  cc: string[];
+  /** school = corps adressé à l'ESF ; candidate = corps candidat. */
+  audience: "school" | "candidate";
   carteSyndicale: string | null;
   scores: {
     comprehension: number;
@@ -87,7 +91,10 @@ const ROWS: Row[] = [
   {
     key: "eliane-jeanbourquin",
     name: "Eliane Jeanbourquin",
-    email: process.env.ELIANE_EMAIL?.trim() || null,
+    // Paula 20/10 : pas d'e-mail candidat → envoi école uniquement
+    to: ["administration@esf-saintgervais.com"],
+    cc: [],
+    audience: "school",
     carteSyndicale: "2374",
     scores: {
       comprehension: 3,
@@ -107,12 +114,14 @@ const ROWS: Row[] = [
         "Vous vous débrouillez globalement pour faire passer les informations importantes et pour échanger simplement. Votre vocabulaire spécifique est suffisant pour que l'on comprenne les consignes. Revoyez les règles grammaticales de base afin d'affiner votre discours. Demandez à vos connaissances italiennes de vous corriger quand une erreur est récurrente.",
     },
     pdfOut: "evaluation-Eliane-Jeanbourquin-italien.pdf",
-    note: "Générale brute 3,25 → arrondie 3,5 (B2+). Carte syndicale 2374.",
+    note: "Générale 3,25→3,5 B2+. Envoi école seule (pas d'e-mail candidat).",
   },
   {
     key: "louise-labrousse",
     name: "Louise Labrousse",
-    email: "louise.labrousse@gmail.com",
+    to: ["louise.labrousse@gmail.com"],
+    cc: ["administration@esf-saintgervais.com"],
+    audience: "candidate",
     carteSyndicale: null,
     scores: {
       comprehension: 3.5,
@@ -132,8 +141,7 @@ const ROWS: Row[] = [
         "Vous vous débrouillez globalement assez bien pour qu'on vous comprenne mais pas suffisamment pour tenir une conversation un peu trop longue ou détaillée. Puisque vous avez la chance de vous trouver en Italie pour quelques mois, profitez de vous trouver en immersion totale le plus souvent possible !",
     },
     pdfOut: "evaluation-Louise-Labrousse-italien.pdf",
-    note:
-      "Générale brute 2,75 → arrondie 3 (B2). Déjà reçu un résultat anglais Mollard le 14/10 — ceci est le résultat italien du 13/10.",
+    note: "Générale 2,75→3 B2. TO candidat + CC école.",
   },
 ];
 
@@ -159,24 +167,31 @@ async function loadAssets(): Promise<EvaluationPdfAssets> {
   };
 }
 
-function emailHtml(name: string, cecrl: string): string {
-  const body = `
+function emailHtml(row: Row, cecrl: string): string {
+  const body =
+    row.audience === "school"
+      ? `
+<p style="margin:0 0 16px">Bonjour,</p>
+<p style="margin:0 0 16px">veuillez trouver ci-joint le résultat du test d'italien de <strong>${row.name}</strong> (${cecrl}), passé le 13/10/2026.</p>
+<p style="margin:0 0 16px">Nous n'avons pas l'adresse e-mail de la candidate : merci de lui transmettre ce compte-rendu.</p>
+<p style="margin:0 0 4px">Cordialement,</p>`
+      : `
 <p style="margin:0 0 16px">Bonjour,</p>
 <p style="margin:0 0 16px">veuillez trouver ci-joint le résultat de votre test d'italien (${cecrl}).</p>
 <p style="margin:0 0 16px">Une copie est adressée à votre école de ski (ESF Saint-Gervais).</p>
-<p style="margin:0 0 4px">Cordialement,</p>
+<p style="margin:0 0 4px">Cordialement,</p>`;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f6f6">
+<tr><td align="center" style="padding:24px 12px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #e8e8e8">
+<tr><td style="padding:28px 24px 24px;font-size:15px;line-height:1.55;font-family:Georgia,'Times New Roman',serif;color:#111">
+${body}
 <p style="margin:0">
   <strong>FLI — France Langues International</strong><br/>
   25 avenue de la Gare<br/>
   73800 Montmélian<br/>
   Tél. : 04 79 28 21 09<br/>
   <a href="mailto:info@fli.fr">info@fli.fr</a>
-</p>`;
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f6f6">
-<tr><td align="center" style="padding:24px 12px">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #e8e8e8">
-<tr><td style="padding:28px 24px 24px;font-size:15px;line-height:1.55;font-family:Georgia,'Times New Roman',serif;color:#111">
-${body}
+</p>
 </td></tr>
 </table>
 </td></tr>
@@ -230,12 +245,16 @@ async function main() {
     const dest = join(OUT, row.pdfOut);
     await writeFile(dest, bytes);
 
-    const subject = `Résultat de votre test de langue — ${row.name}`;
+    const subject =
+      row.audience === "school"
+        ? `Résultat test italien — ${row.name} (ESF Saint-Gervais)`
+        : `Résultat de votre test de langue — ${row.name}`;
     const draft = {
       key: row.key,
-      to: row.email,
-      cc: SCHOOL_CC,
+      to: row.to,
+      cc: row.cc,
       bcc: BCC,
+      audience: row.audience,
       subject,
       attachment: row.pdfOut,
       cecrl,
@@ -254,18 +273,33 @@ async function main() {
     };
     await writeFile(join(OUT, `${row.key}-draft.json`), JSON.stringify(draft, null, 2));
     tableRows.push(
-      `| ${row.name} | ${row.email ?? "**⚠️ MANQUANT**"} | ${cecrl} (${String(general).replace(".", ",")} ; brute ${String(row.scores.generalRaw).replace(".", ",")}) | \`${row.pdfOut}\` |`
+      `| ${row.name} | ${row.to.join(", ")}${row.cc.length ? ` (CC ${row.cc.join(", ")})` : ""} | ${cecrl} (${String(general).replace(".", ",")} ; brute ${String(row.scores.generalRaw).replace(".", ",")}) | \`${row.pdfOut}\` |`
     );
 
     if (!doSend) {
       console.log(
-        `DRY ${row.key} → ${row.email ?? "⚠️ EMAIL MANQUANT"} générale ${row.scores.generalRaw}→${general} ${cecrl} (${bytes.length} o)`
+        `DRY ${row.key} → ${row.to.join(",")} cc=${row.cc.join(",") || "—"} générale ${row.scores.generalRaw}→${general} ${cecrl} (${bytes.length} o)`
       );
       results.push(draft);
       continue;
     }
-    if (!row.email) throw new Error(`${row.key}: e-mail candidat manquant`);
     if (!apiKey) throw new Error("RESEND_API_KEY absente");
+
+    const payload: Record<string, unknown> = {
+      from: "FLI — France Langues International <noreply@fli.fr>",
+      to: row.to,
+      bcc: [BCC],
+      reply_to: ["info@fli.fr"],
+      subject,
+      html: emailHtml(row, cecrl),
+      attachments: [
+        {
+          filename: row.pdfOut,
+          content: Buffer.from(bytes).toString("base64"),
+        },
+      ],
+    };
+    if (row.cc.length > 0) payload.cc = row.cc;
 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -274,21 +308,7 @@ async function main() {
         "Content-Type": "application/json",
         "User-Agent": "FLI-Formation/st-gervais-italien-1310",
       },
-      body: JSON.stringify({
-        from: "FLI — France Langues International <noreply@fli.fr>",
-        to: [row.email],
-        cc: SCHOOL_CC,
-        bcc: [BCC],
-        reply_to: ["info@fli.fr"],
-        subject,
-        html: emailHtml(row.name, cecrl),
-        attachments: [
-          {
-            filename: row.pdfOut,
-            content: Buffer.from(bytes).toString("base64"),
-          },
-        ],
-      }),
+      body: JSON.stringify(payload),
     });
     const text = await response.text();
     await writeFile(join(OUT, `${row.key}-resend.json`), text);
