@@ -9,7 +9,10 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { PDFDocument, StandardFonts, rgb, type PDFFont } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
-import { buildFliBankDetailsEmailHtml } from "../src/lib/registration-payments.ts";
+import {
+  buildFliBankDetailsEmailHtml,
+  FLI_BANK_DETAILS,
+} from "../src/lib/registration-payments.ts";
 
 const OUT_DIR = "/opt/cursor/artifacts/mollard-oct-2026/carroz-invoice";
 const INVOICE_NUMBER = "26-27.14327";
@@ -34,8 +37,8 @@ const FLI = {
   email: "info@fli.fr",
   siret: "484 772 041 00048",
   tvaNumber: "FR 44 484772041",
-  iban: "FR76 1820 6004 4339 5412 7300 189",
-  bic: "AGRIFRPP882",
+  iban: FLI_BANK_DETAILS.iban,
+  bic: FLI_BANK_DETAILS.bic,
   activity: "82 73 01 366 73",
 } as const;
 

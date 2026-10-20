@@ -22,6 +22,7 @@ import {
   type EvaluationPdfAssets,
 } from "../src/lib/evaluation-pdf-assets.ts";
 import { renderEvaluationPdf } from "../src/lib/evaluation-pdf-render.ts";
+import { FLI_BANK_DETAILS } from "../src/lib/registration-payments.ts";
 
 const OUT = "/opt/cursor/artifacts/mollard-oct-2026/dsf-mandica";
 const UPLOADS = "/home/ubuntu/.cursor/projects/workspace/uploads";
@@ -61,8 +62,8 @@ const FLI = {
   email: "info@fli.fr",
   siret: "484 772 041 00048",
   tvaNumber: "FR 44 484772041",
-  iban: "FR76 1820 6004 4339 5412 7300 189",
-  bic: "AGRIFRPP882",
+  iban: FLI_BANK_DETAILS.iban,
+  bic: FLI_BANK_DETAILS.bic,
   activity: "82 73 01 366 73",
 } as const;
 

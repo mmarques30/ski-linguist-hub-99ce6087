@@ -260,6 +260,32 @@ describe("modes de règlement /register", () => {
     expect(invoiceTpl).toContain("FLI_BANK_DETAILS");
     expect(front).not.toContain("7300 144");
     expect(deno).not.toContain("7300 144");
+
+    // Surfaces factures + UI inscription + scripts ops (plus de copie locale d'IBAN).
+    for (const rel of [
+      "src/components/registration/ConfirmationStep.tsx",
+      "src/components/registration/PaymentStep.tsx",
+      "scripts/send-carroz-school-invoice.mts",
+      "scripts/prepare-dsf-mandica-pack.mts",
+      "scripts/send-mollard-remaining-results.mts",
+    ]) {
+      const src = readFileSync(join(process.cwd(), rel), "utf8");
+      expect(src, rel).toContain("FLI_BANK_DETAILS");
+      expect(src, rel).not.toContain("7300 144");
+      expect(src, rel).not.toMatch(/iban:\s*"FR76/);
+    }
+
+    // Modèles e-mail Resend (docs pack) : aucun IBAN en dur.
+    for (const rel of [
+      "docs/emails-fli-2026-09/05a-invoice_reminder_1/invoice_reminder_1.html",
+      "docs/emails-fli-2026-09/05b-invoice_reminder_2/invoice_reminder_2.html",
+      "docs/emails-fli-2026-09/05c-invoice_reminder_3/invoice_reminder_3.html",
+      "docs/emails-fli-2026-09/01a-inscription_confirmation_individual/inscription_confirmation_individual.html",
+      "docs/emails-fli-2026-09/01b-inscription_confirmation_group/inscription_confirmation_group.html",
+    ]) {
+      const html = readFileSync(join(process.cwd(), rel), "utf8");
+      expect(html, rel).not.toMatch(/FR76\s*1820|7300\s*14[49]|AGRIFRPP/i);
+    }
   });
 
   it("masque l'acompte 150 € pour Méribel / La Rosière et propose intégral en ligne + chèque FLI", () => {
