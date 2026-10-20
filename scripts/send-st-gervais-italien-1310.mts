@@ -1,31 +1,84 @@
 /**
  * ESF Saint-Gervais — tests italien 13/10/2026 (Nathalie Raguin).
  * Eliane Jeanbourquin + Louise Labrousse.
- * TO candidat · CC administration@esf-saintgervais.com · BCC info@fli.fr · PJ CR (pas de facture).
+ * PDF = habillage ESF (C.5) · appréciation générale arrondie au demi-point.
+ * TO candidat · CC administration@esf-saintgervais.com · BCC info@fli.fr · sans facture.
  *
  *   ./node_modules/.bin/tsx scripts/send-st-gervais-italien-1310.mts
  *   SEND=1 ./node_modules/.bin/tsx scripts/send-st-gervais-italien-1310.mts
  *
  * Eliane : poser ELIANE_EMAIL=… (absente en base).
  */
-import { mkdir, readFile, writeFile, copyFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import {
+  buildEvaluationPdfModel,
+  type CecrlScaleRow,
+  type EvaluationPdfInput,
+  type FliIdentity,
+} from "../src/lib/evaluation-pdf.ts";
+import {
+  EVALUATION_PDF_ASSET_FILES,
+  type EvaluationPdfAssets,
+} from "../src/lib/evaluation-pdf-assets.ts";
+import { renderEvaluationPdf } from "../src/lib/evaluation-pdf-render.ts";
 
 const OUT = "/opt/cursor/artifacts/st-gervais-italien-1310";
-const UPLOADS = "/home/ubuntu/.cursor/projects/workspace/uploads";
 const BCC = "info@fli.fr";
 const SCHOOL_CC = ["administration@esf-saintgervais.com"];
+
+const IDENTITY: FliIdentity = {
+  legal_name: "France Langues International",
+  address_line: "25 avenue de la Gare",
+  postal_code: "73800",
+  city: "Montmélian",
+  phone: "04 79 28 21 09",
+  email: "info@fli.fr",
+};
+
+const SCALE: CecrlScaleRow[] = [
+  { score: 0, cecrl_label: "A1", base_label: "A1", niveau: 0, description: "Faux débutant / Quelques notions / Eveil" },
+  { score: 0.5, cecrl_label: "A1+", base_label: "A1", niveau: 0, description: "Faux débutant / Quelques notions / Eveil" },
+  { score: 1, cecrl_label: "A2", base_label: "A2", niveau: 1, description: "Élémentaire / Pré-intermédiaire / Survie" },
+  { score: 1.5, cecrl_label: "A2+", base_label: "A2", niveau: 1, description: "Élémentaire / Pré-intermédiaire / Survie" },
+  { score: 2, cecrl_label: "B1", base_label: "B1", niveau: 2, description: "Intermédiaire / Autonomie" },
+  { score: 2.5, cecrl_label: "B1+", base_label: "B1", niveau: 2, description: "Intermédiaire / Autonomie" },
+  { score: 3, cecrl_label: "B2", base_label: "B2", niveau: 3, description: "Post intermédiaire / Opérationnel" },
+  { score: 3.5, cecrl_label: "B2+", base_label: "B2", niveau: 3, description: "Post intermédiaire / Opérationnel" },
+  { score: 4, cecrl_label: "C1", base_label: "C1", niveau: 4, description: "Perfectionnement / Fluidité / Aisance" },
+  { score: 4.5, cecrl_label: "C1+", base_label: "C1", niveau: 4, description: "Perfectionnement / Fluidité / Aisance" },
+  { score: 5, cecrl_label: "C2", base_label: "C2", niveau: 5, description: "Maîtrise" },
+];
+
+/** Arrondi au demi-point le plus proche (0,5 → vers le haut). */
+function roundHalf(score: number): number {
+  return Math.round(score * 2) / 2;
+}
+
+function cecrlFromScore(score: number): string {
+  const row = SCALE.find((r) => r.score === score);
+  return row?.cecrl_label ?? "—";
+}
 
 type Row = {
   key: string;
   name: string;
   email: string | null;
-  cecrl: string;
-  scoreGeneral: string;
-  languageLabel: string;
-  testDate: string;
-  evaluator: string;
-  pdfUpload: string;
+  carteSyndicale: string | null;
+  scores: {
+    comprehension: number;
+    expression: number;
+    structure: number;
+    technique: number;
+    conversation: number;
+    generalRaw: number;
+  };
+  blocs: {
+    introduction: string;
+    comprehension: string;
+    technique: string;
+    conclusion: string;
+  };
   pdfOut: string;
   note?: string;
 };
@@ -35,35 +88,81 @@ const ROWS: Row[] = [
     key: "eliane-jeanbourquin",
     name: "Eliane Jeanbourquin",
     email: process.env.ELIANE_EMAIL?.trim() || null,
-    cecrl: "B2",
-    scoreGeneral: "3,25",
-    languageLabel: "italien",
-    testDate: "13/10/2026",
-    evaluator: "Nathalie Raguin",
-    pdfUpload: "Eliane_Jeanbourquin_CR_1c9e.pdf",
+    carteSyndicale: "2374",
+    scores: {
+      comprehension: 3,
+      expression: 3.5,
+      structure: 3,
+      technique: 3.5,
+      conversation: 3,
+      generalRaw: 3.25,
+    },
+    blocs: {
+      introduction:
+        "Vous vous exprimez facilement mais êtes gênée par des erreurs grammaticales et syntaxiques. Vos phrases sont souvent courtes. Votre prononciation et votre accent sont corrects dans l'ensemble mais vous manquez de pratique. La fin des mots est souvent hésitante et inexacte : singulier / pluriel ; masculin / féminin ; accords des verbes… « sono nato » à la place de « sono nata » ; « le fragola » au lieu de « le fragole » ; « lo nome » à la place de « il nome »… Le vocabulaire spécifique est connu et vous arrivez à vous faire comprendre et à interagir. Vous avez suffisamment de vocabulaire pour converser simplement.",
+      comprehension:
+        "Vous avez une écoute globale mais avez du mal à retenir les détails. Concernant le texte audio, vous avez compris de quoi ça parlait mais n'avez pas retenu précisément les informations. Vous peinez à saisir le sens des propos quand le débit est un peu rapide. N'hésitez pas à regarder des films en VO régulièrement pour habituer votre oreille.",
+      technique: "",
+      conclusion:
+        "Vous vous débrouillez globalement pour faire passer les informations importantes et pour échanger simplement. Votre vocabulaire spécifique est suffisant pour que l'on comprenne les consignes. Revoyez les règles grammaticales de base afin d'affiner votre discours. Demandez à vos connaissances italiennes de vous corriger quand une erreur est récurrente.",
+    },
     pdfOut: "evaluation-Eliane-Jeanbourquin-italien.pdf",
-    note: "Carte syndicale 2374 · scores 3 / 3,5 / 3 / 3,5 / 3 → générale 3,25",
+    note: "Générale brute 3,25 → arrondie 3,5 (B2+). Carte syndicale 2374.",
   },
   {
     key: "louise-labrousse",
     name: "Louise Labrousse",
     email: "louise.labrousse@gmail.com",
-    cecrl: "B1+",
-    scoreGeneral: "2,75",
-    languageLabel: "italien",
-    testDate: "13/10/2026",
-    evaluator: "Nathalie Raguin",
-    pdfUpload: "Louise_Labrousse_ac07.pdf",
+    carteSyndicale: null,
+    scores: {
+      comprehension: 3.5,
+      expression: 2.5,
+      structure: 2.5,
+      technique: 2,
+      conversation: 3,
+      generalRaw: 2.75,
+    },
+    blocs: {
+      introduction:
+        "Vous avez envie de vous exprimer et c'est bien. Néanmoins, vous faites de nombreuses erreurs grammaticales et syntaxiques : « i personi che lavorare » au lieu de « le persone che lavorano ». Vous cherchez vos mots et cela vous empêche d'avoir une fluidité dans votre discours. Attention également à votre conjugaison. Vous confondez premières personnes du singulier et du pluriel : « abbiamo » à la place de « ho ». Plus on avance dans l'entretien et plus il semble difficile pour vous de soutenir la discussion. Vos mots sont tronqués, vos accords approximatifs : « le lezione » au lieu de « le lezioni ». Vous avez tendance à paniquer un peu dès qu'on vous pose des questions. Il faut prendre confiance en vous ! Le vocabulaire technique n'est pas complètement maîtrisé, il faudrait pratiquer davantage.",
+      comprehension:
+        "Vous avez bien compris le texte audio et avez répondu favorablement aux questions posées. Vous avez donc une écoute efficace quand vous vous concentrez. C'est un très bon point ! Je vous suggère de passer plus de temps avec vos amis italiens et de participer davantage aux conversations.",
+      technique: "",
+      conclusion:
+        "Vous vous débrouillez globalement assez bien pour qu'on vous comprenne mais pas suffisamment pour tenir une conversation un peu trop longue ou détaillée. Puisque vous avez la chance de vous trouver en Italie pour quelques mois, profitez de vous trouver en immersion totale le plus souvent possible !",
+    },
     pdfOut: "evaluation-Louise-Labrousse-italien.pdf",
     note:
-      "Scores 3,5 / 2,5 / 2,5 / 2 / 3 → générale 2,75. Déjà reçu un résultat anglais Mollard le 14/10 — ceci est un 2e test (italien).",
+      "Générale brute 2,75 → arrondie 3 (B2). Déjà reçu un résultat anglais Mollard le 14/10 — ceci est le résultat italien du 13/10.",
   },
 ];
 
-function emailHtml(row: Row): string {
+async function loadAssets(): Promise<EvaluationPdfAssets> {
+  const dir = join(process.cwd(), "public/evaluation-pdf");
+  const read = async (file: string) => readFile(join(dir, file));
+  const partners: Uint8Array[] = [];
+  for (const file of EVALUATION_PDF_ASSET_FILES.partners) {
+    partners.push(await read(file));
+  }
+  return {
+    esfLogo: await read(EVALUATION_PDF_ASSET_FILES.esfLogo),
+    fliHeader: await read(EVALUATION_PDF_ASSET_FILES.fliHeader),
+    fliCachet: await read(EVALUATION_PDF_ASSET_FILES.fliCachet),
+    fliCompact: await read(EVALUATION_PDF_ASSET_FILES.fliCompact),
+    dsfLetterhead: await read(EVALUATION_PDF_ASSET_FILES.dsfLetterhead),
+    partnerLogos: partners,
+    fonts: {
+      regular: await read(EVALUATION_PDF_ASSET_FILES.fonts.regular),
+      bold: await read(EVALUATION_PDF_ASSET_FILES.fonts.bold),
+      italic: await read(EVALUATION_PDF_ASSET_FILES.fonts.italic),
+    },
+  };
+}
+
+function emailHtml(name: string, cecrl: string): string {
   const body = `
 <p style="margin:0 0 16px">Bonjour,</p>
-<p style="margin:0 0 16px">veuillez trouver ci-joint le résultat de votre test d'italien (${row.cecrl}).</p>
+<p style="margin:0 0 16px">veuillez trouver ci-joint le résultat de votre test d'italien (${cecrl}).</p>
 <p style="margin:0 0 16px">Une copie est adressée à votre école de ski (ESF Saint-Gervais).</p>
 <p style="margin:0 0 4px">Cordialement,</p>
 <p style="margin:0">
@@ -88,14 +187,49 @@ async function main() {
   const doSend = process.env.SEND === "1";
   const apiKey = process.env.RESEND_API_KEY;
   await mkdir(OUT, { recursive: true });
-
+  const assets = await loadAssets();
   const results: Array<Record<string, unknown>> = [];
+  const tableRows: string[] = [];
 
   for (const row of ROWS) {
-    const src = join(UPLOADS, row.pdfUpload);
+    const general = roundHalf(row.scores.generalRaw);
+    const cecrl = cecrlFromScore(general);
+
+    const input: EvaluationPdfInput = {
+      sponsorType: "esf",
+      evaluatedAt: new Date("2026-10-13T10:00:00+02:00"),
+      candidateName: row.name,
+      candidateProfession: "moniteur",
+      skiDiscipline: "alpin",
+      trainingCycle: null,
+      carteSyndicale: row.carteSyndicale,
+      language: "italien",
+      previousTest: false,
+      skiSchoolName: "ESF SAINT GERVAIS",
+      companyName: "ESF SAINT GERVAIS",
+      instructorName: "Nathalie Raguin",
+      scores: {
+        comprehension: row.scores.comprehension,
+        expression: row.scores.expression,
+        structure: row.scores.structure,
+        technique: row.scores.technique,
+        conversation: row.scores.conversation,
+        general,
+      },
+      cecrlGeneral: cecrl,
+      blocs: row.blocs,
+      noteMethodologique: null,
+      priceTtc: 45,
+      identity: IDENTITY,
+      cecrlScale: SCALE,
+      verifiedAt: new Date("2026-10-20T12:00:00+02:00"),
+    };
+
+    const model = buildEvaluationPdfModel(input);
+    const bytes = await renderEvaluationPdf(model, assets);
     const dest = join(OUT, row.pdfOut);
-    await copyFile(src, dest);
-    const bytes = await readFile(dest);
+    await writeFile(dest, bytes);
+
     const subject = `Résultat de votre test de langue — ${row.name}`;
     const draft = {
       key: row.key,
@@ -104,12 +238,14 @@ async function main() {
       bcc: BCC,
       subject,
       attachment: row.pdfOut,
-      cecrl: row.cecrl,
-      score_general: row.scoreGeneral,
-      language: row.languageLabel,
-      test_date: row.testDate,
-      evaluator: row.evaluator,
+      cecrl,
+      score_general_raw: row.scores.generalRaw,
+      score_general_rounded: general,
+      language: "italien",
+      test_date: "13/10/2026",
+      evaluator: "Nathalie Raguin",
       school: "ESF SAINT GERVAIS",
+      habillage: "esf",
       no_invoice: true,
       note: row.note ?? null,
       dry_run: !doSend,
@@ -117,10 +253,13 @@ async function main() {
       pdf_bytes: bytes.length,
     };
     await writeFile(join(OUT, `${row.key}-draft.json`), JSON.stringify(draft, null, 2));
+    tableRows.push(
+      `| ${row.name} | ${row.email ?? "**⚠️ MANQUANT**"} | ${cecrl} (${String(general).replace(".", ",")} ; brute ${String(row.scores.generalRaw).replace(".", ",")}) | \`${row.pdfOut}\` |`
+    );
 
     if (!doSend) {
       console.log(
-        `DRY ${row.key} → ${row.email ?? "⚠️ EMAIL MANQUANT"} (${row.pdfOut}, ${bytes.length} o)`
+        `DRY ${row.key} → ${row.email ?? "⚠️ EMAIL MANQUANT"} générale ${row.scores.generalRaw}→${general} ${cecrl} (${bytes.length} o)`
       );
       results.push(draft);
       continue;
@@ -142,7 +281,7 @@ async function main() {
         bcc: [BCC],
         reply_to: ["info@fli.fr"],
         subject,
-        html: emailHtml(row),
+        html: emailHtml(row.name, cecrl),
         attachments: [
           {
             filename: row.pdfOut,
@@ -172,30 +311,39 @@ async function main() {
     console.log(`ENVOYE ${row.key} ${resendId}`);
   }
 
-  const summary = {
-    school: "ESF SAINT GERVAIS",
-    language: "italien",
-    test_date: "13/10/2026",
-    evaluator: "Nathalie Raguin",
-    count: results.length,
-    dry_run: !doSend,
-    no_invoice: true,
-    cc: SCHOOL_CC,
-    bcc: BCC,
-    results,
-  };
-  await writeFile(join(OUT, "summary.json"), JSON.stringify(summary, null, 2));
+  await writeFile(
+    join(OUT, "summary.json"),
+    JSON.stringify(
+      {
+        school: "ESF SAINT GERVAIS",
+        language: "italien",
+        test_date: "13/10/2026",
+        evaluator: "Nathalie Raguin",
+        habillage: "esf",
+        general_rounding: "Math.round(x*2)/2",
+        count: results.length,
+        dry_run: !doSend,
+        no_invoice: true,
+        cc: SCHOOL_CC,
+        bcc: BCC,
+        results,
+      },
+      null,
+      2
+    )
+  );
 
-  const md = `# Brouillon — ESF Saint-Gervais italien 13/10/2026 — **À VALIDER — PAS ENVOYÉ**
+  await writeFile(
+    join(OUT, "email-draft.md"),
+    `# Brouillon — ESF Saint-Gervais italien 13/10/2026 — **À VALIDER — PAS ENVOYÉ**
 
-Évaluatrice : Nathalie Raguin · CC école : \`${SCHOOL_CC.join("`, `")}\` · BCC : \`${BCC}\` · **sans facture** (facture école fin de mois).
+Évaluatrice : Nathalie Raguin · Habillage : **ESF (C.5)** · Générale **arrondie au demi-point** · CC : \`${SCHOOL_CC.join("`, `")}\` · BCC : \`${BCC}\` · **sans facture**.
 
 | Candidat | E-mail | Niveau | PJ |
 |----------|--------|--------|-----|
-| Eliane Jeanbourquin | ${ROWS[0].email ?? "**⚠️ MANQUANT**"} | B2 (3,25) | \`${ROWS[0].pdfOut}\` |
-| Louise Labrousse | ${ROWS[1].email} | B1+ (2,75) | \`${ROWS[1].pdfOut}\` |
+${tableRows.join("\n")}
 
-## Corps (identique pour les 2)
+## Corps
 
 Bonjour,
 
@@ -206,12 +354,11 @@ Une copie est adressée à votre école de ski (ESF Saint-Gervais).
 Cordialement,
 FLI — France Langues International
 
-## Notes
-- Louise a déjà reçu un résultat **anglais** (Mollard) le 14/10 — ce mail est le résultat **italien** du 13/10.
-- Eliane : carte syndicale 2374 ; e-mail absent en base.
-- Référentiel ESF Saint-Gervais : un seul mail école (\`administration@esf-saintgervais.com\`).
-`;
-  await writeFile(join(OUT, "email-draft.md"), md);
+## Arrondi
+- Eliane : 3,25 → **3,5 (B2+)**
+- Louise : 2,75 → **3 (B2)**
+`
+  );
   console.log(`SUMMARY ${join(OUT, "summary.json")} dry_run=${!doSend}`);
 }
 
