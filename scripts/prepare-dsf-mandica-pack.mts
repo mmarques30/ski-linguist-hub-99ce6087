@@ -61,7 +61,7 @@ const FLI = {
   email: "info@fli.fr",
   siret: "484 772 041 00048",
   tvaNumber: "FR 44 484772041",
-  iban: "FR76 1820 6004 4339 5412 7300 144",
+  iban: "FR76 1820 6004 4339 5412 7300 189",
   bic: "AGRIFRPP882",
   activity: "82 73 01 366 73",
 } as const;

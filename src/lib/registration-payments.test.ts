@@ -5,6 +5,7 @@ import {
   buildFliBankDetailsEmailHtml,
   buildPaymentLinkWithBankDetailsEmailHtml,
   FLI_BANK_DETAILS,
+  isValidIban,
   getAvailablePaymentOptions,
   getRegistrationPaymentSummary,
   hasChequeBalance,
@@ -204,7 +205,10 @@ describe("modes de règlement /register", () => {
     expect(deno).toContain('LEGACY_STRIPE_4X = "stripe_4x"');
   });
 
-  it("expose le RIB FLI et l'exige avec tout lien de paiement (copie Deno)", () => {
+  it("expose un RIB FLI à checksum IBAN valide (copie Deno + factures)", () => {
+    expect(isValidIban(FLI_BANK_DETAILS.iban)).toBe(true);
+    expect(isValidIban("FR76 1820 6004 4339 5412 7300 144")).toBe(false);
+
     const rib = buildFliBankDetailsEmailHtml("FLI-260036");
     expect(rib).toContain(FLI_BANK_DETAILS.iban);
     expect(rib).toContain(FLI_BANK_DETAILS.bic);
@@ -234,15 +238,28 @@ describe("modes de règlement /register", () => {
       join(process.cwd(), "supabase/functions/_shared/registration-payments.ts"),
       "utf8",
     );
+    const invoicePdf = readFileSync(
+      join(process.cwd(), "src/lib/invoice-pdf.ts"),
+      "utf8",
+    );
+    const invoiceTpl = readFileSync(
+      join(process.cwd(), "src/components/invoices/InvoiceTemplate.tsx"),
+      "utf8",
+    );
     for (const symbol of [
       "FLI_BANK_DETAILS",
       "buildFliBankDetailsEmailHtml",
       "buildPaymentLinkWithBankDetailsEmailHtml",
-      'iban: "FR76 1820 6004 4339 5412 7300 144"',
+      "isValidIban",
+      'iban: "FR76 1820 6004 4339 5412 7300 189"',
     ]) {
       expect(front).toContain(symbol);
       expect(deno).toContain(symbol);
     }
+    expect(invoicePdf).toContain("FLI_BANK_DETAILS");
+    expect(invoiceTpl).toContain("FLI_BANK_DETAILS");
+    expect(front).not.toContain("7300 144");
+    expect(deno).not.toContain("7300 144");
   });
 
   it("masque l'acompte 150 € pour Méribel / La Rosière et propose intégral en ligne + chèque FLI", () => {

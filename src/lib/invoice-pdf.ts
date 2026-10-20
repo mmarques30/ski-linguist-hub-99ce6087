@@ -7,6 +7,7 @@
  */
 import { PDFDocument, StandardFonts, rgb, type PDFFont } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
+import { FLI_BANK_DETAILS } from "@/lib/registration-payments";
 
 export const INVOICE_LOGO_PUBLIC_PATH =
   "inscription-documents/fli-invoice-logo.png";
@@ -55,8 +56,8 @@ const FLI = {
   phone: "04 79 28 21 09",
   email: "info@fli.fr",
   siret: "484 772 041 00048",
-  iban: "FR76 1820 6004 4339 5412 7300 144",
-  bic: "AGRIFRPP882",
+  iban: FLI_BANK_DETAILS.iban,
+  bic: FLI_BANK_DETAILS.bic,
   activity: "82 73 01 366 73",
 } as const;
 
