@@ -31,7 +31,7 @@
   {
     "key": "samson-benamor",
     "name": "Samson Benamor",
-    "email": null,
+    "email": "benamorsamson@gmail.com",
     "phone": null,
     "school": "ESF SAINT GERVAIS",
     "school_id": "c3e047ad-c884-4e2d-8d32-a7fdc7d842b3",
@@ -54,7 +54,7 @@
     "points": "Apprenez à utiliser les temps du passé PRETERIT (action datée/terminée) et PRESENT PERFECT (l'action continue dans le présent) ; utilisez SHOULD pour donner un conseil.",
     "concl": "Votre niveau vous permet de comprendre globalement et de vous exprimer en général.",
     "pdf_habillage": "esf",
-    "send_mode": "school_billed_need_email",
+    "send_mode": "school_billed_no_invoice",
     "school_cc": ["administration@esf-saintgervais.com"],
     "note": "Pas encore envoyé. Distinct d'Anouk Benamor (déjà envoyé 14/10)."
   },
@@ -187,7 +187,7 @@
   {
     "key": "lucas-audo",
     "name": "Lucas Audo",
-    "email": null,
+    "email": "lucasaudo74@gmail.com",
     "phone": null,
     "school": "ESF SAINT GERVAIS",
     "school_id": "c3e047ad-c884-4e2d-8d32-a7fdc7d842b3",
@@ -210,7 +210,7 @@
     "points": "Apprenez à utiliser SINCE suivi d'un point de départ et FOR suivi d'une durée. Ex. : « I've worked there since 2020, for 2 years ». Utilisez le PRESENT -ing pour parler de ce qui se déroule maintenant ou temporairement. Utilisez le PRESENT SIMPLE pour parler des vérités permanentes, de votre routine, des règles de sécurité, etc. Apprenez à utiliser les temps du passé PRETERIT (action datée/terminée) et PRESENT PERFECT (l'action continue dans le présent). Revoyez MUST et HAVE TO pour exprimer l'obligation. Revoyez CAN et TO BE ABLE TO pour exprimer la capacité au présent et au futur. Ex. : I can ski but I'll be able to ski even better at the end of the day! Vous dites « for + verb » au lieu de « to + verb » — utilisez TO pour exprimer le but.",
     "concl": "Vous avez un niveau faible qui vous permet de comprendre et de vous exprimer simplement.",
     "pdf_habillage": "esf",
-    "send_mode": "school_billed_need_email",
+    "send_mode": "school_billed_no_invoice",
     "school_cc": ["administration@esf-saintgervais.com"]
   },
   {
