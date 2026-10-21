@@ -58,6 +58,7 @@ export function formateurAssistPath(
   instructorId: string,
   page:
     | "tableau-de-bord"
+    | "onboarding"
     | "planning"
     | `missions/${string}`
     | "stagiaires"

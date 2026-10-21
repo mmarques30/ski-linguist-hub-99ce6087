@@ -94,6 +94,12 @@ export default function FormateurDashboard() {
           <SurfaceCard title="Raccourcis" icon={ClipboardCheck}>
             <div className="flex flex-col gap-2">
               <Button variant="outline" className="justify-start" asChild>
+                <Link to={`${basePath}/onboarding`}>
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  Guide FLI — bienvenue & fonctionnement
+                </Link>
+              </Button>
+              <Button variant="outline" className="justify-start" asChild>
                 <Link to={`${basePath}/bilans`}>
                   <ClipboardList className="mr-2 h-4 w-4" />
                   Bilans entrée / sortie
