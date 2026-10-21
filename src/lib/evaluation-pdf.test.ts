@@ -182,6 +182,25 @@ describe("titre et saison PDF", () => {
     expect(front).toContain('habillage === "esf"');
     expect(deno).toContain('habillage === "esf"');
   });
+
+  it("garde la copie Deno d'accord avec le rendu ESF (nom sous le titre)", () => {
+    const front = readFileSync(
+      join(process.cwd(), "src/lib/evaluation-pdf-render.ts"),
+      "utf8"
+    );
+    const deno = readFileSync(
+      join(process.cwd(), "supabase/functions/_shared/evaluation-pdf-render.ts"),
+      "utf8"
+    );
+    for (const src of [front, deno]) {
+      expect(src).toMatch(/const ESF_NAME_BASELINE_FROM_TOP = 58;/);
+      expect(src).toContain("headerTop - ESF_NAME_BASELINE_FROM_TOP");
+      expect(src).not.toMatch(/y: headerTop - 28/);
+    }
+    expect(front.includes("ESF_NAME_BASELINE_FROM_TOP")).toBe(
+      deno.includes("ESF_NAME_BASELINE_FROM_TOP")
+    );
+  });
 });
 
 describe("nom affiché et sous-titre", () => {
