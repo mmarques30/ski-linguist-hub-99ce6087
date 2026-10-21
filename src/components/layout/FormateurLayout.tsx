@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Link, NavLink, useNavigate } from "react-router";
+import { Link, NavLink, useLocation, useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -26,7 +26,7 @@ interface FormateurLayoutProps {
 
 const formateurNavPages = [
   { name: "Tableau de bord", page: "tableau-de-bord", icon: LayoutDashboard, short: "Accueil" },
-  { name: "Planning", page: "planning", icon: Calendar, short: "Planning" },
+  { name: "Missions", page: "planning", icon: Calendar, short: "Missions" },
   { name: "Stagiaires", page: "stagiaires", icon: Users, short: "Stagiaires" },
   { name: "Bilans", page: "bilans", icon: ClipboardList, short: "Bilans" },
   { name: "Évaluations", page: "evaluations", icon: ClipboardCheck, short: "Évals" },
@@ -42,12 +42,25 @@ const formateurNavPages = [
 export function FormateurLayout({ children }: FormateurLayoutProps) {
   const { signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { basePath, isAssistMode, instructorName, instructorId } = useFormateurView();
 
   const formateurNav = formateurNavPages.map((item) => ({
     ...item,
     href: `${basePath}/${item.page}`,
   }));
+
+  const isNavActive = (page: string, isActive: boolean) => {
+    if (isActive) return true;
+    // Fiche mission = sous-page du planning
+    if (page === "planning" && location.pathname.includes("/missions/")) {
+      return true;
+    }
+    if (page === "bilans" && location.pathname.includes("/bilans/")) {
+      return true;
+    }
+    return false;
+  };
 
   const handleSignOut = async () => {
     if (isAssistMode) {
@@ -114,7 +127,7 @@ export function FormateurLayout({ children }: FormateurLayoutProps) {
               className={({ isActive }) =>
                 cn(
                   "flex items-center gap-2.5 rounded-[var(--radius)] px-3 py-2 text-sm transition-colors",
-                  isActive
+                  isNavActive(item.page, isActive)
                     ? "bg-primary font-medium text-primary-foreground shadow-xs"
                     : "text-muted-foreground hover:bg-[hsl(var(--surface-sunken))] hover:text-foreground"
                 )
@@ -134,7 +147,9 @@ export function FormateurLayout({ children }: FormateurLayoutProps) {
               className={({ isActive }) =>
                 cn(
                   "flex flex-col items-center gap-0.5 rounded-[var(--radius)] px-2 py-1 text-2xs transition-colors",
-                  isActive ? "font-medium text-primary" : "text-muted-foreground"
+                  isNavActive(item.page, isActive)
+                    ? "font-medium text-primary"
+                    : "text-muted-foreground"
                 )
               }
             >

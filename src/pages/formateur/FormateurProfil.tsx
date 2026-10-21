@@ -26,7 +26,7 @@ export default function FormateurProfil() {
       <PageShell>
         <PageHeader
           title="Mon profil"
-          description="Informations professionnelles visibles par FLI"
+          description="Identité, fiscal, tarif — lecture seule"
           icon={User}
           tone="gold"
         />
@@ -135,8 +135,7 @@ export default function FormateurProfil() {
             )}
 
             <p className="text-xs text-muted-foreground">
-              Pour corriger une information, contactez l&apos;équipe FLI
-              (info@fli.fr).
+              Pour corriger une information, contacte info@fli.fr.
             </p>
           </div>
         )}

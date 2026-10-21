@@ -92,8 +92,8 @@ export function FormateurEntryFormFields({
             Niveau du stagiaire en début de formation
           </p>
           <p className="text-xs text-muted-foreground">
-            Échelle CECRL (demi-niveaux). Choisis « Non évaluée » si la
-            compétence n&apos;a pas été observée.
+            Échelle CECRL. Choisis « Non évaluée » si tu n&apos;as pas observé
+            la compétence.
           </p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <FormateurCecrlLevelSelect
@@ -137,7 +137,7 @@ export function FormateurEntryFormFields({
 
       {suggestedGeneralEntry && !isCollective ? (
         <p className="text-xs text-muted-foreground">
-          Indicatif test de placement (ne pas recopier tel quel) :{" "}
+          Indicatif du test de placement (à croiser avec ton observation) :{" "}
           {suggestedGeneralEntry}
         </p>
       ) : null}
@@ -234,7 +234,7 @@ export function FormateurEntryFormFields({
 
       <div className="space-y-2">
         <Label htmlFor="moyens">
-          Adéquation des moyens mis à disposition (salle, matériel, connexion…){" "}
+          Adéquation des moyens (salle, matériel, connexion…){" "}
           <span className="text-destructive">*</span>
         </Label>
         <Textarea

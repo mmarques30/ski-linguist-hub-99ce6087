@@ -30,7 +30,7 @@ export default function FormateurPaiements() {
       <PageShell>
         <PageHeader
           title="Paiements"
-          description="Rémunérations enregistrées par FLI"
+          description="Rémunérations FLI — lecture seule"
           icon={Wallet}
           tone="blue"
         />

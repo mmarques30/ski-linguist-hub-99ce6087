@@ -175,16 +175,19 @@ describe("formateur-formation-forms", () => {
     expect(isFormulaireEntreeComplete(form)).toBe(false);
   });
 
-  it("App et layout exposent /formateur/bilans", () => {
+  it("App et layout exposent /formateur/bilans et /missions", () => {
     const app = readFileSync(join(process.cwd(), "src/App.tsx"), "utf8");
     expect(app).toContain('path="/formateur/bilans"');
+    expect(app).toContain('path="/formateur/missions/:inscriptionId"');
     expect(app).toContain("FormateurBilans");
     expect(app).toContain("FormateurBilanFormPage");
+    expect(app).toContain("FormateurMissionDetail");
     const layout = readFileSync(
       join(process.cwd(), "src/components/layout/FormateurLayout.tsx"),
       "utf8"
     );
     expect(layout).toContain("bilans");
+    expect(layout).toContain("Missions");
     const mig = readFileSync(
       join(
         process.cwd(),

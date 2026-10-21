@@ -50,6 +50,7 @@ import EvaluationView from "./pages/formateur/EvaluationView";
 import EvaluationVerify from "./pages/formateur/EvaluationVerify";
 import FormateurDashboard from "./pages/formateur/FormateurDashboard";
 import FormateurPlanning from "./pages/formateur/FormateurPlanning";
+import FormateurMissionDetail from "./pages/formateur/FormateurMissionDetail";
 import FormateurStagiaires from "./pages/formateur/FormateurStagiaires";
 import FormateurProfil from "./pages/formateur/FormateurProfil";
 import FormateurPaiements from "./pages/formateur/FormateurPaiements";
@@ -191,6 +192,16 @@ const App = () => (
                 <ProtectedRoute>
                   <FormateurOwnViewProvider>
                     <FormateurPlanning />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/formateur/missions/:inscriptionId"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <FormateurMissionDetail />
                   </FormateurOwnViewProvider>
                 </ProtectedRoute>
               }
@@ -415,6 +426,10 @@ const App = () => (
               <Route index element={<Navigate to="tableau-de-bord" replace />} />
               <Route path="tableau-de-bord" element={<FormateurDashboard />} />
               <Route path="planning" element={<FormateurPlanning />} />
+              <Route
+                path="missions/:inscriptionId"
+                element={<FormateurMissionDetail />}
+              />
               <Route path="stagiaires" element={<FormateurStagiaires />} />
               <Route path="bilans" element={<FormateurBilans />} />
               <Route

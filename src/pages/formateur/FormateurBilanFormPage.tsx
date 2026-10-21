@@ -286,8 +286,8 @@ export default function FormateurBilanFormPage({ kind }: { kind: Kind }) {
           title={title}
           description={
             kind === "entree"
-              ? "Un niveau par stagiaire en début de formation"
-              : "Un niveau par stagiaire en fin de formation"
+              ? "Niveau et contexte pédagogique en début de formation"
+              : "Niveau et bilan pédagogique en fin de formation"
           }
           icon={Icon}
           tone="gold"
@@ -319,9 +319,8 @@ export default function FormateurBilanFormPage({ kind }: { kind: Kind }) {
             <FormateurFormationContextCard context={context} />
             {cohort.length > 1 ? (
               <p className="text-xs text-muted-foreground">
-                Groupe détecté : {cohort.length} stagiaire
-                {cohort.length > 1 ? "s" : ""} — en formation collective, tu
-                renseignes le niveau de chacun.
+                Groupe détecté ({cohort.length} stagiaires) — en collective, tu
+                indiques le niveau de chacun.
               </p>
             ) : null}
             <SurfaceCard>

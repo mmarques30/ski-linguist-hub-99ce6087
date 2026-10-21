@@ -76,8 +76,7 @@ export function FormateurExitFormFields({
               Niveau général du groupe en fin de formation
             </p>
             <p className="text-xs text-muted-foreground">
-              Puis le niveau de ce stagiaire (un bilan par dossier — remplace la
-              grille Google à 12 lignes).
+              Puis un niveau par stagiaire (un bilan par dossier).
             </p>
           </div>
           <FormateurCecrlLevelSelect
@@ -117,7 +116,7 @@ export function FormateurExitFormFields({
               Niveau du stagiaire en fin de formation
             </p>
             <p className="text-xs text-muted-foreground">
-              Synthèse certificat. Général + spécifique (CECRL).
+              Synthèse pour le certificat — général et spécifique (CECRL).
             </p>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -167,7 +166,7 @@ export function FormateurExitFormFields({
               rows={3}
               value={fields.stagiaires_liste || ""}
               onChange={(e) => onChange("stagiaires_liste", e.target.value)}
-              placeholder="1. … — 2. … (optionnel : déjà un bilan par dossier)"
+              placeholder="Optionnel — déjà un bilan par dossier"
             />
           </div>
         </div>
@@ -177,8 +176,7 @@ export function FormateurExitFormFields({
             Appréciation générale (cours individuels)
           </p>
           <Label htmlFor="assiduite">
-            Commentaires concernant l&apos;assiduité, le comportement et
-            l&apos;investissement du stagiaire{" "}
+            Assiduité, comportement et investissement du stagiaire{" "}
             <span className="text-destructive">*</span>
           </Label>
           <Textarea
@@ -215,8 +213,7 @@ export function FormateurExitFormFields({
           </SelectContent>
         </Select>
         <p className="text-2xs text-muted-foreground">
-          Google Form : Oui / Non — l&apos;option « Partiellement » est un
-          ajout app.
+          Oui / Non / Partiellement.
         </p>
       </div>
 
@@ -239,8 +236,7 @@ export function FormateurExitFormFields({
 
       <div className="space-y-2">
         <Label htmlFor="logistique">
-          Commentaires concernant les moyens techniques et logistiques (salle,
-          horaires, matériel, etc.)
+          Moyens techniques et logistiques (salle, horaires, matériel…)
           {!isCollective ? (
             <span className="text-destructive"> *</span>
           ) : null}

@@ -109,19 +109,22 @@ describe("portail formateur — câblage", () => {
     expect(sql).toContain("formateur_portal_invite");
   });
 
-  it("App expose tableau-de-bord / planning / stagiaires / docs / paiements / profil + Assister", () => {
+  it("App expose tableau-de-bord / planning / missions / stagiaires / docs / paiements / profil + Assister", () => {
     const app = source("src/App.tsx");
     expect(app).toContain('path="/formateur/tableau-de-bord"');
     expect(app).toContain('path="/formateur/planning"');
+    expect(app).toContain('path="/formateur/missions/:inscriptionId"');
     expect(app).toContain('path="/formateur/stagiaires"');
     expect(app).toContain('path="/formateur/documents"');
     expect(app).toContain('path="/formateur/paiements"');
     expect(app).toContain('path="/formateur/profil"');
     expect(app).toContain('path="tableau-de-bord"');
+    expect(app).toContain('path="missions/:inscriptionId"');
     expect(app).toContain('path="documents"');
     expect(app).toContain('path="paiements"');
     expect(app).toContain('path="profil"');
     expect(app).toContain("FormateurDashboard");
+    expect(app).toContain("FormateurMissionDetail");
     expect(app).toContain("FormateurDocuments");
     expect(app).toContain("FormateurPaiements");
     expect(app).toContain("FormateurProfil");

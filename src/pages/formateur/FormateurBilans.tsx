@@ -1,5 +1,11 @@
 import { Link } from "react-router";
-import { ArrowRight, ClipboardList, FileInput, FileOutput } from "lucide-react";
+import {
+  ArrowRight,
+  ClipboardList,
+  FileInput,
+  FileOutput,
+  Calendar,
+} from "lucide-react";
 import { FormateurPageShell } from "@/components/layout/FormateurPageShell";
 import { useFormateurView } from "@/contexts/FormateurViewContext";
 import {
@@ -36,8 +42,8 @@ export default function FormateurBilans() {
           title="Bilans entrée / sortie"
           description={
             isAssistMode
-              ? "Niveau de chaque stagiaire en début et en fin de formation"
-              : "Un niveau d'entrée et un niveau de sortie pour chaque stagiaire"
+              ? "Niveaux d'entrée et de sortie (aperçu Assister)"
+              : "Saisie des niveaux d'entrée et de sortie pour chaque stagiaire"
           }
           icon={ClipboardList}
           tone="gold"
@@ -93,6 +99,12 @@ export default function FormateurBilans() {
                           </p>
                         </div>
                         <div className="flex shrink-0 flex-wrap gap-2">
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link to={`${basePath}/missions/${row.id}`}>
+                              <Calendar className="mr-1.5 h-3.5 w-3.5" />
+                              Mission
+                            </Link>
+                          </Button>
                           <Button variant="outline" size="sm" asChild>
                             <Link to={`${basePath}/bilans/${row.id}/entree`}>
                               <FileInput className="mr-1.5 h-3.5 w-3.5" />
