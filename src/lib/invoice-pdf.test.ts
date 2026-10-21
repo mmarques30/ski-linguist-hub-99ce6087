@@ -12,8 +12,15 @@ import {
   INVOICE_LOGO_PUBLIC_PATH,
   INVOICE_PAID_STAMP_PUBLIC_PATH,
 } from "./invoice-pdf";
-
 describe("invoice-pdf", () => {
+  it("prend le RIB via FLI_BANK_DETAILS (plus de copie locale d'IBAN)", () => {
+    const src = readFileSync(join(process.cwd(), "src/lib/invoice-pdf.ts"), "utf8");
+    expect(src).toContain('from "@/lib/registration-payments"');
+    expect(src).toContain("FLI_BANK_DETAILS.iban");
+    expect(src).toContain("FLI_BANK_DETAILS.bic");
+    expect(src).not.toMatch(/iban:\s*"FR76/);
+  });
+
   it("builds stable filename and storage path", () => {
     expect(invoicePdfFilename("26-27.14323")).toBe("Facture-26-27.14323.pdf");
     expect(buildInvoicePdfPath("stu", "ins", "26-27.14323")).toBe(
