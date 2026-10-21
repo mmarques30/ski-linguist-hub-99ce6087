@@ -108,7 +108,7 @@ const App = () => (
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<InstitutionalLanding />} />
-            <Route path="/mockup/lp-assets" element={<AssetValidationMockupPage />} />
+            <Route path="/mockup/lp-assets" element={<ProtectedRoute><AssetValidationMockupPage /></ProtectedRoute>} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/register" element={<PublicRegistrationRoute />} />
             <Route path="/salon" element={<SalonDirecteursPage />} />
