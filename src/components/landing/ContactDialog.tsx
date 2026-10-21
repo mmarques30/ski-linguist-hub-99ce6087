@@ -17,6 +17,40 @@ import {
   type ContactDialogIntent,
 } from "@/lib/landing-contact";
 
+/** Copie synchrone via `execCommand`, pendant le geste utilisateur (sinon refusée). */
+function legacyCopy(text: string): boolean {
+  try {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(textarea);
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * `execCommand` d'abord (synchrone, fiable dans un clic), puis l'API
+ * presse-papiers bornée à 800 ms : sans permission, `writeText` peut rester
+ * en attente indéfiniment et le bouton ne donnerait jamais de retour.
+ */
+async function copyToClipboard(text: string): Promise<boolean> {
+  if (legacyCopy(text)) return true;
+  if (!navigator.clipboard?.writeText) return false;
+  const timeout = new Promise<boolean>((resolve) => window.setTimeout(() => resolve(false), 800));
+  const write = navigator.clipboard.writeText(text).then(
+    () => true,
+    () => false
+  );
+  return Promise.race([write, timeout]);
+}
+
 interface ContactDialogProps {
   intent: ContactDialogIntent | null;
   onClose: () => void;
@@ -34,13 +68,9 @@ export function ContactDialog({ intent, onClose }: ContactDialogProps) {
   const copy = CONTACT_DIALOG_COPY[effectiveIntent];
 
   const copyEmail = async () => {
-    try {
-      await navigator.clipboard.writeText(FLI_CONTACT_EMAIL);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(false);
-    }
+    const ok = await copyToClipboard(FLI_CONTACT_EMAIL);
+    setCopied(ok);
+    if (ok) window.setTimeout(() => setCopied(false), 2000);
   };
 
   return (
