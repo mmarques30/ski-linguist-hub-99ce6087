@@ -54,6 +54,7 @@ import FormateurStagiaires from "./pages/formateur/FormateurStagiaires";
 import FormateurProfil from "./pages/formateur/FormateurProfil";
 import FormateurPaiements from "./pages/formateur/FormateurPaiements";
 import FormateurDocuments from "./pages/formateur/FormateurDocuments";
+import FormateurOnboarding from "./pages/formateur/FormateurOnboarding";
 import PublicRegistrationRoute from "./pages/register/PublicRegistrationRoute";
 import BookTest from "./pages/test/BookTest";
 import SalonDirecteursPage from "./pages/salon/Index";
@@ -179,6 +180,16 @@ const App = () => (
                 <ProtectedRoute>
                   <FormateurOwnViewProvider>
                     <FormateurDashboard />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/formateur/onboarding"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <FormateurOnboarding />
                   </FormateurOwnViewProvider>
                 </ProtectedRoute>
               }
@@ -382,6 +393,7 @@ const App = () => (
             >
               <Route index element={<Navigate to="tableau-de-bord" replace />} />
               <Route path="tableau-de-bord" element={<FormateurDashboard />} />
+              <Route path="onboarding" element={<FormateurOnboarding />} />
               <Route path="planning" element={<FormateurPlanning />} />
               <Route path="stagiaires" element={<FormateurStagiaires />} />
               <Route path="documents" element={<FormateurDocuments />} />

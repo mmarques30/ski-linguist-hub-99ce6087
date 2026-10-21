@@ -9,6 +9,7 @@ import {
   User,
   Wallet,
   FileText,
+  BookOpen,
   LogOut,
   Eye,
   ArrowLeft,
@@ -25,6 +26,7 @@ interface FormateurLayoutProps {
 
 const formateurNavPages = [
   { name: "Tableau de bord", page: "tableau-de-bord", icon: LayoutDashboard, short: "Accueil" },
+  { name: "Guide FLI", page: "onboarding", icon: BookOpen, short: "Guide" },
   { name: "Planning", page: "planning", icon: Calendar, short: "Planning" },
   { name: "Stagiaires", page: "stagiaires", icon: Users, short: "Stagiaires" },
   { name: "Évaluations", page: "evaluations", icon: ClipboardCheck, short: "Évals" },
