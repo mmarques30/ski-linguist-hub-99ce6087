@@ -32,6 +32,12 @@ const MARGIN_ESF = 36;
 const ESF_TAB = MARGIN_ESF + 5670 / 20;
 /** Indent Nom/Adresse .dotx left=5245 twips. */
 const ESF_NAME_X = MARGIN_ESF + 5245 / 20;
+/**
+ * Baseline « Nom – Prénom » sous le titre (pt depuis le haut de zone).
+ * Le titre centré déborde horizontalement sur ESF_NAME_X (~317 pt de large) :
+ * un offset trop faible (ex. 28) cache le nom sous le titre.
+ */
+const ESF_NAME_BASELINE_FROM_TOP = 58;
 const ESF_LOGO = 78;
 const ESF_SKILLS_W = (3402 + 1701) / 20;
 const ESF_BAREME_W = 10884 / 20;
@@ -968,24 +974,9 @@ function drawEsfDocument(
   fliCachet: PDFImage | null,
   partnerLogos: PDFImage[]
 ) {
-  // En-tête .dotx : logo à gauche, titre centré, Nom/Adresse en haut à droite.
+  // En-tête .dotx : logo à gauche, titre centré, Nom/Adresse à droite sous le titre.
   const headerTop = cursor.bounds.top;
   drawEsfHeaderLogo(cursor.page, esfLogo, headerTop + 4);
-  const size = 10;
-  cursor.page.drawText(pdfSafe(`Nom – Prénom : ${model.candidateDisplayName}`), {
-    x: ESF_NAME_X,
-    y: headerTop - 28,
-    size,
-    font: fonts.regular,
-    color: BLACK,
-  });
-  cursor.page.drawText(pdfSafe("Adresse :"), {
-    x: ESF_NAME_X,
-    y: headerTop - 28 - size - 4,
-    size,
-    font: fonts.regular,
-    color: BLACK,
-  });
   cursor.y = headerTop - 8;
   cursor.text(model.title, {
     size: 14,
@@ -994,7 +985,23 @@ function drawEsfDocument(
     align: "center",
     gap: 2,
   });
-  cursor.y = Math.min(cursor.y, headerTop - ESF_LOGO - 8);
+  const size = 10;
+  const nameY = headerTop - ESF_NAME_BASELINE_FROM_TOP;
+  cursor.page.drawText(pdfSafe(`Nom – Prénom : ${model.candidateDisplayName}`), {
+    x: ESF_NAME_X,
+    y: nameY,
+    size,
+    font: fonts.regular,
+    color: BLACK,
+  });
+  cursor.page.drawText(pdfSafe("Adresse :"), {
+    x: ESF_NAME_X,
+    y: nameY - size - 4,
+    size,
+    font: fonts.regular,
+    color: BLACK,
+  });
+  cursor.y = Math.min(cursor.y, headerTop - ESF_LOGO - 8, nameY - size - 4 - 6);
   cursor.space(8);
 
   if (model.noteMethodologique) {
