@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ADMIN_HOME_PATH } from "@/lib/admin-home";
 import { PATH_TO_ROUTE_KEY, resolveRouteKey } from "@/lib/route-permissions";
 import { isPathActive } from "@/lib/navigation";
+import { buildContactMailto, FLI_CONTACT_EMAIL } from "@/lib/landing-contact";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -95,6 +96,67 @@ describe("LP institutionnelle — conformité spec", () => {
     expect(footer).toContain("qualiopiCertification");
     expect(footer).toContain("Actions de formation");
     expect(src).toContain("qualiopi-certification.png");
+  });
+
+  it("utilise Outfit pour les titres, plus Syne (lisibilité, Paula 21/10)", () => {
+    const src = landing();
+    const html = readFileSync(join(process.cwd(), "index.html"), "utf8");
+    expect(src).not.toContain("Syne");
+    expect(html).not.toContain("Syne");
+    expect(src).toMatch(/\.lp-display \{ font-family: "Outfit"/);
+    expect(src).not.toContain("font-extrabold");
+  });
+
+  it("formation certifiante : Linguaskill et Bright, sans « éligible Qualiopi »", () => {
+    const src = landing();
+    expect(src).toContain('"Centre agréé Linguaskill et Bright."');
+    expect(src).not.toContain("éligible Qualiopi");
+  });
+
+  it("devis et contact ouvrent le dialog (pas de mailto nu sur les CTA)", () => {
+    const src = landing();
+    expect(src).toContain("ContactDialog");
+    expect(src).toContain('setContactIntent("devis")');
+    expect(src).toContain('setContactIntent("question")');
+    const main = src.slice(src.indexOf("<main"), src.indexOf("<footer"));
+    expect(main).not.toContain('href="mailto:');
+  });
+
+  it("construit un mailto pré-rempli par intention", () => {
+    const devis = buildContactMailto("devis");
+    expect(devis.startsWith(`mailto:${FLI_CONTACT_EMAIL}?subject=`)).toBe(true);
+    expect(decodeURIComponent(devis)).toContain("Demande de devis");
+    expect(decodeURIComponent(devis)).toContain("Nombre de personnes");
+    expect(decodeURIComponent(buildContactMailto("question"))).toContain("Question — formations FLI");
+  });
+
+  it("stages : un bloc par langue avec tuiles en grille et format de session", () => {
+    const src = landing();
+    expect(src).toContain("formatSessionFormat");
+    expect(src).toContain("sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4");
+    expect(src).toMatch(/\{group\.sessions\.length\}/);
+  });
+
+  it("FAQ repensée par thèmes, sourcée CGV / sessions / FIF PL", () => {
+    const src = landing();
+    expect(src).toContain("FAQ_GROUPS");
+    for (const title of ["Avant de m'inscrire", "Inscription et financement", "Pendant et après"]) {
+      expect(src).toContain(`title: "${title}"`);
+    }
+    for (const q of [
+      "À qui s'adressent les formations FLI ?",
+      "Quelles langues proposez-vous ?",
+      "Puis-je faire financer ma formation ?",
+      "Et si je dois annuler ?",
+      "FLI est-elle certifiée Qualiopi ?",
+    ]) {
+      expect(src).toContain(q);
+    }
+    expect(src).toContain("10 jours");
+    expect(src).toContain("900 € par an");
+    expect(src).toContain("frais de dossier de 150 €");
+    expect(src).not.toContain("Brevet d'État");
+    expect(src).not.toContain("réseau RHF");
   });
 
   it("place le footer après la FAQ, en bas de page", () => {

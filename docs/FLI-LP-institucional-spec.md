@@ -140,40 +140,28 @@ Menu do header (scroll suave para cada âncora, exceto o CTA):
 
 **Titre :** "Une question ?"
 
-**Questions/réponses proposées** (adaptées de l'Empregga au contexte FLI) :
+**Questions/réponses** (version du 21/10/2026, par thèmes — sources : conditions générales de formation `src/lib/conditions-generales-content.ts`, sessions 2026-2027 `docs/SESSIONS_2026_2027.md`, critères FIF PL `src/lib/fifpl-funding.ts`). Aucun tarif de stage : il dépend de l'école et s'affiche sur le formulaire.
 
-1. **Je n'ai jamais suivi de formation en langues, c'est fait pour moi ?**
-   Oui. Un test de niveau à l'inscription permet de vous placer dans le bon groupe, quel que soit votre point de départ.
+*Avant de m'inscrire*
+1. À qui s'adressent les formations FLI ? — professionnels de la montagne (moniteurs ESF ou indépendants, pisteurs, remontées mécaniques, hôtellerie d'altitude), groupes par niveau et par métier.
+2. Quelles langues proposez-vous ? — anglais, espagnol, néerlandais, portugais brésilien, russe ; autres langues pour un groupe à partir de 6.
+3. Je débute complètement, c'est fait pour moi ? — test de niveau → groupe homogène ; alternative si niveau isolé.
+4. Comment se déroule un stage en station ? — 24 h sur une semaine, groupes de 8, matin/après-midi attribué ~10 jours avant, tests entrée/sortie, émargement, satisfaction.
+5. Je ne peux pas me déplacer : quelles solutions en ligne ? — visio collective 24 h en 8 × 3 h (4 à 8 personnes) ; cours individuels par packs de 3 h (6 à 18 h).
 
-2. **Et si mon niveau ne correspond pas aux autres inscrits ?**
-   Nous vous orientons vers une alternative adaptée (autre groupe, cours individuel) plutôt que de vous imposer un format inadapté.
+*Inscription et financement*
+6. Comment s'inscrire ? — formulaire en ligne + test de niveau ; code d'inscription ; convention et programme envoyés.
+7. Comment se passe le règlement ? — frais de dossier 150 € déduits + solde avant le début, ou paiement intégral ; tarif affiché au récapitulatif ; exonération de TVA.
+8. Puis-je faire financer ma formation ? — FIF PL (langues = cœur de métier, jusqu'à 900 €/an, visio comptée comme présentiel) ; OPCO pour les salariés ; FLI aide à estimer et prépare le dossier.
+9. Et si je dois annuler ? — rétractation 10 jours après signature de la convention ; cours individuels en ligne annulables jusqu'à 24 h avant ; si FLI annule, seules les heures suivies sont dues.
 
-3. **Puis-je concilier la formation avec ma saison de ski ?**
-   Oui : stages intensifs en automne, cours individuels ou en ligne à la demande toute l'année.
+*Pendant et après*
+10. Quels documents vais-je recevoir ? — convention, programme, émargement, attestation, résultats des tests, facture ; transmission à l'école sur demande.
+11. Mon école de ski peut-elle organiser un stage sur place ? — oui, FLI fournit formateur et organisation, l'école la salle (et parfois l'hébergement) ; forfait école possible → devis.
+12. Et si j'ai un handicap ou besoin d'un aménagement ? — référente handicap Paula Rangel Halbwachs ; en ligne accessible PMR ; en station, locaux des partenaires ; orientation possible.
+13. FLI est-elle certifiée Qualiopi ? — oui (actions de formation), condition des financements FIF PL / OPCO.
 
-4. **Et si je dois annuler mon inscription ?**
-   Les frais de dossier (150 €) sont remboursables en cas d'annulation justifiée ou d'insuffisance de participants, sous 7 jours après inscription.
-
-5. **Faut-il déjà avoir le BE (Brevet d'État) pour s'inscrire ?**
-   Oui pour le stage moniteurs de ski — être titulaire du BE ou en formation.
-
-6. **Combien de temps avant de commencer les cours ?**
-   Les inscriptions se clôturent 7 jours avant le début du stage ; au-delà, nous contacter directement selon les places restantes.
-
-7. **Puis-je suivre une formation tout en étant en poste ?**
-   Oui, les formules individuelles en ligne (6h à 18h) s'organisent à votre rythme.
-
-8. **Ça fonctionne dans toutes les stations ?**
-   Nous intervenons dans l'ensemble du réseau ESF et auprès des stations partenaires ; contactez-nous pour organiser une formation dans votre station.
-
-9. **Et si j'ai un handicap ou besoin d'un aménagement ?**
-    Parlez-en dès l'inscription à notre référente handicap, Paula Rangel Halbwachs — nous étudions ensemble les adaptations possibles, avec l'appui du réseau RHF.
-
-10. **Quel suivi est proposé pendant et après la formation ?**
-    Test de progression en fin de stage, questionnaire de satisfaction, et transmission des résultats à votre école de ski.
-
-**Encart contact (comme l'encart Empregga "Não encontrou o que gostaria?"):**
-"Vous n'avez pas trouvé votre réponse ?" → bouton "Nous contacter" → `info@fli.fr` / 04 79 28 21 09
+**Encart contact :** "Vous n'avez pas trouvé votre réponse ?" → bouton "Nous contacter". Comme "Demander un devis" (bloc 4), il ouvre un dialog contact (`ContactDialog`) : e-mail copiable, téléphone cliquable, e-mail pré-rempli — un simple `mailto:` ne fait rien sans client mail configuré (Paula, 21/10/2026).
 
 ---
 
@@ -195,6 +183,8 @@ O spec acima não define paleta/tipografia porque não temos a charte gráfica a
 - [ ] Se a LP deve reaproveitar o design system do app (componentes shadcn/ui já usados) ou ter identidade própria mais "marketing"
 
 Sugestão: reaproveitar o design system do app (Tailwind + shadcn já configurado no repo) para consistência visual entre LP e plataforma, evitando duplicar tokens de design.
+
+**Décision typographie (Paula, 21/10/2026) :** titres et texte courant en **Outfit** (graisse 700 pour les titres). La police display Syne, jugée difficile à lire, est retirée.
 
 ---
 
