@@ -693,9 +693,6 @@ export default function InstitutionalLanding() {
               <Link to="/conditions-generales" className="hover:text-white/80">
                 Conditions générales
               </Link>
-              <Link to="/mockup/lp-assets" className="hover:text-white/80">
-                Validation des visuels
-              </Link>
               <Link to="/auth" className="hover:text-white/80">
                 Accès FLI
               </Link>
