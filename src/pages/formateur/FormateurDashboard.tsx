@@ -4,6 +4,7 @@ import {
   Calendar,
   Users,
   ClipboardCheck,
+  ClipboardList,
   MapPin,
   BookOpen,
 } from "lucide-react";
@@ -131,6 +132,12 @@ export default function FormateurDashboard() {
 
           <SurfaceCard title="Raccourcis" icon={ClipboardCheck}>
             <div className="flex flex-col gap-2">
+              <Button variant="outline" className="justify-start" asChild>
+                <Link to={`${basePath}/bilans`}>
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  Bilans entrée / sortie
+                </Link>
+              </Button>
               <Button variant="outline" className="justify-start" asChild>
                 <Link to={`${basePath}/evaluations`}>
                   <ClipboardCheck className="mr-2 h-4 w-4" />

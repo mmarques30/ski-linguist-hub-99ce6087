@@ -54,6 +54,8 @@ import FormateurStagiaires from "./pages/formateur/FormateurStagiaires";
 import FormateurProfil from "./pages/formateur/FormateurProfil";
 import FormateurPaiements from "./pages/formateur/FormateurPaiements";
 import FormateurDocuments from "./pages/formateur/FormateurDocuments";
+import FormateurBilans from "./pages/formateur/FormateurBilans";
+import FormateurBilanFormPage from "./pages/formateur/FormateurBilanFormPage";
 import PublicRegistrationRoute from "./pages/register/PublicRegistrationRoute";
 import BookTest from "./pages/test/BookTest";
 import SalonDirecteursPage from "./pages/salon/Index";
@@ -199,6 +201,36 @@ const App = () => (
                 <ProtectedRoute>
                   <FormateurOwnViewProvider>
                     <FormateurStagiaires />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/formateur/bilans"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <FormateurBilans />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/formateur/bilans/:inscriptionId/entree"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <FormateurBilanFormPage kind="entree" />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/formateur/bilans/:inscriptionId/sortie"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <FormateurBilanFormPage kind="sortie" />
                   </FormateurOwnViewProvider>
                 </ProtectedRoute>
               }
@@ -384,6 +416,15 @@ const App = () => (
               <Route path="tableau-de-bord" element={<FormateurDashboard />} />
               <Route path="planning" element={<FormateurPlanning />} />
               <Route path="stagiaires" element={<FormateurStagiaires />} />
+              <Route path="bilans" element={<FormateurBilans />} />
+              <Route
+                path="bilans/:inscriptionId/entree"
+                element={<FormateurBilanFormPage kind="entree" />}
+              />
+              <Route
+                path="bilans/:inscriptionId/sortie"
+                element={<FormateurBilanFormPage kind="sortie" />}
+              />
               <Route path="documents" element={<FormateurDocuments />} />
               <Route path="paiements" element={<FormateurPaiements />} />
               <Route path="profil" element={<FormateurProfil />} />

@@ -4379,6 +4379,24 @@ export type Database = {
         }
         Returns: string
       }
+      save_formateur_formation_form: {
+        Args: {
+          p_inscription_id: string
+          p_kind: string
+          p_formulaire: Json
+          p_niveau_general: string
+          p_niveau_technique: string
+          p_remarques_or_commentaire?: string
+          p_objectif_atteint?: string
+          p_hours_followed?: number
+          p_entry_level?: string
+          p_exit_level?: string
+          p_final_general_level?: string
+          p_final_specific_level?: string
+          p_progression?: string
+        }
+        Returns: undefined
+      }
       submit_satisfaction_survey_by_token: {
         Args: { p_data: Json; p_token: string }
         Returns: undefined

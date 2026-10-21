@@ -1,17 +1,24 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   deriveEntryCertificateFields,
   deriveExitCertificateFields,
+  emptyFormulaireEntree,
+  FORMATEUR_CECRL_LEVELS,
+  FORMATEUR_SKILL_UNEVALUATED,
   formatFormateurLevelDisplay,
   isFormulaireEntreeComplete,
   isFormulaireSortieComplete,
+  isUnevaluatedSkillLevel,
   MONTAINE_FORMULAIRE_ENTREE,
   MONTAINE_FORMULAIRE_SORTIE,
   normalizeObjectifAtteint,
   resolveFormulaireEntree,
   resolveFormulaireSortie,
+  usableCecrlSkillLevel,
 } from "./formateur-formation-forms";
-import { canIssueCertificate } from "./certificate-progression";
+import { canIssueCertificate, CECRL_LEVELS } from "./certificate-progression";
 
 describe("formateur-formation-forms", () => {
   it("maps Montaine entry Google Form to certificate synthesis", () => {
@@ -84,5 +91,52 @@ describe("formateur-formation-forms", () => {
     });
     expect(form.niveau_general).toBe("B2");
     expect(form.source).toBe("google_form");
+  });
+
+  it("aligne l'échelle Google Forms (C1+ + Non évaluée)", () => {
+    expect(CECRL_LEVELS).toContain("C1+");
+    expect(FORMATEUR_CECRL_LEVELS).toContain("C1+");
+    expect(isUnevaluatedSkillLevel(FORMATEUR_SKILL_UNEVALUATED)).toBe(true);
+    expect(
+      isUnevaluatedSkillLevel("Cette compétance n'a pas été évaluée")
+    ).toBe(true);
+    expect(usableCecrlSkillLevel(FORMATEUR_SKILL_UNEVALUATED)).toBeNull();
+    expect(usableCecrlSkillLevel("B1+")).toBe("B1+");
+  });
+
+  it("refuse une entrée où toutes les compétences sont Non évaluée", () => {
+    const form = emptyFormulaireEntree({
+      type_formation: "individuelle",
+      comprehension_ecrite: FORMATEUR_SKILL_UNEVALUATED,
+      comprehension_orale: FORMATEUR_SKILL_UNEVALUATED,
+      expression_ecrite: FORMATEUR_SKILL_UNEVALUATED,
+      expression_orale: FORMATEUR_SKILL_UNEVALUATED,
+      connaissances_grammaticales: FORMATEUR_SKILL_UNEVALUATED,
+      attentes_stagiaire: "x",
+      competences_a_developper: "y",
+      themes_a_travailler: "z",
+      adequation_moyens: "ok",
+    });
+    expect(isFormulaireEntreeComplete(form)).toBe(false);
+  });
+
+  it("App et layout exposent /formateur/bilans", () => {
+    const app = readFileSync(join(process.cwd(), "src/App.tsx"), "utf8");
+    expect(app).toContain('path="/formateur/bilans"');
+    expect(app).toContain("FormateurBilans");
+    expect(app).toContain("FormateurBilanFormPage");
+    const layout = readFileSync(
+      join(process.cwd(), "src/components/layout/FormateurLayout.tsx"),
+      "utf8"
+    );
+    expect(layout).toContain("bilans");
+    const mig = readFileSync(
+      join(
+        process.cwd(),
+        "supabase/migrations/20261021150000_formateur_save_formation_forms.sql"
+      ),
+      "utf8"
+    );
+    expect(mig).toContain("save_formateur_formation_form");
   });
 });

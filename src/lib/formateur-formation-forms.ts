@@ -14,22 +14,48 @@ import {
 } from "@/lib/certificate-progression";
 import { displayPisteLabel } from "@/lib/placement-test-engine";
 
-/** Échelle utilisée dans les Google Forms (avec demi-niveaux). */
-export const FORMATEUR_CECRL_LEVELS = [
-  "Débutant complet",
-  "A1",
-  "A1+",
-  "A2",
-  "A2+",
-  "B1",
-  "B1+",
-  "B2",
-  "B2+",
-  "C1",
-  "C2",
+/**
+ * Échelle Google Forms (demi-niveaux + C1+).
+ * Alias de `CECRL_LEVELS` pour les libellés formateur.
+ */
+export const FORMATEUR_CECRL_LEVELS = CECRL_LEVELS;
+export type FormateurCecrlLevel = (typeof FORMATEUR_CECRL_LEVELS)[number];
+
+/**
+ * Option Google Form « Cette compétence n'a pas été évaluée »
+ * (typo historique « compétance » tolérée à l'import).
+ */
+export const FORMATEUR_SKILL_UNEVALUATED = "Non évaluée";
+
+export const FORMATEUR_SKILL_UNEVALUATED_ALIASES = [
+  FORMATEUR_SKILL_UNEVALUATED,
+  "Cette compétence n'a pas été évaluée",
+  "Cette compétance n'a pas été évaluée",
 ] as const;
 
-export type FormateurCecrlLevel = (typeof FORMATEUR_CECRL_LEVELS)[number];
+/** Niveaux saisis par compétence (CECRL + non évaluée). */
+export const FORMATEUR_SKILL_LEVEL_OPTIONS = [
+  ...FORMATEUR_CECRL_LEVELS,
+  FORMATEUR_SKILL_UNEVALUATED,
+] as const;
+
+export function isUnevaluatedSkillLevel(
+  value: string | null | undefined
+): boolean {
+  if (isBlank(value)) return false;
+  const v = String(value).trim().toLowerCase();
+  return FORMATEUR_SKILL_UNEVALUATED_ALIASES.some(
+    (alias) => alias.toLowerCase() === v
+  );
+}
+
+/** Valeur CECRL utilisable pour la synthèse certificat (ignore non évaluée). */
+export function usableCecrlSkillLevel(
+  value: string | null | undefined
+): string | null {
+  if (isBlank(value) || isUnevaluatedSkillLevel(value)) return null;
+  return String(value).trim();
+}
 
 export const FORMATION_TYPE_VALUES = ["individuelle", "collective"] as const;
 export type FormationTypeFormateur = (typeof FORMATION_TYPE_VALUES)[number];
@@ -37,6 +63,19 @@ export type FormationTypeFormateur = (typeof FORMATION_TYPE_VALUES)[number];
 export const FORMATION_TYPE_LABELS: Record<FormationTypeFormateur, string> = {
   individuelle: "Formation individuelle",
   collective: "Formation collective",
+};
+
+/** Contexte inscription prérempli (lecture seule à l'écran — pas re-saisi). */
+export type FormateurFormationContext = {
+  studentName?: string | null;
+  inscriptionCode?: string | null;
+  language?: string | null;
+  location?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  modality?: string | null;
+  formateurName?: string | null;
+  durationHours?: number | null;
 };
 
 export interface FormateurSkillLevels {
@@ -68,13 +107,9 @@ export interface FormulaireEntreeFormateur extends FormateurSkillLevels {
   submitted_at: string | null;
 }
 
-export interface FormulaireSortieFormateur {
+export interface FormulaireSortieFormateur extends FormateurSkillLevels {
   version: 1;
   type_formation: FormationTypeFormateur;
-  /** Individuel — compétences (souvent partiellement remplies sur les exports) */
-  comprehension_ecrite: string | null;
-  expression_orale: string | null;
-  connaissances_grammaticales: string | null;
   /** Synthèse certificat */
   niveau_general: string | null;
   niveau_specifique: string | null;
@@ -128,6 +163,8 @@ export function emptyFormulaireSortie(
     version: 1,
     type_formation: "individuelle",
     comprehension_ecrite: null,
+    comprehension_orale: null,
+    expression_ecrite: null,
     expression_orale: null,
     connaissances_grammaticales: null,
     niveau_general: null,
@@ -238,18 +275,22 @@ export function normalizeObjectifAtteint(
   return null;
 }
 
+function skillAnswered(value: string | null | undefined): boolean {
+  return !isBlank(value);
+}
+
 /** Synthèse certificat depuis le formulaire d'entrée Google Form / app. */
 export function deriveEntryCertificateFields(
   form: FormulaireEntreeFormateur
 ): ProgressionEntryFields {
   const general =
-    form.expression_orale?.trim() ||
-    form.comprehension_orale?.trim() ||
-    form.niveau_general_groupe?.trim() ||
+    usableCecrlSkillLevel(form.expression_orale) ||
+    usableCecrlSkillLevel(form.comprehension_orale) ||
+    usableCecrlSkillLevel(form.niveau_general_groupe) ||
     null;
   const technique =
-    form.connaissances_grammaticales?.trim() ||
-    form.expression_ecrite?.trim() ||
+    usableCecrlSkillLevel(form.connaissances_grammaticales) ||
+    usableCecrlSkillLevel(form.expression_ecrite) ||
     null;
 
   const remarquesParts = [
@@ -265,9 +306,16 @@ export function deriveEntryCertificateFields(
     form.attentes_groupe?.trim()
       ? `Attentes groupe : ${form.attentes_groupe.trim()}`
       : null,
+    form.competences_groupe?.trim()
+      ? `Compétences groupe : ${form.competences_groupe.trim()}`
+      : null,
+    form.themes_groupe?.trim()
+      ? `Thèmes groupe : ${form.themes_groupe.trim()}`
+      : null,
     form.adequation_moyens?.trim()
       ? `Moyens : ${form.adequation_moyens.trim()}`
       : null,
+    form.absents?.trim() ? `Absents : ${form.absents.trim()}` : null,
     form.remarques_groupe?.trim() || null,
   ].filter(Boolean);
 
@@ -290,18 +338,24 @@ export function deriveExitCertificateFields(
     form.objectif_ecart_detail?.trim()
       ? `Écarts objectifs : ${form.objectif_ecart_detail.trim()}`
       : null,
+    form.objectifs_groupe_atteints?.trim()
+      ? `Objectifs groupe : ${form.objectifs_groupe_atteints.trim()}`
+      : null,
+    form.objectifs_groupe_ecarts?.trim()
+      ? `Écarts groupe : ${form.objectifs_groupe_ecarts.trim()}`
+      : null,
     form.commentaire_dynamique_groupe?.trim() || null,
   ].filter(Boolean);
 
   return {
     niveau_general_sortie:
-      form.niveau_general?.trim() ||
-      form.expression_orale?.trim() ||
-      form.niveau_general_groupe?.trim() ||
+      usableCecrlSkillLevel(form.niveau_general) ||
+      usableCecrlSkillLevel(form.expression_orale) ||
+      usableCecrlSkillLevel(form.niveau_general_groupe) ||
       null,
     niveau_technique_sortie:
-      form.niveau_specifique?.trim() ||
-      form.connaissances_grammaticales?.trim() ||
+      usableCecrlSkillLevel(form.niveau_specifique) ||
+      usableCecrlSkillLevel(form.connaissances_grammaticales) ||
       null,
     objectif_atteint: form.objectif_atteint,
     commentaire_sortie: commentaireParts.length
@@ -313,22 +367,40 @@ export function deriveExitCertificateFields(
 export function isFormulaireEntreeComplete(
   form: FormulaireEntreeFormateur
 ): boolean {
+  const skillsOk =
+    skillAnswered(form.comprehension_ecrite) &&
+    skillAnswered(form.comprehension_orale) &&
+    skillAnswered(form.expression_ecrite) &&
+    skillAnswered(form.expression_orale) &&
+    skillAnswered(form.connaissances_grammaticales);
+
+  if (!skillsOk) return false;
+
+  // Au moins une compétence CECRL réelle pour la synthèse certificat.
+  const derived = deriveEntryCertificateFields(form);
+  if (
+    isBlank(derived.niveau_general_entree) ||
+    isBlank(derived.niveau_technique_entree)
+  ) {
+    return false;
+  }
+
   if (form.type_formation === "collective") {
     return (
       !isBlank(form.niveau_general_groupe) &&
-      !isBlank(form.comprehension_ecrite) &&
-      !isBlank(form.comprehension_orale) &&
-      !isBlank(form.expression_ecrite) &&
-      !isBlank(form.expression_orale) &&
-      !isBlank(form.connaissances_grammaticales)
+      !isBlank(form.remarques_groupe) &&
+      !isBlank(form.attentes_groupe) &&
+      !isBlank(form.competences_groupe) &&
+      !isBlank(form.themes_groupe) &&
+      !isBlank(form.adequation_moyens)
     );
   }
+
   return (
-    !isBlank(form.comprehension_ecrite) &&
-    !isBlank(form.comprehension_orale) &&
-    !isBlank(form.expression_ecrite) &&
-    !isBlank(form.expression_orale) &&
-    !isBlank(form.connaissances_grammaticales)
+    !isBlank(form.attentes_stagiaire) &&
+    !isBlank(form.competences_a_developper) &&
+    !isBlank(form.themes_a_travailler) &&
+    !isBlank(form.adequation_moyens)
   );
 }
 
@@ -356,6 +428,8 @@ export const MONTAINE_FORMULAIRE_ENTREE: FormulaireEntreeFormateur =
     expression_orale: "B1+",
     connaissances_grammaticales: "B1",
     attentes_stagiaire: "Obtenir le niveau B2",
+    competences_a_developper: "Fluidité à l'oral, précision grammaticale",
+    themes_a_travailler: "Accueil clients, sécurité, vocabulaire technique",
     adequation_moyens: "Teams, YouTube, quizz",
     formateur_nom: "Maxime Goy",
     source: "google_form",
