@@ -1316,6 +1316,19 @@ export default function InscriptionDetails() {
                   }
                 : null
             }
+            context={{
+              studentName: inscription.student_name,
+              inscriptionCode: inscription.code,
+              language: inscription.language,
+              location: inscription.course_location,
+              startDate: inscription.start_date,
+              endDate: inscription.end_date,
+              modality: inscription.modality,
+              formateurName:
+                (inscription as { formateur?: string | null }).formateur ||
+                inscription.instructor_name,
+              durationHours: inscription.duration_hours,
+            }}
           />
 
           <FormateurExitFormDialog
@@ -1344,6 +1357,19 @@ export default function InscriptionDetails() {
                   }
                 : null
             }
+            context={{
+              studentName: inscription.student_name,
+              inscriptionCode: inscription.code,
+              language: inscription.language,
+              location: inscription.course_location,
+              startDate: inscription.start_date,
+              endDate: inscription.end_date,
+              modality: inscription.modality,
+              formateurName:
+                (inscription as { formateur?: string | null }).formateur ||
+                inscription.instructor_name,
+              durationHours: inscription.duration_hours,
+            }}
           />
 
           <InvoiceCreateDialog

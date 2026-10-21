@@ -16,6 +16,13 @@ export type FormateurInscriptionRow = {
   schedule: string | null;
   group_name: string | null;
   ski_school_name: string | null;
+  duration_hours?: number | null;
+  entry_form_completed_at?: string | null;
+  exit_form_completed_at?: string | null;
+  niveau_general_entree?: string | null;
+  niveau_technique_entree?: string | null;
+  niveau_general_sortie?: string | null;
+  niveau_technique_sortie?: string | null;
 };
 
 export function splitFormateurInscriptions(rows: FormateurInscriptionRow[]) {

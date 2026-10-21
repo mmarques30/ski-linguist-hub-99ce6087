@@ -60,7 +60,11 @@ export function formateurAssistPath(
     | "tableau-de-bord"
     | "onboarding"
     | "planning"
+    | `missions/${string}`
     | "stagiaires"
+    | "bilans"
+    | `bilans/${string}/entree`
+    | `bilans/${string}/sortie`
     | "evaluations"
     | "documents"
     | "paiements"
