@@ -11,7 +11,7 @@ export {
 } from "@/lib/formateur-portal";
 
 const INSCRIPTION_SELECT =
-  "id, code, language, start_date, end_date, status, student_id, student_name, student_email, student_phone, course_location, course_address, modality, rhythm, schedule, group_name, ski_school_name";
+  "id, code, language, start_date, end_date, status, student_id, student_name, student_email, student_phone, course_location, course_address, modality, rhythm, schedule, group_name, ski_school_name, duration_hours, entry_form_completed_at, exit_form_completed_at, niveau_general_entree, niveau_technique_entree, niveau_general_sortie, niveau_technique_sortie";
 
 /** Profil instructeur : soi-même (auth) ou cible Assister. */
 export function useFormateurProfile() {

@@ -1,6 +1,6 @@
 /** Spec certificat FLI — bilan Entrée / Sortie (jamais la piste comme niveau final). */
 
-/** Échelle CECRL formateur (alignée Google Forms, avec demi-niveaux). */
+/** Échelle CECRL formateur (alignée Google Forms, avec demi-niveaux dont C1+). */
 export const CECRL_LEVELS = [
   "Débutant complet",
   "A1",
@@ -12,6 +12,7 @@ export const CECRL_LEVELS = [
   "B2",
   "B2+",
   "C1",
+  "C1+",
   "C2",
 ] as const;
 export type CecrlLevel = (typeof CECRL_LEVELS)[number];

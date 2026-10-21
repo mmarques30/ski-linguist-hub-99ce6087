@@ -4,10 +4,11 @@ import {
   Calendar,
   Users,
   ClipboardCheck,
-  MapPin,
+  ClipboardList,
   BookOpen,
 } from "lucide-react";
 import { FormateurPageShell } from "@/components/layout/FormateurPageShell";
+import { FormateurMissionCard } from "@/components/formateur/FormateurMissionCard";
 import { useFormateurView } from "@/contexts/FormateurViewContext";
 import {
   splitFormateurInscriptions,
@@ -16,8 +17,6 @@ import {
   useFormateurProfile,
 } from "@/hooks/useFormateurPortal";
 import { useTestBookingsToEvaluate } from "@/hooks/useTestEvaluations";
-import { inscriptionDateRangeLabel } from "@/lib/registration-dates";
-import { getStatusLabel } from "@/lib/inscription-status";
 import { displayLanguageLabel } from "@/lib/taught-languages";
 import {
   CardGrid,
@@ -26,11 +25,9 @@ import {
   PageShell,
   StatTile,
   StatTileGrid,
-  StatusPill,
   SurfaceCard,
   TableEmpty,
   TableSkeleton,
-  toneForStatus,
 } from "@/components/ui-kit";
 import { Button } from "@/components/ui/button";
 
@@ -55,7 +52,7 @@ export default function FormateurDashboard() {
               ? "Espace formateur"
               : `Bonjour${profile?.first_name ? `, ${profile.first_name}` : ""}`
           }
-          description="Vos missions, stagiaires et évaluations orales"
+          description="Tes missions en un coup d'œil, puis stagiaires, bilans et évaluations"
           icon={LayoutDashboard}
           tone="gold"
         />
@@ -77,7 +74,7 @@ export default function FormateurDashboard() {
             icon={Calendar}
             actions={
               <Button variant="ghost" size="sm" asChild>
-                <Link to={`${basePath}/planning`}>Voir le planning</Link>
+                <Link to={`${basePath}/planning`}>Toutes les missions</Link>
               </Button>
             }
           >
@@ -88,42 +85,7 @@ export default function FormateurDashboard() {
             ) : (
               <ul className="space-y-3">
                 {highlight.map((row) => (
-                  <li
-                    key={row.id}
-                    className="rounded-[var(--radius)] border border-border p-3 text-sm"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div className="min-w-0 space-y-1">
-                        <p className="font-medium">
-                          {row.student_name || "Stagiaire"}
-                          {row.code ? (
-                            <span className="ml-2 text-xs font-normal text-muted-foreground">
-                              {row.code}
-                            </span>
-                          ) : null}
-                        </p>
-                        <p className="text-xs text-muted-foreground tabular">
-                          {inscriptionDateRangeLabel(row)}
-                        </p>
-                        {row.course_location ? (
-                          <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <MapPin className="h-3 w-3" />
-                            {row.course_location}
-                          </p>
-                        ) : null}
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        {row.language ? (
-                          <StatusPill tone="neutral" size="sm">
-                            {displayLanguageLabel(row.language)}
-                          </StatusPill>
-                        ) : null}
-                        <StatusPill tone={toneForStatus(row.status)} size="sm">
-                          {getStatusLabel(row.status || '', 'fr')}
-                        </StatusPill>
-                      </div>
-                    </div>
-                  </li>
+                  <FormateurMissionCard key={row.id} row={row} />
                 ))}
               </ul>
             )}
@@ -132,9 +94,15 @@ export default function FormateurDashboard() {
           <SurfaceCard title="Raccourcis" icon={ClipboardCheck}>
             <div className="flex flex-col gap-2">
               <Button variant="outline" className="justify-start" asChild>
+                <Link to={`${basePath}/bilans`}>
+                  <ClipboardList className="mr-2 h-4 w-4" />
+                  Bilans entrée / sortie
+                </Link>
+              </Button>
+              <Button variant="outline" className="justify-start" asChild>
                 <Link to={`${basePath}/evaluations`}>
                   <ClipboardCheck className="mr-2 h-4 w-4" />
-                  Évaluations orales
+                  Évaluations orales SNMSF
                   {!loadingEvals && bookingsToEvaluate.length > 0
                     ? ` (${bookingsToEvaluate.length})`
                     : ""}
@@ -143,13 +111,13 @@ export default function FormateurDashboard() {
               <Button variant="outline" className="justify-start" asChild>
                 <Link to={`${basePath}/stagiaires`}>
                   <Users className="mr-2 h-4 w-4" />
-                  Mes stagiaires ({stagiaires.length})
+                  Stagiaires ({stagiaires.length})
                 </Link>
               </Button>
               <Button variant="outline" className="justify-start" asChild>
                 <Link to={`${basePath}/planning`}>
                   <Calendar className="mr-2 h-4 w-4" />
-                  Planning des missions
+                  Toutes les missions
                 </Link>
               </Button>
             </div>
@@ -160,14 +128,14 @@ export default function FormateurDashboard() {
                 columns={1}
                 items={[
                   {
-                    label: "Langues",
+                    label: "Tes langues",
                     value:
                       (profile.languages || [])
                         .map((l) => displayLanguageLabel(l))
                         .join(", ") || "—",
                   },
                   {
-                    label: "Contact",
+                    label: "Ton contact",
                     value: profile.email || profile.phone || "—",
                   },
                 ]}
@@ -179,7 +147,7 @@ export default function FormateurDashboard() {
         {!loadingInscriptions && past.length > 0 ? (
           <p className="text-xs text-muted-foreground">
             {past.length} mission{past.length > 1 ? "s" : ""} passée
-            {past.length > 1 ? "s" : ""} — visibles dans Planning.
+            {past.length > 1 ? "s" : ""} — visibles dans Missions.
           </p>
         ) : null}
       </PageShell>

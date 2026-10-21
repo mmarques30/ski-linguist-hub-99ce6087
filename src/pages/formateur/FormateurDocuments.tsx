@@ -35,7 +35,7 @@ export default function FormateurDocuments() {
       <PageShell>
         <PageHeader
           title="Documents"
-          description="CV, attestation de vigilance et contrats"
+          description="CV, vigilance et contrats — lecture seule"
           icon={FileText}
           tone="blue"
         />

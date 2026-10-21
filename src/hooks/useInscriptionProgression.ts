@@ -66,6 +66,40 @@ export function useInscriptionProgression(inscriptionId?: string) {
   });
 }
 
+async function callSaveFormRpc(args: {
+  inscriptionId: string;
+  kind: "entree" | "sortie";
+  formulaire: FormulaireEntreeFormateur | FormulaireSortieFormateur;
+  niveauGeneral: string | null;
+  niveauTechnique: string | null;
+  remarquesOrCommentaire: string | null;
+  objectifAtteint?: string | null;
+  hoursFollowed?: number | null;
+  entryLevel?: string | null;
+  exitLevel?: string | null;
+  finalGeneralLevel?: string | null;
+  finalSpecificLevel?: string | null;
+  progression?: string | null;
+}) {
+  const { error } = await supabase.rpc("save_formateur_formation_form", {
+    p_inscription_id: args.inscriptionId,
+    p_kind: args.kind,
+    p_formulaire: args.formulaire,
+    p_niveau_general: args.niveauGeneral,
+    p_niveau_technique: args.niveauTechnique,
+    p_remarques_or_commentaire: args.remarquesOrCommentaire,
+    p_objectif_atteint: args.objectifAtteint ?? null,
+    p_hours_followed: args.hoursFollowed ?? null,
+    p_entry_level: args.entryLevel ?? null,
+    p_exit_level: args.exitLevel ?? null,
+    p_final_general_level: args.finalGeneralLevel ?? null,
+    p_final_specific_level: args.finalSpecificLevel ?? null,
+    p_progression: args.progression ?? null,
+  } as never);
+
+  if (error) throw error;
+}
+
 export function useSaveEntryForm() {
   const queryClient = useQueryClient();
 
@@ -73,10 +107,12 @@ export function useSaveEntryForm() {
     mutationFn: async (input: {
       inscriptionId: string;
       formulaire: FormulaireEntreeFormateur;
+      /** Pas de toast (ex. sync cohorte). */
+      quiet?: boolean;
     }) => {
       if (!isFormulaireEntreeComplete(input.formulaire)) {
         throw new Error(
-          "Formulaire d'entrée incomplet (5 compétences CECRL obligatoires)"
+          "Formulaire d'entrée incomplet (compétences CECRL, attentes, moyens)"
         );
       }
       const derived = deriveEntryCertificateFields(input.formulaire);
@@ -94,25 +130,28 @@ export function useSaveEntryForm() {
         submitted_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
-        .from("inscriptions")
-        .update({
-          formulaire_entree: payload,
-          niveau_general_entree: derived.niveau_general_entree,
-          niveau_technique_entree: derived.niveau_technique_entree,
-          remarques_entree: derived.remarques_entree,
-          entry_form_completed_at: new Date().toISOString(),
-          entry_level: legacy.entry_level,
-        } as never)
-        .eq("id", input.inscriptionId);
-
-      if (error) throw error;
+      await callSaveFormRpc({
+        inscriptionId: input.inscriptionId,
+        kind: "entree",
+        formulaire: payload,
+        niveauGeneral: derived.niveau_general_entree,
+        niveauTechnique: derived.niveau_technique_entree,
+        remarquesOrCommentaire: derived.remarques_entree,
+        entryLevel: legacy.entry_level,
+      });
     },
     onSuccess: (_data, vars) => {
-      queryClient.invalidateQueries({ queryKey: ["inscription-progression", vars.inscriptionId] });
-      queryClient.invalidateQueries({ queryKey: ["inscription", vars.inscriptionId] });
+      queryClient.invalidateQueries({
+        queryKey: ["inscription-progression", vars.inscriptionId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["inscription", vars.inscriptionId],
+      });
       queryClient.invalidateQueries({ queryKey: ["inscriptions"] });
-      toast.success("Formulaire d'entrée enregistré");
+      queryClient.invalidateQueries({
+        queryKey: ["formateur-portal-inscriptions"],
+      });
+      if (!vars.quiet) toast.success("Formulaire d'entrée enregistré");
     },
     onError: (error: Error) => {
       toast.error(error.message || "Erreur formulaire d'entrée");
@@ -129,17 +168,20 @@ export function useSaveExitForm() {
       formulaire: FormulaireSortieFormateur;
       hoursFollowed?: number | null;
       existingEntry?: ProgressionEntryFields;
+      quiet?: boolean;
     }) => {
       if (!isFormulaireSortieComplete(input.formulaire)) {
         throw new Error(
-          "Formulaire de sortie incomplet (niveaux, objectif, commentaire assiduité)"
+          "Formulaire de sortie incomplet (niveaux, objectif, assiduité/logistique ou dynamique de groupe)"
         );
       }
 
       const derived = deriveExitCertificateFields(input.formulaire);
       const legacy = legacyLevelSyncFromProgression({
-        niveau_general_entree: input.existingEntry?.niveau_general_entree ?? null,
-        niveau_technique_entree: input.existingEntry?.niveau_technique_entree ?? null,
+        niveau_general_entree:
+          input.existingEntry?.niveau_general_entree ?? null,
+        niveau_technique_entree:
+          input.existingEntry?.niveau_technique_entree ?? null,
         remarques_entree: input.existingEntry?.remarques_entree ?? null,
         ...derived,
       });
@@ -150,34 +192,33 @@ export function useSaveExitForm() {
         submitted_at: new Date().toISOString(),
       };
 
-      const payload: Record<string, unknown> = {
-        formulaire_sortie: formulairePayload,
-        niveau_general_sortie: derived.niveau_general_sortie,
-        niveau_technique_sortie: derived.niveau_technique_sortie,
-        objectif_atteint: derived.objectif_atteint as ObjectifAtteint,
-        commentaire_sortie: derived.commentaire_sortie,
-        exit_form_completed_at: new Date().toISOString(),
-        exit_level: legacy.exit_level,
-        final_general_level: legacy.final_general_level,
-        final_specific_level: legacy.final_specific_level,
+      await callSaveFormRpc({
+        inscriptionId: input.inscriptionId,
+        kind: "sortie",
+        formulaire: formulairePayload,
+        niveauGeneral: derived.niveau_general_sortie,
+        niveauTechnique: derived.niveau_technique_sortie,
+        remarquesOrCommentaire: derived.commentaire_sortie,
+        objectifAtteint: derived.objectif_atteint as ObjectifAtteint,
+        hoursFollowed: input.hoursFollowed,
+        exitLevel: legacy.exit_level,
+        finalGeneralLevel: legacy.final_general_level,
+        finalSpecificLevel: legacy.final_specific_level,
         progression: legacy.progression,
-      };
-      if (input.hoursFollowed !== undefined) {
-        payload.hours_followed = input.hoursFollowed;
-      }
-
-      const { error } = await supabase
-        .from("inscriptions")
-        .update(payload as never)
-        .eq("id", input.inscriptionId);
-
-      if (error) throw error;
+      });
     },
     onSuccess: (_data, vars) => {
-      queryClient.invalidateQueries({ queryKey: ["inscription-progression", vars.inscriptionId] });
-      queryClient.invalidateQueries({ queryKey: ["inscription", vars.inscriptionId] });
+      queryClient.invalidateQueries({
+        queryKey: ["inscription-progression", vars.inscriptionId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["inscription", vars.inscriptionId],
+      });
       queryClient.invalidateQueries({ queryKey: ["inscriptions"] });
-      toast.success("Formulaire de sortie enregistré");
+      queryClient.invalidateQueries({
+        queryKey: ["formateur-portal-inscriptions"],
+      });
+      if (!vars.quiet) toast.success("Formulaire de sortie enregistré");
     },
     onError: (error: Error) => {
       toast.error(error.message || "Erreur formulaire de sortie");
@@ -192,7 +233,9 @@ export function useInscriptionCertificates(inscriptionId?: string) {
       if (!inscriptionId) return [];
       const { data, error } = await supabase
         .from("certificates")
-        .select("id, pdf_url, issue_date, level_achieved, hours_followed, hours_planned")
+        .select(
+          "id, pdf_url, issue_date, level_achieved, hours_followed, hours_planned"
+        )
         .eq("inscription_id", inscriptionId);
       if (error) throw error;
       return data || [];

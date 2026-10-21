@@ -59,7 +59,11 @@ export function formateurAssistPath(
   page:
     | "tableau-de-bord"
     | "planning"
+    | `missions/${string}`
     | "stagiaires"
+    | "bilans"
+    | `bilans/${string}/entree`
+    | `bilans/${string}/sortie`
     | "evaluations"
     | "documents"
     | "paiements"
