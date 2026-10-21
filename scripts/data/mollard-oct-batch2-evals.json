@@ -2,7 +2,7 @@
   {
     "key": "titouan-avocat",
     "name": "Titouan Avocat",
-    "email": null,
+    "email": "titouanavocat@gmail.com",
     "phone": null,
     "school": "ESF ARACHES LES CARROZ",
     "school_id": "1897d121-6d3d-4b92-abee-a0351dcbe6ac",
@@ -25,7 +25,7 @@
     "points": "Utilisez le PRESENT -ing pour parler de ce qui se déroule maintenant ou temporairement. Utilisez le PRESENT SIMPLE pour parler des vérités permanentes, de votre routine, des règles de sécurité, etc. Apprenez à utiliser les temps du passé PRETERIT (action datée/terminée) et PRESENT PERFECT (l'action continue dans le présent).",
     "concl": "Votre niveau vous permet de comprendre globalement et de vous exprimer en général.",
     "pdf_habillage": "esf",
-    "send_mode": "school_billed_need_email",
+    "send_mode": "school_billed_no_invoice",
     "school_cc": ["admin@esf-lescarroz.com", "directeur@esf-lescarroz.com"]
   },
   {
@@ -61,7 +61,7 @@
   {
     "key": "gabin-lombardot",
     "name": "Gabin Lombardot",
-    "email": null,
+    "email": "hulotandy@yahoo.com",
     "phone": null,
     "school": "ESF SAINT GERVAIS",
     "school_id": "c3e047ad-c884-4e2d-8d32-a7fdc7d842b3",
@@ -84,8 +84,9 @@
     "points": "écouter = to listen TO ; « there is » est suivi du singulier et « there are » du pluriel ; utilisez SHOULD pour donner un conseil ; vous dites « at the lunchtime » au lieu de « at lunchtime ».",
     "concl": "Vous avez un niveau autonome qui demande à être amélioré sur quelques points de grammaire ; vous oubliez parfois d'utiliser le passé (passé de know = knew).",
     "pdf_habillage": "esf",
-    "send_mode": "school_billed_need_email",
-    "school_cc": ["administration@esf-saintgervais.com"]
+    "send_mode": "school_billed_no_invoice",
+    "school_cc": ["administration@esf-saintgervais.com"],
+    "note": "Email fourni par Paula : hulotandy@yahoo.com"
   },
   {
     "key": "valentine-charpin",
@@ -124,7 +125,7 @@
   {
     "key": "romain-godeffroy",
     "name": "Romain Godeffroy",
-    "email": null,
+    "email": "romain.godefroy74@gmail.com",
     "phone": null,
     "school": "ESF SAINT GERVAIS",
     "school_id": "c3e047ad-c884-4e2d-8d32-a7fdc7d842b3",
@@ -147,7 +148,7 @@
     "points": "Pour traduire « Cela dépend de… » vous dites « It's depend of » au lieu de « It depends on… » ; le prétérit de FEEL est FELT ; FALL = FELL.",
     "concl": "En conclusion vous avez un niveau opérationnel qui vous permet de communiquer correctement avec la clientèle anglophone. Continuez néanmoins à développer l'apprentissage de vos connaissances, vous gagnerez en aisance et en fluidité.",
     "pdf_habillage": "esf",
-    "send_mode": "school_billed_need_email",
+    "send_mode": "school_billed_no_invoice",
     "school_cc": ["administration@esf-saintgervais.com"]
   },
   {
