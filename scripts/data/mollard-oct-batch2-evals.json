@@ -61,7 +61,7 @@
   {
     "key": "gabin-lombardot",
     "name": "Gabin Lombardot",
-    "email": "hulotandy@yahoo.com",
+    "email": null,
     "phone": null,
     "school": "ESF SAINT GERVAIS",
     "school_id": "c3e047ad-c884-4e2d-8d32-a7fdc7d842b3",
@@ -86,7 +86,7 @@
     "pdf_habillage": "esf",
     "send_mode": "school_billed_no_invoice",
     "school_cc": ["administration@esf-saintgervais.com"],
-    "note": "Email fourni par Paula : hulotandy@yahoo.com"
+    "note": "hulotandy@yahoo.com était une erreur (Andy Hulot a répondu). Excuses envoyées 21/10 Resend 01a15e39-b9a4-7a1b-9b6c-778c32de4e09 ; renvoi école 01a15e39-bae0-7cdf-b66f-0e96816fbd75. Attente vraie adresse Gabin."
   },
   {
     "key": "valentine-charpin",
