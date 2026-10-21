@@ -13,6 +13,10 @@ import {
   type ProgressionExitFields,
 } from "@/lib/certificate-progression";
 import { displayPisteLabel } from "@/lib/placement-test-engine";
+import type { FormateurStagiaireNiveauRow } from "@/lib/formateur-stagiaire-niveaux";
+import {
+  areStagiairesNiveauxComplete,
+} from "@/lib/formateur-stagiaire-niveaux";
 
 /**
  * Échelle Google Forms (demi-niveaux + C1+).
@@ -100,6 +104,11 @@ export interface FormulaireEntreeFormateur extends FormateurSkillLevels {
   competences_groupe: string | null;
   themes_groupe: string | null;
   absents: string | null;
+  /**
+   * Collectif — niveau d'entrée de chaque stagiaire du groupe
+   * (1 ligne = 1 inscription).
+   */
+  stagiaires_niveaux: FormateurStagiaireNiveauRow[] | null;
   /** Commun */
   adequation_moyens: string | null;
   formateur_nom: string | null;
@@ -138,10 +147,12 @@ export interface FormulaireSortieFormateur extends FormateurSkillLevels {
   /** Q11 — assiduité, ponctualité, cohésion et dynamique de groupe * */
   commentaire_dynamique_groupe: string | null;
   /**
-   * Q12 — liste numérotée des stagiaires du groupe (optionnel dans l'app :
-   * un bilan par dossier ; utile pour notes de cohorte).
+   * Q12 — liste numérotée libre (notes). Les niveaux par stagiaire sont dans
+   * `stagiaires_niveaux`.
    */
   stagiaires_liste: string | null;
+  /** Collectif / cohorte — niveau de sortie de chaque stagiaire. */
+  stagiaires_niveaux: FormateurStagiaireNiveauRow[] | null;
   formateur_nom: string | null;
   source: "app" | "google_form" | "legacy_flat";
   submitted_at: string | null;
@@ -167,6 +178,7 @@ export function emptyFormulaireEntree(
     competences_groupe: null,
     themes_groupe: null,
     absents: null,
+    stagiaires_niveaux: null,
     adequation_moyens: null,
     formateur_nom: null,
     source: "app",
@@ -198,6 +210,7 @@ export function emptyFormulaireSortie(
     objectifs_groupe_ecarts: null,
     commentaire_dynamique_groupe: null,
     stagiaires_liste: null,
+    stagiaires_niveaux: null,
     formateur_nom: null,
     source: "app",
     submitted_at: null,
@@ -392,6 +405,18 @@ export function deriveExitCertificateFields(
 export function isFormulaireEntreeComplete(
   form: FormulaireEntreeFormateur
 ): boolean {
+  if (form.type_formation === "collective") {
+    if (!areStagiairesNiveauxComplete(form.stagiaires_niveaux)) return false;
+    return (
+      !isBlank(form.niveau_general_groupe) &&
+      !isBlank(form.remarques_groupe) &&
+      !isBlank(form.attentes_groupe) &&
+      !isBlank(form.competences_groupe) &&
+      !isBlank(form.themes_groupe) &&
+      !isBlank(form.adequation_moyens)
+    );
+  }
+
   const skillsOk =
     skillAnswered(form.comprehension_ecrite) &&
     skillAnswered(form.comprehension_orale) &&
@@ -401,24 +426,12 @@ export function isFormulaireEntreeComplete(
 
   if (!skillsOk) return false;
 
-  // Au moins une compétence CECRL réelle pour la synthèse certificat.
   const derived = deriveEntryCertificateFields(form);
   if (
     isBlank(derived.niveau_general_entree) ||
     isBlank(derived.niveau_technique_entree)
   ) {
     return false;
-  }
-
-  if (form.type_formation === "collective") {
-    return (
-      !isBlank(form.niveau_general_groupe) &&
-      !isBlank(form.remarques_groupe) &&
-      !isBlank(form.attentes_groupe) &&
-      !isBlank(form.competences_groupe) &&
-      !isBlank(form.themes_groupe) &&
-      !isBlank(form.adequation_moyens)
-    );
   }
 
   return (
@@ -432,16 +445,6 @@ export function isFormulaireEntreeComplete(
 export function isFormulaireSortieComplete(
   form: FormulaireSortieFormateur
 ): boolean {
-  const derived = deriveExitCertificateFields(form);
-  const synthesisOk =
-    !isBlank(derived.niveau_general_sortie) &&
-    !isBlank(derived.niveau_technique_sortie) &&
-    OBJECTIF_ATTEINT_VALUES.includes(
-      derived.objectif_atteint as ObjectifAtteint
-    );
-
-  if (!synthesisOk) return false;
-
   if (form.objectif_atteint && form.objectif_atteint !== "oui") {
     if (
       isBlank(form.objectif_ecart_detail) &&
@@ -453,21 +456,60 @@ export function isFormulaireSortieComplete(
 
   if (form.type_formation === "collective") {
     return (
+      OBJECTIF_ATTEINT_VALUES.includes(
+        form.objectif_atteint as ObjectifAtteint
+      ) &&
       !isBlank(form.niveau_general_groupe) &&
       !isBlank(form.commentaire_dynamique_groupe) &&
-      // Certificat : niveaux de CE stagiaire (1 dossier = 1 ligne de la grille Google)
-      !isBlank(usableCecrlSkillLevel(form.niveau_general)) &&
-      !isBlank(usableCecrlSkillLevel(form.niveau_specifique))
+      areStagiairesNiveauxComplete(form.stagiaires_niveaux)
     );
   }
 
-  // Individuel — Google Q18 assiduité * + Q21 logistique *
+  const derived = deriveExitCertificateFields(form);
   return (
+    !isBlank(derived.niveau_general_sortie) &&
+    !isBlank(derived.niveau_technique_sortie) &&
+    OBJECTIF_ATTEINT_VALUES.includes(
+      derived.objectif_atteint as ObjectifAtteint
+    ) &&
     !isBlank(form.commentaire_assiduite) &&
     !isBlank(form.commentaire_logistique) &&
     !isBlank(usableCecrlSkillLevel(form.niveau_general)) &&
     !isBlank(usableCecrlSkillLevel(form.niveau_specifique))
   );
+}
+
+/** Applique la ligne du stagiaire courant sur les champs synthèse du formulaire. */
+export function applyStagiaireNiveauToEntryForm(
+  form: FormulaireEntreeFormateur,
+  inscriptionId: string
+): FormulaireEntreeFormateur {
+  const row = (form.stagiaires_niveaux || []).find(
+    (r) => r.inscription_id === inscriptionId
+  );
+  if (!row) return form;
+  return {
+    ...form,
+    expression_orale: row.niveau_general,
+    comprehension_orale: row.niveau_general,
+    connaissances_grammaticales: row.niveau_technique,
+    expression_ecrite: row.niveau_technique,
+  };
+}
+
+export function applyStagiaireNiveauToExitForm(
+  form: FormulaireSortieFormateur,
+  inscriptionId: string
+): FormulaireSortieFormateur {
+  const row = (form.stagiaires_niveaux || []).find(
+    (r) => r.inscription_id === inscriptionId
+  );
+  if (!row) return form;
+  return {
+    ...form,
+    niveau_general: row.niveau_general,
+    niveau_specifique: row.niveau_technique,
+  };
 }
 
 /** Données Montaine Gros-Deleglise — exports Google Forms 2026-09 / 2026-10. */

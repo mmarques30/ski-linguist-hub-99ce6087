@@ -58,18 +58,34 @@ describe("formateur-formation-forms", () => {
 
     const collectif = emptyFormulaireSortie({
       type_formation: "collective",
-      niveau_general: "B1",
-      niveau_specifique: "B1",
       objectif_atteint: "oui",
       niveau_general_groupe: "B1",
+      commentaire_dynamique_groupe: "Bonne cohésion",
+      stagiaires_niveaux: [
+        {
+          inscription_id: "a",
+          student_id: null,
+          student_name: "Ada",
+          niveau_general: "B1",
+          niveau_technique: "A2+",
+        },
+      ],
     });
-    expect(isFormulaireSortieComplete(collectif)).toBe(false);
+    expect(isFormulaireSortieComplete(collectif)).toBe(true);
     expect(
       isFormulaireSortieComplete({
         ...collectif,
-        commentaire_dynamique_groupe: "Bonne cohésion",
+        stagiaires_niveaux: [
+          {
+            inscription_id: "a",
+            student_id: null,
+            student_name: "Ada",
+            niveau_general: null,
+            niveau_technique: "A2+",
+          },
+        ],
       })
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("normalizes Oui/Non from Google Forms", () => {

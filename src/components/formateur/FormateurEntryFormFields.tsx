@@ -8,6 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FormateurCecrlLevelSelect } from "@/components/formateur/FormateurCecrlLevelSelect";
+import { FormateurStagiairesNiveauxTable } from "@/components/formateur/FormateurStagiairesNiveauxTable";
 import {
   FORMATION_TYPE_LABELS,
   FORMATION_TYPE_VALUES,
@@ -79,54 +80,62 @@ export function FormateurEntryFormFields({
         </>
       ) : null}
 
-      <div className="space-y-2">
-        <p className="text-sm font-medium">
-          Niveau du stagiaire en début de formation
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Échelle CECRL (demi-niveaux). Choisis « Non évaluée » si la compétence
-          n&apos;a pas été observée.
-        </p>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <FormateurCecrlLevelSelect
-            id="ce"
-            label="Compréhension écrite"
-            value={fields.comprehension_ecrite}
-            onChange={(v) => onChange("comprehension_ecrite", v)}
-            required
-          />
-          <FormateurCecrlLevelSelect
-            id="co"
-            label="Compréhension orale"
-            value={fields.comprehension_orale}
-            onChange={(v) => onChange("comprehension_orale", v)}
-            required
-          />
-          <FormateurCecrlLevelSelect
-            id="ee"
-            label="Expression écrite"
-            value={fields.expression_ecrite}
-            onChange={(v) => onChange("expression_ecrite", v)}
-            required
-          />
-          <FormateurCecrlLevelSelect
-            id="eo"
-            label="Expression orale"
-            value={fields.expression_orale}
-            onChange={(v) => onChange("expression_orale", v)}
-            required
-          />
-          <FormateurCecrlLevelSelect
-            id="gram"
-            label="Connaissances grammaticales"
-            value={fields.connaissances_grammaticales}
-            onChange={(v) => onChange("connaissances_grammaticales", v)}
-            required
-          />
+      {isCollective && fields.stagiaires_niveaux ? (
+        <FormateurStagiairesNiveauxTable
+          kind="entree"
+          rows={fields.stagiaires_niveaux}
+          onChange={(next) => onChange("stagiaires_niveaux", next)}
+        />
+      ) : (
+        <div className="space-y-2">
+          <p className="text-sm font-medium">
+            Niveau du stagiaire en début de formation
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Échelle CECRL (demi-niveaux). Choisis « Non évaluée » si la
+            compétence n&apos;a pas été observée.
+          </p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <FormateurCecrlLevelSelect
+              id="ce"
+              label="Compréhension écrite"
+              value={fields.comprehension_ecrite}
+              onChange={(v) => onChange("comprehension_ecrite", v)}
+              required
+            />
+            <FormateurCecrlLevelSelect
+              id="co"
+              label="Compréhension orale"
+              value={fields.comprehension_orale}
+              onChange={(v) => onChange("comprehension_orale", v)}
+              required
+            />
+            <FormateurCecrlLevelSelect
+              id="ee"
+              label="Expression écrite"
+              value={fields.expression_ecrite}
+              onChange={(v) => onChange("expression_ecrite", v)}
+              required
+            />
+            <FormateurCecrlLevelSelect
+              id="eo"
+              label="Expression orale"
+              value={fields.expression_orale}
+              onChange={(v) => onChange("expression_orale", v)}
+              required
+            />
+            <FormateurCecrlLevelSelect
+              id="gram"
+              label="Connaissances grammaticales"
+              value={fields.connaissances_grammaticales}
+              onChange={(v) => onChange("connaissances_grammaticales", v)}
+              required
+            />
+          </div>
         </div>
-      </div>
+      )}
 
-      {suggestedGeneralEntry ? (
+      {suggestedGeneralEntry && !isCollective ? (
         <p className="text-xs text-muted-foreground">
           Indicatif test de placement (ne pas recopier tel quel) :{" "}
           {suggestedGeneralEntry}

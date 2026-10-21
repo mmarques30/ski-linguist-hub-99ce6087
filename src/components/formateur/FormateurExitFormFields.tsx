@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FormateurCecrlLevelSelect } from "@/components/formateur/FormateurCecrlLevelSelect";
+import { FormateurStagiairesNiveauxTable } from "@/components/formateur/FormateurStagiairesNiveauxTable";
 import {
   OBJECTIF_ATTEINT_LABELS,
   OBJECTIF_ATTEINT_VALUES,
@@ -103,33 +104,40 @@ export function FormateurExitFormFields({
         </div>
       ) : null}
 
-      <div className="space-y-3">
-        <div>
-          <p className="text-sm font-medium">
-            Niveau du stagiaire en fin de formation
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Synthèse certificat. « Non évaluée » possible, mais au moins un
-            niveau général et un niveau spécifique CECRL sont requis.
-          </p>
+      {isCollective && fields.stagiaires_niveaux ? (
+        <FormateurStagiairesNiveauxTable
+          kind="sortie"
+          rows={fields.stagiaires_niveaux}
+          onChange={(next) => onChange("stagiaires_niveaux", next)}
+        />
+      ) : (
+        <div className="space-y-3">
+          <div>
+            <p className="text-sm font-medium">
+              Niveau du stagiaire en fin de formation
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Synthèse certificat. Général + spécifique (CECRL).
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <FormateurCecrlLevelSelect
+              id="niveau_general"
+              label="Niveau général"
+              value={fields.niveau_general}
+              onChange={(v) => onChange("niveau_general", v)}
+              required
+            />
+            <FormateurCecrlLevelSelect
+              id="niveau_specifique"
+              label="Niveau spécifique"
+              value={fields.niveau_specifique}
+              onChange={(v) => onChange("niveau_specifique", v)}
+              required
+            />
+          </div>
         </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <FormateurCecrlLevelSelect
-            id="niveau_general"
-            label="Niveau général"
-            value={fields.niveau_general}
-            onChange={(v) => onChange("niveau_general", v)}
-            required
-          />
-          <FormateurCecrlLevelSelect
-            id="niveau_specifique"
-            label="Niveau spécifique"
-            value={fields.niveau_specifique}
-            onChange={(v) => onChange("niveau_specifique", v)}
-            required
-          />
-        </div>
-      </div>
+      )}
 
       {isCollective ? (
         <div className="space-y-4 rounded-[var(--radius)] border border-border p-3">

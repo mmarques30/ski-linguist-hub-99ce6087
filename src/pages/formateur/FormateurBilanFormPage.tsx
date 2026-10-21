@@ -12,11 +12,14 @@ import {
   useSaveEntryForm,
   useSaveExitForm,
 } from "@/hooks/useInscriptionProgression";
+import { useSyncCohortNiveaux } from "@/hooks/useSyncCohortNiveaux";
 import {
   useFormateurInscriptions,
   useFormateurProfile,
 } from "@/hooks/useFormateurPortal";
 import {
+  applyStagiaireNiveauToEntryForm,
+  applyStagiaireNiveauToExitForm,
   emptyFormulaireEntree,
   emptyFormulaireSortie,
   isFormulaireEntreeComplete,
@@ -26,6 +29,10 @@ import {
   type FormulaireEntreeFormateur,
   type FormulaireSortieFormateur,
 } from "@/lib/formateur-formation-forms";
+import {
+  buildNiveauxFromCohort,
+  cohortInscriptionsFor,
+} from "@/lib/formateur-stagiaire-niveaux";
 import { PageHeader, PageShell, SurfaceCard, TableSkeleton } from "@/components/ui-kit";
 import { Button } from "@/components/ui/button";
 
@@ -42,10 +49,16 @@ export default function FormateurBilanFormPage({ kind }: { kind: Kind }) {
     useInscriptionProgression(inscriptionId);
   const saveEntry = useSaveEntryForm();
   const saveExit = useSaveExitForm();
+  const syncCohort = useSyncCohortNiveaux();
 
   const row = useMemo(
     () => inscriptions.find((i) => i.id === inscriptionId) ?? null,
     [inscriptions, inscriptionId]
+  );
+
+  const cohort = useMemo(
+    () => (row ? cohortInscriptionsFor(row, inscriptions) : []),
+    [row, inscriptions]
   );
 
   const formateurName = profile
@@ -78,7 +91,7 @@ export default function FormateurBilanFormPage({ kind }: { kind: Kind }) {
   useEffect(() => {
     if (!progression && loadingProg) return;
     if (kind === "entree") {
-      const resolved = resolveFormulaireEntree(
+      let resolved = resolveFormulaireEntree(
         progression?.formulaire_entree,
         progression
           ? {
@@ -91,9 +104,19 @@ export default function FormateurBilanFormPage({ kind }: { kind: Kind }) {
       if (formateurName && !resolved.formateur_nom) {
         resolved.formateur_nom = formateurName;
       }
+      if (resolved.type_formation === "collective" && cohort.length > 0) {
+        resolved = {
+          ...resolved,
+          stagiaires_niveaux: buildNiveauxFromCohort(
+            cohort,
+            "entree",
+            resolved.stagiaires_niveaux
+          ),
+        };
+      }
       setEntryFields(resolved);
     } else {
-      const resolved = resolveFormulaireSortie(
+      let resolved = resolveFormulaireSortie(
         progression?.formulaire_sortie,
         progression
           ? {
@@ -107,6 +130,16 @@ export default function FormateurBilanFormPage({ kind }: { kind: Kind }) {
       if (formateurName && !resolved.formateur_nom) {
         resolved.formateur_nom = formateurName;
       }
+      if (resolved.type_formation === "collective" && cohort.length > 0) {
+        resolved = {
+          ...resolved,
+          stagiaires_niveaux: buildNiveauxFromCohort(
+            cohort,
+            "sortie",
+            resolved.stagiaires_niveaux
+          ),
+        };
+      }
       setExitFields(resolved);
       setHours(
         progression?.hours_followed ??
@@ -115,19 +148,57 @@ export default function FormateurBilanFormPage({ kind }: { kind: Kind }) {
           ""
       );
     }
-  }, [kind, progression, loadingProg, formateurName, row?.duration_hours]);
+  }, [
+    kind,
+    progression,
+    loadingProg,
+    formateurName,
+    row?.duration_hours,
+    cohort,
+  ]);
 
   const setEntry = <K extends keyof FormulaireEntreeFormateur>(
     key: K,
     value: FormulaireEntreeFormateur[K]
-  ) => setEntryFields((f) => ({ ...f, [key]: value }));
+  ) => {
+    setEntryFields((f) => {
+      const next = { ...f, [key]: value };
+      if (key === "type_formation" && value === "collective" && cohort.length) {
+        next.stagiaires_niveaux = buildNiveauxFromCohort(
+          cohort,
+          "entree",
+          f.stagiaires_niveaux
+        );
+      }
+      if (key === "type_formation" && value === "individuelle") {
+        next.stagiaires_niveaux = null;
+      }
+      return next;
+    });
+  };
 
   const setExit = <K extends keyof FormulaireSortieFormateur>(
     key: K,
     value: FormulaireSortieFormateur[K]
-  ) => setExitFields((f) => ({ ...f, [key]: value }));
+  ) => {
+    setExitFields((f) => {
+      const next = { ...f, [key]: value };
+      if (key === "type_formation" && value === "collective" && cohort.length) {
+        next.stagiaires_niveaux = buildNiveauxFromCohort(
+          cohort,
+          "sortie",
+          f.stagiaires_niveaux
+        );
+      }
+      if (key === "type_formation" && value === "individuelle") {
+        next.stagiaires_niveaux = null;
+      }
+      return next;
+    });
+  };
 
-  const pending = saveEntry.isPending || saveExit.isPending;
+  const pending =
+    saveEntry.isPending || saveExit.isPending || syncCohort.isPending;
   const loading = loadingList || loadingProg;
 
   const handleSave = async () => {
@@ -136,26 +207,47 @@ export default function FormateurBilanFormPage({ kind }: { kind: Kind }) {
       return;
     }
     if (kind === "entree") {
-      if (!isFormulaireEntreeComplete(entryFields)) {
+      let formulaire = entryFields;
+      if (formulaire.type_formation === "collective") {
+        formulaire = applyStagiaireNiveauToEntryForm(formulaire, inscriptionId);
+      }
+      if (!isFormulaireEntreeComplete(formulaire)) {
         toast.error(
-          "Formulaire incomplet : compétences, attentes / thèmes, et moyens."
+          formulaire.type_formation === "collective"
+            ? "Indique un niveau général et technique pour chaque stagiaire, plus les champs groupe."
+            : "Formulaire incomplet : compétences, attentes / thèmes, et moyens."
         );
         return;
       }
-      await saveEntry.mutateAsync({
-        inscriptionId,
-        formulaire: entryFields,
-      });
+      await saveEntry.mutateAsync({ inscriptionId, formulaire });
+      if (
+        formulaire.type_formation === "collective" &&
+        (formulaire.stagiaires_niveaux?.length || 0) > 1
+      ) {
+        await syncCohort.mutateAsync({
+          kind: "entree",
+          currentInscriptionId: inscriptionId,
+          niveaux: formulaire.stagiaires_niveaux || [],
+          templateEntree: formulaire,
+        });
+        toast.success("Niveaux d'entrée enregistrés pour le groupe");
+      }
     } else {
-      if (!isFormulaireSortieComplete(exitFields)) {
+      let formulaire = exitFields;
+      if (formulaire.type_formation === "collective") {
+        formulaire = applyStagiaireNiveauToExitForm(formulaire, inscriptionId);
+      }
+      if (!isFormulaireSortieComplete(formulaire)) {
         toast.error(
-          "Formulaire incomplet : niveaux, objectif, et assiduité/logistique ou dynamique de groupe."
+          formulaire.type_formation === "collective"
+            ? "Indique un niveau pour chaque stagiaire, la dynamique de groupe et l'objectif."
+            : "Formulaire incomplet : niveaux, objectif, assiduité et logistique."
         );
         return;
       }
       await saveExit.mutateAsync({
         inscriptionId,
-        formulaire: exitFields,
+        formulaire,
         hoursFollowed: hours === "" ? null : Number(hours),
         existingEntry: progression
           ? {
@@ -165,6 +257,18 @@ export default function FormateurBilanFormPage({ kind }: { kind: Kind }) {
             }
           : undefined,
       });
+      if (
+        formulaire.type_formation === "collective" &&
+        (formulaire.stagiaires_niveaux?.length || 0) > 1
+      ) {
+        await syncCohort.mutateAsync({
+          kind: "sortie",
+          currentInscriptionId: inscriptionId,
+          niveaux: formulaire.stagiaires_niveaux || [],
+          templateSortie: formulaire,
+        });
+        toast.success("Niveaux de sortie enregistrés pour le groupe");
+      }
     }
     navigate(`${basePath}/bilans`);
   };
@@ -182,8 +286,8 @@ export default function FormateurBilanFormPage({ kind }: { kind: Kind }) {
           title={title}
           description={
             kind === "entree"
-              ? "Constat de début — niveaux CECRL, attentes et moyens"
-              : "Bilan de fin — synthèse certificat et commentaires"
+              ? "Un niveau par stagiaire en début de formation"
+              : "Un niveau par stagiaire en fin de formation"
           }
           icon={Icon}
           tone="gold"
@@ -213,6 +317,13 @@ export default function FormateurBilanFormPage({ kind }: { kind: Kind }) {
         ) : (
           <div className="space-y-4">
             <FormateurFormationContextCard context={context} />
+            {cohort.length > 1 ? (
+              <p className="text-xs text-muted-foreground">
+                Groupe détecté : {cohort.length} stagiaire
+                {cohort.length > 1 ? "s" : ""} — en formation collective, tu
+                renseignes le niveau de chacun.
+              </p>
+            ) : null}
             <SurfaceCard>
               {kind === "entree" ? (
                 <FormateurEntryFormFields

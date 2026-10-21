@@ -107,6 +107,8 @@ export function useSaveEntryForm() {
     mutationFn: async (input: {
       inscriptionId: string;
       formulaire: FormulaireEntreeFormateur;
+      /** Pas de toast (ex. sync cohorte). */
+      quiet?: boolean;
     }) => {
       if (!isFormulaireEntreeComplete(input.formulaire)) {
         throw new Error(
@@ -149,7 +151,7 @@ export function useSaveEntryForm() {
       queryClient.invalidateQueries({
         queryKey: ["formateur-portal-inscriptions"],
       });
-      toast.success("Formulaire d'entrée enregistré");
+      if (!vars.quiet) toast.success("Formulaire d'entrée enregistré");
     },
     onError: (error: Error) => {
       toast.error(error.message || "Erreur formulaire d'entrée");
@@ -166,6 +168,7 @@ export function useSaveExitForm() {
       formulaire: FormulaireSortieFormateur;
       hoursFollowed?: number | null;
       existingEntry?: ProgressionEntryFields;
+      quiet?: boolean;
     }) => {
       if (!isFormulaireSortieComplete(input.formulaire)) {
         throw new Error(
@@ -215,7 +218,7 @@ export function useSaveExitForm() {
       queryClient.invalidateQueries({
         queryKey: ["formateur-portal-inscriptions"],
       });
-      toast.success("Formulaire de sortie enregistré");
+      if (!vars.quiet) toast.success("Formulaire de sortie enregistré");
     },
     onError: (error: Error) => {
       toast.error(error.message || "Erreur formulaire de sortie");
