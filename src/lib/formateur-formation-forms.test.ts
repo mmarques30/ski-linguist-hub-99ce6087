@@ -5,6 +5,7 @@ import {
   deriveEntryCertificateFields,
   deriveExitCertificateFields,
   emptyFormulaireEntree,
+  emptyFormulaireSortie,
   FORMATEUR_CECRL_LEVELS,
   FORMATEUR_SKILL_UNEVALUATED,
   formatFormateurLevelDisplay,
@@ -38,6 +39,37 @@ describe("formateur-formation-forms", () => {
     expect(derived.objectif_atteint).toBe("oui");
     expect(derived.commentaire_sortie).toContain("Très assidue");
     expect(canIssueCertificate(derived)).toBe(true);
+  });
+
+  it("exige logistique en individuel et dynamique de groupe en collectif (PDF Google)", () => {
+    const base = emptyFormulaireSortie({
+      niveau_general: "B1",
+      niveau_specifique: "B1",
+      objectif_atteint: "oui",
+      commentaire_assiduite: "OK",
+    });
+    expect(isFormulaireSortieComplete(base)).toBe(false);
+    expect(
+      isFormulaireSortieComplete({
+        ...base,
+        commentaire_logistique: "Salle OK",
+      })
+    ).toBe(true);
+
+    const collectif = emptyFormulaireSortie({
+      type_formation: "collective",
+      niveau_general: "B1",
+      niveau_specifique: "B1",
+      objectif_atteint: "oui",
+      niveau_general_groupe: "B1",
+    });
+    expect(isFormulaireSortieComplete(collectif)).toBe(false);
+    expect(
+      isFormulaireSortieComplete({
+        ...collectif,
+        commentaire_dynamique_groupe: "Bonne cohésion",
+      })
+    ).toBe(true);
   });
 
   it("normalizes Oui/Non from Google Forms", () => {
@@ -79,7 +111,14 @@ describe("formateur-formation-forms", () => {
     expect(form.niveau_specifique).toBe("B2");
     expect(form.objectif_atteint).toBe("oui");
     expect(form.commentaire_assiduite).toBe("Très assidue");
-    expect(isFormulaireSortieComplete(form)).toBe(true);
+    // PDF Google : logistique obligatoire en individuel — à compléter à la reprise
+    expect(isFormulaireSortieComplete(form)).toBe(false);
+    expect(
+      isFormulaireSortieComplete({
+        ...form,
+        commentaire_logistique: "Moyens OK",
+      })
+    ).toBe(true);
   });
 
   it("préfère le JSONB v1 aux colonnes plates", () => {

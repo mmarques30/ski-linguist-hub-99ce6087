@@ -21,6 +21,10 @@ import {
   type FormulaireSortieFormateur,
 } from "@/lib/formateur-formation-forms";
 
+/**
+ * Champs alignés sur le Google Form « Formulaire de fin de formation ».
+ * Amélioration app : 1 dossier = 1 stagiaire (plus de grille 12 lignes).
+ */
 export function FormateurExitFormFields({
   fields,
   onChange,
@@ -40,7 +44,7 @@ export function FormateurExitFormFields({
   const isCollective = fields.type_formation === "collective";
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="space-y-2">
         <Label>
           Type de formation <span className="text-destructive">*</span>
@@ -65,17 +69,28 @@ export function FormateurExitFormFields({
       </div>
 
       {isCollective ? (
-        <>
+        <div className="space-y-4 rounded-[var(--radius)] border border-border p-3">
+          <div>
+            <p className="text-sm font-medium">
+              Niveau général du groupe en fin de formation
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Puis le niveau de ce stagiaire (un bilan par dossier — remplace la
+              grille Google à 12 lignes).
+            </p>
+          </div>
           <FormateurCecrlLevelSelect
             id="niveau_general_groupe"
-            label="Niveau général du groupe en fin de formation"
+            label="Niveau général du groupe"
             value={fields.niveau_general_groupe}
             onChange={(v) => onChange("niveau_general_groupe", v)}
             mode="cecrl"
             required
           />
           <div className="space-y-2">
-            <Label htmlFor="hetero">Remarques sur l&apos;hétérogénéité</Label>
+            <Label htmlFor="hetero">
+              Remarques si hétérogénéité dans l&apos;évolution des stagiaires
+            </Label>
             <Textarea
               id="hetero"
               rows={2}
@@ -85,77 +100,93 @@ export function FormateurExitFormFields({
               }
             />
           </div>
-        </>
+        </div>
       ) : null}
 
-      <div className="space-y-2">
-        <p className="text-sm font-medium">Synthèse pour le certificat</p>
-        <p className="text-xs text-muted-foreground">
-          Obligatoire avant génération du certificat. Indépendant des tests
-          oraux SNMSF / DSF.
-        </p>
+      <div className="space-y-3">
+        <div>
+          <p className="text-sm font-medium">
+            Niveau du stagiaire en fin de formation
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Synthèse certificat. « Non évaluée » possible, mais au moins un
+            niveau général et un niveau spécifique CECRL sont requis.
+          </p>
+        </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <FormateurCecrlLevelSelect
             id="niveau_general"
-            label="Niveau général (sortie)"
+            label="Niveau général"
             value={fields.niveau_general}
             onChange={(v) => onChange("niveau_general", v)}
-            mode="cecrl"
             required
           />
           <FormateurCecrlLevelSelect
             id="niveau_specifique"
-            label="Niveau spécifique / technique"
+            label="Niveau spécifique"
             value={fields.niveau_specifique}
             onChange={(v) => onChange("niveau_specifique", v)}
-            mode="cecrl"
             required
           />
         </div>
       </div>
 
-      <div className="space-y-2">
-        <p className="text-sm font-medium">Compétences en fin de formation</p>
-        <p className="text-xs text-muted-foreground">
-          Optionnel mais recommandé — même échelle qu&apos;à l&apos;entrée.
-        </p>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <FormateurCecrlLevelSelect
-            id="ce"
-            label="Compréhension écrite"
-            value={fields.comprehension_ecrite}
-            onChange={(v) => onChange("comprehension_ecrite", v)}
-          />
-          <FormateurCecrlLevelSelect
-            id="co"
-            label="Compréhension orale"
-            value={fields.comprehension_orale}
-            onChange={(v) => onChange("comprehension_orale", v)}
-          />
-          <FormateurCecrlLevelSelect
-            id="ee"
-            label="Expression écrite"
-            value={fields.expression_ecrite}
-            onChange={(v) => onChange("expression_ecrite", v)}
-          />
-          <FormateurCecrlLevelSelect
-            id="eo"
-            label="Expression orale"
-            value={fields.expression_orale}
-            onChange={(v) => onChange("expression_orale", v)}
-          />
-          <FormateurCecrlLevelSelect
-            id="gram"
-            label="Connaissances grammaticales"
-            value={fields.connaissances_grammaticales}
-            onChange={(v) => onChange("connaissances_grammaticales", v)}
+      {isCollective ? (
+        <div className="space-y-4 rounded-[var(--radius)] border border-border p-3">
+          <p className="text-sm font-medium">
+            Appréciation générale (cours collectifs)
+          </p>
+          <div className="space-y-2">
+            <Label htmlFor="dynamique">
+              Niveau général, assiduité, ponctualité, cohésion et dynamique de
+              groupe <span className="text-destructive">*</span>
+            </Label>
+            <Textarea
+              id="dynamique"
+              rows={3}
+              value={fields.commentaire_dynamique_groupe || ""}
+              onChange={(e) =>
+                onChange("commentaire_dynamique_groupe", e.target.value)
+              }
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="liste">
+              Liste des stagiaires du groupe (prénoms, noms, numéro)
+            </Label>
+            <Textarea
+              id="liste"
+              rows={3}
+              value={fields.stagiaires_liste || ""}
+              onChange={(e) => onChange("stagiaires_liste", e.target.value)}
+              placeholder="1. … — 2. … (optionnel : déjà un bilan par dossier)"
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <p className="text-sm font-medium">
+            Appréciation générale (cours individuels)
+          </p>
+          <Label htmlFor="assiduite">
+            Commentaires concernant l&apos;assiduité, le comportement et
+            l&apos;investissement du stagiaire{" "}
+            <span className="text-destructive">*</span>
+          </Label>
+          <Textarea
+            id="assiduite"
+            rows={3}
+            value={fields.commentaire_assiduite || ""}
+            onChange={(e) => onChange("commentaire_assiduite", e.target.value)}
           />
         </div>
-      </div>
+      )}
 
       <div className="space-y-2">
         <Label>
-          Objectif pédagogique atteint{" "}
+          {isCollective
+            ? "Les stagiaires ont-ils atteint les objectifs pédagogiques fixés en début de formation ?"
+            : "L'objectif pédagogique a-t-il été atteint ?"}{" "}
           <span className="text-destructive">*</span>
         </Label>
         <Select
@@ -175,74 +206,37 @@ export function FormateurExitFormFields({
             ))}
           </SelectContent>
         </Select>
+        <p className="text-2xs text-muted-foreground">
+          Google Form : Oui / Non — l&apos;option « Partiellement » est un
+          ajout app.
+        </p>
       </div>
 
-      {fields.objectif_atteint !== "oui" ? (
+      {fields.objectif_atteint && fields.objectif_atteint !== "oui" ? (
         <div className="space-y-2">
-          <Label htmlFor="ecarts">Si non / partiel — préciser</Label>
+          <Label htmlFor="ecarts">
+            {isCollective
+              ? "Si non : raisons et explications des écarts (par stagiaire concerné)"
+              : "Si non : préciser les raisons"}{" "}
+            <span className="text-destructive">*</span>
+          </Label>
           <Textarea
             id="ecarts"
-            rows={2}
+            rows={3}
             value={fields.objectif_ecart_detail || ""}
             onChange={(e) => onChange("objectif_ecart_detail", e.target.value)}
           />
         </div>
       ) : null}
 
-      {isCollective ? (
-        <>
-          <div className="space-y-2">
-            <Label htmlFor="obj_g">Objectifs du groupe atteints</Label>
-            <Textarea
-              id="obj_g"
-              rows={2}
-              value={fields.objectifs_groupe_atteints || ""}
-              onChange={(e) =>
-                onChange("objectifs_groupe_atteints", e.target.value)
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="obj_ecarts_g">Écarts éventuels (groupe)</Label>
-            <Textarea
-              id="obj_ecarts_g"
-              rows={2}
-              value={fields.objectifs_groupe_ecarts || ""}
-              onChange={(e) =>
-                onChange("objectifs_groupe_ecarts", e.target.value)
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="dynamique">Dynamique de groupe</Label>
-            <Textarea
-              id="dynamique"
-              rows={2}
-              value={fields.commentaire_dynamique_groupe || ""}
-              onChange={(e) =>
-                onChange("commentaire_dynamique_groupe", e.target.value)
-              }
-            />
-          </div>
-        </>
-      ) : null}
-
       <div className="space-y-2">
-        <Label htmlFor="assiduite">
-          Assiduité, comportement et investissement{" "}
-          <span className="text-destructive">*</span>
+        <Label htmlFor="logistique">
+          Commentaires concernant les moyens techniques et logistiques (salle,
+          horaires, matériel, etc.)
+          {!isCollective ? (
+            <span className="text-destructive"> *</span>
+          ) : null}
         </Label>
-        <Textarea
-          id="assiduite"
-          rows={3}
-          value={fields.commentaire_assiduite || ""}
-          onChange={(e) => onChange("commentaire_assiduite", e.target.value)}
-          placeholder="Bilan sur l'investissement du stagiaire"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="logistique">Moyens techniques et logistiques</Label>
         <Textarea
           id="logistique"
           rows={2}
@@ -250,6 +244,21 @@ export function FormateurExitFormFields({
           onChange={(e) => onChange("commentaire_logistique", e.target.value)}
         />
       </div>
+
+      {!isCollective ? null : (
+        <div className="space-y-2">
+          <Label htmlFor="assiduite_col">
+            Notes d&apos;assiduité / investissement (ce stagiaire)
+          </Label>
+          <Textarea
+            id="assiduite_col"
+            rows={2}
+            value={fields.commentaire_assiduite || ""}
+            onChange={(e) => onChange("commentaire_assiduite", e.target.value)}
+            placeholder="Optionnel — en plus de l'appréciation de groupe"
+          />
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="hours_followed">

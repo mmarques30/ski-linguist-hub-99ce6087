@@ -169,7 +169,7 @@ export function useSaveExitForm() {
     }) => {
       if (!isFormulaireSortieComplete(input.formulaire)) {
         throw new Error(
-          "Formulaire de sortie incomplet (niveaux, objectif, commentaire assiduité)"
+          "Formulaire de sortie incomplet (niveaux, objectif, assiduité/logistique ou dynamique de groupe)"
         );
       }
 

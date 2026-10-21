@@ -149,7 +149,7 @@ export default function FormateurBilanFormPage({ kind }: { kind: Kind }) {
     } else {
       if (!isFormulaireSortieComplete(exitFields)) {
         toast.error(
-          "Formulaire incomplet : niveaux, objectif, et commentaire d'assiduité."
+          "Formulaire incomplet : niveaux, objectif, et assiduité/logistique ou dynamique de groupe."
         );
         return;
       }

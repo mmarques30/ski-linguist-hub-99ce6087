@@ -107,22 +107,41 @@ export interface FormulaireEntreeFormateur extends FormateurSkillLevels {
   submitted_at: string | null;
 }
 
+/**
+ * Sortie — aligné Google Form « Formulaire de fin de formation ».
+ * Individuel : Q9–10 niveaux + Q18–21 assiduité / objectif / logistique.
+ * Collectif : Q7–8 groupe + Q11 dynamique + niveaux de CE stagiaire (1 dossier app
+ * remplace la grille Google à 12 stagiaires).
+ */
 export interface FormulaireSortieFormateur extends FormateurSkillLevels {
   version: 1;
   type_formation: FormationTypeFormateur;
-  /** Synthèse certificat */
+  /** Q9 — Niveau général * (CECRL ou Non évaluée) */
   niveau_general: string | null;
+  /** Q10 — Niveau spécifique * */
   niveau_specifique: string | null;
+  /** Q15 / Q19 — objectifs pédagogiques */
   objectif_atteint: ObjectifAtteint | null;
+  /** Q16 / Q20 — si non / partiel */
   objectif_ecart_detail: string | null;
+  /** Q18 — assiduité individuelle * */
   commentaire_assiduite: string | null;
+  /** Q17 / Q21 — moyens techniques et logistiques (* en individuel) */
   commentaire_logistique: string | null;
-  /** Collectif */
+  /** Q7 — Niveau général du groupe * */
   niveau_general_groupe: string | null;
+  /** Q8 — Remarques si hétérogénéité */
   remarques_heterogeneite: string | null;
+  /** Texte libre legacy / notes objectifs groupe */
   objectifs_groupe_atteints: string | null;
   objectifs_groupe_ecarts: string | null;
+  /** Q11 — assiduité, ponctualité, cohésion et dynamique de groupe * */
   commentaire_dynamique_groupe: string | null;
+  /**
+   * Q12 — liste numérotée des stagiaires du groupe (optionnel dans l'app :
+   * un bilan par dossier ; utile pour notes de cohorte).
+   */
+  stagiaires_liste: string | null;
   formateur_nom: string | null;
   source: "app" | "google_form" | "legacy_flat";
   submitted_at: string | null;
@@ -178,6 +197,7 @@ export function emptyFormulaireSortie(
     objectifs_groupe_atteints: null,
     objectifs_groupe_ecarts: null,
     commentaire_dynamique_groupe: null,
+    stagiaires_liste: null,
     formateur_nom: null,
     source: "app",
     submitted_at: null,
@@ -331,6 +351,9 @@ export function deriveExitCertificateFields(
   form: FormulaireSortieFormateur
 ): ProgressionExitFields {
   const commentaireParts = [
+    form.commentaire_dynamique_groupe?.trim()
+      ? `Groupe : ${form.commentaire_dynamique_groupe.trim()}`
+      : null,
     form.commentaire_assiduite?.trim() || null,
     form.commentaire_logistique?.trim()
       ? `Logistique : ${form.commentaire_logistique.trim()}`
@@ -344,7 +367,9 @@ export function deriveExitCertificateFields(
     form.objectifs_groupe_ecarts?.trim()
       ? `Écarts groupe : ${form.objectifs_groupe_ecarts.trim()}`
       : null,
-    form.commentaire_dynamique_groupe?.trim() || null,
+    form.stagiaires_liste?.trim()
+      ? `Liste groupe : ${form.stagiaires_liste.trim()}`
+      : null,
   ].filter(Boolean);
 
   return {
@@ -408,13 +433,40 @@ export function isFormulaireSortieComplete(
   form: FormulaireSortieFormateur
 ): boolean {
   const derived = deriveExitCertificateFields(form);
-  return (
+  const synthesisOk =
     !isBlank(derived.niveau_general_sortie) &&
     !isBlank(derived.niveau_technique_sortie) &&
     OBJECTIF_ATTEINT_VALUES.includes(
       derived.objectif_atteint as ObjectifAtteint
-    ) &&
-    !isBlank(derived.commentaire_sortie)
+    );
+
+  if (!synthesisOk) return false;
+
+  if (form.objectif_atteint && form.objectif_atteint !== "oui") {
+    if (
+      isBlank(form.objectif_ecart_detail) &&
+      isBlank(form.objectifs_groupe_ecarts)
+    ) {
+      return false;
+    }
+  }
+
+  if (form.type_formation === "collective") {
+    return (
+      !isBlank(form.niveau_general_groupe) &&
+      !isBlank(form.commentaire_dynamique_groupe) &&
+      // Certificat : niveaux de CE stagiaire (1 dossier = 1 ligne de la grille Google)
+      !isBlank(usableCecrlSkillLevel(form.niveau_general)) &&
+      !isBlank(usableCecrlSkillLevel(form.niveau_specifique))
+    );
+  }
+
+  // Individuel — Google Q18 assiduité * + Q21 logistique *
+  return (
+    !isBlank(form.commentaire_assiduite) &&
+    !isBlank(form.commentaire_logistique) &&
+    !isBlank(usableCecrlSkillLevel(form.niveau_general)) &&
+    !isBlank(usableCecrlSkillLevel(form.niveau_specifique))
   );
 }
 

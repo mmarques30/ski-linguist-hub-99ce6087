@@ -92,7 +92,7 @@ export function FormateurExitFormDialog({
   const handleSave = () => {
     if (!isFormulaireSortieComplete(fields)) {
       toast.error(
-        "Formulaire incomplet : niveaux général et technique, objectif atteint, et commentaire d'assiduité sont obligatoires."
+        "Formulaire incomplet : niveaux général et spécifique, objectif, et selon le type — assiduité + logistique (individuel) ou dynamique de groupe (collectif)."
       );
       return;
     }
@@ -111,8 +111,8 @@ export function FormateurExitFormDialog({
         <DialogHeader>
           <DialogTitle>Formulaire de sortie formateur</DialogTitle>
           <DialogDescription>
-            Bilan de fin de formation (ex-Google Form). Obligatoire avant
-            certificat. Les évaluations SNMSF / DSF ne sont jamais reprises ici.
+            Aligné sur le Google Form de fin de formation (individuel /
+            collectif). Obligatoire avant certificat — jamais SNMSF / DSF.
           </DialogDescription>
         </DialogHeader>
 
