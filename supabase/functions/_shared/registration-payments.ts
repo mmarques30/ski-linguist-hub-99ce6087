@@ -20,13 +20,34 @@ export const REGISTRATION_PAYMENT_OPTIONS = {
 export type RegistrationPaymentOption =
   (typeof REGISTRATION_PAYMENT_OPTIONS)[keyof typeof REGISTRATION_PAYMENT_OPTIONS];
 
-/** Aligné sur `src/lib/registration-payments.ts` — RIB FLI. */
+/**
+ * Aligné sur `src/lib/registration-payments.ts` — RIB FLI.
+ * Clé RIB corrigée 44 → 89 (IBAN …189) après retour DSF / checksum invalide.
+ */
 export const FLI_BANK_DETAILS = {
   beneficiary: "France Langues International",
-  iban: "FR76 1820 6004 4339 5412 7300 144",
+  iban: "FR76 1820 6004 4339 5412 7300 189",
   bic: "AGRIFRPP882",
   bank: "Crédit Agricole",
 };
+
+/** Contrôle ISO 13616 (IBAN mod 97 === 1). Aligné sur src/lib. */
+export function isValidIban(iban: string): boolean {
+  const compact = iban.replace(/\s+/g, "").toUpperCase();
+  if (!/^[A-Z]{2}\d{2}[A-Z0-9]+$/.test(compact) || compact.length < 15) {
+    return false;
+  }
+  const rearranged = compact.slice(4) + compact.slice(0, 4);
+  let numeric = "";
+  for (const ch of rearranged) {
+    numeric += /\d/.test(ch) ? ch : String(ch.charCodeAt(0) - 55);
+  }
+  let remainder = 0;
+  for (const digit of numeric) {
+    remainder = (remainder * 10 + Number(digit)) % 97;
+  }
+  return remainder === 1;
+}
 
 /**
  * Bloc HTML RIB FLI pour les e-mails.

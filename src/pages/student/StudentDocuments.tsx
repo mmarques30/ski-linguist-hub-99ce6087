@@ -34,6 +34,7 @@ const docTypeLabels: Record<string, string> = {
   FACTURE: "Facture",
   AGEFICE_DEMANDE: "Demande AGEFICE",
   AGEFICE_PIECES: "Pièces justificatives AGEFICE",
+  AVENANT: "Avenant",
 };
 
 function isCertificateDoc(type: string | null | undefined): boolean {

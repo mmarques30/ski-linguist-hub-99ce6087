@@ -167,6 +167,7 @@ export const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   ATTESTATION_PRESENCE: "Attestation de présence",
   CERTIFICAT: "Certificat de fin de formation",
   FACTURE: "Facture",
+  AVENANT: "Avenant",
 };
 
 export function getRegistrationDocumentPublicUrl(internalFile: string): string {
