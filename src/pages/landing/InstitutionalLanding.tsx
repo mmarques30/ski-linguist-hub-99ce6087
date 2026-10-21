@@ -23,6 +23,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ContactDialog } from "@/components/landing/ContactDialog";
+import type { ContactDialogIntent } from "@/lib/landing-contact";
 import {
   RECOMMENDED,
   YOUTUBE_TITLE,
@@ -84,7 +86,7 @@ const FORMATIONS = [
   {
     icon: Award,
     title: "Formation certifiante",
-    text: "Centre agréé Linguaskill et Bright, éligible Qualiopi.",
+    text: "Centre agréé Linguaskill et Bright.",
   },
   {
     icon: ChartLine,
@@ -93,46 +95,79 @@ const FORMATIONS = [
   },
 ] as const;
 
-const FAQ_ITEMS = [
+/**
+ * FAQ par thèmes. Sources : conditions générales de formation
+ * (`src/lib/conditions-generales-content.ts`), sessions 2026-2027
+ * (`docs/SESSIONS_2026_2027.md`) et critères FIF PL (`src/lib/fifpl-funding.ts`).
+ * Aucun tarif de stage ici : il dépend de l'école et s'affiche sur le formulaire.
+ */
+const FAQ_GROUPS = [
   {
-    q: "Je n'ai jamais suivi de formation en langues, c'est fait pour moi ?",
-    a: "Oui. Un test de niveau à l'inscription permet de vous placer dans le bon groupe, quel que soit votre point de départ.",
+    title: "Avant de m'inscrire",
+    items: [
+      {
+        q: "À qui s'adressent les formations FLI ?",
+        a: "Aux professionnels de la montagne : moniteurs et monitrices de ski (ESF ou indépendants), pisteurs-secouristes, personnel des remontées mécaniques, hôtellerie et restauration d'altitude. Les groupes sont constitués par niveau et par métier, pour travailler les situations que vous vivez vraiment en saison.",
+      },
+      {
+        q: "Quelles langues proposez-vous ?",
+        a: "Cette saison : anglais, espagnol, néerlandais, portugais brésilien et russe, en station ou en ligne. D'autres langues peuvent être organisées pour un groupe à partir de 6 personnes — contactez-nous.",
+      },
+      {
+        q: "Je débute complètement, c'est fait pour moi ?",
+        a: "Oui. Le test de niveau passé à l'inscription nous permet de vous placer dans un groupe homogène, quel que soit votre point de départ. Si votre niveau est isolé par rapport aux autres inscrits, nous vous proposons une alternative adaptée (autre session, autre lieu, cours individuel en ligne) plutôt qu'un groupe qui ne vous conviendrait pas.",
+      },
+      {
+        q: "Comment se déroule un stage en station ?",
+        a: "Une semaine de 24 heures, du lundi au vendredi, dans votre station ou à proximité. Les groupes de 8 personnes sont répartis entre le matin et l'après-midi : l'équipe FLI vous attribue votre créneau environ 10 jours avant le début, après analyse de l'ensemble des inscrits. Test de niveau à l'entrée et à la sortie, feuille d'émargement, questionnaire de satisfaction.",
+      },
+      {
+        q: "Je ne peux pas me déplacer : quelles solutions en ligne ?",
+        a: "Deux formats. Les stages collectifs en visio : 24 heures en 8 séances de 3 heures, deux soirs par semaine, en petit groupe de 4 à 8 personnes. Et les cours individuels en ligne, par packs de 3 heures (6 à 18 heures), que vous planifiez à votre rythme avec votre formateur ou formatrice.",
+      },
+    ],
   },
   {
-    q: "Et si mon niveau ne correspond pas aux autres inscrits ?",
-    a: "Nous vous orientons vers une alternative adaptée (autre groupe, cours individuel) plutôt que de vous imposer un format inadapté.",
+    title: "Inscription et financement",
+    items: [
+      {
+        q: "Comment s'inscrire ?",
+        a: "Depuis le formulaire en ligne : vous choisissez votre langue, votre lieu et vos dates, puis vous passez le test de niveau (obligatoire). Votre inscription est confirmée par un code d'inscription ; la convention de formation et le programme vous sont ensuite adressés, à vous ou à votre employeur.",
+      },
+      {
+        q: "Comment se passe le règlement ?",
+        a: "Au choix à l'étape « Paiement » : des frais de dossier de 150 €, déduits du tarif total, puis le solde avant le début de la formation ; ou le paiement intégral, en ligne ou par virement. Le tarif de votre session, qui dépend de votre école, est affiché sur le récapitulatif avant validation. FLI est exonérée de TVA.",
+      },
+      {
+        q: "Puis-je faire financer ma formation ?",
+        a: "Oui. Moniteurs et monitrices indépendants : les langues sont une formation « cœur de métier » pour le FIF PL, prise en charge jusqu'à 900 € par an (nos visios comptent comme du présentiel). Salariés : votre OPCO peut financer la formation. Dans les deux cas, FLI vous aide à estimer vos droits et prépare les documents du dossier.",
+      },
+      {
+        q: "Et si je dois annuler ?",
+        a: "Vous disposez de 10 jours après la signature de la convention pour vous rétracter par lettre recommandée, sans qu'aucune somme ne soit due. Pour les cours individuels en ligne, un cours s'annule jusqu'à 24 heures avant ; passé ce délai, il est facturé. En cas d'annulation d'une session par FLI, seules les heures effectivement suivies sont dues.",
+      },
+    ],
   },
   {
-    q: "Puis-je concilier la formation avec ma saison de ski ?",
-    a: "Oui : stages intensifs en automne, cours individuels ou en ligne à la demande toute l'année.",
-  },
-  {
-    q: "Et si je dois annuler mon inscription ?",
-    a: "Les frais de dossier (150 €) sont remboursables en cas d'annulation justifiée ou d'insuffisance de participants, sous 7 jours après inscription.",
-  },
-  {
-    q: "Faut-il déjà avoir le BE (Brevet d'État) pour s'inscrire ?",
-    a: "Oui pour le stage moniteurs de ski — être titulaire du BE ou en formation.",
-  },
-  {
-    q: "Combien de temps avant de commencer les cours ?",
-    a: "Les inscriptions se clôturent 7 jours avant le début du stage ; au-delà, nous contacter directement selon les places restantes.",
-  },
-  {
-    q: "Puis-je suivre une formation tout en étant en poste ?",
-    a: "Oui, les formules individuelles en ligne (6h à 18h) s'organisent à votre rythme.",
-  },
-  {
-    q: "Ça fonctionne dans toutes les stations ?",
-    a: "Nous intervenons dans l'ensemble du réseau ESF et auprès des stations partenaires ; contactez-nous pour organiser une formation dans votre station.",
-  },
-  {
-    q: "Et si j'ai un handicap ou besoin d'un aménagement ?",
-    a: "Parlez-en dès l'inscription à notre référente handicap, Paula Rangel Halbwachs — nous étudions ensemble les adaptations possibles, avec l'appui du réseau RHF.",
-  },
-  {
-    q: "Quel suivi est proposé pendant et après la formation ?",
-    a: "Test de progression en fin de stage, questionnaire de satisfaction, et transmission des résultats à votre école de ski.",
+    title: "Pendant et après",
+    items: [
+      {
+        q: "Quels documents vais-je recevoir ?",
+        a: "Avant la formation : convention et programme. Pendant : feuille d'émargement. À l'issue : attestation de stage, résultats de vos tests d'entrée et de sortie, et facture. Si vous le souhaitez, vos résultats sont transmis à votre école de ski.",
+      },
+      {
+        q: "Mon école de ski peut-elle organiser un stage sur place ?",
+        a: "Oui, c'est le cas de la plupart de nos sessions en station : FLI fournit le formateur ou la formatrice et gère l'organisation, l'école met à disposition une salle et, selon les cas, l'hébergement. Un forfait école est possible. Demandez-nous un devis.",
+      },
+      {
+        q: "Et si j'ai un handicap ou besoin d'un aménagement ?",
+        a: "Parlez-en dès l'inscription à notre référente handicap, Paula Rangel Halbwachs. Nos formations en ligne sont accessibles aux personnes à mobilité réduite ; en station, les locaux sont ceux de nos partenaires. Nous étudions avec vous les adaptations possibles ou vous orientons vers un organisme adapté.",
+      },
+      {
+        q: "FLI est-elle certifiée Qualiopi ?",
+        a: "Oui, France Langues International est certifiée Qualiopi au titre des actions de formation. C'est la condition pour que votre formation soit financée par le FIF PL, un OPCO ou un autre financeur public.",
+      },
+    ],
   },
 ] as const;
 
@@ -166,6 +201,14 @@ function groupSessionsByLanguage(offerings: RegistrationOffering[]): LanguageSes
   return Array.from(groups.values()).sort((a, b) => a.label.localeCompare(b.label, "fr"));
 }
 
+/** « Présentiel · 24 h » / « En ligne (visio) · 24 h » — court, pour la tuile de session. */
+function formatSessionFormat(
+  session: Pick<RegistrationOffering, "modality_key" | "duration_hours">
+): string {
+  const modality = session.modality_key === "in_person" ? "Présentiel" : "En ligne (visio)";
+  return session.duration_hours > 0 ? `${modality} · ${session.duration_hours} h` : modality;
+}
+
 /**
  * Landing institutionnelle publique — conforme `docs/FLI-LP-institucional-spec.md`.
  * `/` = LP ; `/auth` = login inchangé ; CTA « Accès FLI ».
@@ -174,6 +217,7 @@ export default function InstitutionalLanding() {
   const [scrolled, setScrolled] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [contactIntent, setContactIntent] = useState<ContactDialogIntent | null>(null);
   const { data: offerings = [], isLoading: offeringsLoading } = useRegistrationOfferings();
   const sessionsByLanguage = useMemo(() => groupSessionsByLanguage(offerings), [offerings]);
 
@@ -197,7 +241,8 @@ export default function InstitutionalLanding() {
     <div className="lp-root flex min-h-screen flex-col bg-[hsl(var(--surface-page))] text-[hsl(var(--foreground))] antialiased">
       <style>{`
         .lp-root { font-family: "Outfit", ui-sans-serif, system-ui, sans-serif; }
-        .lp-display { font-family: "Syne", "Outfit", sans-serif; }
+        /* Titres : même police que le texte courant, graisse 700 — lisible et sans effet de style (Paula, 21/10). */
+        .lp-display { font-family: "Outfit", ui-sans-serif, system-ui, sans-serif; font-weight: 700; letter-spacing: -0.01em; }
         @keyframes lp-float {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-6px); }
@@ -296,10 +341,10 @@ export default function InstitutionalLanding() {
         >
           <div className="relative mx-auto grid max-w-6xl gap-10 px-4 pb-8 pt-12 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-8 lg:pb-6 lg:pt-16">
             <div>
-              <p className="lp-display text-xs font-semibold uppercase tracking-[0.22em] text-[hsl(var(--fli-yellow))]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[hsl(var(--fli-yellow))]">
                 France Langues International
               </p>
-              <h1 className="lp-display mt-4 max-w-xl text-3xl font-extrabold leading-[1.12] tracking-tight text-white sm:text-4xl lg:text-[2.75rem]">
+              <h1 className="lp-display mt-4 max-w-xl text-3xl leading-[1.15] text-white sm:text-4xl lg:text-[2.75rem]">
                 Formez-vous dans la langue de votre métier, sans sacrifier votre saison.
               </h1>
               <p className="mt-5 max-w-lg text-base leading-relaxed text-white/80 sm:text-lg">
@@ -348,7 +393,7 @@ export default function InstitutionalLanding() {
             <div className="mx-auto grid max-w-6xl grid-cols-2 gap-px sm:grid-cols-4">
               {INDICATORS.map((item) => (
                 <div key={item.value} className="px-4 py-5 text-center sm:py-6">
-                  <p className="lp-display text-xl font-bold text-[hsl(var(--fli-yellow))] sm:text-2xl">
+                  <p className="lp-display text-xl text-[hsl(var(--fli-yellow))] sm:text-2xl">
                     {item.value}
                   </p>
                   <p className="mt-1 text-xs text-white/70 sm:text-sm">{item.label}</p>
@@ -362,7 +407,7 @@ export default function InstitutionalLanding() {
         <section id="metodo" className="scroll-mt-24 bg-[hsl(var(--surface-raised))]">
           <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:items-center lg:py-20">
             <div>
-              <h2 className="lp-display text-3xl font-bold tracking-tight text-[hsl(var(--fli-navy))] sm:text-4xl">
+              <h2 className="lp-display text-3xl text-[hsl(var(--fli-navy))] sm:text-4xl">
                 Découvrez comment se déroule votre formation
               </h2>
               <p className="mt-4 text-base text-muted-foreground sm:text-lg">
@@ -427,7 +472,7 @@ export default function InstitutionalLanding() {
         <section id="formacoes" className="scroll-mt-24 bg-[hsl(var(--surface-page))]">
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
             <div className="max-w-2xl">
-              <h2 className="lp-display text-3xl font-bold tracking-tight text-[hsl(var(--fli-navy))] sm:text-4xl">
+              <h2 className="lp-display text-3xl text-[hsl(var(--fli-navy))] sm:text-4xl">
                 Des formations pensées pour votre métier
               </h2>
               <p className="mt-3 text-muted-foreground">
@@ -445,7 +490,7 @@ export default function InstitutionalLanding() {
                   <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[hsl(var(--fli-yellow)/0.25)] text-[hsl(var(--fli-navy))]">
                     <Icon className="h-5 w-5" aria-hidden />
                   </span>
-                  <h3 className="lp-display mt-4 text-lg font-bold text-[hsl(var(--fli-navy))]">
+                  <h3 className="lp-display mt-4 text-lg text-[hsl(var(--fli-navy))]">
                     {title}
                   </h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{text}</p>
@@ -456,7 +501,7 @@ export default function InstitutionalLanding() {
             {/* Bandeau CTA */}
             <div className="mt-14 overflow-hidden rounded-[var(--radius-panel)] bg-[hsl(var(--fli-yellow))] px-6 py-10 text-[hsl(var(--fli-navy))] sm:px-10 sm:py-12 lg:flex lg:items-center lg:justify-between lg:gap-8">
               <div className="max-w-xl">
-                <h3 className="lp-display text-2xl font-extrabold tracking-tight sm:text-3xl">
+                <h3 className="lp-display text-2xl text-[hsl(var(--fli-navy))] sm:text-3xl">
                   Organisez la formation linguistique de votre équipe, sans complexité
                   administrative
                 </h3>
@@ -469,12 +514,13 @@ export default function InstitutionalLanding() {
                   Je réserve mon stage
                   <ArrowRight className="h-4 w-4" aria-hidden />
                 </Link>
-                <a
-                  href="mailto:info@fli.fr"
-                  className="inline-flex items-center gap-2 rounded-full border border-[hsl(var(--fli-navy)/0.35)] px-6 py-3 text-sm font-semibold"
+                <button
+                  type="button"
+                  onClick={() => setContactIntent("devis")}
+                  className="inline-flex items-center gap-2 rounded-full border border-[hsl(var(--fli-navy)/0.35)] px-6 py-3 text-sm font-semibold transition hover:bg-[hsl(var(--fli-navy)/0.08)]"
                 >
                   Demander un devis
-                </a>
+                </button>
               </div>
             </div>
           </div>
@@ -484,7 +530,7 @@ export default function InstitutionalLanding() {
         <section id="stages" className="scroll-mt-24 bg-[hsl(var(--surface-raised))]">
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
             <div className="max-w-2xl">
-              <h2 className="lp-display text-3xl font-bold tracking-tight text-[hsl(var(--fli-navy))] sm:text-4xl">
+              <h2 className="lp-display text-3xl text-[hsl(var(--fli-navy))] sm:text-4xl">
                 Nos prochains stages, par langue
               </h2>
               <p className="mt-3 text-muted-foreground">
@@ -501,31 +547,37 @@ export default function InstitutionalLanding() {
                 ))}
               </div>
             ) : sessionsByLanguage.length > 0 ? (
-              <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-10 space-y-8">
                 {sessionsByLanguage.map((group) => (
-                  <div
-                    key={group.key}
-                    className="rounded-[var(--radius-card)] border border-border bg-[hsl(var(--surface-page))] p-6 shadow-xs"
-                  >
-                    <h3 className="lp-display text-lg font-bold text-[hsl(var(--fli-navy))]">
-                      {group.label}
-                    </h3>
-                    <ul className="mt-4 space-y-3">
+                  <div key={group.key}>
+                    <div className="flex items-baseline gap-3 border-b border-border pb-3">
+                      <h3 className="lp-display text-xl text-[hsl(var(--fli-navy))]">
+                        {group.label}
+                      </h3>
+                      <span className="text-sm text-muted-foreground">
+                        {group.sessions.length}{" "}
+                        {group.sessions.length > 1 ? "sessions" : "session"}
+                      </span>
+                    </div>
+                    <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                       {group.sessions.map((session) => (
                         <li
                           key={session.id}
-                          className="border-t border-border/60 pt-3 text-sm first:border-t-0 first:pt-0"
+                          className="flex flex-col rounded-[var(--radius-card)] border border-border bg-[hsl(var(--surface-page))] px-4 py-3.5 text-sm shadow-xs"
                         >
-                          <p className="flex items-center gap-1.5 font-semibold text-foreground">
+                          <p className="flex items-start gap-1.5 font-semibold leading-snug text-foreground">
                             <MapPin
-                              className="h-3.5 w-3.5 shrink-0 text-[hsl(var(--fli-orange))]"
+                              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[hsl(var(--fli-orange))]"
                               aria-hidden
                             />
                             {session.location_label}
                           </p>
-                          <p className="mt-1 flex items-center gap-1.5 text-muted-foreground">
-                            <CalendarDays className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                          <p className="mt-1.5 flex items-start gap-1.5 leading-snug text-muted-foreground">
+                            <CalendarDays className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
                             {session.date_label || "Dates à confirmer"}
+                          </p>
+                          <p className="mt-auto pt-2 text-xs text-muted-foreground/80">
+                            {formatSessionFormat(session)}
                           </p>
                         </li>
                       ))}
@@ -556,7 +608,7 @@ export default function InstitutionalLanding() {
         <section id="faq" className="scroll-mt-24 bg-[hsl(var(--surface-raised))]">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[0.85fr_1.15fr] lg:py-20">
           <div>
-            <h2 className="lp-display text-3xl font-bold tracking-tight text-[hsl(var(--fli-navy))] sm:text-4xl">
+            <h2 className="lp-display text-3xl text-[hsl(var(--fli-navy))] sm:text-4xl">
               Une question ?
             </h2>
             <div className="mt-8 rounded-[var(--radius-card)] border border-border bg-[hsl(var(--surface-page))] p-6">
@@ -566,31 +618,41 @@ export default function InstitutionalLanding() {
               <p className="mt-2 text-sm text-muted-foreground">
                 Écrivez-nous ou appelez l&apos;équipe FLI — nous répondons rapidement.
               </p>
-              <a
-                href="mailto:info@fli.fr"
-                className="mt-5 inline-flex items-center gap-2 rounded-full bg-[hsl(var(--fli-yellow))] px-5 py-2.5 text-sm font-semibold text-[hsl(var(--fli-navy))]"
+              <button
+                type="button"
+                onClick={() => setContactIntent("question")}
+                className="mt-5 inline-flex items-center gap-2 rounded-full bg-[hsl(var(--fli-yellow))] px-5 py-2.5 text-sm font-semibold text-[hsl(var(--fli-navy))] transition hover:brightness-105"
               >
                 Nous contacter
                 <ArrowRight className="h-4 w-4" aria-hidden />
-              </a>
+              </button>
               <p className="mt-3 text-xs text-muted-foreground">
                 info@fli.fr · 04 79 28 21 09
               </p>
             </div>
           </div>
 
-          <Accordion type="single" collapsible className="w-full">
-            {FAQ_ITEMS.map((item, i) => (
-              <AccordionItem key={item.q} value={`faq-${i}`}>
-                <AccordionTrigger className="text-left text-sm font-semibold text-[hsl(var(--fli-navy))] sm:text-base">
-                  {item.q}
-                </AccordionTrigger>
-                <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
-                  {item.a}
-                </AccordionContent>
-              </AccordionItem>
+          <div className="space-y-8">
+            {FAQ_GROUPS.map((group) => (
+              <div key={group.title}>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[hsl(var(--fli-orange))]">
+                  {group.title}
+                </p>
+                <Accordion type="single" collapsible className="mt-2 w-full">
+                  {group.items.map((item) => (
+                    <AccordionItem key={item.q} value={item.q}>
+                      <AccordionTrigger className="text-left text-sm font-semibold text-[hsl(var(--fli-navy))] sm:text-base">
+                        {item.q}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
+                        {item.a}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </div>
             ))}
-          </Accordion>
+          </div>
         </div>
       </section>
       </main>
@@ -644,6 +706,8 @@ export default function InstitutionalLanding() {
           © {new Date().getFullYear()} France Langues International
         </div>
       </footer>
+
+      <ContactDialog intent={contactIntent} onClose={() => setContactIntent(null)} />
     </div>
   );
 }
