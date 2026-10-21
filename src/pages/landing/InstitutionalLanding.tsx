@@ -76,7 +76,7 @@ const FORMATIONS = [
   {
     icon: Wallet,
     title: "Financement facilité",
-    text: "FIFPL, OPCO : FLI gère le dossier administratif pour vous.",
+    text: "FIFPL, OPCO : FLI vous accompagne dans vos démarches de prise en charge.",
   },
   {
     icon: Laptop,
@@ -140,7 +140,7 @@ const FAQ_GROUPS = [
       },
       {
         q: "Puis-je faire financer ma formation ?",
-        a: "Oui. Moniteurs et monitrices indépendants : les langues sont une formation « cœur de métier » pour le FIF PL, prise en charge jusqu'à 900 € par an (nos visios comptent comme du présentiel). Salariés : votre OPCO peut financer la formation. Dans les deux cas, FLI vous aide à estimer vos droits et prépare les documents du dossier.",
+        a: "Oui. Moniteurs et monitrices indépendants : les langues sont une formation « cœur de métier » pour le FIF PL, prise en charge jusqu'à 900 € par an (nos visios comptent comme du présentiel). Salariés : votre OPCO peut financer la formation. Dans les deux cas, FLI vous accompagne : nous vous aidons à estimer vos droits et vous fournissons les documents utiles (convention, programme, tutoriel). La demande de prise en charge reste à faire par vous, avant le début de la formation.",
       },
       {
         q: "Et si je dois annuler ?",
