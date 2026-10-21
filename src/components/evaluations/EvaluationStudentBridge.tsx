@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,6 @@ import { Input } from "@/components/ui/input";
 import { StatusPill } from "@/components/ui-kit";
 import { Link2, UserRound, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 
 type Props = {
   candidateId: string | null | undefined;
@@ -33,7 +33,6 @@ export function EvaluationStudentBridge({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: linkedInscription } = useQuery({
@@ -80,12 +79,12 @@ export function EvaluationStudentBridge({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["test-bookings-to-evaluate"] });
       queryClient.invalidateQueries({ queryKey: ["completed-evaluations"] });
-      toast({ title: "Stagiaire lié au test oral" });
+      toast.success("Stagiaire lié au test oral");
       setOpen(false);
       setQ("");
     },
     onError: (err: Error) => {
-      toast({ variant: "destructive", title: "Liaison impossible", description: err.message });
+      toast.error("Liaison impossible", { description: err.message });
     },
   });
 

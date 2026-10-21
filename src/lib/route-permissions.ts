@@ -24,7 +24,7 @@ export const ROUTE_GROUPS: RouteGroup[] = [
   {
     label: "Commercial & partenaires",
     routes: [
-      { key: "commercial", label: "Pipeline commercial" },
+      { key: "commercial", label: "Prospects commerciaux" },
       { key: "partenaires", label: "Partenaires" },
       { key: "moniteurs", label: "Moniteurs de ski" },
     ],
@@ -79,6 +79,7 @@ export const PATH_TO_ROUTE_KEY: Record<string, string> = {
   "/gestion/moniteurs": "moniteurs",
   "/gestion/partenaires": "partenaires",
   "/inscriptions": "inscriptions",
+  "/inscriptions/par-formation": "inscriptions",
   "/formation/sessions": "inscriptions",
   "/classes": "inscriptions",
   "/documents": "inscriptions",

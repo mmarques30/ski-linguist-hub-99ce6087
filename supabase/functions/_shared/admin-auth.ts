@@ -42,9 +42,38 @@ function isAnonToken(token: string, anonKey: string): boolean {
   return readJwtRoleClaim(token) === "anon";
 }
 
+/**
+ * Égalité stricte (temps constant) avec la vraie clé service_role.
+ * Ne JAMAIS se fier au claim `role` décodé : un JWT forgé non signé
+ * pourrait l'annoncer (finding « forged token »).
+ */
 function isServiceRoleToken(token: string, serviceRoleKey: string): boolean {
-  if (token === serviceRoleKey) return true;
-  return readJwtRoleClaim(token) === "service_role";
+  if (!serviceRoleKey || token.length !== serviceRoleKey.length) return false;
+  let diff = 0;
+  for (let i = 0; i < token.length; i++) {
+    diff |= token.charCodeAt(i) ^ serviceRoleKey.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
+/** Comparaison à temps constant du jeton cron avec la valeur en base. */
+async function isValidCronDispatchToken(
+  adminClient: SupabaseClient,
+  provided: string
+): Promise<boolean> {
+  const { data, error } = await adminClient
+    .from("cron_dispatch_secret")
+    .select("token")
+    .eq("id", true)
+    .maybeSingle();
+  const expected = (data as { token?: string } | null)?.token;
+  if (error || !expected || expected.length < 32) return false;
+  if (expected.length !== provided.length) return false;
+  let diff = 0;
+  for (let i = 0; i < expected.length; i++) {
+    diff |= expected.charCodeAt(i) ^ provided.charCodeAt(i);
+  }
+  return diff === 0;
 }
 
 export async function requireAdmin(
@@ -109,11 +138,21 @@ async function requireServiceRoleOrRoles(
     return jsonAuthError(401, "Unauthorized");
   }
 
+  const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
+  // Cron pg_cron : jeton dédié généré en base (public.cron_dispatch_secret),
+  // envoyé par dispatch_edge_function dans x-cron-dispatch-token.
+  const cronHeader = req.headers.get("x-cron-dispatch-token")?.trim();
+  if (cronHeader) {
+    if (await isValidCronDispatchToken(adminClient, cronHeader)) {
+      return { adminClient, userId: null, authMode: "service_role" };
+    }
+    return jsonAuthError(403, "Forbidden: invalid cron token");
+  }
+
   if (isAnonToken(token, anonKey)) {
     return jsonAuthError(403, "Forbidden: anon key is not sufficient");
   }
-
-  const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
   if (isServiceRoleToken(token, serviceRoleKey)) {
     return { adminClient, userId: null, authMode: "service_role" };

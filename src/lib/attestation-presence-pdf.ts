@@ -386,10 +386,10 @@ export async function buildAttestationPresencePdfBytes(
   const CACHET_BOX = { x: 218, y: 70, w: 152, h: 88 };
   const SIGNATURE_BOX = { x: 392, y: 66, w: 136, h: 46 };
 
-  const drawContainedImage = (
-    embedded: { width: number; height: number },
+  const drawContainedImage = <T extends { width: number; height: number }>(
+    embedded: T,
     box: { x: number; y: number; w: number; h: number },
-    drawImage: (img: typeof embedded, opts: {
+    drawImage: (img: T, opts: {
       x: number; y: number; width: number; height: number;
     }) => void
   ) => {

@@ -1,3 +1,5 @@
+import { execFileSync } from "node:child_process";
+import { readFileSync, writeFileSync, mkdtempSync } from "node:fs";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -45,11 +47,23 @@ function pdfVisibleText(bytes: Uint8Array): string {
     );
 }
 
+/** Extraction fiable avec polices CID (Liberation Sans ESF). */
+function pdfExtractedText(bytes: Uint8Array): string {
+  try {
+    const dir = mkdtempSync(join(tmpdir(), "fli-pdf-"));
+    const file = join(dir, "doc.pdf");
+    writeFileSync(file, bytes);
+    return execFileSync("pdftotext", ["-layout", file, "-"], { encoding: "utf8" });
+  } catch {
+    return pdfVisibleText(bytes);
+  }
+}
+
 const identity = DEFAULT_FLI_IDENTITY;
 
 const SCALE: CecrlScaleRow[] = [
-  { score: 0, cecrl_label: "A1", niveau: 0, description: "Faux débutant / Quelques notions / Éveil" },
-  { score: 0.5, cecrl_label: "A1+", niveau: 0, description: "Faux débutant / Quelques notions / Éveil" },
+  { score: 0, cecrl_label: "A1", niveau: 0, description: "Faux débutant / Quelques notions / Eveil" },
+  { score: 0.5, cecrl_label: "A1+", niveau: 0, description: "Faux débutant / Quelques notions / Eveil" },
   { score: 1, cecrl_label: "A2", niveau: 1, description: "Élémentaire / Pré-intermédiaire / Survie" },
   { score: 1.5, cecrl_label: "A2+", niveau: 1, description: "Élémentaire / Pré-intermédiaire / Survie" },
   { score: 2, cecrl_label: "B1", niveau: 2, description: "Intermédiaire / Autonomie" },
@@ -108,6 +122,11 @@ async function loadAssets(): Promise<EvaluationPdfAssets> {
     partnerLogos: await Promise.all(
       EVALUATION_PDF_ASSET_FILES.partners.map((name) => read(name))
     ),
+    fonts: {
+      regular: await read(EVALUATION_PDF_ASSET_FILES.fonts.regular),
+      bold: await read(EVALUATION_PDF_ASSET_FILES.fonts.bold),
+      italic: await read(EVALUATION_PDF_ASSET_FILES.fonts.italic),
+    },
   };
 }
 
@@ -126,6 +145,43 @@ describe("titre et saison PDF", () => {
       "Évaluation en langue vivante saison 2026 / 2027"
     );
   });
+
+  it("refuse une Date invalide (évite saison NaN / NaN)", () => {
+    expect(() => skiSeasonYears(new Date("2026-10-05T14:00:00+00"))).toThrow(
+      /invalide/
+    );
+    expect(() => skiSeasonYears(new Date("invalid"))).toThrow(/invalide/);
+  });
+
+  it("garde la copie Deno d'accord avec le module front (saison + ESF)", () => {
+    const front = readFileSync(
+      join(process.cwd(), "src/lib/evaluation-pdf.ts"),
+      "utf8"
+    );
+    const deno = readFileSync(
+      join(process.cwd(), "supabase/functions/_shared/evaluation-pdf-model.ts"),
+      "utf8"
+    );
+    const sliceFn = (texte: string, nom: string) => {
+      const debut = texte.indexOf(`export function ${nom}`);
+      expect(debut).toBeGreaterThan(-1);
+      const fin = texte.indexOf("\nexport ", debut + 1);
+      return texte.slice(debut, fin === -1 ? undefined : fin);
+    };
+    expect(sliceFn(deno, "skiSeasonYears")).toBe(sliceFn(front, "skiSeasonYears"));
+    expect(sliceFn(deno, "formatSeasonLabel")).toBe(sliceFn(front, "formatSeasonLabel"));
+    expect(sliceFn(deno, "evaluationTitle")).toBe(sliceFn(front, "evaluationTitle"));
+    expect(sliceFn(deno, "formatEsfTarifLabel")).toBe(sliceFn(front, "formatEsfTarifLabel"));
+    expect(sliceFn(deno, "esfCycleChecks")).toBe(sliceFn(front, "esfCycleChecks"));
+    expect(front).toContain("assertValidDate");
+    expect(deno).toContain("assertValidDate");
+    expect(front).toContain("ESF_GENERAL_SKILL_LABEL");
+    expect(deno).toContain("ESF_GENERAL_SKILL_LABEL");
+    expect(front).toContain("ESF_BAREME_HEADING");
+    expect(deno).toContain("ESF_BAREME_HEADING");
+    expect(front).toContain('habillage === "esf"');
+    expect(deno).toContain('habillage === "esf"');
+  });
 });
 
 describe("nom affiché et sous-titre", () => {
@@ -133,11 +189,18 @@ describe("nom affiché et sous-titre", () => {
     expect(formatCandidateDisplayName("ZZTEST CandidatC5")).toBe("ZZTEST CANDIDATC5");
   });
 
-  it("calcule le sous-titre label principal → objectif C1", () => {
+  it("ESF (.dotx) : pas de sous-titre synthétique", () => {
+    const esf = buildEvaluationPdfModel(sample("esf"));
+    expect(esf.subtitle).toBe("");
+    expect(esf.skiDisciplineLabel).toBe("Alpin");
+    expect(esf.trainingCycle).toBe("ZZTEST Cycle 2");
+  });
+
+  it("école / DSF : sous-titre label principal → objectif C1", () => {
     expect(principalLabel("Post intermédiaire / Opérationnel")).toBe(
       "Post intermédiaire"
     );
-    const model = buildEvaluationPdfModel(sample("esf"));
+    const model = buildEvaluationPdfModel(sample("ecole_ski"));
     expect(model.subtitle).toContain("ZZTEST CANDIDATC5");
     expect(model.subtitle).toContain("3 / B2 - Niveau 3 - Post intermédiaire");
     expect(model.subtitle).not.toContain("Opérationnel");
@@ -145,8 +208,6 @@ describe("nom affiché et sous-titre", () => {
     expect(model.subtitle).toContain("Anglais");
     expect(model.subtitle).toContain("évaluateur");
     expect(model.subtitle).toContain("ZZTEST Formateur");
-    expect(model.skiDisciplineLabel).toBe("Alpin");
-    expect(model.trainingCycle).toBe("ZZTEST Cycle 2");
   });
 });
 
@@ -161,10 +222,11 @@ describe("prix TTC selon habillage", () => {
     const ecole = buildEvaluationPdfModel(sample("ecole_ski"));
     const dsf = buildEvaluationPdfModel(sample("dsf"));
     expect(esf.showPrice).toBe(true);
-    expect(esf.priceLabel).toBe("45 € TTC");
+    expect(esf.priceLabel).toBe("45 €");
     expect(esf.showCourseTable).toBe(true);
     expect(esf.showRegionalSections).toBe(true);
     expect(ecole.showPrice).toBe(true);
+    expect(ecole.priceLabel).toBe("45 € TTC");
     expect(ecole.showFliHeaderFooter).toBe(true);
     expect(ecole.title).toBe("Évaluation en langue vivante saison 2025 / 2026");
     expect(dsf.showPrice).toBe(false);
@@ -222,7 +284,7 @@ describe("blocs C.2/C.3 et note méthodologique", () => {
     expect(withGap.noteMethodologique).toBe("Écart expliqué pour la fluidité orale.");
   });
 
-  it("aligne les six compétences sur les trois habillages", () => {
+  it("aligne les six compétences (ESF : APPRÉCIATION GÉNÉRALE majuscules)", () => {
     const labels = SKILL_ORDER.map((s) => s.label);
     expect(labels).toEqual([
       "Compréhension",
@@ -232,11 +294,37 @@ describe("blocs C.2/C.3 et note méthodologique", () => {
       "Conversation générale",
       "Appréciation générale",
     ]);
-    for (const sponsor of ["esf", "ecole_ski", "dsf"] as const) {
+    const esfLabels = [
+      ...labels.slice(0, 5),
+      "APPRÉCIATION GÉNÉRALE",
+    ];
+    expect(buildEvaluationPdfModel(sample("esf")).skillRows.map((r) => r.label)).toEqual(
+      esfLabels
+    );
+    expect(buildEvaluationPdfModel(sample("esf")).skillRows.map((r) => r.value)).toEqual([
+      "3",
+      "3",
+      "3",
+      "3",
+      "3,5",
+      "3",
+    ]);
+    for (const sponsor of ["ecole_ski", "dsf"] as const) {
       expect(buildEvaluationPdfModel(sample(sponsor)).skillRows.map((r) => r.label)).toEqual(
         labels
       );
     }
+  });
+
+  it("ESF : blocs sans titres Points forts / Clôture", () => {
+    const model = buildEvaluationPdfModel(sample("esf"));
+    expect(model.blocs.every((b) => b.label === "")).toBe(true);
+    expect(model.blocs.map((b) => b.text)).toEqual([
+      "Vous vous présentez clairement et vous situez votre activité.",
+      "Vous comprenez les consignes de sécurité.",
+      "Votre vocabulaire technique est adapté aux situations de piste.",
+      "Vous pouvez conclure un échange professionnel de façon courtoise.",
+    ]);
   });
 });
 
@@ -274,12 +362,9 @@ describe("octets PDF", () => {
       const bytes = await renderEvaluationPdf(model, assets);
       expect(bytes.byteLength).toBeGreaterThan(5000);
       const doc = await PDFDocument.load(bytes);
-      const ascii = pdfVisibleText(bytes);
+      const ascii = pdfExtractedText(bytes);
       expect(Buffer.from(bytes).toString("latin1")).toContain("%PDF");
       expect(ascii).toContain("ZZTEST CANDIDATC5");
-      expect(ascii).toContain("Points forts");
-      expect(ascii).toContain("Clôture");
-      expect(ascii).toContain("Pour passer au C1");
       expect(ascii).not.toContain("EVALUATION EN LANGUE VIVANTE");
       expect(ascii).not.toContain("Note m");
       expect(ascii).toContain("Structures de la langue");
@@ -293,26 +378,46 @@ describe("octets PDF", () => {
         expect(ascii).toContain("Bar");
         expect(ascii).not.toContain("TTC");
         expect(ascii).not.toContain("Tarif");
-      } else {
-        expect(ascii).toContain("TTC");
-        expect(ascii).toContain("Tarif");
-      }
-      if (sponsor === "esf") {
-        expect(doc.getPageCount()).toBe(2);
-        expect(ascii).toContain("Cours collectifs enfants");
-        expect(ascii).toContain("Organismes agr");
-        expect(ascii).toContain("Sections r");
-        expect(ascii).toContain("Alpin");
-        expect(ascii).toContain("ZZTEST Cycle 2");
-        expect(ascii).toContain("objectif C1");
+        expect(ascii).toContain("Points forts");
+        expect(ascii).toContain("Cl");
+        expect(ascii).toContain("Pour passer au C1");
       }
       if (sponsor === "ecole_ski") {
         expect(doc.getPageCount()).toBe(1);
+        expect(ascii).toContain("TTC");
+        expect(ascii).toContain("Tarif");
+        expect(ascii).toContain("Points forts");
+        expect(ascii).toContain("Cl");
+        expect(ascii).toContain("Pour passer au C1");
         expect(ascii).toContain("04 79 28 21 09");
         expect(ascii).not.toContain("09 81 84 60 65");
         expect(ascii).toContain("Fait ");
         expect(ascii).toContain("10/09/2026");
         expect(ascii).not.toContain("le 15/01/2026");
+      }
+      if (sponsor === "esf") {
+        // .dotx : 2 pages, formulaire à cases, barème p.1, appréciations p.2
+        expect(doc.getPageCount()).toBe(2);
+        expect(ascii).toContain("Tarif");
+        expect(ascii).not.toContain("TTC");
+        expect(ascii).toContain("Cours collectifs enfants");
+        expect(ascii).toContain("Barème Européen");
+        expect(ascii).toContain("T.S.V.P.");
+        expect(ascii).toContain("Page 1 sur 2");
+        expect(ascii).toContain("Page 2 sur 2");
+        expect(ascii).toContain("Alpin");
+        expect(ascii).toContain("1er Cycle");
+        expect(ascii).toContain("Nordique");
+        expect(ascii).toContain("demand");
+        expect(ascii).toContain("FLI");
+        expect(ascii).toContain("BOURG SAINT MAURICE");
+        expect(ascii).toContain("Carte Syndicale");
+        expect(ascii).toContain("OUI");
+        expect(ascii).toContain("NON");
+        expect(ascii).not.toContain("Organismes agr");
+        expect(ascii).not.toContain("Points forts");
+        expect(ascii).not.toContain("objectif C1");
+        expect(ascii).not.toContain("Sections r");
       }
     }
   }, 20_000);

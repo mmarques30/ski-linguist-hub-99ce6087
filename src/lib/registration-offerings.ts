@@ -216,10 +216,15 @@ export function uniqueLanguages(offerings: RegistrationOffering[]) {
   return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label, "fr"));
 }
 
+/** Clé stable pour regrouper / filtrer une session par ses dates. */
+export function offeringDateKey(o: Pick<RegistrationOffering, "start_date" | "end_date" | "date_label">): string {
+  return o.start_date && o.end_date ? `${o.start_date}_${o.end_date}` : o.date_label || "flex";
+}
+
 export function uniqueDateOptions(offerings: RegistrationOffering[]): DateOption[] {
   const map = new Map<string, DateOption>();
   for (const o of offerings) {
-    const key = o.start_date && o.end_date ? `${o.start_date}_${o.end_date}` : o.date_label || "flex";
+    const key = offeringDateKey(o);
     const label =
       o.date_label ||
       (o.start_date && o.end_date
@@ -227,7 +232,34 @@ export function uniqueDateOptions(offerings: RegistrationOffering[]): DateOption
         : "Dates à confirmer");
     map.set(key, { key, label, start_date: o.start_date, end_date: o.end_date });
   }
-  return Array.from(map.values());
+  return Array.from(map.values()).sort((a, b) => {
+    const aStart = a.start_date || a.label;
+    const bStart = b.start_date || b.label;
+    return aStart.localeCompare(bStart, "fr");
+  });
+}
+
+export function filterByLanguage(offerings: RegistrationOffering[], languageKey: string) {
+  return offerings.filter((o) => o.language_key === languageKey);
+}
+
+export function filterByDateKey(offerings: RegistrationOffering[], dateKey: string) {
+  return offerings.filter((o) => offeringDateKey(o) === dateKey);
+}
+
+/** Sessions d’une langue : dates chronologiques, puis lieu. */
+export function sortOfferingsByDateThenLocation(
+  offerings: RegistrationOffering[]
+): RegistrationOffering[] {
+  return [...offerings].sort((a, b) => {
+    const aStart = a.start_date || a.date_label || "";
+    const bStart = b.start_date || b.date_label || "";
+    const byDate = aStart.localeCompare(bStart, "fr");
+    if (byDate !== 0) return byDate;
+    const byLoc = a.location_label.localeCompare(b.location_label, "fr");
+    if (byLoc !== 0) return byLoc;
+    return a.sort_order - b.sort_order;
+  });
 }
 
 export function uniqueDurations(offerings: RegistrationOffering[]) {
@@ -264,9 +296,7 @@ export function matchOffering(
       if (filters.languageKey && o.language_key !== filters.languageKey) return false;
       if (filters.durationHours != null && o.duration_hours !== filters.durationHours) return false;
       if (filters.dateKey) {
-        const oKey =
-          o.start_date && o.end_date ? `${o.start_date}_${o.end_date}` : o.date_label || "flex";
-        if (oKey !== filters.dateKey) return false;
+        if (offeringDateKey(o) !== filters.dateKey) return false;
       }
       return true;
     }) || null

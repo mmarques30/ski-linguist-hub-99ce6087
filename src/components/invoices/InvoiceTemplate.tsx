@@ -9,6 +9,7 @@ import {
 } from "@/lib/organization-identity";
 import { paymentMethodLabel } from "@/lib/payment-methods";
 import { invoicePaidDisplay } from "@/lib/invoice-paid-display";
+import { FLI_BANK_DETAILS } from "@/lib/registration-payments";
 
 export type InvoiceType = "formation" | "test" | "soustraitance";
 
@@ -84,8 +85,8 @@ const FLI_INFO = {
   email: "info@fli.fr",
   siret: "484 772 041 00048",
   tvaNumber: "FR 44 484772041",
-  iban: "FR76 1820 6004 4339 5412 7300 144",
-  bic: "AGRIFRPP882",
+  iban: FLI_BANK_DETAILS.iban,
+  bic: FLI_BANK_DETAILS.bic,
 };
 
 interface InvoiceTemplateProps {

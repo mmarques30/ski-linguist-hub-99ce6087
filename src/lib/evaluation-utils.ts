@@ -81,21 +81,61 @@ export const SCORE_TO_LEVEL_5: Record<number, string> = {
   5: 'C2'
 };
 
-export const SCORE_TO_LEVEL_20: Record<number, string> = {
-  0: 'A1', 0.5: 'A1', 1: 'A1+', 1.5: 'A1+', 2: 'A1+', 2.5: 'A1+', 3: 'A1+',
-  3.5: 'A2', 4: 'A2', 4.5: 'A2', 5: 'A2', 5.5: 'A2',
-  6: 'A2+', 6.5: 'A2+', 7: 'A2+', 7.5: 'A2+',
-  8: 'B1', 8.5: 'B1', 9: 'B1+', 9.5: 'B1+',
-  10: 'B2', 10.5: 'B2', 11: 'B2', 11.5: 'B2',
-  12: 'B2+', 12.5: 'B2+', 13: 'B2+', 13.5: 'B2+',
-  14: 'C1', 14.5: 'C1', 15: 'C1', 15.5: 'C1',
-  16: 'C1+', 16.5: 'C1+', 17: 'C1+', 17.5: 'C1+',
-  18: 'C2', 18.5: 'C2', 19: 'C2', 19.5: 'C2', 20: 'C2'
+/**
+ * Tableau de correspondance ESF Alpe d'Huez / Villard Reculas (note /20).
+ * Bornes alignées sur les demi-points saisis (ex. 3,1→3,5 ; 5,9→5,5 ; 7,9→7,5).
+ * Les « + » marquent la fourchette haute quand le tableau distingue deux qualificatifs
+ * (ex. Moyen vs Moyen confirmé → B2 / B2+) ; pour B1 (une seule fourchette 8–9,9)
+ * on garde B1+ sur 9–9,5 (usage formateurs, ex. « B1+ - 9,5 »).
+ */
+export type AlpeDhuezBand = {
+  min: number;
+  max: number;
+  cecrl: string;
+  niveau: number;
+  keyword: string;
+  qualifier: string;
 };
 
+export const ALPE_DHUEZ_CORRESPONDANCE: readonly AlpeDhuezBand[] = [
+  { min: 0, max: 0, cecrl: "A1", niveau: 0, keyword: "ÉVEIL", qualifier: "Débutant complet" },
+  { min: 0.5, max: 3, cecrl: "A1+", niveau: 0, keyword: "ÉVEIL", qualifier: "Débutant avec notions" },
+  { min: 3.5, max: 5.5, cecrl: "A2", niveau: 1, keyword: "SURVIE", qualifier: "Très faible" },
+  { min: 6, max: 7.5, cecrl: "A2+", niveau: 1, keyword: "SURVIE", qualifier: "Faible" },
+  { min: 8, max: 8.5, cecrl: "B1", niveau: 2, keyword: "AUTONOMIE", qualifier: "Faible" },
+  { min: 9, max: 9.5, cecrl: "B1+", niveau: 2, keyword: "AUTONOMIE", qualifier: "Faible" },
+  { min: 10, max: 11.5, cecrl: "B2", niveau: 3, keyword: "OPÉRATIONNEL", qualifier: "Moyen" },
+  { min: 12, max: 13.5, cecrl: "B2+", niveau: 3, keyword: "OPÉRATIONNEL", qualifier: "Moyen confirmé" },
+  { min: 14, max: 15.5, cecrl: "C1", niveau: 4, keyword: "FLUIDITÉ", qualifier: "Bon" },
+  { min: 16, max: 17.5, cecrl: "C1+", niveau: 4, keyword: "FLUIDITÉ", qualifier: "Très bon" },
+  { min: 18, max: 20, cecrl: "C2", niveau: 5, keyword: "MAÎTRISE", qualifier: "Excellent" },
+] as const;
+
+/** Résout une note /20 via le tableau Alpe d'Huez (bornes inclusives). */
+export function alpeDhuezFromScore20(score: number): AlpeDhuezBand {
+  const n = Number(score);
+  if (!Number.isFinite(n) || n < 0) return ALPE_DHUEZ_CORRESPONDANCE[0];
+  if (n > 20) return ALPE_DHUEZ_CORRESPONDANCE[ALPE_DHUEZ_CORRESPONDANCE.length - 1];
+  const band = ALPE_DHUEZ_CORRESPONDANCE.find((b) => n >= b.min && n <= b.max);
+  if (band) return band;
+  // Demi-point hors liste (ex. 3,0 déjà couvert) : plus proche inférieur
+  for (let i = ALPE_DHUEZ_CORRESPONDANCE.length - 1; i >= 0; i--) {
+    if (n >= ALPE_DHUEZ_CORRESPONDANCE[i].min) return ALPE_DHUEZ_CORRESPONDANCE[i];
+  }
+  return ALPE_DHUEZ_CORRESPONDANCE[0];
+}
+
+/** Carte discrète demi-points — dérivée du tableau (compat ScoreInput / exports). */
+export const SCORE_TO_LEVEL_20: Record<number, string> = Object.fromEntries(
+  Array.from({ length: 41 }, (_, i) => {
+    const score = i / 2;
+    return [score, alpeDhuezFromScore20(score).cecrl];
+  })
+);
+
 export function scoreToLevel(score: number, system: 'sur_5' | 'sur_20'): string {
-  const map = system === 'sur_5' ? SCORE_TO_LEVEL_5 : SCORE_TO_LEVEL_20;
-  return map[score] || 'A1';
+  if (system === "sur_20") return alpeDhuezFromScore20(score).cecrl;
+  return SCORE_TO_LEVEL_5[score] || "A1";
 }
 
 export function compareLevels(level1: string, level2: string): number {
@@ -112,8 +152,8 @@ export function generateScoreOptions(system: 'sur_5' | 'sur_20'): number[] {
   return options;
 }
 
-// Schools that use /20 scoring system
-export const SCHOOLS_SUR_20 = ["esf alpe d'huez", "esf alpe d'huez", "villard reculas", "villard-reculas"];
+// Schools that use /20 scoring system (tableau Alpe d'Huez)
+export const SCHOOLS_SUR_20 = ["alpe d'huez", "alpe d huez", "villard reculas", "villard-reculas"];
 
 export function getScoringSystem(schoolName: string): 'sur_5' | 'sur_20' {
   const normalized = schoolName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');

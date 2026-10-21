@@ -164,7 +164,7 @@ export const ESF_REGIONAL_SECTIONS: ReadonlyArray<{
 
 /** Barème européen du .dotx (A1–C2 / niveaux 0–5). Repli si cecrl_scale incomplet. */
 export const CECRL_BAREME: ReadonlyArray<BaremeRow> = [
-  { score: 0, cecrl: "A1", niveau: 0, labels: "Faux débutant / Quelques notions / Éveil" },
+  { score: 0, cecrl: "A1", niveau: 0, labels: "Faux débutant / Quelques notions / Eveil" },
   { score: 1, cecrl: "A2", niveau: 1, labels: "Élémentaire / Pré-intermédiaire / Survie" },
   { score: 2, cecrl: "B1", niveau: 2, labels: "Intermédiaire / Autonomie" },
   { score: 3, cecrl: "B2", niveau: 3, labels: "Post intermédiaire / Opérationnel" },
@@ -193,6 +193,37 @@ export const SKILL_ORDER: Array<{ key: keyof EvaluationPdfScores; label: string 
   { key: "general", label: "Appréciation générale" },
 ];
 
+/** Libellé .dotx ESF pour la ligne générale (majuscules). */
+export const ESF_GENERAL_SKILL_LABEL = "APPRÉCIATION GÉNÉRALE";
+
+export const ESF_ORGANISM_NAME = "FLI – France Langues International";
+export const ESF_CACHET_CAPTION = "Cachet de l'organisme";
+export const ESF_BAREME_HEADING = "Barème Européen";
+export const ESF_APPRECIATION_HEADING = "Appréciation sur les capacités du stagiaire :";
+export const ESF_PAGE_LABEL = (index: number, total: number) => `Page ${index} sur ${total}`;
+
+/** Cases à cocher cycle (.dotx). */
+export type EsfCycleChecks = {
+  preparatoire: boolean;
+  premier: boolean;
+  deuxieme: boolean;
+  titulaireDe: boolean;
+};
+
+/** Interprète `training_cycle` libre pour cocher la case .dotx la plus proche. */
+export function esfCycleChecks(trainingCycle: string | null | undefined): EsfCycleChecks {
+  const raw = (trainingCycle || "").trim().toLowerCase();
+  const preparatoire = /pr[eé]paratoire|prep/.test(raw);
+  const titulaireDe = /titulaire/.test(raw);
+  const deuxieme = /2|deuxi[eè]me|2eme|2ème/.test(raw);
+  const premier =
+    !preparatoire &&
+    !titulaireDe &&
+    !deuxieme &&
+    (/^1$|1er|premier|cycle\s*1|\b1\b/.test(raw) || raw === "1");
+  return { preparatoire, premier, deuxieme, titulaireDe };
+}
+
 export function isSponsorType(value: string): value is SponsorType {
   return value === "esf" || value === "ecole_ski" || value === "dsf";
 }
@@ -204,8 +235,15 @@ export function habillageFromSponsorType(value: string): SponsorType {
   return value;
 }
 
+function assertValidDate(date: Date, label: string): void {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    throw new Error(`${label} invalide (Date NaN)`);
+  }
+}
+
 /** Saison ski : 1er juillet N → 30 juin N+1 = saison N / N+1. */
 export function skiSeasonYears(date: Date): { start: number; end: number } {
+  assertValidDate(date, "date d'évaluation");
   const year = date.getFullYear();
   const month = date.getMonth();
   if (month >= 6) return { start: year, end: year + 1 };
@@ -279,6 +317,7 @@ export function formatIdentityLine(identity: FliIdentity): string {
 }
 
 function formatDateFr(date: Date): string {
+  assertValidDate(date, "date");
   const dd = String(date.getDate()).padStart(2, "0");
   const mm = String(date.getMonth() + 1).padStart(2, "0");
   return `${dd}/${mm}/${date.getFullYear()}`;
@@ -403,12 +442,18 @@ export function evaluationSubtitle(input: {
 function skillRowsFor(
   scores: EvaluationPdfScores,
   cecrlGeneral: string | null,
-  scale: CecrlScaleRow[]
+  scale: CecrlScaleRow[],
+  habillage: SponsorType
 ): SkillRow[] {
   return SKILL_ORDER.map(({ key, label }) => {
+    const rowLabel = habillage === "esf" && key === "general" ? ESF_GENERAL_SKILL_LABEL : label;
+    if (habillage === "esf") {
+      // .dotx : colonne « Niveau de 0 à 5 » = note seule (pas de CECRL dans la cellule).
+      return { label: rowLabel, value: formatScoreFr(asScoreNumber(scores[key])) };
+    }
     const hint = key === "general" ? cecrlGeneral : resolveLevel(scores[key], scale).cecrl;
     return {
-      label,
+      label: rowLabel,
       value: formatScoreCecrl(scores[key], hint),
     };
   });
@@ -417,8 +462,18 @@ function skillRowsFor(
 function commentBlocs(
   input: EvaluationPdfBlocs,
   current: ResolvedLevel,
-  next: ResolvedLevel | null
+  next: ResolvedLevel | null,
+  habillage: SponsorType
 ): { label: string; text: string }[] {
+  // .dotx ESF : paragraphes libres sans titres « Points forts / À consolider / … ».
+  if (habillage === "esf") {
+    return [
+      { label: "", text: input.introduction?.trim() || "" },
+      { label: "", text: input.comprehension?.trim() || "" },
+      { label: "", text: input.technique?.trim() || "" },
+      { label: "", text: input.conclusion?.trim() || "" },
+    ].filter((b) => b.text);
+  }
   return [
     { label: "Points forts", text: input.introduction?.trim() || "" },
     { label: "À consolider", text: input.comprehension?.trim() || "" },
@@ -430,11 +485,21 @@ function commentBlocs(
   ];
 }
 
+/** Tarif .dotx ESF : « Tarif 45 € » (sans « TTC »). */
+export function formatEsfTarifLabel(amount: number): string {
+  const shown = Number.isInteger(amount) ? String(amount) : String(amount).replace(".", ",");
+  return `${shown} €`;
+}
+
 export function buildEvaluationPdfModel(input: EvaluationPdfInput): EvaluationPdfModel {
   const habillage = habillageFromSponsorType(input.sponsorType);
   const showPrice = habillage !== "dsf";
   const priceLabel =
-    showPrice && input.priceTtc != null ? formatPriceTtc(input.priceTtc) : null;
+    showPrice && input.priceTtc != null
+      ? habillage === "esf"
+        ? formatEsfTarifLabel(input.priceTtc)
+        : formatPriceTtc(input.priceTtc)
+      : null;
   if (showPrice && priceLabel == null) {
     throw new Error("evaluation_price_ttc manquant pour cet habillage");
   }
@@ -455,13 +520,17 @@ export function buildEvaluationPdfModel(input: EvaluationPdfInput): EvaluationPd
     habillage,
     title: evaluationTitle(input.evaluatedAt),
     seasonLabel: formatSeasonLabel(input.evaluatedAt),
-    subtitle: evaluationSubtitle({
-      candidateName: input.candidateName,
-      generalScore: input.scores.general,
-      current,
-      languageLabel,
-      instructorName,
-    }),
+    // .dotx ESF : pas de sous-titre synthétique sous le titre.
+    subtitle:
+      habillage === "esf"
+        ? ""
+        : evaluationSubtitle({
+            candidateName: input.candidateName,
+            generalScore: input.scores.general,
+            current,
+            languageLabel,
+            instructorName,
+          }),
     showPrice,
     priceLabel,
     showCourseTable: habillage === "esf",
@@ -484,10 +553,10 @@ export function buildEvaluationPdfModel(input: EvaluationPdfInput): EvaluationPd
     skiDiscipline: input.skiDiscipline?.trim() || null,
     skiDisciplineLabel: formatSkiDisciplineLabel(input.skiDiscipline),
     trainingCycle: input.trainingCycle?.trim() || "—",
-    skillRows: skillRowsFor(input.scores, input.cecrlGeneral, scale),
+    skillRows: skillRowsFor(input.scores, input.cecrlGeneral, scale, habillage),
     baremeRows: baremeRowsFromScale(scale),
     noteMethodologique: methodo,
-    blocs: commentBlocs(input.blocs, current, next),
+    blocs: commentBlocs(input.blocs, current, next, habillage),
     identity: input.identity,
     identityLine: formatIdentityLine(input.identity),
   };

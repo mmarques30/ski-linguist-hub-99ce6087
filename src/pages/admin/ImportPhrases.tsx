@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -10,7 +11,6 @@ import {
   StatusPill,
   SurfaceCard,
 } from "@/components/ui-kit";
-import { useToast } from "@/hooks/use-toast";
 import { useBulkImportPhrases, useTestPhrases } from "@/hooks/useTestPhrases";
 import { Upload, FileJson, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import {
@@ -52,7 +52,6 @@ function toInsertRow(phrase: FilePhrase, index: number) {
 }
 
 export default function ImportPhrasesPage() {
-  const { toast } = useToast();
   const bulkImport = useBulkImportPhrases();
   const { data: existingPhrases } = useTestPhrases({ active: null });
 
@@ -80,11 +79,7 @@ export default function ImportPhrasesPage() {
       const phrasesToImport = replaceExisting ? phrases : newPhrases;
 
       if (phrasesToImport.length === 0) {
-        toast({
-          title: "Rien à importer",
-          description: "Toutes les phrases existent déjà dans la base de données.",
-          variant: "destructive",
-        });
+        toast.info("Rien à importer", { description: "Toutes les phrases existent déjà dans la base de données." });
         setImporting(false);
         return;
       }
@@ -99,11 +94,7 @@ export default function ImportPhrasesPage() {
       });
     } catch (error) {
       console.error("Import error:", error);
-      toast({
-        title: "Erreur d'import",
-        description: error instanceof Error ? error.message : "Une erreur est survenue",
-        variant: "destructive",
-      });
+      toast.error("Erreur d'import", { description: error instanceof Error ? error.message : "Une erreur est survenue" });
     } finally {
       setImporting(false);
     }

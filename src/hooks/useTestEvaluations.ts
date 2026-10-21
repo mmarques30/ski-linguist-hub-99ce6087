@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 import { useFormateurView } from "@/contexts/FormateurViewContext";
 import { notifyAdmins } from "@/lib/notify-admins";
@@ -150,7 +150,6 @@ export interface CreateEvaluationData {
 
 export function useCreateTestEvaluation() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: async (evaluation: CreateEvaluationData) => {
@@ -175,26 +174,20 @@ export function useCreateTestEvaluation() {
       queryClient.invalidateQueries({ queryKey: ["test-bookings-to-evaluate"] });
       queryClient.invalidateQueries({ queryKey: ["completed-evaluations"] });
       queryClient.invalidateQueries({ queryKey: ["test-evaluation"] });
-      toast({
-        title:
-          data.status === "a_verifier"
-            ? "Évaluation soumise pour vérification"
-            : "Brouillon enregistré",
-      });
+      toast.success(
+        data.status === "a_verifier"
+          ? "Évaluation soumise pour vérification"
+          : "Brouillon enregistré",
+      );
     },
     onError: (error: Error) => {
-      toast({ 
-        variant: "destructive", 
-        title: "Erreur", 
-        description: error.message 
-      });
+      toast.error("Erreur", { description: error.message });
     },
   });
 }
 
 export function useUpdateTestEvaluation() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<TestEvaluation> & { id: string }) => {
@@ -220,21 +213,16 @@ export function useUpdateTestEvaluation() {
       queryClient.invalidateQueries({ queryKey: ["test-evaluation"] });
       queryClient.invalidateQueries({ queryKey: ["evaluation-with-booking"] });
       queryClient.invalidateQueries({ queryKey: ["test-bookings-to-evaluate"] });
-      toast({ title: "Évaluation mise à jour" });
+      toast.success("Évaluation mise à jour");
     },
     onError: (error: Error) => {
-      toast({ 
-        variant: "destructive", 
-        title: "Erreur", 
-        description: error.message 
-      });
+      toast.error("Erreur", { description: error.message });
     },
   });
 }
 
 export function useGenerateEvaluationPdf() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: async (evaluationId: string) => {
@@ -256,20 +244,65 @@ export function useGenerateEvaluationPdf() {
       queryClient.invalidateQueries({ queryKey: ["test-evaluation"] });
       queryClient.invalidateQueries({ queryKey: ["evaluation-with-booking"] });
       queryClient.invalidateQueries({ queryKey: ["completed-evaluations"] });
-      toast({
-        title: "PDF enregistré",
-        description: "Le statut reste validé tant que le courriel n'est pas parti.",
-      });
+      toast.success("PDF enregistré", { description: "Le statut reste validé tant que le courriel n'est pas parti." });
       if (data.signedUrl) {
         window.open(data.signedUrl, "_blank", "noopener,noreferrer");
       }
     },
     onError: (error: Error) => {
-      toast({
-        variant: "destructive",
-        title: "Génération PDF",
-        description: error.message,
-      });
+      toast.error("Génération PDF", { description: error.message });
+    },
+  });
+}
+
+export interface CreateFormateurEvaluationBookingInput {
+  name: string;
+  email: string;
+  phone: string;
+  profession: string;
+  professionAutre: string;
+  skiSchoolId: string;
+  carteSyndicale: string;
+  skiDiscipline: string;
+  trainingCycle: string;
+  language: string;
+  datetimeIso: string;
+  sponsorType: "esf" | "ecole_ski" | "dsf";
+  paymentType: string;
+  instructorId?: string | null;
+}
+
+/** Crée candidat + réservation `completed` (RPC) pour ouvrir la saisie. */
+export function useCreateFormateurEvaluationBooking() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: CreateFormateurEvaluationBookingInput) => {
+      const { data, error } = await supabase.rpc(
+        "create_formateur_evaluation_booking",
+        {
+          p_name: input.name,
+          p_email: input.email,
+          p_phone: input.phone,
+          p_profession: input.profession,
+          p_profession_autre: input.professionAutre,
+          p_ski_school_id: input.skiSchoolId,
+          p_carte_syndicale: input.carteSyndicale,
+          p_ski_discipline: input.skiDiscipline,
+          p_training_cycle: input.trainingCycle,
+          p_language: input.language,
+          p_datetime: input.datetimeIso,
+          p_sponsor_type: input.sponsorType,
+          p_payment_type: input.paymentType,
+          p_instructor_id: input.instructorId ?? null,
+        }
+      );
+      if (error) throw error;
+      if (!data) throw new Error("Identifiant de réservation manquant");
+      return data as string;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["test-bookings-to-evaluate"] });
     },
   });
 }

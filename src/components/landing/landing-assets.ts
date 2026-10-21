@@ -39,7 +39,7 @@ export const LOGO_CANDIDATES: LandingAsset[] = [
     id: "marca-yellow",
     src: logoMarcaYellow,
     label: "fli-marca-yellow",
-    usage: "Header / nav (déjà utilisé dans l’app)",
+    usage: "Menu (déjà utilisé dans l’application)",
   },
   {
     id: "marca-black",
@@ -150,13 +150,13 @@ export const CHARACTER_CANDIDATES: LandingAsset[] = [
     id: "p01",
     src: personagem01,
     label: "fli_personagem_01",
-    usage: "Hero — moniteur ski (identité montagne)",
+    usage: "Tête de page — moniteur de ski",
   },
   {
     id: "p02",
     src: personagem02,
     label: "fli_personagem_02p",
-    usage: "CTA plateforme — écran FLI / digital",
+    usage: "Accès à la plateforme — écran FLI",
   },
   {
     id: "p03",

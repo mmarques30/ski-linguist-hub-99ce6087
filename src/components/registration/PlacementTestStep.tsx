@@ -11,13 +11,17 @@ import { MeterRow, StatusPill, SurfaceCard } from "@/components/ui-kit";
 import type { PillTone } from "@/components/ui-kit";
 import {
   buildAdaptiveTestResult,
+  evaluateSalonSlope,
   evaluateSlope,
+  getNextSalonSlopeAfterSlope,
   getNextSlopeAfterSlope,
   getPresentationQuestion,
   getQuestionsForSlope,
   PASS_THRESHOLD,
   PRESENTATION_MAX_CHARS,
   QUESTIONS_PER_SLOPE,
+  SALON_PASS_THRESHOLD,
+  SALON_QUESTIONS_PER_SLOPE,
   SLOPE_LABELS,
   studentFacingPisteLabel,
   type AdaptiveTestResult,
@@ -53,10 +57,20 @@ interface PlacementTestStepProps {
   data: Partial<RegistrationData>;
   onUpdate: (data: Partial<RegistrationData>) => void;
   onNext: () => void;
+  /** Salon des directeurs : pas d'auto-diagnostic, CTA de fin dédié. */
+  variant?: "register" | "salon";
+  finishLabel?: string;
 }
 
-export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepProps) {
-  const isStationGroup = expectsStationGroupAssignment(data.modality);
+export function PlacementTestStep({
+  data,
+  onUpdate,
+  onNext,
+  variant = "register",
+  finishLabel,
+}: PlacementTestStepProps) {
+  const isSalon = variant === "salon";
+  const isStationGroup = !isSalon && expectsStationGroupAssignment(data.modality);
   const [phase, setPhase] = useState<Phase>("intro");
   const [currentSlope, setCurrentSlope] = useState<SlopeLevel>("verte");
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -74,9 +88,17 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
     [allQuestions]
   );
 
+  const questionsPerSlope = isSalon ? SALON_QUESTIONS_PER_SLOPE : QUESTIONS_PER_SLOPE;
+  const passThreshold = isSalon ? SALON_PASS_THRESHOLD : PASS_THRESHOLD;
+
   const slopeQuestions = useMemo(
-    () => getQuestionsForSlope(allQuestions, currentSlope),
-    [allQuestions, currentSlope]
+    () =>
+      getQuestionsForSlope(
+        allQuestions,
+        currentSlope,
+        isSalon ? SALON_QUESTIONS_PER_SLOPE : undefined
+      ),
+    [allQuestions, currentSlope, isSalon]
   );
 
   const presentationQuestion = useMemo(
@@ -157,7 +179,7 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
 
   const startMcq = () => {
     if (scoredQuestions.length === 0) return;
-    if (!data.autoDiagnostic) {
+    if (!isSalon && !data.autoDiagnostic) {
       setPhase("auto_diagnostic");
       return;
     }
@@ -204,6 +226,7 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
         presentationText: testResult.presentationText,
         startedAt: startedAtRef.current,
         completedAt,
+        ...(isSalon ? { salonShort: true } : {}),
       },
     });
     setPhase("results");
@@ -226,12 +249,31 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
     prevSlopeResults: SlopeResult[],
     prevPassedSlopes: SlopeLevel[]
   ) => {
-    const questions = getQuestionsForSlope(allQuestions, slope);
+    const questions = getQuestionsForSlope(
+      allQuestions,
+      slope,
+      isSalon ? SALON_QUESTIONS_PER_SLOPE : undefined
+    );
     const correct = questions.filter((q) => slopeAnswers[q.id] === q.correct_answer).length;
-    const passed = evaluateSlope(correct);
+    const passed = isSalon ? evaluateSalonSlope(correct) : evaluateSlope(correct);
     const slopeResult: SlopeResult = { slope, correct, total: questions.length, passed };
     const newSlopeResults = [...prevSlopeResults, slopeResult];
     const newPassedSlopes = passed ? [...prevPassedSlopes, slope] : prevPassedSlopes;
+
+    if (isSalon) {
+      const nextSalon = getNextSalonSlopeAfterSlope(slope, passed);
+      if (nextSalon === "done") {
+        finishTest(slopeAnswers, newSlopeResults, newPassedSlopes, "");
+        return;
+      }
+      setSlopeResults(newSlopeResults);
+      setPassedSlopes(newPassedSlopes);
+      setAnswers(slopeAnswers);
+      setCurrentSlope(nextSalon);
+      setQuestionIndex(0);
+      return;
+    }
+
     const next = getNextSlopeAfterSlope(slope, passed);
 
     if (next === "vocab_ski") {
@@ -305,7 +347,11 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
               Test terminé
             </span>
           }
-          description="Votre parcours adaptatif FLI est enregistré"
+          description={
+            isSalon
+              ? "Estimation rapide (version salon) — piste indicative"
+              : "Votre parcours adaptatif FLI est enregistré"
+          }
         >
           <div className="space-y-6">
             <SummaryPanel className="space-y-2 text-center">
@@ -341,9 +387,11 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
 
         <StepActions>
           <Button type="submit" className="h-12 w-full text-base sm:w-auto">
-            {data.profession === "ski_instructor"
-              ? "Continuer vers le paiement"
-              : "Continuer vers la certification"}
+            {finishLabel
+              ? finishLabel
+              : data.profession === "ski_instructor"
+                ? "Continuer vers le paiement"
+                : "Continuer vers la certification"}
           </Button>
         </StepActions>
       </form>
@@ -417,7 +465,7 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
         description={
           currentSlope === "vocab_ski"
             ? "Partie commune à tous les niveaux — vocabulaire technique du ski"
-            : `Comme au ski : ${QUESTIONS_PER_SLOPE} questions sur cette piste. Il faut au moins ${PASS_THRESHOLD} bonnes réponses pour passer à la suivante.`
+            : `Comme au ski : ${questionsPerSlope} questions sur cette piste. Il faut au moins ${passThreshold} bonnes réponses pour passer à la suivante.`
         }
         actions={
           <StatusPill tone={SLOPE_TONES[currentSlope]} dot>
@@ -468,34 +516,59 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
 
   return (
     <StepCard
-      title="Test de niveau obligatoire"
-      description="D’abord un auto-diagnostic, puis le parcours adaptatif par pistes de ski"
+      title={isSalon ? "Test de niveau FLI — version salon" : "Test de niveau obligatoire"}
+      description={
+        isSalon
+          ? `Adaptatif 4 pistes, ${SALON_QUESTIONS_PER_SLOPE} questions chacune (seuil ${SALON_PASS_THRESHOLD}/${SALON_QUESTIONS_PER_SLOPE})`
+          : "D’abord un auto-diagnostic, puis le parcours adaptatif par pistes de ski"
+      }
       icon={Mountain}
     >
       <div className="space-y-5">
         <Alert>
           <Mountain className="h-4 w-4" />
           <AlertDescription className="space-y-3">
-            <p>
-              <strong className="font-medium text-foreground">1. Auto-diagnostic</strong> — vos
-              besoins, votre parcours et votre aisance. Il prépare l’équipe FLI et ne remplace pas
-              le test.
-            </p>
-            <p>
-              <strong className="font-medium text-foreground">2. Test de niveau</strong> — où vous
-              commencez en{" "}
-              <strong className="font-medium text-foreground">piste verte</strong>, puis{" "}
-              <strong className="font-medium text-foreground">bleue</strong>,{" "}
-              <strong className="font-medium text-foreground">rouge</strong> et{" "}
-              <strong className="font-medium text-foreground">noire</strong> si vous validez chaque
-              étape ({PASS_THRESHOLD} bonnes réponses sur {QUESTIONS_PER_SLOPE}).
-            </p>
-            <p>
-              Ensuite, tous les stagiaires passent le{" "}
-              <strong className="font-medium text-foreground">Vocabulaire du ski</strong> (score
-              séparé), puis une présentation facultative. Comment ça fonctionne : comme les pistes
-              de ski.
-            </p>
+            {!isSalon && (
+              <p>
+                <strong className="font-medium text-foreground">1. Auto-diagnostic</strong> — vos
+                besoins, votre parcours et votre aisance. Il prépare l’équipe FLI et ne remplace pas
+                le test.
+              </p>
+            )}
+            {isSalon ? (
+              <>
+                <p>
+                  Même logique que pour vos moniteurs : vous commencez en{" "}
+                  <strong className="font-medium text-foreground">piste verte</strong>, puis{" "}
+                  <strong className="font-medium text-foreground">bleue</strong>,{" "}
+                  <strong className="font-medium text-foreground">rouge</strong> et{" "}
+                  <strong className="font-medium text-foreground">noire</strong> si vous validez chaque
+                  étape ({SALON_PASS_THRESHOLD} bonnes réponses sur {SALON_QUESTIONS_PER_SLOPE}).
+                </p>
+                <p>
+                  Version salon : pas de vocabulaire ski ni de présentation — uniquement les pistes.
+                  Comment ça fonctionne : comme les pistes de ski.
+                </p>
+              </>
+            ) : (
+              <>
+                <p>
+                  <strong className="font-medium text-foreground">2. Test de niveau</strong> — où vous
+                  commencez en{" "}
+                  <strong className="font-medium text-foreground">piste verte</strong>, puis{" "}
+                  <strong className="font-medium text-foreground">bleue</strong>,{" "}
+                  <strong className="font-medium text-foreground">rouge</strong> et{" "}
+                  <strong className="font-medium text-foreground">noire</strong> si vous validez chaque
+                  étape ({PASS_THRESHOLD} bonnes réponses sur {QUESTIONS_PER_SLOPE}).
+                </p>
+                <p>
+                  Ensuite, tous les stagiaires passent le{" "}
+                  <strong className="font-medium text-foreground">Vocabulaire du ski</strong> (score
+                  séparé), puis une présentation facultative. Comment ça fonctionne : comme les pistes
+                  de ski.
+                </p>
+              </>
+            )}
           </AlertDescription>
         </Alert>
 
@@ -519,6 +592,10 @@ export function PlacementTestStep({ data, onUpdate, onNext }: PlacementTestStepP
               contacter FLI à info@fli.fr.
             </AlertDescription>
           </Alert>
+        ) : isSalon ? (
+          <Button type="button" onClick={startMcq} className="h-12 w-full text-base">
+            Commencer le test (piste verte)
+          </Button>
         ) : autoDone ? (
           <div className="space-y-3">
             <Alert>

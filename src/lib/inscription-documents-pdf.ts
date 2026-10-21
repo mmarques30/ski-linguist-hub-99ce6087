@@ -159,12 +159,24 @@ function buildDatesLabel(input: {
   const startDateLabel = formatDateFr(input.start_date);
   const endDateLabel = formatDateFr(input.end_date);
   if (input.dates_to_confirm) {
-    const wished = startDateLabel !== "—" ? startDateLabel : endDateLabel;
-    const datesLabel =
-      wished !== "—"
-        ? `À planifier — début souhaité le ${wished}`
-        : "À planifier";
-    return { startDateLabel: datesLabel, endDateLabel: datesLabel, datesLabel };
+    // Aligné sur inscriptionDateRangeLabel (BL-029) : fenêtre de réalisation
+    // (ex. 12 h → 4 mois) visible sur convention / programme.
+    if (startDateLabel !== "—") {
+      const datesLabel =
+        endDateLabel !== "—" && endDateLabel !== startDateLabel
+          ? `À planifier — début souhaité le ${startDateLabel}, à réaliser avant le ${endDateLabel}`
+          : `À planifier — début souhaité le ${startDateLabel}`;
+      return { startDateLabel: datesLabel, endDateLabel: datesLabel, datesLabel };
+    }
+    if (endDateLabel !== "—") {
+      const datesLabel = `À planifier — début souhaité le ${endDateLabel}`;
+      return { startDateLabel: datesLabel, endDateLabel: datesLabel, datesLabel };
+    }
+    return {
+      startDateLabel: "À planifier",
+      endDateLabel: "À planifier",
+      datesLabel: "À planifier",
+    };
   }
   if (startDateLabel === endDateLabel) {
     return {

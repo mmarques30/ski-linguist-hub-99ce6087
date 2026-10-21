@@ -36,8 +36,11 @@ describe("staff-email", () => {
       join(process.cwd(), "supabase/functions/send-staff-email/index.ts"),
       "utf8"
     );
-    expect(edge).toContain('TEMPLATE_SLUG = "staff_manual"');
+    expect(edge).toContain('DEFAULT_TEMPLATE_SLUG = "staff_manual"');
+    expect(edge).toContain("formateur_mise_en_relation");
     expect(edge).toContain("requireStaff");
     expect(edge).toContain("sendFliEmail");
+    expect(edge).toContain("attachments");
+    expect(edge).toContain("cc");
   });
 });

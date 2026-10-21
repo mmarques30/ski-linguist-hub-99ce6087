@@ -17,10 +17,11 @@ import {
 describe("fifpl-funding — grille micro CFP 2026", () => {
   it("applique le tableau page 3 des critères Moniteurs de ski", () => {
     expect(microPercentFromCfpContribution(10)).toBe(20);
-    expect(microPercentFromCfpContribution(21)).toBe(40);
-    expect(microPercentFromCfpContribution(80)).toBe(60);
-    expect(microPercentFromCfpContribution(100)).toBe(80);
-    expect(microPercentFromCfpContribution(115)).toBe(90);
+    expect(microPercentFromCfpContribution(21)).toBe(60);
+    expect(microPercentFromCfpContribution(40)).toBe(60);
+    expect(microPercentFromCfpContribution(41)).toBe(80);
+    expect(microPercentFromCfpContribution(80)).toBe(80);
+    expect(microPercentFromCfpContribution(81)).toBe(100);
     expect(microPercentFromCfpContribution(116)).toBe(100);
     expect(microPercentFromCfpContribution(200)).toBe(100);
     expect(microPercentFromCfpContribution(0)).toBeNull();
@@ -66,13 +67,13 @@ describe("fifpl-funding — grille micro CFP 2026", () => {
   it("réduit le plafond uniquement pour l’e-learning asynchrone", () => {
     const rights = estimateFifplRights({
       status: "micro_entrepreneur",
-      cfpContributionEur: 50, // 60 %
+      cfpContributionEur: 50, // 80 % (tranche 41–80 €)
       modality: "elearning",
       alreadyCoveredEur: 0,
     });
-    // base 450 × 60 % = 270
+    // base 450 × 80 % = 360
     expect(rights?.annualCeilingBaseEur).toBe(450);
-    expect(rights?.grossRightsEur).toBe(270);
+    expect(rights?.grossRightsEur).toBe(360);
     expect(rights?.isElearning).toBe(true);
   });
 

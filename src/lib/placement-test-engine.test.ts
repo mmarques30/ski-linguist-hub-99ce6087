@@ -3,14 +3,19 @@ import {
   buildAdaptiveTestResult,
   determineLevelFromSlopes,
   displayPisteLabel,
+  evaluateSalonSlope,
   evaluateSlope,
+  getNextSalonSlopeAfterSlope,
   getNextSlopeAfterSlope,
+  getQuestionsForSlope,
   hasAdaptedScale,
   needsAdminCallFromResults,
   pisteEntrySelectValue,
   pisteLabelFromPlacementAnswers,
   pistePillTone,
   PISTE_STAGIAIRE_PAR_DEFAUT,
+  SALON_PASS_THRESHOLD,
+  SALON_QUESTIONS_PER_SLOPE,
   studentFacingPisteFromCecrl,
   studentFacingCertificateLabel,
   studentFacingPisteLabel,
@@ -54,6 +59,33 @@ describe("placement-test-engine", () => {
   it("evaluateSlope requires 3 correct answers", () => {
     expect(evaluateSlope(3)).toBe(true);
     expect(evaluateSlope(2)).toBe(false);
+  });
+
+  it("salon: adaptatif 4 pistes, 2/3 pour valider, fin sans vocab", () => {
+    expect(SALON_QUESTIONS_PER_SLOPE).toBe(3);
+    expect(SALON_PASS_THRESHOLD).toBe(2);
+    expect(evaluateSalonSlope(2)).toBe(true);
+    expect(evaluateSalonSlope(1)).toBe(false);
+    expect(getNextSalonSlopeAfterSlope("verte", true)).toBe("bleue");
+    expect(getNextSalonSlopeAfterSlope("bleue", true)).toBe("rouge");
+    expect(getNextSalonSlopeAfterSlope("rouge", true)).toBe("noire");
+    expect(getNextSalonSlopeAfterSlope("noire", true)).toBe("done");
+    expect(getNextSalonSlopeAfterSlope("verte", false)).toBe("done");
+    expect(getNextSalonSlopeAfterSlope("bleue", false)).toBe("done");
+  });
+
+  it("getQuestionsForSlope respecte la limite salon", () => {
+    const many: PlacementQuestion[] = Array.from({ length: 5 }, (_, i) => ({
+      id: `v${i}`,
+      question_text: `Q${i}`,
+      options: ["a", "b"],
+      correct_answer: "a",
+      slope: "verte" as const,
+      category: "comprehension",
+      order_index: i + 1,
+    }));
+    expect(getQuestionsForSlope(many, "verte")).toHaveLength(5);
+    expect(getQuestionsForSlope(many, "verte", SALON_QUESTIONS_PER_SLOPE)).toHaveLength(3);
   });
 
   it("determineLevelFromSlopes maps pistes to CEFR", () => {

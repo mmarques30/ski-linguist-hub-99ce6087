@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import {
   ArrowRight,
   Award,
+  CalendarDays,
   ChartLine,
   GraduationCap,
   Laptop,
   Mail,
+  MapPin,
   Menu,
   Phone,
   Play,
@@ -20,16 +22,24 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   RECOMMENDED,
   YOUTUBE_TITLE,
   YOUTUBE_VIDEO_ID,
 } from "@/components/landing/landing-assets";
+import qualiopiCertification from "@/assets/qualiopi-certification.png";
+import { useRegistrationOfferings } from "@/hooks/useRegistrationOfferings";
+import {
+  isOpenOffering,
+  sortOfferingsByDateThenLocation,
+  type RegistrationOffering,
+} from "@/lib/registration-offerings";
 
 const NAV = [
-  { label: "Notre méthode", href: "#methode" },
-  { label: "Partenaires", href: "#partenaires" },
-  { label: "Formations", href: "#formations" },
+  { label: "Notre méthode", href: "#metodo" },
+  { label: "Formations", href: "#formacoes" },
+  { label: "Nos stages", href: "#stages" },
   { label: "FAQ", href: "#faq" },
 ] as const;
 
@@ -37,10 +47,10 @@ const INDICATORS = [
   { value: "87 %", label: "stagiaires satisfait·es ou très satisfait·es" },
   { value: "0,6 %", label: "taux d'abandon" },
   { value: "4,72 / 5", label: "qualité d'animation" },
-  { value: "Depuis 2018", label: "formations montagne" },
+  { value: "+ de 40 ans", label: "FLI" },
 ] as const;
 
-const BADGES = ["Groupes de 6 max", "Financement FIFPL", "Certifié Qualiopi"] as const;
+const BADGES = ["Groupes de 8 personnes", "Financement FIFPL", "Certifié Qualiopi"] as const;
 
 const METHOD_STEPS = [
   "Test de niveau à l'inscription",
@@ -50,26 +60,10 @@ const METHOD_STEPS = [
   "Questionnaire de satisfaction",
 ] as const;
 
-const PARTNERS = [
-  "Réseau ESF",
-  "Courchevel 1850",
-  "Val Cenis",
-  "Valmorel",
-  "St Sorlin d'Arves",
-  "La Rosière",
-  "Saint-Gervais",
-  "La Clusaz",
-  "Piau Engaly",
-  "Qualiopi",
-  "FIFPL / OPCO",
-  "Linguaskill",
-  "Bright",
-] as const;
-
 const FORMATIONS = [
   {
     icon: Users,
-    title: "Groupes de 6 maximum",
+    title: "Groupes de 8 personnes",
     text: "Chaque stagiaire participe activement, sans se noyer dans la masse.",
   },
   {
@@ -113,10 +107,6 @@ const FAQ_ITEMS = [
     a: "Oui : stages intensifs en automne, cours individuels ou en ligne à la demande toute l'année.",
   },
   {
-    q: "Le coût est-il élevé ?",
-    a: "750 €/personne pour un stage intensif de 20h. Le FIFPL peut financer jusqu'à 900 €/an pour les formations individuelles.",
-  },
-  {
     q: "Et si je dois annuler mon inscription ?",
     a: "Les frais de dossier (150 €) sont remboursables en cas d'annulation justifiée ou d'insuffisance de participants, sous 7 jours après inscription.",
   },
@@ -146,6 +136,36 @@ const FAQ_ITEMS = [
   },
 ] as const;
 
+interface LanguageSessionsGroup {
+  key: string;
+  label: string;
+  sessions: RegistrationOffering[];
+}
+
+/** Stages à dates fixes (présentiel + en ligne groupe), regroupés par langue — hors individuel à la demande. */
+function groupSessionsByLanguage(offerings: RegistrationOffering[]): LanguageSessionsGroup[] {
+  const scheduled = offerings.filter(
+    (o) => o.modality_key !== "online_individual" && isOpenOffering(o)
+  );
+  const groups = new Map<string, LanguageSessionsGroup>();
+  for (const offering of scheduled) {
+    const existing = groups.get(offering.language_key);
+    if (existing) {
+      existing.sessions.push(offering);
+    } else {
+      groups.set(offering.language_key, {
+        key: offering.language_key,
+        label: offering.language_label,
+        sessions: [offering],
+      });
+    }
+  }
+  for (const group of groups.values()) {
+    group.sessions = sortOfferingsByDateThenLocation(group.sessions);
+  }
+  return Array.from(groups.values()).sort((a, b) => a.label.localeCompare(b.label, "fr"));
+}
+
 /**
  * Landing institutionnelle publique — conforme `docs/FLI-LP-institucional-spec.md`.
  * `/` = LP ; `/auth` = login inchangé ; CTA « Accès FLI ».
@@ -154,6 +174,8 @@ export default function InstitutionalLanding() {
   const [scrolled, setScrolled] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { data: offerings = [], isLoading: offeringsLoading } = useRegistrationOfferings();
+  const sessionsByLanguage = useMemo(() => groupSessionsByLanguage(offerings), [offerings]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
@@ -172,20 +194,10 @@ export default function InstitutionalLanding() {
   const closeMenu = () => setMenuOpen(false);
 
   return (
-    <div className="lp-root min-h-screen bg-[hsl(var(--surface-page))] text-[hsl(var(--foreground))] antialiased">
+    <div className="lp-root flex min-h-screen flex-col bg-[hsl(var(--surface-page))] text-[hsl(var(--foreground))] antialiased">
       <style>{`
         .lp-root { font-family: "Outfit", ui-sans-serif, system-ui, sans-serif; }
         .lp-display { font-family: "Syne", "Outfit", sans-serif; }
-        @keyframes lp-marquee {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
-        }
-        .lp-marquee-track {
-          display: flex;
-          width: max-content;
-          animation: lp-marquee 40s linear infinite;
-        }
-        .lp-marquee-track:hover { animation-play-state: paused; }
         @keyframes lp-float {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-6px); }
@@ -194,7 +206,7 @@ export default function InstitutionalLanding() {
         .lp-float-delay { animation-delay: 1.2s; }
       `}</style>
 
-      {/* —— Header sticky —— */}
+      {/* —— Menu fixe —— */}
       <header
         className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
           scrolled
@@ -203,7 +215,7 @@ export default function InstitutionalLanding() {
         }`}
       >
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:h-[4.25rem] sm:px-6">
-          <a href="#accueil" className="flex shrink-0 items-center" aria-label="FLI — accueil">
+          <a href="#inicio" className="flex shrink-0 items-center" aria-label="FLI — accueil">
             <img
               src={RECOMMENDED.navLogo}
               alt="France Langues International"
@@ -276,10 +288,10 @@ export default function InstitutionalLanding() {
         )}
       </header>
 
-      <main>
-        {/* —— Bloc 1 : Hero —— fond gris foncé uni, sans photo de fond */}
+      <main className="flex-1">
+        {/* —— Section 1 : tête de page —— fond gris foncé uni, sans photo de fond */}
         <section
-          id="accueil"
+          id="inicio"
           className="relative overflow-hidden bg-[#2c2c2e] pt-16 text-white sm:pt-[4.25rem]"
         >
           <div className="relative mx-auto grid max-w-6xl gap-10 px-4 pb-8 pt-12 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-8 lg:pb-6 lg:pt-16">
@@ -297,14 +309,14 @@ export default function InstitutionalLanding() {
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-4">
                 <a
-                  href="#formations"
+                  href="#formacoes"
                   className="inline-flex items-center gap-2 rounded-full bg-[hsl(var(--fli-yellow))] px-6 py-3 text-base font-semibold text-[hsl(var(--fli-navy))] transition hover:brightness-105"
                 >
                   Réserver mon stage
                   <ArrowRight className="h-5 w-5" aria-hidden />
                 </a>
                 <a
-                  href="#methode"
+                  href="#metodo"
                   className="text-sm font-semibold text-white/90 underline-offset-4 transition hover:text-[hsl(var(--fli-yellow))] hover:underline"
                 >
                   Découvrir la méthode
@@ -346,8 +358,8 @@ export default function InstitutionalLanding() {
           </div>
         </section>
 
-        {/* —— Bloc 2 : Méthode / Vidéo —— */}
-        <section id="methode" className="scroll-mt-24 bg-[hsl(var(--surface-raised))]">
+        {/* —— Section 2 : méthode / vidéo —— */}
+        <section id="metodo" className="scroll-mt-24 bg-[hsl(var(--surface-raised))]">
           <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:items-center lg:py-20">
             <div>
               <h2 className="lp-display text-3xl font-bold tracking-tight text-[hsl(var(--fli-navy))] sm:text-4xl">
@@ -411,36 +423,8 @@ export default function InstitutionalLanding() {
           </div>
         </section>
 
-        {/* —— Bloc 3 : Partenaires —— */}
-        <section
-          id="partenaires"
-          className="scroll-mt-24 overflow-hidden border-y border-border bg-[hsl(var(--fli-navy))] py-14 text-white"
-        >
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <h2 className="lp-display text-center text-2xl font-bold tracking-tight text-white sm:text-3xl">
-              Ils nous font confiance
-            </h2>
-            <p className="mx-auto mt-2 max-w-xl text-center text-sm text-white/60">
-              Logos partenaires en attente des fichiers HD (spec §7) — noms affichés en
-              placeholder.
-            </p>
-          </div>
-          <div className="relative mt-10 mask-[linear-gradient(90deg,transparent,black_8%,black_92%,transparent)]">
-            <div className="lp-marquee-track gap-4 px-4">
-              {[...PARTNERS, ...PARTNERS].map((name, i) => (
-                <div
-                  key={`${name}-${i}`}
-                  className="flex h-14 min-w-[9.5rem] items-center justify-center rounded-xl border border-white/15 bg-white/5 px-5 text-center text-sm font-semibold tracking-wide text-white/80"
-                >
-                  {name}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* —— Bloc 4 : Formations —— */}
-        <section id="formations" className="scroll-mt-24 bg-[hsl(var(--surface-page))]">
+        {/* —— Section formations —— */}
+        <section id="formacoes" className="scroll-mt-24 bg-[hsl(var(--surface-page))]">
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
             <div className="max-w-2xl">
               <h2 className="lp-display text-3xl font-bold tracking-tight text-[hsl(var(--fli-navy))] sm:text-4xl">
@@ -472,7 +456,7 @@ export default function InstitutionalLanding() {
             {/* Bandeau CTA */}
             <div className="mt-14 overflow-hidden rounded-[var(--radius-panel)] bg-[hsl(var(--fli-yellow))] px-6 py-10 text-[hsl(var(--fli-navy))] sm:px-10 sm:py-12 lg:flex lg:items-center lg:justify-between lg:gap-8">
               <div className="max-w-xl">
-                <h3 className="lp-display text-2xl font-extrabold tracking-tight text-[hsl(var(--fli-navy))] sm:text-3xl">
+                <h3 className="lp-display text-2xl font-extrabold tracking-tight sm:text-3xl">
                   Organisez la formation linguistique de votre équipe, sans complexité
                   administrative
                 </h3>
@@ -495,56 +479,81 @@ export default function InstitutionalLanding() {
             </div>
           </div>
         </section>
-      </main>
 
-      {/* —— Footer (avant FAQ) —— */}
-      <footer className="border-t border-border bg-[hsl(var(--fli-navy))] text-white">
-        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-[1.2fr_1fr]">
-          <div>
-            <img src={RECOMMENDED.navLogo} alt="FLI" className="h-9 w-auto" />
-            <p className="mt-4 max-w-md text-sm text-white/70">
-              Centre de formation professionnelle pour les moniteurs de ski et les professionnels
-              de la montagne.
-            </p>
-          </div>
-          <div className="space-y-3 text-sm text-white/80">
-            <p className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-[hsl(var(--fli-yellow))]" aria-hidden />
-              <a href="mailto:info@fli.fr" className="hover:text-[hsl(var(--fli-yellow))]">
-                info@fli.fr
-              </a>
-            </p>
-            <p className="flex items-center gap-2">
-              <Phone className="h-4 w-4 text-[hsl(var(--fli-yellow))]" aria-hidden />
-              <a href="tel:+33479282109" className="hover:text-[hsl(var(--fli-yellow))]">
-                04 79 28 21 09
-              </a>
-            </p>
-            <p className="text-white/60">
-              25, avenue de la Gare
-              <br />
-              73800 Montmélian
-            </p>
-            <div className="flex flex-wrap gap-4 pt-2 text-xs text-white/50">
-              <Link to="/conditions-generales" className="hover:text-white/80">
-                Conditions générales
-              </Link>
-              <Link to="/mockup/lp-assets" className="hover:text-white/80">
-                Validation des visuels
-              </Link>
-              <Link to="/auth" className="hover:text-white/80">
-                Accès FLI
+        {/* —— Section stages : par langue, lieux et dates, catalogue public /register */}
+        <section id="stages" className="scroll-mt-24 bg-[hsl(var(--surface-raised))]">
+          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
+            <div className="max-w-2xl">
+              <h2 className="lp-display text-3xl font-bold tracking-tight text-[hsl(var(--fli-navy))] sm:text-4xl">
+                Nos prochains stages, par langue
+              </h2>
+              <p className="mt-3 text-muted-foreground">
+                Lieux et dates des sessions ouvertes à l&apos;inscription cette saison. Le
+                catalogue complet, avec les tarifs selon votre école, est disponible sur le
+                formulaire d&apos;inscription.
+              </p>
+            </div>
+
+            {offeringsLoading ? (
+              <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {[0, 1, 2].map((i) => (
+                  <Skeleton key={i} className="h-44 rounded-[var(--radius-card)]" />
+                ))}
+              </div>
+            ) : sessionsByLanguage.length > 0 ? (
+              <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {sessionsByLanguage.map((group) => (
+                  <div
+                    key={group.key}
+                    className="rounded-[var(--radius-card)] border border-border bg-[hsl(var(--surface-page))] p-6 shadow-xs"
+                  >
+                    <h3 className="lp-display text-lg font-bold text-[hsl(var(--fli-navy))]">
+                      {group.label}
+                    </h3>
+                    <ul className="mt-4 space-y-3">
+                      {group.sessions.map((session) => (
+                        <li
+                          key={session.id}
+                          className="border-t border-border/60 pt-3 text-sm first:border-t-0 first:pt-0"
+                        >
+                          <p className="flex items-center gap-1.5 font-semibold text-foreground">
+                            <MapPin
+                              className="h-3.5 w-3.5 shrink-0 text-[hsl(var(--fli-orange))]"
+                              aria-hidden
+                            />
+                            {session.location_label}
+                          </p>
+                          <p className="mt-1 flex items-center gap-1.5 text-muted-foreground">
+                            <CalendarDays className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                            {session.date_label || "Dates à confirmer"}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-10 text-sm text-muted-foreground">
+                Le calendrier des prochains stages est en cours de mise à jour — consultez le
+                formulaire d&apos;inscription pour les dates disponibles.
+              </p>
+            )}
+
+            <div className="mt-10">
+              <Link
+                to="/register"
+                className="inline-flex items-center gap-2 rounded-full bg-[hsl(var(--fli-yellow))] px-6 py-3 text-sm font-semibold text-[hsl(var(--fli-navy))] transition hover:brightness-105"
+              >
+                Voir le calendrier complet et m&apos;inscrire
+                <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
             </div>
           </div>
-        </div>
-        <div className="border-t border-white/10 py-4 text-center text-xs text-white/45">
-          © {new Date().getFullYear()} France Langues International
-        </div>
-      </footer>
+        </section>
 
-      {/* —— Bloc 5 : FAQ (après footer) —— */}
-      <section id="faq" className="scroll-mt-24 bg-[hsl(var(--surface-raised))]">
+        {/* —— FAQ —— */}
+        <section id="faq" className="scroll-mt-24 bg-[hsl(var(--surface-raised))]">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[0.85fr_1.15fr] lg:py-20">
           <div>
             <h2 className="lp-display text-3xl font-bold tracking-tight text-[hsl(var(--fli-navy))] sm:text-4xl">
@@ -584,6 +593,57 @@ export default function InstitutionalLanding() {
           </Accordion>
         </div>
       </section>
+      </main>
+
+      <footer className="mt-auto border-t border-border bg-[hsl(var(--fli-navy))] text-white">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-[1.2fr_1fr]">
+          <div>
+            <img src={RECOMMENDED.navLogo} alt="FLI" className="h-9 w-auto" />
+            <p className="mt-4 max-w-md text-sm text-white/70">
+              Centre de formation professionnelle pour les moniteurs de ski et les professionnels
+              de la montagne.
+            </p>
+            <img
+              src={qualiopiCertification}
+              alt="Qualiopi, processus certifié. La certification qualité a été délivrée au titre de la catégorie d'action suivante : Actions de formation."
+              className="mt-6 h-auto w-full max-w-md rounded-lg bg-white p-3"
+            />
+          </div>
+          <div className="space-y-3 text-sm text-white/80">
+            <p className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-[hsl(var(--fli-yellow))]" aria-hidden />
+              <a href="mailto:info@fli.fr" className="hover:text-[hsl(var(--fli-yellow))]">
+                info@fli.fr
+              </a>
+            </p>
+            <p className="flex items-center gap-2">
+              <Phone className="h-4 w-4 text-[hsl(var(--fli-yellow))]" aria-hidden />
+              <a href="tel:+33479282109" className="hover:text-[hsl(var(--fli-yellow))]">
+                04 79 28 21 09
+              </a>
+            </p>
+            <p className="text-white/60">
+              25, avenue de la Gare
+              <br />
+              73800 Montmélian
+            </p>
+            <div className="flex flex-wrap gap-4 pt-2 text-xs text-white/50">
+              <Link to="/conditions-generales" className="hover:text-white/80">
+                Conditions générales
+              </Link>
+              <Link to="/mockup/lp-assets" className="hover:text-white/80">
+                Validation des visuels
+              </Link>
+              <Link to="/auth" className="hover:text-white/80">
+                Accès FLI
+              </Link>
+            </div>
+          </div>
+        </div>
+        <div className="border-t border-white/10 py-4 text-center text-xs text-white/45">
+          © {new Date().getFullYear()} France Langues International
+        </div>
+      </footer>
     </div>
   );
 }

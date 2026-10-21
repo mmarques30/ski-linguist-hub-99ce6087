@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { isAllowedStripeCheckoutReturnUrl } from "../_shared/checkout-return-urls.ts";
 import {
   createStripeCheckoutSession,
   getInscriptionPaymentFields,
@@ -26,6 +27,21 @@ Deno.serve(async (req) => {
     if (!inscriptionId || !paymentOption || !email || !successUrl || !cancelUrl) {
       return new Response(
         JSON.stringify({ success: false, error: "Paramètres de paiement incomplets" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (
+      typeof successUrl !== "string" ||
+      typeof cancelUrl !== "string" ||
+      !isAllowedStripeCheckoutReturnUrl(successUrl) ||
+      !isAllowedStripeCheckoutReturnUrl(cancelUrl)
+    ) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "URL de retour Stripe non autorisée",
+        }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

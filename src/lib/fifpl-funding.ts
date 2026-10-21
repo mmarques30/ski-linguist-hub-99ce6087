@@ -2,7 +2,7 @@
  * FIFPL — moniteurs de ski 2026 (profession 8551 Z).
  *
  * Source : « Critères de prise en charge Moniteurs de ski 2026.pdf »
- * (Conseil de Gestion du 20 novembre 2025) :
+ * (Conseil de Gestion du 20 novembre 2025, modifié les 23 avril et 24 juin 2026) :
  * - Formations cœur de métier (dont langues étrangères) : plafond 900 € / an,
  *   300 € / jour, au coût réel
  * - E-learning asynchrone : 50 % des critères journaliers et annuels
@@ -50,18 +50,20 @@ export const FIFPL_ELEARNING_FACTOR = 0.5;
 
 export type FifplProfessionalStatus = "independant" | "micro_entrepreneur";
 
-/** Tranches page 3 — micro-entrepreneurs, proportionnel à la cotisation CFP. */
+/**
+ * Tranches page 3 — micro-entrepreneurs, proportionnel à la cotisation CFP.
+ * Grille réévaluée (conseils du 23 avril et du 24 juin 2026), plus favorable
+ * que les six paliers de décembre 2025.
+ */
 export const FIFPL_MICRO_CFP_BRACKETS: ReadonlyArray<{
   minEur: number;
   maxEur: number | null;
   percent: number;
 }> = [
   { minEur: 1, maxEur: 20, percent: 20 },
-  { minEur: 21, maxEur: 40, percent: 40 },
-  { minEur: 41, maxEur: 80, percent: 60 },
-  { minEur: 81, maxEur: 100, percent: 80 },
-  { minEur: 101, maxEur: 115, percent: 90 },
-  { minEur: 116, maxEur: null, percent: 100 },
+  { minEur: 21, maxEur: 40, percent: 60 },
+  { minEur: 41, maxEur: 80, percent: 80 },
+  { minEur: 81, maxEur: null, percent: 100 },
 ];
 
 export interface FifplQuestionnaire {

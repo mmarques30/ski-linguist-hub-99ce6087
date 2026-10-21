@@ -7,34 +7,29 @@ import {
 
 const SPEC_PICKS = [
   {
-    role: "Nav / Accès FLI",
+    role: "Navigation / Accès FLI",
     file: "fli-marca-yellow.png",
-    why: "Logo header sticky (spec §4) — déjà en prod app",
+    why: "Logo du menu, déjà utilisé dans l’application",
   },
   {
-    role: "Hero photo (placeholder)",
+    role: "Photo de tête de page (provisoire)",
     file: "fli_personagem_01.png + fli-auth-bg.png",
-    why: "Spec §7 : photo pro moniteur à fournir — illustration temporaire",
+    why: "Photo professionnelle à fournir — illustration temporaire",
   },
   {
     role: "Badges flottants",
     file: "texte",
-    why: "Groupes de 6 max · Financement FIFPL · Certifié Qualiopi",
+    why: "Groupes de 8 personnes · Financement FIFPL · Certifié Qualiopi",
   },
   {
-    role: "Vidéo #methode",
+    role: "Vidéo de la méthode",
     file: "YouTube 1cIivE5ggCk",
-    why: "Embed stages-langues (spec §3 bloc 2)",
-  },
-  {
-    role: "Carrousel partenaires",
-    file: "placeholders texte",
-    why: "Logos HD ESF / stations / Qualiopi / FIFPL / Linguaskill / Bright à fournir",
+    why: "Vidéo déjà en ligne sur stages-langues.fr",
   },
 ];
 
 /**
- * Mockup validation des visuels — aligné sur docs/FLI-LP-institucional-spec.md §5–7.
+ * Mockup validation assets — aligné sur docs/FLI-LP-institucional-spec.md §5–7.
  * Route : /mockup/lp-assets
  */
 export default function AssetValidationMockupPage() {
@@ -44,10 +39,10 @@ export default function AssetValidationMockupPage() {
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#FCAF17]">
-              Spec LP · validation des visuels
+              Validation des visuels
             </p>
             <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
-              Logos & illustrations — LP institutionnelle FLI
+              Logos et illustrations
             </h1>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -73,9 +68,10 @@ export default function AssetValidationMockupPage() {
             Aligné sur docs/FLI-LP-institucional-spec.md
           </h2>
           <p className="mt-2 max-w-3xl text-sm text-white/75">
-            Sitemap : Hero → Méthode/vidéo → Partenaires → Formations → Footer → FAQ. CTA header
-            « Accès FLI » → <code className="text-[#FCAF17]">/auth</code>. Pendances spec §5–7 :
-            photo hero réelle, logos partenaires HD, chiffres moniteurs formés.
+            Parcours : tête de page, méthode et vidéo, formations, stages, FAQ, puis le pied de
+            page. Bouton « Accès FLI » vers <code className="text-[#FCAF17]">/auth</code>. En
+            attente : photo réelle, chiffres des moniteurs formés. Les logos partenaires ne sont
+            pas affichés pour le moment.
           </p>
           <ul className="mt-5 grid gap-3 sm:grid-cols-2">
             {SPEC_PICKS.map((p) => (
@@ -92,7 +88,7 @@ export default function AssetValidationMockupPage() {
           <div className="mt-6 flex flex-wrap items-end gap-6">
             <figure className="text-center">
               <img src={RECOMMENDED.navLogo} alt="" className="mx-auto h-12 object-contain" />
-              <figcaption className="mt-2 text-xs text-white/50">Nav</figcaption>
+              <figcaption className="mt-2 text-xs text-white/50">Navigation</figcaption>
             </figure>
             <figure className="text-center">
               <img
@@ -100,7 +96,7 @@ export default function AssetValidationMockupPage() {
                 alt=""
                 className="mx-auto h-28 object-contain"
               />
-              <figcaption className="mt-2 text-xs text-white/50">Hero (provisoire)</figcaption>
+              <figcaption className="mt-2 text-xs text-white/50">Illustration de tête de page</figcaption>
             </figure>
             <figure className="text-center">
               <img
@@ -108,7 +104,9 @@ export default function AssetValidationMockupPage() {
                 alt=""
                 className="mx-auto h-28 object-contain"
               />
-              <figcaption className="mt-2 text-xs text-white/50">Disponible (non utilisé dans le hero)</figcaption>
+              <figcaption className="mt-2 text-xs text-white/50">
+                Disponible, non utilisée en tête de page
+              </figcaption>
             </figure>
           </div>
         </section>
@@ -116,7 +114,7 @@ export default function AssetValidationMockupPage() {
         <section>
           <h2 className="text-lg font-bold">Tous les logos ({LOGO_CANDIDATES.length})</h2>
           <p className="mt-1 text-sm text-white/60">
-            Fond damier = transparence. Fond noir = matte déjà dans le PNG.
+            Fond en damier : transparence. Fond noir : le noir est déjà dans l’image.
           </p>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {LOGO_CANDIDATES.map((asset) => (

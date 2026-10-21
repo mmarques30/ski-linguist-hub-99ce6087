@@ -27,12 +27,36 @@ export const REGISTRATION_PAYMENT_OPTIONS = {
 export type RegistrationPaymentOption =
   (typeof REGISTRATION_PAYMENT_OPTIONS)[keyof typeof REGISTRATION_PAYMENT_OPTIONS];
 
+/**
+ * RIB FLI (Crédit Agricole des Savoie).
+ * L’IBAN historique se terminait par …144 (clé RIB 44) : checksum IBAN invalide
+ * (mod 97 ≠ 1) — signalé par DSF sur les factures. Clé correcte pour le compte
+ * 39541273001 = 89 → …189.
+ */
 export const FLI_BANK_DETAILS = {
   beneficiary: "France Langues International",
-  iban: "FR76 1820 6004 4339 5412 7300 144",
+  iban: "FR76 1820 6004 4339 5412 7300 189",
   bic: "AGRIFRPP882",
   bank: "Crédit Agricole",
 };
+
+/** Contrôle ISO 13616 (IBAN mod 97 === 1). */
+export function isValidIban(iban: string): boolean {
+  const compact = iban.replace(/\s+/g, "").toUpperCase();
+  if (!/^[A-Z]{2}\d{2}[A-Z0-9]+$/.test(compact) || compact.length < 15) {
+    return false;
+  }
+  const rearranged = compact.slice(4) + compact.slice(0, 4);
+  let numeric = "";
+  for (const ch of rearranged) {
+    numeric += /\d/.test(ch) ? ch : String(ch.charCodeAt(0) - 55);
+  }
+  let remainder = 0;
+  for (const digit of numeric) {
+    remainder = (remainder * 10 + Number(digit)) % 97;
+  }
+  return remainder === 1;
+}
 
 /**
  * Bloc HTML RIB FLI pour les e-mails.

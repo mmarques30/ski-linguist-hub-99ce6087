@@ -1,6 +1,10 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { adminCorsHeaders, requireAdmin } from "../_shared/admin-auth.ts";
-import { applyEmailTemplate, sendFliEmail } from "../_shared/fli-email.ts";
+import {
+  applyEmailTemplate,
+  escapeHtml,
+  sendFliEmail,
+} from "../_shared/fli-email.ts";
 import {
   isFliPlaceholderEmail,
   isMassSendConfirmed,
@@ -213,7 +217,7 @@ Deno.serve(async (req) => {
             : "Accès à votre espace stagiaire — France Langues International";
           const html = template
             ? applyEmailTemplate(template.body_fr, variables)
-            : `<p>Bonjour ${studentName},</p><p><a href="${actionLink}">Accéder à mon espace stagiaire</a></p>`;
+            : `<p>Bonjour ${escapeHtml(studentName)},</p><p><a href="${escapeHtml(actionLink)}">Accéder à mon espace stagiaire</a></p>`;
 
           const sent = await sendFliEmail({
             resendApiKey,

@@ -1,34 +1,65 @@
-# Triage des findings Critical — scan du 13 oct. 2026 (aucun correctif)
+# Prompt para o Cursor — correções de segurança (scan Lovable 14/10/2026)
 
-Source : le scan détaillé (« deep », statut incomplete) cumule ses findings du 7, 12 et 13 oct. Le Quick scan base (lov_pgscan) : 0 finding. Les 51 lignes Critical se ramènent à **19 trous distincts**.
+Copie o bloco abaixo e cole no Cursor.
 
-| # | Finding (dédoublonné) | Cible | Lignes | Statut |
-|---|---|---|---|---|
-| 1 | Envoi de prospection en masse / lecture des contacts moniteurs | edge process-intake-outreach | 7 | Corrigé en prod (#182, admin ou service_role) |
-| 2 | Envoi des documents d'inscription à n'importe quel stagiaire / insertion de documents | edge send-inscription-documents | 7 | Corrigé (#182, staff ou service_role) |
-| 3 | Lecture et modification des rappels planning | edge process-schedule-reminders (+ config.toml) | 4 | Corrigé (#182) |
-| 4 | Détail des factures impayées | edge process-invoice-reminders | 1 | Corrigé (#182) |
-| 5 | Actions de paiement dans le digest | edge send-daily-ops-digest | 1 | Corrigé (#182) |
-| 6 | Modification des rappels d'enquête | edge process-survey-reminders | 1 | Corrigé (#183, testé : anon → 403) |
-| 7 | Génération des charges mensuelles | edge generate-monthly-charges | 1 | Corrigé (#183) |
-| 8 | Mails de demande CFP Rosière | edge send-rosiere-cfp-request | 2 | Corrigé (#183) |
-| 9 | Dépôt dans le dossier d'un autre stagiaire | edge upload-registration-document | 3 | Corrigé (#183, testé) |
-| 10 | Changement de la saison active | RPC activate_season | 1 | Corrigé (migration is_staff appliquée) |
-| 11 | Prix de la formation choisi par le client | edge submit-registration | 2 | Corrigé (#182, prix recalculé serveur) |
-| 12 | Écrasement des coordonnées d'un stagiaire existant | edge submit-registration | 2 | Corrigé (#182, plus de mise à jour) |
-| 13 | Estimation FIF-PL réduite par le client | edge submit-registration | 7 | Faux positif probable : estimation indicative, recopiée en note ; seul « coveredOnCourseEur » mérite une vérification |
-| 14 | Niveau d'entrée choisi par le client | edge submit-registration (entry_level) | 3 | Faux positif probable : niveau déclaratif, remplacé par le test de placement |
-| 15 | Confirmation d'inscription via le retour de paiement | edge verify-registration-checkout | 1 | Faux positif probable : la session est relue chez Stripe et doit être « paid » ; on ne peut confirmer sans avoir payé |
-| 16 | Lecture des statuts Stripe | edge check-stripe-config | 1 | Vrai reste, faible : aucun contrôle de connexion ; renvoie des infos de config, pas les clés |
-| 17 | Tout formateur télécharge tous les PDF d'évaluation | edge sign-private-download | 2 | Vrai reste (contrôle de connexion, mais pas « ce formateur, ce dossier ») ; conforme à la règle « formateurs = accès global », donc à arbitrer par Paula |
-| 18 | Taux de présence d'un autre stagiaire | RPC compute_attendance_rate (GRANT authenticated) | 2 | Vrai reste : un stagiaire connecté peut interroger n'importe quelle inscription |
-| 19 | Lecture de dossiers d'autres inscrits avec un ID et un e-mail / prix des cours modifiables | create-registration-checkout ; pricing_rules (useSeasons) | 2 | Checkout : corrigé (#182). pricing_rules : faux positif (staff seulement, règle voulue) |
-| 20 | « Injection » dans la recherche globale | front GlobalSearch (.or ilike) | 2 | Faux positif : filtre de lecture côté staff, la RLS s'applique quand même |
+```text
+PROJETO FLI Formation (Vite + React + Supabase/Lovable Cloud). Trabalhe numa branch nova
+cursor/security-scan-2026-10-14 a partir de origin/main. Respeite AGENTS.md (copias
+src/lib <-> supabase/functions/_shared + teste de drift; nao mexer em docs/BACKLOG.md
+nem docs/ETAT_APP_*.md; merge origin/main antes de entregar). NAO enviar e-mail,
+NAO ligar cron, NAO alterar secrets. Sem casts "as any" / "as unknown as".
 
-## Ops Vault
-Aucun finding ne vise `edge_dispatch_jwt`. Mais tant que le support n'a pas fait la rotation, les tâches automatiques des fonctions 1 à 7 sont refusées (403) : sécurité OK, fonctionnement en panne.
+0) PRE-REQUISITO — trazer para o GitHub a correcao feita so no Lovable:
+   supabase/functions/_shared/admin-auth.ts
+   - isServiceRoleToken: igualdade estrita em tempo constante com
+     SUPABASE_SERVICE_ROLE_KEY. NUNCA confiar no claim "role" decodificado do JWT
+     (JWT forjado nao assinado era aceito).
+   - isValidCronDispatchToken: header x-cron-dispatch-token comparado em tempo
+     constante com public.cron_dispatch_secret.token (min 32 chars); token errado -> 403.
+   - Teste em src/lib/edge-cron-auth.test.ts (JWT forjado role=service_role -> recusado).
+   Migration ja aplicada em prod (nao recriar): cron_dispatch_token_no_vault
+   (tabela cron_dispatch_secret + dispatch_edge_function sem Vault). Apenas
+   adicionar o arquivo de migration ao repo se faltar.
 
-## Que veulent dire « 46 » et « 27 Critical » ?
-Ce sont surtout des **doublons**. Le scan détaillé n'a jamais fini, et il garde ses findings du 7, 12 et 13 oct. sans fermer ceux qui sont corrigés : 51 lignes pour environ 19 sujets, et une seule date (13 oct.) pour les mêmes cibles. Les lignes du 13 oct. sont des redétections sur des fonctions déjà corrigées (le scan lit peut-être une version antérieure du code), pas des nouvelles cibles.
-**Vrais restes** : #18 (taux de présence), #17 (à arbitrer), #16 (faible). À vérifier : la partie « coveredOnCourseEur » de #13.
-Pour faire baisser le compteur, il faut qu'un scan détaillé aille au bout, puis marquer comme corrigés les findings 1 à 12.
+1) Login de administrador de teste (PRIORIDADE)
+   - Procurar contas/credenciais de teste admin no repo (scripts/sql/zztest_roles_logins.sql,
+     docs/TESTING_GUIDE.md, /admin/testing, .env, seeds) e qualquer senha em claro.
+   - Remover senhas do repo; documentar que a conta deve ser desativada ou ter a senha
+     trocada em prod (listar o e-mail encontrado no relatorio, nao a senha).
+
+2) Retorno do pagamento (verify-registration-checkout)
+   - Manter a revalidacao da sessao no Stripe (status paid + payment_status paid).
+   - Exigir que session.metadata.inscription_id corresponda a uma inscricao existente
+     e que o valor pago corresponda ao valor esperado no banco; idempotente
+     (nao duplicar payments se o webhook ja gravou).
+
+3) Preco de parceiro / parte FIF-PL (submit-registration, create-registration-checkout)
+   - O preco final vem SO do servidor (offerings / pricing_rules). A escola parceira
+     e a situacao FIF-PL declaradas pelo aluno nao podem reduzir o valor cobrado
+     sem validacao: gravar como "declarado" e deixar o desconto para validacao staff,
+     ou validar a escola contra ski_schools/partners no servidor.
+
+4) URLs de retorno do Stripe (create-registration-checkout)
+   - successUrl / cancelUrl: allowlist de origem (https://plateforme.fli.fr,
+     https://ski-linguist-hub.lovable.app, preview *.lovable.app, http://localhost:8080).
+     Fora da lista -> 400.
+
+5) Conteudo dos e-mails sem escape (fli-email.ts, applyEmailTemplate, send-staff-email,
+   send-inscription-documents, process-*-reminders)
+   - Escapar HTML de toda variavel vinda do usuario (nomes, textos livres) antes de
+     inserir no template. Manter src/lib/email-template-apply.ts e a copia _shared
+     identicas + teste de drift + teste "<script> vira &lt;script&gt;".
+
+6) Buscas (GlobalSearch, alunos/formadores/pagamentos) e PDFs de avaliacao
+   (sign-private-download, generate-evaluation-pdf)
+   - Politica atual FLI: formadores = acesso global. NAO restringir; apenas garantir
+     que anon e student nao acessam (student so os proprios). Listar no relatorio.
+
+7) Testes: npm test deve passar. tsgo/tsc sem erros.
+
+8) Entrega: PR com lista, por item, de arquivo alterado e o que mudou; lista das
+   Edge Functions a reimplantar no Lovable Cloud depois do merge.
+```
+
+## Depois do merge
+Me avise o commit: eu confiro os arquivos e reimplanto só as funções listadas pelo Cursor, e marco as alertas como corrigidas.

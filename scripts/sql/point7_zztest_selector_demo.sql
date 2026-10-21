@@ -1,6 +1,7 @@
 -- Point 7 — jeu ZZTEST pour la démonstration du sélecteur de phrases (one-shot).
 -- Convention ZZTEST + @example.invalid. Aucune identité réelle.
 -- Crée un formateur avec mot de passe, un candidat et un test à évaluer.
+-- Avant exécution : SELECT set_config('zztest.pwd_p7', '<secret>', false);
 -- À supprimer ensuite : voir point7_zztest_selector_demo_cleanup.sql.
 
 DELETE FROM public.test_evaluations
@@ -77,8 +78,19 @@ DECLARE
   cand_c uuid;
   book_c uuid;
 BEGIN
-  uid_f := public._p7_make_auth_user('zztest.p7.form@example.invalid', 'ZZTESTp7-demo!');
-  uid_c := public._p7_make_auth_user('zztest.p7.cand@example.invalid', 'ZZTESTp7-demo!');
+  IF coalesce(current_setting('zztest.pwd_p7', true), '') = '' THEN
+    RAISE EXCEPTION
+      'Définir zztest.pwd_p7 via set_config avant exécution (pas de secret dans le dépôt)';
+  END IF;
+
+  uid_f := public._p7_make_auth_user(
+    'zztest.p7.form@example.invalid',
+    current_setting('zztest.pwd_p7', true)
+  );
+  uid_c := public._p7_make_auth_user(
+    'zztest.p7.cand@example.invalid',
+    current_setting('zztest.pwd_p7', true)
+  );
 
   INSERT INTO public.user_roles (user_id, role) VALUES
     (uid_f, 'formateur'),

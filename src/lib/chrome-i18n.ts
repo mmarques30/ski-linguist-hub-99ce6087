@@ -12,14 +12,19 @@ export const CHROME_SECTIONS: Record<string, Translations> = {
   portails: { fr: "Portails", "pt-BR": "Portais", en: "Portals" },
   administration: { fr: "Administration", "pt-BR": "Administração", en: "Administration" },
   monitoramento: {
-    fr: "Monitoring",
+    fr: "Santé système",
     "pt-BR": "Monitoramento",
-    en: "Monitoring",
+    en: "System health",
   },
 };
 
 export const CHROME_NAV: Record<string, Translations> = {
   "/inscriptions": { fr: "Inscriptions", "pt-BR": "Inscrições", en: "Registrations" },
+  "/inscriptions/par-formation": {
+    fr: "Par formation",
+    "pt-BR": "Por formação",
+    en: "By training",
+  },
   "/inscriptions/schedule-validation": {
     fr: "Constitution des groupes",
     "pt-BR": "Constituição dos grupos",
@@ -44,9 +49,9 @@ export const CHROME_NAV: Record<string, Translations> = {
     en: "Attendance",
   },
   "/gestion/commercial": {
-    fr: "Pipeline commercial",
-    "pt-BR": "Pipeline comercial",
-    en: "Sales pipeline",
+    fr: "Prospects commerciaux",
+    "pt-BR": "Prospectos comerciais",
+    en: "Sales prospects",
   },
   "/gestion/partenaires": { fr: "Partenaires", "pt-BR": "Parceiros", en: "Partners" },
   "/gestion/moniteurs": {
@@ -77,7 +82,7 @@ export const CHROME_NAV: Record<string, Translations> = {
     en: "Instructor portal",
   },
   "/admin/import": { fr: "Import", "pt-BR": "Importação", en: "Import" },
-  "/admin/emails": { fr: "Emails", "pt-BR": "E-mails", en: "Emails" },
+  "/admin/emails": { fr: "E-mails", "pt-BR": "E-mails", en: "Emails" },
   "/admin/registration-documents": {
     fr: "Modèles documents",
     "pt-BR": "Modelos de documentos",
@@ -85,7 +90,7 @@ export const CHROME_NAV: Record<string, Translations> = {
   },
   "/admin/phrases": { fr: "Phrases", "pt-BR": "Frases", en: "Phrases" },
   "/admin/seasons": { fr: "Saisons", "pt-BR": "Temporadas", en: "Seasons" },
-  "/admin/testing": { fr: "Tests QA", "pt-BR": "Testes QA", en: "QA tests" },
+  "/admin/testing": { fr: "Recette & tests", "pt-BR": "Testes QA", en: "QA tests" },
   "/admin/users": { fr: "Utilisateurs", "pt-BR": "Utilizadores", en: "Users" },
   "/settings": { fr: "Paramètres", "pt-BR": "Configurações", en: "Settings" },
   "/monitoramento": {
@@ -132,7 +137,7 @@ export const CHROME_NAV_GROUPS: Record<string, Translations> = {
   },
 
   // Commercial
-  commercialPipeline: { fr: "Pipeline", "pt-BR": "Pipeline", en: "Pipeline" },
+  commercialPipeline: { fr: "Tableau", "pt-BR": "Quadro", en: "Board" },
   commercialAnalytics: { fr: "Analyses", "pt-BR": "Análises", en: "Analytics" },
   moniteursDates: {
     fr: "Dates de formation",
@@ -226,6 +231,7 @@ export const CHROME_BREADCRUMB: Record<string, Translations> = {
   partenaires: CHROME_NAV["/gestion/partenaires"],
   moniteurs: { fr: "Moniteurs", "pt-BR": "Monitores", en: "Monitors" },
   inscriptions: CHROME_NAV["/inscriptions"],
+  "par-formation": CHROME_NAV["/inscriptions/par-formation"],
   "schedule-validation": CHROME_NAV["/inscriptions/schedule-validation"],
   invoices: CHROME_NAV["/invoices"],
   students: CHROME_NAV["/students"],

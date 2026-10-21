@@ -5,6 +5,7 @@ import {
   buildFliBankDetailsEmailHtml,
   buildPaymentLinkWithBankDetailsEmailHtml,
   FLI_BANK_DETAILS,
+  isValidIban,
   getAvailablePaymentOptions,
   getRegistrationPaymentSummary,
   hasChequeBalance,
@@ -204,7 +205,10 @@ describe("modes de règlement /register", () => {
     expect(deno).toContain('LEGACY_STRIPE_4X = "stripe_4x"');
   });
 
-  it("expose le RIB FLI et l'exige avec tout lien de paiement (copie Deno)", () => {
+  it("expose un RIB FLI à checksum IBAN valide (copie Deno + factures)", () => {
+    expect(isValidIban(FLI_BANK_DETAILS.iban)).toBe(true);
+    expect(isValidIban("FR76 1820 6004 4339 5412 7300 144")).toBe(false);
+
     const rib = buildFliBankDetailsEmailHtml("FLI-260036");
     expect(rib).toContain(FLI_BANK_DETAILS.iban);
     expect(rib).toContain(FLI_BANK_DETAILS.bic);
@@ -234,14 +238,53 @@ describe("modes de règlement /register", () => {
       join(process.cwd(), "supabase/functions/_shared/registration-payments.ts"),
       "utf8",
     );
+    const invoicePdf = readFileSync(
+      join(process.cwd(), "src/lib/invoice-pdf.ts"),
+      "utf8",
+    );
+    const invoiceTpl = readFileSync(
+      join(process.cwd(), "src/components/invoices/InvoiceTemplate.tsx"),
+      "utf8",
+    );
     for (const symbol of [
       "FLI_BANK_DETAILS",
       "buildFliBankDetailsEmailHtml",
       "buildPaymentLinkWithBankDetailsEmailHtml",
-      'iban: "FR76 1820 6004 4339 5412 7300 144"',
+      "isValidIban",
+      'iban: "FR76 1820 6004 4339 5412 7300 189"',
     ]) {
       expect(front).toContain(symbol);
       expect(deno).toContain(symbol);
+    }
+    expect(invoicePdf).toContain("FLI_BANK_DETAILS");
+    expect(invoiceTpl).toContain("FLI_BANK_DETAILS");
+    expect(front).not.toContain("7300 144");
+    expect(deno).not.toContain("7300 144");
+
+    // Surfaces factures + UI inscription + scripts ops (plus de copie locale d'IBAN).
+    for (const rel of [
+      "src/components/registration/ConfirmationStep.tsx",
+      "src/components/registration/PaymentStep.tsx",
+      "scripts/send-carroz-school-invoice.mts",
+      "scripts/prepare-dsf-mandica-pack.mts",
+      "scripts/send-mollard-remaining-results.mts",
+    ]) {
+      const src = readFileSync(join(process.cwd(), rel), "utf8");
+      expect(src, rel).toContain("FLI_BANK_DETAILS");
+      expect(src, rel).not.toContain("7300 144");
+      expect(src, rel).not.toMatch(/iban:\s*"FR76/);
+    }
+
+    // Modèles e-mail Resend (docs pack) : aucun IBAN en dur.
+    for (const rel of [
+      "docs/emails-fli-2026-09/05a-invoice_reminder_1/invoice_reminder_1.html",
+      "docs/emails-fli-2026-09/05b-invoice_reminder_2/invoice_reminder_2.html",
+      "docs/emails-fli-2026-09/05c-invoice_reminder_3/invoice_reminder_3.html",
+      "docs/emails-fli-2026-09/01a-inscription_confirmation_individual/inscription_confirmation_individual.html",
+      "docs/emails-fli-2026-09/01b-inscription_confirmation_group/inscription_confirmation_group.html",
+    ]) {
+      const html = readFileSync(join(process.cwd(), rel), "utf8");
+      expect(html, rel).not.toMatch(/FR76\s*1820|7300\s*14[49]|AGRIFRPP/i);
     }
   });
 
@@ -314,8 +357,10 @@ describe("modes de règlement /register", () => {
     expect(submit).toContain("deposit_amount: paymentFields?.depositAmount ?? null");
     expect(submit).toContain("STRIPE_KLARNA_3X");
     expect(submit).toContain("Payez en 3 fois avec Klarna");
-    expect(submit).toContain("studentShareEur: schoolFifplStudentShareEur");
+    // Scan 14/10/2026 : FIF-PL déclaré ne réduit plus le montant à la soumission.
+    expect(submit).not.toContain("studentShareEur: schoolFifplStudentShareEur");
     expect(submit).toContain("coveredOnCourseEur");
+    expect(submit).toContain("pendingStaffValidation");
   });
 
   it("passe le montant payable à getAvailablePaymentOptions dans PaymentStep", () => {

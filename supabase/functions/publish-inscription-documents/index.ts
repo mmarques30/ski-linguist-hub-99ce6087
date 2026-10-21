@@ -281,7 +281,11 @@ Deno.serve(async (req) => {
                   : null,
             })
           : STATIC_DOCS[docType];
-      bytes = await loadSkiMonitorWelcomeDocument(meta.internalFile, admin);
+      bytes = await loadSkiMonitorWelcomeDocument(
+        meta.internalFile,
+        admin,
+        new URL(import.meta.url),
+      );
       filename = meta.filename;
     } else {
       return json(400, {

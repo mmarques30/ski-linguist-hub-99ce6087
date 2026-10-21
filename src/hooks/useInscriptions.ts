@@ -38,6 +38,8 @@ export function useInscriptions(filters?: {
   seasonId?: string | null;
   seasonStart?: string | null;
   seasonEnd?: string | null;
+  /** Plafond PostgREST — défaut 100 (liste) ; vue par formation monte plus haut. */
+  limit?: number;
 }) {
   return useQuery({
     queryKey: ["inscriptions", filters],
@@ -71,7 +73,7 @@ export function useInscriptions(filters?: {
         );
       }
 
-      const { data, error } = await query.limit(100);
+      const { data, error } = await query.limit(filters?.limit ?? 100);
 
       if (error) throw error;
       return data as InscriptionComplete[];

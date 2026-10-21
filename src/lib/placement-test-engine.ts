@@ -14,6 +14,14 @@ export const PASS_THRESHOLD = 3;
 export const QUESTIONS_PER_SLOPE = 5;
 export const PRESENTATION_MAX_CHARS = 1000;
 
+/**
+ * Version salon des directeurs : adaptatif 4 pistes, 3 questions / piste,
+ * sans vocabulaire ski ni présentation (max 12 questions).
+ */
+export const SALON_QUESTIONS_PER_SLOPE = 3;
+export const SALON_PASS_THRESHOLD = 2;
+export const SALON_SLOPE_ORDER: SlopeLevel[] = ["verte", "bleue", "rouge", "noire"];
+
 /** Languages whose piste scale is not comparable to EN/ES/… (verte = traduction). */
 export const ADAPTED_SCALE_BANK_KEYS = new Set([
   "allemand",
@@ -96,6 +104,10 @@ export function evaluateSlope(correct: number, total: number = QUESTIONS_PER_SLO
   return correct >= PASS_THRESHOLD;
 }
 
+export function evaluateSalonSlope(correct: number): boolean {
+  return correct >= SALON_PASS_THRESHOLD;
+}
+
 /**
  * Next step after a piste (not vocab / presentation).
  * Fail or pass-noire → vocabulaire (toujours).
@@ -112,6 +124,20 @@ export function getNextSlopeAfterSlope(
   const idx = SLOPE_ORDER.indexOf(currentSlope);
   if (idx === -1 || idx === SLOPE_ORDER.length - 1) return "vocab_ski";
   return SLOPE_ORDER[idx + 1];
+}
+
+/**
+ * Parcours salon : adaptatif verte → bleue → rouge → noire (3 Q, seuil 2/3).
+ * Échec ou validation noire → fin (pas de vocab / présentation).
+ */
+export function getNextSalonSlopeAfterSlope(
+  currentSlope: SlopeLevel,
+  passed: boolean
+): SlopeLevel | "done" {
+  if (!passed) return "done";
+  const idx = SALON_SLOPE_ORDER.indexOf(currentSlope);
+  if (idx === -1 || idx >= SALON_SLOPE_ORDER.length - 1) return "done";
+  return SALON_SLOPE_ORDER[idx + 1];
 }
 
 export function determineLevelFromSlopes(passedSlopes: SlopeLevel[]): string {
@@ -312,11 +338,14 @@ export function buildAdaptiveTestResult(
 
 export function getQuestionsForSlope(
   questions: PlacementQuestion[],
-  slope: SlopeLevel | "presentation"
+  slope: SlopeLevel | "presentation",
+  limit?: number
 ): PlacementQuestion[] {
-  return questions
+  const list = questions
     .filter((q) => q.slope === slope)
     .sort((a, b) => a.order_index - b.order_index);
+  if (limit == null || limit <= 0) return list;
+  return list.slice(0, limit);
 }
 
 export function getPresentationQuestion(

@@ -1,4 +1,3 @@
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -24,6 +23,7 @@ import Dashboard from "./pages/Dashboard";
 import Inscriptions from "./pages/Inscriptions";
 import InscriptionDetails from "./pages/inscriptions/InscriptionDetails";
 import ScheduleValidation from "./pages/inscriptions/ScheduleValidation";
+import InscriptionsByFormation from "./pages/inscriptions/InscriptionsByFormation";
 import Invoices from "./pages/Invoices";
 import Students from "./pages/Students";
 import StudentDetails from "./pages/students/StudentDetails";
@@ -54,8 +54,9 @@ import FormateurStagiaires from "./pages/formateur/FormateurStagiaires";
 import FormateurProfil from "./pages/formateur/FormateurProfil";
 import FormateurPaiements from "./pages/formateur/FormateurPaiements";
 import FormateurDocuments from "./pages/formateur/FormateurDocuments";
-import Register from "./pages/register/Index";
+import PublicRegistrationRoute from "./pages/register/PublicRegistrationRoute";
 import BookTest from "./pages/test/BookTest";
+import SalonDirecteursPage from "./pages/salon/Index";
 import { PaymentSuccessPage, PaymentCancelPage } from "./pages/register/PaymentReturn";
 import SatisfactionSurvey from "./pages/survey/SatisfactionSurvey";
 import ContinuousImprovement from "./pages/ContinuousImprovement";
@@ -102,7 +103,6 @@ const App = () => (
     <LanguageProvider>
       <SeasonProvider>
       <TooltipProvider>
-        <Toaster />
         <Sonner />
         <BrowserRouter>
           <Routes>
@@ -110,7 +110,8 @@ const App = () => (
             <Route path="/" element={<InstitutionalLanding />} />
             <Route path="/mockup/lp-assets" element={<AssetValidationMockupPage />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/register" element={<PublicRegistrationRoute />} />
+            <Route path="/salon" element={<SalonDirecteursPage />} />
             <Route path="/reserver-test" element={<BookTest />} />
             <Route path="/register/payment-success" element={<PaymentSuccessPage />} />
             <Route path="/register/payment-cancel" element={<PaymentCancelPage />} />
@@ -140,6 +141,7 @@ const App = () => (
             <Route path="/gestion/partenaires" element={<ProtectedRoute><PartnersList /></ProtectedRoute>} />
             <Route path="/gestion/partenaires/:id" element={<ProtectedRoute><PartnerDetails /></ProtectedRoute>} />
             <Route path="/inscriptions" element={<ProtectedRoute><Inscriptions /></ProtectedRoute>} />
+            <Route path="/inscriptions/par-formation" element={<ProtectedRoute><InscriptionsByFormation /></ProtectedRoute>} />
             <Route path="/inscriptions/schedule-validation" element={<ProtectedRoute><ScheduleValidation /></ProtectedRoute>} />
             <Route path="/inscriptions/:id" element={<ProtectedRoute><InscriptionDetails /></ProtectedRoute>} />
             <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />

@@ -1,4 +1,5 @@
 import { ReactNode, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { useNavigate, Link } from "react-router";
 import { FormateurPageShell } from "@/components/layout/FormateurPageShell";
 import { Button } from "@/components/ui/button";
@@ -24,14 +25,15 @@ import {
   ShieldCheck,
   Download,
   Loader2,
+  Plus,
 } from "lucide-react";
 import { useTestBookingsToEvaluate } from "@/hooks/useTestEvaluations";
+import { CreateEvaluationBookingDialog } from "@/components/evaluations/CreateEvaluationBookingDialog";
 import { LANGUAGE_FLAGS, LANGUAGE_LABELS } from "@/lib/evaluation-utils";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { SurveyQRCodeDialog } from "@/components/survey/SurveyQRCodeDialog";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
-import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { EVALUATION_PDF_BUCKET } from "@/lib/evaluation-pdf";
 import {
@@ -102,14 +104,15 @@ function FilterField({
 
 export default function EvaluationsList() {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"pending" | "completed">("pending");
   const [showQRDialog, setShowQRDialog] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [filters, setFilters] = useState<EvaluationListFilters>(emptyFilters);
   const [exporting, setExporting] = useState(false);
   const { canEdit, isFormateur, isAdmin } = useUserPermissions();
   const { basePath, isAssistMode } = useFormateurView();
   const editable = canEdit("evaluations") && !isAssistMode;
+  const canCreateEvaluation = editable;
   const canExportDsf = !isFormateur && !isAssistMode;
 
   const { data: allCompleted, isLoading: pendingLoading, refetch: refetchPending } =
@@ -181,10 +184,7 @@ export default function EvaluationsList() {
     try {
       const source = filtered.filter((row) => row.sponsor_type === "dsf");
       if (source.length === 0) {
-        toast({
-          title: "Aucune ligne DSF",
-          description: "Aucun test DSF ne correspond aux filtres.",
-        });
+        toast.success("Aucune ligne DSF", { description: "Aucun test DSF ne correspond aux filtres." });
         return;
       }
       const pdfLinks: Record<string, string> = {};
@@ -210,13 +210,9 @@ export default function EvaluationsList() {
       a.download = dsfExportFilename();
       a.click();
       URL.revokeObjectURL(url);
-      toast({ title: `Export DSF : ${rows.length} ligne(s)` });
+      toast.success(`Export DSF : ${rows.length} ligne(s)`);
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Export DSF",
-        description: error instanceof Error ? error.message : "Échec de l'export",
-      });
+      toast.error("Export DSF", { description: error instanceof Error ? error.message : "Échec de l'export" });
     } finally {
       setExporting(false);
     }
@@ -247,6 +243,12 @@ export default function EvaluationsList() {
           tone="gold"
           actions={
             <>
+              {canCreateEvaluation && (
+                <Button onClick={() => setShowCreateDialog(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nouvelle évaluation
+                </Button>
+              )}
               {canExportDsf && (
                 <Button variant="outline" onClick={handleExportDsf} disabled={exporting}>
                   {exporting ? (
@@ -277,6 +279,18 @@ export default function EvaluationsList() {
             </>
           }
         />
+
+        {canCreateEvaluation && (
+          <CreateEvaluationBookingDialog
+            open={showCreateDialog}
+            onOpenChange={setShowCreateDialog}
+            requireInstructorPick={!isFormateur}
+            onCreated={(bookingId) => {
+              void refetchPending();
+              navigate(`${basePath}/evaluation/${bookingId}`);
+            }}
+          />
+        )}
 
         {!isFormateur && (
           <SurveyQRCodeDialog open={showQRDialog} onOpenChange={setShowQRDialog} />

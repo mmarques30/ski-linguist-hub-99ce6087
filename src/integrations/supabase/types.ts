@@ -606,6 +606,24 @@ export type Database = {
           },
         ]
       }
+      cron_dispatch_secret: {
+        Row: {
+          id: boolean
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          id?: boolean
+          token?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: boolean
+          token?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       document_sendings: {
         Row: {
           created_at: string
@@ -2906,6 +2924,66 @@ export type Database = {
           },
         ]
       }
+      salon_demo_tests: {
+        Row: {
+          answers: Json | null
+          correct_answers: number | null
+          created_at: string
+          determined_level: string | null
+          email: string
+          first_name: string
+          id: string
+          language: string
+          last_name: string
+          phone: string
+          score_percentage: number | null
+          ski_network: string
+          ski_school_code: string | null
+          ski_school_name: string
+          source: string
+          summary: Json | null
+          total_questions: number | null
+        }
+        Insert: {
+          answers?: Json | null
+          correct_answers?: number | null
+          created_at?: string
+          determined_level?: string | null
+          email: string
+          first_name: string
+          id?: string
+          language: string
+          last_name: string
+          phone: string
+          score_percentage?: number | null
+          ski_network?: string
+          ski_school_code?: string | null
+          ski_school_name: string
+          source?: string
+          summary?: Json | null
+          total_questions?: number | null
+        }
+        Update: {
+          answers?: Json | null
+          correct_answers?: number | null
+          created_at?: string
+          determined_level?: string | null
+          email?: string
+          first_name?: string
+          id?: string
+          language?: string
+          last_name?: string
+          phone?: string
+          score_percentage?: number | null
+          ski_network?: string
+          ski_school_code?: string | null
+          ski_school_name?: string
+          source?: string
+          summary?: Json | null
+          total_questions?: number | null
+        }
+        Relationships: []
+      }
       satisfaction_surveys: {
         Row: {
           completed_at: string | null
@@ -3574,13 +3652,13 @@ export type Database = {
           email: string
           id: string
           name: string
-          phone: string
+          phone: string | null
           photo_face_url: string | null
           photo_id_url: string | null
-          profession: string
+          profession: string | null
           profession_autre: string | null
           ski_discipline: string | null
-          ski_school_id: string
+          ski_school_id: string | null
           student_id: string | null
           training_cycle: string | null
         }
@@ -3590,13 +3668,13 @@ export type Database = {
           email: string
           id?: string
           name: string
-          phone: string
+          phone?: string | null
           photo_face_url?: string | null
           photo_id_url?: string | null
-          profession: string
+          profession?: string | null
           profession_autre?: string | null
           ski_discipline?: string | null
-          ski_school_id: string
+          ski_school_id?: string | null
           student_id?: string | null
           training_cycle?: string | null
         }
@@ -3606,13 +3684,13 @@ export type Database = {
           email?: string
           id?: string
           name?: string
-          phone?: string
+          phone?: string | null
           photo_face_url?: string | null
           photo_id_url?: string | null
-          profession?: string
+          profession?: string | null
           profession_autre?: string | null
           ski_discipline?: string | null
-          ski_school_id?: string
+          ski_school_id?: string | null
           student_id?: string | null
           training_cycle?: string | null
         }
@@ -4136,6 +4214,25 @@ export type Database = {
         Args: { p_inscription_id: string }
         Returns: number
       }
+      create_formateur_evaluation_booking: {
+        Args: {
+          p_carte_syndicale: string
+          p_datetime: string
+          p_email: string
+          p_instructor_id?: string
+          p_language: string
+          p_name: string
+          p_payment_type?: string
+          p_phone: string
+          p_profession: string
+          p_profession_autre: string
+          p_ski_discipline: string
+          p_ski_school_id: string
+          p_sponsor_type: string
+          p_training_cycle: string
+        }
+        Returns: string
+      }
       dispatch_edge_function: {
         Args: {
           p_body?: Json
@@ -4263,6 +4360,24 @@ export type Database = {
       storage_object_belongs_to_me: {
         Args: { _name: string }
         Returns: boolean
+      }
+      submit_salon_demo_test: {
+        Args: {
+          p_answers?: Json
+          p_correct_answers?: number
+          p_determined_level?: string
+          p_email: string
+          p_first_name: string
+          p_language: string
+          p_last_name: string
+          p_phone: string
+          p_score_percentage?: number
+          p_ski_school_code: string
+          p_ski_school_name: string
+          p_summary?: Json
+          p_total_questions?: number
+        }
+        Returns: string
       }
       submit_satisfaction_survey_by_token: {
         Args: { p_data: Json; p_token: string }

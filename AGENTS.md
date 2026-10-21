@@ -92,7 +92,9 @@ Paires connues :
 | `evaluation-pdf-assets.ts` | `evaluation-pdf-assets.ts` |
 
 Logos C.5 : mêmes fichiers dans `public/evaluation-pdf/` et
-`supabase/functions/_shared/evaluation-pdf-assets/`.
+`supabase/functions/generate-evaluation-pdf/evaluation-pdf-assets/`.
+Ils ne restent pas dans `_shared` : Lovable joint tout ce dossier à chaque
+déploiement de fonction (limite d'environ 4,5 Mo).
 
 Modèle de test : `src/lib/registration-dates.test.ts` (« garde la copie Deno
 d'accord avec le module front ») — comparer les fonctions exportées, pas

@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { PASS_THRESHOLD, QUESTIONS_PER_SLOPE, SLOPE_LABELS } from "./placement-test-engine";
+import {
+  PASS_THRESHOLD,
+  QUESTIONS_PER_SLOPE,
+  SALON_PASS_THRESHOLD,
+  SALON_QUESTIONS_PER_SLOPE,
+  SLOPE_LABELS,
+} from "./placement-test-engine";
 
 function source(relatif: string): string {
   return readFileSync(join(process.cwd(), relatif), "utf8");
@@ -17,10 +23,27 @@ describe("PlacementTestStep — UX progressif pistes", () => {
     expect(step).toContain("rouge");
     expect(step).toContain("noire");
     expect(step).toContain("Vocabulaire du ski");
-    expect(step).toContain("tous les stagiaires");
+    expect(step).toContain("tous les stagiaires passent");
     expect(step).toContain("PASS_THRESHOLD");
     expect(step).toContain("QUESTIONS_PER_SLOPE");
     expect(step).toContain("Auto-diagnostic");
+  });
+
+  it("supporte le mode salon sans auto-diagnostic", () => {
+    expect(step).toContain('variant?: "register" | "salon"');
+    expect(step).toContain("isSalon");
+    expect(step).toContain("!isSalon && !data.autoDiagnostic");
+  });
+
+  it("utilise une version salon adaptative (3 Q × 4 pistes, pas de vocab)", () => {
+    expect(step).toContain("SALON_QUESTIONS_PER_SLOPE");
+    expect(step).toContain("SALON_PASS_THRESHOLD");
+    expect(step).toContain("getNextSalonSlopeAfterSlope");
+    expect(step).toContain("version salon");
+    expect(step).toContain("Adaptatif 4 pistes");
+    expect(step).toContain("pas de vocabulaire ski");
+    expect(SALON_QUESTIONS_PER_SLOPE).toBe(3);
+    expect(SALON_PASS_THRESHOLD).toBe(2);
   });
 
   it("affiche la progression au format n/total piste X", () => {

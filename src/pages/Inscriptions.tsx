@@ -53,6 +53,7 @@ import {
 import { DATES_A_PLANIFIER_LABEL } from "@/lib/registration-dates";
 import { DueStatusAdvanceCard } from "@/components/inscriptions/DueStatusAdvanceCard";
 import { InscriptionStatusMenu } from "@/components/inscriptions/InscriptionStatusMenu";
+import { InscriptionsSubnav } from "@/components/inscriptions/InscriptionsSubnav";
 import { Link, useSearchParams } from "react-router";
 import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
@@ -701,6 +702,7 @@ export default function Inscriptions() {
           meta={
             season ? <StatusPill tone="info">{season.name}</StatusPill> : undefined
           }
+          tabs={<InscriptionsSubnav />}
           actions={
             <>
               {editable && (
@@ -925,10 +927,11 @@ export default function Inscriptions() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogTitle>
+              Supprimer l&apos;inscription de {inscriptionToDelete?.name} ?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer l'inscription de{" "}
-              <strong>{inscriptionToDelete?.name}</strong> ? Cette action est irréversible.
+              Cette action est définitive : l&apos;inscription ne pourra pas être récupérée.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
