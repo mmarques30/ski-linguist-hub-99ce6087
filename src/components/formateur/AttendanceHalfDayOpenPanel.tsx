@@ -72,7 +72,7 @@ export function AttendanceHalfDayOpenPanel({
   return (
     <SurfaceCard
       title="Émargement demi-journée"
-      description="Stages station : groupe matin / après-midi — le vendredi, option tous ensemble"
+      description="Lun–jeu : groupe matin / après-midi · vendredi : tous ensemble (si les 2 créneaux sont présents)"
       icon={Users}
     >
       <div className="space-y-4">

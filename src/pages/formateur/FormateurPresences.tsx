@@ -192,8 +192,9 @@ export default function FormateurPresences() {
 
         <p className="text-xs text-muted-foreground">
           Choisis la date, ouvre le groupe matin ou après-midi, envoie le lien
-          aux stagiaires. Le vendredi, tu peux ouvrir une séance « tous
-          ensemble ». En individuel (visio), utilise le bouton par mission.
+          aux stagiaires. Le vendredi (2 groupes), c&apos;est « tous ensemble »
+          matin et/ou après-midi. En individuel (visio), utilise le bouton par
+          mission.
         </p>
 
         {profile?.id && !isLoading ? (

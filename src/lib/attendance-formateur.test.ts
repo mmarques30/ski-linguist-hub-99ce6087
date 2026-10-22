@@ -84,19 +84,25 @@ describe("listHalfDayOpenOptions", () => {
     expect(opts.some((o) => o.kind === "ensemble")).toBe(false);
   });
 
-  it("le vendredi ajoute tous ensemble (matin + après-midi)", () => {
+  it("le vendredi remplace les 2 groupes par tous ensemble (matin + AP)", () => {
     const opts = listHalfDayOpenOptions(
       [matinA, matinB, apresC, apresD],
       "2026-01-16" // vendredi
     );
-    const ensemble = opts.filter((o) => o.kind === "ensemble");
-    expect(ensemble).toHaveLength(2);
-    expect(ensemble.every((o) => o.members.length === 4)).toBe(true);
-    expect(new Set(ensemble.map((o) => o.groupKey)).size).toBe(1);
-    expect(ensemble.map((o) => o.dayPart).sort()).toEqual([
-      "apres-midi",
-      "matin",
-    ]);
+    expect(opts.every((o) => o.kind === "ensemble")).toBe(true);
+    expect(opts).toHaveLength(2);
+    expect(opts.every((o) => o.members.length === 4)).toBe(true);
+    expect(new Set(opts.map((o) => o.groupKey)).size).toBe(1);
+    expect(opts.map((o) => o.dayPart).sort()).toEqual(["apres-midi", "matin"]);
+  });
+
+  it("vendredi avec un seul créneau : garde le groupe demi-journée", () => {
+    const opts = listHalfDayOpenOptions(
+      [matinA, matinB],
+      "2026-01-16"
+    );
+    expect(opts.map((o) => o.kind)).toEqual(["half-day"]);
+    expect(opts[0]?.dayPart).toBe("matin");
   });
 
   it("clés half / ensemble distinctes", () => {

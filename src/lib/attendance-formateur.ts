@@ -159,6 +159,28 @@ export function listHalfDayOpenOptions(
     const apresRows = rows.filter(
       (r) => inferSlotFromSchedule(r.schedule) === "apres-midi"
     );
+    const allMembers = toMembers(rows);
+    // Vendredi station : tout le monde réuni — on n'ouvre plus les 2 groupes séparés
+    const useEnsemble =
+      friday && allMembers.length >= 2 && matinRows.length > 0 && apresRows.length > 0;
+
+    if (useEnsemble) {
+      const ensembleKey = buildEnsembleGroupKey(base);
+      for (const dayPart of ["matin", "apres-midi"] as FliScheduleSlot[]) {
+        options.push({
+          id: `ensemble|${sessionBaseKey(base)}|${dayPart}`,
+          kind: "ensemble",
+          dayPart,
+          groupKey: ensembleKey,
+          title: `Tous ensemble (${FLI_SCHEDULE_SLOT_LABELS[dayPart].toLowerCase()}) — ${label}`,
+          subtitle: `${allMembers.length} stagiaires · vendredi · ${
+            dayPart === "matin" ? "8h30–12h30" : "13h30–17h30"
+          }`,
+          members: allMembers,
+        });
+      }
+      continue;
+    }
 
     if (matinRows.length > 0) {
       const members = toMembers(matinRows);
@@ -187,27 +209,6 @@ export function listHalfDayOpenOptions(
           subtitle: `${members.length} stagiaire${members.length > 1 ? "s" : ""} · ${FLI_SCHEDULE_SLOT_LABELS["apres-midi"]} (13h30–17h30)`,
           members,
         });
-      }
-    }
-
-    // Vendredi : tous les stagiaires de la session, quel que soit le créneau habituel
-    if (friday) {
-      const allMembers = toMembers(rows);
-      if (allMembers.length >= 2) {
-        const ensembleKey = buildEnsembleGroupKey(base);
-        for (const dayPart of ["matin", "apres-midi"] as FliScheduleSlot[]) {
-          options.push({
-            id: `ensemble|${sessionBaseKey(base)}|${dayPart}`,
-            kind: "ensemble",
-            dayPart,
-            groupKey: ensembleKey,
-            title: `Tous ensemble (${FLI_SCHEDULE_SLOT_LABELS[dayPart].toLowerCase()}) — ${label}`,
-            subtitle: `${allMembers.length} stagiaires · vendredi · ${
-              dayPart === "matin" ? "8h30–12h30" : "13h30–17h30"
-            }`,
-            members: allMembers,
-          });
-        }
       }
     }
   }
