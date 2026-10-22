@@ -35,7 +35,7 @@ export default function FormateurStagiaires() {
       <PageShell>
         <PageHeader
           title="Stagiaires"
-          description="Contact, missions, attentes et test — ouvre une fiche pour le détail"
+          description="Ouvre une fiche pour le contact, les attentes, le test et les niveaux"
           icon={Users}
           tone="blue"
         />

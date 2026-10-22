@@ -87,15 +87,15 @@ export default function FormateurPresences() {
       <PageShell>
         <PageHeader
           title="Présence"
-          description="Télécharge la fiche d'émargement FORMATEUR (PDF) — signature manuscrite à chaque séance, puis renvoi à FLI"
+          description="Télécharge ta fiche FORMATEUR, fais signer à chaque séance, renvoie à FLI"
           icon={ClipboardPen}
           tone="blue"
         />
 
         <p className="text-xs text-muted-foreground">
-          L&apos;émargement numérique en ligne arrivera plus tard. Pour
-          l&apos;instant : imprime, fais signer, renvoie les feuilles à
-          info@fli.fr.
+          Signature manuscrite pour l&apos;instant (pas encore d&apos;émargement
+          en ligne). Envoie les feuilles signées à info@fli.fr en fin de
+          formation.
         </p>
 
         {isLoading || loadingProfile ? (

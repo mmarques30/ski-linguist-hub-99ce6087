@@ -26,7 +26,11 @@ describe("formateur onboarding", () => {
       "appli",
       "contact",
     ]);
-    expect(FORMATEUR_ONBOARDING_APP_LINKS.length).toBeGreaterThanOrEqual(5);
+    expect(FORMATEUR_ONBOARDING_APP_LINKS.length).toBeGreaterThanOrEqual(8);
+    const pages = FORMATEUR_ONBOARDING_APP_LINKS.map((l) => l.page);
+    expect(pages).toContain("bilans");
+    expect(pages).toContain("presences");
+    expect(pages).toContain("stagiaires");
   });
 
   it("route, layout et page sont branchés (propre + Assister)", () => {

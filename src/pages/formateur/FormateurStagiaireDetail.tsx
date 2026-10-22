@@ -208,7 +208,7 @@ export default function FormateurStagiaireDetail() {
           title={stagiaire?.name || "Stagiaire"}
           description={
             stagiaire
-              ? `${missions.length} mission${missions.length > 1 ? "s" : ""} — contact, attentes, test et niveaux`
+              ? `${missions.length} mission${missions.length > 1 ? "s" : ""} · contact, attentes, test, niveaux`
               : "Fiche stagiaire"
           }
           icon={Users}
@@ -276,8 +276,12 @@ export default function FormateurStagiaireDetail() {
                     value: first?.student_city || "—",
                   },
                   {
-                    label: "École / organisme",
-                    value: first?.student_company || first?.ski_school_name || "—",
+                    label: "Organisme",
+                    value: first?.student_company || "—",
+                  },
+                  {
+                    label: "École de ski",
+                    value: first?.ski_school_name || "—",
                   },
                   ...(first?.course_location
                     ? [

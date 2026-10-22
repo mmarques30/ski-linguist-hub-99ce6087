@@ -32,7 +32,16 @@ export function FormateurMissionCard({
     >
       <div className="min-w-0 space-y-1.5">
         <p className="text-sm font-medium">
-          {row.student_name || "Stagiaire"}
+          {row.student_id ? (
+            <Link
+              to={`${basePath}/stagiaires/${row.student_id}`}
+              className="hover:underline"
+            >
+              {row.student_name || "Stagiaire"}
+            </Link>
+          ) : (
+            row.student_name || "Stagiaire"
+          )}
           {row.code ? (
             <span className="ml-2 text-xs font-normal text-muted-foreground">
               {row.code}

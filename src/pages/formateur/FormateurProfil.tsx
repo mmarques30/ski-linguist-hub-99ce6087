@@ -26,7 +26,7 @@ export default function FormateurProfil() {
       <PageShell>
         <PageHeader
           title="Mon profil"
-          description="Identité, fiscal, tarif — lecture seule"
+          description="Identité, fiscal, tarif — lecture seule (corrections via info@fli.fr)"
           icon={User}
           tone="gold"
         />
