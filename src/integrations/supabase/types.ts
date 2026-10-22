@@ -4008,6 +4008,22 @@ export type Database = {
       }
     }
     Views: {
+      inscription_finance: {
+        Row: {
+          id: string
+          price: number | null
+          payment_method: string | null
+          deposit_amount: number | null
+          deposit_date: string | null
+          check_number: string | null
+          check_date: string | null
+          balance_after_deposit: number | null
+          pedagogical_cost: number | null
+          funding_organization: string | null
+          funding_details: string | null
+        }
+        Relationships: []
+      }
       inscriptions_complete: {
         Row: {
           balance_after_deposit: number | null

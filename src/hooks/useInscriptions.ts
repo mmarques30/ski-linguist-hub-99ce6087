@@ -86,7 +86,7 @@ export function useInscriptionStats() {
     queryKey: ["inscription-stats"],
     queryFn: async () => {
       const { data: inscriptions, error } = await supabase
-        .from("inscriptions")
+        .from("inscriptions_complete")
         .select("status, price, language, modality, created_at");
 
       if (error) throw error;

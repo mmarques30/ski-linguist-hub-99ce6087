@@ -35,7 +35,7 @@ function createSupabaseEndPackStore(): EndPackStore {
 
     async getInscriptionAmounts(inscriptionId) {
       const { data, error } = await supabase
-        .from("inscriptions")
+        .from("inscription_finance")
         .select("price, deposit_amount, balance_after_deposit, deposit_date")
         .eq("id", inscriptionId)
         .maybeSingle();

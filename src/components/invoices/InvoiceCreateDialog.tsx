@@ -58,40 +58,31 @@ export function InvoiceCreateDialog({ open, onOpenChange, defaultInscriptionId }
     queryKey: ["inscriptions-for-invoice"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("inscriptions")
+        .from("inscriptions_complete")
         .select(`
           id,
           code,
           language,
           start_date,
           price,
-          student_id
+          student_id,
+          student_name
         `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      // Récupérer les noms des stagiaires pour chaque inscription
-      const inscriptionsWithStudents = await Promise.all(
-        (data || []).map(async (inscription) => {
-          const { data: student } = await supabase
-            .from("students")
-            .select("first_name, last_name")
-            .eq("id", inscription.student_id)
-            .maybeSingle();
-
-          return {
+      return (data || []).map(
+        (inscription) =>
+          ({
             id: inscription.id,
             code: inscription.code,
-            student_name: student ? `${student.first_name} ${student.last_name}` : "Client inconnu",
+            student_name: inscription.student_name || "Client inconnu",
             language: inscription.language,
             start_date: inscription.start_date,
             price: inscription.price,
-          } as InscriptionOption;
-        })
+          }) as InscriptionOption
       );
-
-      return inscriptionsWithStudents;
     },
     enabled: open,
   });

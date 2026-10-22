@@ -105,7 +105,7 @@ export function useInvoices(filters?: {
           if (!invoice.inscription_id) return invoice;
 
           const { data: inscription } = await supabase
-            .from("inscriptions")
+            .from("inscriptions_complete")
             .select(`
               id,
               code,
@@ -117,17 +117,22 @@ export function useInvoices(filters?: {
               price,
               deposit_amount,
               deposit_date,
-              student_id
+              student_id,
+              student_name,
+              student_email,
+              student_phone,
+              student_city,
+              student_company
             `)
             .eq("id", invoice.inscription_id)
             .maybeSingle();
 
           if (!inscription) return invoice;
 
-          // Fetch student details
+          // Adresse postale absente de la vue — complément students (staff)
           const { data: student } = await supabase
             .from("students")
-            .select("first_name, last_name, email, phone, city, company, street_address, postal_code")
+            .select("street_address, postal_code")
             .eq("id", inscription.student_id)
             .maybeSingle();
 
@@ -137,11 +142,11 @@ export function useInvoices(filters?: {
               id: inscription.id,
               code: inscription.code,
               student_id: inscription.student_id,
-              student_name: student ? `${student.first_name} ${student.last_name}` : null,
-              student_email: student?.email || null,
-              student_phone: student?.phone || null,
-              student_city: student?.city || null,
-              student_company: student?.company || null,
+              student_name: inscription.student_name || null,
+              student_email: inscription.student_email || null,
+              student_phone: inscription.student_phone || null,
+              student_city: inscription.student_city || null,
+              student_company: inscription.student_company || null,
               student_address: student?.street_address || null,
               student_postal_code: student?.postal_code || null,
               course_location: inscription.course_location,

@@ -76,12 +76,7 @@ export async function downloadFormationDocumentClient(params: {
       duration_hours,
       course_location,
       modality,
-      price,
-      deposit_amount,
-      balance_after_deposit,
       group_size,
-      funding_organization,
-      payment_method,
       student_id,
       students!inscriptions_student_id_fkey (
         id,
@@ -101,6 +96,15 @@ export async function downloadFormationDocumentClient(params: {
     .maybeSingle();
   if (insErr) throw insErr;
   if (!inscription) throw new Error("Inscription introuvable");
+
+  const { data: finance, error: finErr } = await supabase
+    .from("inscription_finance")
+    .select(
+      "price, deposit_amount, balance_after_deposit, funding_organization, payment_method",
+    )
+    .eq("id", sending.inscription_id)
+    .maybeSingle();
+  if (finErr) throw finErr;
 
   const studentRaw = (inscription as { students?: Record<string, unknown> | null })
     .students;
@@ -136,6 +140,14 @@ export async function downloadFormationDocumentClient(params: {
   }
 
   const code = inscription.code || "sans-code";
+  const inscriptionWithFinance = {
+    ...inscription,
+    price: finance?.price ?? null,
+    deposit_amount: finance?.deposit_amount ?? null,
+    balance_after_deposit: finance?.balance_after_deposit ?? null,
+    funding_organization: finance?.funding_organization ?? null,
+    payment_method: finance?.payment_method ?? null,
+  };
   let bytes: Uint8Array;
   let filename: string;
 
@@ -144,7 +156,7 @@ export async function downloadFormationDocumentClient(params: {
       throw new Error("Signature organisme introuvable");
     }
     const model = buildConventionPdfModel({
-      inscription,
+      inscription: inscriptionWithFinance,
       student,
       identity: identityRow?.value ?? null,
     });
@@ -155,7 +167,7 @@ export async function downloadFormationDocumentClient(params: {
     filename = conventionFilename(code);
   } else {
     const model = buildProgrammePdfModel({
-      inscription,
+      inscription: inscriptionWithFinance,
       student,
       identity: identityRow?.value ?? null,
     });
