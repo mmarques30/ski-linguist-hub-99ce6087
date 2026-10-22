@@ -118,6 +118,8 @@ describe("portail formateur — câblage", () => {
     expect(app).toContain('path="/formateur/stagiaires"');
     expect(app).toContain('path="/formateur/stagiaires/:studentId"');
     expect(app).toContain('path="/formateur/presences"');
+    expect(app).toContain('path="/emarger/:token"');
+    expect(app).toContain("EmargerPage");
     expect(app).toContain('path="/formateur/documents"');
     expect(app).toContain('path="/formateur/paiements"');
     expect(app).toContain('path="/formateur/profil"');

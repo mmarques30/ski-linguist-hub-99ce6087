@@ -115,7 +115,7 @@ export default function FormateurDashboard() {
               <Button variant="outline" className="justify-start" asChild>
                 <Link to={`${basePath}/presences`}>
                   <ClipboardPen className="mr-2 h-4 w-4" />
-                  Fiches de présence
+                  Présence / émargement
                 </Link>
               </Button>
               <Button variant="outline" className="justify-start" asChild>
