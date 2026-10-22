@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { ClipboardPen, Loader2, Radio } from "lucide-react";
 import { toast } from "sonner";
+import { AttendanceHalfDayOpenPanel } from "@/components/formateur/AttendanceHalfDayOpenPanel";
 import { AttendanceSlotPanel } from "@/components/formateur/AttendanceSlotPanel";
 import { FormateurPresenceDownloadButton } from "@/components/formateur/FormateurPresenceDownloadButton";
 import { FormateurPageShell } from "@/components/layout/FormateurPageShell";
@@ -184,16 +185,25 @@ export default function FormateurPresences() {
       <PageShell>
         <PageHeader
           title="Présence"
-          description="Émargement numérique par séance — ou fiche PDF FORMATEUR en secours"
+          description="Émargement par demi-journée (matin / après-midi) — vendredi : tous ensemble"
           icon={ClipboardPen}
           tone="blue"
         />
 
         <p className="text-xs text-muted-foreground">
-          Ouvre une séance, envoie le lien aux stagiaires (ils signent avec
-          leur e-mail d&apos;inscription), marque absents / excusés, puis
-          clôture. La fiche PDF reste dispo si besoin papier.
+          Choisis la date, ouvre le groupe matin ou après-midi, envoie le lien
+          aux stagiaires. Le vendredi, tu peux ouvrir une séance « tous
+          ensemble ». En individuel (visio), utilise le bouton par mission.
         </p>
+
+        {profile?.id && !isLoading ? (
+          <AttendanceHalfDayOpenPanel
+            inscriptions={inscriptions}
+            instructorId={profile.id}
+            isAssistMode={isAssistMode}
+            onOpened={setFocusSlotId}
+          />
+        ) : null}
 
         {loadingSlots || loadingProfile ? (
           <SurfaceCard flush>
@@ -203,6 +213,7 @@ export default function FormateurPresences() {
           <div className="space-y-4">
             {openSlots.length > 0 || recentClosed.length > 0 ? (
               <div className="space-y-3">
+                <h2 className="text-sm font-semibold">Séances ouvertes / récentes</h2>
                 <div className="flex flex-wrap gap-2">
                   {[...openSlots, ...recentClosed].map((s) => (
                     <Button
@@ -213,6 +224,11 @@ export default function FormateurPresences() {
                       onClick={() => setFocusSlotId(s.id)}
                     >
                       {s.slot_date}
+                      {s.day_part === "matin"
+                        ? " · matin"
+                        : s.day_part === "apres-midi"
+                          ? " · AP"
+                          : ""}
                       {s.status === "open" ? " · ouvert" : ""}
                     </Button>
                   ))}
@@ -228,15 +244,17 @@ export default function FormateurPresences() {
             ) : (
               <SurfaceCard>
                 <p className="text-sm text-muted-foreground">
-                  Aucune séance ouverte. Choisis une mission ci-dessous et
-                  clique sur « Ouvrir l&apos;émargement ».
+                  Aucune séance ouverte. Ouvre un groupe demi-journée ci-dessus,
+                  ou un émargement individuel sur une mission.
                 </p>
               </SurfaceCard>
             )}
           </div>
         )}
 
-        <h2 className="text-sm font-semibold">Missions — ouvrir / PDF</h2>
+        <h2 className="text-sm font-semibold">
+          Individuel / PDF FORMATEUR
+        </h2>
 
         {isLoading || loadingProfile ? (
           <SurfaceCard flush>

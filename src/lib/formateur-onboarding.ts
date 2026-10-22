@@ -52,7 +52,7 @@ export const FORMATEUR_ONBOARDING_SECTIONS: FormateurOnboardingSection[] = [
     bullets: [
       "FLI te confie une mission (présentiel en station, visio de groupe, ou cours individuel en ligne) avec les infos stagiaire / groupe.",
       "Tu organises les créneaux avec le·la stagiaire ou le groupe (selon le format), dans le cadre des dates et de la durée prévues.",
-      "À chaque séance : ouvre l'émargement numérique dans Présence et envoie le lien aux stagiaires (signature par e-mail). La fiche PDF FORMATEUR reste dispo en secours.",
+      "À chaque séance : ouvre l'émargement dans Présence (demi-journée matin ou après-midi ; le vendredi, option tous ensemble) et envoie le lien aux stagiaires. La fiche PDF FORMATEUR reste dispo en secours.",
       "Tu renseignes les bilans d’entrée et de sortie (niveaux CECRL) dans Bilans — un niveau par stagiaire.",
       "En présentiel de groupe : le dernier jour, dix minutes pour le questionnaire de satisfaction (Qualiopi) — les stagiaires reçoivent le lien par e-mail.",
       "Les évaluations orales SNMSF se saisissent dans Évaluations, quand tu es examinateur·rice sur une session.",
@@ -112,7 +112,7 @@ export const FORMATEUR_ONBOARDING_APP_LINKS: FormateurOnboardingAppLink[] = [
   {
     page: "presences",
     label: "Présence",
-    description: "Émargement numérique par séance + fiche PDF FORMATEUR.",
+    description: "Émargement demi-journée (matin / AP, vendredi ensemble) + PDF.",
   },
   {
     page: "evaluations",

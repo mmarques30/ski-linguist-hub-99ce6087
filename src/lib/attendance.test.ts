@@ -123,5 +123,6 @@ describe("UI émargement branchée", () => {
     );
     expect(presences).toContain("useOpenIndividualAttendanceSlot");
     expect(presences).toContain("AttendanceSlotPanel");
+    expect(presences).toContain("AttendanceHalfDayOpenPanel");
   });
 });
