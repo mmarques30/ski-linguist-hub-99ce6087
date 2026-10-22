@@ -35,7 +35,7 @@ export default function FormateurDocuments() {
       <PageShell>
         <PageHeader
           title="Documents"
-          description="CV, vigilance et contrats — lecture seule"
+          description="Ton CV, ta vigilance et tes contrats — lecture seule"
           icon={FileText}
           tone="blue"
         />
@@ -54,7 +54,10 @@ export default function FormateurDocuments() {
                   label={instructorCvOpenLabel(cvUrl)}
                 />
               ) : (
-                <p className="text-sm text-muted-foreground">Aucun CV renseigné.</p>
+                <p className="text-sm text-muted-foreground">
+                  Aucun CV pour l&apos;instant — contacte info@fli.fr pour
+                  l&apos;ajouter.
+                </p>
               )}
             </SurfaceCard>
 
@@ -98,7 +101,10 @@ export default function FormateurDocuments() {
                     />
                   )
                 ) : (
-                  <p className="text-muted-foreground">Aucun document renseigné.</p>
+                  <p className="text-muted-foreground">
+                    Pas encore d&apos;attestation — contacte info@fli.fr si
+                    besoin.
+                  </p>
                 )}
               </div>
             </SurfaceCard>
@@ -107,7 +113,7 @@ export default function FormateurDocuments() {
               {loadingContracts ? (
                 <TableSkeleton rows={3} cols={2} />
               ) : contracts.length === 0 ? (
-                <TableEmpty title="Aucun contrat enregistré." />
+                <TableEmpty title="Aucun contrat enregistré pour l'instant." />
               ) : (
                 <ul className="space-y-3">
                   {contracts.map((c) => (
@@ -165,6 +171,10 @@ export default function FormateurDocuments() {
                 </ul>
               )}
             </SurfaceCard>
+
+            <p className="text-xs text-muted-foreground">
+              Pour mettre à jour un document, contacte info@fli.fr.
+            </p>
           </div>
         )}
       </PageShell>

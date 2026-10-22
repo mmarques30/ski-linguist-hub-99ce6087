@@ -31,7 +31,7 @@ export default function FormateurPlanning() {
       <PageShell>
         <PageHeader
           title="Missions"
-          description="Qui, où, quand, langue, horaires, école — ouvre une fiche pour le détail"
+          description="Qui, où, quand, langue, horaires, école — ouvre une mission pour le détail"
           icon={Calendar}
           tone="blue"
         />

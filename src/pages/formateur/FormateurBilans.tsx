@@ -43,7 +43,7 @@ export default function FormateurBilans() {
           description={
             isAssistMode
               ? "Niveaux d'entrée et de sortie (aperçu Assister)"
-              : "Saisie des niveaux d'entrée et de sortie pour chaque stagiaire"
+              : "Un niveau d'entrée et un niveau de sortie par stagiaire (CECRL)"
           }
           icon={ClipboardList}
           tone="gold"

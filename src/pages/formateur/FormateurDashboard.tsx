@@ -5,6 +5,7 @@ import {
   Users,
   ClipboardCheck,
   ClipboardList,
+  ClipboardPen,
   BookOpen,
 } from "lucide-react";
 import { FormateurPageShell } from "@/components/layout/FormateurPageShell";
@@ -17,10 +18,8 @@ import {
   useFormateurProfile,
 } from "@/hooks/useFormateurPortal";
 import { useTestBookingsToEvaluate } from "@/hooks/useTestEvaluations";
-import { displayLanguageLabel } from "@/lib/taught-languages";
 import {
   CardGrid,
-  DefinitionList,
   PageHeader,
   PageShell,
   StatTile,
@@ -42,6 +41,9 @@ export default function FormateurDashboard() {
   const { upcoming, current, past } = splitFormateurInscriptions(inscriptions);
   const stagiaires = uniqueStagiairesFromInscriptions(inscriptions);
   const highlight = [...current, ...upcoming].slice(0, 3);
+  const bilansTodo = inscriptions.filter(
+    (r) => !r.entry_form_completed_at || !r.exit_form_completed_at
+  ).length;
 
   return (
     <FormateurPageShell>
@@ -52,9 +54,17 @@ export default function FormateurDashboard() {
               ? "Espace formateur"
               : `Bonjour${profile?.first_name ? `, ${profile.first_name}` : ""}`
           }
-          description="Tes missions en un coup d'œil, puis stagiaires, bilans et évaluations"
+          description="Tes missions, stagiaires et bilans — le reste est en lecture seule ou pour les évals orales"
           icon={LayoutDashboard}
           tone="gold"
+          actions={
+            <Button variant="outline" size="sm" asChild>
+              <Link to={`${basePath}/onboarding`}>
+                <BookOpen className="mr-1.5 h-3.5 w-3.5" />
+                Guide FLI
+              </Link>
+            </Button>
+          }
         />
 
         <StatTileGrid cols={4}>
@@ -74,7 +84,7 @@ export default function FormateurDashboard() {
             icon={Calendar}
             actions={
               <Button variant="ghost" size="sm" asChild>
-                <Link to={`${basePath}/planning`}>Toutes les missions</Link>
+                <Link to={`${basePath}/planning`}>Toutes</Link>
               </Button>
             }
           >
@@ -91,24 +101,27 @@ export default function FormateurDashboard() {
             )}
           </SurfaceCard>
 
-          <SurfaceCard title="Raccourcis" icon={ClipboardCheck}>
+          <SurfaceCard title="À faire" icon={ClipboardList}>
             <div className="flex flex-col gap-2">
-              <Button variant="outline" className="justify-start" asChild>
-                <Link to={`${basePath}/onboarding`}>
-                  <BookOpen className="mr-2 h-4 w-4" />
-                  Guide FLI — bienvenue & fonctionnement
-                </Link>
-              </Button>
               <Button variant="outline" className="justify-start" asChild>
                 <Link to={`${basePath}/bilans`}>
                   <ClipboardList className="mr-2 h-4 w-4" />
                   Bilans entrée / sortie
+                  {!loadingInscriptions && bilansTodo > 0
+                    ? ` (${bilansTodo})`
+                    : ""}
+                </Link>
+              </Button>
+              <Button variant="outline" className="justify-start" asChild>
+                <Link to={`${basePath}/presences`}>
+                  <ClipboardPen className="mr-2 h-4 w-4" />
+                  Fiches de présence
                 </Link>
               </Button>
               <Button variant="outline" className="justify-start" asChild>
                 <Link to={`${basePath}/evaluations`}>
                   <ClipboardCheck className="mr-2 h-4 w-4" />
-                  Évaluations orales SNMSF
+                  Évaluations orales
                   {!loadingEvals && bookingsToEvaluate.length > 0
                     ? ` (${bookingsToEvaluate.length})`
                     : ""}
@@ -117,36 +130,10 @@ export default function FormateurDashboard() {
               <Button variant="outline" className="justify-start" asChild>
                 <Link to={`${basePath}/stagiaires`}>
                   <Users className="mr-2 h-4 w-4" />
-                  Stagiaires ({stagiaires.length})
-                </Link>
-              </Button>
-              <Button variant="outline" className="justify-start" asChild>
-                <Link to={`${basePath}/planning`}>
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Toutes les missions
+                  Stagiaires
                 </Link>
               </Button>
             </div>
-
-            {profile ? (
-              <DefinitionList
-                className="mt-4"
-                columns={1}
-                items={[
-                  {
-                    label: "Tes langues",
-                    value:
-                      (profile.languages || [])
-                        .map((l) => displayLanguageLabel(l))
-                        .join(", ") || "—",
-                  },
-                  {
-                    label: "Ton contact",
-                    value: profile.email || profile.phone || "—",
-                  },
-                ]}
-              />
-            ) : null}
           </SurfaceCard>
         </CardGrid>
 

@@ -62,9 +62,11 @@ export function formateurAssistPath(
     | "planning"
     | `missions/${string}`
     | "stagiaires"
+    | `stagiaires/${string}`
     | "bilans"
     | `bilans/${string}/entree`
     | `bilans/${string}/sortie`
+    | "presences"
     | "evaluations"
     | "documents"
     | "paiements"

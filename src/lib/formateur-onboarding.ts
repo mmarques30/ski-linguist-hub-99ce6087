@@ -16,6 +16,8 @@ export type FormateurOnboardingAppLink = {
     | "tableau-de-bord"
     | "planning"
     | "stagiaires"
+    | "bilans"
+    | "presences"
     | "evaluations"
     | "documents"
     | "paiements"
@@ -27,7 +29,7 @@ export type FormateurOnboardingAppLink = {
 export const FORMATEUR_ONBOARDING_TITLE = "Bienvenue chez FLI";
 
 export const FORMATEUR_ONBOARDING_INTRO =
-  "Ce guide te présente France Langues International, le déroulé des formations, et l’espace formateur de la plateforme.";
+  "Ce guide te présente France Langues International, le déroulé des formations, et ton espace formateur.";
 
 export const FORMATEUR_ONBOARDING_SECTIONS: FormateurOnboardingSection[] = [
   {
@@ -50,10 +52,11 @@ export const FORMATEUR_ONBOARDING_SECTIONS: FormateurOnboardingSection[] = [
     bullets: [
       "FLI te confie une mission (présentiel en station, visio de groupe, ou cours individuel en ligne) avec les infos stagiaire / groupe.",
       "Tu organises les créneaux avec le·la stagiaire ou le groupe (selon le format), dans le cadre des dates et de la durée prévues.",
-      "À chaque séance : signature des fiches de présence (modèles FORMATEUR et STAGIAIRE). En fin de formation, tu renvoies ta fiche signée à FLI.",
+      "À chaque séance : signature des fiches de présence (PDF FORMATEUR téléchargeable ici). En fin de formation, tu renvoies ta fiche signée à FLI.",
+      "Tu renseignes les bilans d’entrée et de sortie (niveaux CECRL) dans Bilans — un niveau par stagiaire.",
       "En présentiel de groupe : le dernier jour, dix minutes pour le questionnaire de satisfaction (Qualiopi) — les stagiaires reçoivent le lien par e-mail.",
-      "Les évaluations orales SNMSF (tests de niveau) se saisissent dans l’onglet Évaluations, quand tu es examinateur·rice sur une session.",
-      "Contrats, vigilance, CV et paiements sont gérés avec FLI ; tu les retrouves en lecture dans Documents, Paiements et Profil.",
+      "Les évaluations orales SNMSF se saisissent dans Évaluations, quand tu es examinateur·rice sur une session.",
+      "Contrats, vigilance, CV et paiements sont en lecture seule dans Documents, Paiements et Profil — pour une correction, écris à info@fli.fr.",
     ],
   },
   {
@@ -63,14 +66,14 @@ export const FORMATEUR_ONBOARDING_SECTIONS: FormateurOnboardingSection[] = [
     bullets: [
       "Présentiel en station — souvent 24 h sur une semaine (parfois 40 h ou 2 × 20 h), en salle ESF ou organisée par FLI, groupes limités.",
       "Visio de groupe — typiquement 24 h en 8 séances de 3 h (ex. mardi / jeudi), via visioconférence.",
-      "Individuel en ligne — packs d’heures (multiples de 3 h) ; tu conviens des créneaux (ex. Google Meet) directement avec le·la stagiaire après mise en relation.",
+      "Individuel en ligne — packs d’heures (multiples de 3 h) ; tu conviens des créneaux directement avec le·la stagiaire après mise en relation.",
       "Langues courantes : anglais, espagnol, portugais brésilien, néerlandais, russe — selon ta fiche et les besoins de la saison.",
     ],
   },
   {
     id: "appli",
     title: "L’espace formateur",
-    lead: "Cet espace te montre ce qui te concerne. Les données viennent du dossier FLI ; pour une correction (profil, CV, coordonnées), écris à info@fli.fr.",
+    lead: "Cet espace te montre ce qui te concerne. Les données viennent du dossier FLI.",
     paragraphs: [
       "Utilise le menu pour naviguer. Sur mobile, la barre du bas reprend les mêmes rubriques.",
     ],
@@ -89,37 +92,47 @@ export const FORMATEUR_ONBOARDING_APP_LINKS: FormateurOnboardingAppLink[] = [
   {
     page: "tableau-de-bord",
     label: "Tableau de bord",
-    description: "Vue d’ensemble : missions en cours, à venir, évals à saisir.",
+    description: "Vue d’ensemble : missions, stagiaires, évals à saisir.",
   },
   {
     page: "planning",
-    label: "Planning",
-    description: "Tes missions classées (en cours, à venir, passées) et créneaux.",
+    label: "Missions",
+    description: "Qui, où, quand, langue, horaires, école — fiche par mission.",
   },
   {
     page: "stagiaires",
     label: "Stagiaires",
-    description: "Personnes rattachées à tes missions, avec contacts utiles.",
+    description: "Contact, attentes, test de placement et niveaux.",
+  },
+  {
+    page: "bilans",
+    label: "Bilans",
+    description: "Formulaires d’entrée et de sortie (niveaux CECRL).",
+  },
+  {
+    page: "presences",
+    label: "Présence",
+    description: "Télécharge la fiche d’émargement FORMATEUR (PDF).",
   },
   {
     page: "evaluations",
     label: "Évaluations",
-    description: "Saisie des tests oraux SNMSF (notes, phrases, PDF).",
+    description: "Tests oraux SNMSF (notes, phrases, PDF).",
   },
   {
     page: "documents",
     label: "Documents",
-    description: "CV, attestation de vigilance, contrats.",
+    description: "CV, attestation de vigilance, contrats (lecture seule).",
   },
   {
     page: "paiements",
     label: "Paiements",
-    description: "Rémunérations enregistrées par FLI.",
+    description: "Rémunérations FLI (lecture seule).",
   },
   {
     page: "profil",
     label: "Profil",
-    description: "Identité, langues, infos administratives visibles par FLI.",
+    description: "Identité, fiscal, tarif — contacte info@fli.fr pour corriger.",
   },
 ];
 

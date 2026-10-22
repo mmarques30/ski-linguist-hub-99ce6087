@@ -10,6 +10,7 @@ import {
   Phone,
   School,
 } from "lucide-react";
+import { FormateurPresenceDownloadButton } from "@/components/formateur/FormateurPresenceDownloadButton";
 import { FormateurPageShell } from "@/components/layout/FormateurPageShell";
 import { useFormateurView } from "@/contexts/FormateurViewContext";
 import {
@@ -41,6 +42,9 @@ export default function FormateurMissionDetail() {
 
   const row = inscriptions.find((i) => i.id === inscriptionId) ?? null;
   const loading = loadingProfile || isLoading;
+  const formateurName = profile
+    ? `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim()
+    : "Formateur·rice";
 
   return (
     <FormateurPageShell>
@@ -61,12 +65,20 @@ export default function FormateurMissionDetail() {
           icon={Calendar}
           tone="gold"
           actions={
-            <Button variant="outline" size="sm" asChild>
-              <Link to={`${basePath}/planning`}>
-                <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
-                Missions
-              </Link>
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              {row ? (
+                <FormateurPresenceDownloadButton
+                  row={row}
+                  formateurName={formateurName}
+                />
+              ) : null}
+              <Button variant="outline" size="sm" asChild>
+                <Link to={`${basePath}/planning`}>
+                  <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
+                  Missions
+                </Link>
+              </Button>
+            </div>
           }
         />
 
@@ -169,7 +181,7 @@ export default function FormateurMissionDetail() {
             </SurfaceCard>
 
             <SurfaceCard title="Contact stagiaire">
-              <div className="flex flex-wrap gap-3 text-sm">
+              <div className="flex flex-wrap items-center gap-3 text-sm">
                 {row.student_email ? (
                   <a
                     href={`mailto:${row.student_email}`}
@@ -189,6 +201,13 @@ export default function FormateurMissionDetail() {
                     <Phone className="h-3.5 w-3.5" />
                     {row.student_phone}
                   </a>
+                ) : null}
+                {row.student_id ? (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to={`${basePath}/stagiaires/${row.student_id}`}>
+                      Fiche stagiaire
+                    </Link>
+                  </Button>
                 ) : null}
               </div>
             </SurfaceCard>

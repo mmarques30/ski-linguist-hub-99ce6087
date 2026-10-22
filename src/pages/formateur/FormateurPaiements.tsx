@@ -30,7 +30,7 @@ export default function FormateurPaiements() {
       <PageShell>
         <PageHeader
           title="Paiements"
-          description="Rémunérations FLI — lecture seule"
+          description="Tes rémunérations FLI — lecture seule"
           icon={Wallet}
           tone="blue"
         />
@@ -41,7 +41,7 @@ export default function FormateurPaiements() {
           </SurfaceCard>
         ) : payments.length === 0 ? (
           <SurfaceCard flush>
-            <TableEmpty title="Aucun paiement enregistré pour le moment." />
+            <TableEmpty title="Aucun paiement enregistré pour l'instant." />
           </SurfaceCard>
         ) : (
           <ul className="space-y-3">
@@ -85,6 +85,10 @@ export default function FormateurPaiements() {
             ))}
           </ul>
         )}
+
+        <p className="text-xs text-muted-foreground">
+          Une question sur un paiement ? Contacte info@fli.fr.
+        </p>
       </PageShell>
     </FormateurPageShell>
   );
