@@ -53,6 +53,7 @@ import FormateurPlanning from "./pages/formateur/FormateurPlanning";
 import FormateurMissionDetail from "./pages/formateur/FormateurMissionDetail";
 import FormateurStagiaires from "./pages/formateur/FormateurStagiaires";
 import FormateurStagiaireDetail from "./pages/formateur/FormateurStagiaireDetail";
+import FormateurPresences from "./pages/formateur/FormateurPresences";
 import FormateurProfil from "./pages/formateur/FormateurProfil";
 import FormateurPaiements from "./pages/formateur/FormateurPaiements";
 import FormateurDocuments from "./pages/formateur/FormateurDocuments";
@@ -234,6 +235,16 @@ const App = () => (
                 <ProtectedRoute>
                   <FormateurOwnViewProvider>
                     <FormateurStagiaireDetail />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/formateur/presences"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <FormateurPresences />
                   </FormateurOwnViewProvider>
                 </ProtectedRoute>
               }
@@ -458,6 +469,7 @@ const App = () => (
                 path="stagiaires/:studentId"
                 element={<FormateurStagiaireDetail />}
               />
+              <Route path="presences" element={<FormateurPresences />} />
               <Route path="bilans" element={<FormateurBilans />} />
               <Route
                 path="bilans/:inscriptionId/entree"

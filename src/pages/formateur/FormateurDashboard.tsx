@@ -5,6 +5,7 @@ import {
   Users,
   ClipboardCheck,
   ClipboardList,
+  ClipboardPen,
   BookOpen,
 } from "lucide-react";
 import { FormateurPageShell } from "@/components/layout/FormateurPageShell";
@@ -103,6 +104,12 @@ export default function FormateurDashboard() {
                 <Link to={`${basePath}/bilans`}>
                   <ClipboardList className="mr-2 h-4 w-4" />
                   Bilans entrée / sortie
+                </Link>
+              </Button>
+              <Button variant="outline" className="justify-start" asChild>
+                <Link to={`${basePath}/presences`}>
+                  <ClipboardPen className="mr-2 h-4 w-4" />
+                  Fiches de présence (PDF)
                 </Link>
               </Button>
               <Button variant="outline" className="justify-start" asChild>

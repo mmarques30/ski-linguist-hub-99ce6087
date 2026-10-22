@@ -117,6 +117,7 @@ describe("portail formateur — câblage", () => {
     expect(app).toContain('path="/formateur/missions/:inscriptionId"');
     expect(app).toContain('path="/formateur/stagiaires"');
     expect(app).toContain('path="/formateur/stagiaires/:studentId"');
+    expect(app).toContain('path="/formateur/presences"');
     expect(app).toContain('path="/formateur/documents"');
     expect(app).toContain('path="/formateur/paiements"');
     expect(app).toContain('path="/formateur/profil"');
@@ -124,6 +125,7 @@ describe("portail formateur — câblage", () => {
     expect(app).toContain('path="onboarding"');
     expect(app).toContain('path="missions/:inscriptionId"');
     expect(app).toContain('path="stagiaires/:studentId"');
+    expect(app).toContain('path="presences"');
     expect(app).toContain('path="documents"');
     expect(app).toContain('path="paiements"');
     expect(app).toContain('path="profil"');
@@ -131,6 +133,7 @@ describe("portail formateur — câblage", () => {
     expect(app).toContain("FormateurOnboarding");
     expect(app).toContain("FormateurMissionDetail");
     expect(app).toContain("FormateurStagiaireDetail");
+    expect(app).toContain("FormateurPresences");
     expect(app).toContain("FormateurDocuments");
     expect(app).toContain("FormateurPaiements");
     expect(app).toContain("FormateurProfil");
@@ -161,6 +164,7 @@ describe("portail formateur — câblage", () => {
     const layout = source("src/components/layout/FormateurLayout.tsx");
     expect(layout).toContain("tableau-de-bord");
     expect(layout).toContain("onboarding");
+    expect(layout).toContain("presences");
     expect(layout).toContain("documents");
     expect(layout).toContain("paiements");
     expect(layout).toContain("profil");

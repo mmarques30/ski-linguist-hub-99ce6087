@@ -66,6 +66,7 @@ export function formateurAssistPath(
     | "bilans"
     | `bilans/${string}/entree`
     | `bilans/${string}/sortie`
+    | "presences"
     | "evaluations"
     | "documents"
     | "paiements"
