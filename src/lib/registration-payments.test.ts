@@ -208,6 +208,9 @@ describe("modes de règlement /register", () => {
   it("expose un RIB FLI à checksum IBAN valide (copie Deno + factures)", () => {
     expect(isValidIban(FLI_BANK_DETAILS.iban)).toBe(true);
     expect(isValidIban("FR76 1820 6004 4339 5412 7300 144")).toBe(false);
+    expect(FLI_BANK_DETAILS.iban).toBe("FR76 1382 5002 0008 7706 7321 189");
+    expect(FLI_BANK_DETAILS.bic).toBe("CEPAFRPP382");
+    expect(FLI_BANK_DETAILS.bank).toBe("Caisse d'Épargne");
 
     const rib = buildFliBankDetailsEmailHtml("FLI-260036");
     expect(rib).toContain(FLI_BANK_DETAILS.iban);
@@ -251,15 +254,18 @@ describe("modes de règlement /register", () => {
       "buildFliBankDetailsEmailHtml",
       "buildPaymentLinkWithBankDetailsEmailHtml",
       "isValidIban",
-      'iban: "FR76 1820 6004 4339 5412 7300 189"',
+      'iban: "FR76 1382 5002 0008 7706 7321 189"',
+      'bic: "CEPAFRPP382"',
     ]) {
       expect(front).toContain(symbol);
       expect(deno).toContain(symbol);
     }
     expect(invoicePdf).toContain("FLI_BANK_DETAILS");
     expect(invoiceTpl).toContain("FLI_BANK_DETAILS");
-    expect(front).not.toContain("7300 144");
-    expect(deno).not.toContain("7300 144");
+    expect(front).not.toContain("1820 6004");
+    expect(deno).not.toContain("1820 6004");
+    expect(front).not.toContain("AGRIFRPP");
+    expect(deno).not.toContain("AGRIFRPP");
 
     // Surfaces factures + UI inscription + scripts ops (plus de copie locale d'IBAN).
     for (const rel of [
@@ -271,7 +277,7 @@ describe("modes de règlement /register", () => {
     ]) {
       const src = readFileSync(join(process.cwd(), rel), "utf8");
       expect(src, rel).toContain("FLI_BANK_DETAILS");
-      expect(src, rel).not.toContain("7300 144");
+      expect(src, rel).not.toContain("1820 6004");
       expect(src, rel).not.toMatch(/iban:\s*"FR76/);
     }
 
@@ -284,7 +290,7 @@ describe("modes de règlement /register", () => {
       "docs/emails-fli-2026-09/01b-inscription_confirmation_group/inscription_confirmation_group.html",
     ]) {
       const html = readFileSync(join(process.cwd(), rel), "utf8");
-      expect(html, rel).not.toMatch(/FR76\s*1820|7300\s*14[49]|AGRIFRPP/i);
+      expect(html, rel).not.toMatch(/FR76\s*1820|FR76\s*1382|AGRIFRPP|CEPAFRPP/i);
     }
   });
 
