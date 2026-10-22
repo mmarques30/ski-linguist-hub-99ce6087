@@ -54,7 +54,7 @@ export const FORMATEUR_ONBOARDING_SECTIONS: FormateurOnboardingSection[] = [
       "Tu organises les créneaux avec le·la stagiaire ou le groupe (selon le format), dans le cadre des dates et de la durée prévues.",
       "À chaque séance : ouvre l'émargement numérique dans Présence et envoie le lien aux stagiaires (signature par e-mail). La fiche PDF FORMATEUR reste dispo en secours.",
       "Tu renseignes les bilans d’entrée et de sortie (niveaux CECRL) dans Bilans — un niveau par stagiaire.",
-      "En présentiel de groupe : le dernier jour, dix minutes pour le questionnaire de satisfaction (Qualiopi) — les stagiaires reçoivent le lien par e-mail.",
+      "Questionnaire de satisfaction (Qualiopi) : en collectif le lien part auto le dernier jour — garde dix minutes en fin de séance. En individuel (ou en cas de souci), envoie le lien depuis Stagiaires / Mission.",
       "Les évaluations orales SNMSF se saisissent dans Évaluations, quand tu es examinateur·rice sur une session.",
       "Contrats, vigilance, CV et paiements sont en lecture seule dans Documents, Paiements et Profil — pour une correction, écris à info@fli.fr.",
     ],

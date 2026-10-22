@@ -90,6 +90,40 @@ export async function requireStaff(
 }
 
 /**
+ * Staff back-office ou formateur·rice connecté·e.
+ * L'appelant doit encore vérifier le périmètre métier (ex. instructor_id).
+ */
+export async function requireStaffOrFormateur(
+  req: Request
+): Promise<
+  | {
+      adminClient: SupabaseClient;
+      userId: string;
+      authMode: "staff" | "formateur";
+    }
+  | Response
+> {
+  const result = await requireRole(
+    req,
+    ["admin", "user", "formateur"],
+    "Forbidden: staff or formateur only"
+  );
+  if (result instanceof Response) return result;
+
+  const { data: roles } = await result.adminClient
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", result.userId);
+  const roleSet = new Set((roles || []).map((r) => r.role as string));
+  const isStaff = roleSet.has("admin") || roleSet.has("user");
+  return {
+    adminClient: result.adminClient,
+    userId: result.userId,
+    authMode: isStaff ? "staff" : "formateur",
+  };
+}
+
+/**
  * Cron / dispatch SQL (JWT service_role) **ou** staff connecté.
  * Refuse explicitement la clé anon : `verify_jwt=true` l'accepte autrement.
  */
@@ -165,7 +199,7 @@ async function requireServiceRoleOrRoles(
 
 async function requireRole(
   req: Request,
-  roles: Array<"admin" | "user">,
+  roles: Array<"admin" | "user" | "formateur">,
   forbiddenMessage: string
 ): Promise<{ adminClient: SupabaseClient; userId: string } | Response> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;

@@ -9,6 +9,7 @@ import {
   Phone,
   Users,
 } from "lucide-react";
+import { FormateurSatisfactionSendPanel } from "@/components/formateur/FormateurSatisfactionSendPanel";
 import { PlacementTestSummaryCard } from "@/components/inscriptions/PlacementTestSummaryCard";
 import { FormateurPageShell } from "@/components/layout/FormateurPageShell";
 import { useFormateurView } from "@/contexts/FormateurViewContext";
@@ -184,7 +185,7 @@ function MissionPedagogieBlock({
 
 export default function FormateurStagiaireDetail() {
   const { studentId = "" } = useParams<{ studentId: string }>();
-  const { basePath } = useFormateurView();
+  const { basePath, isAssistMode } = useFormateurView();
   const { data: profile, isLoading: loadingProfile } = useFormateurProfile();
   const { data: inscriptions = [], isLoading } = useFormateurInscriptions(
     profile?.id
@@ -238,6 +239,11 @@ export default function FormateurStagiaireDetail() {
           </SurfaceCard>
         ) : (
           <div className="space-y-4">
+            <FormateurSatisfactionSendPanel
+              inscriptions={missions}
+              isAssistMode={isAssistMode}
+              preselectedInscriptionId={first?.id}
+            />
             <SurfaceCard title="Contact">
               <DefinitionList
                 columns={2}

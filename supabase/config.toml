@@ -22,6 +22,9 @@ verify_jwt = true
 [functions.send-training-completion-pack]
 verify_jwt = true
 
+[functions.send-satisfaction-survey]
+verify_jwt = true
+
 [functions.create-user]
 verify_jwt = false
 

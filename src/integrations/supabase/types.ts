@@ -2988,6 +2988,7 @@ export type Database = {
         Row: {
           completed_at: string | null
           created_at: string
+          day0_sent_at: string | null
           exit_test_scores: Json | null
           id: string
           inscription_id: string
@@ -3008,6 +3009,7 @@ export type Database = {
         Insert: {
           completed_at?: string | null
           created_at?: string
+          day0_sent_at?: string | null
           exit_test_scores?: Json | null
           id?: string
           inscription_id: string
@@ -3028,6 +3030,7 @@ export type Database = {
         Update: {
           completed_at?: string | null
           created_at?: string
+          day0_sent_at?: string | null
           exit_test_scores?: Json | null
           id?: string
           inscription_id?: string

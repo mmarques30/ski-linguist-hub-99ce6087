@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { ChevronRight, Mail, Phone, Users } from "lucide-react";
+import { FormateurSatisfactionSendPanel } from "@/components/formateur/FormateurSatisfactionSendPanel";
 import { FormateurPageShell } from "@/components/layout/FormateurPageShell";
 import { useFormateurView } from "@/contexts/FormateurViewContext";
 import {
@@ -23,7 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 export default function FormateurStagiaires() {
-  const { basePath } = useFormateurView();
+  const { basePath, isAssistMode } = useFormateurView();
   const { data: profile } = useFormateurProfile();
   const { data: inscriptions = [], isLoading } = useFormateurInscriptions(
     profile?.id
@@ -39,6 +40,13 @@ export default function FormateurStagiaires() {
           icon={Users}
           tone="blue"
         />
+
+        {!isLoading && inscriptions.length > 0 ? (
+          <FormateurSatisfactionSendPanel
+            inscriptions={inscriptions}
+            isAssistMode={isAssistMode}
+          />
+        ) : null}
 
         {isLoading ? (
           <SurfaceCard flush>

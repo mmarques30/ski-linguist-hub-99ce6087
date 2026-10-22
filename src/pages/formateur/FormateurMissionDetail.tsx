@@ -11,6 +11,7 @@ import {
   School,
 } from "lucide-react";
 import { FormateurPresenceDownloadButton } from "@/components/formateur/FormateurPresenceDownloadButton";
+import { FormateurSatisfactionSendPanel } from "@/components/formateur/FormateurSatisfactionSendPanel";
 import { FormateurPageShell } from "@/components/layout/FormateurPageShell";
 import { useFormateurView } from "@/contexts/FormateurViewContext";
 import {
@@ -34,7 +35,7 @@ import { Button } from "@/components/ui/button";
 
 export default function FormateurMissionDetail() {
   const { inscriptionId = "" } = useParams<{ inscriptionId: string }>();
-  const { basePath } = useFormateurView();
+  const { basePath, isAssistMode } = useFormateurView();
   const { data: profile, isLoading: loadingProfile } = useFormateurProfile();
   const { data: inscriptions = [], isLoading } = useFormateurInscriptions(
     profile?.id
@@ -97,6 +98,11 @@ export default function FormateurMissionDetail() {
           </SurfaceCard>
         ) : (
           <div className="space-y-4">
+            <FormateurSatisfactionSendPanel
+              inscriptions={[row]}
+              isAssistMode={isAssistMode}
+              preselectedInscriptionId={row.id}
+            />
             <SurfaceCard title="Mission">
               <DefinitionList
                 columns={2}
