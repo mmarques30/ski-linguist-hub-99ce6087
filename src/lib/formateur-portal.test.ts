@@ -116,21 +116,32 @@ describe("portail formateur — câblage", () => {
     expect(app).toContain('path="/formateur/planning"');
     expect(app).toContain('path="/formateur/missions/:inscriptionId"');
     expect(app).toContain('path="/formateur/stagiaires"');
+    expect(app).toContain('path="/formateur/stagiaires/:studentId"');
     expect(app).toContain('path="/formateur/documents"');
     expect(app).toContain('path="/formateur/paiements"');
     expect(app).toContain('path="/formateur/profil"');
     expect(app).toContain('path="tableau-de-bord"');
     expect(app).toContain('path="onboarding"');
     expect(app).toContain('path="missions/:inscriptionId"');
+    expect(app).toContain('path="stagiaires/:studentId"');
     expect(app).toContain('path="documents"');
     expect(app).toContain('path="paiements"');
     expect(app).toContain('path="profil"');
     expect(app).toContain("FormateurDashboard");
     expect(app).toContain("FormateurOnboarding");
     expect(app).toContain("FormateurMissionDetail");
+    expect(app).toContain("FormateurStagiaireDetail");
     expect(app).toContain("FormateurDocuments");
     expect(app).toContain("FormateurPaiements");
     expect(app).toContain("FormateurProfil");
+  });
+
+  it("migration placement_tests SELECT formateur existe", () => {
+    const path =
+      "supabase/migrations/20261022060000_formateur_placement_tests_select.sql";
+    expect(existsSync(join(process.cwd(), path))).toBe(true);
+    const sql = source(path);
+    expect(sql).toContain("rls_placement_tests_select_formateur");
   });
 
   it("Auth et ProtectedRoute redirigent vers tableau-de-bord", () => {

@@ -61,6 +61,12 @@ export function FormateurLayout({ children }: FormateurLayoutProps) {
     if (page === "bilans" && location.pathname.includes("/bilans/")) {
       return true;
     }
+    if (
+      page === "stagiaires" &&
+      /\/stagiaires\/[^/]+/.test(location.pathname)
+    ) {
+      return true;
+    }
     return false;
   };
 

@@ -169,7 +169,7 @@ export default function FormateurMissionDetail() {
             </SurfaceCard>
 
             <SurfaceCard title="Contact stagiaire">
-              <div className="flex flex-wrap gap-3 text-sm">
+              <div className="flex flex-wrap items-center gap-3 text-sm">
                 {row.student_email ? (
                   <a
                     href={`mailto:${row.student_email}`}
@@ -189,6 +189,13 @@ export default function FormateurMissionDetail() {
                     <Phone className="h-3.5 w-3.5" />
                     {row.student_phone}
                   </a>
+                ) : null}
+                {row.student_id ? (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to={`${basePath}/stagiaires/${row.student_id}`}>
+                      Fiche stagiaire
+                    </Link>
+                  </Button>
                 ) : null}
               </div>
             </SurfaceCard>

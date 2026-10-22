@@ -1,3 +1,5 @@
+import type { Json } from "@/integrations/supabase/types";
+
 export type FormateurInscriptionRow = {
   id: string;
   code: string | null;
@@ -9,6 +11,8 @@ export type FormateurInscriptionRow = {
   student_name: string | null;
   student_email: string | null;
   student_phone: string | null;
+  student_city?: string | null;
+  student_company?: string | null;
   course_location: string | null;
   course_address: string | null;
   modality: string | null;
@@ -17,6 +21,12 @@ export type FormateurInscriptionRow = {
   group_name: string | null;
   ski_school_name: string | null;
   duration_hours?: number | null;
+  expectations?: string | null;
+  entry_test_id?: string | null;
+  entry_test_score?: string | null;
+  entry_level?: string | null;
+  formulaire_entree?: Json | null;
+  remarques_entree?: string | null;
   entry_form_completed_at?: string | null;
   exit_form_completed_at?: string | null;
   niveau_general_entree?: string | null;
