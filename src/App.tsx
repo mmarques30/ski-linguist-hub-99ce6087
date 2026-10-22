@@ -54,6 +54,7 @@ import FormateurMissionDetail from "./pages/formateur/FormateurMissionDetail";
 import FormateurStagiaires from "./pages/formateur/FormateurStagiaires";
 import FormateurStagiaireDetail from "./pages/formateur/FormateurStagiaireDetail";
 import FormateurPresences from "./pages/formateur/FormateurPresences";
+import EmargerPage from "./pages/EmargerPage";
 import FormateurProfil from "./pages/formateur/FormateurProfil";
 import FormateurPaiements from "./pages/formateur/FormateurPaiements";
 import FormateurDocuments from "./pages/formateur/FormateurDocuments";
@@ -123,6 +124,7 @@ const App = () => (
             <Route path="/register/payment-cancel" element={<PaymentCancelPage />} />
             <Route path="/survey/:token" element={<SatisfactionSurvey />} />
             <Route path="/suivi/:token" element={<InscriptionSuiviPage />} />
+            <Route path="/emarger/:token" element={<EmargerPage />} />
             <Route path="/conditions-generales" element={<ConditionsGenerales />} />
 
             {/* Design-validation mockup — staff only */}
