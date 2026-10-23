@@ -1,4 +1,5 @@
 import { User } from "lucide-react";
+import { FormateurChangePasswordCard } from "@/components/formateur/FormateurChangePasswordCard";
 import { FormateurPageShell } from "@/components/layout/FormateurPageShell";
 import { useFormateurProfile } from "@/hooks/useFormateurPortal";
 import { displayLanguageLabel } from "@/lib/taught-languages";
@@ -26,7 +27,7 @@ export default function FormateurProfil() {
       <PageShell>
         <PageHeader
           title="Mon profil"
-          description="Identité, fiscal, tarif — lecture seule (corrections via info@fli.fr)"
+          description="Mot de passe modifiable ; identité, fiscal, tarif en lecture seule (corrections via info@fli.fr)"
           icon={User}
           tone="gold"
         />
@@ -37,6 +38,7 @@ export default function FormateurProfil() {
           </SurfaceCard>
         ) : (
           <div className="space-y-4">
+            <FormateurChangePasswordCard />
             <SurfaceCard title="Identité" icon={User}>
               <DefinitionList
                 columns={2}

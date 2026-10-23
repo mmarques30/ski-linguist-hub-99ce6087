@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router";
 import { GraduationCap, ShieldCheck, ClipboardList } from "lucide-react";
 import { AuthCard } from "@/components/auth/AuthCard";
@@ -8,12 +8,23 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import authBg from "@/assets/fli-auth-bg.png";
 import { ADMIN_HOME_PATH } from "@/lib/admin-home";
+import { FormateurChangePasswordCard } from "@/components/formateur/FormateurChangePasswordCard";
 
 export default function Auth() {
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(() =>
+    new URLSearchParams(window.location.hash.slice(1)).get("type") === "recovery"
+  );
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isStudentMode = searchParams.get("mode") === "student";
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") setIsPasswordRecovery(true);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const { data: role, isLoading: roleLoading } = useQuery({
     queryKey: ["user-role-check", user?.id],
@@ -30,7 +41,7 @@ export default function Auth() {
   });
 
   useEffect(() => {
-    if (!loading && !roleLoading && user) {
+    if (!isPasswordRecovery && !loading && !roleLoading && user) {
       const home =
         role === "student"
           ? "/student/dashboard"
@@ -39,7 +50,7 @@ export default function Auth() {
             : ADMIN_HOME_PATH;
       navigate(home, { replace: true });
     }
-  }, [user, loading, roleLoading, role, navigate]);
+  }, [user, loading, roleLoading, role, navigate, isPasswordRecovery]);
 
   if (loading) {
     return (
@@ -62,10 +73,12 @@ export default function Auth() {
 
       {/* Contenu */}
       <div className="relative z-10 flex w-full max-w-md flex-col items-center gap-6">
-        {isStudentMode ? <StudentAuthCard /> : <AuthCard />}
+        {isPasswordRecovery ? (
+          <FormateurChangePasswordCard title="Nouveau mot de passe" onUpdated={() => setIsPasswordRecovery(false)} />
+        ) : isStudentMode ? <StudentAuthCard /> : <AuthCard />}
 
         {/* Les deux parcours restent visibles : staff et stagiaire. */}
-        <nav
+        {!isPasswordRecovery && <nav
           aria-label="Autres accès"
           className="fli-glass w-full rounded-[var(--radius-card)] border border-border/60 p-2 shadow-md"
         >
@@ -102,7 +115,7 @@ export default function Auth() {
               </Link>
             </li>
           </ul>
-        </nav>
+        </nav>}
 
         <footer className="text-center">
           <p className="fli-glass inline-block rounded-pill border border-border/60 px-3 py-1 text-xs text-muted-foreground">

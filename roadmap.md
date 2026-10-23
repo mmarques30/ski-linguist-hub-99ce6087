@@ -1,0 +1,2 @@
+- [ ] Ajouter le changement de mot de passe au profil formateur et la récupération sur /auth.
+- [ ] Vérifier les validations et le parcours sans envoyer d’e-mail ni modifier le mot de passe d’un utilisateur réel.
