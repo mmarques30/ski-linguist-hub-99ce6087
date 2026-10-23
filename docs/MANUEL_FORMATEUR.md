@@ -36,7 +36,7 @@ Pour te déconnecter : icône en haut à droite de la barre (à côté de « Esp
 | **Évaluations** | Tests oraux SNMSF (quand tu es examinateur·rice) |
 | **Documents** | CV, vigilance, contrats (**lecture seule**) |
 | **Paiements** | Rémunérations FLI (**lecture seule**) |
-| **Profil** | Identité / fiscal — corrections via **info@fli.fr** |
+| **Profil** | Identité / fiscal (lecture seule) + **changement de mot de passe** |
 
 Tu ne vois jamais les dossiers des autres formateurs. Les montants de formation stagiaire ne s’affichent pas dans cet espace.
 
@@ -138,9 +138,11 @@ Si aucune session ne t’est attribuée, la page reste vide — c’est normal.
 
 ---
 
-## 10. Documents, paiements, profil (lecture seule)
+## 10. Documents, paiements, profil
 
-Ces trois rubriques te montrent ce que FLI a en dossier te concernant. Tu ne modifies pas les fichiers ni les montants depuis l’appli.
+Documents et paiements sont en **lecture seule** (tu ne modifies pas les fichiers ni les montants).
+
+Sur **Profil**, tu peux **changer ton mot de passe** toi-même. Le reste (identité, fiscal, tarif) est en lecture seule.
 
 ![Documents](manuel-formateur/11-documents.png)
 
@@ -148,7 +150,8 @@ Ces trois rubriques te montrent ce que FLI a en dossier te concernant. Tu ne mod
 
 ![Profil](manuel-formateur/13-profil.png)
 
-Pour une correction (RIB, adresse, CV, tarif, etc.) : écris à **info@fli.fr**.
+Pour une correction (RIB, adresse, CV, tarif, etc.) : écris à **info@fli.fr**.  
+Mot de passe oublié avant connexion : sur **/auth**, lien « Mot de passe oublié ? ».
 
 ---
 

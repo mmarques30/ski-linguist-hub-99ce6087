@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router";
 import { GraduationCap, ShieldCheck, ClipboardList } from "lucide-react";
 import { AuthCard } from "@/components/auth/AuthCard";
+import { AuthUpdatePasswordCard } from "@/components/auth/AuthUpdatePasswordCard";
 import { StudentAuthCard } from "@/components/auth/StudentAuthCard";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
@@ -14,6 +15,18 @@ export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isStudentMode = searchParams.get("mode") === "student";
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setIsPasswordRecovery(true);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const { data: role, isLoading: roleLoading } = useQuery({
     queryKey: ["user-role-check", user?.id],
@@ -30,7 +43,7 @@ export default function Auth() {
   });
 
   useEffect(() => {
-    if (!loading && !roleLoading && user) {
+    if (!loading && !roleLoading && user && !isPasswordRecovery) {
       const home =
         role === "student"
           ? "/student/dashboard"
@@ -39,7 +52,7 @@ export default function Auth() {
             : ADMIN_HOME_PATH;
       navigate(home, { replace: true });
     }
-  }, [user, loading, roleLoading, role, navigate]);
+  }, [user, loading, roleLoading, role, navigate, isPasswordRecovery]);
 
   if (loading) {
     return (
@@ -62,47 +75,55 @@ export default function Auth() {
 
       {/* Contenu */}
       <div className="relative z-10 flex w-full max-w-md flex-col items-center gap-6">
-        {isStudentMode ? <StudentAuthCard /> : <AuthCard />}
+        {isPasswordRecovery ? (
+          <AuthUpdatePasswordCard />
+        ) : isStudentMode ? (
+          <StudentAuthCard />
+        ) : (
+          <AuthCard />
+        )}
 
         {/* Les deux parcours restent visibles : staff et stagiaire. */}
-        <nav
-          aria-label="Autres accès"
-          className="fli-glass w-full rounded-[var(--radius-card)] border border-border/60 p-2 shadow-md"
-        >
-          <ul className="flex flex-col gap-1">
-            {!isStudentMode && (
+        {!isPasswordRecovery && (
+          <nav
+            aria-label="Autres accès"
+            className="fli-glass w-full rounded-[var(--radius-card)] border border-border/60 p-2 shadow-md"
+          >
+            <ul className="flex flex-col gap-1">
+              {!isStudentMode && (
+                <li>
+                  <Link
+                    to="/auth?mode=student"
+                    className="flex min-h-11 items-center gap-2.5 rounded-[var(--radius)] px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-[hsl(var(--surface-sunken))]"
+                  >
+                    <GraduationCap className="h-4 w-4 shrink-0 text-[hsl(var(--tint-blue-fg))]" />
+                    Espace stagiaire
+                  </Link>
+                </li>
+              )}
+              {isStudentMode && (
+                <li>
+                  <Link
+                    to="/auth"
+                    className="flex min-h-11 items-center gap-2.5 rounded-[var(--radius)] px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-[hsl(var(--surface-sunken))]"
+                  >
+                    <ShieldCheck className="h-4 w-4 shrink-0 text-[hsl(var(--tint-navy-fg))]" />
+                    Connexion administrateur
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link
-                  to="/auth?mode=student"
+                  to="/register"
                   className="flex min-h-11 items-center gap-2.5 rounded-[var(--radius)] px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-[hsl(var(--surface-sunken))]"
                 >
-                  <GraduationCap className="h-4 w-4 shrink-0 text-[hsl(var(--tint-blue-fg))]" />
-                  Espace stagiaire
+                  <ClipboardList className="h-4 w-4 shrink-0 text-[hsl(var(--tint-gold-fg))]" />
+                  Formulaire d&apos;inscription publique
                 </Link>
               </li>
-            )}
-            {isStudentMode && (
-              <li>
-                <Link
-                  to="/auth"
-                  className="flex min-h-11 items-center gap-2.5 rounded-[var(--radius)] px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-[hsl(var(--surface-sunken))]"
-                >
-                  <ShieldCheck className="h-4 w-4 shrink-0 text-[hsl(var(--tint-navy-fg))]" />
-                  Connexion administrateur
-                </Link>
-              </li>
-            )}
-            <li>
-              <Link
-                to="/register"
-                className="flex min-h-11 items-center gap-2.5 rounded-[var(--radius)] px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-[hsl(var(--surface-sunken))]"
-              >
-                <ClipboardList className="h-4 w-4 shrink-0 text-[hsl(var(--tint-gold-fg))]" />
-                Formulaire d&apos;inscription publique
-              </Link>
-            </li>
-          </ul>
-        </nav>
+            </ul>
+          </nav>
+        )}
 
         <footer className="text-center">
           <p className="fli-glass inline-block rounded-pill border border-border/60 px-3 py-1 text-xs text-muted-foreground">
