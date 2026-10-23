@@ -35,8 +35,9 @@ export function AuthCard() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [resetSending, setResetSending] = useState(false);
 
-  const { signIn } = useAuth();
+  const { signIn, resetPasswordForEmail } = useAuth();
   const navigate = useNavigate();
 
   const triggerConfetti = () => {
@@ -76,6 +77,36 @@ export function AuthCard() {
       }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const emailCheck = z
+      .string()
+      .trim()
+      .email("Adresse e-mail invalide")
+      .safeParse(email);
+    if (!emailCheck.success) {
+      toast.error(authValidationToastTitle(), {
+        description: "Indique ton adresse e-mail pour recevoir le lien de réinitialisation",
+      });
+      return;
+    }
+    setResetSending(true);
+    try {
+      const { error } = await resetPasswordForEmail(emailCheck.data);
+      if (error) {
+        toast.error("Envoi impossible", {
+          description: describeAuthError(error.message),
+        });
+        return;
+      }
+      toast.success("E-mail envoyé", {
+        description:
+          "Si un compte existe pour cette adresse, tu recevras un lien pour choisir un nouveau mot de passe.",
+      });
+    } finally {
+      setResetSending(false);
     }
   };
 
@@ -160,9 +191,19 @@ export function AuthCard() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password-login" className="text-foreground">
-              Mot de passe
-            </Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="password-login" className="text-foreground">
+                Mot de passe
+              </Label>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={resetSending || isLoading || loginSuccess}
+                className="text-xs font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50"
+              >
+                {resetSending ? "Envoi…" : "Mot de passe oublié ?"}
+              </button>
+            </div>
             <Input
               id="password-login"
               type="password"

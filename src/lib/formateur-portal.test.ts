@@ -185,6 +185,20 @@ describe("portail formateur — câblage", () => {
     const invite = source("supabase/functions/invite-formateur-portal/index.ts");
     expect(invite).toContain("formateur_portal_invite");
     expect(invite).toContain("requireAdmin");
+    expect(invite).toContain("temporary_password");
+    expect(invite).toContain("generateTemporaryPassword");
+    expect(invite).not.toContain('type: "magiclink"');
+  });
+
+  it("profil formateur permet de changer le mot de passe", () => {
+    expect(
+      existsSync(join(process.cwd(), "src/components/formateur/FormateurChangePasswordCard.tsx"))
+    ).toBe(true);
+    const profil = source("src/pages/formateur/FormateurProfil.tsx");
+    expect(profil).toContain("FormateurChangePasswordCard");
+    const auth = source("src/hooks/useAuth.ts");
+    expect(auth).toContain("updatePassword");
+    expect(auth).toContain("resetPasswordForEmail");
   });
 
   it("sign-private-download autorise le CV formateur sous staff/instructors", () => {
