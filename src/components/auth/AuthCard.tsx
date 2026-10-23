@@ -35,9 +35,31 @@ export function AuthCard() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
-  const { signIn } = useAuth();
+  const { signIn, resetPasswordForEmail } = useAuth();
   const navigate = useNavigate();
+
+  const handlePasswordReset = async () => {
+    const validation = authSchema.shape.email.safeParse(email);
+    if (!validation.success) {
+      toast.error("Saisis ton adresse e-mail pour réinitialiser ton mot de passe.");
+      return;
+    }
+    setIsResetting(true);
+    try {
+      const { error } = await resetPasswordForEmail(validation.data);
+      if (error) {
+        toast.error("Impossible d’envoyer le lien. Réessaie dans un instant.");
+      } else {
+        toast.success("Si un compte correspond à cette adresse, tu recevras un lien pour changer ton mot de passe.");
+      }
+    } catch {
+      toast.error("Vérifie ta connexion et réessaie.");
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   const triggerConfetti = () => {
     confetti({
@@ -174,6 +196,11 @@ export function AuthCard() {
               required
             />
           </div>
+
+          <Button type="button" variant="link" className="h-auto px-0" onClick={handlePasswordReset}
+            disabled={isResetting || isLoading || loginSuccess}>
+            {isResetting ? "Envoi du lien…" : "Mot de passe oublié ?"}
+          </Button>
 
           <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
             <Button

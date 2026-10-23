@@ -80,6 +80,13 @@ export type Database = {
             foreignKeyName: "accommodations_inscription_id_fkey"
             columns: ["inscription_id"]
             isOneToOne: false
+            referencedRelation: "inscription_finance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accommodations_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
             referencedRelation: "inscriptions"
             referencedColumns: ["id"]
           },
@@ -160,6 +167,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "attendance_records_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscription_finance"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "attendance_records_inscription_id_fkey"
             columns: ["inscription_id"]
@@ -261,6 +275,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "attendance_slots_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscription_finance"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "attendance_slots_inscription_id_fkey"
             columns: ["inscription_id"]
@@ -442,6 +463,13 @@ export type Database = {
           student_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "certificates_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscription_finance"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "certificates_inscription_id_fkey"
             columns: ["inscription_id"]
@@ -660,6 +688,13 @@ export type Database = {
             foreignKeyName: "document_sendings_inscription_id_fkey"
             columns: ["inscription_id"]
             isOneToOne: false
+            referencedRelation: "inscription_finance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_sendings_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
             referencedRelation: "inscriptions"
             referencedColumns: ["id"]
           },
@@ -764,6 +799,13 @@ export type Database = {
           variables_used?: Json | null
         }
         Relationships: [
+          {
+            foreignKeyName: "email_log_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscription_finance"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "email_log_inscription_id_fkey"
             columns: ["inscription_id"]
@@ -1013,6 +1055,13 @@ export type Database = {
             foreignKeyName: "formation_costs_inscription_id_fkey"
             columns: ["inscription_id"]
             isOneToOne: false
+            referencedRelation: "inscription_finance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "formation_costs_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
             referencedRelation: "inscriptions"
             referencedColumns: ["id"]
           },
@@ -1138,6 +1187,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "funding_requests_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscription_finance"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "funding_requests_inscription_id_fkey"
             columns: ["inscription_id"]
@@ -1592,6 +1648,13 @@ export type Database = {
             foreignKeyName: "instructor_contracts_inscription_id_fkey"
             columns: ["inscription_id"]
             isOneToOne: false
+            referencedRelation: "inscription_finance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instructor_contracts_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
             referencedRelation: "inscriptions"
             referencedColumns: ["id"]
           },
@@ -1705,6 +1768,13 @@ export type Database = {
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "instructor_sessions_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscription_finance"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "instructor_sessions_inscription_id_fkey"
             columns: ["inscription_id"]
@@ -1992,6 +2062,13 @@ export type Database = {
             foreignKeyName: "invoices_inscription_id_fkey"
             columns: ["inscription_id"]
             isOneToOne: false
+            referencedRelation: "inscription_finance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
             referencedRelation: "inscriptions"
             referencedColumns: ["id"]
           },
@@ -2110,6 +2187,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "leads_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscription_finance"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "leads_inscription_id_fkey"
             columns: ["inscription_id"]
@@ -2367,6 +2451,13 @@ export type Database = {
             foreignKeyName: "payment_reminders_inscription_id_fkey"
             columns: ["inscription_id"]
             isOneToOne: false
+            referencedRelation: "inscription_finance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_reminders_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
             referencedRelation: "inscriptions"
             referencedColumns: ["id"]
           },
@@ -2463,6 +2554,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "payments_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscription_finance"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payments_inscription_id_fkey"
             columns: ["inscription_id"]
@@ -2572,6 +2670,13 @@ export type Database = {
           total_questions?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "placement_tests_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscription_finance"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "placement_tests_inscription_id_fkey"
             columns: ["inscription_id"]
@@ -2988,6 +3093,7 @@ export type Database = {
         Row: {
           completed_at: string | null
           created_at: string
+          day0_sent_at: string | null
           exit_test_scores: Json | null
           id: string
           inscription_id: string
@@ -3008,6 +3114,7 @@ export type Database = {
         Insert: {
           completed_at?: string | null
           created_at?: string
+          day0_sent_at?: string | null
           exit_test_scores?: Json | null
           id?: string
           inscription_id: string
@@ -3028,6 +3135,7 @@ export type Database = {
         Update: {
           completed_at?: string | null
           created_at?: string
+          day0_sent_at?: string | null
           exit_test_scores?: Json | null
           id?: string
           inscription_id?: string
@@ -3046,6 +3154,13 @@ export type Database = {
           weak_points?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "satisfaction_surveys_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscription_finance"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "satisfaction_surveys_inscription_id_fkey"
             columns: ["inscription_id"]
@@ -3212,6 +3327,13 @@ export type Database = {
           student_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "session_enrollments_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscription_finance"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "session_enrollments_inscription_id_fkey"
             columns: ["inscription_id"]
@@ -4008,6 +4130,48 @@ export type Database = {
       }
     }
     Views: {
+      inscription_finance: {
+        Row: {
+          balance_after_deposit: number | null
+          check_date: string | null
+          check_number: string | null
+          deposit_amount: number | null
+          deposit_date: string | null
+          funding_details: string | null
+          funding_organization: string | null
+          id: string | null
+          payment_method: string | null
+          pedagogical_cost: number | null
+          price: number | null
+        }
+        Insert: {
+          balance_after_deposit?: number | null
+          check_date?: string | null
+          check_number?: string | null
+          deposit_amount?: number | null
+          deposit_date?: string | null
+          funding_details?: string | null
+          funding_organization?: string | null
+          id?: string | null
+          payment_method?: string | null
+          pedagogical_cost?: number | null
+          price?: number | null
+        }
+        Update: {
+          balance_after_deposit?: number | null
+          check_date?: string | null
+          check_number?: string | null
+          deposit_amount?: number | null
+          deposit_date?: string | null
+          funding_details?: string | null
+          funding_organization?: string | null
+          id?: string | null
+          payment_method?: string | null
+          pedagogical_cost?: number | null
+          price?: number | null
+        }
+        Relationships: []
+      }
       inscriptions_complete: {
         Row: {
           balance_after_deposit: number | null
@@ -4345,6 +4509,24 @@ export type Database = {
         Args: { p_dry_run?: boolean; p_jobname: string }
         Returns: Json
       }
+      save_formateur_formation_form: {
+        Args: {
+          p_entry_level?: string
+          p_exit_level?: string
+          p_final_general_level?: string
+          p_final_specific_level?: string
+          p_formulaire: Json
+          p_hours_followed?: number
+          p_inscription_id: string
+          p_kind: string
+          p_niveau_general: string
+          p_niveau_technique: string
+          p_objectif_atteint?: string
+          p_progression?: string
+          p_remarques_or_commentaire?: string
+        }
+        Returns: undefined
+      }
       set_email_cron_active: {
         Args: { p_active: boolean; p_jobname: string }
         Returns: Json
@@ -4378,24 +4560,6 @@ export type Database = {
           p_total_questions?: number
         }
         Returns: string
-      }
-      save_formateur_formation_form: {
-        Args: {
-          p_inscription_id: string
-          p_kind: string
-          p_formulaire: Json
-          p_niveau_general: string
-          p_niveau_technique: string
-          p_remarques_or_commentaire?: string
-          p_objectif_atteint?: string
-          p_hours_followed?: number
-          p_entry_level?: string
-          p_exit_level?: string
-          p_final_general_level?: string
-          p_final_specific_level?: string
-          p_progression?: string
-        }
-        Returns: undefined
       }
       submit_satisfaction_survey_by_token: {
         Args: { p_data: Json; p_token: string }
