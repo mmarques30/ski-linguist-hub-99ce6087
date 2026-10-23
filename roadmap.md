@@ -1,2 +1,2 @@
-- [ ] Ajouter le changement de mot de passe au profil formateur et la récupération sur /auth.
-- [ ] Vérifier les validations et le parcours sans envoyer d’e-mail ni modifier le mot de passe d’un utilisateur réel.
+- [x] Ajouter le changement de mot de passe au profil formateur et la récupération sur /auth.
+- [x] Vérifier les validations et le parcours simulé sans envoyer d’e-mail ni modifier le mot de passe d’un utilisateur réel. Vérification connectée du profil non disponible : aucune session utilisable pour le compte demandeur.
