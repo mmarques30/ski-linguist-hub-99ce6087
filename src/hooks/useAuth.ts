@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { AuthError, User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 export function useAuth() {
@@ -63,6 +63,14 @@ export function useAuth() {
   };
 
   const updatePassword = async (password: string) => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      return {
+        error: new AuthError("Session expirée. Reconnecte-toi puis réessaie.", 401),
+      };
+    }
     const { error } = await supabase.auth.updateUser({ password });
     return { error };
   };

@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import authBg from "@/assets/fli-auth-bg.png";
-import { ADMIN_HOME_PATH } from "@/lib/admin-home";
+import { homePathForRole } from "@/lib/auth-home";
 import { FormateurChangePasswordCard } from "@/components/formateur/FormateurChangePasswordCard";
 
 export default function Auth() {
@@ -42,13 +42,7 @@ export default function Auth() {
 
   useEffect(() => {
     if (!isPasswordRecovery && !loading && !roleLoading && user) {
-      const home =
-        role === "student"
-          ? "/student/dashboard"
-          : role === "formateur"
-            ? "/formateur/tableau-de-bord"
-            : ADMIN_HOME_PATH;
-      navigate(home, { replace: true });
+      navigate(homePathForRole(role), { replace: true });
     }
   }, [user, loading, roleLoading, role, navigate, isPasswordRecovery]);
 

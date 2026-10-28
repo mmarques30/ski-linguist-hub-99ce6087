@@ -32,6 +32,19 @@ export function describeAuthError(message: string | undefined | null): string {
   if (lower.includes("rate limit") || lower.includes("too many requests")) {
     return "Trop de tentatives. Réessayez dans quelques minutes";
   }
+  if (
+    lower.includes("same password") ||
+    lower.includes("should be different") ||
+    lower.includes("different from the old")
+  ) {
+    return "Choisis un mot de passe différent de l'actuel";
+  }
+  if (lower.includes("weak") || lower.includes("pwned") || lower.includes("leaked")) {
+    return "Ce mot de passe est trop faible ou compromis. Choisis-en un autre";
+  }
+  if (lower.includes("session") && (lower.includes("expir") || lower.includes("missing"))) {
+    return "Session expirée. Reconnecte-toi puis réessaie.";
+  }
   if (lower.includes("network") || lower.includes("fetch")) {
     return "Connexion impossible. Vérifiez votre réseau et réessayez";
   }

@@ -150,10 +150,14 @@ describe("portail formateur — câblage", () => {
   });
 
   it("Auth et ProtectedRoute redirigent vers tableau-de-bord", () => {
-    expect(source("src/pages/Auth.tsx")).toContain("/formateur/tableau-de-bord");
+    expect(source("src/lib/auth-home.ts")).toContain("/formateur/tableau-de-bord");
+    expect(source("src/pages/Auth.tsx")).toContain("homePathForRole");
     expect(source("src/components/auth/ProtectedRoute.tsx")).toContain(
       "/formateur/tableau-de-bord"
     );
+    // Ne plus forcer /app admin après login (bug Claire → dash admin).
+    expect(source("src/components/auth/AuthCard.tsx")).not.toContain("ADMIN_HOME_PATH");
+    expect(source("src/components/auth/AuthCard.tsx")).toContain("PasswordInput");
   });
 
   it("FormateurLayout et PageShell existent", () => {
