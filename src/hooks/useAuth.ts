@@ -63,6 +63,10 @@ export function useAuth() {
   };
 
   const updatePassword = async (password: string) => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      return { error: new Error("Session expirée. Reconnecte-toi puis réessaie.") };
+    }
     const { error } = await supabase.auth.updateUser({ password });
     return { error };
   };
