@@ -3,7 +3,8 @@ import { LockKeyhole } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/auth/PasswordInput";
+import { describeAuthError } from "@/lib/auth-copy";
 import { Label } from "@/components/ui/label";
 import { SurfaceCard } from "@/components/ui-kit/SurfaceCard";
 import { useAuth } from "@/hooks/useAuth";
@@ -40,7 +41,7 @@ export function FormateurChangePasswordCard({
     try {
       const { error } = await updatePassword(validation.data.password);
       if (error) {
-        toast.error("Ton mot de passe n’a pas pu être enregistré. Réessaie ou contacte FLI.");
+        toast.error(describeAuthError(error.message));
         return;
       }
       setPassword("");
@@ -59,13 +60,13 @@ export function FormateurChangePasswordCard({
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <div className="space-y-2">
           <Label htmlFor="new-password">Nouveau mot de passe</Label>
-          <Input id="new-password" type="password" autoComplete="new-password" minLength={8}
+          <PasswordInput id="new-password" autoComplete="new-password" minLength={8}
             required value={password} onChange={(event) => setPassword(event.target.value)} disabled={isLoading} />
           <p className="text-sm text-muted-foreground">Choisis un mot de passe d’au moins 8 caractères.</p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="confirm-password">Confirme ton mot de passe</Label>
-          <Input id="confirm-password" type="password" autoComplete="new-password" minLength={8}
+          <PasswordInput id="confirm-password" autoComplete="new-password" minLength={8}
             required value={confirmation} onChange={(event) => setConfirmation(event.target.value)} disabled={isLoading} />
         </div>
         <Button type="submit" disabled={isLoading} className="h-auto min-h-11 max-w-full whitespace-normal">
