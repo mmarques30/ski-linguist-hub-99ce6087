@@ -66,6 +66,8 @@ This is a single-package **Vite + React 18 + TypeScript** SPA (Lovable-generated
   qui contient un lien Stripe/checkout doit aussi afficher les coordonnées bancaires
   (`FLI_BANK_DETAILS` / `buildPaymentLinkWithBankDetailsEmailHtml` dans
   `registration-payments.ts`). Alternative virement avec la référence d’inscription.
+- **Vouvoiement** (Paula, 2026-10-28) : s’adresser aux stagiaires avec **vous** (pas de
+  tutoiement) dans tous les e-mails opérationnels à venir.
 
 ### Git / docs (Paula, 2026-09-11)
 - Do **not** modify `docs/BACKLOG.md` or `docs/ETAT_APP_*.md` on working branches.
