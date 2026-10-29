@@ -9,7 +9,11 @@ describe("describeAuthError", () => {
   });
 
   it("masque un message technique anglais inconnu", () => {
-    expect(describeAuthError("JWT expired somehow")).toMatch(/FLI|Réessayez/);
+    expect(describeAuthError("OAuth stack exception undefined")).toMatch(/FLI|Réessayez/);
+  });
+
+  it("traduit session / jwt expiré en message clair", () => {
+    expect(describeAuthError("JWT expired somehow")).toMatch(/Session expirée/i);
   });
 
   it("conserve un message déjà en français", () => {
