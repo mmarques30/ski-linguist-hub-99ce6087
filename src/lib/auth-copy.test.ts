@@ -19,4 +19,13 @@ describe("describeAuthError", () => {
   it("conserve un message déjà en français", () => {
     expect(describeAuthError("Adresse introuvable")).toBe("Adresse introuvable");
   });
+
+  it("explique les échecs de changement de mot de passe", () => {
+    expect(describeAuthError("New password should be different from the old password.")).toMatch(
+      /différent/i,
+    );
+    expect(describeAuthError("Session expirée. Reconnecte-toi puis réessaie.")).toMatch(
+      /Session expirée/i,
+    );
+  });
 });
