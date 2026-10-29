@@ -1,19 +1,28 @@
 import { describe, expect, it } from "vitest";
-import { homePathForRole } from "@/lib/auth-home";
-import { ADMIN_HOME_PATH } from "@/lib/admin-home";
+import { homePathForRole } from "./auth-home";
+import { describeAuthError } from "./auth-copy";
 
 describe("homePathForRole", () => {
-  it("envoie les formateurs vers leur tableau de bord", () => {
+  it("envoie un formateur sur son espace", () => {
     expect(homePathForRole("formateur")).toBe("/formateur/tableau-de-bord");
   });
-
-  it("envoie les stagiaires vers le portail stagiaire", () => {
+  it("envoie un stagiaire sur son espace", () => {
     expect(homePathForRole("student")).toBe("/student/dashboard");
   });
+  it("envoie admin / rôle inconnu sur /app", () => {
+    expect(homePathForRole("admin")).toBe("/app");
+    expect(homePathForRole(null)).toBe("/app");
+  });
+});
 
-  it("envoie admin / staff vers /app", () => {
-    expect(homePathForRole("admin")).toBe(ADMIN_HOME_PATH);
-    expect(homePathForRole("user")).toBe(ADMIN_HOME_PATH);
-    expect(homePathForRole(null)).toBe(ADMIN_HOME_PATH);
+describe("describeAuthError mot de passe", () => {
+  it("même mot de passe", () => {
+    expect(describeAuthError("New password should be different from the old password.")).toMatch(/différent/);
+  });
+  it("session expirée", () => {
+    expect(describeAuthError("Auth session missing!")).toMatch(/Session expirée/);
+  });
+  it("mot de passe faible", () => {
+    expect(describeAuthError("Password is known to be weak and easy to guess")).toMatch(/trop faible/);
   });
 });

@@ -48,6 +48,21 @@ export function describeAuthError(message: string | undefined | null): string {
   if (lower.includes("network") || lower.includes("fetch")) {
     return "Connexion impossible. Vérifiez votre réseau et réessayez";
   }
+  if (lower.includes("same_password") || lower.includes("should be different")) {
+    return "Ton nouveau mot de passe doit être différent de l’ancien.";
+  }
+  if (lower.includes("weak") || lower.includes("pwned") || lower.includes("easy to guess")) {
+    return "Ce mot de passe est trop faible. Choisis-en un plus long ou moins courant.";
+  }
+  if (
+    lower.includes("session expirée") ||
+    lower.includes("session missing") ||
+    lower.includes("session_not_found") ||
+    lower.includes("jwt expired") ||
+    lower.includes("refresh token")
+  ) {
+    return "Session expirée. Reconnecte-toi puis réessaie.";
+  }
   // Masquer uniquement un message clairement technique / anglais.
   const looksTechnicalEnglish =
     /\b(jwt|token|oauth|supabase|postgres|sql|stack|exception|undefined|null)\b/i.test(

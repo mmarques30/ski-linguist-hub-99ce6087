@@ -6,9 +6,9 @@ import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { PasswordInput } from "@/components/auth/PasswordInput";
 
 import { useAuth } from "@/hooks/useAuth";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 import {
   authEmailLabel,
   authValidationToastTitle,
@@ -48,9 +48,7 @@ export function AuthCard() {
     try {
       const { error } = await resetPasswordForEmail(validation.data);
       if (error) {
-        toast.error("Impossible d’envoyer le lien", {
-          description: describeAuthError(error.message),
-        });
+        toast.error("Impossible d’envoyer le lien. Réessaie dans un instant.");
       } else {
         toast.success("Si un compte correspond à cette adresse, tu recevras un lien pour changer ton mot de passe.");
       }
@@ -73,6 +71,7 @@ export function AuthCard() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate inputs
     const validation = authSchema.safeParse({ email, password });
     if (!validation.success) {
       const firstError = validation.error.errors[0];
@@ -89,9 +88,9 @@ export function AuthCard() {
           description: describeAuthError(error.message),
         });
       } else {
-        // Auth.tsx redirige selon le rôle (formateur → espace formateur, pas /app admin).
         setLoginSuccess(true);
         triggerConfetti();
+        // La redirection selon le rôle est gérée par Auth.tsx.
       }
     } finally {
       setIsLoading(false);
@@ -179,29 +178,24 @@ export function AuthCard() {
             />
           </div>
           <div className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <Label htmlFor="password-login" className="text-foreground">
-                Mot de passe
-              </Label>
-              <button
-                type="button"
-                onClick={handlePasswordReset}
-                disabled={isResetting || isLoading || loginSuccess}
-                className="text-xs font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50"
-              >
-                {isResetting ? "Envoi…" : "Mot de passe oublié ?"}
-              </button>
-            </div>
+            <Label htmlFor="password-login" className="text-foreground">
+              Mot de passe
+            </Label>
             <PasswordInput
               id="password-login"
               autoComplete="current-password"
               placeholder="********"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              className="h-11 transition-all duration-200"
               required
-              disabled={isLoading || loginSuccess}
             />
           </div>
+
+          <Button type="button" variant="link" className="h-auto px-0" onClick={handlePasswordReset}
+            disabled={isResetting || isLoading || loginSuccess}>
+            {isResetting ? "Envoi du lien…" : "Mot de passe oublié ?"}
+          </Button>
 
           <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
             <Button
