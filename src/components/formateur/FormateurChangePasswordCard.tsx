@@ -1,94 +1,75 @@
 import { useState } from "react";
-import { KeyRound } from "lucide-react";
-import { toast } from "sonner";
+import { LockKeyhole } from "lucide-react";
 import { z } from "zod";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/auth/PasswordInput";
+import { describeAuthError } from "@/lib/auth-copy";
 import { Label } from "@/components/ui/label";
-import { SurfaceCard } from "@/components/ui-kit";
+import { SurfaceCard } from "@/components/ui-kit/SurfaceCard";
 import { useAuth } from "@/hooks/useAuth";
-import {
-  authValidationToastTitle,
-  describeAuthError,
-} from "@/lib/auth-copy";
 
-const passwordSchema = z
-  .object({
-    password: z
-      .string()
-      .min(8, "Le mot de passe doit comporter au moins 8 caractères")
-      .max(72, "Mot de passe trop long"),
-    confirm: z.string(),
-  })
-  .refine((v) => v.password === v.confirm, {
-    message: "Les deux saisies ne correspondent pas",
-    path: ["confirm"],
-  });
+export const passwordChangeSchema = z.object({
+  password: z.string().min(8, "Ton mot de passe doit comporter au moins 8 caractères."),
+  confirmation: z.string(),
+}).refine(({ password, confirmation }) => password === confirmation, {
+  message: "Les deux mots de passe ne correspondent pas.",
+  path: ["confirmation"],
+});
 
-export function FormateurChangePasswordCard() {
+export function FormateurChangePasswordCard({
+  title = "Mot de passe",
+  onUpdated,
+}: {
+  title?: string;
+  onUpdated?: () => void;
+}) {
   const { updatePassword } = useAuth();
   const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
+  const [confirmation, setConfirmation] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const validation = passwordSchema.safeParse({ password, confirm });
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (isLoading) return;
+    const validation = passwordChangeSchema.safeParse({ password, confirmation });
     if (!validation.success) {
-      const firstError = validation.error.errors[0];
-      toast.error(authValidationToastTitle(), { description: firstError.message });
+      toast.error(validation.error.issues[0]?.message ?? "Vérifie ta saisie.");
       return;
     }
-
     setIsLoading(true);
     try {
       const { error } = await updatePassword(validation.data.password);
       if (error) {
-        toast.error("Mot de passe non modifié", {
-          description: describeAuthError(error.message),
-        });
+        toast.error(describeAuthError(error.message));
         return;
       }
       setPassword("");
-      setConfirm("");
-      toast.success("Mot de passe mis à jour");
+      setConfirmation("");
+      toast.success("Ton mot de passe a été mis à jour.");
+      onUpdated?.();
+    } catch {
+      toast.error("Ton mot de passe n’a pas pu être enregistré. Vérifie ta connexion et réessaie.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <SurfaceCard title="Mot de passe" icon={KeyRound}>
-      <p className="mb-4 text-sm text-muted-foreground">
-        Tu peux changer ton mot de passe à tout moment. Choisis-en un personnel (8
-        caractères minimum).
-      </p>
-      <form onSubmit={handleSubmit} className="space-y-3" noValidate>
+    <SurfaceCard title={title} icon={LockKeyhole}>
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <div className="space-y-2">
-          <Label htmlFor="formateur-new-password">Nouveau mot de passe</Label>
-          <Input
-            id="formateur-new-password"
-            type="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="h-11"
-            required
-          />
+          <Label htmlFor="new-password">Nouveau mot de passe</Label>
+          <PasswordInput id="new-password" autoComplete="new-password" minLength={8}
+            required value={password} onChange={(event) => setPassword(event.target.value)} disabled={isLoading} />
+          <p className="text-sm text-muted-foreground">Choisis un mot de passe d’au moins 8 caractères.</p>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="formateur-confirm-password">Confirmer</Label>
-          <Input
-            id="formateur-confirm-password"
-            type="password"
-            autoComplete="new-password"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            className="h-11"
-            required
-          />
+          <Label htmlFor="confirm-password">Confirme ton mot de passe</Label>
+          <PasswordInput id="confirm-password" autoComplete="new-password" minLength={8}
+            required value={confirmation} onChange={(event) => setConfirmation(event.target.value)} disabled={isLoading} />
         </div>
-        <Button type="submit" disabled={isLoading} className="h-11">
+        <Button type="submit" disabled={isLoading} className="h-auto min-h-11 max-w-full whitespace-normal">
           {isLoading ? "Enregistrement…" : "Enregistrer le mot de passe"}
         </Button>
       </form>
