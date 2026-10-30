@@ -160,6 +160,22 @@ describe("portail formateur — câblage", () => {
     expect(source("src/components/auth/AuthCard.tsx")).toContain("PasswordInput");
   });
 
+  it("rôle effectif gère admin+formateur sans maybeSingle (Assister admin)", () => {
+    expect(source("src/lib/app-role.ts")).toContain("resolveAppRole");
+    expect(source("src/hooks/useUserPermissions.ts")).toContain("fetchEffectiveAppRole");
+    expect(source("src/hooks/useUserPermissions.ts")).not.toMatch(
+      /\.from\("user_roles"\)[\s\S]*\.maybeSingle\(\)/
+    );
+    expect(source("src/pages/Auth.tsx")).toContain("fetchEffectiveAppRole");
+    expect(source("src/pages/Auth.tsx")).not.toMatch(
+      /\.from\("user_roles"\)[\s\S]*\.maybeSingle\(\)/
+    );
+    expect(source("src/pages/portails/PortalFormateurPicker.tsx")).toContain("Assister");
+    expect(source("src/components/formateurs/FormateurPortalAccessCard.tsx")).toContain(
+      "Voir comme le formateur"
+    );
+  });
+
   it("FormateurLayout et PageShell existent", () => {
     expect(existsSync(join(process.cwd(), "src/components/layout/FormateurLayout.tsx"))).toBe(
       true

@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import authBg from "@/assets/fli-auth-bg.png";
 import { homePathForRole } from "@/lib/auth-home";
+import { fetchEffectiveAppRole } from "@/lib/app-role";
 import { FormateurChangePasswordCard } from "@/components/formateur/FormateurChangePasswordCard";
 
 export default function Auth() {
@@ -30,12 +31,7 @@ export default function Auth() {
     queryKey: ["user-role-check", user?.id],
     queryFn: async () => {
       if (!user) return null;
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      return data?.role ?? null;
+      return fetchEffectiveAppRole(supabase, user.id);
     },
     enabled: !!user,
   });

@@ -100,7 +100,8 @@ export function AppSidebar() {
   const logoutLabel = t(CHROME_UI.logout);
 
   const sections: NavSection[] = useMemo(() => {
-    if (isFormateur) return FORMATEUR_SECTIONS;
+    // Admin (évent. aussi formateur) : menu back-office — vue formateur via Assister.
+    if (isFormateur && !isAdmin) return FORMATEUR_SECTIONS;
     const visible = (node: { href: string; routeKey?: string; adminOnly?: boolean }) => {
       if (node.adminOnly && !isAdmin) return false;
       if (isAdmin) return true;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { homePathForRole } from "./auth-home";
 import { describeAuthError } from "./auth-copy";
+import { resolveAppRole } from "./app-role";
 
 describe("homePathForRole", () => {
   it("envoie un formateur sur son espace", () => {
@@ -12,6 +13,9 @@ describe("homePathForRole", () => {
   it("envoie admin / rôle inconnu sur /app", () => {
     expect(homePathForRole("admin")).toBe("/app");
     expect(homePathForRole(null)).toBe("/app");
+  });
+  it("admin + formateur → /app (Assister pour la vue formateur)", () => {
+    expect(homePathForRole(resolveAppRole(["admin", "formateur"]))).toBe("/app");
   });
 });
 

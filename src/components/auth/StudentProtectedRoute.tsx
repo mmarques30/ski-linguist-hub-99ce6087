@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ADMIN_HOME_PATH } from "@/lib/admin-home";
+import { fetchEffectiveAppRole } from "@/lib/app-role";
 
 interface Props {
   children: React.ReactNode;
@@ -17,12 +18,7 @@ export function StudentProtectedRoute({ children }: Props) {
     queryKey: ["user-role-check", user?.id],
     queryFn: async () => {
       if (!user) return null;
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      return data?.role ?? null;
+      return fetchEffectiveAppRole(supabase, user.id);
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000,

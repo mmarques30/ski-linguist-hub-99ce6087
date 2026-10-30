@@ -1,28 +1,26 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { fetchEffectiveAppRole } from "@/lib/app-role";
 import { routeKeyParent } from "@/lib/route-permissions";
 
 export function useUserPermissions() {
   const { user } = useAuth();
 
-  // Même clé que ProtectedRoute pour partager le cache (évite course SPA Assister).
+  // Même clé que ProtectedRoute / Auth pour partager le cache (évite course SPA Assister).
+  // Plusieurs rôles possibles (admin + formateur) → fetchEffectiveAppRole, pas .maybeSingle().
   const { data: role, isPending: rolePending } = useQuery({
     queryKey: ["user-role-check", user?.id],
     queryFn: async () => {
       if (!user) return null;
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      return data?.role ?? null;
+      return fetchEffectiveAppRole(supabase, user.id);
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000,
   });
 
   const isAdmin = role === "admin";
+  // Si admin + formateur, le rôle effectif est admin → back-office + Assister.
   const isFormateur = role === "formateur";
 
   const { data: permissions = [], isPending: permsPending } = useQuery({
