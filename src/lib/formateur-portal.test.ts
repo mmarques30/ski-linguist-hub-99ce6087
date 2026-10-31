@@ -150,10 +150,14 @@ describe("portail formateur — câblage", () => {
   });
 
   it("Auth et ProtectedRoute redirigent vers tableau-de-bord", () => {
-    expect(source("src/pages/Auth.tsx")).toContain("/formateur/tableau-de-bord");
+    expect(source("src/lib/auth-home.ts")).toContain("/formateur/tableau-de-bord");
+    expect(source("src/pages/Auth.tsx")).toContain("homePathForRole");
     expect(source("src/components/auth/ProtectedRoute.tsx")).toContain(
       "/formateur/tableau-de-bord"
     );
+    // Ne plus forcer /app admin après login (bug Claire → dash admin).
+    expect(source("src/components/auth/AuthCard.tsx")).not.toContain("ADMIN_HOME_PATH");
+    expect(source("src/components/auth/AuthCard.tsx")).toContain("PasswordInput");
   });
 
   it("FormateurLayout et PageShell existent", () => {
@@ -185,6 +189,20 @@ describe("portail formateur — câblage", () => {
     const invite = source("supabase/functions/invite-formateur-portal/index.ts");
     expect(invite).toContain("formateur_portal_invite");
     expect(invite).toContain("requireAdmin");
+    expect(invite).toContain("temporary_password");
+    expect(invite).toContain("generateTemporaryPassword");
+    expect(invite).not.toContain('type: "magiclink"');
+  });
+
+  it("profil formateur permet de changer le mot de passe", () => {
+    expect(
+      existsSync(join(process.cwd(), "src/components/formateur/FormateurChangePasswordCard.tsx"))
+    ).toBe(true);
+    const profil = source("src/pages/formateur/FormateurProfil.tsx");
+    expect(profil).toContain("FormateurChangePasswordCard");
+    const auth = source("src/hooks/useAuth.ts");
+    expect(auth).toContain("updatePassword");
+    expect(auth).toContain("resetPasswordForEmail");
   });
 
   it("sign-private-download autorise le CV formateur sous staff/instructors", () => {

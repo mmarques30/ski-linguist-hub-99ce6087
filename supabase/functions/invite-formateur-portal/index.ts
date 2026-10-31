@@ -10,7 +10,18 @@ import {
   isMassSendConfirmed,
 } from "../_shared/email-guards.ts";
 
-const APP_URL = Deno.env.get("APP_URL") || "https://ski-linguist-hub.lovable.app";
+const APP_URL = Deno.env.get("APP_URL") || "https://plateforme.fli.fr";
+
+function generateTemporaryPassword(): string {
+  const bytes = new Uint8Array(12);
+  crypto.getRandomValues(bytes);
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+  let out = "Fli-";
+  for (const b of bytes) {
+    out += alphabet[b % alphabet.length];
+  }
+  return out;
+}
 
 async function ensureFormateurAuthUser(
   adminClient: SupabaseClient,
@@ -20,15 +31,23 @@ async function ensureFormateurAuthUser(
     first_name: string | null;
     last_name: string;
     auth_user_id: string | null;
-  }
+  },
+  password: string
 ): Promise<string> {
+  const fullName = `${instructor.first_name ?? ""} ${instructor.last_name}`.trim();
+
   if (instructor.auth_user_id) {
+    const { error: updateError } = await adminClient.auth.admin.updateUserById(
+      instructor.auth_user_id,
+      { password, email_confirm: true }
+    );
+    if (updateError) throw new Error(updateError.message);
     return instructor.auth_user_id;
   }
 
-  const fullName = `${instructor.first_name ?? ""} ${instructor.last_name}`.trim();
   const { data: created, error: createError } = await adminClient.auth.admin.createUser({
     email: instructor.email,
+    password,
     email_confirm: true,
     user_metadata: { full_name: fullName, instructor_id: instructor.id },
   });
@@ -55,6 +74,11 @@ async function ensureFormateurAuthUser(
       throw new Error("Utilisateur existant introuvable pour cet email");
     }
     authUserId = existing.id;
+    const { error: updateError } = await adminClient.auth.admin.updateUserById(authUserId, {
+      password,
+      email_confirm: true,
+    });
+    if (updateError) throw new Error(updateError.message);
   }
 
   if (!authUserId) {
@@ -121,7 +145,7 @@ Deno.serve(async (req) => {
     }
 
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    const redirectTo = `${APP_URL.replace(/\/$/, "")}/formateur/tableau-de-bord`;
+    const loginUrl = `${APP_URL.replace(/\/$/, "")}/auth`;
     const results: Array<{
       instructorId: string;
       email: string;
@@ -160,19 +184,9 @@ Deno.serve(async (req) => {
       }
 
       try {
-        await ensureFormateurAuthUser(adminClient, instructor);
+        const temporaryPassword = generateTemporaryPassword();
+        await ensureFormateurAuthUser(adminClient, instructor, temporaryPassword);
 
-        const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
-          type: "magiclink",
-          email: instructor.email,
-          options: { redirectTo },
-        });
-
-        if (linkError || !linkData?.properties?.action_link) {
-          throw new Error(linkError?.message || "Impossible de générer le lien de connexion");
-        }
-
-        const actionLink = linkData.properties.action_link;
         const formateurName = `${instructor.first_name ?? ""} ${instructor.last_name}`.trim();
         let emailSent = false;
 
@@ -186,15 +200,24 @@ Deno.serve(async (req) => {
 
           const variables = {
             formateur_name: formateurName,
-            magic_link: actionLink,
-            link_expiry_label: "1 heure",
+            login_email: instructor.email,
+            temporary_password: temporaryPassword,
+            login_url: loginUrl,
+            change_password_hint:
+              "Une fois connecté·e, tu peux changer ton mot de passe dans Profil.",
           };
           const subject = template
             ? applyEmailTemplate(template.subject_fr, variables)
             : "Accès à votre espace formateur — France Langues International";
           const html = template
             ? applyEmailTemplate(template.body_fr, variables)
-            : `<p>Bonjour ${escapeHtml(formateurName)},</p><p><a href="${escapeHtml(actionLink)}">Accéder à mon espace formateur</a></p>`;
+            : `<p>Bonjour ${escapeHtml(formateurName)},</p>
+<p>Ton espace formateur FLI est prêt.</p>
+<p>Connexion : <a href="${escapeHtml(loginUrl)}">${escapeHtml(loginUrl)}</a></p>
+<p>Identifiant : <strong>${escapeHtml(instructor.email)}</strong><br/>
+Mot de passe temporaire : <strong>${escapeHtml(temporaryPassword)}</strong></p>
+<p>${escapeHtml(variables.change_password_hint)}</p>
+<p>L’équipe FLI</p>`;
 
           const sent = await sendFliEmail({
             resendApiKey,
@@ -209,7 +232,7 @@ Deno.serve(async (req) => {
             recipient_email: instructor.email,
             recipient_name: formateurName,
             status: sent.skipped ? "skipped" : emailSent ? "sent" : "failed",
-            variables_used: { instructor_id: instructor.id },
+            variables_used: { instructor_id: instructor.id, mode: "password" },
           });
         }
 
