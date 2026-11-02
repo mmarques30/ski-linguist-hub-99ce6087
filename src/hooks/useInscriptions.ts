@@ -33,6 +33,8 @@ export interface InscriptionComplete {
 
 export function useInscriptions(filters?: {
   status?: string;
+  /** Multi-statut : prioritaire sur `status` ; tableau vide → aucun résultat. */
+  statuses?: string[];
   language?: string;
   search?: string;
   seasonId?: string | null;
@@ -44,12 +46,18 @@ export function useInscriptions(filters?: {
   return useQuery({
     queryKey: ["inscriptions", filters],
     queryFn: async () => {
+      if (filters?.statuses && filters.statuses.length === 0) {
+        return [] as InscriptionComplete[];
+      }
+
       let query = supabase
         .from("inscriptions_complete")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (filters?.status && filters.status !== "all") {
+      if (filters?.statuses && filters.statuses.length > 0) {
+        query = query.in("status", filters.statuses);
+      } else if (filters?.status && filters.status !== "all") {
         query = query.eq("status", filters.status);
       }
 

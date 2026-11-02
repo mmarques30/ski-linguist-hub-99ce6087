@@ -168,6 +168,113 @@ export const FILTER_STATUSES: InscriptionStatus[] = [
   'en_attente', 'confirmee', 'en_cours', 'terminee', 'facturee', 'annulee'
 ];
 
+/**
+ * Statuts cochables sur la liste des dossiers (inclut brouillon, présent
+ * dans le Select historique).
+ */
+export const LIST_FILTER_STATUSES: InscriptionStatus[] = [
+  'brouillon',
+  ...FILTER_STATUSES,
+];
+
+/** Défaut liste dossiers : tous les statuts sauf annulée. */
+export const DEFAULT_FILTER_STATUSES: InscriptionStatus[] = LIST_FILTER_STATUSES.filter(
+  (status) => status !== 'annulee'
+);
+
+function sortedUniqueStatuses(statuses: readonly string[]): InscriptionStatus[] {
+  const allowed = new Set<string>(LIST_FILTER_STATUSES);
+  const unique = new Set<InscriptionStatus>();
+  for (const raw of statuses) {
+    const value = raw.trim() as InscriptionStatus;
+    if (allowed.has(value)) unique.add(value);
+  }
+  return LIST_FILTER_STATUSES.filter((status) => unique.has(status));
+}
+
+export function sameStatusSet(
+  left: readonly string[],
+  right: readonly string[]
+): boolean {
+  if (left.length !== right.length) return false;
+  const rightSet = new Set(right);
+  return left.every((status) => rightSet.has(status));
+}
+
+export function isDefaultStatusFilter(statuses: readonly string[]): boolean {
+  return sameStatusSet(statuses, DEFAULT_FILTER_STATUSES);
+}
+
+export function isAllStatusFilter(statuses: readonly string[]): boolean {
+  return sameStatusSet(statuses, LIST_FILTER_STATUSES);
+}
+
+/**
+ * Lit `?status=` : absent → défaut (sauf annulée) ; `all` → tous ;
+ * une valeur ou une liste CSV → intersection avec les statuts connus.
+ */
+export function parseStatusFilterParam(raw: string | null | undefined): InscriptionStatus[] {
+  if (raw == null || raw === '') return [...DEFAULT_FILTER_STATUSES];
+  if (raw === 'all') return [...LIST_FILTER_STATUSES];
+  const parsed = sortedUniqueStatuses(raw.split(','));
+  return parsed.length > 0 ? parsed : [...DEFAULT_FILTER_STATUSES];
+}
+
+/**
+ * Sérialise pour l'URL : `null` si défaut (paramètre omis), `all` si tous,
+ * sinon CSV ordonné.
+ */
+export function serializeStatusFilterParam(statuses: readonly string[]): string | null {
+  const normalized = sortedUniqueStatuses(statuses);
+  if (isDefaultStatusFilter(normalized)) return null;
+  if (isAllStatusFilter(normalized)) return 'all';
+  return normalized.join(',');
+}
+
+export function toggleStatusInFilter(
+  current: readonly InscriptionStatus[],
+  status: InscriptionStatus
+): InscriptionStatus[] {
+  if (current.includes(status)) {
+    return current.filter((value) => value !== status);
+  }
+  return sortedUniqueStatuses([...current, status]);
+}
+
+/**
+ * Libellé compact du déclencheur du filtre multi-statuts.
+ */
+export function describeStatusFilter(
+  statuses: readonly string[],
+  lang: 'fr' | 'pt-BR' | 'en'
+): string {
+  if (isAllStatusFilter(statuses)) {
+    return lang === 'pt-BR' ? 'Todos os status' : lang === 'en' ? 'All statuses' : 'Tous les statuts';
+  }
+  if (isDefaultStatusFilter(statuses)) {
+    return lang === 'pt-BR'
+      ? 'Todos exceto cancelados'
+      : lang === 'en'
+        ? 'All except cancelled'
+        : 'Tous sauf annulés';
+  }
+  if (statuses.length === 0) {
+    return lang === 'pt-BR' ? 'Nenhum status' : lang === 'en' ? 'No status' : 'Aucun statut';
+  }
+  if (statuses.length === 1) {
+    return getStatusLabel(statuses[0], lang);
+  }
+  if (statuses.length <= 2) {
+    return statuses.map((status) => getStatusLabel(status, lang)).join(', ');
+  }
+  const count = String(statuses.length);
+  return lang === 'pt-BR'
+    ? `${count} status`
+    : lang === 'en'
+      ? `${count} statuses`
+      : `${count} statuts`;
+}
+
 // "Active" statuses (for counting active formations)
 export const ACTIVE_STATUSES: InscriptionStatus[] = ['en_cours'];
 
