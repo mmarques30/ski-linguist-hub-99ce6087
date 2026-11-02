@@ -60,9 +60,19 @@ import { fr, ptBR, enUS } from "date-fns/locale";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSeasonFilter } from "@/contexts/SeasonContext";
 import { LANGUAGE_LABELS } from "@/lib/language-catalog";
-import { getStatusLabel } from "@/lib/inscription-status";
+import {
+  DEFAULT_FILTER_STATUSES,
+  describeStatusFilter,
+  getStatusLabel,
+  isAllStatusFilter,
+  isDefaultStatusFilter,
+  parseStatusFilterParam,
+  serializeStatusFilterParam,
+  type InscriptionStatus,
+} from "@/lib/inscription-status";
 import { EndPackDialog } from "@/components/endpack/EndPackDialog";
 import { InscriptionFormDialog } from "@/components/inscriptions/InscriptionFormDialog";
+import { InscriptionStatusFilter } from "@/components/inscriptions/InscriptionStatusFilter";
 import { toast } from "sonner";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import {
@@ -111,31 +121,6 @@ const translations = {
     fr: "Rechercher par nom, email ou code...",
     "pt-BR": "Buscar por nome, e-mail ou código...",
     en: "Search by name, email or code...",
-  },
-  allStatuses: {
-    fr: "Tous les statuts",
-    "pt-BR": "Todos os status",
-    en: "All statuses",
-  },
-  statusInProgress: {
-    fr: "En cours",
-    "pt-BR": "Em andamento",
-    en: "In Progress",
-  },
-  statusBilled: {
-    fr: "Facturée",
-    "pt-BR": "Faturada",
-    en: "Billed",
-  },
-  statusCompleted: {
-    fr: "Terminée",
-    "pt-BR": "Concluída",
-    en: "Completed",
-  },
-  statusCancelled: {
-    fr: "Annulée",
-    "pt-BR": "Cancelada",
-    en: "Cancelled",
   },
   allLanguages: {
     fr: "Toutes les langues",
@@ -302,11 +287,11 @@ const translations = {
 };
 
 export default function Inscriptions() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const statusFromUrl = searchParams.get("status");
   const languageFromUrl = searchParams.get("language");
-  const [statusFilter, setStatusFilter] = useState(
-    () => statusFromUrl || "all"
+  const [statusFilters, setStatusFilters] = useState<InscriptionStatus[]>(() =>
+    parseStatusFilterParam(statusFromUrl)
   );
   const [languageFilter, setLanguageFilter] = useState(
     () => languageFromUrl || "all"
@@ -323,8 +308,17 @@ export default function Inscriptions() {
   const editable = canEdit("inscriptions");
   const deleteInscription = useDeleteInscription();
 
+  const applyStatusFilters = (next: InscriptionStatus[]) => {
+    setStatusFilters(next);
+    const params = new URLSearchParams(searchParams);
+    const serialized = serializeStatusFilterParam(next);
+    if (serialized == null) params.delete("status");
+    else params.set("status", serialized);
+    setSearchParams(params, { replace: true });
+  };
+
   useEffect(() => {
-    if (statusFromUrl) setStatusFilter(statusFromUrl);
+    setStatusFilters(parseStatusFilterParam(statusFromUrl));
   }, [statusFromUrl]);
 
   // Les répartitions du tableau de bord pointent ici avec ?language=…
@@ -332,8 +326,12 @@ export default function Inscriptions() {
     if (languageFromUrl) setLanguageFilter(languageFromUrl);
   }, [languageFromUrl]);
 
+  const queryStatuses = isAllStatusFilter(statusFilters)
+    ? undefined
+    : statusFilters;
+
   const { data: inscriptions, isLoading, error, refetch } = useInscriptions({
-    status: statusFilter,
+    statuses: queryStatuses,
     language: languageFilter,
     search: search || undefined,
     seasonId,
@@ -415,11 +413,11 @@ export default function Inscriptions() {
   );
 
   const activeFilters: Array<{ key: string; label: string; onRemove: () => void }> = [];
-  if (statusFilter !== "all") {
+  if (!isDefaultStatusFilter(statusFilters)) {
     activeFilters.push({
       key: "status",
-      label: `${t(translations.status)} : ${getStatusLabel(statusFilter, language)}`,
-      onRemove: () => setStatusFilter("all"),
+      label: `${t(translations.status)} : ${describeStatusFilter(statusFilters, language)}`,
+      onRemove: () => applyStatusFilters([...DEFAULT_FILTER_STATUSES]),
     });
   }
   if (languageFilter !== "all") {
@@ -739,7 +737,7 @@ export default function Inscriptions() {
             tone="navy"
             loading={portfolioLoading}
             onClick={() => {
-              setStatusFilter("all");
+              applyStatusFilters([...DEFAULT_FILTER_STATUSES]);
               setLanguageFilter("all");
               setSearch("");
             }}
@@ -755,7 +753,7 @@ export default function Inscriptions() {
             icon={ClipboardList}
             tone="gold"
             loading={isLoading}
-            onClick={() => setStatusFilter("all")}
+            onClick={() => applyStatusFilters([...DEFAULT_FILTER_STATUSES])}
           />
           <StatTile
             label={getStatusLabel("en_attente", language)}
@@ -764,7 +762,7 @@ export default function Inscriptions() {
             icon={Clock}
             tone="orange"
             loading={isLoading}
-            onClick={() => setStatusFilter("en_attente")}
+            onClick={() => applyStatusFilters(["en_attente"])}
           />
           <StatTile
             label={getStatusLabel("en_cours", language)}
@@ -773,7 +771,7 @@ export default function Inscriptions() {
             icon={PlayCircle}
             tone="teal"
             loading={isLoading}
-            onClick={() => setStatusFilter("en_cours")}
+            onClick={() => applyStatusFilters(["en_cours"])}
           />
           <StatTile
             label={getStatusLabel("terminee", language)}
@@ -782,7 +780,7 @@ export default function Inscriptions() {
             icon={CheckCircle2}
             tone="purple"
             loading={isLoading}
-            onClick={() => setStatusFilter("terminee")}
+            onClick={() => applyStatusFilters(["terminee"])}
           />
         </StatTileGrid>
 
@@ -843,21 +841,11 @@ export default function Inscriptions() {
               }}
               filters={
                 <>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[160px]">
-                      <SelectValue placeholder={t(translations.status)} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t(translations.allStatuses)}</SelectItem>
-                      <SelectItem value="brouillon">{language === "pt-BR" ? "Rascunho" : language === "en" ? "Draft" : "Brouillon"}</SelectItem>
-                      <SelectItem value="en_attente">{language === "pt-BR" ? "Pendente" : language === "en" ? "Pending" : "En attente"}</SelectItem>
-                      <SelectItem value="confirmee">{language === "pt-BR" ? "Confirmada" : language === "en" ? "Confirmed" : "Confirmée"}</SelectItem>
-                      <SelectItem value="en_cours">{t(translations.statusInProgress)}</SelectItem>
-                      <SelectItem value="terminee">{t(translations.statusCompleted)}</SelectItem>
-                      <SelectItem value="facturee">{t(translations.statusBilled)}</SelectItem>
-                      <SelectItem value="annulee">{t(translations.statusCancelled)}</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <InscriptionStatusFilter
+                    value={statusFilters}
+                    onChange={applyStatusFilters}
+                    language={language}
+                  />
                   <Select value={languageFilter} onValueChange={setLanguageFilter}>
                     <SelectTrigger className="w-[160px]">
                       <SelectValue placeholder={t(translations.language)} />
@@ -877,7 +865,7 @@ export default function Inscriptions() {
               onClearAll={
                 activeFilters.length > 0
                   ? () => {
-                      setStatusFilter("all");
+                      applyStatusFilters([...DEFAULT_FILTER_STATUSES]);
                       setLanguageFilter("all");
                       setSearch("");
                     }
