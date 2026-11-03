@@ -10,7 +10,14 @@
     "test_at": "2026-10-22T10:00:00+02:00",
     "previous_test": false,
     "payment": "school_st_gervais_batch",
-    "scores": [2, 1, 1.5, 1.5, 1, 1.5],
+    "scores": [
+      2,
+      1,
+      1.5,
+      1.5,
+      1,
+      1.5
+    ],
     "cecrl": "A2+",
     "instructor_first_name": "Anna",
     "instructor_last_name": "Tessier",
@@ -22,7 +29,9 @@
     "concl": "Continuez à enrichir le vocabulaire (général et technique) et à consolider la grammaire pour gagner en aisance.",
     "pdf_habillage": "esf",
     "send_mode": "school_billed_no_invoice",
-    "school_cc": ["administration@esf-saintgervais.com"],
+    "school_cc": [
+      "administration@esf-saintgervais.com"
+    ],
     "note": "D'abord envoyé école seule 03/11 ; TO candidat margot.dumez@gmail.com ensuite."
   },
   {
@@ -41,7 +50,14 @@
     "payment_date": "2026-10-05",
     "invoice_number": "26-27.14341",
     "invoice_seq": 14341,
-    "scores": [2.5, 2, 1.5, 1.5, 2, 2],
+    "scores": [
+      2.5,
+      2,
+      1.5,
+      1.5,
+      2,
+      2
+    ],
     "cecrl": "B1",
     "instructor_first_name": "Anna",
     "instructor_last_name": "Tessier",
@@ -53,7 +69,10 @@
     "concl": "Bonne continuation !",
     "pdf_habillage": "esf",
     "send_mode": "stripe_paid_invoice",
-    "school_cc": ["contact@esf-courchevel.com", "direction@esf-courchevel.com"]
+    "school_cc": [
+      "contact@esf-courchevel.com",
+      "direction@esf-courchevel.com"
+    ]
   },
   {
     "key": "victor-dorn",
@@ -66,7 +85,14 @@
     "test_at": "2026-10-29T10:00:00+01:00",
     "previous_test": false,
     "payment": "school_st_gervais_batch",
-    "scores": [2, 1.5, 1, 1.5, 1.5, 1.5],
+    "scores": [
+      2,
+      1.5,
+      1,
+      1.5,
+      1.5,
+      1.5
+    ],
     "cecrl": "A2+",
     "instructor_first_name": "Carole",
     "instructor_last_name": "Mollard",
@@ -78,7 +104,9 @@
     "concl": "Votre niveau vous permet de comprendre globalement et de vous exprimer en général.",
     "pdf_habillage": "esf",
     "send_mode": "school_billed_no_invoice",
-    "school_cc": ["administration@esf-saintgervais.com"]
+    "school_cc": [
+      "administration@esf-saintgervais.com"
+    ]
   },
   {
     "key": "sasha-gonin",
@@ -91,7 +119,14 @@
     "test_at": "2026-10-29T11:00:00+01:00",
     "previous_test": true,
     "payment": "bank_2210",
-    "scores": [2.5, 2.5, 2.5, 2.5, 2.5, 2.5],
+    "scores": [
+      2.5,
+      2.5,
+      2.5,
+      2.5,
+      2.5,
+      2.5
+    ],
     "cecrl": "B1+",
     "instructor_first_name": "Carole",
     "instructor_last_name": "Mollard",
@@ -103,7 +138,10 @@
     "concl": "Vous avez un niveau autonome qui demande à être amélioré sur le plan de la grammaire.",
     "pdf_habillage": "esf",
     "send_mode": "school_billed_no_invoice",
-    "school_cc": ["ski@esfcourchevel.com", "sebdame@esfcourchevel.com"],
+    "school_cc": [
+      "ski@esfcourchevel.com",
+      "sebdame@esfcourchevel.com"
+    ],
     "note": "Nouveau test 29/10. Virement 45 € 22/10/2026 confirmé Paula (VIR INST — VIREMENT TEST … 29 OCTOBRE). Envoi différé."
   },
   {
@@ -116,8 +154,15 @@
     "profession": "moniteur",
     "test_at": "2026-10-29T12:00:00+01:00",
     "previous_test": false,
-    "payment": "paid_2026-11-03",
-    "scores": [3, 3.5, 3, 3.5, 3.5, 3.5],
+    "payment": "partial_40_balance_5",
+    "scores": [
+      3,
+      3.5,
+      3,
+      3.5,
+      3.5,
+      3.5
+    ],
     "cecrl": "B2+",
     "instructor_first_name": "Carole",
     "instructor_last_name": "Mollard",
@@ -130,8 +175,11 @@
     "pdf_habillage": "ecole_ski",
     "pdf_source": "prosneige_dotx",
     "send_mode": "school_billed_no_invoice",
-    "school_cc": ["sam@prosneige.fr", "nathan@prosneige.fr"],
-    "note": "Notes +0,5 vs Mollard. Prosneige DOTX. Payé 03/11. Envoyé 03/11 Resend 01a1a1af-459a-7216-8205-0e1439b2c3f3 (CC Sam+Nathan, BCC info@fli.fr)."
+    "school_cc": [
+      "sam@prosneige.fr",
+      "nathan@prosneige.fr"
+    ],
+    "note": "Notes +0,5 → B2+. Résultat envoyé 03/11 Resend 01a1a1af-459a-7216-8205-0e1439b2c3f3. Paiement 40 € reçu (tarif 45 €) — solde 5 € à relancer (Stripe plink_1UXiBxQBleN6FLtSKAcSJiEE). Brouillon prêt, envoi relance après OK Paula."
   },
   {
     "key": "titouan-avocat-reeval",
@@ -144,7 +192,14 @@
     "test_at": "2026-10-12T10:00:00+02:00",
     "previous_test": true,
     "payment": "school",
-    "scores": [3, 1.5, 2, 2.5, 2, 2],
+    "scores": [
+      3,
+      1.5,
+      2,
+      2.5,
+      2,
+      2
+    ],
     "cecrl": "B1",
     "instructor_first_name": "Équipe",
     "instructor_last_name": "FLI",
@@ -157,8 +212,11 @@
     "note_methodologique": "Réévaluation : notes retenues = max par compétence entre Mollard (3 / 1 / 1 / 2 / 1,5 / 1,5) et réévaluation FLI (2,5 / 1,5 / 2 / 2,5 / 2 / 2) → 3 / 1,5 / 2 / 2,5 / 2 / 2 (B1 — autonomie).",
     "pdf_habillage": "esf",
     "send_mode": "school_billed_no_invoice",
-    "school_cc": ["admin@esf-lescarroz.com", "directeur@esf-lescarroz.com"],
+    "school_cc": [
+      "admin@esf-lescarroz.com",
+      "directeur@esf-lescarroz.com"
+    ],
     "email_body_extra": "Nous avons revu votre dossier après la réévaluation. Pour certaines compétences, la seconde note était inférieure à la première : nous avons choisi de conserver systématiquement la meilleure note.\n\nCe que nous observons : il vous manque de fluidité à l'oral. Vous étiez clairement stressé lors du test ; cela se sent et joue contre vous. La prononciation n'est pas très claire. Globalement, la grammaire et l'explication des mouvements techniques vont ; c'est vraiment l'expression votre point faible.\n\nIl faut pratiquer beaucoup plus : écoute de podcasts, films et séries en VO, chansons, et prise de parole régulière.",
-    "note": "Réévaluation : meilleure note / compétence. Remplace A2+ envoyé le 21/10. Pas d'envoi sans OK Paula."
+    "note": "Réévaluation B1 autonomie. Envoyé 03/11 Resend 01a1a1af-494c-70eb-b102-81d987d27c77 (CC Les Carroz, BCC info@fli.fr). Remplace A2+ du 21/10."
   }
 ]
