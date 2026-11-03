@@ -220,7 +220,7 @@ function isSamoensPortugueseOffering(
   return isSamoens && lang === "portuguese";
 }
 
-/** Samoëns anglais : on en parle à tous (directeurs + anciens toutes langues). */
+/** Samoëns anglais : badge UI — anciens du lieu Samoëns (toutes langues). */
 export function isSamoensEnglishOffering(
   offering: Pick<
     RegistrationOffering,
@@ -295,6 +295,17 @@ function placesMatch(offeringLabel: string, courseLocation: string | null | unde
   const b = normalizePlaceLabel(courseLocation);
   if (!a || !b) return false;
   return a === b || a.includes(b) || b.includes(a);
+}
+
+/** Ancien stagiaire du même lieu (label ou clé catalogue), indépendamment de la langue. */
+export function alumniPlaceMatches(
+  offering: Pick<RegistrationOffering, "location_label" | "location_key">,
+  courseLocation: string | null | undefined
+): boolean {
+  if (!courseLocation?.trim()) return false;
+  if (placesMatch(offering.location_label, courseLocation)) return true;
+  if (placesMatch(offering.location_key, courseLocation)) return true;
+  return false;
 }
 
 /** Une inscription appartient-elle à cette session catalogue ? */
@@ -682,9 +693,9 @@ ${COMMERCIAL_EMAIL_SIGNATURE}`
 /**
  * Anciens stagiaires : e-mail réel, inscription terminée/facturée,
  * pas déjà inscrit·e sur ce stage.
+ * Ciblage par **lieu** du stage (course_location), pas par langue.
  * — Méribel / Samoëns PT : aucun (Seb pour le PT).
- * — Samoëns anglais : tous les anciens (toutes langues) — « parler à tous ».
- * — Autres stages : anciens de la même langue.
+ * — Samoëns anglais : anciens du lieu Samoëns (toutes langues).
  */
 export function selectAlumniForStage(
   offering: Pick<
@@ -715,8 +726,6 @@ export function selectAlumniForStage(
 ): StageFillAlumni[] {
   if (isAlumniOutreachExcluded(offering)) return [];
 
-  const talkToEveryone = isSamoensEnglishOffering(offering);
-
   const alreadyOnStage = new Set(
     history
       .filter(
@@ -738,8 +747,7 @@ export function selectAlumniForStage(
     history
       .filter((h) => {
         if (h.status !== "terminee" && h.status !== "facturee") return false;
-        if (talkToEveryone) return true;
-        return languageKeysMatch(offering.language_label, h.language);
+        return alumniPlaceMatches(offering, h.course_location);
       })
       .map((h) => h.student_id)
   );

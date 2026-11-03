@@ -137,8 +137,8 @@ export default function StageFillPage() {
               Directeurs : un mail par station (ex. Oz — anglais + néerlandais).{" "}
               <strong>Méribel</strong> exclu (liste ESF) ·{" "}
               <strong>Samoëns portugais</strong> exclu (inscriptions avec Seb).
-              Anciens : pas Méribel / pas Samoëns PT · Samoëns anglais →{" "}
-              <em>tous</em> les anciens. Pas de prospection{" "}
+              Anciens : ciblés par <strong>lieu</strong> du stage (pas par
+              langue) · pas Méribel / pas Samoëns PT. Pas de prospection{" "}
               <code>ski_monitors</code>.
             </p>
             <p>
@@ -287,7 +287,7 @@ export default function StageFillPage() {
 
             <SectionHeading
               title="Stages (anciens stagiaires)"
-              description="Invitation + bouche-à-oreille. Hors Méribel et Samoëns PT (Seb). Samoëns anglais : tous les anciens."
+              description="Invitation + bouche-à-oreille. Anciens du même lieu (hors Méribel et Samoëns PT)."
             />
             {visible.length === 0 ? (
               <TableEmpty
@@ -332,7 +332,7 @@ export default function StageFillPage() {
                             )}
                             {samoensEn && (
                               <StatusPill tone="info">
-                                Samoëns EN — tous les anciens
+                                Samoëns EN — anciens du lieu
                               </StatusPill>
                             )}
                           </div>
