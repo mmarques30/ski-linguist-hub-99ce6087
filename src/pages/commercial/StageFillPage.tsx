@@ -92,11 +92,11 @@ export default function StageFillPage() {
               Lien d'inscription :{" "}
               <a
                 className="underline"
-                href="https://plateforme.fli.fr/register"
+                href="https://www.fli.fr/register"
                 target="_blank"
                 rel="noreferrer"
               >
-                plateforme.fli.fr/register
+                www.fli.fr/register
               </a>
               . Pipeline leads :{" "}
               <Link className="underline" to="/gestion/commercial">

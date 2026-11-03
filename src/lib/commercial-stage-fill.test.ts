@@ -189,7 +189,7 @@ describe("commercial-stage-fill", () => {
     expect(alumni.map((a) => a.studentId)).toEqual(["s1"]);
   });
 
-  it("produit des brouillons FR sans emoji, avec lien d'inscription", () => {
+  it("produit le brouillon directeur Paula (court) + lien www.fli.fr", () => {
     const off = offering({
       session_code: "S11",
       location_label: "Brides-les-Bains",
@@ -205,7 +205,11 @@ describe("commercial-stage-fill", () => {
     });
     expect(dir.subject).toContain("Russe");
     expect(dir.bodyText).toContain("Bonjour Marie,");
-    expect(dir.bodyText).toContain("plateforme.fli.fr/register");
+    expect(dir.bodyText).toContain("il nous manque encore des stagiaires");
+    expect(dir.bodyText).toContain("www.fli.fr/register");
+    expect(dir.bodyText).toContain("nous nous occupons du reste");
+    expect(dir.bodyText).toContain("équipe FLI");
+    expect(dir.bodyText).not.toContain("Paula");
     expect(dir.bodyText).not.toMatch(/[\u{1F300}-\u{1FAFF}]/u);
 
     const alum = buildAlumniRelanceDraft({ offering: off, firstName: "Léa" });
