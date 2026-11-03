@@ -131,7 +131,7 @@
     "pdf_source": "prosneige_dotx",
     "send_mode": "school_billed_no_invoice",
     "school_cc": ["sam@prosneige.fr", "nathan@prosneige.fr"],
-    "note": "Notes +0,5 vs saisie Mollard (Paula 03/11). Modèle Prosneige DOTX. Paiement reçu 03/11. Envoi après OK Paula."
+    "note": "Notes +0,5 vs Mollard. Prosneige DOTX. Payé 03/11. Envoyé 03/11 Resend 01a1a1af-459a-7216-8205-0e1439b2c3f3 (CC Sam+Nathan, BCC info@fli.fr)."
   },
   {
     "key": "titouan-avocat-reeval",
