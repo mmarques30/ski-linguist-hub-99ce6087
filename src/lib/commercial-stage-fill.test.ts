@@ -10,6 +10,7 @@ import {
   groupRowsForDirectorOutreach,
   inscriptionMatchesOffering,
   isAlumniOutreachExcluded,
+  isCommercialOutreachPersonExcluded,
   isDirectorOutreachExcluded,
   isSamoensEnglishOffering,
   minEnrollmentForOffering,
@@ -405,6 +406,31 @@ describe("commercial-stage-fill", () => {
     ]);
     expect(csv.split("\n")[0]).toBe("email;nom;detail");
     expect(csv).toContain('"a@b.fr"');
+  });
+
+  it("exclut Valérie Tuillière des relances", () => {
+    expect(isCommercialOutreachPersonExcluded("Valerie Tuilliere")).toBe(true);
+    expect(isCommercialOutreachPersonExcluded("Valérie Tuillière")).toBe(true);
+    expect(isCommercialOutreachPersonExcluded("Valerie Tulliere")).toBe(true);
+    expect(
+      selectDirectorsForStage(
+        offering({
+          session_code: "S07",
+          location_label: "ESF Oz en Oisans",
+          language_label: "Anglais",
+          partner_school_codes: ["esf-oz"],
+        }),
+        [
+          {
+            code: "esf-oz",
+            nom_affiche: "ESF Oz en Oisans",
+            station: "Oz en Oisans",
+            directeur: "Valerie Tuilliere",
+            courriel_direction: "valerie@oz.fr",
+          },
+        ]
+      )
+    ).toEqual([]);
   });
 
   it("prépare un seul mail test à info@fli.fr sans envoi masse", () => {

@@ -94,6 +94,15 @@ export const DIRECTOR_OUTREACH_EXCLUDED_SESSION_CODES = new Set([
   "S21", // Samoëns portugais
 ]);
 
+/**
+ * Personnes exclues des relances commerciales (directeurs + anciens).
+ * Noms normalisés (sans accents, minuscules) — Paula 2026-11-03.
+ */
+export const COMMERCIAL_OUTREACH_EXCLUDED_NAMES = [
+  "valerie tuilliere", // orthographe image Paula
+  "valerie tulliere", // variante / faute courante
+] as const;
+
 function stripDiacritics(value: string): string {
   return value.normalize("NFD").replace(/\p{M}/gu, "");
 }
@@ -104,6 +113,28 @@ export function normalizePlaceLabel(value: string | null | undefined): string {
     .replace(/^esf\s+/i, "")
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
+}
+
+/** Normalise un nom de personne pour exclusion (Valérie → valerie). */
+export function normalizePersonName(value: string | null | undefined): string {
+  return stripDiacritics((value ?? "").trim().toLowerCase())
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+/** True si le contact est sur la liste d'exclusion Paula. */
+export function isCommercialOutreachPersonExcluded(
+  name: string | null | undefined
+): boolean {
+  const normalized = normalizePersonName(name);
+  if (!normalized) return false;
+  return COMMERCIAL_OUTREACH_EXCLUDED_NAMES.some(
+    (excluded) =>
+      normalized === excluded ||
+      normalized.includes(excluded) ||
+      excluded.includes(normalized)
+  );
 }
 
 export function minEnrollmentForOffering(
@@ -382,6 +413,12 @@ export function selectDirectorsForOfferings(
     );
 
     if (!byPartner && !byPlace) continue;
+    if (
+      isCommercialOutreachPersonExcluded(school.directeur) ||
+      isCommercialOutreachPersonExcluded(school.nom_affiche)
+    ) {
+      continue;
+    }
     if (seen.has(picked.email.toLowerCase())) continue;
     seen.add(picked.email.toLowerCase());
     out.push({
@@ -670,6 +707,13 @@ export function selectAlumniForStage(
   for (const student of students) {
     if (!alumniIds.has(student.id)) continue;
     if (alreadyOnStage.has(student.id)) continue;
+    if (
+      isCommercialOutreachPersonExcluded(
+        `${student.first_name} ${student.last_name}`
+      )
+    ) {
+      continue;
+    }
     const email = studentEmailOrNull(student.email);
     if (!email) continue;
     const key = email.toLowerCase();
