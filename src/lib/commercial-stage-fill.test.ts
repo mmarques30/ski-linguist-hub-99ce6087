@@ -220,6 +220,8 @@ describe("commercial-stage-fill", () => {
     expect(alum.bodyText).toContain("lang=russian");
     expect(alum.bodyText).toContain("mieux préparer votre saison de ski");
     expect(alum.bodyText).toContain("Nous pensions à vous");
+    expect(alum.bodyText).toContain("bouche-à-oreille");
+    expect(alum.bodyText).toContain("en parler autour de vous");
     expect(alum.bodyText).toContain("nous vous répondons avec plaisir");
     expect(alum.bodyText.trim().endsWith("L'équipe FLI")).toBe(true);
     expect(alum.bodyText.toLowerCase()).not.toMatch(/effectif|minimum|manque encore/);

@@ -330,6 +330,8 @@ Nous avons encore des places sur ${stage}.
 Inscription en ligne (tarif selon l'école, FIF-PL possible) :
 ${url}
 
+Et si ce n'est pas pour vous cette fois-ci, n'hésitez pas à en parler autour de vous — collègues, moniteur·rices de votre école : le bouche-à-oreille reste notre meilleure pub. Ils peuvent s'inscrire au même lien, ou nous écrire et nous nous occupons du reste.
+
 Si vous avez une question sur les dates, le tarif ou le financement, répondez simplement à ce message : nous vous répondons avec plaisir.
 
 ${COMMERCIAL_EMAIL_SIGNATURE}`
