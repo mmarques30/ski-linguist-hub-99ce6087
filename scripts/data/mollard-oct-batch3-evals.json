@@ -154,7 +154,7 @@
     "profession": "moniteur",
     "test_at": "2026-10-29T12:00:00+01:00",
     "previous_test": false,
-    "payment": "partial_40_balance_5",
+    "payment": "partial_40_awaiting_transfer_5",
     "scores": [
       3,
       3.5,
@@ -179,7 +179,7 @@
       "sam@prosneige.fr",
       "nathan@prosneige.fr"
     ],
-    "note": "Notes +0,5 → B2+. Résultat envoyé 03/11 Resend 01a1a1af-459a-7216-8205-0e1439b2c3f3. Paiement 40 € reçu (tarif 45 €) — solde 5 € à relancer (Stripe plink_1UXiBxQBleN6FLtSKAcSJiEE). Brouillon prêt, envoi relance après OK Paula."
+    "note": "Notes +0,5 → B2+. Résultat envoyé 03/11 Resend 01a1a1af-459a-7216-8205-0e1439b2c3f3. Paiement 40 € reçu / tarif 45 €. Solde 5 € : Pierre fera un virement (Paula 03/11) — relance mail annulée ; lien Stripe plink_1UXiBxQBleN6FLtSKAcSJiEE désactivé."
   },
   {
     "key": "titouan-avocat-reeval",
