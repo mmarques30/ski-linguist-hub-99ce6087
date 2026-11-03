@@ -215,11 +215,14 @@ describe("commercial-stage-fill", () => {
     expect(dir.bodyText).not.toMatch(/[\u{1F300}-\u{1FAFF}]/u);
 
     const alum = buildAlumniRelanceDraft({ offering: off, firstName: "Léa" });
+    expect(alum.subject.toLowerCase()).toContain("saison");
     expect(alum.bodyText).toContain("Bonjour Léa,");
     expect(alum.bodyText).toContain("lang=russian");
-    expect(alum.bodyText).toContain("il nous manque encore des stagiaires");
-    expect(alum.bodyText).toContain("nous vous répondons rapidement");
+    expect(alum.bodyText).toContain("mieux préparer votre saison de ski");
+    expect(alum.bodyText).toContain("Nous pensions à vous");
+    expect(alum.bodyText).toContain("nous vous répondons avec plaisir");
     expect(alum.bodyText.trim().endsWith("équipe FLI")).toBe(true);
+    expect(alum.bodyText.toLowerCase()).not.toMatch(/effectif|minimum|manque encore/);
     expect(alum.bodyText).not.toMatch(/\bje\b/i);
     expect(alum.bodyText).not.toContain("Paula");
   });

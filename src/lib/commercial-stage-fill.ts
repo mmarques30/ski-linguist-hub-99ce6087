@@ -306,7 +306,7 @@ ${COMMERCIAL_EMAIL_SIGNATURE}`
   return { audience: "directeur", subject, bodyText };
 }
 
-/** Brouillon ancien stagiaire — même voix (nous + équipe FLI). */
+/** Brouillon ancien stagiaire — ton commercial, sans parler d'effectif. */
 export function buildAlumniRelanceDraft(input: {
   offering: RegistrationOffering;
   firstName: string;
@@ -319,16 +319,18 @@ export function buildAlumniRelanceDraft(input: {
     input.registerUrl ?? `${COMMERCIAL_REGISTER_URL}?lang=${offering.language_key}`;
   const stage = stageLine(offering);
 
-  const subject = `FLI — une place pour vous ? ${offering.language_label} · ${offering.location_label}`;
+  const subject = `Reprendre un stage FLI pour bien préparer votre saison ?`;
 
   const bodyText = `${greeting}
 
-Vous avez déjà suivi une formation FLI — pour le moment il nous manque encore des stagiaires pour le stage ${stage}.
+Nous pensions à vous : et si vous recommenciez un stage avec nous pour mieux préparer votre saison de ski ?
+
+Nous avons encore des places sur ${stage}.
 
 Inscription en ligne (tarif selon l'école, FIF-PL possible) :
 ${url}
 
-Si vous avez une question sur les dates, le tarif ou le financement, répondez simplement à ce message : nous vous répondons rapidement.
+Si vous avez une question sur les dates, le tarif ou le financement, répondez simplement à ce message : nous vous répondons avec plaisir.
 
 ${COMMERCIAL_EMAIL_SIGNATURE}`
     .replace(/\n{3,}/g, "\n\n")
