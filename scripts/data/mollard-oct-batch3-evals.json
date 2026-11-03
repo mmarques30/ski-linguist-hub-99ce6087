@@ -2,7 +2,7 @@
   {
     "key": "margot-dumez",
     "name": "Margot Dumez",
-    "email": null,
+    "email": "margot.dumez@gmail.com",
     "school": "ESF SAINT GERVAIS",
     "sponsor_type": "esf",
     "carte": "44277",
@@ -21,8 +21,9 @@
     "points": null,
     "concl": "Continuez à enrichir le vocabulaire (général et technique) et à consolider la grammaire pour gagner en aisance.",
     "pdf_habillage": "esf",
-    "send_mode": "school_billed_need_email",
-    "school_cc": ["administration@esf-saintgervais.com"]
+    "send_mode": "school_billed_no_invoice",
+    "school_cc": ["administration@esf-saintgervais.com"],
+    "note": "D'abord envoyé école seule 03/11 ; TO candidat margot.dumez@gmail.com ensuite."
   },
   {
     "key": "thibault-dussenwart",
