@@ -526,6 +526,49 @@ ${input.draftBody}`
   return { subject, bodyText };
 }
 
+/**
+ * Digest unique après une campagne réelle : 1 mail à info@fli.fr listant
+ * les envois (pas une copie BCC par destinataire).
+ */
+export function buildCommercialCampaignDigest(input: {
+  audience: RelanceAudience;
+  draftSubject: string;
+  sent: Array<{ email: string; name: string; ok: boolean }>;
+  contextLabel?: string;
+}): { subject: string; bodyText: string } {
+  const ok = input.sent.filter((s) => s.ok);
+  const failed = input.sent.filter((s) => !s.ok);
+  const audienceLabel =
+    input.audience === "directeur" ? "directeurs" : "anciens stagiaires";
+  const context = input.contextLabel?.trim()
+    ? ` · ${input.contextLabel.trim()}`
+    : "";
+  const listOk = ok
+    .slice(0, 40)
+    .map((r) => `— ${r.name} <${r.email}>`)
+    .join("\n");
+  const moreOk =
+    ok.length > 40 ? `\n… et ${ok.length - 40} autre${ok.length - 40 > 1 ? "s" : ""}` : "";
+  const listFail = failed
+    .slice(0, 20)
+    .map((r) => `— ${r.name} <${r.email}>`)
+    .join("\n");
+
+  const subject = `[FLI] Relance ${audienceLabel}${context} — ${ok.length} envoyé${ok.length !== 1 ? "s" : ""}${failed.length ? `, ${failed.length} échec${failed.length !== 1 ? "s" : ""}` : ""}`;
+
+  const bodyText = `Digest campagne commerciale (1 seul résumé, pas de BCC unitaire).
+
+Campagne : ${audienceLabel}${context}
+Sujet client : ${input.draftSubject}
+Envoyés : ${ok.length}
+${listOk || "— (aucun)"}${moreOk}
+${failed.length ? `\nÉchecs : ${failed.length}\n${listFail || "—"}` : ""}`
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  return { subject, bodyText };
+}
+
 function formatDirectorGreeting(directeur: string | null): string {
   const name = (directeur ?? "").trim();
   if (!name) return "Bonjour,";

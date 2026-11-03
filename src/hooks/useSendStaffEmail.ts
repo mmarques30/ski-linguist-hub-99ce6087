@@ -17,6 +17,8 @@ export type SendStaffEmailInput = {
   cc?: string[];
   attachments?: SendStaffEmailAttachment[];
   templateSlug?: "staff_manual" | "formateur_mise_en_relation";
+  /** Campagne commerciale : pas de BCC unitaire (digest séparé). */
+  skipNotifyBcc?: boolean;
 };
 
 export function useSendStaffEmail() {

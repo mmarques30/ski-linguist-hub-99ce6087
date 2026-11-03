@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { RegistrationOffering } from "@/lib/registration-offerings";
 import {
   buildAlumniRelanceDraft,
+  buildCommercialCampaignDigest,
   buildCommercialTestEnvelope,
   buildDirectorRelanceDraft,
   COMMERCIAL_TEST_TO,
@@ -450,5 +451,23 @@ describe("commercial-stage-fill", () => {
     expect(envelope.bodyText).toContain("dir@oz.fr");
     expect(envelope.bodyText).toContain("Sujet client");
     expect(envelope.bodyText).toContain("Corps client");
+  });
+
+  it("prépare un digest unique après campagne (sans BCC unitaire)", () => {
+    const digest = buildCommercialCampaignDigest({
+      audience: "directeur",
+      draftSubject: "Sujet client",
+      sent: [
+        { email: "dir@oz.fr", name: "Jean", ok: true },
+        { email: "dir2@oz.fr", name: "Marie", ok: false },
+      ],
+      contextLabel: "ESF Oz en Oisans",
+    });
+    expect(digest.subject).toContain("[FLI] Relance directeurs");
+    expect(digest.subject).toContain("1 envoyé");
+    expect(digest.subject).toContain("1 échec");
+    expect(digest.bodyText).toContain("dir@oz.fr");
+    expect(digest.bodyText).toContain("dir2@oz.fr");
+    expect(digest.bodyText).toContain("Sujet client");
   });
 });

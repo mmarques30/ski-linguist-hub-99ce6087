@@ -40,8 +40,9 @@ type Props = {
 };
 
 /**
- * Prépare les brouillons et envoie un seul mail test à info@fli.fr.
- * Pas d'envoi de masse ici (évite une copie BCC par destinataire).
+ * Prépare le brouillon et envoie un seul mail à info@fli.fr (bouton Envoyer).
+ * Pas d'envoi de masse ici tant que l'edge skipNotifyBcc + digest n'est pas
+ * déployé — évite une copie BCC par destinataire.
  */
 export function StageRelanceDialog({
   open,
@@ -131,14 +132,14 @@ export function StageRelanceDialog({
     URL.revokeObjectURL(url);
   };
 
-  const canTest =
+  const canSend =
     canSendStaffEmail({ subject, bodyText }) &&
     recipients.length > 0 &&
     !sending &&
     !sendEmail.isPending;
 
-  const handleSendTest = async () => {
-    if (!canTest) return;
+  const handleSend = async () => {
+    if (!canSend) return;
     setSending(true);
     try {
       const envelope = buildCommercialTestEnvelope({
@@ -155,10 +156,10 @@ export function StageRelanceDialog({
         recipientName: "FLI",
         templateSlug: "staff_manual",
       });
-      toast.success(`Mail test envoyé à ${COMMERCIAL_TEST_TO} (1 seul message)`);
+      toast.success(`Envoyé à ${COMMERCIAL_TEST_TO} (1 seul message)`);
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Envoi test impossible");
+      toast.error(error instanceof Error ? error.message : "Envoi impossible");
     } finally {
       setSending(false);
     }
@@ -179,10 +180,10 @@ export function StageRelanceDialog({
 
         <Alert>
           <AlertDescription>
-            Pas d'envoi de masse ici : un seul <strong>mail test</strong> part à{" "}
-            <code>{COMMERCIAL_TEST_TO}</code> (brouillon + liste prévue). Aucune
-            copie par destinataire. La campagne réelle se fera après ton OK, sans
-            te BCC à chaque personne.
+            Le bouton <strong>Envoyer</strong> envoie <strong>un seul</strong>{" "}
+            message à <code>{COMMERCIAL_TEST_TO}</code> (brouillon + liste des{" "}
+            {recipients.length} destinataire{recipients.length !== 1 ? "s" : ""}{" "}
+            prévus). Aucune copie par personne.
           </AlertDescription>
         </Alert>
 
@@ -191,7 +192,7 @@ export function StageRelanceDialog({
             {recipients.length} destinataire{recipients.length !== 1 ? "s" : ""}{" "}
             prévus
           </StatusPill>
-          <StatusPill tone="success">Test → {COMMERCIAL_TEST_TO}</StatusPill>
+          <StatusPill tone="success">Envoi → {COMMERCIAL_TEST_TO}</StatusPill>
         </div>
 
         {recipients.length > 0 && (
@@ -203,13 +204,15 @@ export function StageRelanceDialog({
               </li>
             ))}
             {recipients.length > 40 && (
-              <li className="text-muted-foreground">… et {recipients.length - 40} autres</li>
+              <li className="text-muted-foreground">
+                … et {recipients.length - 40} autres
+              </li>
             )}
           </ul>
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="stage-relance-subject">Sujet (brouillon client)</Label>
+          <Label htmlFor="stage-relance-subject">Sujet</Label>
           <Input
             id="stage-relance-subject"
             value={subject}
@@ -218,7 +221,7 @@ export function StageRelanceDialog({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="stage-relance-body">Message (brouillon client)</Label>
+          <Label htmlFor="stage-relance-body">Message</Label>
           <Textarea
             id="stage-relance-body"
             value={bodyText}
@@ -244,13 +247,13 @@ export function StageRelanceDialog({
               CSV
             </Button>
           </div>
-          <Button type="button" onClick={handleSendTest} disabled={!canTest}>
+          <Button type="button" onClick={handleSend} disabled={!canSend}>
             {sending || sendEmail.isPending ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <Send className="mr-2 h-4 w-4" />
             )}
-            Mail test → {COMMERCIAL_TEST_TO}
+            Envoyer
           </Button>
         </DialogFooter>
       </DialogContent>
