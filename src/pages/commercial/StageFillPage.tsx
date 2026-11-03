@@ -30,6 +30,7 @@ import {
   groupRowsForDirectorOutreach,
   isAlumniOutreachExcluded,
   isDirectorOutreachExcluded,
+  isSainteFoyOffering,
   isSamoensEnglishOffering,
   type RelanceAudience,
   type StageFillRow,
@@ -138,8 +139,8 @@ export default function StageFillPage() {
               <strong>Méribel</strong> exclu (liste ESF) ·{" "}
               <strong>Samoëns portugais</strong> exclu (inscriptions avec Seb).
               Anciens : ciblés par <strong>lieu</strong> du stage (pas par
-              langue) · pas Méribel / pas Samoëns PT. Pas de prospection{" "}
-              <code>ski_monitors</code>.
+              langue) · Sainte-Foy → anciens d&apos;Aime · pas Méribel / pas
+              Samoëns PT. Pas de prospection <code>ski_monitors</code>.
             </p>
             <p>
               <strong>Envoyer</strong> = mail réel à chaque destinataire (sans
@@ -307,6 +308,7 @@ export default function StageFillPage() {
                     : alumniFor(row.offering).length;
                   const dirExcluded = isDirectorOutreachExcluded(row.offering);
                   const samoensEn = isSamoensEnglishOffering(row.offering);
+                  const sainteFoy = isSainteFoyOffering(row.offering);
                   const stationKey = directorStationKey(row.offering);
                   return (
                     <SurfaceCard key={row.offering.id} className="p-4">
@@ -333,6 +335,11 @@ export default function StageFillPage() {
                             {samoensEn && (
                               <StatusPill tone="info">
                                 Samoëns EN — anciens du lieu
+                              </StatusPill>
+                            )}
+                            {sainteFoy && (
+                              <StatusPill tone="info">
+                                Anciens d&apos;Aime
                               </StatusPill>
                             )}
                           </div>

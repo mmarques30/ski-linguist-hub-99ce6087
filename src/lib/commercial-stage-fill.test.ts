@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { RegistrationOffering } from "@/lib/registration-offerings";
 import {
+  alumniPlaceMatches,
   buildAlumniRelanceDraft,
   buildCommercialCampaignDigest,
   buildCommercialTestEnvelope,
   buildDirectorRelanceDraft,
   COMMERCIAL_TEST_TO,
+  isSainteFoyOffering,
   computeStageFillRows,
   countsTowardStageFill,
   groupRowsForDirectorOutreach,
@@ -198,6 +200,51 @@ describe("commercial-stage-fill", () => {
       ]
     );
     expect(alumni.map((a) => a.studentId)).toEqual(["s1"]);
+  });
+
+  it("Sainte-Foy reprend les anciens d'Aime", () => {
+    const sainteFoy = offering({
+      session_code: "S01",
+      location_label: "Sainte-Foy-Tarentaise",
+      location_key: "sainte-foy-tarentaise",
+      language_label: "Portugais brésilien",
+      language_key: "portuguese",
+      start_date: "2026-11-23",
+      end_date: "2026-11-27",
+      partner_school_codes: [],
+    });
+    expect(isSainteFoyOffering(sainteFoy)).toBe(true);
+    expect(alumniPlaceMatches(sainteFoy, "Aime La Plagne")).toBe(true);
+    expect(alumniPlaceMatches(sainteFoy, "ESF Aime La Plagne")).toBe(true);
+    expect(alumniPlaceMatches(sainteFoy, "Aime")).toBe(true);
+    expect(alumniPlaceMatches(sainteFoy, "Val d'Isère")).toBe(false);
+
+    const alumni = selectAlumniForStage(
+      sainteFoy,
+      [
+        { id: "aime", first_name: "Ana", last_name: "Aime", email: "aime@ex.fr" },
+        { id: "val", first_name: "Val", last_name: "Isere", email: "val@ex.fr" },
+      ],
+      [
+        {
+          student_id: "aime",
+          language: "Portugais brésilien",
+          status: "facturee",
+          start_date: "2025-01-01",
+          end_date: "2025-01-05",
+          course_location: "Aime La Plagne",
+        },
+        {
+          student_id: "val",
+          language: "Portugais brésilien",
+          status: "facturee",
+          start_date: "2025-01-01",
+          end_date: "2025-01-05",
+          course_location: "Val d'Isère",
+        },
+      ]
+    );
+    expect(alumni.map((a) => a.studentId)).toEqual(["aime"]);
   });
 
   it("cible les anciens par lieu, pas par langue", () => {

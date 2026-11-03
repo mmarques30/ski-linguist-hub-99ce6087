@@ -297,14 +297,50 @@ function placesMatch(offeringLabel: string, courseLocation: string | null | unde
   return a === b || a.includes(b) || b.includes(a);
 }
 
-/** Ancien stagiaire du même lieu (label ou clé catalogue), indépendamment de la langue. */
+/** Stage Sainte-Foy-Tarentaise (S01) — Paula : anciens d'Aime / Aime La Plagne. */
+export function isSainteFoyOffering(
+  offering: Pick<
+    RegistrationOffering,
+    "session_code" | "location_label" | "location_key"
+  >
+): boolean {
+  const code = (offering.session_code ?? "").trim().toUpperCase();
+  if (code === "S01") return true;
+  const place = normalizePlaceLabel(offering.location_label);
+  const key = normalizePlaceLabel(offering.location_key);
+  return place.includes("sainte foy") || key.includes("sainte foy");
+}
+
+/**
+ * Lieux historiques additionnels pour le ciblage anciens
+ * (ex. Sainte-Foy → Aime, Paula 2026-11-03).
+ */
+export function alumniPlaceAliasLabels(
+  offering: Pick<
+    RegistrationOffering,
+    "session_code" | "location_label" | "location_key"
+  >
+): string[] {
+  if (isSainteFoyOffering(offering)) {
+    return ["Aime", "Aime La Plagne", "ESF Aime La Plagne"];
+  }
+  return [];
+}
+
+/** Ancien stagiaire du même lieu (ou alias Paula), indépendamment de la langue. */
 export function alumniPlaceMatches(
-  offering: Pick<RegistrationOffering, "location_label" | "location_key">,
+  offering: Pick<
+    RegistrationOffering,
+    "session_code" | "location_label" | "location_key"
+  >,
   courseLocation: string | null | undefined
 ): boolean {
   if (!courseLocation?.trim()) return false;
   if (placesMatch(offering.location_label, courseLocation)) return true;
   if (placesMatch(offering.location_key, courseLocation)) return true;
+  for (const alias of alumniPlaceAliasLabels(offering)) {
+    if (placesMatch(alias, courseLocation)) return true;
+  }
   return false;
 }
 
@@ -695,7 +731,7 @@ ${COMMERCIAL_EMAIL_SIGNATURE}`
  * pas déjà inscrit·e sur ce stage.
  * Ciblage par **lieu** du stage (course_location), pas par langue.
  * — Méribel / Samoëns PT : aucun (Seb pour le PT).
- * — Samoëns anglais : anciens du lieu Samoëns (toutes langues).
+ * — Sainte-Foy : anciens d'Aime / Aime La Plagne (+ Sainte-Foy si présent).
  */
 export function selectAlumniForStage(
   offering: Pick<
