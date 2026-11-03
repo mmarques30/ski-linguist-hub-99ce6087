@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import {
-  Plus, TrendingUp, Euro, Clock, Target, AlertTriangle, Link2, KanbanSquare, BarChart3,
+  Plus, TrendingUp, Euro, Clock, Target, AlertTriangle, Link2, KanbanSquare, BarChart3, Users,
 } from "lucide-react";
 import {
   useLeads, useLeadKPIs, useUpdateLead,
