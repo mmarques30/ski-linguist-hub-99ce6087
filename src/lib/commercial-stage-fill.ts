@@ -260,7 +260,7 @@ export function selectDirectorsForStage(
 export const COMMERCIAL_REGISTER_URL = "https://www.fli.fr/register";
 
 /** Signature commerciale — toujours « nous », jamais un prénom. */
-export const COMMERCIAL_EMAIL_SIGNATURE = "équipe FLI";
+export const COMMERCIAL_EMAIL_SIGNATURE = "L'équipe FLI";
 
 function formatDirectorGreeting(directeur: string | null): string {
   const name = (directeur ?? "").trim();
