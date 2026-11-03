@@ -139,7 +139,9 @@ def build_pack(
 
 
 def pierre_boes_data() -> dict[str, str]:
-    """Scores = ordre C.5 : comp / expr / struct / tech / conv / générale."""
+    """Scores = ordre C.5 : comp / expr / struct / tech / conv / générale.
+    Notes retenues = saisie Mollard + 0,5 (Paula 03/11/2026).
+    """
     return {
         "title_year": "2026",
         "footer_version": "Version du 03/11/2026",
@@ -149,12 +151,12 @@ def pierre_boes_data() -> dict[str, str]:
         "Langue_évaluée": "Anglais",
         "Date_de_lévaluation": "29/10/2026",
         "Évaluateurrice": "C. Mollard",
-        "Expression": "3 - B2",
-        "Conversation_Générale": "3 - B2",
-        "Structures_de_la_langue": "2,5 - B1+",
-        "Compréhension": "2,5 - B1+",
-        "Expression_Technique_et_spécifique": "3 - B2",
-        "Appréciation_générale_moyenne": "3 - B2",
+        "Expression": "3,5 - B2+",
+        "Conversation_Générale": "3,5 - B2+",
+        "Structures_de_la_langue": "3 - B2",
+        "Compréhension": "3 - B2",
+        "Expression_Technique_et_spécifique": "3,5 - B2+",
+        "Appréciation_générale_moyenne": "3,5 - B2+",
         "Introduction": (
             "Vous vous exprimez d'une façon assez claire et autonome. "
             "Vous pouvez gérer une situation, donner des explications techniques "
@@ -180,7 +182,7 @@ def pierre_boes_data() -> dict[str, str]:
         "Appréciation": "",
         "Points_de_grammaire_à_travailler": "",
         "Conclusion": (
-            "En conclusion vous avez un niveau opérationnel qui vous permet de "
+            "En conclusion vous avez un niveau opérationnel (B2+) qui vous permet de "
             "communiquer correctement avec la clientèle anglophone."
         ),
     }

@@ -116,9 +116,9 @@
     "profession": "moniteur",
     "test_at": "2026-10-29T12:00:00+01:00",
     "previous_test": false,
-    "payment": "pending_unpaid",
-    "scores": [2.5, 3, 2.5, 3, 3, 3],
-    "cecrl": "B2",
+    "payment": "paid_2026-11-03",
+    "scores": [3, 3.5, 3, 3.5, 3.5, 3.5],
+    "cecrl": "B2+",
     "instructor_first_name": "Carole",
     "instructor_last_name": "Mollard",
     "intro": "Vous vous exprimez d'une façon assez claire et autonome. Vous pouvez gérer une situation, donner des explications techniques et soutenir une conversation avec un client.",
@@ -126,12 +126,12 @@
     "grammar": "Les structures grammaticales simples et complexes sont bien maîtrisées malgré quelques rares erreurs d'inattention qui ne gênent pas la communication.",
     "tech": "Vous avez su utiliser un vocabulaire technique plutôt approprié lors de l'explication du mouvement technique et avez pris le temps d'en préciser les différentes étapes. Vocabulaire : obligatoire = mandatory.",
     "points": null,
-    "concl": "En conclusion vous avez un niveau opérationnel qui vous permet de communiquer correctement avec la clientèle anglophone.",
+    "concl": "En conclusion vous avez un niveau opérationnel (B2+) qui vous permet de communiquer correctement avec la clientèle anglophone.",
     "pdf_habillage": "ecole_ski",
     "pdf_source": "prosneige_dotx",
-    "send_mode": "pending_payment",
+    "send_mode": "school_billed_no_invoice",
     "school_cc": ["sam@prosneige.fr", "nathan@prosneige.fr"],
-    "note": "Modèle Word Prosneige (docs/evaluation-resultats/Evaluation_PROSNEIGE_2025.dotx) — ≠ ESF. Pack prêt (DOCX+PDF). Paiement 45 € non reçu → pas d'envoi tant que Paula n'a pas validé + paiement OK."
+    "note": "Notes +0,5 vs saisie Mollard (Paula 03/11). Modèle Prosneige DOTX. Paiement reçu 03/11. Envoi après OK Paula."
   },
   {
     "key": "titouan-avocat-reeval",
