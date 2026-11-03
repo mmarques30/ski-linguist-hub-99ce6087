@@ -36,7 +36,6 @@ function emailHtml(): string {
 <p style="margin:0 0 16px">Bonjour,</p>
 <p style="margin:0 0 16px">nous avons bien reçu votre règlement de <strong>40&nbsp;€</strong> pour le test d'anglais. Le tarif est de <strong>45&nbsp;€</strong>&nbsp;: il reste donc un solde de <strong>5&nbsp;€</strong> à régler.</p>
 ${paymentBlock}
-<p style="margin:0 0 16px">Une copie de ce message est adressée à Prosneige.</p>
 <p style="margin:0 0 4px">Cordialement,</p>
 <p style="margin:0">
   <strong>FLI — France Langues International</strong><br/>
@@ -65,8 +64,6 @@ IBAN : ${FLI_BANK_DETAILS.iban}
 BIC : ${FLI_BANK_DETAILS.bic}
 Banque : ${FLI_BANK_DETAILS.bank}
 Référence à indiquer : ${REF}
-
-Une copie de ce message est adressée à Prosneige.
 
 Cordialement,
 FLI — France Langues International
