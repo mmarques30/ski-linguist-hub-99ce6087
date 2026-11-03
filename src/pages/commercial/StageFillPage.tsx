@@ -142,9 +142,9 @@ export default function StageFillPage() {
               <code>ski_monitors</code>.
             </p>
             <p>
-              Bouton <strong>Envoyer</strong> : un seul message à{" "}
-              <code>info@fli.fr</code> (brouillon + liste prévue), pas une copie
-              par destinataire. Lien inscription :{" "}
+              <strong>Envoyer</strong> = mail réel à chaque destinataire (sans
+              BCC unitaire) + digest à <code>info@fli.fr</code>. Anciens
+              ciblés par <strong>lieu</strong> du stage. Lien :{" "}
               <a
                 className="underline"
                 href="https://www.fli.fr/register"

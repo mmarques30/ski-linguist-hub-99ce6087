@@ -18,6 +18,7 @@ import { useSendStaffEmail } from "@/hooks/useSendStaffEmail";
 import { canSendStaffEmail } from "@/lib/staff-email";
 import {
   buildAlumniRelanceDraft,
+  buildCommercialCampaignDigest,
   buildCommercialTestEnvelope,
   buildDirectorRelanceDraft,
   COMMERCIAL_TEST_TO,
@@ -27,6 +28,10 @@ import {
   type StageFillDirector,
   type StageFillRow,
 } from "@/lib/commercial-stage-fill";
+import {
+  isMassSendConfirmed,
+  massSendNeedsConfirmation,
+} from "@/lib/email-guards";
 import { StatusPill } from "@/components/ui-kit";
 
 type Props = {
@@ -40,9 +45,8 @@ type Props = {
 };
 
 /**
- * Prépare le brouillon et envoie un seul mail à info@fli.fr (bouton Envoyer).
- * Pas d'envoi de masse ici tant que l'edge skipNotifyBcc + digest n'est pas
- * déployé — évite une copie BCC par destinataire.
+ * Envoi réel aux destinataires (skipNotifyBcc) + digest unique à info@fli.fr.
+ * Bouton « Mail test » = 1 aperçu à info@fli.fr.
  */
 export function StageRelanceDialog({
   open,
@@ -56,6 +60,7 @@ export function StageRelanceDialog({
   const sendEmail = useSendStaffEmail();
   const [subject, setSubject] = useState("");
   const [bodyText, setBodyText] = useState("");
+  const [confirmCount, setConfirmCount] = useState("");
   const [sending, setSending] = useState(false);
 
   const primary = rows[0] ?? null;
@@ -67,12 +72,16 @@ export function StageRelanceDialog({
         email: d.email,
         name: d.directeur?.trim() || d.nom_affiche,
         detail: d.nom_affiche,
+        studentId: null as string | null,
+        firstName: (d.directeur?.trim() || "").split(/\s+/)[0] ?? "",
       }));
     }
     return alumni.map((a) => ({
       email: a.email,
       name: `${a.firstName} ${a.lastName}`.trim(),
       detail: a.languageLabel,
+      studentId: a.studentId,
+      firstName: a.firstName,
     }));
   }, [audience, directors, alumni]);
 
@@ -93,6 +102,7 @@ export function StageRelanceDialog({
       setSubject(draft.subject);
       setBodyText(draft.bodyText);
     }
+    setConfirmCount("");
   }, [open, rows, offerings, audience, directors, alumni, primary]);
 
   const title =
@@ -118,7 +128,13 @@ export function StageRelanceDialog({
   };
 
   const handleExport = () => {
-    const csv = recipientsToCsv(recipients);
+    const csv = recipientsToCsv(
+      recipients.map((r) => ({
+        email: r.email,
+        name: r.name,
+        detail: r.detail,
+      }))
+    );
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -132,14 +148,35 @@ export function StageRelanceDialog({
     URL.revokeObjectURL(url);
   };
 
+  const confirmed = isMassSendConfirmed(
+    recipients.length,
+    Number.parseInt(confirmCount, 10) || null
+  );
+
+  const busy = sending || sendEmail.isPending;
+
+  const canTest =
+    canSendStaffEmail({ subject, bodyText }) &&
+    recipients.length > 0 &&
+    !busy;
+
   const canSend =
     canSendStaffEmail({ subject, bodyText }) &&
     recipients.length > 0 &&
-    !sending &&
-    !sendEmail.isPending;
+    confirmed &&
+    !busy;
 
-  const handleSend = async () => {
-    if (!canSend) return;
+  const personalizeBody = (recipient: (typeof recipients)[number]) => {
+    if (audience !== "ancien") return bodyText;
+    const templateFirst = (alumni[0]?.firstName ?? "").trim();
+    const first = (recipient.firstName || recipient.name.split(/\s+/)[0] || "").trim();
+    if (!templateFirst || !first || templateFirst === first) return bodyText;
+    if (!bodyText.includes(templateFirst)) return bodyText;
+    return bodyText.split(templateFirst).join(first);
+  };
+
+  const handleSendTest = async () => {
+    if (!canTest) return;
     setSending(true);
     try {
       const envelope = buildCommercialTestEnvelope({
@@ -156,10 +193,64 @@ export function StageRelanceDialog({
         recipientName: "FLI",
         templateSlug: "staff_manual",
       });
-      toast.success(`Envoyé à ${COMMERCIAL_TEST_TO} (1 seul message)`);
-      onOpenChange(false);
+      toast.success(`Mail test envoyé à ${COMMERCIAL_TEST_TO}`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Envoi impossible");
+      toast.error(error instanceof Error ? error.message : "Envoi test impossible");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleSendAll = async () => {
+    if (!canSend) return;
+    setSending(true);
+    const results: Array<{ email: string; name: string; ok: boolean }> = [];
+    try {
+      for (const recipient of recipients) {
+        try {
+          await sendEmail.mutateAsync({
+            to: recipient.email,
+            subject: subject.trim(),
+            bodyText: personalizeBody(recipient),
+            recipientName: recipient.name,
+            studentId: recipient.studentId,
+            templateSlug: "staff_manual",
+            skipNotifyBcc: true,
+          });
+          results.push({ email: recipient.email, name: recipient.name, ok: true });
+        } catch {
+          results.push({ email: recipient.email, name: recipient.name, ok: false });
+        }
+      }
+
+      const digest = buildCommercialCampaignDigest({
+        audience,
+        draftSubject: subject.trim(),
+        sent: results,
+        contextLabel:
+          stationLabel ?? primary?.offering.location_label ?? primary?.offering.session_code,
+      });
+      try {
+        await sendEmail.mutateAsync({
+          to: COMMERCIAL_TEST_TO,
+          subject: digest.subject,
+          bodyText: digest.bodyText,
+          recipientName: "FLI",
+          templateSlug: "staff_manual",
+        });
+      } catch {
+        toast.error("Campagne envoyée mais digest info@fli.fr en échec");
+      }
+
+      const ok = results.filter((r) => r.ok).length;
+      const failed = results.length - ok;
+      if (ok > 0) {
+        toast.success(
+          `${ok} e-mail${ok > 1 ? "s" : ""} envoyé${ok > 1 ? "s" : ""} → digest ${COMMERCIAL_TEST_TO}`
+        );
+      }
+      if (failed > 0) toast.error(`${failed} échec${failed > 1 ? "s" : ""}`);
+      if (failed === 0) onOpenChange(false);
     } finally {
       setSending(false);
     }
@@ -180,19 +271,17 @@ export function StageRelanceDialog({
 
         <Alert>
           <AlertDescription>
-            Le bouton <strong>Envoyer</strong> envoie <strong>un seul</strong>{" "}
-            message à <code>{COMMERCIAL_TEST_TO}</code> (brouillon + liste des{" "}
-            {recipients.length} destinataire{recipients.length !== 1 ? "s" : ""}{" "}
-            prévus). Aucune copie par personne.
+            <strong>Envoyer</strong> = mail réel à chaque destinataire listé
+            (sans BCC unitaire). Un <strong>digest</strong> unique part ensuite
+            à <code>{COMMERCIAL_TEST_TO}</code>. « Mail test » = aperçu seul.
           </AlertDescription>
         </Alert>
 
         <div className="flex flex-wrap items-center gap-2">
           <StatusPill tone={recipients.length > 0 ? "info" : "warning"}>
-            {recipients.length} destinataire{recipients.length !== 1 ? "s" : ""}{" "}
-            prévus
+            {recipients.length} destinataire{recipients.length !== 1 ? "s" : ""}
           </StatusPill>
-          <StatusPill tone="success">Envoi → {COMMERCIAL_TEST_TO}</StatusPill>
+          <StatusPill tone="success">Digest → {COMMERCIAL_TEST_TO}</StatusPill>
         </div>
 
         {recipients.length > 0 && (
@@ -231,6 +320,21 @@ export function StageRelanceDialog({
           />
         </div>
 
+        {massSendNeedsConfirmation(recipients.length) && (
+          <div className="space-y-2">
+            <Label htmlFor="stage-relance-confirm">
+              Confirmer le nombre de destinataires ({recipients.length})
+            </Label>
+            <Input
+              id="stage-relance-confirm"
+              inputMode="numeric"
+              value={confirmCount}
+              onChange={(e) => setConfirmCount(e.target.value)}
+              placeholder={String(recipients.length)}
+            />
+          </div>
+        )}
+
         <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="outline" onClick={handleCopy}>
@@ -246,14 +350,27 @@ export function StageRelanceDialog({
               <Download className="mr-2 h-4 w-4" />
               CSV
             </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleSendTest}
+              disabled={!canTest}
+            >
+              {busy ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Mail className="mr-2 h-4 w-4" />
+              )}
+              Mail test
+            </Button>
           </div>
-          <Button type="button" onClick={handleSend} disabled={!canSend}>
-            {sending || sendEmail.isPending ? (
+          <Button type="button" onClick={handleSendAll} disabled={!canSend}>
+            {busy ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <Send className="mr-2 h-4 w-4" />
             )}
-            Envoyer
+            Envoyer ({recipients.length})
           </Button>
         </DialogFooter>
       </DialogContent>
