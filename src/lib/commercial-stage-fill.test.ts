@@ -189,7 +189,7 @@ describe("commercial-stage-fill", () => {
     expect(alumni.map((a) => a.studentId)).toEqual(["s1"]);
   });
 
-  it("produit le brouillon directeur Paula (court) + lien www.fli.fr", () => {
+  it("utilise toujours le nous et signe équipe FLI (directeur + ancien)", () => {
     const off = offering({
       session_code: "S11",
       location_label: "Brides-les-Bains",
@@ -207,14 +207,21 @@ describe("commercial-stage-fill", () => {
     expect(dir.bodyText).toContain("Bonjour Marie,");
     expect(dir.bodyText).toContain("il nous manque encore des stagiaires");
     expect(dir.bodyText).toContain("www.fli.fr/register");
+    expect(dir.bodyText).toContain("de nous répondre");
     expect(dir.bodyText).toContain("nous nous occupons du reste");
-    expect(dir.bodyText).toContain("équipe FLI");
+    expect(dir.bodyText.trim().endsWith("équipe FLI")).toBe(true);
+    expect(dir.bodyText).not.toMatch(/\bje\b/i);
     expect(dir.bodyText).not.toContain("Paula");
     expect(dir.bodyText).not.toMatch(/[\u{1F300}-\u{1FAFF}]/u);
 
     const alum = buildAlumniRelanceDraft({ offering: off, firstName: "Léa" });
     expect(alum.bodyText).toContain("Bonjour Léa,");
     expect(alum.bodyText).toContain("lang=russian");
+    expect(alum.bodyText).toContain("il nous manque encore des stagiaires");
+    expect(alum.bodyText).toContain("nous vous répondons rapidement");
+    expect(alum.bodyText.trim().endsWith("équipe FLI")).toBe(true);
+    expect(alum.bodyText).not.toMatch(/\bje\b/i);
+    expect(alum.bodyText).not.toContain("Paula");
   });
 
   it("exporte un CSV destinataires", () => {

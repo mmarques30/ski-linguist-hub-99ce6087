@@ -259,6 +259,9 @@ export function selectDirectorsForStage(
 /** Lien public d'inscription (brouillon Paula 2026-11-03). */
 export const COMMERCIAL_REGISTER_URL = "https://www.fli.fr/register";
 
+/** Signature commerciale — toujours « nous », jamais un prénom. */
+export const COMMERCIAL_EMAIL_SIGNATURE = "équipe FLI";
+
 function formatDirectorGreeting(directeur: string | null): string {
   const name = (directeur ?? "").trim();
   if (!name) return "Bonjour,";
@@ -272,7 +275,7 @@ function stageLine(offering: RegistrationOffering): string {
   return `${offering.location_label} — ${offering.language_label} (${dates})`;
 }
 
-/** Brouillon directeur — texte validé Paula (court). */
+/** Brouillon directeur — texte validé Paula (court, nous + équipe FLI). */
 export function buildDirectorRelanceDraft(input: {
   offering: RegistrationOffering;
   directeurName?: string | null;
@@ -294,16 +297,16 @@ Pour le moment il nous manque encore des stagiaires pour le stage ${stage}.
 Inscription en ligne (tarif selon l'école, FIF-PL possible) :
 ${url}
 
-Si vous avez des moniteur·rices intéressé·es — ou une autre école du secteur à prévenir — merci de leur transmettre ce lien, ou de me répondre avec leurs coordonnées : nous nous occupons du reste.
+Si vous avez des moniteur·rices intéressé·es — ou une autre école du secteur à prévenir — merci de leur transmettre ce lien, ou de nous répondre avec leurs coordonnées : nous nous occupons du reste.
 
-équipe FLI`
+${COMMERCIAL_EMAIL_SIGNATURE}`
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
   return { audience: "directeur", subject, bodyText };
 }
 
-/** Brouillon ancien stagiaire : revenir pour un stage de la saison. */
+/** Brouillon ancien stagiaire — même voix (nous + équipe FLI). */
 export function buildAlumniRelanceDraft(input: {
   offering: RegistrationOffering;
   firstName: string;
@@ -314,27 +317,20 @@ export function buildAlumniRelanceDraft(input: {
   const greeting = first === "Bonjour" ? "Bonjour," : `Bonjour ${first},`;
   const url =
     input.registerUrl ?? `${COMMERCIAL_REGISTER_URL}?lang=${offering.language_key}`;
+  const stage = stageLine(offering);
 
   const subject = `FLI — une place pour vous ? ${offering.language_label} · ${offering.location_label}`;
 
   const bodyText = `${greeting}
 
-vous avez déjà suivi une formation FLI — nous rouvrons les inscriptions pour la saison, et le stage ci-dessous n'a pas encore atteint son effectif minimum :
+Vous avez déjà suivi une formation FLI — pour le moment il nous manque encore des stagiaires pour le stage ${stage}.
 
-${stageLine(offering)}
-${offering.format_label ? `Format : ${offering.format_label}` : ""}
-
-Si vous souhaitez vous perfectionner (ou changer de langue), l'inscription se fait ici :
+Inscription en ligne (tarif selon l'école, FIF-PL possible) :
 ${url}
 
-FIF-PL possible selon votre statut. Répondez simplement à ce message si vous avez une question sur les dates, le tarif ou le financement — je vous réponds rapidement.
+Si vous avez une question sur les dates, le tarif ou le financement, répondez simplement à ce message : nous vous répondons rapidement.
 
-Bien cordialement,
-Paula
-FLI — France Langues International
-25 avenue de la Gare — 73800 Montmélian
-Tél. : 04 79 28 21 09
-info@fli.fr`
+${COMMERCIAL_EMAIL_SIGNATURE}`
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
