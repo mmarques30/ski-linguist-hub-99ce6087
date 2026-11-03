@@ -53,6 +53,11 @@ export const CHROME_NAV: Record<string, Translations> = {
     "pt-BR": "Prospectos comerciais",
     en: "Sales prospects",
   },
+  "/gestion/commercial/stages": {
+    fr: "Stages à compléter",
+    "pt-BR": "Turmas a completar",
+    en: "Stages to fill",
+  },
   "/gestion/partenaires": { fr: "Partenaires", "pt-BR": "Parceiros", en: "Partners" },
   "/gestion/moniteurs": {
     fr: "Moniteurs de ski",

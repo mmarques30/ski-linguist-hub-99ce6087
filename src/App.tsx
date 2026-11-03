@@ -90,6 +90,7 @@ import StudentDocuments from "./pages/student/StudentDocuments";
 import StudentEvaluation from "./pages/student/StudentEvaluation";
 import StudentPlanning from "./pages/student/StudentPlanning";
 import CommercialDashboard from "./pages/commercial/CommercialDashboard";
+import StageFillPage from "./pages/commercial/StageFillPage";
 import MoniteursSki from "./pages/moniteurs/MoniteursSki";
 import DashboardGestaoMockupPage from "./pages/mockup/DashboardGestaoMockup";
 import ConditionsGenerales from "./pages/legal/ConditionsGenerales";
@@ -145,6 +146,7 @@ const App = () => (
             <Route path="/finance/payments" element={<ProtectedRoute><FinancePayments /></ProtectedRoute>} />
             <Route path="/finance/charges-fixes" element={<ProtectedRoute><FinanceChargesFixes /></ProtectedRoute>} />
             <Route path="/gestion/commercial" element={<ProtectedRoute><CommercialDashboard /></ProtectedRoute>} />
+            <Route path="/gestion/commercial/stages" element={<ProtectedRoute><StageFillPage /></ProtectedRoute>} />
             <Route path="/gestion/moniteurs" element={<ProtectedRoute><MoniteursSki /></ProtectedRoute>} />
             <Route path="/gestion/partenaires" element={<ProtectedRoute><PartnersList /></ProtectedRoute>} />
             <Route path="/gestion/partenaires/:id" element={<ProtectedRoute><PartnerDetails /></ProtectedRoute>} />

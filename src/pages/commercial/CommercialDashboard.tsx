@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import {
-  Plus, TrendingUp, Euro, Clock, Target, AlertTriangle, Link2, KanbanSquare, BarChart3,
+  Plus, TrendingUp, Euro, Clock, Target, AlertTriangle, Link2, KanbanSquare, BarChart3, Users,
 } from "lucide-react";
 import {
   useLeads, useLeadKPIs, useUpdateLead,
@@ -391,11 +391,19 @@ export default function CommercialDashboard() {
           tone="gold"
           meta={<StatusPill tone="info">{channelMeta.description}</StatusPill>}
           actions={
-            editable ? (
-              <Button onClick={() => { setEditLead(null); setFormOpen(true); }}>
-                <Plus className="mr-2 h-4 w-4" /> Nouveau prospect
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" asChild>
+                <Link to="/gestion/commercial/stages">
+                  <Users className="mr-2 h-4 w-4" />
+                  Stages à compléter
+                </Link>
               </Button>
-            ) : undefined
+              {editable ? (
+                <Button onClick={() => { setEditLead(null); setFormOpen(true); }}>
+                  <Plus className="mr-2 h-4 w-4" /> Nouveau prospect
+                </Button>
+              ) : null}
+            </div>
           }
           tabs={
             <SegmentedControl<ExpansionChannel>
