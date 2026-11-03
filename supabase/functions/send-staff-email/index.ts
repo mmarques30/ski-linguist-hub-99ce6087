@@ -185,6 +185,8 @@ Deno.serve(async (req) => {
       );
     }
 
+    const skipNotifyBcc = body?.skipNotifyBcc === true;
+
     const identity = await loadOrganizationIdentity(adminClient);
     const footerHtml = buildFliFooterHtml(identity);
     const html = plainTextToEmailHtml(bodyText, footerHtml);
@@ -196,6 +198,7 @@ Deno.serve(async (req) => {
       html,
       cc: cc.length ? cc : undefined,
       attachments: attachments.length ? attachments : undefined,
+      skipNotifyBcc,
     });
 
     await adminClient.from("email_log").insert({
@@ -214,6 +217,7 @@ Deno.serve(async (req) => {
         body_preview: bodyText.slice(0, 500),
         cc,
         attachments: attachments.map((a) => a.filename),
+        skip_notify_bcc: skipNotifyBcc,
       },
     });
 

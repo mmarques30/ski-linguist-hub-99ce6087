@@ -142,9 +142,9 @@ export default function StageFillPage() {
               <code>ski_monitors</code>.
             </p>
             <p>
-              Envoi : un seul <strong>mail test</strong> à{" "}
-              <code>info@fli.fr</code> (pas de copie par destinataire). Lien
-              inscription :{" "}
+              Bouton <strong>Envoyer</strong> : un seul message à{" "}
+              <code>info@fli.fr</code> (brouillon + liste prévue), pas une copie
+              par destinataire. Lien inscription :{" "}
               <a
                 className="underline"
                 href="https://www.fli.fr/register"
@@ -271,13 +271,12 @@ export default function StageFillPage() {
                         </div>
                         <Button
                           type="button"
-                          variant="outline"
                           size="sm"
                           disabled={!editable || realDirCount === 0}
                           onClick={() => openDirectorsForStation(group.stationKey)}
                         >
-                          <School className="mr-2 h-4 w-4" />
-                          Directeurs
+                          <Mail className="mr-2 h-4 w-4" />
+                          Envoyer aux directeurs
                         </Button>
                       </div>
                     </SurfaceCard>
@@ -364,13 +363,12 @@ export default function StageFillPage() {
                         </div>
                         <Button
                           type="button"
-                          variant="outline"
                           size="sm"
                           disabled={!editable || alumExcluded || alumCount === 0}
                           onClick={() => openAlumni(row)}
                         >
-                          <Users className="mr-2 h-4 w-4" />
-                          Anciens
+                          <Mail className="mr-2 h-4 w-4" />
+                          Envoyer aux anciens
                         </Button>
                       </div>
                     </SurfaceCard>
