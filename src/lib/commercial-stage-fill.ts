@@ -80,6 +80,20 @@ export type RelanceDraft = {
   bodyText: string;
 };
 
+/** Groupe de stages d'une même station pour un seul mail directeurs. */
+export type DirectorStationGroup = {
+  stationKey: string;
+  stationLabel: string;
+  rows: StageFillRow[];
+};
+
+/** Sessions / lieux exclus des relances directeurs (Paula 2026-11-03). */
+export const DIRECTOR_OUTREACH_EXCLUDED_SESSION_CODES = new Set([
+  "S06", // Méribel anglais — liste à recevoir de l'ESF
+  "S14", // Méribel portugais
+  "S21", // Samoëns portugais
+]);
+
 function stripDiacritics(value: string): string {
   return value.normalize("NFD").replace(/\p{M}/gu, "");
 }
@@ -123,6 +137,59 @@ function languageKeyLoose(label: string): string | null {
   if (normalized.startsWith("allemand")) return "german";
   if (normalized.startsWith("italien")) return "italian";
   return null;
+}
+
+/** Clé de regroupement station (ex. Oz anglais + néerlandais). */
+export function directorStationKey(
+  offering: Pick<RegistrationOffering, "location_key" | "location_label">
+): string {
+  const fromKey = (offering.location_key ?? "").trim().toLowerCase();
+  if (fromKey) return fromKey;
+  return normalizePlaceLabel(offering.location_label) || "autre";
+}
+
+export function directorStationLabel(
+  offering: Pick<RegistrationOffering, "location_label">
+): string {
+  return (offering.location_label ?? "").trim() || "Station";
+}
+
+/**
+ * Pas de mail directeurs pour Méribel (liste ESF à venir) ni Samoëns portugais.
+ * Les anciens stagiaires restent ciblables sur ces sessions.
+ */
+export function isDirectorOutreachExcluded(
+  offering: Pick<
+    RegistrationOffering,
+    "session_code" | "location_label" | "location_key" | "language_label" | "language_key"
+  >
+): boolean {
+  const code = (offering.session_code ?? "").trim().toUpperCase();
+  if (DIRECTOR_OUTREACH_EXCLUDED_SESSION_CODES.has(code)) return true;
+
+  const place = normalizePlaceLabel(offering.location_label);
+  const placeKey = normalizePlaceLabel(offering.location_key);
+  const isMeribel = place.includes("meribel") || placeKey.includes("meribel");
+  if (isMeribel) return true;
+
+  const lang =
+    offering.language_key?.trim() ||
+    languageKeyLoose(offering.language_label) ||
+    "";
+  const isSamoens = place.includes("samoens") || placeKey.includes("samoens");
+  if (isSamoens && lang === "portuguese") return true;
+
+  return false;
+}
+
+function isMeribelDirectorySchool(school: {
+  nom_affiche: string;
+  station: string | null;
+}): boolean {
+  return (
+    normalizePlaceLabel(school.station).includes("meribel") ||
+    normalizePlaceLabel(school.nom_affiche).includes("meribel")
+  );
 }
 
 function languageKeysMatch(
@@ -206,39 +273,58 @@ export function pickDirectorEmail(row: {
   return null;
 }
 
+type DirectorySchool = {
+  code: string;
+  nom_affiche: string;
+  station: string | null;
+  directeur: string | null;
+  courriel_direction?: string | null;
+  courriel_ecole?: string | null;
+  is_active?: boolean;
+};
+
 /**
- * Directeurs à relancer pour un stage : écoles partenaires listées, sinon
- * école dont la station / le nom colle au lieu du stage.
+ * Directeurs à relancer pour un ou plusieurs stages d'une station :
+ * écoles partenaires listées + école dont la station / le nom colle au lieu.
+ * Jamais l'ESF Méribel (liste à recevoir).
  */
 export function selectDirectorsForStage(
   offering: Pick<RegistrationOffering, "location_label" | "partner_school_codes">,
-  directory: Array<{
-    code: string;
-    nom_affiche: string;
-    station: string | null;
-    directeur: string | null;
-    courriel_direction?: string | null;
-    courriel_ecole?: string | null;
-    is_active?: boolean;
-  }>
+  directory: DirectorySchool[]
 ): StageFillDirector[] {
-  const partnerCodes = new Set(offering.partner_school_codes ?? []);
-  const place = normalizePlaceLabel(offering.location_label);
+  return selectDirectorsForOfferings([offering], directory);
+}
+
+export function selectDirectorsForOfferings(
+  offerings: Array<Pick<RegistrationOffering, "location_label" | "partner_school_codes">>,
+  directory: DirectorySchool[]
+): StageFillDirector[] {
+  const partnerCodes = new Set(
+    offerings.flatMap((o) => o.partner_school_codes ?? [])
+  );
+  const places = offerings
+    .map((o) => normalizePlaceLabel(o.location_label))
+    .filter(Boolean);
   const out: StageFillDirector[] = [];
   const seen = new Set<string>();
 
   for (const school of directory) {
     if (school.is_active === false) continue;
+    if (isMeribelDirectorySchool(school)) continue;
     const picked = pickDirectorEmail(school);
     if (!picked) continue;
 
+    const schoolStation = normalizePlaceLabel(school.station);
+    const schoolName = normalizePlaceLabel(school.nom_affiche);
     const byPartner = partnerCodes.has(school.code);
-    const byPlace =
-      place.length > 0 &&
-      (normalizePlaceLabel(school.station).includes(place) ||
-        place.includes(normalizePlaceLabel(school.station)) ||
-        normalizePlaceLabel(school.nom_affiche).includes(place) ||
-        place.includes(normalizePlaceLabel(school.nom_affiche)));
+    const byPlace = places.some(
+      (place) =>
+        place.length > 0 &&
+        (schoolStation.includes(place) ||
+          place.includes(schoolStation) ||
+          schoolName.includes(place) ||
+          place.includes(schoolName))
+    );
 
     if (!byPartner && !byPlace) continue;
     if (seen.has(picked.email.toLowerCase())) continue;
@@ -254,6 +340,47 @@ export function selectDirectorsForStage(
   }
 
   return out.sort((a, b) => a.nom_affiche.localeCompare(b.nom_affiche, "fr"));
+}
+
+/**
+ * Regroupe les stages sous le min par station pour un seul mail directeurs.
+ * Exclut Méribel et Samoëns portugais.
+ */
+export function groupRowsForDirectorOutreach(
+  rows: StageFillRow[]
+): DirectorStationGroup[] {
+  const eligible = rows.filter(
+    (r) => r.underMin && !isDirectorOutreachExcluded(r.offering)
+  );
+  const byStation = new Map<string, DirectorStationGroup>();
+
+  for (const row of eligible) {
+    const key = directorStationKey(row.offering);
+    let group = byStation.get(key);
+    if (!group) {
+      group = {
+        stationKey: key,
+        stationLabel: directorStationLabel(row.offering),
+        rows: [],
+      };
+      byStation.set(key, group);
+    }
+    group.rows.push(row);
+  }
+
+  const groups = Array.from(byStation.values());
+  for (const group of groups) {
+    group.rows.sort((a, b) => {
+      const byLang = a.offering.language_label.localeCompare(
+        b.offering.language_label,
+        "fr"
+      );
+      if (byLang !== 0) return byLang;
+      return (a.offering.start_date ?? "").localeCompare(b.offering.start_date ?? "");
+    });
+  }
+
+  return groups.sort((a, b) => a.stationLabel.localeCompare(b.stationLabel, "fr"));
 }
 
 /** Lien public d'inscription (brouillon Paula 2026-11-03). */
@@ -275,24 +402,55 @@ function stageLine(offering: RegistrationOffering): string {
   return `${offering.location_label} — ${offering.language_label} (${dates})`;
 }
 
-/** Brouillon directeur — texte validé Paula (court, nous + équipe FLI). */
+function stageBulletLine(offering: RegistrationOffering): string {
+  const dates = offering.date_label?.trim() ||
+    [offering.start_date, offering.end_date].filter(Boolean).join(" → ");
+  return `— ${offering.language_label} (${dates})`;
+}
+
+/**
+ * Brouillon directeur — un mail par station, langues regroupées
+ * (ex. Oz : anglais + néerlandais). Voix « nous » + L'équipe FLI.
+ */
 export function buildDirectorRelanceDraft(input: {
-  offering: RegistrationOffering;
+  /** @deprecated préférer `offerings` (regroupement station). */
+  offering?: RegistrationOffering;
+  offerings?: RegistrationOffering[];
   directeurName?: string | null;
-  enrolledCount: number;
-  minRequired: number;
+  enrolledCount?: number;
+  minRequired?: number;
   registerUrl?: string;
 }): RelanceDraft {
-  const { offering } = input;
+  const offerings =
+    input.offerings && input.offerings.length > 0
+      ? input.offerings
+      : input.offering
+        ? [input.offering]
+        : [];
+  if (offerings.length === 0) {
+    throw new Error("buildDirectorRelanceDraft : aucun stage fourni");
+  }
+
   const greeting = formatDirectorGreeting(input.directeurName ?? null);
   const url = input.registerUrl ?? COMMERCIAL_REGISTER_URL;
-  const stage = stageLine(offering);
+  const station = directorStationLabel(offerings[0]);
+  const languages = offerings.map((o) => o.language_label).join(" / ");
 
-  const subject = `Stage FLI ${offering.language_label} — ${offering.location_label} — places encore disponibles`;
+  const subject =
+    offerings.length === 1
+      ? `Stage FLI ${offerings[0].language_label} — ${station} — places encore disponibles`
+      : `Stages FLI ${station} (${languages}) — places encore disponibles`;
+
+  const stagesBlock =
+    offerings.length === 1
+      ? `Pour le moment il nous manque encore des stagiaires pour le stage ${stageLine(offerings[0])}.`
+      : `Pour le moment il nous manque encore des stagiaires pour les stages suivants à ${station} :\n${offerings
+          .map((o) => stageBulletLine(o))
+          .join("\n")}`;
 
   const bodyText = `${greeting}
 
-Pour le moment il nous manque encore des stagiaires pour le stage ${stage}.
+${stagesBlock}
 
 Inscription en ligne (tarif selon l'école, FIF-PL possible) :
 ${url}

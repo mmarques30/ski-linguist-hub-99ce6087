@@ -5,12 +5,15 @@ import {
   buildDirectorRelanceDraft,
   computeStageFillRows,
   countsTowardStageFill,
+  groupRowsForDirectorOutreach,
   inscriptionMatchesOffering,
+  isDirectorOutreachExcluded,
   minEnrollmentForOffering,
   normalizePlaceLabel,
   pickDirectorEmail,
   recipientsToCsv,
   selectAlumniForStage,
+  selectDirectorsForOfferings,
   selectDirectorsForStage,
 } from "@/lib/commercial-stage-fill";
 
@@ -189,6 +192,133 @@ describe("commercial-stage-fill", () => {
     expect(alumni.map((a) => a.studentId)).toEqual(["s1"]);
   });
 
+  it("exclut Méribel et Samoëns portugais des relances directeurs", () => {
+    expect(
+      isDirectorOutreachExcluded(
+        offering({
+          session_code: "S06",
+          location_label: "ESF Méribel",
+          language_label: "Anglais",
+          location_key: "meribel",
+        })
+      )
+    ).toBe(true);
+    expect(
+      isDirectorOutreachExcluded(
+        offering({
+          session_code: "S21",
+          location_label: "ESF Samoëns",
+          language_label: "Portugais brésilien",
+          language_key: "portuguese",
+          location_key: "samoens",
+        })
+      )
+    ).toBe(true);
+    expect(
+      isDirectorOutreachExcluded(
+        offering({
+          session_code: "S13",
+          location_label: "ESF Samoëns",
+          language_label: "Anglais",
+          language_key: "english",
+          location_key: "samoens",
+        })
+      )
+    ).toBe(false);
+  });
+
+  it("regroupe Oz anglais + néerlandais et ignore Méribel", () => {
+    const ozEn = offering({
+      id: "oz-en",
+      session_code: "S07",
+      location_key: "oz-en-oisans",
+      location_label: "ESF Oz en Oisans",
+      language_label: "Anglais",
+      language_key: "english",
+      partner_school_codes: ["esf-oz"],
+    });
+    const ozNl = offering({
+      id: "oz-nl",
+      session_code: "S08",
+      location_key: "oz-en-oisans",
+      location_label: "ESF Oz en Oisans",
+      language_label: "Néerlandais",
+      language_key: "dutch",
+      partner_school_codes: ["esf-oz"],
+    });
+    const meribel = offering({
+      id: "mer",
+      session_code: "S06",
+      location_key: "meribel",
+      location_label: "ESF Méribel",
+      language_label: "Anglais",
+    });
+    const groups = groupRowsForDirectorOutreach([
+      {
+        offering: ozEn,
+        enrolledCount: 1,
+        minRequired: 6,
+        missing: 5,
+        underMin: true,
+        inscriptionIds: [],
+      },
+      {
+        offering: ozNl,
+        enrolledCount: 2,
+        minRequired: 6,
+        missing: 4,
+        underMin: true,
+        inscriptionIds: [],
+      },
+      {
+        offering: meribel,
+        enrolledCount: 0,
+        minRequired: 6,
+        missing: 6,
+        underMin: true,
+        inscriptionIds: [],
+      },
+    ]);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].stationKey).toBe("oz-en-oisans");
+    expect(groups[0].rows.map((r) => r.offering.language_label)).toEqual([
+      "Anglais",
+      "Néerlandais",
+    ]);
+
+    const draft = buildDirectorRelanceDraft({
+      offerings: [ozEn, ozNl],
+      directeurName: "Jean",
+    });
+    expect(draft.subject).toContain("Oz en Oisans");
+    expect(draft.subject).toContain("Anglais");
+    expect(draft.subject).toContain("Néerlandais");
+    expect(draft.bodyText).toContain("stages suivants à ESF Oz en Oisans");
+    expect(draft.bodyText).toContain("— Anglais");
+    expect(draft.bodyText).toContain("— Néerlandais");
+
+    const dirs = selectDirectorsForOfferings(
+      [ozEn, ozNl],
+      [
+        {
+          code: "esf-oz",
+          nom_affiche: "ESF Oz en Oisans",
+          station: "Oz en Oisans",
+          directeur: "Jean",
+          courriel_direction: "dir@oz.fr",
+        },
+        {
+          code: "esf-meribel",
+          nom_affiche: "ESF Méribel",
+          station: "Méribel",
+          directeur: "X",
+          courriel_direction: "dir@meribel.fr",
+        },
+      ]
+    );
+    expect(dirs.map((d) => d.code)).toEqual(["esf-oz"]);
+  });
+
   it("utilise toujours le nous et signe L'équipe FLI (directeur + ancien)", () => {
     const off = offering({
       session_code: "S11",
@@ -198,10 +328,8 @@ describe("commercial-stage-fill", () => {
       partner_school_codes: [],
     });
     const dir = buildDirectorRelanceDraft({
-      offering: off,
+      offerings: [off],
       directeurName: "Marie Curie",
-      enrolledCount: 2,
-      minRequired: 6,
     });
     expect(dir.subject).toContain("Russe");
     expect(dir.bodyText).toContain("Bonjour Marie,");

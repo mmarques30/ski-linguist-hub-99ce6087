@@ -16,6 +16,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   PageHeader,
   PageShell,
+  SectionHeading,
   StatTile,
   StatTileGrid,
   StatusPill,
@@ -24,12 +25,18 @@ import {
 } from "@/components/ui-kit";
 import { useStageFillCampaign } from "@/hooks/useStageFillCampaign";
 import { StageRelanceDialog } from "@/components/commercial/StageRelanceDialog";
-import type { RelanceAudience, StageFillRow } from "@/lib/commercial-stage-fill";
+import {
+  directorStationKey,
+  groupRowsForDirectorOutreach,
+  isDirectorOutreachExcluded,
+  type RelanceAudience,
+  type StageFillRow,
+} from "@/lib/commercial-stage-fill";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 
 /**
  * Commercial — stages sous le minimum d'inscrits.
- * Relances directeurs + anciens stagiaires (hors gel moniteurs).
+ * Relances directeurs (par station) + anciens stagiaires (hors gel moniteurs).
  */
 export default function StageFillPage() {
   const { canEdit } = useUserPermissions();
@@ -40,29 +47,72 @@ export default function StageFillPage() {
   const [onlyUnderMin, setOnlyUnderMin] = useState(true);
   const [sendingUnlocked, setSendingUnlocked] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [activeRow, setActiveRow] = useState<StageFillRow | null>(null);
+  const [activeRows, setActiveRows] = useState<StageFillRow[]>([]);
   const [audience, setAudience] = useState<RelanceAudience>("directeur");
+  const [stationLabel, setStationLabel] = useState<string | undefined>();
 
   const visible = useMemo(
     () => (onlyUnderMin ? underMin : rows),
     [onlyUnderMin, underMin, rows]
   );
 
-  const openRelance = (row: StageFillRow, nextAudience: RelanceAudience) => {
-    setActiveRow(row);
-    setAudience(nextAudience);
+  const directorGroups = useMemo(
+    () => groupRowsForDirectorOutreach(underMin),
+    [underMin]
+  );
+
+  const openAlumni = (row: StageFillRow) => {
+    setActiveRows([row]);
+    setAudience("ancien");
+    setStationLabel(undefined);
     setDialogOpen(true);
   };
 
-  const directors = activeRow ? directorsFor(activeRow.offering) : [];
-  const alumni = activeRow ? alumniFor(activeRow.offering) : [];
+  const openDirectorsForStation = (stationKey: string) => {
+    const group = directorGroups.find((g) => g.stationKey === stationKey);
+    if (!group || group.rows.length === 0) return;
+    setActiveRows(group.rows);
+    setAudience("directeur");
+    setStationLabel(group.stationLabel);
+    setDialogOpen(true);
+  };
+
+  const directors = useMemo(() => {
+    if (audience !== "directeur" || activeRows.length === 0) return [];
+    // Réutilise la même source que directorsFor via les offerings du groupe.
+    // Le hook expose directorsFor(one) — on agrège ici via select côté page
+    // en passant par directorsFor de chaque offering puis dédup e-mail.
+    const seen = new Set<string>();
+    const out = [];
+    for (const row of activeRows) {
+      for (const d of directorsFor(row.offering)) {
+        const key = d.email.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push(d);
+      }
+    }
+    // Filtre Méribel déjà dans selectDirectorsForOfferings ; double sécurité.
+    return out.filter(
+      (d) =>
+        !d.nom_affiche.toLowerCase().includes("méribel") &&
+        !d.nom_affiche.toLowerCase().includes("meribel") &&
+        !(d.station ?? "").toLowerCase().includes("méribel") &&
+        !(d.station ?? "").toLowerCase().includes("meribel")
+    );
+  }, [audience, activeRows, directorsFor]);
+
+  const alumni =
+    audience === "ancien" && activeRows[0]
+      ? alumniFor(activeRows[0].offering)
+      : [];
 
   return (
     <MainLayout>
       <PageShell>
         <PageHeader
           title="Stages à compléter"
-          description="Effectifs par session catalogue — relancer les directeurs et les anciens stagiaires (pas la base moniteurs gelée)."
+          description="Effectifs par session — relances directeurs par station (hors Méribel / Samoëns portugais) et anciens stagiaires."
           icon={Users}
           tone="gold"
           meta={
@@ -83,13 +133,13 @@ export default function StageFillPage() {
           <AlertTitle>Règle d'envoi</AlertTitle>
           <AlertDescription className="space-y-2">
             <p>
-              Aucun e-mail ne part sans validation explicite des brouillons (Paula). La
-              prospection <code>ski_monitors</code> reste gelée — ici uniquement
-              <strong> directeurs</strong> (<code>ski_school_directory</code>) et{" "}
-              <strong>anciens stagiaires</strong> (dossiers terminés / facturés).
+              Directeurs : un mail par station (ex. Oz — anglais + néerlandais).{" "}
+              <strong>Méribel</strong> exclu (liste à recevoir) ·{" "}
+              <strong>Samoëns portugais</strong> exclu. Anciens : invitation +
+              bouche-à-oreille. Pas de prospection <code>ski_monitors</code>.
             </p>
             <p>
-              Lien d'inscription :{" "}
+              Lien :{" "}
               <a
                 className="underline"
                 href="https://www.fli.fr/register"
@@ -98,7 +148,7 @@ export default function StageFillPage() {
               >
                 www.fli.fr/register
               </a>
-              . Pipeline leads :{" "}
+              {" · "}
               <Link className="underline" to="/gestion/commercial">
                 Prospects commerciaux
               </Link>
@@ -125,22 +175,18 @@ export default function StageFillPage() {
             loading={isLoading}
           />
           <StatTile
-            label="Places manquantes"
-            value={underMin.reduce((sum, r) => sum + r.missing, 0)}
-            hint="somme des écarts au min"
-            icon={Users}
+            label="Stations à relancer"
+            value={directorGroups.length}
+            hint="hors Méribel / Samoëns PT"
+            icon={Mail}
             tone="gold"
             loading={isLoading}
           />
           <StatTile
-            label="Prochaine échéance"
-            value={
-              underMin[0]?.offering.date_label?.split(" ")[0] ??
-              underMin[0]?.offering.start_date?.slice(5) ??
-              "—"
-            }
-            hint={underMin[0]?.offering.location_label ?? "aucun stage critique"}
-            icon={Mail}
+            label="Places manquantes"
+            value={underMin.reduce((sum, r) => sum + r.missing, 0)}
+            hint="somme des écarts au min"
+            icon={Users}
             tone="purple"
             loading={isLoading}
           />
@@ -181,95 +227,160 @@ export default function StageFillPage() {
             <Loader2 className="h-4 w-4 animate-spin" />
             Calcul des effectifs…
           </div>
-        ) : visible.length === 0 ? (
-          <TableEmpty
-            title={onlyUnderMin ? "Tous les stages sont au minimum" : "Aucune session"}
-            description={
-              onlyUnderMin
-                ? "Passez le filtre pour voir l'ensemble du catalogue saison."
-                : "Vérifiez le catalogue registration_offerings."
-            }
-          />
         ) : (
-          <div className="grid gap-3">
-            {visible.map((row) => {
-              const dirCount = directorsFor(row.offering).length;
-              const alumCount = alumniFor(row.offering).length;
-              return (
-                <SurfaceCard key={row.offering.id} className="p-4">
-                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                    <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <StatusPill tone={row.underMin ? "danger" : "success"}>
-                          {row.offering.session_code ?? "—"}
-                        </StatusPill>
-                        <span className="font-medium">
-                          {row.offering.location_label} · {row.offering.language_label}
-                        </span>
+          <>
+            <SectionHeading
+              title="Relances directeurs (par station)"
+              description="Un e-mail regroupe toutes les langues de la station."
+            />
+            {directorGroups.length === 0 ? (
+              <TableEmpty
+                title="Aucune station à relancer"
+                description="Soit tous les stages sont au minimum, soit seuls Méribel / Samoëns portugais restent sous le min."
+              />
+            ) : (
+              <div className="grid gap-3">
+                {directorGroups.map((group) => {
+                  const langs = group.rows
+                    .map((r) => r.offering.language_label)
+                    .join(" · ");
+                  const realDirCount = (() => {
+                    const seen = new Set<string>();
+                    for (const row of group.rows) {
+                      for (const d of directorsFor(row.offering)) {
+                        seen.add(d.email.toLowerCase());
+                      }
+                    }
+                    return seen.size;
+                  })();
+                  return (
+                    <SurfaceCard key={group.stationKey} className="p-4">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <StatusPill tone="warning">{group.stationLabel}</StatusPill>
+                            <span className="font-medium">{langs}</span>
+                          </div>
+                          <ul className="text-sm text-muted-foreground">
+                            {group.rows.map((r) => (
+                              <li key={r.offering.id}>
+                                {r.offering.session_code} · {r.offering.language_label}{" "}
+                                — {r.enrolledCount}/{r.minRequired}
+                                {r.offering.date_label
+                                  ? ` · ${r.offering.date_label}`
+                                  : ""}
+                              </li>
+                            ))}
+                          </ul>
+                          <p className="text-xs text-muted-foreground">
+                            {realDirCount} directeur{realDirCount !== 1 ? "s" : ""}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={!editable || realDirCount === 0}
+                          onClick={() => openDirectorsForStation(group.stationKey)}
+                        >
+                          <School className="mr-2 h-4 w-4" />
+                          Directeurs
+                        </Button>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {row.offering.date_label ??
-                          `${row.offering.start_date} → ${row.offering.end_date}`}
-                        {row.offering.format_label
-                          ? ` · ${row.offering.format_label}`
-                          : ""}
-                      </p>
-                      <p className="text-sm">
-                        <strong>
-                          {row.enrolledCount}/{row.minRequired}
-                        </strong>{" "}
-                        inscrit·es
-                        {row.underMin ? (
-                          <span className="text-rose-700">
-                            {" "}
-                            — il manque {row.missing}
-                          </span>
-                        ) : (
-                          <span className="text-emerald-700"> — minimum atteint</span>
-                        )}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Cibles : {dirCount} directeur{dirCount !== 1 ? "s" : ""} ·{" "}
-                        {alumCount} ancien{alumCount !== 1 ? "s" : ""}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={!editable || dirCount === 0}
-                        onClick={() => openRelance(row, "directeur")}
-                      >
-                        <School className="mr-2 h-4 w-4" />
-                        Directeurs
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={!editable || alumCount === 0}
-                        onClick={() => openRelance(row, "ancien")}
-                      >
-                        <Users className="mr-2 h-4 w-4" />
-                        Anciens
-                      </Button>
-                    </div>
-                  </div>
-                </SurfaceCard>
-              );
-            })}
-          </div>
+                    </SurfaceCard>
+                  );
+                })}
+              </div>
+            )}
+
+            <SectionHeading
+              title="Stages (anciens stagiaires)"
+              description="Invitation à recommencer + bouche-à-oreille — y compris Méribel / Samoëns PT."
+            />
+            {visible.length === 0 ? (
+              <TableEmpty
+                title={onlyUnderMin ? "Tous les stages sont au minimum" : "Aucune session"}
+                description={
+                  onlyUnderMin
+                    ? "Passez le filtre pour voir l'ensemble du catalogue saison."
+                    : "Vérifiez le catalogue registration_offerings."
+                }
+              />
+            ) : (
+              <div className="grid gap-3">
+                {visible.map((row) => {
+                  const alumCount = alumniFor(row.offering).length;
+                  const excluded = isDirectorOutreachExcluded(row.offering);
+                  const stationKey = directorStationKey(row.offering);
+                  return (
+                    <SurfaceCard key={row.offering.id} className="p-4">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <StatusPill tone={row.underMin ? "danger" : "success"}>
+                              {row.offering.session_code ?? "—"}
+                            </StatusPill>
+                            <span className="font-medium">
+                              {row.offering.location_label} ·{" "}
+                              {row.offering.language_label}
+                            </span>
+                            {excluded && (
+                              <StatusPill tone="neutral">
+                                hors mail directeurs
+                              </StatusPill>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {row.offering.date_label ??
+                              `${row.offering.start_date} → ${row.offering.end_date}`}
+                          </p>
+                          <p className="text-sm">
+                            <strong>
+                              {row.enrolledCount}/{row.minRequired}
+                            </strong>{" "}
+                            inscrit·es
+                            {row.underMin ? (
+                              <span className="text-rose-700">
+                                {" "}
+                                — il manque {row.missing}
+                              </span>
+                            ) : null}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Anciens : {alumCount}
+                            {!excluded
+                              ? ` · station « ${stationKey} » pour directeurs`
+                              : ""}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={!editable || alumCount === 0}
+                          onClick={() => openAlumni(row)}
+                        >
+                          <Users className="mr-2 h-4 w-4" />
+                          Anciens
+                        </Button>
+                      </div>
+                    </SurfaceCard>
+                  );
+                })}
+              </div>
+            )}
+          </>
         )}
       </PageShell>
 
       <StageRelanceDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        row={activeRow}
+        rows={activeRows}
         audience={audience}
         directors={directors}
         alumni={alumni}
+        stationLabel={stationLabel}
         sendingUnlocked={sendingUnlocked}
       />
     </MainLayout>

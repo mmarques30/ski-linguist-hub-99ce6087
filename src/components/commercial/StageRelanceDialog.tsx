@@ -31,10 +31,12 @@ import { StatusPill } from "@/components/ui-kit";
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  row: StageFillRow | null;
+  /** Stages concernés (1 pour anciens ; N regroupés par station pour directeurs). */
+  rows: StageFillRow[];
   audience: RelanceAudience;
   directors: StageFillDirector[];
   alumni: StageFillAlumni[];
+  stationLabel?: string;
   /** Envoi réel autorisé seulement après validation Paula des textes. */
   sendingUnlocked: boolean;
 };
@@ -42,10 +44,11 @@ type Props = {
 export function StageRelanceDialog({
   open,
   onOpenChange,
-  row,
+  rows,
   audience,
   directors,
   alumni,
+  stationLabel,
   sendingUnlocked,
 }: Props) {
   const sendEmail = useSendStaffEmail();
@@ -53,6 +56,9 @@ export function StageRelanceDialog({
   const [bodyText, setBodyText] = useState("");
   const [confirmCount, setConfirmCount] = useState("");
   const [sending, setSending] = useState(false);
+
+  const primary = rows[0] ?? null;
+  const offerings = useMemo(() => rows.map((r) => r.offering), [rows]);
 
   const recipients = useMemo(() => {
     if (audience === "directeur") {
@@ -72,31 +78,41 @@ export function StageRelanceDialog({
   }, [audience, directors, alumni]);
 
   useEffect(() => {
-    if (!open || !row) return;
+    if (!open || rows.length === 0) return;
     if (audience === "directeur") {
       const draft = buildDirectorRelanceDraft({
-        offering: row.offering,
+        offerings,
         directeurName: directors[0]?.directeur ?? null,
-        enrolledCount: row.enrolledCount,
-        minRequired: row.minRequired,
       });
       setSubject(draft.subject);
       setBodyText(draft.bodyText);
-    } else {
+    } else if (primary) {
       const draft = buildAlumniRelanceDraft({
-        offering: row.offering,
+        offering: primary.offering,
         firstName: alumni[0]?.firstName ?? "",
       });
       setSubject(draft.subject);
       setBodyText(draft.bodyText);
     }
     setConfirmCount("");
-  }, [open, row, audience, directors, alumni]);
+  }, [open, rows, offerings, audience, directors, alumni, primary]);
 
   const title =
     audience === "directeur"
-      ? "Relance directeurs"
+      ? `Relance directeurs${stationLabel ? ` — ${stationLabel}` : ""}`
       : "Relance anciens stagiaires";
+
+  const description =
+    audience === "directeur"
+      ? rows
+          .map(
+            (r) =>
+              `${r.offering.language_label} (${r.enrolledCount}/${r.minRequired})`
+          )
+          .join(" · ")
+      : primary
+        ? `${primary.offering.session_code} · ${primary.offering.location_label} · ${primary.offering.language_label} — ${primary.enrolledCount}/${primary.minRequired} inscrit·es`
+        : "";
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(`${subject}\n\n${bodyText}`);
@@ -111,7 +127,11 @@ export function StageRelanceDialog({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `relance-${audience}-${row?.offering.session_code ?? "stage"}.csv`;
+    const slug =
+      audience === "directeur"
+        ? stationLabel?.replace(/\s+/g, "-") ?? "station"
+        : primary?.offering.session_code ?? "stage";
+    a.download = `relance-${audience}-${slug}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -129,29 +149,24 @@ export function StageRelanceDialog({
     !sendEmail.isPending;
 
   const handleSendAll = async () => {
-    if (!canSend || !row) return;
+    if (!canSend || rows.length === 0) return;
     setSending(true);
     let ok = 0;
     let failed = 0;
     try {
       for (const recipient of recipients) {
-        // Personnalise le prénom pour les anciens ; directeurs : texte commun.
         let personalizedBody = bodyText;
-        if (audience === "ancien") {
+        if (audience === "ancien" && primary) {
           const first = recipient.name.split(" ")[0] ?? "";
-          const draft = buildAlumniRelanceDraft({
-            offering: row.offering,
+          personalizedBody = buildAlumniRelanceDraft({
+            offering: primary.offering,
             firstName: first,
-          });
-          personalizedBody = draft.bodyText;
+          }).bodyText;
         } else if (audience === "directeur") {
-          const draft = buildDirectorRelanceDraft({
-            offering: row.offering,
+          personalizedBody = buildDirectorRelanceDraft({
+            offerings,
             directeurName: recipient.name,
-            enrolledCount: row.enrolledCount,
-            minRequired: row.minRequired,
-          });
-          personalizedBody = draft.bodyText;
+          }).bodyText;
         }
         try {
           await sendEmail.mutateAsync({
@@ -175,7 +190,7 @@ export function StageRelanceDialog({
     }
   };
 
-  if (!row) return null;
+  if (rows.length === 0) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -185,16 +200,16 @@ export function StageRelanceDialog({
             <Mail className="h-4 w-4" />
             {title}
           </DialogTitle>
-          <DialogDescription>
-            {row.offering.session_code} · {row.offering.location_label} ·{" "}
-            {row.offering.language_label} — {row.enrolledCount}/{row.minRequired} inscrit·es
-          </DialogDescription>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
         <Alert>
           <AlertDescription>
             Aucun envoi automatique. Les textes sont des brouillons : validez-les avec Paula
             avant de débloquer l'envoi. En attendant, exportez la liste ou copiez le message.
+            {audience === "directeur" && (
+              <> Méribel et Samoëns portugais sont exclus des relances directeurs.</>
+            )}
           </AlertDescription>
         </Alert>
 
