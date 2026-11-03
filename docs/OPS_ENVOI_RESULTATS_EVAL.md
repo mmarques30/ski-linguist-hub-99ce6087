@@ -31,7 +31,8 @@ Scripts ops : `SEND=1 ./node_modules/.bin/tsx scripts/send-….mts` (sans `SEND=
 
 **Pièces jointes**
 
-1. Résultat PDF (habillage C.5 `esf` ou `ecole_ski`)  
+1. Résultat PDF (habillage C.5 `esf` ; **Prosneige** = modèle Word
+   `Evaluation_PROSNEIGE_2025.dotx` via `scripts/fill-prosneige-eval-dotx.py`, ≠ ESF)  
 2. Facture **acquittée** individuelle (si le candidat a payé)
 
 **Objet type**  

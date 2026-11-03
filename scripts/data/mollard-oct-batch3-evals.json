@@ -116,7 +116,7 @@
     "profession": "moniteur",
     "test_at": "2026-10-29T12:00:00+01:00",
     "previous_test": false,
-    "payment": "pending_clarify",
+    "payment": "pending_unpaid",
     "scores": [2.5, 3, 2.5, 3, 3, 3],
     "cecrl": "B2",
     "instructor_first_name": "Carole",
@@ -128,9 +128,10 @@
     "points": null,
     "concl": "En conclusion vous avez un niveau opérationnel qui vous permet de communiquer correctement avec la clientèle anglophone.",
     "pdf_habillage": "ecole_ski",
-    "send_mode": "pending_payment_and_cc",
-    "school_cc": [],
-    "note": "Habillage école de ski (Prosneige). Pas de 45 € Stripe récent trouvé (anciens paiements formation). CC école : pas d'e-mail Prosneige au référentiel — à préciser."
+    "pdf_source": "prosneige_dotx",
+    "send_mode": "pending_payment",
+    "school_cc": ["sam@prosneige.fr", "nathan@prosneige.fr"],
+    "note": "Modèle Word Prosneige (docs/evaluation-resultats/Evaluation_PROSNEIGE_2025.dotx) — ≠ ESF. Pack prêt (DOCX+PDF). Paiement 45 € non reçu → pas d'envoi tant que Paula n'a pas validé + paiement OK."
   },
   {
     "key": "titouan-avocat-reeval",

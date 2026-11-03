@@ -84,6 +84,7 @@ type Row = {
   points: string | null;
   concl: string;
   pdf_habillage: "esf" | "ecole_ski";
+  pdf_source?: "prosneige_dotx" | "c5";
   send_mode: string;
   school_cc: string[];
   payment: string;
@@ -371,47 +372,64 @@ async function main() {
   ];
 
   for (const r of rows) {
-    const blocs = buildBlocs(r);
-    const [comp, expr, struct, tech, conv, gen] = r.scores;
     const evaluationId = randomUUID();
-    const input: EvaluationPdfInput = {
-      sponsorType: r.pdf_habillage,
-      evaluatedAt: new Date(r.test_at),
-      candidateName: r.name,
-      candidateProfession: r.profession,
-      skiDiscipline: "alpin",
-      trainingCycle: "1",
-      carteSyndicale: r.carte,
-      language: "anglais",
-      previousTest: !!r.previous_test,
-      skiSchoolName: r.school,
-      companyName: r.school,
-      instructorName: `${r.instructor_first_name} ${r.instructor_last_name}`,
-      scores: {
-        comprehension: comp,
-        expression: expr,
-        structure: struct,
-        technique: tech,
-        conversation: conv,
-        general: gen,
-      },
-      cecrlGeneral: r.cecrl,
-      blocs: {
-        introduction: blocs.intro,
-        comprehension: blocs.comp,
-        technique: blocs.tech,
-        conclusion: blocs.concl,
-      },
-      noteMethodologique: r.note_methodologique ?? null,
-      priceTtc: 45,
-      identity: IDENTITY,
-      cecrlScale: SCALE,
-      verifiedAt: new Date(),
-    };
-    const bytes = await renderEvaluationPdf(buildEvaluationPdfModel(input), assets);
-    const pdfName = slugName(r.name, "anglais", r.key);
-    await writeFile(join(OUT, "pdfs", pdfName), bytes);
-    console.log(`PDF OK ${pdfName} (${bytes.length})`);
+    const useProsneigeDotx = r.pdf_source === "prosneige_dotx";
+    const pdfName = useProsneigeDotx
+      ? "evaluation-Pierre-Boes-anglais-Prosneige.pdf"
+      : slugName(r.name, "anglais", r.key);
+    if (useProsneigeDotx) {
+      // Modèle Word Prosneige (≠ ESF / ≠ C.5 ecole_ski) — généré à part :
+      //   python3 scripts/fill-prosneige-eval-dotx.py
+      const existing = join(OUT, "pdfs", pdfName);
+      try {
+        await readFile(existing);
+        console.log(`PDF SKIP C.5 (Prosneige DOTX) ${pdfName}`);
+      } catch {
+        throw new Error(
+          `PDF Prosneige manquant : lancer python3 scripts/fill-prosneige-eval-dotx.py puis recopier vers ${existing}`
+        );
+      }
+    } else {
+      const blocs = buildBlocs(r);
+      const [comp, expr, struct, tech, conv, gen] = r.scores;
+      const input: EvaluationPdfInput = {
+        sponsorType: r.pdf_habillage,
+        evaluatedAt: new Date(r.test_at),
+        candidateName: r.name,
+        candidateProfession: r.profession,
+        skiDiscipline: "alpin",
+        trainingCycle: "1",
+        carteSyndicale: r.carte,
+        language: "anglais",
+        previousTest: !!r.previous_test,
+        skiSchoolName: r.school,
+        companyName: r.school,
+        instructorName: `${r.instructor_first_name} ${r.instructor_last_name}`,
+        scores: {
+          comprehension: comp,
+          expression: expr,
+          structure: struct,
+          technique: tech,
+          conversation: conv,
+          general: gen,
+        },
+        cecrlGeneral: r.cecrl,
+        blocs: {
+          introduction: blocs.intro,
+          comprehension: blocs.comp,
+          technique: blocs.tech,
+          conclusion: blocs.concl,
+        },
+        noteMethodologique: r.note_methodologique ?? null,
+        priceTtc: 45,
+        identity: IDENTITY,
+        cecrlScale: SCALE,
+        verifiedAt: new Date(),
+      };
+      const bytes = await renderEvaluationPdf(buildEvaluationPdfModel(input), assets);
+      await writeFile(join(OUT, "pdfs", pdfName), bytes);
+      console.log(`PDF OK ${pdfName} (${bytes.length})`);
+    }
 
     let invoiceName: string | null = null;
     if (r.send_mode === "stripe_paid_invoice" && r.invoice_number && r.payment_date) {
@@ -428,7 +446,10 @@ async function main() {
     }
 
     const paymentBlocked =
-      r.send_mode === "pending_payment_and_cc" || r.payment === "pending_clarify";
+      r.send_mode === "pending_payment_and_cc" ||
+      r.send_mode === "pending_payment" ||
+      r.payment === "pending_clarify" ||
+      r.payment === "pending_unpaid";
     const to =
       r.email ??
       (r.school.includes("GERVAIS")
@@ -441,7 +462,7 @@ async function main() {
     const body = r.email ? emailBody(r, !!invoiceName) : schoolOnlyBody(r);
     const attachments = [pdfName, invoiceName].filter(Boolean) as string[];
     const sendLabel = paymentBlocked
-      ? "BLOQUÉ (paiement / CC à clarifier)"
+      ? "BLOQUÉ (paiement en attente — pack prêt, pas d'envoi)"
       : r.email
         ? invoiceName
           ? "TO candidat + facture"
@@ -461,6 +482,8 @@ async function main() {
       scores: r.scores,
       evaluation_id: evaluationId,
       pdf: pdfName,
+      docx: useProsneigeDotx ? "evaluation-Pierre-Boes-anglais-Prosneige.docx" : null,
+      pdf_source: r.pdf_source ?? "c5",
       invoice: invoiceName,
       to,
       cc,
@@ -484,12 +507,16 @@ async function main() {
     draftLines.push("");
     if (m.blocked) {
       const why =
-        m.send_mode === "pending_payment_and_cc"
-          ? "Paiement / CC école à clarifier"
+        m.send_mode === "pending_payment" || m.send_mode === "pending_payment_and_cc"
+          ? "Paiement non reçu — pack prêt, pas d'envoi"
           : "Email candidat manquant";
       draftLines.push(
         `⚠️ **${why}** — proposition : TO \`${m.to as string}\`${(m.cc as string[]).length ? ` · CC \`${(m.cc as string[]).join("`, `")}\`` : ""}`
       );
+      draftLines.push(`- **To :** \`${m.to as string}\``);
+      if ((m.cc as string[]).length) {
+        draftLines.push(`- **Cc :** \`${(m.cc as string[]).join("`, `")}\``);
+      }
     } else {
       draftLines.push(`- **To :** \`${m.to as string}\``);
       draftLines.push(`- **Cc :** \`${(m.cc as string[]).join("`, `")}\``);

@@ -9,6 +9,7 @@ Process d’envoi : `docs/OPS_ENVOI_RESULTATS_EVAL.md`. Habillages PDF app : `do
 |---------|---------|-----------|
 | `Resultat_eval_DSF_forms.dotx` | « Résultat d'éval DSF forms.dotx » (Paula, 2026-10) | Remplir → `.docx` + PDF LibreOffice pour envoi DSF |
 | `Evaluation_en_langue_vivante_saison.dotx` | « Évaluation en langue vivante saison … .dotx » | Référence mise en page / MERGEFIELD ESF ; génération PDF prod via C.5 |
+| `Evaluation_PROSNEIGE_2025.dotx` | « Évaluation PROSNEIGE 2025.dotx » (Paula, 2026-11) | Remplir → `.docx` + PDF LibreOffice pour envoi Prosneige (≠ ESF) |
 
 ## Remplir le modèle DSF
 
@@ -57,6 +58,17 @@ Champs spéciaux gérés hors MERGEFIELD document :
 
 Même famille de champs, plus `Carte_syndicale_` ; pas de champ `Expression_Technique` isolé
 (présent côté DSF). Le PDF envoyé aux candidats ESF reste celui généré par l’app (C.5).
+
+### MERGEFIELD — `Evaluation_PROSNEIGE_2025.dotx`
+
+Même famille que DSF, plus `Compréhension2`, `Expression2`, `Métier`, `Exemples__Moniteurs`.
+Pas de page 2 ESF (cours / sections régionales). Remplir via :
+
+```bash
+python3 scripts/fill-prosneige-eval-dotx.py \
+  --dotx docs/evaluation-resultats/Evaluation_PROSNEIGE_2025.dotx \
+  --out-dir /chemin/sortie
+```
 
 ## Tableau des niveaux (session DSF)
 
