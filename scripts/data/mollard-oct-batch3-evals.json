@@ -57,7 +57,7 @@
   {
     "key": "victor-dorn",
     "name": "Victor Dorn",
-    "email": null,
+    "email": "victordorn@outlook.com",
     "school": "ESF SAINT GERVAIS",
     "sponsor_type": "esf",
     "carte": "55010",
@@ -76,7 +76,7 @@
     "points": "Utilisez le PRESENT -ing pour parler de ce qui se déroule maintenant ou temporairement. Utilisez le PRESENT SIMPLE pour parler des vérités permanentes, de votre routine, des règles de sécurité, etc. Apprenez à utiliser les temps du passé PRETERIT (action datée/terminée) et PRESENT PERFECT (l'action continue dans le présent). Revoyez MUST et HAVE TO pour exprimer l'obligation. Revoyez CAN et TO BE ABLE TO pour exprimer la capacité au présent et au futur. Ex. : I can ski but I'll be able to ski even better at the end of the day! Vous dites « for + verb » au lieu de « to + verb » — utilisez TO pour exprimer le but.",
     "concl": "Votre niveau vous permet de comprendre globalement et de vous exprimer en général.",
     "pdf_habillage": "esf",
-    "send_mode": "school_billed_need_email",
+    "send_mode": "school_billed_no_invoice",
     "school_cc": ["administration@esf-saintgervais.com"]
   },
   {
@@ -89,7 +89,7 @@
     "profession": "moniteur",
     "test_at": "2026-10-29T11:00:00+01:00",
     "previous_test": true,
-    "payment": "bank_0309",
+    "payment": "bank_2210",
     "scores": [2.5, 2.5, 2.5, 2.5, 2.5, 2.5],
     "cecrl": "B1+",
     "instructor_first_name": "Carole",
@@ -103,7 +103,7 @@
     "pdf_habillage": "esf",
     "send_mode": "school_billed_no_invoice",
     "school_cc": ["ski@esfcourchevel.com", "sebdame@esfcourchevel.com"],
-    "note": "Nouveau test 29/10 (précédent résultat B1 envoyé 14/10). Carte « 00000 » ignorée. Paiement : virement 03/09 déjà utilisé pour le 1er envoi — à confirmer si nouveau règlement dû."
+    "note": "Nouveau test 29/10. Virement 45 € 22/10/2026 confirmé Paula (VIR INST — VIREMENT TEST … 29 OCTOBRE). Envoi différé."
   },
   {
     "key": "pierre-boes",
