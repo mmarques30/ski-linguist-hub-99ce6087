@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import type { RegistrationOffering } from "@/lib/registration-offerings";
 import {
   buildAlumniRelanceDraft,
+  buildCommercialTestEnvelope,
   buildDirectorRelanceDraft,
+  COMMERCIAL_TEST_TO,
   computeStageFillRows,
   countsTowardStageFill,
   groupRowsForDirectorOutreach,
@@ -403,5 +405,24 @@ describe("commercial-stage-fill", () => {
     ]);
     expect(csv.split("\n")[0]).toBe("email;nom;detail");
     expect(csv).toContain('"a@b.fr"');
+  });
+
+  it("prépare un seul mail test à info@fli.fr sans envoi masse", () => {
+    const envelope = buildCommercialTestEnvelope({
+      audience: "directeur",
+      draftSubject: "Sujet client",
+      draftBody: "Corps client\nL'équipe FLI",
+      recipients: [
+        { email: "dir@oz.fr", name: "Jean", detail: "ESF Oz" },
+        { email: "dir2@oz.fr", name: "Marie", detail: "ESF Oz" },
+      ],
+      contextLabel: "ESF Oz en Oisans",
+    });
+    expect(envelope.subject).toContain("[FLI][TEST]");
+    expect(envelope.subject).toContain("2 destinataires");
+    expect(envelope.bodyText).toContain(COMMERCIAL_TEST_TO);
+    expect(envelope.bodyText).toContain("dir@oz.fr");
+    expect(envelope.bodyText).toContain("Sujet client");
+    expect(envelope.bodyText).toContain("Corps client");
   });
 });

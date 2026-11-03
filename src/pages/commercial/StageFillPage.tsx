@@ -47,7 +47,6 @@ export default function StageFillPage() {
     useStageFillCampaign();
 
   const [onlyUnderMin, setOnlyUnderMin] = useState(true);
-  const [sendingUnlocked, setSendingUnlocked] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeRows, setActiveRows] = useState<StageFillRow[]>([]);
   const [audience, setAudience] = useState<RelanceAudience>("directeur");
@@ -143,7 +142,9 @@ export default function StageFillPage() {
               <code>ski_monitors</code>.
             </p>
             <p>
-              Lien :{" "}
+              Envoi : un seul <strong>mail test</strong> à{" "}
+              <code>info@fli.fr</code> (pas de copie par destinataire). Lien
+              inscription :{" "}
               <a
                 className="underline"
                 href="https://www.fli.fr/register"
@@ -205,18 +206,6 @@ export default function StageFillPage() {
             />
             <Label htmlFor="only-under">Uniquement sous le minimum</Label>
           </div>
-          {editable && (
-            <div className="flex items-center gap-2">
-              <Switch
-                id="unlock-send"
-                checked={sendingUnlocked}
-                onCheckedChange={setSendingUnlocked}
-              />
-              <Label htmlFor="unlock-send">
-                Débloquer l'envoi (après OK Paula sur les textes)
-              </Label>
-            </div>
-          )}
         </div>
 
         {error && (
@@ -401,7 +390,6 @@ export default function StageFillPage() {
         directors={directors}
         alumni={alumni}
         stationLabel={stationLabel}
-        sendingUnlocked={sendingUnlocked}
       />
     </MainLayout>
   );

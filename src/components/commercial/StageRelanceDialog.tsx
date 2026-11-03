@@ -18,29 +18,31 @@ import { useSendStaffEmail } from "@/hooks/useSendStaffEmail";
 import { canSendStaffEmail } from "@/lib/staff-email";
 import {
   buildAlumniRelanceDraft,
+  buildCommercialTestEnvelope,
   buildDirectorRelanceDraft,
+  COMMERCIAL_TEST_TO,
   recipientsToCsv,
   type RelanceAudience,
   type StageFillAlumni,
   type StageFillDirector,
   type StageFillRow,
 } from "@/lib/commercial-stage-fill";
-import { isMassSendConfirmed, massSendNeedsConfirmation } from "@/lib/email-guards";
 import { StatusPill } from "@/components/ui-kit";
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Stages concernés (1 pour anciens ; N regroupés par station pour directeurs). */
   rows: StageFillRow[];
   audience: RelanceAudience;
   directors: StageFillDirector[];
   alumni: StageFillAlumni[];
   stationLabel?: string;
-  /** Envoi réel autorisé seulement après validation Paula des textes. */
-  sendingUnlocked: boolean;
 };
 
+/**
+ * Prépare les brouillons et envoie un seul mail test à info@fli.fr.
+ * Pas d'envoi de masse ici (évite une copie BCC par destinataire).
+ */
 export function StageRelanceDialog({
   open,
   onOpenChange,
@@ -49,12 +51,10 @@ export function StageRelanceDialog({
   directors,
   alumni,
   stationLabel,
-  sendingUnlocked,
 }: Props) {
   const sendEmail = useSendStaffEmail();
   const [subject, setSubject] = useState("");
   const [bodyText, setBodyText] = useState("");
-  const [confirmCount, setConfirmCount] = useState("");
   const [sending, setSending] = useState(false);
 
   const primary = rows[0] ?? null;
@@ -66,14 +66,12 @@ export function StageRelanceDialog({
         email: d.email,
         name: d.directeur?.trim() || d.nom_affiche,
         detail: d.nom_affiche,
-        studentId: null as string | null,
       }));
     }
     return alumni.map((a) => ({
       email: a.email,
       name: `${a.firstName} ${a.lastName}`.trim(),
       detail: a.languageLabel,
-      studentId: a.studentId,
     }));
   }, [audience, directors, alumni]);
 
@@ -94,7 +92,6 @@ export function StageRelanceDialog({
       setSubject(draft.subject);
       setBodyText(draft.bodyText);
     }
-    setConfirmCount("");
   }, [open, rows, offerings, audience, directors, alumni, primary]);
 
   const title =
@@ -111,7 +108,7 @@ export function StageRelanceDialog({
           )
           .join(" · ")
       : primary
-        ? `${primary.offering.session_code} · ${primary.offering.location_label} · ${primary.offering.language_label} — ${primary.enrolledCount}/${primary.minRequired} inscrit·es`
+        ? `${primary.offering.session_code} · ${primary.offering.location_label} · ${primary.offering.language_label}`
         : "";
 
   const handleCopy = async () => {
@@ -120,9 +117,7 @@ export function StageRelanceDialog({
   };
 
   const handleExport = () => {
-    const csv = recipientsToCsv(
-      recipients.map((r) => ({ email: r.email, name: r.name, detail: r.detail }))
-    );
+    const csv = recipientsToCsv(recipients);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -136,55 +131,34 @@ export function StageRelanceDialog({
     URL.revokeObjectURL(url);
   };
 
-  const confirmed = isMassSendConfirmed(
-    recipients.length,
-    Number.parseInt(confirmCount, 10) || null
-  );
-  const canSend =
-    sendingUnlocked &&
+  const canTest =
     canSendStaffEmail({ subject, bodyText }) &&
     recipients.length > 0 &&
-    confirmed &&
     !sending &&
     !sendEmail.isPending;
 
-  const handleSendAll = async () => {
-    if (!canSend || rows.length === 0) return;
+  const handleSendTest = async () => {
+    if (!canTest) return;
     setSending(true);
-    let ok = 0;
-    let failed = 0;
     try {
-      for (const recipient of recipients) {
-        let personalizedBody = bodyText;
-        if (audience === "ancien" && primary) {
-          const first = recipient.name.split(" ")[0] ?? "";
-          personalizedBody = buildAlumniRelanceDraft({
-            offering: primary.offering,
-            firstName: first,
-          }).bodyText;
-        } else if (audience === "directeur") {
-          personalizedBody = buildDirectorRelanceDraft({
-            offerings,
-            directeurName: recipient.name,
-          }).bodyText;
-        }
-        try {
-          await sendEmail.mutateAsync({
-            to: recipient.email,
-            subject: subject.trim(),
-            bodyText: personalizedBody,
-            recipientName: recipient.name,
-            studentId: recipient.studentId,
-            templateSlug: "staff_manual",
-          });
-          ok += 1;
-        } catch {
-          failed += 1;
-        }
-      }
-      if (ok > 0) toast.success(`${ok} e-mail${ok > 1 ? "s" : ""} envoyé${ok > 1 ? "s" : ""}`);
-      if (failed > 0) toast.error(`${failed} échec${failed > 1 ? "s" : ""} d'envoi`);
-      if (failed === 0) onOpenChange(false);
+      const envelope = buildCommercialTestEnvelope({
+        audience,
+        draftSubject: subject.trim(),
+        draftBody: bodyText,
+        recipients,
+        contextLabel: stationLabel ?? primary?.offering.session_code ?? undefined,
+      });
+      await sendEmail.mutateAsync({
+        to: COMMERCIAL_TEST_TO,
+        subject: envelope.subject,
+        bodyText: envelope.bodyText,
+        recipientName: "FLI",
+        templateSlug: "staff_manual",
+      });
+      toast.success(`Mail test envoyé à ${COMMERCIAL_TEST_TO} (1 seul message)`);
+      onOpenChange(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Envoi test impossible");
     } finally {
       setSending(false);
     }
@@ -205,21 +179,19 @@ export function StageRelanceDialog({
 
         <Alert>
           <AlertDescription>
-            Aucun envoi automatique. Les textes sont des brouillons : validez-les avec Paula
-            avant de débloquer l'envoi. En attendant, exportez la liste ou copiez le message.
-            {audience === "directeur" && (
-              <> Méribel et Samoëns portugais sont exclus des relances directeurs.</>
-            )}
+            Pas d'envoi de masse ici : un seul <strong>mail test</strong> part à{" "}
+            <code>{COMMERCIAL_TEST_TO}</code> (brouillon + liste prévue). Aucune
+            copie par destinataire. La campagne réelle se fera après ton OK, sans
+            te BCC à chaque personne.
           </AlertDescription>
         </Alert>
 
         <div className="flex flex-wrap items-center gap-2">
           <StatusPill tone={recipients.length > 0 ? "info" : "warning"}>
-            {recipients.length} destinataire{recipients.length !== 1 ? "s" : ""}
+            {recipients.length} destinataire{recipients.length !== 1 ? "s" : ""}{" "}
+            prévus
           </StatusPill>
-          {!sendingUnlocked && (
-            <StatusPill tone="warning">Envoi verrouillé — validation requise</StatusPill>
-          )}
+          <StatusPill tone="success">Test → {COMMERCIAL_TEST_TO}</StatusPill>
         </div>
 
         {recipients.length > 0 && (
@@ -237,7 +209,7 @@ export function StageRelanceDialog({
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="stage-relance-subject">Sujet</Label>
+          <Label htmlFor="stage-relance-subject">Sujet (brouillon client)</Label>
           <Input
             id="stage-relance-subject"
             value={subject}
@@ -246,30 +218,15 @@ export function StageRelanceDialog({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="stage-relance-body">Message</Label>
+          <Label htmlFor="stage-relance-body">Message (brouillon client)</Label>
           <Textarea
             id="stage-relance-body"
             value={bodyText}
             onChange={(e) => setBodyText(e.target.value)}
-            rows={14}
+            rows={12}
             className="font-mono text-sm"
           />
         </div>
-
-        {sendingUnlocked && massSendNeedsConfirmation(recipients.length) && (
-          <div className="space-y-2">
-            <Label htmlFor="stage-relance-confirm">
-              Confirmer le nombre de destinataires ({recipients.length})
-            </Label>
-            <Input
-              id="stage-relance-confirm"
-              inputMode="numeric"
-              value={confirmCount}
-              onChange={(e) => setConfirmCount(e.target.value)}
-              placeholder={String(recipients.length)}
-            />
-          </div>
-        )}
 
         <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
           <div className="flex flex-wrap gap-2">
@@ -287,13 +244,13 @@ export function StageRelanceDialog({
               CSV
             </Button>
           </div>
-          <Button type="button" onClick={handleSendAll} disabled={!canSend}>
+          <Button type="button" onClick={handleSendTest} disabled={!canTest}>
             {sending || sendEmail.isPending ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <Send className="mr-2 h-4 w-4" />
             )}
-            Envoyer ({recipients.length})
+            Mail test → {COMMERCIAL_TEST_TO}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -444,6 +444,51 @@ export const COMMERCIAL_REGISTER_URL = "https://www.fli.fr/register";
 /** Signature commerciale — toujours « nous », jamais un prénom. */
 export const COMMERCIAL_EMAIL_SIGNATURE = "L'équipe FLI";
 
+/** Destinataire unique des essais commerciaux (jamais une adresse client). */
+export const COMMERCIAL_TEST_TO = "info@fli.fr";
+
+/**
+ * Enveloppe d'un mail test : un seul message à info@fli.fr, avec le brouillon
+ * et le décompte des destinataires prévus — pas de copie par personne.
+ */
+export function buildCommercialTestEnvelope(input: {
+  audience: RelanceAudience;
+  draftSubject: string;
+  draftBody: string;
+  recipients: Array<{ email: string; name: string; detail?: string }>;
+  contextLabel?: string;
+}): { subject: string; bodyText: string } {
+  const n = input.recipients.length;
+  const audienceLabel =
+    input.audience === "directeur" ? "directeurs" : "anciens stagiaires";
+  const context = input.contextLabel?.trim()
+    ? ` · ${input.contextLabel.trim()}`
+    : "";
+  const preview = input.recipients
+    .slice(0, 25)
+    .map((r) => `— ${r.name} <${r.email}>${r.detail ? ` (${r.detail})` : ""}`)
+    .join("\n");
+  const more =
+    n > 25 ? `\n… et ${n - 25} autre${n - 25 > 1 ? "s" : ""}` : "";
+
+  const subject = `[FLI][TEST] Relance ${audienceLabel}${context} — ${n} destinataire${n !== 1 ? "s" : ""}`;
+
+  const bodyText = `Mail test commercial (un seul envoi à ${COMMERCIAL_TEST_TO}).
+
+Campagne : ${audienceLabel}${context}
+Destinataires prévus : ${n}
+${preview || "— (aucun)"}${more}
+
+——— Brouillon qui partirait ———
+Sujet : ${input.draftSubject}
+
+${input.draftBody}`
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  return { subject, bodyText };
+}
+
 function formatDirectorGreeting(directeur: string | null): string {
   const name = (directeur ?? "").trim();
   if (!name) return "Bonjour,";
