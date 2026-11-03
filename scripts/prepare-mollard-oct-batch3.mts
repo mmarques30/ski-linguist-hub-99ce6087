@@ -96,6 +96,7 @@ type Row = {
   invoice_number?: string;
   invoice_seq?: number;
   note?: string;
+  email_body_extra?: string | null;
 };
 
 function slugName(name: string, language: string, key: string): string {
@@ -329,10 +330,13 @@ function emailBody(r: Row, withInvoice: boolean): string {
   const invoiceLine = withInvoice
     ? `\n\nLa facture acquittée n° ${r.invoice_number} est jointe.`
     : "";
+  const extra = r.email_body_extra?.trim()
+    ? `\n\n${r.email_body_extra.trim()}\n`
+    : "";
   return `Bonjour,
 
 veuillez trouver ci-joint le résultat de votre test d'anglais (${r.cecrl}).
-
+${extra}
 Une copie est adressée à votre école de ski.${invoiceLine}
 
 Cordialement,
