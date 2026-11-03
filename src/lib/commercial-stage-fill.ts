@@ -154,9 +154,62 @@ export function directorStationLabel(
   return (offering.location_label ?? "").trim() || "Station";
 }
 
+function offeringPlaceParts(
+  offering: Pick<RegistrationOffering, "location_label" | "location_key">
+): { place: string; placeKey: string } {
+  return {
+    place: normalizePlaceLabel(offering.location_label),
+    placeKey: normalizePlaceLabel(offering.location_key),
+  };
+}
+
+function isMeribelOffering(
+  offering: Pick<RegistrationOffering, "session_code" | "location_label" | "location_key">
+): boolean {
+  const code = (offering.session_code ?? "").trim().toUpperCase();
+  if (code === "S06" || code === "S14") return true;
+  const { place, placeKey } = offeringPlaceParts(offering);
+  return place.includes("meribel") || placeKey.includes("meribel");
+}
+
+function isSamoensPortugueseOffering(
+  offering: Pick<
+    RegistrationOffering,
+    "session_code" | "location_label" | "location_key" | "language_label" | "language_key"
+  >
+): boolean {
+  const code = (offering.session_code ?? "").trim().toUpperCase();
+  if (code === "S21") return true;
+  const { place, placeKey } = offeringPlaceParts(offering);
+  const isSamoens = place.includes("samoens") || placeKey.includes("samoens");
+  const lang =
+    offering.language_key?.trim() ||
+    languageKeyLoose(offering.language_label) ||
+    "";
+  return isSamoens && lang === "portuguese";
+}
+
+/** Samoëns anglais : on en parle à tous (directeurs + anciens toutes langues). */
+export function isSamoensEnglishOffering(
+  offering: Pick<
+    RegistrationOffering,
+    "session_code" | "location_label" | "location_key" | "language_label" | "language_key"
+  >
+): boolean {
+  const code = (offering.session_code ?? "").trim().toUpperCase();
+  if (code === "S13") return true;
+  const { place, placeKey } = offeringPlaceParts(offering);
+  const isSamoens = place.includes("samoens") || placeKey.includes("samoens");
+  const lang =
+    offering.language_key?.trim() ||
+    languageKeyLoose(offering.language_label) ||
+    "";
+  return isSamoens && lang === "english";
+}
+
 /**
- * Pas de mail directeurs pour Méribel (liste ESF à venir) ni Samoëns portugais.
- * Les anciens stagiaires restent ciblables sur ces sessions.
+ * Pas de mail directeurs pour Méribel (liste ESF à venir) ni Samoëns portugais
+ * (inscriptions directement avec Seb).
  */
 export function isDirectorOutreachExcluded(
   offering: Pick<
@@ -166,20 +219,22 @@ export function isDirectorOutreachExcluded(
 ): boolean {
   const code = (offering.session_code ?? "").trim().toUpperCase();
   if (DIRECTOR_OUTREACH_EXCLUDED_SESSION_CODES.has(code)) return true;
-
-  const place = normalizePlaceLabel(offering.location_label);
-  const placeKey = normalizePlaceLabel(offering.location_key);
-  const isMeribel = place.includes("meribel") || placeKey.includes("meribel");
-  if (isMeribel) return true;
-
-  const lang =
-    offering.language_key?.trim() ||
-    languageKeyLoose(offering.language_label) ||
-    "";
-  const isSamoens = place.includes("samoens") || placeKey.includes("samoens");
-  if (isSamoens && lang === "portuguese") return true;
-
+  if (isMeribelOffering(offering)) return true;
+  if (isSamoensPortugueseOffering(offering)) return true;
   return false;
+}
+
+/**
+ * Pas d'anciens pour Méribel ni Samoëns portugais (Seb gère le PT en direct).
+ * Samoëns anglais : ciblage élargi (voir selectAlumniForStage).
+ */
+export function isAlumniOutreachExcluded(
+  offering: Pick<
+    RegistrationOffering,
+    "session_code" | "location_label" | "location_key" | "language_label" | "language_key"
+  >
+): boolean {
+  return isMeribelOffering(offering) || isSamoensPortugueseOffering(offering);
 }
 
 function isMeribelDirectorySchool(school: {
@@ -500,11 +555,23 @@ ${COMMERCIAL_EMAIL_SIGNATURE}`
 }
 
 /**
- * Anciens stagiaires : e-mail réel, au moins une inscription terminée/facturée
- * dans la langue du stage, et pas déjà inscrit·e sur ce stage.
+ * Anciens stagiaires : e-mail réel, inscription terminée/facturée,
+ * pas déjà inscrit·e sur ce stage.
+ * — Méribel / Samoëns PT : aucun (Seb pour le PT).
+ * — Samoëns anglais : tous les anciens (toutes langues) — « parler à tous ».
+ * — Autres stages : anciens de la même langue.
  */
 export function selectAlumniForStage(
-  offering: Pick<RegistrationOffering, "language_label" | "start_date" | "end_date" | "location_label">,
+  offering: Pick<
+    RegistrationOffering,
+    | "language_label"
+    | "language_key"
+    | "start_date"
+    | "end_date"
+    | "location_label"
+    | "location_key"
+    | "session_code"
+  >,
   students: Array<{
     id: string;
     first_name: string;
@@ -521,6 +588,10 @@ export function selectAlumniForStage(
     course_location?: string | null;
   }>
 ): StageFillAlumni[] {
+  if (isAlumniOutreachExcluded(offering)) return [];
+
+  const talkToEveryone = isSamoensEnglishOffering(offering);
+
   const alreadyOnStage = new Set(
     history
       .filter(
@@ -540,11 +611,11 @@ export function selectAlumniForStage(
 
   const alumniIds = new Set(
     history
-      .filter(
-        (h) =>
-          (h.status === "terminee" || h.status === "facturee") &&
-          languageKeysMatch(offering.language_label, h.language)
-      )
+      .filter((h) => {
+        if (h.status !== "terminee" && h.status !== "facturee") return false;
+        if (talkToEveryone) return true;
+        return languageKeysMatch(offering.language_label, h.language);
+      })
       .map((h) => h.student_id)
   );
 

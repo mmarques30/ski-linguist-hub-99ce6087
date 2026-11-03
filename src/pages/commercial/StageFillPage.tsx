@@ -28,7 +28,9 @@ import { StageRelanceDialog } from "@/components/commercial/StageRelanceDialog";
 import {
   directorStationKey,
   groupRowsForDirectorOutreach,
+  isAlumniOutreachExcluded,
   isDirectorOutreachExcluded,
+  isSamoensEnglishOffering,
   type RelanceAudience,
   type StageFillRow,
 } from "@/lib/commercial-stage-fill";
@@ -134,9 +136,11 @@ export default function StageFillPage() {
           <AlertDescription className="space-y-2">
             <p>
               Directeurs : un mail par station (ex. Oz — anglais + néerlandais).{" "}
-              <strong>Méribel</strong> exclu (liste à recevoir) ·{" "}
-              <strong>Samoëns portugais</strong> exclu. Anciens : invitation +
-              bouche-à-oreille. Pas de prospection <code>ski_monitors</code>.
+              <strong>Méribel</strong> exclu (liste ESF) ·{" "}
+              <strong>Samoëns portugais</strong> exclu (inscriptions avec Seb).
+              Anciens : pas Méribel / pas Samoëns PT · Samoëns anglais →{" "}
+              <em>tous</em> les anciens. Pas de prospection{" "}
+              <code>ski_monitors</code>.
             </p>
             <p>
               Lien :{" "}
@@ -295,7 +299,7 @@ export default function StageFillPage() {
 
             <SectionHeading
               title="Stages (anciens stagiaires)"
-              description="Invitation à recommencer + bouche-à-oreille — y compris Méribel / Samoëns PT."
+              description="Invitation + bouche-à-oreille. Hors Méribel et Samoëns PT (Seb). Samoëns anglais : tous les anciens."
             />
             {visible.length === 0 ? (
               <TableEmpty
@@ -309,8 +313,12 @@ export default function StageFillPage() {
             ) : (
               <div className="grid gap-3">
                 {visible.map((row) => {
-                  const alumCount = alumniFor(row.offering).length;
-                  const excluded = isDirectorOutreachExcluded(row.offering);
+                  const alumExcluded = isAlumniOutreachExcluded(row.offering);
+                  const alumCount = alumExcluded
+                    ? 0
+                    : alumniFor(row.offering).length;
+                  const dirExcluded = isDirectorOutreachExcluded(row.offering);
+                  const samoensEn = isSamoensEnglishOffering(row.offering);
                   const stationKey = directorStationKey(row.offering);
                   return (
                     <SurfaceCard key={row.offering.id} className="p-4">
@@ -324,9 +332,19 @@ export default function StageFillPage() {
                               {row.offering.location_label} ·{" "}
                               {row.offering.language_label}
                             </span>
-                            {excluded && (
+                            {dirExcluded && (
                               <StatusPill tone="neutral">
                                 hors mail directeurs
+                              </StatusPill>
+                            )}
+                            {alumExcluded && (
+                              <StatusPill tone="neutral">
+                                hors mail anciens
+                              </StatusPill>
+                            )}
+                            {samoensEn && (
+                              <StatusPill tone="info">
+                                Samoëns EN — tous les anciens
                               </StatusPill>
                             )}
                           </div>
@@ -347,8 +365,10 @@ export default function StageFillPage() {
                             ) : null}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            Anciens : {alumCount}
-                            {!excluded
+                            {alumExcluded
+                              ? "Pas de relance anciens (Méribel, ou Samoëns PT avec Seb)"
+                              : `Anciens : ${alumCount}`}
+                            {!dirExcluded
                               ? ` · station « ${stationKey} » pour directeurs`
                               : ""}
                           </p>
@@ -357,7 +377,7 @@ export default function StageFillPage() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          disabled={!editable || alumCount === 0}
+                          disabled={!editable || alumExcluded || alumCount === 0}
                           onClick={() => openAlumni(row)}
                         >
                           <Users className="mr-2 h-4 w-4" />

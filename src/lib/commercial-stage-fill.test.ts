@@ -7,7 +7,9 @@ import {
   countsTowardStageFill,
   groupRowsForDirectorOutreach,
   inscriptionMatchesOffering,
+  isAlumniOutreachExcluded,
   isDirectorOutreachExcluded,
+  isSamoensEnglishOffering,
   minEnrollmentForOffering,
   normalizePlaceLabel,
   pickDirectorEmail,
@@ -192,39 +194,77 @@ describe("commercial-stage-fill", () => {
     expect(alumni.map((a) => a.studentId)).toEqual(["s1"]);
   });
 
-  it("exclut Méribel et Samoëns portugais des relances directeurs", () => {
+  it("exclut Méribel / Samoëns PT ; Samoëns EN pour tous les anciens", () => {
+    const meribel = offering({
+      session_code: "S06",
+      location_label: "ESF Méribel",
+      language_label: "Anglais",
+      location_key: "meribel",
+    });
+    const samoensPt = offering({
+      session_code: "S21",
+      location_label: "ESF Samoëns",
+      language_label: "Portugais brésilien",
+      language_key: "portuguese",
+      location_key: "samoens",
+    });
+    const samoensEn = offering({
+      session_code: "S13",
+      location_label: "ESF Samoëns",
+      language_label: "Anglais",
+      language_key: "english",
+      location_key: "samoens",
+      start_date: "2026-12-07",
+      end_date: "2026-12-11",
+    });
+    expect(isDirectorOutreachExcluded(meribel)).toBe(true);
+    expect(isAlumniOutreachExcluded(meribel)).toBe(true);
+    expect(isDirectorOutreachExcluded(samoensPt)).toBe(true);
+    expect(isAlumniOutreachExcluded(samoensPt)).toBe(true);
+    expect(isDirectorOutreachExcluded(samoensEn)).toBe(false);
+    expect(isAlumniOutreachExcluded(samoensEn)).toBe(false);
+    expect(isSamoensEnglishOffering(samoensEn)).toBe(true);
+
     expect(
-      isDirectorOutreachExcluded(
-        offering({
-          session_code: "S06",
-          location_label: "ESF Méribel",
-          language_label: "Anglais",
-          location_key: "meribel",
-        })
+      selectAlumniForStage(
+        meribel,
+        [{ id: "s1", first_name: "A", last_name: "B", email: "a@b.fr" }],
+        [
+          {
+            student_id: "s1",
+            language: "Anglais",
+            status: "facturee",
+            start_date: "2025-01-01",
+            end_date: "2025-01-05",
+          },
+        ]
       )
-    ).toBe(true);
-    expect(
-      isDirectorOutreachExcluded(
-        offering({
-          session_code: "S21",
-          location_label: "ESF Samoëns",
-          language_label: "Portugais brésilien",
-          language_key: "portuguese",
-          location_key: "samoens",
-        })
-      )
-    ).toBe(true);
-    expect(
-      isDirectorOutreachExcluded(
-        offering({
-          session_code: "S13",
-          location_label: "ESF Samoëns",
-          language_label: "Anglais",
-          language_key: "english",
-          location_key: "samoens",
-        })
-      )
-    ).toBe(false);
+    ).toEqual([]);
+
+    const broad = selectAlumniForStage(
+      samoensEn,
+      [
+        { id: "s1", first_name: "Alice", last_name: "En", email: "en@b.fr" },
+        { id: "s2", first_name: "Bruno", last_name: "Pt", email: "pt@b.fr" },
+      ],
+      [
+        {
+          student_id: "s1",
+          language: "Anglais",
+          status: "facturee",
+          start_date: "2025-01-01",
+          end_date: "2025-01-05",
+        },
+        {
+          student_id: "s2",
+          language: "Portugais brésilien",
+          status: "facturee",
+          start_date: "2025-01-01",
+          end_date: "2025-01-05",
+        },
+      ]
+    );
+    expect(broad.map((a) => a.studentId).sort()).toEqual(["s1", "s2"]);
   });
 
   it("regroupe Oz anglais + néerlandais et ignore Méribel", () => {
