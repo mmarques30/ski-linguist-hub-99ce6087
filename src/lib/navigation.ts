@@ -135,6 +135,12 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/gestion/commercial",
       },
       {
+        id: "commercial-stages",
+        label: L["/gestion/commercial/stages"],
+        icon: Users,
+        href: "/gestion/commercial/stages",
+      },
+      {
         id: "partenaires",
         label: L["/gestion/partenaires"],
         icon: Briefcase,
