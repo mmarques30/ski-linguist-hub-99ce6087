@@ -1,5 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  computePaymentSettlement,
+  docsSentStatus,
+  sumReceivedPayments,
+  type InscriptionDocsSentStatus,
+  type InscriptionPaymentSettlement,
+} from "@/lib/inscription-ops-visibility";
 
 export interface InscriptionComplete {
   id: string;
@@ -18,6 +25,12 @@ export interface InscriptionComplete {
   exit_level?: string | null;
   course_location?: string | null;
   end_pack_sent_at?: string | null;
+  /** Enrichi côté liste (table inscriptions) — pas toujours dans la vue SQL. */
+  documents_sent_at?: string | null;
+  /** Somme des paiements status=recu (enrichi liste). */
+  payments_received_total?: number;
+  docs_sent_status?: InscriptionDocsSentStatus;
+  payment_settlement?: InscriptionPaymentSettlement;
   season_id?: string | null;
   certification_result: string | null;
   created_at: string;
@@ -29,6 +42,69 @@ export interface InscriptionComplete {
   student_company: string | null;
   instructor_name: string | null;
   ski_school_name: string | null;
+}
+
+/** Découpe les `.in(...)` PostgREST (URL / payload) pour la vue par formation. */
+const OPS_VISIBILITY_ID_CHUNK = 200;
+
+async function enrichInscriptionsOpsVisibility(
+  rows: InscriptionComplete[],
+): Promise<InscriptionComplete[]> {
+  if (rows.length === 0) return rows;
+  const ids = rows.map((r) => r.id);
+
+  const docsById = new Map<string, string | null>();
+  const paysById = new Map<
+    string,
+    Array<{ amount?: number | null; status?: string | null }>
+  >();
+
+  for (let i = 0; i < ids.length; i += OPS_VISIBILITY_ID_CHUNK) {
+    const chunk = ids.slice(i, i + OPS_VISIBILITY_ID_CHUNK);
+    const [{ data: opsRows, error: opsErr }, { data: payRows, error: payErr }] =
+      await Promise.all([
+        supabase
+          .from("inscriptions")
+          .select("id, documents_sent_at")
+          .in("id", chunk),
+        supabase
+          .from("payments")
+          .select("inscription_id, amount, status")
+          .in("inscription_id", chunk),
+      ]);
+    if (opsErr) throw opsErr;
+    if (payErr) throw payErr;
+
+    for (const row of opsRows ?? []) {
+      docsById.set(row.id, row.documents_sent_at);
+    }
+    for (const p of payRows ?? []) {
+      const list = paysById.get(p.inscription_id) ?? [];
+      list.push(p);
+      paysById.set(p.inscription_id, list);
+    }
+  }
+
+  const receivedById = new Map<string, number>();
+  for (const [id, list] of paysById) {
+    receivedById.set(id, sumReceivedPayments(list));
+  }
+
+  return rows.map((row) => {
+    const documents_sent_at =
+      docsById.get(row.id) ?? row.documents_sent_at ?? null;
+    const payments_received_total = receivedById.get(row.id) ?? 0;
+    return {
+      ...row,
+      documents_sent_at,
+      payments_received_total,
+      docs_sent_status: docsSentStatus(documents_sent_at),
+      payment_settlement: computePaymentSettlement({
+        price: row.price,
+        receivedTotal: payments_received_total,
+      }),
+    };
+  });
 }
 
 export function useInscriptions(filters?: {
@@ -84,7 +160,7 @@ export function useInscriptions(filters?: {
       const { data, error } = await query.limit(filters?.limit ?? 100);
 
       if (error) throw error;
-      return data as InscriptionComplete[];
+      return enrichInscriptionsOpsVisibility((data ?? []) as InscriptionComplete[]);
     },
   });
 }
