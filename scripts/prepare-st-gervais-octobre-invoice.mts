@@ -1,6 +1,7 @@
 /**
  * Facture école octobre 2026 — ESF Saint-Gervais + tableau des niveaux.
- * Dry-run uniquement (aucun envoi sans OK Paula).
+ * Génère PDF / DOCX / brouillon mail (aucun envoi ici).
+ * Envoi Resend : scripts/send-st-gervais-octobre-invoice.mts (SEND=1 après OK Paula).
  *
  *   ./node_modules/.bin/tsx scripts/prepare-st-gervais-octobre-invoice.mts
  */
