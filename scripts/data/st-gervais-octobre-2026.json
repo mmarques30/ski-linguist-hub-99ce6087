@@ -1,9 +1,14 @@
 {
   "school": "ESF SAINT GERVAIS LES BAINS",
   "school_short": "ESF SAINT GERVAIS",
-  "to": ["administration@esf-saintgervais.com"],
+  "director_name": "Alizée Nicoletta",
+  "to": [
+    "administration@esf-saintgervais.com",
+    "contact@esf-saintgervais.com"
+  ],
   "cc": [],
   "bcc": "info@fli.fr",
+  "tutoiement": true,
   "invoice_number": "26-27.14343",
   "invoice_date": "2026-10-31",
   "due_date": "2026-11-30",
@@ -50,6 +55,14 @@
       "cecrl": "B2"
     },
     {
+      "name": "Samson Benamor",
+      "language": "Anglais",
+      "test_date": "2026-10-12",
+      "evaluator": "C. Mollard",
+      "scores": [3, 1, 1, 1.5, 1.5, 1.5],
+      "cecrl": "A2+"
+    },
+    {
       "name": "Eliane Jeanbourquin",
       "language": "Italien",
       "test_date": "2026-10-13",
@@ -64,6 +77,30 @@
       "evaluator": "N. Raguin",
       "scores": [3.5, 2.5, 2.5, 2, 3, 3],
       "cecrl": "B2"
+    },
+    {
+      "name": "Gabin Lombardot",
+      "language": "Anglais",
+      "test_date": "2026-10-15",
+      "evaluator": "C. Mollard",
+      "scores": [3, 2.5, 2.5, 2.5, 2.5, 2.5],
+      "cecrl": "B1+"
+    },
+    {
+      "name": "Romain Godeffroy",
+      "language": "Anglais",
+      "test_date": "2026-10-15",
+      "evaluator": "C. Mollard",
+      "scores": [2.5, 3, 3, 3, 3, 3],
+      "cecrl": "B2"
+    },
+    {
+      "name": "Lucas Audo",
+      "language": "Anglais",
+      "test_date": "2026-10-19",
+      "evaluator": "C. Mollard",
+      "scores": [1, 1, 0.5, 1, 1, 1],
+      "cecrl": "A2"
     },
     {
       "name": "Margot Dumez",

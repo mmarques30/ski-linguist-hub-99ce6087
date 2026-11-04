@@ -36,7 +36,7 @@ const FLI = {
 
 const CLIENT = {
   name: "ESF SAINT GERVAIS LES BAINS",
-  address: "Saint-Gervais-les-Bains",
+  address: "Maison de St Gervais — 43 rue du Mont Blanc",
   postalCode: "74170",
   city: "SAINT-GERVAIS-LES-BAINS",
 };
@@ -52,9 +52,11 @@ type Candidate = {
 
 type Pack = {
   school: string;
+  director_name?: string;
   to: string[];
   cc: string[];
   bcc: string;
+  tutoiement?: boolean;
   invoice_number: string;
   invoice_date: string;
   due_date: string;
@@ -449,11 +451,12 @@ async function main() {
 
   const rib = buildFliBankDetailsEmailHtml(pack.invoice_number);
   const subject = `Facture ${pack.invoice_number} — Tests de langue octobre 2026 — ESF Saint-Gervais`;
-  const bodyText = `Bonjour,
+  const greeting = pack.tutoiement
+    ? `Bonjour${pack.director_name ? ` ${pack.director_name.split(" ")[0]}` : ""},`
+    : "Bonjour,";
+  const bodyText = `${greeting}
 
-veuillez trouver ci-joint :
-- la facture ${pack.invoice_number} correspondant aux tests de langue d'octobre 2026 (${pack.candidates.length} tests) ;
-- le tableau récapitulatif des niveaux.
+voici la facture complète des tests de langue d'octobre 2026 pour l'ESF Saint-Gervais (${pack.candidates.length} tests), avec le tableau récapitulatif des niveaux.
 
 Montant : ${formatEuro(amountTtc)} TTC (${formatEuro(amountHt)} HT + TVA 20 %).
 Échéance : ${formatFr(pack.due_date)}.
@@ -481,8 +484,8 @@ info@fli.fr`;
 <tr><td align="center" style="padding:24px 12px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #e8e8e8">
 <tr><td style="padding:28px 24px 24px;font-size:15px;line-height:1.55;font-family:Georgia,'Times New Roman',serif;color:#111">
-<p style="margin:0 0 16px">Bonjour,</p>
-<p style="margin:0 0 16px">veuillez trouver ci-joint la facture <strong>${pack.invoice_number}</strong> correspondant aux tests de langue d'octobre&nbsp;2026 (${pack.candidates.length}&nbsp;tests), ainsi que le tableau récapitulatif des niveaux.</p>
+<p style="margin:0 0 16px">${greeting}</p>
+<p style="margin:0 0 16px">voici la facture complète <strong>${pack.invoice_number}</strong> des tests de langue d'octobre&nbsp;2026 pour l'ESF Saint-Gervais (${pack.candidates.length}&nbsp;tests), avec le tableau récapitulatif des niveaux.</p>
 <ul style="margin:0 0 16px;padding-left:20px">
 ${listHtml}
 </ul>
