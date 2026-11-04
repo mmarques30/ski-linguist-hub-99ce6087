@@ -2898,6 +2898,7 @@ export type Database = {
           format_label: string | null
           funding_mode: string
           id: string
+          instructor_id: string | null
           instructor_label: string | null
           is_active: boolean
           language_key: string
@@ -2926,6 +2927,7 @@ export type Database = {
           format_label?: string | null
           funding_mode?: string
           id?: string
+          instructor_id?: string | null
           instructor_label?: string | null
           is_active?: boolean
           language_key: string
@@ -2954,6 +2956,7 @@ export type Database = {
           format_label?: string | null
           funding_mode?: string
           id?: string
+          instructor_id?: string | null
           instructor_label?: string | null
           is_active?: boolean
           language_key?: string
@@ -2973,6 +2976,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "registration_offerings_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "registration_offerings_season_id_fkey"
             columns: ["season_id"]

@@ -10,10 +10,13 @@ import {
 } from "lucide-react";
 import { FormateurPageShell } from "@/components/layout/FormateurPageShell";
 import { FormateurMissionCard } from "@/components/formateur/FormateurMissionCard";
+import { FormateurCatalogSessionCard } from "@/components/formateur/FormateurCatalogSessionCard";
 import { useFormateurView } from "@/contexts/FormateurViewContext";
 import {
+  splitFormateurCatalogSessions,
   splitFormateurInscriptions,
   uniqueStagiairesFromInscriptions,
+  useFormateurCatalogSessions,
   useFormateurInscriptions,
   useFormateurProfile,
 } from "@/hooks/useFormateurPortal";
@@ -35,12 +38,27 @@ export default function FormateurDashboard() {
   const { data: profile, isLoading: loadingProfile } = useFormateurProfile();
   const { data: inscriptions = [], isLoading: loadingInscriptions } =
     useFormateurInscriptions(profile?.id);
+  const { data: catalog = [], isLoading: loadingCatalog } =
+    useFormateurCatalogSessions(profile ?? undefined);
   const { data: bookingsToEvaluate = [], isLoading: loadingEvals } =
     useTestBookingsToEvaluate();
 
   const { upcoming, current, past } = splitFormateurInscriptions(inscriptions);
+  const catalogSplit = splitFormateurCatalogSessions(catalog);
   const stagiaires = uniqueStagiairesFromInscriptions(inscriptions);
-  const highlight = [...current, ...upcoming].slice(0, 3);
+  const catalogHighlight = [
+    ...catalogSplit.current,
+    ...catalogSplit.upcoming,
+  ];
+  const inscriptionHighlight = [...current, ...upcoming];
+  const highlightCatalog = catalogHighlight.slice(0, 3);
+  const highlightInscriptions = inscriptionHighlight.slice(
+    0,
+    Math.max(0, 3 - highlightCatalog.length)
+  );
+  const hasHighlight =
+    highlightCatalog.length > 0 || highlightInscriptions.length > 0;
+  const loadingMissions = loadingInscriptions || loadingCatalog;
   const bilansTodo = inscriptions.filter(
     (r) => !r.entry_form_completed_at || !r.exit_form_completed_at
   ).length;
@@ -68,8 +86,16 @@ export default function FormateurDashboard() {
         />
 
         <StatTileGrid cols={4}>
-          <StatTile label="En cours" value={current.length} icon={BookOpen} />
-          <StatTile label="À venir" value={upcoming.length} icon={Calendar} />
+          <StatTile
+            label="En cours"
+            value={current.length + catalogSplit.current.length}
+            icon={BookOpen}
+          />
+          <StatTile
+            label="À venir"
+            value={upcoming.length + catalogSplit.upcoming.length}
+            icon={Calendar}
+          />
           <StatTile label="Stagiaires" value={stagiaires.length} icon={Users} />
           <StatTile
             label="Évals à saisir"
@@ -88,13 +114,19 @@ export default function FormateurDashboard() {
               </Button>
             }
           >
-            {loadingInscriptions ? (
+            {loadingMissions ? (
               <TableSkeleton rows={3} cols={2} />
-            ) : highlight.length === 0 ? (
+            ) : !hasHighlight ? (
               <TableEmpty title="Aucune mission en cours ou à venir." />
             ) : (
               <ul className="space-y-3">
-                {highlight.map((row) => (
+                {highlightCatalog.map((session) => (
+                  <FormateurCatalogSessionCard
+                    key={`catalog-${session.id}`}
+                    session={session}
+                  />
+                ))}
+                {highlightInscriptions.map((row) => (
                   <FormateurMissionCard key={row.id} row={row} />
                 ))}
               </ul>

@@ -2,10 +2,15 @@ import { describe, expect, it } from "vitest";
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import {
+  instructorLabelMatchesProfile,
+  offeringMatchesInstructor,
+  splitFormateurCatalogSessions,
   splitFormateurInscriptions,
+  toFormateurCatalogSession,
   uniqueStagiairesFromInscriptions,
   type FormateurInscriptionRow,
 } from "./formateur-portal";
+import type { RegistrationOffering } from "./registration-offerings";
 
 function source(relatif: string): string {
   return readFileSync(join(process.cwd(), relatif), "utf8");
@@ -34,6 +39,89 @@ function row(
     ...partial,
   };
 }
+
+describe("catalogue formateur — matching libellé", () => {
+  const georgios = {
+    id: "inst-georgios",
+    first_name: "Georgios",
+    last_name: "Constandi",
+  };
+
+  it("reconnaît Prénom Nom, Nom Prénom et UUID instructor_id", () => {
+    expect(
+      instructorLabelMatchesProfile("Georgios Constandi", georgios)
+    ).toBe(true);
+    expect(
+      instructorLabelMatchesProfile("Constandi Georgios", georgios)
+    ).toBe(true);
+    expect(instructorLabelMatchesProfile("Martine", georgios)).toBe(false);
+    expect(
+      offeringMatchesInstructor(
+        { instructor_id: "inst-georgios", instructor_label: "Autre" },
+        georgios
+      )
+    ).toBe(true);
+    expect(
+      offeringMatchesInstructor(
+        { instructor_id: "autre", instructor_label: "Georgios Constandi" },
+        georgios
+      )
+    ).toBe(false);
+  });
+
+  it("accepte un libellé prénom seul (Martine, Lydia)", () => {
+    expect(
+      instructorLabelMatchesProfile("Martine", {
+        first_name: "Martine",
+        last_name: "Dupont",
+      })
+    ).toBe(true);
+  });
+
+  it("répartit les sessions catalogue par dates", () => {
+    const base = {
+      session_code: "S05",
+      location_label: "ESF Val d'Isère",
+      language_label: "Anglais",
+      modality_label: "Présentiel",
+      format_label: "Présentiel 24 h",
+      date_label: null,
+      duration_hours: 24,
+      enrollment_status: "open",
+      instructor_label: "Georgios Constandi",
+    };
+    const { upcoming, past } = splitFormateurCatalogSessions([
+      { ...base, id: "a", start_date: "2020-01-01", end_date: "2020-01-05" },
+      { ...base, id: "b", start_date: "2099-11-30", end_date: "2099-12-04" },
+    ]);
+    expect(past.map((r) => r.id)).toEqual(["a"]);
+    expect(upcoming.map((r) => r.id)).toEqual(["b"]);
+  });
+
+  it("mappe une offre catalogue vers FormateurCatalogSession", () => {
+    const offering = {
+      id: "off-1",
+      season_id: null,
+      session_code: "S05",
+      location_key: "val-disere",
+      location_label: "ESF Val d'Isère",
+      language_key: "english",
+      language_label: "Anglais",
+      modality_key: "in_person" as const,
+      modality_label: "Présentiel",
+      duration_hours: 24,
+      start_date: "2026-11-30",
+      end_date: "2026-12-04",
+      date_label: "30 nov.–4 déc. 2026",
+      format_label: "Présentiel 24 h",
+      instructor_label: "Georgios Constandi",
+      base_price: 900,
+      sort_order: 5,
+      enrollment_status: "open" as const,
+    } satisfies RegistrationOffering;
+    expect(toFormateurCatalogSession(offering).session_code).toBe("S05");
+  });
+});
 
 describe("useFormateurPortal helpers", () => {
   it("répartit inscriptions en cours / à venir / passées", () => {
@@ -147,6 +235,28 @@ describe("portail formateur — câblage", () => {
     expect(existsSync(join(process.cwd(), path))).toBe(true);
     const sql = source(path);
     expect(sql).toContain("rls_placement_tests_select_formateur");
+  });
+
+  it("migration + portail exposent les sessions catalogue sans inscrits", () => {
+    const path =
+      "supabase/migrations/20261103184000_formateur_catalog_sessions_instructor_id.sql";
+    expect(existsSync(join(process.cwd(), path))).toBe(true);
+    const sql = source(path);
+    expect(sql).toContain("instructor_id");
+    expect(sql).toContain("registration_offerings");
+    const hook = source("src/hooks/useFormateurPortal.ts");
+    expect(hook).toContain("useFormateurCatalogSessions");
+    expect(hook).toContain("offeringMatchesInstructor");
+    const planning = source("src/pages/formateur/FormateurPlanning.tsx");
+    expect(planning).toContain("FormateurCatalogSessionCard");
+    expect(planning).toContain("useFormateurCatalogSessions");
+    const dash = source("src/pages/formateur/FormateurDashboard.tsx");
+    expect(dash).toContain("useFormateurCatalogSessions");
+    expect(
+      existsSync(
+        join(process.cwd(), "src/components/formateur/FormateurCatalogSessionCard.tsx")
+      )
+    ).toBe(true);
   });
 
   it("Auth et ProtectedRoute redirigent vers tableau-de-bord", () => {

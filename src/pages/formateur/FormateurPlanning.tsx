@@ -1,8 +1,11 @@
 import { Calendar, Clock } from "lucide-react";
 import { FormateurPageShell } from "@/components/layout/FormateurPageShell";
 import { FormateurMissionCard } from "@/components/formateur/FormateurMissionCard";
+import { FormateurCatalogSessionCard } from "@/components/formateur/FormateurCatalogSessionCard";
 import {
+  splitFormateurCatalogSessions,
   splitFormateurInscriptions,
+  useFormateurCatalogSessions,
   useFormateurInscriptions,
   useFormateurProfile,
   useFormateurSessions,
@@ -22,21 +25,29 @@ export default function FormateurPlanning() {
   const { data: inscriptions = [], isLoading } = useFormateurInscriptions(
     profile?.id
   );
+  const { data: catalog = [], isLoading: loadingCatalog } =
+    useFormateurCatalogSessions(profile ?? undefined);
   const { data: sessions = [], isLoading: loadingSessions } =
     useFormateurSessions(profile?.id);
   const { upcoming, current, past } = splitFormateurInscriptions(inscriptions);
+  const catalogSplit = splitFormateurCatalogSessions(catalog);
+
+  const upcomingCount = upcoming.length + catalogSplit.upcoming.length;
+  const currentCount = current.length + catalogSplit.current.length;
+  const pastCount = past.length + catalogSplit.past.length;
+  const loading = isLoading || loadingCatalog;
 
   return (
     <FormateurPageShell>
       <PageShell>
         <PageHeader
           title="Missions"
-          description="Qui, où, quand, langue, horaires, école — ouvre une mission pour le détail"
+          description="Sessions affectées (même sans inscrits) et stagiaires — ouvre une mission pour le détail"
           icon={Calendar}
           tone="blue"
         />
 
-        {isLoading ? (
+        {loading ? (
           <SurfaceCard flush>
             <TableSkeleton rows={4} cols={3} />
           </SurfaceCard>
@@ -44,13 +55,19 @@ export default function FormateurPlanning() {
           <div className="space-y-4">
             <SurfaceCard
               icon={Calendar}
-              title={`En cours (${current.length})`}
-              flush={current.length === 0}
+              title={`En cours (${currentCount})`}
+              flush={currentCount === 0}
             >
-              {current.length === 0 ? (
+              {currentCount === 0 ? (
                 <TableEmpty title="Aucune mission en cours." />
               ) : (
                 <ul className="space-y-2 p-3">
+                  {catalogSplit.current.map((session) => (
+                    <FormateurCatalogSessionCard
+                      key={`catalog-${session.id}`}
+                      session={session}
+                    />
+                  ))}
                   {current.map((row) => (
                     <FormateurMissionCard key={row.id} row={row} />
                   ))}
@@ -60,13 +77,19 @@ export default function FormateurPlanning() {
 
             <SurfaceCard
               icon={Calendar}
-              title={`À venir (${upcoming.length})`}
-              flush={upcoming.length === 0}
+              title={`À venir (${upcomingCount})`}
+              flush={upcomingCount === 0}
             >
-              {upcoming.length === 0 ? (
+              {upcomingCount === 0 ? (
                 <TableEmpty title="Aucune mission à venir." />
               ) : (
                 <ul className="space-y-2 p-3">
+                  {catalogSplit.upcoming.map((session) => (
+                    <FormateurCatalogSessionCard
+                      key={`catalog-${session.id}`}
+                      session={session}
+                    />
+                  ))}
                   {upcoming.map((row) => (
                     <FormateurMissionCard key={row.id} row={row} />
                   ))}
@@ -76,13 +99,19 @@ export default function FormateurPlanning() {
 
             <SurfaceCard
               icon={Calendar}
-              title={`Passées (${past.length})`}
-              flush={past.length === 0}
+              title={`Passées (${pastCount})`}
+              flush={pastCount === 0}
             >
-              {past.length === 0 ? (
+              {pastCount === 0 ? (
                 <TableEmpty title="Aucune mission passée." />
               ) : (
                 <ul className="space-y-2 p-3">
+                  {catalogSplit.past.slice(0, 40).map((session) => (
+                    <FormateurCatalogSessionCard
+                      key={`catalog-${session.id}`}
+                      session={session}
+                    />
+                  ))}
                   {past.slice(0, 40).map((row) => (
                     <FormateurMissionCard key={row.id} row={row} />
                   ))}
