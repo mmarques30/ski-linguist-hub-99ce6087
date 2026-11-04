@@ -11,7 +11,9 @@ import { PDFDocument, StandardFonts, rgb, type PDFFont } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import {
   buildFliBankDetailsEmailHtml,
+  buildPaymentLinkWithBankDetailsEmailHtml,
   FLI_BANK_DETAILS,
+  isValidIban,
 } from "../src/lib/registration-payments.ts";
 
 const DATA = join(process.cwd(), "scripts/data/st-gervais-octobre-2026.json");
@@ -61,6 +63,8 @@ type Pack = {
   invoice_date: string;
   due_date: string;
   unit_ht: number;
+  checkout_url?: string | null;
+  stripe_payment_link?: string | null;
   candidates: Candidate[];
 };
 
@@ -449,11 +453,44 @@ async function main() {
     )
     .join("\n");
 
-  const rib = buildFliBankDetailsEmailHtml(pack.invoice_number);
+  if (!isValidIban(FLI_BANK_DETAILS.iban) || !FLI_BANK_DETAILS.iban.replace(/\s/g, "").endsWith("189")) {
+    throw new Error(`IBAN FLI invalide ou pas …189 : ${FLI_BANK_DETAILS.iban}`);
+  }
+
+  const checkoutUrl = (pack.checkout_url || "").trim();
+  const paymentHtml = checkoutUrl
+    ? buildPaymentLinkWithBankDetailsEmailHtml({
+        checkoutUrl,
+        amountLabel: formatEuro(amountTtc),
+        reference: pack.invoice_number,
+        onlineIntroHtml: `Pour régler <strong>${formatEuro(amountTtc)}</strong> en ligne (carte), utilisez ce lien sécurisé&nbsp;:`,
+      })
+    : `${buildFliBankDetailsEmailHtml(pack.invoice_number)}
+<p style="margin:0 0 16px">Merci de bien vouloir procéder au règlement par virement en indiquant la référence de facture.</p>`;
+
   const subject = `Facture ${pack.invoice_number} — Tests de langue octobre 2026 — ESF Saint-Gervais`;
   const greeting = pack.tutoiement
     ? `Bonjour${pack.director_name ? ` ${pack.director_name.split(" ")[0]}` : ""},`
     : "Bonjour,";
+  const paymentText = checkoutUrl
+    ? `Paiement en ligne (carte) :
+${checkoutUrl}
+
+Ou par virement :
+Bénéficiaire : ${FLI_BANK_DETAILS.beneficiary}
+IBAN : ${FLI_BANK_DETAILS.iban}
+BIC : ${FLI_BANK_DETAILS.bic}
+Banque : ${FLI_BANK_DETAILS.bank}
+Référence à indiquer : ${pack.invoice_number}`
+    : `Coordonnées bancaires FLI :
+Bénéficiaire : ${FLI_BANK_DETAILS.beneficiary}
+IBAN : ${FLI_BANK_DETAILS.iban}
+BIC : ${FLI_BANK_DETAILS.bic}
+Banque : ${FLI_BANK_DETAILS.bank}
+Référence à indiquer : ${pack.invoice_number}
+
+Merci de bien vouloir procéder au règlement par virement en indiquant la référence de facture.`;
+
   const bodyText = `${greeting}
 
 voici la facture complète des tests de langue d'octobre 2026 pour l'ESF Saint-Gervais (${pack.candidates.length} tests), avec le tableau récapitulatif des niveaux.
@@ -464,14 +501,7 @@ Montant : ${formatEuro(amountTtc)} TTC (${formatEuro(amountHt)} HT + TVA 20 %).
 Candidats :
 ${pack.candidates.map((c) => `- ${c.name} — ${c.language} (${formatFr(c.test_date)}) · ${c.cecrl}`).join("\n")}
 
-Coordonnées bancaires FLI :
-Bénéficiaire : ${FLI_BANK_DETAILS.beneficiary}
-IBAN : ${FLI_BANK_DETAILS.iban}
-BIC : ${FLI_BANK_DETAILS.bic}
-Banque : ${FLI_BANK_DETAILS.bank}
-Référence à indiquer : ${pack.invoice_number}
-
-Merci de bien vouloir procéder au règlement par virement en indiquant la référence de facture.
+${paymentText}
 
 Cordialement,
 FLI — France Langues International
@@ -490,8 +520,7 @@ info@fli.fr`;
 ${listHtml}
 </ul>
 <p style="margin:0 0 16px">Montant : <strong>${formatEuro(amountTtc)} TTC</strong> (${formatEuro(amountHt)} HT + TVA 20&nbsp;%).<br/>Échéance : ${formatFr(pack.due_date)}.</p>
-${rib}
-<p style="margin:0 0 16px">Merci de bien vouloir procéder au règlement par virement en indiquant la référence de facture.</p>
+${paymentHtml}
 <p style="margin:0 0 4px">Cordialement,</p>
 <p style="margin:0">
   <strong>FLI — France Langues International</strong><br/>
@@ -519,6 +548,11 @@ ${rib}
     amount_ttc: amountTtc,
     count: pack.candidates.length,
     attachments: [invoiceName, docxName, csvName],
+    checkout_url: checkoutUrl || null,
+    stripe_payment_link: pack.stripe_payment_link ?? null,
+    iban: FLI_BANK_DETAILS.iban,
+    iban_ends_189: FLI_BANK_DETAILS.iban.replace(/\s/g, "").endsWith("189"),
+    iban_checksum_ok: isValidIban(FLI_BANK_DETAILS.iban),
     body_text: bodyText,
   };
   await writeFile(join(OUT, "draft.json"), JSON.stringify(draft, null, 2));
@@ -531,6 +565,8 @@ ${rib}
 - **Bcc :** \`${pack.bcc}\`
 - **PJ :** \`${invoiceName}\`, \`${docxName}\`
 - **Montant :** ${formatEuro(amountTtc)} TTC · échéance ${formatFr(pack.due_date)}
+- **IBAN :** \`${FLI_BANK_DETAILS.iban}\` (…189 · checksum ${isValidIban(FLI_BANK_DETAILS.iban) ? "OK" : "KO"})
+${checkoutUrl ? `- **Lien paiement :** ${checkoutUrl}` : ""}
 
 \`\`\`
 ${bodyText}

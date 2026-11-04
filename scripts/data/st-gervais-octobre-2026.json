@@ -13,6 +13,9 @@
   "invoice_date": "2026-10-31",
   "due_date": "2026-11-30",
   "unit_ht": 37.5,
+  "checkout_url": "https://buy.stripe.com/fZueVfchH9oh0Hu17kfYY0b",
+  "stripe_payment_link": "plink_1UY5rLQBleN6FLtSwdhEVRwq",
+  "stripe_price": "price_1UY5rLQBleN6FLtSAZFsmlv5",
   "candidates": [
     {
       "name": "Anouk Leynaud",
