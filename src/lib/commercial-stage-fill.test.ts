@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { RegistrationOffering } from "@/lib/registration-offerings";
 import {
+  alumniPlaceMatches,
   buildAlumniRelanceDraft,
   buildCommercialCampaignDigest,
   buildCommercialTestEnvelope,
   buildDirectorRelanceDraft,
   COMMERCIAL_TEST_TO,
+  isSainteFoyOffering,
   computeStageFillRows,
   countsTowardStageFill,
   groupRowsForDirectorOutreach,
@@ -173,10 +175,11 @@ describe("commercial-stage-fill", () => {
       [
         {
           student_id: "s1",
-          language: "Anglais",
+          language: "Néerlandais",
           status: "facturee",
           start_date: "2025-11-01",
           end_date: "2025-11-05",
+          course_location: "Saint-Jean-de-Maurienne",
         },
         {
           student_id: "s2",
@@ -184,6 +187,7 @@ describe("commercial-stage-fill", () => {
           status: "facturee",
           start_date: "2025-11-01",
           end_date: "2025-11-05",
+          course_location: "Saint-Jean-de-Maurienne",
         },
         {
           student_id: "s2",
@@ -198,7 +202,89 @@ describe("commercial-stage-fill", () => {
     expect(alumni.map((a) => a.studentId)).toEqual(["s1"]);
   });
 
-  it("exclut Méribel / Samoëns PT ; Samoëns EN pour tous les anciens", () => {
+  it("Sainte-Foy reprend les anciens d'Aime", () => {
+    const sainteFoy = offering({
+      session_code: "S01",
+      location_label: "Sainte-Foy-Tarentaise",
+      location_key: "sainte-foy-tarentaise",
+      language_label: "Portugais brésilien",
+      language_key: "portuguese",
+      start_date: "2026-11-23",
+      end_date: "2026-11-27",
+      partner_school_codes: [],
+    });
+    expect(isSainteFoyOffering(sainteFoy)).toBe(true);
+    expect(alumniPlaceMatches(sainteFoy, "Aime La Plagne")).toBe(true);
+    expect(alumniPlaceMatches(sainteFoy, "ESF Aime La Plagne")).toBe(true);
+    expect(alumniPlaceMatches(sainteFoy, "Aime")).toBe(true);
+    expect(alumniPlaceMatches(sainteFoy, "Val d'Isère")).toBe(false);
+
+    const alumni = selectAlumniForStage(
+      sainteFoy,
+      [
+        { id: "aime", first_name: "Ana", last_name: "Aime", email: "aime@ex.fr" },
+        { id: "val", first_name: "Val", last_name: "Isere", email: "val@ex.fr" },
+      ],
+      [
+        {
+          student_id: "aime",
+          language: "Portugais brésilien",
+          status: "facturee",
+          start_date: "2025-01-01",
+          end_date: "2025-01-05",
+          course_location: "Aime La Plagne",
+        },
+        {
+          student_id: "val",
+          language: "Portugais brésilien",
+          status: "facturee",
+          start_date: "2025-01-01",
+          end_date: "2025-01-05",
+          course_location: "Val d'Isère",
+        },
+      ]
+    );
+    expect(alumni.map((a) => a.studentId)).toEqual(["aime"]);
+  });
+
+  it("cible les anciens par lieu, pas par langue", () => {
+    const alumni = selectAlumniForStage(
+      offering({
+        session_code: "S07",
+        location_label: "ESF Oz en Oisans",
+        location_key: "oz-en-oisans",
+        language_label: "Anglais",
+        start_date: "2026-12-01",
+        end_date: "2026-12-05",
+        partner_school_codes: [],
+      }),
+      [
+        { id: "oz-nl", first_name: "Oz", last_name: "Nl", email: "oz-nl@ex.fr" },
+        { id: "val-en", first_name: "Val", last_name: "En", email: "val-en@ex.fr" },
+      ],
+      [
+        {
+          student_id: "oz-nl",
+          language: "Néerlandais",
+          status: "facturee",
+          start_date: "2025-01-01",
+          end_date: "2025-01-05",
+          course_location: "Oz en Oisans",
+        },
+        {
+          student_id: "val-en",
+          language: "Anglais",
+          status: "facturee",
+          start_date: "2025-01-01",
+          end_date: "2025-01-05",
+          course_location: "Val d'Isère",
+        },
+      ]
+    );
+    expect(alumni.map((a) => a.studentId)).toEqual(["oz-nl"]);
+  });
+
+  it("exclut Méribel / Samoëns PT ; Samoëns EN = anciens du lieu", () => {
     const meribel = offering({
       session_code: "S06",
       location_label: "ESF Méribel",
@@ -250,6 +336,7 @@ describe("commercial-stage-fill", () => {
       [
         { id: "s1", first_name: "Alice", last_name: "En", email: "en@b.fr" },
         { id: "s2", first_name: "Bruno", last_name: "Pt", email: "pt@b.fr" },
+        { id: "s3", first_name: "Claire", last_name: "Oz", email: "oz@b.fr" },
       ],
       [
         {
@@ -258,6 +345,7 @@ describe("commercial-stage-fill", () => {
           status: "facturee",
           start_date: "2025-01-01",
           end_date: "2025-01-05",
+          course_location: "ESF Samoëns",
         },
         {
           student_id: "s2",
@@ -265,6 +353,15 @@ describe("commercial-stage-fill", () => {
           status: "facturee",
           start_date: "2025-01-01",
           end_date: "2025-01-05",
+          course_location: "Samoëns",
+        },
+        {
+          student_id: "s3",
+          language: "Anglais",
+          status: "facturee",
+          start_date: "2025-01-01",
+          end_date: "2025-01-05",
+          course_location: "Oz en Oisans",
         },
       ]
     );
@@ -390,13 +487,15 @@ describe("commercial-stage-fill", () => {
     expect(alum.subject.toLowerCase()).toContain("saison");
     expect(alum.bodyText).toContain("Bonjour Léa,");
     expect(alum.bodyText).toContain("lang=russian");
-    expect(alum.bodyText).toContain("mieux préparer votre saison de ski");
-    expect(alum.bodyText).toContain("Nous pensions à vous");
+    expect(alum.bodyText).toContain("nous serions ravis de vous retrouver");
+    expect(alum.bodyText).toContain("pourrait vous convenir");
     expect(alum.bodyText).toContain("bouche-à-oreille");
     expect(alum.bodyText).toContain("en parler autour de vous");
     expect(alum.bodyText).toContain("nous vous répondons avec plaisir");
     expect(alum.bodyText.trim().endsWith("L'équipe FLI")).toBe(true);
-    expect(alum.bodyText.toLowerCase()).not.toMatch(/effectif|minimum|manque encore/);
+    expect(alum.bodyText.toLowerCase()).not.toMatch(
+      /effectif|minimum|manque encore|encore des places|compléter|sous.?rempli/
+    );
     expect(alum.bodyText).not.toMatch(/\bje\b/i);
     expect(alum.bodyText).not.toContain("Paula");
   });

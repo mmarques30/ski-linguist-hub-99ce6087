@@ -220,7 +220,7 @@ function isSamoensPortugueseOffering(
   return isSamoens && lang === "portuguese";
 }
 
-/** Samoëns anglais : on en parle à tous (directeurs + anciens toutes langues). */
+/** Samoëns anglais : badge UI — anciens du lieu Samoëns (toutes langues). */
 export function isSamoensEnglishOffering(
   offering: Pick<
     RegistrationOffering,
@@ -295,6 +295,53 @@ function placesMatch(offeringLabel: string, courseLocation: string | null | unde
   const b = normalizePlaceLabel(courseLocation);
   if (!a || !b) return false;
   return a === b || a.includes(b) || b.includes(a);
+}
+
+/** Stage Sainte-Foy-Tarentaise (S01) — Paula : anciens d'Aime / Aime La Plagne. */
+export function isSainteFoyOffering(
+  offering: Pick<
+    RegistrationOffering,
+    "session_code" | "location_label" | "location_key"
+  >
+): boolean {
+  const code = (offering.session_code ?? "").trim().toUpperCase();
+  if (code === "S01") return true;
+  const place = normalizePlaceLabel(offering.location_label);
+  const key = normalizePlaceLabel(offering.location_key);
+  return place.includes("sainte foy") || key.includes("sainte foy");
+}
+
+/**
+ * Lieux historiques additionnels pour le ciblage anciens
+ * (ex. Sainte-Foy → Aime, Paula 2026-11-03).
+ */
+export function alumniPlaceAliasLabels(
+  offering: Pick<
+    RegistrationOffering,
+    "session_code" | "location_label" | "location_key"
+  >
+): string[] {
+  if (isSainteFoyOffering(offering)) {
+    return ["Aime", "Aime La Plagne", "ESF Aime La Plagne"];
+  }
+  return [];
+}
+
+/** Ancien stagiaire du même lieu (ou alias Paula), indépendamment de la langue. */
+export function alumniPlaceMatches(
+  offering: Pick<
+    RegistrationOffering,
+    "session_code" | "location_label" | "location_key"
+  >,
+  courseLocation: string | null | undefined
+): boolean {
+  if (!courseLocation?.trim()) return false;
+  if (placesMatch(offering.location_label, courseLocation)) return true;
+  if (placesMatch(offering.location_key, courseLocation)) return true;
+  for (const alias of alumniPlaceAliasLabels(offering)) {
+    if (placesMatch(alias, courseLocation)) return true;
+  }
+  return false;
 }
 
 /** Une inscription appartient-elle à cette session catalogue ? */
@@ -644,7 +691,10 @@ ${COMMERCIAL_EMAIL_SIGNATURE}`
   return { audience: "directeur", subject, bodyText };
 }
 
-/** Brouillon ancien stagiaire — ton commercial, sans parler d'effectif. */
+/**
+ * Brouillon ancien stagiaire — invitation personnelle à reprendre un stage.
+ * Pas de formulation « places à remplir / stages à compléter » (Paula).
+ */
 export function buildAlumniRelanceDraft(input: {
   offering: RegistrationOffering;
   firstName: string;
@@ -657,20 +707,20 @@ export function buildAlumniRelanceDraft(input: {
     input.registerUrl ?? `${COMMERCIAL_REGISTER_URL}?lang=${offering.language_key}`;
   const stage = stageLine(offering);
 
-  const subject = `Reprendre un stage FLI pour bien préparer votre saison ?`;
+  const subject = `Nous avons pensé à vous pour préparer votre saison`;
 
   const bodyText = `${greeting}
 
-Nous pensions à vous : et si vous recommenciez un stage avec nous pour mieux préparer votre saison de ski ?
+La saison approche, et nous serions ravis de vous retrouver pour un stage FLI — pour progresser et bien démarrer vos cours.
 
-Nous avons encore des places sur ${stage}.
+Si l'envie est là, voici une session qui pourrait vous convenir : ${stage}.
 
 Inscription en ligne (tarif selon l'école, FIF-PL possible) :
 ${url}
 
 Et si ce n'est pas pour vous cette fois-ci, n'hésitez pas à en parler autour de vous — collègues, moniteur·rices de votre école : le bouche-à-oreille reste notre meilleure pub. Ils peuvent s'inscrire au même lien, ou nous écrire et nous nous occupons du reste.
 
-Si vous avez une question sur les dates, le tarif ou le financement, répondez simplement à ce message : nous vous répondons avec plaisir.
+Une question sur les dates, le tarif ou le financement ? Répondez simplement à ce message : nous vous répondons avec plaisir.
 
 ${COMMERCIAL_EMAIL_SIGNATURE}`
     .replace(/\n{3,}/g, "\n\n")
@@ -682,9 +732,9 @@ ${COMMERCIAL_EMAIL_SIGNATURE}`
 /**
  * Anciens stagiaires : e-mail réel, inscription terminée/facturée,
  * pas déjà inscrit·e sur ce stage.
+ * Ciblage par **lieu** du stage (course_location), pas par langue.
  * — Méribel / Samoëns PT : aucun (Seb pour le PT).
- * — Samoëns anglais : tous les anciens (toutes langues) — « parler à tous ».
- * — Autres stages : anciens de la même langue.
+ * — Sainte-Foy : anciens d'Aime / Aime La Plagne (+ Sainte-Foy si présent).
  */
 export function selectAlumniForStage(
   offering: Pick<
@@ -715,8 +765,6 @@ export function selectAlumniForStage(
 ): StageFillAlumni[] {
   if (isAlumniOutreachExcluded(offering)) return [];
 
-  const talkToEveryone = isSamoensEnglishOffering(offering);
-
   const alreadyOnStage = new Set(
     history
       .filter(
@@ -738,8 +786,7 @@ export function selectAlumniForStage(
     history
       .filter((h) => {
         if (h.status !== "terminee" && h.status !== "facturee") return false;
-        if (talkToEveryone) return true;
-        return languageKeysMatch(offering.language_label, h.language);
+        return alumniPlaceMatches(offering, h.course_location);
       })
       .map((h) => h.student_id)
   );

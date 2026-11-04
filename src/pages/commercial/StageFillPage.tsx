@@ -30,6 +30,7 @@ import {
   groupRowsForDirectorOutreach,
   isAlumniOutreachExcluded,
   isDirectorOutreachExcluded,
+  isSainteFoyOffering,
   isSamoensEnglishOffering,
   type RelanceAudience,
   type StageFillRow,
@@ -137,14 +138,14 @@ export default function StageFillPage() {
               Directeurs : un mail par station (ex. Oz — anglais + néerlandais).{" "}
               <strong>Méribel</strong> exclu (liste ESF) ·{" "}
               <strong>Samoëns portugais</strong> exclu (inscriptions avec Seb).
-              Anciens : pas Méribel / pas Samoëns PT · Samoëns anglais →{" "}
-              <em>tous</em> les anciens. Pas de prospection{" "}
-              <code>ski_monitors</code>.
+              Anciens : ciblés par <strong>lieu</strong> du stage (pas par
+              langue) · Sainte-Foy → anciens d&apos;Aime · pas Méribel / pas
+              Samoëns PT. Pas de prospection <code>ski_monitors</code>.
             </p>
             <p>
-              Bouton <strong>Envoyer</strong> : un seul message à{" "}
-              <code>info@fli.fr</code> (brouillon + liste prévue), pas une copie
-              par destinataire. Lien inscription :{" "}
+              <strong>Envoyer</strong> = mail réel à chaque destinataire (sans
+              BCC unitaire) + digest à <code>info@fli.fr</code>. Anciens
+              ciblés par <strong>lieu</strong> du stage. Lien :{" "}
               <a
                 className="underline"
                 href="https://www.fli.fr/register"
@@ -287,7 +288,7 @@ export default function StageFillPage() {
 
             <SectionHeading
               title="Stages (anciens stagiaires)"
-              description="Invitation + bouche-à-oreille. Hors Méribel et Samoëns PT (Seb). Samoëns anglais : tous les anciens."
+              description="Invitation + bouche-à-oreille. Anciens du même lieu (hors Méribel et Samoëns PT)."
             />
             {visible.length === 0 ? (
               <TableEmpty
@@ -307,6 +308,7 @@ export default function StageFillPage() {
                     : alumniFor(row.offering).length;
                   const dirExcluded = isDirectorOutreachExcluded(row.offering);
                   const samoensEn = isSamoensEnglishOffering(row.offering);
+                  const sainteFoy = isSainteFoyOffering(row.offering);
                   const stationKey = directorStationKey(row.offering);
                   return (
                     <SurfaceCard key={row.offering.id} className="p-4">
@@ -332,7 +334,12 @@ export default function StageFillPage() {
                             )}
                             {samoensEn && (
                               <StatusPill tone="info">
-                                Samoëns EN — tous les anciens
+                                Samoëns EN — anciens du lieu
+                              </StatusPill>
+                            )}
+                            {sainteFoy && (
+                              <StatusPill tone="info">
+                                Anciens d&apos;Aime
                               </StatusPill>
                             )}
                           </div>
