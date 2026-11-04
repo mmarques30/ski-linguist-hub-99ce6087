@@ -487,13 +487,15 @@ describe("commercial-stage-fill", () => {
     expect(alum.subject.toLowerCase()).toContain("saison");
     expect(alum.bodyText).toContain("Bonjour Léa,");
     expect(alum.bodyText).toContain("lang=russian");
-    expect(alum.bodyText).toContain("mieux préparer votre saison de ski");
-    expect(alum.bodyText).toContain("Nous pensions à vous");
+    expect(alum.bodyText).toContain("nous serions ravis de vous retrouver");
+    expect(alum.bodyText).toContain("pourrait vous convenir");
     expect(alum.bodyText).toContain("bouche-à-oreille");
     expect(alum.bodyText).toContain("en parler autour de vous");
     expect(alum.bodyText).toContain("nous vous répondons avec plaisir");
     expect(alum.bodyText.trim().endsWith("L'équipe FLI")).toBe(true);
-    expect(alum.bodyText.toLowerCase()).not.toMatch(/effectif|minimum|manque encore/);
+    expect(alum.bodyText.toLowerCase()).not.toMatch(
+      /effectif|minimum|manque encore|encore des places|compléter|sous.?rempli/
+    );
     expect(alum.bodyText).not.toMatch(/\bje\b/i);
     expect(alum.bodyText).not.toContain("Paula");
   });

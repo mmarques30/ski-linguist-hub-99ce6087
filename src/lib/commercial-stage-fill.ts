@@ -691,7 +691,10 @@ ${COMMERCIAL_EMAIL_SIGNATURE}`
   return { audience: "directeur", subject, bodyText };
 }
 
-/** Brouillon ancien stagiaire — ton commercial, sans parler d'effectif. */
+/**
+ * Brouillon ancien stagiaire — invitation personnelle à reprendre un stage.
+ * Pas de formulation « places à remplir / stages à compléter » (Paula).
+ */
 export function buildAlumniRelanceDraft(input: {
   offering: RegistrationOffering;
   firstName: string;
@@ -704,20 +707,20 @@ export function buildAlumniRelanceDraft(input: {
     input.registerUrl ?? `${COMMERCIAL_REGISTER_URL}?lang=${offering.language_key}`;
   const stage = stageLine(offering);
 
-  const subject = `Reprendre un stage FLI pour bien préparer votre saison ?`;
+  const subject = `Nous avons pensé à vous pour préparer votre saison`;
 
   const bodyText = `${greeting}
 
-Nous pensions à vous : et si vous recommenciez un stage avec nous pour mieux préparer votre saison de ski ?
+La saison approche, et nous serions ravis de vous retrouver pour un stage FLI — pour progresser et bien démarrer vos cours.
 
-Nous avons encore des places sur ${stage}.
+Si l'envie est là, voici une session qui pourrait vous convenir : ${stage}.
 
 Inscription en ligne (tarif selon l'école, FIF-PL possible) :
 ${url}
 
 Et si ce n'est pas pour vous cette fois-ci, n'hésitez pas à en parler autour de vous — collègues, moniteur·rices de votre école : le bouche-à-oreille reste notre meilleure pub. Ils peuvent s'inscrire au même lien, ou nous écrire et nous nous occupons du reste.
 
-Si vous avez une question sur les dates, le tarif ou le financement, répondez simplement à ce message : nous vous répondons avec plaisir.
+Une question sur les dates, le tarif ou le financement ? Répondez simplement à ce message : nous vous répondons avec plaisir.
 
 ${COMMERCIAL_EMAIL_SIGNATURE}`
     .replace(/\n{3,}/g, "\n\n")
