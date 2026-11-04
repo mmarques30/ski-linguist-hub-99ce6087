@@ -154,7 +154,10 @@
     "profession": "moniteur",
     "test_at": "2026-10-29T12:00:00+01:00",
     "previous_test": false,
-    "payment": "partial_40_awaiting_transfer_5",
+    "payment": "virement_paid",
+    "payment_date": "2026-11-04",
+    "invoice_number": "26-27.14342",
+    "invoice_seq": 14342,
     "scores": [
       3,
       3.5,
@@ -174,12 +177,12 @@
     "concl": "En conclusion vous avez un niveau opérationnel (B2+) qui vous permet de communiquer correctement avec la clientèle anglophone.",
     "pdf_habillage": "ecole_ski",
     "pdf_source": "prosneige_dotx",
-    "send_mode": "school_billed_no_invoice",
+    "send_mode": "bank_paid_invoice",
     "school_cc": [
       "sam@prosneige.fr",
       "nathan@prosneige.fr"
     ],
-    "note": "Notes +0,5 → B2+. Résultat envoyé 03/11 Resend 01a1a1af-459a-7216-8205-0e1439b2c3f3. Paiement 40 € reçu / tarif 45 €. Solde 5 € : Pierre fera un virement (Paula 03/11) — relance mail annulée ; lien Stripe plink_1UXiBxQBleN6FLtSKAcSJiEE désactivé."
+    "note": "Notes +0,5 → B2+. Résultat 03/11 Resend 01a1a1af-459a-7216-8205-0e1439b2c3f3. Facture acquittée 26-27.14342 envoyée 04/11 Resend 01a1a693-404c-77b6-b2a5-6673c259cd63 (CC Prosneige, BCC info@fli.fr)."
   },
   {
     "key": "titouan-avocat-reeval",
