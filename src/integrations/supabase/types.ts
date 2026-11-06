@@ -3524,12 +3524,14 @@ export type Database = {
           cartes_actifs: number | null
           code: string
           courriel_direction: string | null
+          courriel_directeur_technique: string | null
           courriel_ecole: string | null
           courriel_resultats_cc: string | null
           cp: string | null
           created_at: string
           departement: string | null
           directeur: string | null
+          directeur_technique: string | null
           id: string
           is_active: boolean
           nom_affiche: string
@@ -3547,12 +3549,14 @@ export type Database = {
           cartes_actifs?: number | null
           code: string
           courriel_direction?: string | null
+          courriel_directeur_technique?: string | null
           courriel_ecole?: string | null
           courriel_resultats_cc?: string | null
           cp?: string | null
           created_at?: string
           departement?: string | null
           directeur?: string | null
+          directeur_technique?: string | null
           id?: string
           is_active?: boolean
           nom_affiche: string
@@ -3570,12 +3574,14 @@ export type Database = {
           cartes_actifs?: number | null
           code?: string
           courriel_direction?: string | null
+          courriel_directeur_technique?: string | null
           courriel_ecole?: string | null
           courriel_resultats_cc?: string | null
           cp?: string | null
           created_at?: string
           departement?: string | null
           directeur?: string | null
+          directeur_technique?: string | null
           id?: string
           is_active?: boolean
           nom_affiche?: string
