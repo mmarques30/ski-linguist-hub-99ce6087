@@ -5,7 +5,7 @@ import { MONITORING_SECRET_CATALOG, type MonitoringConfigStatus } from "@/lib/mo
 import { Link } from "react-router";
 
 const SUPABASE_SECRETS_URL =
-  "https://supabase.com/dashboard/project/nghkrmvakjomzmfwdhbo/settings/functions";
+  "https://supabase.com/dashboard/project/huroglcfhekfvyglfocs/settings/functions";
 const GITHUB_TOKENS_URL = "https://github.com/settings/tokens?type=beta";
 const DOCS_PATH = "/monitoramento"; // le guide est dans docs/ ; lien relatif UI vers l'onglet secrets
 
