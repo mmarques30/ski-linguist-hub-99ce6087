@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { useProvisionStripeWebhook, useStripeConfig } from "@/hooks/useStripeConfig";
 
 const SUPABASE_PROJECT_URL =
-  "https://supabase.com/dashboard/project/nghkrmvakjomzmfwdhbo/settings/functions";
+  "https://supabase.com/dashboard/project/huroglcfhekfvyglfocs/settings/functions";
 const GITHUB_REPO_URL = "https://github.com/mmarques30/ski-linguist-hub-99ce6087";
 const STRIPE_TEST_KEYS_URL = "https://dashboard.stripe.com/test/apikeys";
 const STRIPE_LIVE_KEYS_URL = "https://dashboard.stripe.com/apikeys";
