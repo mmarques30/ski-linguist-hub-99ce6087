@@ -1,0 +1,125 @@
+{
+  "school": "ESF SAINT GERVAIS LES BAINS",
+  "school_short": "ESF SAINT GERVAIS",
+  "director_name": "Alizée Nicoletta",
+  "to": [
+    "administration@esf-saintgervais.com",
+    "direction@esf-saintgervais.com"
+  ],
+  "cc": [],
+  "bcc": "info@fli.fr",
+  "tutoiement": true,
+  "invoice_number": "26-27.14343",
+  "invoice_date": "2026-10-31",
+  "due_date": "2026-11-30",
+  "unit_ht": 37.5,
+  "checkout_url": "https://buy.stripe.com/fZueVfchH9oh0Hu17kfYY0b",
+  "stripe_payment_link": "plink_1UY5rLQBleN6FLtSwdhEVRwq",
+  "stripe_price": "price_1UY5rLQBleN6FLtSAZFsmlv5",
+  "candidates": [
+    {
+      "name": "Anouk Leynaud",
+      "language": "Anglais",
+      "test_date": "2026-10-08",
+      "evaluator": "C. Mollard",
+      "scores": [4, 2.5, 2, 2.5, 2, 3],
+      "cecrl": "B2"
+    },
+    {
+      "name": "Sacha Mir-Emarati",
+      "language": "Anglais",
+      "test_date": "2026-10-08",
+      "evaluator": "C. Mollard",
+      "scores": [4, 4, 4, 4, 4.5, 4],
+      "cecrl": "C1"
+    },
+    {
+      "name": "Anouk Benamor",
+      "language": "Anglais",
+      "test_date": "2026-10-12",
+      "evaluator": "C. Mollard",
+      "scores": [3.5, 3, 3, 2.5, 2.5, 3],
+      "cecrl": "B2"
+    },
+    {
+      "name": "Zoé Tollet",
+      "language": "Anglais",
+      "test_date": "2026-10-12",
+      "evaluator": "C. Mollard",
+      "scores": [3.5, 2.5, 3, 2, 3, 3],
+      "cecrl": "B2"
+    },
+    {
+      "name": "Louise Labrousse",
+      "language": "Anglais",
+      "test_date": "2026-10-12",
+      "evaluator": "C. Mollard",
+      "scores": [3.5, 2.5, 1.5, 3, 2.5, 3],
+      "cecrl": "B2"
+    },
+    {
+      "name": "Samson Benamor",
+      "language": "Anglais",
+      "test_date": "2026-10-12",
+      "evaluator": "C. Mollard",
+      "scores": [3, 1, 1, 1.5, 1.5, 1.5],
+      "cecrl": "A2+"
+    },
+    {
+      "name": "Eliane Jeanbourquin",
+      "language": "Italien",
+      "test_date": "2026-10-13",
+      "evaluator": "N. Raguin",
+      "scores": [3, 3.5, 3, 3.5, 3, 3.5],
+      "cecrl": "B2+"
+    },
+    {
+      "name": "Louise Labrousse",
+      "language": "Italien",
+      "test_date": "2026-10-13",
+      "evaluator": "N. Raguin",
+      "scores": [3.5, 2.5, 2.5, 2, 3, 3],
+      "cecrl": "B2"
+    },
+    {
+      "name": "Gabin Lombardot",
+      "language": "Anglais",
+      "test_date": "2026-10-15",
+      "evaluator": "C. Mollard",
+      "scores": [3, 2.5, 2.5, 2.5, 2.5, 2.5],
+      "cecrl": "B1+"
+    },
+    {
+      "name": "Romain Godeffroy",
+      "language": "Anglais",
+      "test_date": "2026-10-15",
+      "evaluator": "C. Mollard",
+      "scores": [2.5, 3, 3, 3, 3, 3],
+      "cecrl": "B2"
+    },
+    {
+      "name": "Lucas Audo",
+      "language": "Anglais",
+      "test_date": "2026-10-19",
+      "evaluator": "C. Mollard",
+      "scores": [1, 1, 0.5, 1, 1, 1],
+      "cecrl": "A2"
+    },
+    {
+      "name": "Margot Dumez",
+      "language": "Anglais",
+      "test_date": "2026-10-22",
+      "evaluator": "A. Tessier",
+      "scores": [2, 1, 1.5, 1.5, 1, 1.5],
+      "cecrl": "A2+"
+    },
+    {
+      "name": "Victor Dorn",
+      "language": "Anglais",
+      "test_date": "2026-10-29",
+      "evaluator": "C. Mollard",
+      "scores": [2, 1.5, 1, 1.5, 1.5, 1.5],
+      "cecrl": "A2+"
+    }
+  ]
+}
