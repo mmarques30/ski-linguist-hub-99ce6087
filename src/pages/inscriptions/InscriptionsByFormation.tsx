@@ -54,6 +54,12 @@ import {
   formationGroupTitle,
   groupInscriptionsByFormation,
 } from "@/lib/inscriptions-by-formation";
+import {
+  DOCS_SENT_LABELS,
+  DOCS_SENT_TONES,
+  PAYMENT_SETTLEMENT_LABELS,
+  PAYMENT_SETTLEMENT_TONES,
+} from "@/lib/inscription-ops-visibility";
 
 const translations = {
   title: {
@@ -364,7 +370,10 @@ export default function InscriptionsByFormation() {
               bodyClassName="p-0"
             >
               <ul className="divide-y divide-border">
-                {group.inscriptions.map((inscription) => (
+                {group.inscriptions.map((inscription) => {
+                  const docsStatus = inscription.docs_sent_status ?? "a_envoyer";
+                  const payStatus = inscription.payment_settlement ?? "aucun";
+                  return (
                   <li
                     key={inscription.id}
                     className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm"
@@ -400,6 +409,17 @@ export default function InscriptionsByFormation() {
                       </StatusPill>
                     ) : null}
 
+                    <StatusPill tone={DOCS_SENT_TONES[docsStatus]} size="sm" dot>
+                      {DOCS_SENT_LABELS[docsStatus]}
+                    </StatusPill>
+                    <StatusPill
+                      tone={PAYMENT_SETTLEMENT_TONES[payStatus]}
+                      size="sm"
+                      dot
+                    >
+                      {PAYMENT_SETTLEMENT_LABELS[payStatus]}
+                    </StatusPill>
+
                     <InscriptionStatusMenu
                       inscriptionId={inscription.id}
                       status={inscription.status || ""}
@@ -416,7 +436,8 @@ export default function InscriptionsByFormation() {
                       </Link>
                     </Button>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             </SurfaceCard>
           ))}

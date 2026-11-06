@@ -70,6 +70,12 @@ import {
   serializeStatusFilterParam,
   type InscriptionStatus,
 } from "@/lib/inscription-status";
+import {
+  DOCS_SENT_LABELS,
+  DOCS_SENT_TONES,
+  PAYMENT_SETTLEMENT_LABELS,
+  PAYMENT_SETTLEMENT_TONES,
+} from "@/lib/inscription-ops-visibility";
 import { EndPackDialog } from "@/components/endpack/EndPackDialog";
 import { InscriptionFormDialog } from "@/components/inscriptions/InscriptionFormDialog";
 import { InscriptionStatusFilter } from "@/components/inscriptions/InscriptionStatusFilter";
@@ -181,6 +187,16 @@ const translations = {
     fr: "Montant",
     "pt-BR": "Valor",
     en: "Amount",
+  },
+  docs: {
+    fr: "Dossier",
+    "pt-BR": "Dossiê",
+    en: "Pack",
+  },
+  payment: {
+    fr: "Paiement",
+    "pt-BR": "Pagamento",
+    en: "Payment",
   },
   status: {
     fr: "Statut",
@@ -588,12 +604,21 @@ export default function Inscriptions() {
               <TableHeadCell align="right" className="hidden md:table-cell">
                 {t(translations.amount)}
               </TableHeadCell>
+              <TableHeadCell className="hidden md:table-cell">
+                {t(translations.docs)}
+              </TableHeadCell>
+              <TableHeadCell className="hidden md:table-cell">
+                {t(translations.payment)}
+              </TableHeadCell>
               <TableHeadCell>{t(translations.status)}</TableHeadCell>
               <TableHeadCell align="right">{t(translations.actions)}</TableHeadCell>
             </TableHeadRow>
           </thead>
           <tbody>
-            {inscriptions.map((inscription) => (
+            {inscriptions.map((inscription) => {
+              const docsStatus = inscription.docs_sent_status ?? "a_envoyer";
+              const payStatus = inscription.payment_settlement ?? "aucun";
+              return (
               <TableRow key={inscription.id}>
                 <TableCell className="font-mono">
                   {inscription.code || "-"}
@@ -627,6 +652,25 @@ export default function Inscriptions() {
                 <TableCell align="right" hideBelow="md" className="tabular">
                   {formatPrice(inscription.price)}
                 </TableCell>
+                <TableCell hideBelow="md">
+                  <StatusPill tone={DOCS_SENT_TONES[docsStatus]} size="sm" dot>
+                    {DOCS_SENT_LABELS[docsStatus]}
+                  </StatusPill>
+                </TableCell>
+                <TableCell hideBelow="md">
+                  <StatusPill
+                    tone={PAYMENT_SETTLEMENT_TONES[payStatus]}
+                    size="sm"
+                    dot
+                    className="whitespace-nowrap"
+                  >
+                    {PAYMENT_SETTLEMENT_LABELS[payStatus]}
+                    {typeof inscription.payments_received_total === "number" &&
+                    inscription.payments_received_total > 0
+                      ? ` · ${formatPrice(inscription.payments_received_total)}`
+                      : ""}
+                  </StatusPill>
+                </TableCell>
                 <TableCell>
                   <InscriptionStatusMenu
                     inscriptionId={inscription.id}
@@ -637,7 +681,8 @@ export default function Inscriptions() {
                 </TableCell>
                 <TableCell align="right">{rowActions(inscription)}</TableCell>
               </TableRow>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </TableFrame>
@@ -681,6 +726,16 @@ export default function Inscriptions() {
               },
               { label: t(translations.period), value: renderPeriod(inscription) },
               { label: t(translations.amount), value: formatPrice(inscription.price) },
+              {
+                label: t(translations.docs),
+                value: DOCS_SENT_LABELS[inscription.docs_sent_status ?? "a_envoyer"],
+              },
+              {
+                label: t(translations.payment),
+                value: PAYMENT_SETTLEMENT_LABELS[
+                  inscription.payment_settlement ?? "aucun"
+                ],
+              },
             ]}
             actions={rowActions(inscription)}
           />
