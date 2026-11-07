@@ -2,7 +2,7 @@
 
 Règle : noter ici, **ne pas corriger** tant que le point courant n’est pas validé.
 
-Dernière mise à jour : 2026-09-29 (BL-015 + BL-020 clos ; BL-022 CV cadré).
+Dernière mise à jour : 2026-10-21 (landing institutionnelle `/` : #103 fusionnée, retours Paula du 21/10 validés).
 
 ## Conventions de lecture
 
@@ -139,6 +139,7 @@ dette antérieure, non remontée par la recette.
 | BL-019 | J-10 horaires FLI exacts + pas de code depuis horaires | Point 10 |
 | BL-020 | Policies storage certificats — **clos** 29/09 : Point A / PR #16 déjà livré ; *(live)* bucket `certificates` `public=false`, 5 policies RLS (`select_staff` / `select_owner` / `insert_staff` / `update_staff` / `delete_admin`) ; 0 ligne `certificates`, 0 objet storage ; URL `/object/public/certificates/…` → `NoSuchBucket` ; vue `inscriptions_complete` bilan OK | Ops |
 | BL-022 | `instructors.cv_url` Drive — **cadré** 29/09 : `docs/POINT_BL022_CV_URL.md` ; *(live)* 16/72 liens Drive, 0 Storage ; pas de scrape auto ; UI Administratif + upload `documents/staff/instructors/<id>/cv.pdf` | Faible |
+| LP-001 | Landing `/` — pendances spec §5–7 : photo hero professionnelle (illustration provisoire), logos partenaires HD (bandeau retiré en attendant), chiffre « moniteurs formés / écoles partenaires » pour la barre d'indicateurs ; retirer le lien footer « Validation des visuels » (`/mockup/lp-assets`) avant communication large | Faible |
 
 ---
 
@@ -266,4 +267,7 @@ dette antérieure, non remontée par la recette.
 | **Édition admin partout** | Fusionné main (PR #83) — `useConfirmAction` ; confirmation avant chaque mutation BO |
 | **BL-007 crons + notifs** | Fusionné main (PR #85) — crons email + avancement actifs ; producteurs notifs BO |
 | **BL-014 peaufinage** | Fusionné main (PR #87) — candidat→actif : gaps soft, confirm, liste, presets, inactif |
+| **Landing institutionnelle `/`** | Fusionné main (PR #103, 14/10) — `/` public (hero, méthode + vidéo, formations, stages par langue depuis le catalogue `/register`, FAQ, footer Qualiopi) ; staff → `/app` ; « Accès FLI » → `/auth` ; spec `docs/FLI-LP-institucional-spec.md` |
+| **Landing — retours Paula 21/10** | Validé 21/10, branche `cursor/landing-page-reprise-29e6` (PR à fusionner) — titres Outfit (Syne retirée) ; « Centre agréé Linguaskill et Bright. » ; « Demander un devis » / « Nous contacter » → `ContactDialog` (e-mail copiable, tél., mail pré-rempli) au lieu de `mailto:` ; stages en grille par langue ; FAQ 13 Q/R en 3 thèmes sourcées CGV / sessions / FIF PL |
+| **`/register` → www.fli.fr** | Fusionné main (PR #210, 15/10) — sur `plateforme.fli.fr` seulement ; retours Stripe restent sur l'hôte d'origine |
 | 6 — Stripe | Config test OK via Settings / `check-stripe-config` ; docs STRIPE_SETUP rafraîchis (#78) ; mode live hors scope |

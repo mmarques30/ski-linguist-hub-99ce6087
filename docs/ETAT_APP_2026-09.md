@@ -7,7 +7,7 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 
 ## 0. Fusion & déploiement (tête de rapport)
 
-### Fusionné dans `main` (rafraîchi 21/09/2026 — incl. #87)
+### Fusionné dans `main` (rafraîchi 21/09/2026 — incl. #87 ; complément landing 21/10)
 
 | Élément | PR | Note |
 |---------|----|------|
@@ -33,6 +33,9 @@ Convention : **livré** = fusionné dans `main` **et** déployé sur l’app pub
 | **Édition admin partout** | #83 | `useConfirmAction` ; confirmation avant chaque mutation BO |
 | **BL-007 crons + notifs** | #85 | Crons email + avancement actifs ; producteurs notifs BO |
 | **BL-014 peaufinage** | #87 | Bannière gaps, confirm enrichie, CTA liste, presets admin, inactif |
+| **Landing institutionnelle `/`** | #103 | `/` public, dashboard staff → `/app`, « Accès FLI » → `/auth`, stages par langue, Qualiopi footer |
+| **`/register` → www.fli.fr** | #210 | Redirection sur `plateforme.fli.fr` uniquement (garde-fou aussi dans `index.html`) |
+| **Landing — retours 21/10** | branche `cursor/landing-page-reprise-29e6` | Titres Outfit ; `ContactDialog` devis/contact ; stages en grille ; FAQ repensée ; Linguaskill/Bright |
 | Sync types Lovable | — | `types.ts` leads + `funding_requests.payer_type` |
 
 **SHA `main` au moment de ce refresh :** `e2d385d` (merge #87 BL-014).
@@ -84,6 +87,7 @@ Historique / hors plan : voir anciennes notes ; les vagues UX A–D et C.1–C.6
 | `components/formateurs/` | Instructors UI |
 | `components/inscriptions/` | Dossiers, bilan, docs, J-10 |
 | `components/invoices/` | Factures |
+| `components/landing/` | Landing publique : assets, `ContactDialog` |
 | `components/layout/` | Shell / sidebar |
 | `components/moniteurs/` | CRM moniteurs ski |
 | `components/partners/` | Partenaires ESF |
@@ -123,6 +127,8 @@ Historique / hors plan : voir anciennes notes ; les vagues UX A–D et C.1–C.6
 | `TESTING_GUIDE.md` | Tests manuels |
 | `STRIPE_SETUP.md` | Stripe (partiellement obsolète) |
 | `ADR-placement-tests.md` | ADR placement |
+| `FLI-LP-institucional-spec.md` | Spec landing `/` (sitemap, FAQ, pendances assets) |
+| `SESSIONS_2026_2027.md` | Sessions saison 2026-2027 et règles tarifaires |
 
 ---
 
@@ -130,15 +136,17 @@ Historique / hors plan : voir anciennes notes ; les vagues UX A–D et C.1–C.6
 
 | Route | Auth | Écran | État |
 |-------|------|-------|------|
+| `/` | public | Landing institutionnelle (`InstitutionalLanding`) — #103 | Fonctionnel |
+| `/mockup/lp-assets` | public | Validation des visuels LP | Maquette (à retirer du footer avant com.) |
 | `/auth` | public | Login | Fonctionnel |
-| `/register` | public | Inscription multi-étapes | Fonctionnel |
+| `/register` | public | Inscription multi-étapes ; sur `plateforme.fli.fr` → redirection `https://www.fli.fr/register` (#210) | Fonctionnel |
 | `/register/payment-success` | public | Retour Stripe | Fonctionnel |
 | `/register/payment-cancel` | public | Annulation Stripe | Fonctionnel |
 | `/survey/:token` | public | Satisfaction | Fonctionnel |
 | `/suivi/:token` | public | Suivi inscription (Vague A) | Fonctionnel |
 | `/conditions-generales` | public | CG formation | Fonctionnel |
 | `/mockup/dashboard-gestao` | staff | Mockup dashboard | Maquette (protégé) |
-| `/` | staff | Dashboard + rail « À traiter » | Fonctionnel (Vague B) |
+| `/app` | staff | Dashboard + rail « À traiter » (ex-`/`, `ADMIN_HOME_PATH`) | Fonctionnel (Vague B, #103) |
 | `/finance` (+ analyses, rentabilité) | staff | Pilotage (sous-nav) | Fonctionnel (Vague C) |
 | `/finance/tresorerie` (+ charges-fixes) | staff | Trésorerie | Fonctionnel |
 | `/finance/payments` | staff | Paiements | Fonctionnel |

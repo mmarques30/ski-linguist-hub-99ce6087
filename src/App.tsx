@@ -50,10 +50,17 @@ import EvaluationView from "./pages/formateur/EvaluationView";
 import EvaluationVerify from "./pages/formateur/EvaluationVerify";
 import FormateurDashboard from "./pages/formateur/FormateurDashboard";
 import FormateurPlanning from "./pages/formateur/FormateurPlanning";
+import FormateurMissionDetail from "./pages/formateur/FormateurMissionDetail";
 import FormateurStagiaires from "./pages/formateur/FormateurStagiaires";
+import FormateurStagiaireDetail from "./pages/formateur/FormateurStagiaireDetail";
+import FormateurPresences from "./pages/formateur/FormateurPresences";
+import EmargerPage from "./pages/EmargerPage";
 import FormateurProfil from "./pages/formateur/FormateurProfil";
 import FormateurPaiements from "./pages/formateur/FormateurPaiements";
 import FormateurDocuments from "./pages/formateur/FormateurDocuments";
+import FormateurOnboarding from "./pages/formateur/FormateurOnboarding";
+import FormateurBilans from "./pages/formateur/FormateurBilans";
+import FormateurBilanFormPage from "./pages/formateur/FormateurBilanFormPage";
 import PublicRegistrationRoute from "./pages/register/PublicRegistrationRoute";
 import BookTest from "./pages/test/BookTest";
 import SalonDirecteursPage from "./pages/salon/Index";
@@ -83,6 +90,7 @@ import StudentDocuments from "./pages/student/StudentDocuments";
 import StudentEvaluation from "./pages/student/StudentEvaluation";
 import StudentPlanning from "./pages/student/StudentPlanning";
 import CommercialDashboard from "./pages/commercial/CommercialDashboard";
+import StageFillPage from "./pages/commercial/StageFillPage";
 import MoniteursSki from "./pages/moniteurs/MoniteursSki";
 import DashboardGestaoMockupPage from "./pages/mockup/DashboardGestaoMockup";
 import ConditionsGenerales from "./pages/legal/ConditionsGenerales";
@@ -108,7 +116,7 @@ const App = () => (
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<InstitutionalLanding />} />
-            <Route path="/mockup/lp-assets" element={<AssetValidationMockupPage />} />
+            <Route path="/mockup/lp-assets" element={<ProtectedRoute><AssetValidationMockupPage /></ProtectedRoute>} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/register" element={<PublicRegistrationRoute />} />
             <Route path="/salon" element={<SalonDirecteursPage />} />
@@ -117,6 +125,7 @@ const App = () => (
             <Route path="/register/payment-cancel" element={<PaymentCancelPage />} />
             <Route path="/survey/:token" element={<SatisfactionSurvey />} />
             <Route path="/suivi/:token" element={<InscriptionSuiviPage />} />
+            <Route path="/emarger/:token" element={<EmargerPage />} />
             <Route path="/conditions-generales" element={<ConditionsGenerales />} />
 
             {/* Design-validation mockup — staff only */}
@@ -137,6 +146,7 @@ const App = () => (
             <Route path="/finance/payments" element={<ProtectedRoute><FinancePayments /></ProtectedRoute>} />
             <Route path="/finance/charges-fixes" element={<ProtectedRoute><FinanceChargesFixes /></ProtectedRoute>} />
             <Route path="/gestion/commercial" element={<ProtectedRoute><CommercialDashboard /></ProtectedRoute>} />
+            <Route path="/gestion/commercial/stages" element={<ProtectedRoute><StageFillPage /></ProtectedRoute>} />
             <Route path="/gestion/moniteurs" element={<ProtectedRoute><MoniteursSki /></ProtectedRoute>} />
             <Route path="/gestion/partenaires" element={<ProtectedRoute><PartnersList /></ProtectedRoute>} />
             <Route path="/gestion/partenaires/:id" element={<ProtectedRoute><PartnerDetails /></ProtectedRoute>} />
@@ -184,6 +194,16 @@ const App = () => (
               }
             />
             <Route
+              path="/formateur/onboarding"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <FormateurOnboarding />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/formateur/planning"
               element={
                 <ProtectedRoute>
@@ -194,11 +214,71 @@ const App = () => (
               }
             />
             <Route
+              path="/formateur/missions/:inscriptionId"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <FormateurMissionDetail />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/formateur/stagiaires"
               element={
                 <ProtectedRoute>
                   <FormateurOwnViewProvider>
                     <FormateurStagiaires />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/formateur/stagiaires/:studentId"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <FormateurStagiaireDetail />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/formateur/presences"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <FormateurPresences />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/formateur/bilans"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <FormateurBilans />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/formateur/bilans/:inscriptionId/entree"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <FormateurBilanFormPage kind="entree" />
+                  </FormateurOwnViewProvider>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/formateur/bilans/:inscriptionId/sortie"
+              element={
+                <ProtectedRoute>
+                  <FormateurOwnViewProvider>
+                    <FormateurBilanFormPage kind="sortie" />
                   </FormateurOwnViewProvider>
                 </ProtectedRoute>
               }
@@ -382,8 +462,27 @@ const App = () => (
             >
               <Route index element={<Navigate to="tableau-de-bord" replace />} />
               <Route path="tableau-de-bord" element={<FormateurDashboard />} />
+              <Route path="onboarding" element={<FormateurOnboarding />} />
               <Route path="planning" element={<FormateurPlanning />} />
+              <Route
+                path="missions/:inscriptionId"
+                element={<FormateurMissionDetail />}
+              />
               <Route path="stagiaires" element={<FormateurStagiaires />} />
+              <Route
+                path="stagiaires/:studentId"
+                element={<FormateurStagiaireDetail />}
+              />
+              <Route path="presences" element={<FormateurPresences />} />
+              <Route path="bilans" element={<FormateurBilans />} />
+              <Route
+                path="bilans/:inscriptionId/entree"
+                element={<FormateurBilanFormPage kind="entree" />}
+              />
+              <Route
+                path="bilans/:inscriptionId/sortie"
+                element={<FormateurBilanFormPage kind="sortie" />}
+              />
               <Route path="documents" element={<FormateurDocuments />} />
               <Route path="paiements" element={<FormateurPaiements />} />
               <Route path="profil" element={<FormateurProfil />} />

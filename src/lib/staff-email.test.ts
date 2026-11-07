@@ -42,5 +42,6 @@ describe("staff-email", () => {
     expect(edge).toContain("sendFliEmail");
     expect(edge).toContain("attachments");
     expect(edge).toContain("cc");
+    expect(edge).toContain("skipNotifyBcc");
   });
 });

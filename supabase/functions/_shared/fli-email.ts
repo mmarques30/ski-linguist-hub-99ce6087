@@ -78,6 +78,11 @@ export interface SendFliEmailInput {
   /** Copies visibles (ex. secrétaire ESF). Dédupliquées vs `to` ; hors placeholder. */
   cc?: string[];
   attachments?: Array<{ filename: string; content: string }>;
+  /**
+   * Campagne commerciale : pas de BCC unitaire (Paula reçoit un digest à part).
+   * Défaut false — BCC info@fli.fr reste la règle pour tout autre envoi.
+   */
+  skipNotifyBcc?: boolean;
 }
 
 /** Normalise une liste CC : trim, minuscules pour dédup, exclut `to` et placeholders. */
@@ -173,8 +178,12 @@ export async function sendFliEmail(
   if (ccList.length) {
     body.cc = ccList;
   }
-  // BCC Paula (info@fli.fr) sauf si elle est déjà destinataire principale.
-  if (toNormalized !== FLI_NOTIFY_BCC.toLowerCase()) {
+  // BCC Paula (info@fli.fr) sauf si elle est déjà destinataire principale,
+  // ou si la campagne demande un digest unique (skipNotifyBcc).
+  if (
+    !input.skipNotifyBcc &&
+    toNormalized !== FLI_NOTIFY_BCC.toLowerCase()
+  ) {
     body.bcc = [FLI_NOTIFY_BCC];
   }
   if (input.attachments?.length) {

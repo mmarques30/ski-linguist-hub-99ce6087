@@ -62,6 +62,21 @@ export function useAuth() {
     return { error };
   };
 
+  const updatePassword = async (password: string) => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      return { error: new Error("Session expirée. Reconnecte-toi puis réessaie.") };
+    }
+    const { error } = await supabase.auth.updateUser({ password });
+    return { error };
+  };
+
+  const resetPasswordForEmail = async (email: string) => {
+    const redirectTo = `${window.location.origin}/auth`;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    return { error };
+  };
+
   return {
     user,
     session,
@@ -70,5 +85,7 @@ export function useAuth() {
     signUp,
     signInWithMagicLink,
     signOut,
+    updatePassword,
+    resetPasswordForEmail,
   };
 }

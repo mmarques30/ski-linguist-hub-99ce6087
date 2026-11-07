@@ -1,10 +1,13 @@
-import { Mail, Phone, Users } from "lucide-react";
+import { Link } from "react-router";
+import { ChevronRight, Mail, Phone, Users } from "lucide-react";
 import { FormateurPageShell } from "@/components/layout/FormateurPageShell";
+import { useFormateurView } from "@/contexts/FormateurViewContext";
 import {
   uniqueStagiairesFromInscriptions,
   useFormateurInscriptions,
   useFormateurProfile,
 } from "@/hooks/useFormateurPortal";
+import { formatFormateurLevelDisplay } from "@/lib/formateur-formation-forms";
 import { inscriptionDateRangeLabel } from "@/lib/registration-dates";
 import { getStatusLabel } from "@/lib/inscription-status";
 import { displayLanguageLabel } from "@/lib/taught-languages";
@@ -17,10 +20,14 @@ import {
   TableSkeleton,
   toneForStatus,
 } from "@/components/ui-kit";
+import { Button } from "@/components/ui/button";
 
 export default function FormateurStagiaires() {
+  const { basePath } = useFormateurView();
   const { data: profile } = useFormateurProfile();
-  const { data: inscriptions = [], isLoading } = useFormateurInscriptions(profile?.id);
+  const { data: inscriptions = [], isLoading } = useFormateurInscriptions(
+    profile?.id
+  );
   const stagiaires = uniqueStagiairesFromInscriptions(inscriptions);
 
   return (
@@ -28,7 +35,7 @@ export default function FormateurStagiaires() {
       <PageShell>
         <PageHeader
           title="Stagiaires"
-          description="Personnes rattachées à vos missions"
+          description="Ouvre une fiche pour le contact, les attentes, le test et les niveaux"
           icon={Users}
           tone="blue"
         />
@@ -48,7 +55,12 @@ export default function FormateurStagiaires() {
                 <SurfaceCard>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0 space-y-1">
-                      <p className="text-sm font-semibold">{s.name}</p>
+                      <Link
+                        to={`${basePath}/stagiaires/${s.studentId}`}
+                        className="text-sm font-semibold text-foreground hover:underline"
+                      >
+                        {s.name}
+                      </Link>
                       <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
                         {s.email ? (
                           <span className="inline-flex items-center gap-1">
@@ -64,27 +76,53 @@ export default function FormateurStagiaires() {
                         ) : null}
                       </div>
                     </div>
-                    <StatusPill tone="neutral" size="sm" className="shrink-0">
-                      {s.inscriptions.length} mission
-                      {s.inscriptions.length > 1 ? "s" : ""}
-                    </StatusPill>
+                    <div className="flex shrink-0 flex-wrap items-center gap-2">
+                      <StatusPill tone="neutral" size="sm">
+                        {s.inscriptions.length} mission
+                        {s.inscriptions.length > 1 ? "s" : ""}
+                      </StatusPill>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`${basePath}/stagiaires/${s.studentId}`}>
+                          Voir la fiche
+                          <ChevronRight className="ml-1 h-3.5 w-3.5" />
+                        </Link>
+                      </Button>
+                    </div>
                   </div>
                   <ul className="mt-3 space-y-2 border-t border-border pt-3">
                     {s.inscriptions.map((row) => (
-                      <li
-                        key={row.id}
-                        className="flex flex-wrap items-center justify-between gap-2 text-xs"
-                      >
-                        <span className="text-muted-foreground">
-                          {row.code ? `${row.code} · ` : ""}
-                          {inscriptionDateRangeLabel(row)}
-                          {row.language
-                            ? ` · ${displayLanguageLabel(row.language)}`
-                            : ""}
-                        </span>
-                        <StatusPill tone={toneForStatus(row.status)} size="sm">
-                          {getStatusLabel(row.status || '', 'fr')}
-                        </StatusPill>
+                      <li key={row.id}>
+                        <Link
+                          to={`${basePath}/missions/${row.id}`}
+                          className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius)] px-1 py-1.5 text-xs transition-colors hover:bg-[hsl(var(--surface-sunken))]"
+                        >
+                          <span className="text-muted-foreground">
+                            {row.code ? `${row.code} · ` : ""}
+                            {inscriptionDateRangeLabel(row)}
+                            {row.language
+                              ? ` · ${displayLanguageLabel(row.language)}`
+                              : ""}
+                            {row.niveau_general_entree ||
+                            row.niveau_general_sortie ? (
+                              <span className="ml-1 text-foreground">
+                                ·{" "}
+                                {formatFormateurLevelDisplay(
+                                  row.niveau_general_entree
+                                )}{" "}
+                                →{" "}
+                                {formatFormateurLevelDisplay(
+                                  row.niveau_general_sortie
+                                )}
+                              </span>
+                            ) : null}
+                          </span>
+                          <StatusPill
+                            tone={toneForStatus(row.status)}
+                            size="sm"
+                          >
+                            {getStatusLabel(row.status || "", "fr")}
+                          </StatusPill>
+                        </Link>
                       </li>
                     ))}
                   </ul>

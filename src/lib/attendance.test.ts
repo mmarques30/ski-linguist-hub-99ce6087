@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   buildAttendanceGroupKey,
@@ -104,5 +106,22 @@ describe("labels & urls", () => {
     expect(formatSignedElectronically("2026-12-01T10:15:00.000Z")).toMatch(
       /Signé électroniquement/
     );
+  });
+});
+
+describe("UI émargement branchée", () => {
+  it("expose /emarger/:token et Présence formateur", () => {
+    const app = readFileSync(join(process.cwd(), "src/App.tsx"), "utf8");
+    expect(app).toContain('path="/emarger/:token"');
+    expect(app).toContain("EmargerPage");
+    expect(
+      existsSync(join(process.cwd(), "src/pages/EmargerPage.tsx"))
+    ).toBe(true);
+    const presences = readFileSync(
+      join(process.cwd(), "src/pages/formateur/FormateurPresences.tsx"),
+      "utf8"
+    );
+    expect(presences).toContain("useOpenIndividualAttendanceSlot");
+    expect(presences).toContain("AttendanceSlotPanel");
   });
 });

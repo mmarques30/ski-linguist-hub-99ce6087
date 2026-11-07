@@ -22,6 +22,8 @@ export interface RegistrationOffering {
   date_label: string | null;
   format_label?: string | null;
   instructor_label?: string | null;
+  /** Fiche formateur liée (espace formateur, sessions sans inscrits). */
+  instructor_id?: string | null;
   base_price: number;
   partner_price?: number | null;
   /** Second tarif partenaire si logistique non tranchée. */

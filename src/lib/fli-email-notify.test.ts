@@ -20,6 +20,9 @@ describe("fli-email notify BCC", () => {
     expect(edge).toContain('export const FLI_NOTIFY_BCC = "info@fli.fr"');
     expect(edge).toContain("body.bcc = [FLI_NOTIFY_BCC]");
     expect(edge).toContain("toNormalized !== FLI_NOTIFY_BCC.toLowerCase()");
+    // Campagnes commerciales : digest unique via skipNotifyBcc (pas de BCC unitaire).
+    expect(edge).toContain("skipNotifyBcc");
+    expect(edge).toContain("!input.skipNotifyBcc");
   });
 
   it("applique aussi le BCC sur process-intake-outreach (hors sendFliEmail)", () => {

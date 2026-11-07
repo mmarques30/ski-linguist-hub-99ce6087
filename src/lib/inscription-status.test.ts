@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DEFAULT_FILTER_STATUSES,
   INSCRIPTION_STATUSES,
+  LIST_FILTER_STATUSES,
   STATUS_TRANSITIONS,
   TERMINAL_STATUSES,
   canCloseWithEndPack,
@@ -8,9 +10,15 @@ import {
   canTransition,
   cancellationBlockedReason,
   describeRefusedTransition,
+  describeStatusFilter,
   endPackBlockedReason,
   getNextStatuses,
+  isAllStatusFilter,
+  isDefaultStatusFilter,
   isTerminalStatus,
+  parseStatusFilterParam,
+  serializeStatusFilterParam,
+  toggleStatusInFilter,
 } from '@/lib/inscription-status';
 
 describe('matrice de transitions', () => {
@@ -134,5 +142,59 @@ describe('annulation d’une formation commencée', () => {
 
   it('ne dit rien pour les autres statuts', () => {
     expect(cancellationBlockedReason('en_attente', '2026-01-01', '2026-09-15')).toBeNull();
+  });
+});
+
+describe('filtre multi-statuts (liste dossiers)', () => {
+  it('exclut annulée du défaut et conserve l’ordre canonique', () => {
+    expect(DEFAULT_FILTER_STATUSES).not.toContain('annulee');
+    expect(DEFAULT_FILTER_STATUSES).toEqual(
+      LIST_FILTER_STATUSES.filter((status) => status !== 'annulee')
+    );
+    expect(isDefaultStatusFilter(DEFAULT_FILTER_STATUSES)).toBe(true);
+    expect(isAllStatusFilter(LIST_FILTER_STATUSES)).toBe(true);
+  });
+
+  it('parse l’URL : défaut, all, mono et CSV', () => {
+    expect(parseStatusFilterParam(null)).toEqual(DEFAULT_FILTER_STATUSES);
+    expect(parseStatusFilterParam('')).toEqual(DEFAULT_FILTER_STATUSES);
+    expect(parseStatusFilterParam('all')).toEqual(LIST_FILTER_STATUSES);
+    expect(parseStatusFilterParam('en_attente')).toEqual(['en_attente']);
+    expect(parseStatusFilterParam('annulee,en_attente,inconnu')).toEqual([
+      'en_attente',
+      'annulee',
+    ]);
+  });
+
+  it('sérialise vers l’URL sans bruit sur le défaut', () => {
+    expect(serializeStatusFilterParam(DEFAULT_FILTER_STATUSES)).toBeNull();
+    expect(serializeStatusFilterParam(LIST_FILTER_STATUSES)).toBe('all');
+    expect(serializeStatusFilterParam(['terminee'])).toBe('terminee');
+    expect(serializeStatusFilterParam(['annulee', 'en_attente'])).toBe(
+      'en_attente,annulee'
+    );
+  });
+
+  it('bascule une case sans dupliquer ni perdre l’ordre', () => {
+    expect(toggleStatusInFilter(['en_attente'], 'confirmee')).toEqual([
+      'en_attente',
+      'confirmee',
+    ]);
+    expect(toggleStatusInFilter(['en_attente', 'confirmee'], 'en_attente')).toEqual([
+      'confirmee',
+    ]);
+  });
+
+  it('libellé compact FR pour le déclencheur', () => {
+    expect(describeStatusFilter(DEFAULT_FILTER_STATUSES, 'fr')).toBe(
+      'Tous sauf annulés'
+    );
+    expect(describeStatusFilter(LIST_FILTER_STATUSES, 'fr')).toBe(
+      'Tous les statuts'
+    );
+    expect(describeStatusFilter(['en_cours'], 'fr')).toBe('En cours');
+    expect(describeStatusFilter(['en_attente', 'confirmee', 'en_cours'], 'fr')).toBe(
+      '3 statuts'
+    );
   });
 });

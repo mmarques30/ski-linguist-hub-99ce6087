@@ -1,5 +1,7 @@
 # AGENTS.md
 
+- Reuse `FormateurChangePasswordCard` for instructor profile password changes and `/auth` recovery; recovery must suppress role-based redirects until the password update succeeds.
+
 ## Cursor Cloud specific instructions
 
 This is a single-package **Vite + React 18 + TypeScript** SPA (Lovable-generated) named

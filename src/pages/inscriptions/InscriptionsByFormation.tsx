@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router";
 import { format } from "date-fns";
 import { fr, ptBR, enUS } from "date-fns/locale";
 import {
@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { InscriptionsSubnav } from "@/components/inscriptions/InscriptionsSubnav";
+import { InscriptionStatusFilter } from "@/components/inscriptions/InscriptionStatusFilter";
 import { InscriptionStatusMenu } from "@/components/inscriptions/InscriptionStatusMenu";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,7 +36,15 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useSeasonFilter } from "@/contexts/SeasonContext";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { LANGUAGE_LABELS } from "@/lib/language-catalog";
-import { getStatusLabel } from "@/lib/inscription-status";
+import {
+  DEFAULT_FILTER_STATUSES,
+  describeStatusFilter,
+  isAllStatusFilter,
+  isDefaultStatusFilter,
+  parseStatusFilterParam,
+  serializeStatusFilterParam,
+  type InscriptionStatus,
+} from "@/lib/inscription-status";
 import { DATES_A_PLANIFIER_LABEL } from "@/lib/registration-dates";
 import {
   displayPisteLabel,
@@ -45,6 +54,12 @@ import {
   formationGroupTitle,
   groupInscriptionsByFormation,
 } from "@/lib/inscriptions-by-formation";
+import {
+  DOCS_SENT_LABELS,
+  DOCS_SENT_TONES,
+  PAYMENT_SETTLEMENT_LABELS,
+  PAYMENT_SETTLEMENT_TONES,
+} from "@/lib/inscription-ops-visibility";
 
 const translations = {
   title: {
@@ -61,11 +76,6 @@ const translations = {
     fr: "Rechercher par nom, email ou code...",
     "pt-BR": "Buscar por nome, e-mail ou código...",
     en: "Search by name, email or code...",
-  },
-  allStatuses: {
-    fr: "Tous les statuts",
-    "pt-BR": "Todos os status",
-    en: "All statuses",
   },
   allLanguages: {
     fr: "Toutes les langues",
@@ -125,16 +135,44 @@ const translations = {
 };
 
 export default function InscriptionsByFormation() {
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [languageFilter, setLanguageFilter] = useState("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusFromUrl = searchParams.get("status");
+  const languageFromUrl = searchParams.get("language");
+  const [statusFilters, setStatusFilters] = useState<InscriptionStatus[]>(() =>
+    parseStatusFilterParam(statusFromUrl)
+  );
+  const [languageFilter, setLanguageFilter] = useState(
+    () => languageFromUrl || "all"
+  );
   const [search, setSearch] = useState("");
   const { language, t } = useLanguage();
   const { seasonId, seasonStart, seasonEnd, season } = useSeasonFilter();
   const { canEdit } = useUserPermissions();
   const editable = canEdit("inscriptions");
 
+  const applyStatusFilters = (next: InscriptionStatus[]) => {
+    setStatusFilters(next);
+    const params = new URLSearchParams(searchParams);
+    const serialized = serializeStatusFilterParam(next);
+    if (serialized == null) params.delete("status");
+    else params.set("status", serialized);
+    setSearchParams(params, { replace: true });
+  };
+
+  useEffect(() => {
+    setStatusFilters(parseStatusFilterParam(statusFromUrl));
+  }, [statusFromUrl]);
+
+  useEffect(() => {
+    if (languageFromUrl) setLanguageFilter(languageFromUrl);
+  }, [languageFromUrl]);
+
+  const queryStatuses = isAllStatusFilter(statusFilters)
+    ? undefined
+    : statusFilters;
+
   const { data: inscriptions, isLoading, error } = useInscriptions({
-    status: statusFilter,
+    statuses: queryStatuses,
     language: languageFilter,
     search: search || undefined,
     seasonId,
@@ -178,11 +216,11 @@ export default function InscriptionsByFormation() {
   }, [inscriptions, groups]);
 
   const activeFilters: Array<{ key: string; label: string; onRemove: () => void }> = [];
-  if (statusFilter !== "all") {
+  if (!isDefaultStatusFilter(statusFilters)) {
     activeFilters.push({
       key: "status",
-      label: `${t(translations.status)} : ${getStatusLabel(statusFilter, language)}`,
-      onRemove: () => setStatusFilter("all"),
+      label: `${t(translations.status)} : ${describeStatusFilter(statusFilters, language)}`,
+      onRemove: () => applyStatusFilters([...DEFAULT_FILTER_STATUSES]),
     });
   }
   if (languageFilter !== "all") {
@@ -249,21 +287,11 @@ export default function InscriptionsByFormation() {
               }}
               filters={
                 <>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[160px]">
-                      <SelectValue placeholder={t(translations.status)} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t(translations.allStatuses)}</SelectItem>
-                      <SelectItem value="brouillon">Brouillon</SelectItem>
-                      <SelectItem value="en_attente">En attente</SelectItem>
-                      <SelectItem value="confirmee">Confirmée</SelectItem>
-                      <SelectItem value="en_cours">En cours</SelectItem>
-                      <SelectItem value="terminee">Terminée</SelectItem>
-                      <SelectItem value="facturee">Facturée</SelectItem>
-                      <SelectItem value="annulee">Annulée</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <InscriptionStatusFilter
+                    value={statusFilters}
+                    onChange={applyStatusFilters}
+                    language={language}
+                  />
                   <Select value={languageFilter} onValueChange={setLanguageFilter}>
                     <SelectTrigger className="w-[160px]">
                       <SelectValue placeholder={t(translations.language)} />
@@ -283,7 +311,7 @@ export default function InscriptionsByFormation() {
               onClearAll={
                 activeFilters.length > 0
                   ? () => {
-                      setStatusFilter("all");
+                      applyStatusFilters([...DEFAULT_FILTER_STATUSES]);
                       setLanguageFilter("all");
                       setSearch("");
                     }
@@ -342,7 +370,10 @@ export default function InscriptionsByFormation() {
               bodyClassName="p-0"
             >
               <ul className="divide-y divide-border">
-                {group.inscriptions.map((inscription) => (
+                {group.inscriptions.map((inscription) => {
+                  const docsStatus = inscription.docs_sent_status ?? "a_envoyer";
+                  const payStatus = inscription.payment_settlement ?? "aucun";
+                  return (
                   <li
                     key={inscription.id}
                     className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm"
@@ -378,6 +409,17 @@ export default function InscriptionsByFormation() {
                       </StatusPill>
                     ) : null}
 
+                    <StatusPill tone={DOCS_SENT_TONES[docsStatus]} size="sm" dot>
+                      {DOCS_SENT_LABELS[docsStatus]}
+                    </StatusPill>
+                    <StatusPill
+                      tone={PAYMENT_SETTLEMENT_TONES[payStatus]}
+                      size="sm"
+                      dot
+                    >
+                      {PAYMENT_SETTLEMENT_LABELS[payStatus]}
+                    </StatusPill>
+
                     <InscriptionStatusMenu
                       inscriptionId={inscription.id}
                       status={inscription.status || ""}
@@ -394,7 +436,8 @@ export default function InscriptionsByFormation() {
                       </Link>
                     </Button>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             </SurfaceCard>
           ))}

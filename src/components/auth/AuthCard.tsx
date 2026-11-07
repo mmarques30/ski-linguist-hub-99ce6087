@@ -2,14 +2,13 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
-import { useNavigate } from "react-router";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
 import { useAuth } from "@/hooks/useAuth";
-import { ADMIN_HOME_PATH } from "@/lib/admin-home";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 import {
   authEmailLabel,
   authValidationToastTitle,
@@ -35,9 +34,30 @@ export function AuthCard() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
-  const { signIn } = useAuth();
-  const navigate = useNavigate();
+  const { signIn, resetPasswordForEmail } = useAuth();
+
+  const handlePasswordReset = async () => {
+    const validation = authSchema.shape.email.safeParse(email);
+    if (!validation.success) {
+      toast.error("Saisis ton adresse e-mail pour réinitialiser ton mot de passe.");
+      return;
+    }
+    setIsResetting(true);
+    try {
+      const { error } = await resetPasswordForEmail(validation.data);
+      if (error) {
+        toast.error("Impossible d’envoyer le lien. Réessaie dans un instant.");
+      } else {
+        toast.success("Si un compte correspond à cette adresse, tu recevras un lien pour changer ton mot de passe.");
+      }
+    } catch {
+      toast.error("Vérifie ta connexion et réessaie.");
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   const triggerConfetti = () => {
     confetti({
@@ -70,9 +90,7 @@ export function AuthCard() {
       } else {
         setLoginSuccess(true);
         triggerConfetti();
-        setTimeout(() => {
-          navigate(ADMIN_HOME_PATH);
-        }, 1500);
+        // La redirection selon le rôle est gérée par Auth.tsx.
       }
     } finally {
       setIsLoading(false);
@@ -120,7 +138,7 @@ export function AuthCard() {
                   Bienvenue
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Redirection vers le tableau de bord…
+                  Redirection vers ton espace…
                 </p>
               </motion.div>
             ) : (
@@ -132,10 +150,10 @@ export function AuthCard() {
                 className="space-y-1"
               >
                 <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-                  Administration FLI
+                  Connexion FLI
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Connectez-vous pour accéder au back-office
+                  Espace formateur et administration
                 </p>
               </motion.div>
             )}
@@ -163,9 +181,8 @@ export function AuthCard() {
             <Label htmlFor="password-login" className="text-foreground">
               Mot de passe
             </Label>
-            <Input
+            <PasswordInput
               id="password-login"
-              type="password"
               autoComplete="current-password"
               placeholder="********"
               value={password}
@@ -174,6 +191,11 @@ export function AuthCard() {
               required
             />
           </div>
+
+          <Button type="button" variant="link" className="h-auto px-0" onClick={handlePasswordReset}
+            disabled={isResetting || isLoading || loginSuccess}>
+            {isResetting ? "Envoi du lien…" : "Mot de passe oublié ?"}
+          </Button>
 
           <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
             <Button
