@@ -25,6 +25,7 @@ import {
 import {
   AGEFICE_DOCUMENT_FILES,
 } from "../_shared/agefice-funding.ts";
+import { fillAgeficeDemandePdf } from "../_shared/agefice-demande-pdf.ts";
 import { ORGANIZATION_IDENTITY_KEY } from "../_shared/organization-identity.ts";
 
 const corsHeaders = {
@@ -146,6 +147,7 @@ Deno.serve(async (req) => {
         funding_organization,
         funding_details,
         payment_method,
+        formateur,
         observations,
         student_id,
         students!inscriptions_student_id_fkey (
@@ -287,6 +289,72 @@ Deno.serve(async (req) => {
         new URL(import.meta.url),
       );
       filename = meta.filename;
+      if (docType === "AGEFICE_DEMANDE") {
+        const { data: identityRow } = await admin
+          .from("app_settings")
+          .select("value")
+          .eq("key", ORGANIZATION_IDENTITY_KEY)
+          .maybeSingle();
+        const identity =
+          identityRow?.value && typeof identityRow.value === "object"
+            ? (identityRow.value as Record<string, unknown>)
+            : null;
+        bytes = await fillAgeficeDemandePdf({
+          templatePdfBytes: bytes,
+          student: {
+            civility: (student?.civility as string | null) ?? null,
+            first_name: (student?.first_name as string | null) ?? null,
+            last_name: (student?.last_name as string | null) ?? null,
+            street_address: (student?.street_address as string | null) ?? null,
+            postal_code: (student?.postal_code as string | null) ?? null,
+            city: (student?.city as string | null) ?? null,
+            email: (student?.email as string | null) ?? null,
+            phone: (student?.phone as string | null) ?? null,
+            company: (student?.company as string | null) ?? null,
+          },
+          inscription: {
+            code: (inscription.code as string | null) ?? null,
+            language: (inscription.language as string | null) ?? null,
+            course_location: (inscription.course_location as string | null) ?? null,
+            start_date: (inscription.start_date as string | null) ?? null,
+            end_date: (inscription.end_date as string | null) ?? null,
+            price: typeof inscription.price === "number" ? inscription.price : null,
+            duration_hours:
+              typeof inscription.duration_hours === "number"
+                ? inscription.duration_hours
+                : null,
+            modality: (inscription.modality as string | null) ?? null,
+            formateur:
+              typeof (inscription as { formateur?: string | null }).formateur === "string"
+                ? (inscription as { formateur?: string | null }).formateur
+                : null,
+          },
+          organization: identity
+            ? {
+                legal_name:
+                  typeof identity.legal_name === "string" ? identity.legal_name : null,
+                address_line:
+                  typeof identity.address_line === "string"
+                    ? identity.address_line
+                    : null,
+                postal_code:
+                  typeof identity.postal_code === "string" ? identity.postal_code : null,
+                city: typeof identity.city === "string" ? identity.city : null,
+                phone: typeof identity.phone === "string" ? identity.phone : null,
+                email: typeof identity.email === "string" ? identity.email : null,
+                siret: typeof identity.siret === "string" ? identity.siret : null,
+                activity_number:
+                  typeof identity.activity_number === "string"
+                    ? identity.activity_number
+                    : null,
+                representative:
+                  typeof identity.representative === "string"
+                    ? identity.representative
+                    : null,
+              }
+            : null,
+        });
+      }
     } else {
       return json(400, {
         success: false,
