@@ -106,7 +106,8 @@ export const AGEFICE_WELCOME_DOCUMENTS: RegistrationWelcomeDocument[] = [
     documentType: "AGEFICE_DEMANDE",
     filename: "AGEFICE-Demande-prise-en-charge-2025-2026.pdf",
     internalFile: "agefice-demande-prise-en-charge-2025-2026.pdf",
-    label: "Demande préalable de financement AGEFICE (à compléter / signer)",
+    label:
+      "Demande préalable de financement AGEFICE (préremplie — à vérifier / signer)",
     delivery: "static_pdf",
   },
   {
