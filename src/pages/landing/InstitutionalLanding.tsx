@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/accordion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ContactDialog } from "@/components/landing/ContactDialog";
+import { ManageCookiesButton } from "@/components/legal/CookieConsentBanner";
 import type { ContactDialogIntent } from "@/lib/landing-contact";
 import {
   RECOMMENDED,
@@ -693,6 +694,10 @@ export default function InstitutionalLanding() {
               <Link to="/conditions-generales" className="hover:text-white/80">
                 Conditions générales
               </Link>
+              <Link to="/politique-de-confidentialite" className="hover:text-white/80">
+                Confidentialité & cookies
+              </Link>
+              <ManageCookiesButton className="hover:text-white/80" />
               <Link to="/auth" className="hover:text-white/80">
                 Accès FLI
               </Link>
