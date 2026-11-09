@@ -10,8 +10,15 @@
     "test_at": "2026-11-02T09:30:00+01:00",
     "previous_test": false,
     "payment": "school_st_gervais_batch",
-    "scores": [2, 2, 1.5, 1, 2, 2],
-    "cecrl": "B1",
+    "scores": [
+      2.5,
+      2.5,
+      2,
+      1.5,
+      2.5,
+      2.5
+    ],
+    "cecrl": "B1+",
     "instructor_first_name": "Carole",
     "instructor_last_name": "Mollard",
     "intro": "Votre prononciation et votre accent sont corrects dans l'ensemble, mais il semble que vous manquez de pratique. Vous arrivez à interagir mais l'ensemble manque de fluidité et de justesse.",
@@ -26,7 +33,7 @@
       "administration@esf-saintgervais.com",
       "direction@esf-saintgervais.com"
     ],
-    "note": "Réservation 26/10 — école paie (St-Gervais facture fin de mois). Pas de facture individuelle."
+    "note": "Notes Mollard +0,5 (Paula — Carole trop dure) : [2, 2, 1.5, 1, 2, 2] B1 → [2.5, 2.5, 2, 1.5, 2.5, 2.5] B1+. Réservation 26/10 — école paie (St-Gervais facture fin de mois). Pas de facture individuelle."
   },
   {
     "key": "hugo-mater",
@@ -42,8 +49,15 @@
     "payment_date": "2026-10-22",
     "invoice_number": "26-27.14345",
     "invoice_seq": 14345,
-    "scores": [2.5, 3, 3, 3, 3, 3],
-    "cecrl": "B2",
+    "scores": [
+      3,
+      3.5,
+      3.5,
+      3.5,
+      3.5,
+      3.5
+    ],
+    "cecrl": "B2+",
     "instructor_first_name": "Carole",
     "instructor_last_name": "Mollard",
     "intro": "Vous vous exprimez avec une certaine aisance et parvenez facilement à vous faire comprendre.",
@@ -58,7 +72,7 @@
       "contact@esf-courchevel.com",
       "direction@esf-courchevel.com"
     ],
-    "note": "VIR INST 22/10 +45 € « MATER Hugo » (réf. 2629585I40074284). Facture acquittée 26-27.14345."
+    "note": "Notes Mollard +0,5 (Paula — Carole trop dure) : [2.5, 3, 3, 3, 3, 3] B2 → [3, 3.5, 3.5, 3.5, 3.5, 3.5] B2+. VIR INST 22/10 +45 € « MATER Hugo » (réf. 2629585I40074284). Facture acquittée 26-27.14345."
   },
   {
     "key": "ethan-catarino",
@@ -76,8 +90,15 @@
     "stripe_pi": "pi_3UXRPLQBleN6FLtS0iW4cKZZ",
     "invoice_number": "26-27.14346",
     "invoice_seq": 14346,
-    "scores": [0, 0, 0, 0, 0.5, 0.5],
-    "cecrl": "A1+",
+    "scores": [
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      1,
+      1
+    ],
+    "cecrl": "A2",
     "instructor_first_name": "Carole",
     "instructor_last_name": "Mollard",
     "intro": "Vous avez envie de vous exprimer mais vous êtes gêné(e) par des erreurs syntaxiques (construction de phrases), grammaticales et lexicales.",
@@ -92,7 +113,7 @@
       "contact@esf-courchevel.com",
       "direction@esf-courchevel.com"
     ],
-    "note": "Stripe 02/11 ch_3UXRPLQBleN6FLtS07KdARnG (45 €). Facture acquittée 26-27.14346."
+    "note": "Notes Mollard +0,5 (Paula — Carole trop dure) : [0, 0, 0, 0, 0.5, 0.5] A1+ → [0.5, 0.5, 0.5, 0.5, 1, 1] A2. Stripe 02/11 ch_3UXRPLQBleN6FLtS07KdARnG (45 €). Facture acquittée 26-27.14346."
   },
   {
     "key": "andy-hulot",
@@ -108,8 +129,15 @@
     "payment_date": "2026-10-14",
     "invoice_number": "26-27.14347",
     "invoice_seq": 14347,
-    "scores": [1.5, 1, 0.5, 1, 1, 1],
-    "cecrl": "A2",
+    "scores": [
+      2,
+      1.5,
+      1,
+      1.5,
+      1.5,
+      1.5
+    ],
+    "cecrl": "A2+",
     "instructor_first_name": "Carole",
     "instructor_last_name": "Mollard",
     "intro": "Vous avez envie de vous exprimer mais vous êtes gêné(e) par des erreurs syntaxiques (construction de phrases), grammaticales et lexicales.",
@@ -124,7 +152,7 @@
       "contact@esf-courchevel.com",
       "direction@esf-courchevel.com"
     ],
-    "note": "VIR INST 14/10 +45 € « HULOT ANDY - Test langue ESF » (réf. 2628785I40119655). Facture acquittée 26-27.14347."
+    "note": "Notes Mollard +0,5 (Paula — Carole trop dure) : [1.5, 1, 0.5, 1, 1, 1] A2 → [2, 1.5, 1, 1.5, 1.5, 1.5] A2+. VIR INST 14/10 +45 € « HULOT ANDY - Test langue ESF » (réf. 2628785I40119655). Facture acquittée 26-27.14347."
   },
   {
     "key": "tristan-blancfene",
@@ -142,8 +170,15 @@
     "stripe_pi": "pi_3UYiYuQBleN6FLtS1OyFqQDG",
     "invoice_number": "26-27.14348",
     "invoice_seq": 14348,
-    "scores": [2, 2.5, 2.5, 2.5, 2.5, 2.5],
-    "cecrl": "B1+",
+    "scores": [
+      2.5,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "cecrl": "B2",
     "instructor_first_name": "Carole",
     "instructor_last_name": "Mollard",
     "intro": "Vous vous exprimez d'une façon assez claire et autonome.",
@@ -158,6 +193,6 @@
       "contact@esfvaldisere.com",
       "direction@esfvaldisere.com"
     ],
-    "note": "Stripe 06/11 ch_3UYiYuQBleN6FLtS1HcmX7ql (45 €). Réservation carte « 2658973 » ; saisie Mollard carte 32558. Facture acquittée 26-27.14348."
+    "note": "Notes Mollard +0,5 (Paula — Carole trop dure) : [2, 2.5, 2.5, 2.5, 2.5, 2.5] B1+ → [2.5, 3, 3, 3, 3, 3] B2. Stripe 06/11 ch_3UYiYuQBleN6FLtS1HcmX7ql (45 €). Réservation carte « 2658973 » ; saisie Mollard carte 32558. Facture acquittée 26-27.14348."
   }
 ]
