@@ -95,6 +95,8 @@ import StageFillPage from "./pages/commercial/StageFillPage";
 import MoniteursSki from "./pages/moniteurs/MoniteursSki";
 import DashboardGestaoMockupPage from "./pages/mockup/DashboardGestaoMockup";
 import ConditionsGenerales from "./pages/legal/ConditionsGenerales";
+import PolitiqueConfidentialite from "./pages/legal/PolitiqueConfidentialite";
+import { CookieConsentBanner } from "./components/legal/CookieConsentBanner";
 import InstitutionalLanding from "./pages/landing/InstitutionalLanding";
 import AssetValidationMockupPage from "./pages/landing/AssetValidationMockup";
 
@@ -114,6 +116,7 @@ const App = () => (
       <TooltipProvider>
         <Sonner />
         <BrowserRouter>
+          <CookieConsentBanner />
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<InstitutionalLanding />} />
@@ -128,6 +131,7 @@ const App = () => (
             <Route path="/suivi/:token" element={<InscriptionSuiviPage />} />
             <Route path="/emarger/:token" element={<EmargerPage />} />
             <Route path="/conditions-generales" element={<ConditionsGenerales />} />
+            <Route path="/politique-de-confidentialite" element={<PolitiqueConfidentialite />} />
 
             {/* Design-validation mockup — staff only */}
             <Route

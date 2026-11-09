@@ -51,7 +51,8 @@ export const AGEFICE_PACK_DOCUMENTS: AgeficePackDocument[] = [
     documentType: "AGEFICE_DEMANDE",
     filename: "AGEFICE-Demande-prise-en-charge-2025-2026.pdf",
     internalFile: AGEFICE_DOCUMENT_FILES.demandePriseEnCharge,
-    label: "Demande préalable de financement AGEFICE (à compléter / signer)",
+    label:
+      "Demande préalable de financement AGEFICE (préremplie — à vérifier / signer)",
     phase: "inscription",
   },
   {
