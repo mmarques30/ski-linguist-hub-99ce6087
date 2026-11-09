@@ -2,14 +2,14 @@
   {
     "key": "eloi-pierlot",
     "name": "Eloi Pierlot",
-    "email": null,
+    "email": "eloipierlot@gmail.com",
     "school": "ESF ST GERVAIS LES BAINS",
     "sponsor_type": "esf",
     "carte": null,
     "profession": "moniteur",
-    "test_at": "2026-11-02T10:00:00+01:00",
+    "test_at": "2026-11-02T09:30:00+01:00",
     "previous_test": false,
-    "payment": "pending_clarify",
+    "payment": "school_st_gervais_batch",
     "scores": [2, 2, 1.5, 1, 2, 2],
     "cecrl": "B1",
     "instructor_first_name": "Carole",
@@ -21,24 +21,27 @@
     "points": "Apprenez à utiliser SINCE suivi d'un point de départ et FOR suivi d'une durée. Ex. : « I've worked there since 2020, for 2 years ». Utilisez le PRESENT -ing pour parler de ce qui se déroule maintenant ou temporairement. Utilisez le PRESENT SIMPLE pour parler des vérités permanentes, de votre routine, des règles de sécurité, etc. Apprenez à utiliser les temps du passé PRETERIT (action datée/terminée) et PRESENT PERFECT (l'action continue dans le présent).",
     "concl": "Votre niveau vous permet de comprendre globalement et de vous exprimer en général.",
     "pdf_habillage": "esf",
-    "send_mode": "pending_payment_and_cc",
+    "send_mode": "school_billed_no_invoice",
     "school_cc": [
       "administration@esf-saintgervais.com",
       "direction@esf-saintgervais.com"
     ],
-    "note": "Saisie Mollard 04/11. Email candidat + paiement à confirmer Paula."
+    "note": "Réservation 26/10 — école paie (St-Gervais facture fin de mois). Pas de facture individuelle."
   },
   {
     "key": "hugo-mater",
     "name": "Hugo Mater",
-    "email": null,
+    "email": "hugomater@orange.fr",
     "school": "ESF COURCHEVEL 1550",
     "sponsor_type": "esf",
     "carte": null,
     "profession": "moniteur",
-    "test_at": "2026-11-02T11:00:00+01:00",
+    "test_at": "2026-11-02T10:00:00+01:00",
     "previous_test": false,
-    "payment": "pending_clarify",
+    "payment": "bank_2210",
+    "payment_date": "2026-10-22",
+    "invoice_number": "26-27.14345",
+    "invoice_seq": 14345,
     "scores": [2.5, 3, 3, 3, 3, 3],
     "cecrl": "B2",
     "instructor_first_name": "Carole",
@@ -50,24 +53,29 @@
     "points": null,
     "concl": "En conclusion vous avez un niveau opérationnel qui vous permet de communiquer avec la clientèle anglophone de manière satisfaisante.",
     "pdf_habillage": "esf",
-    "send_mode": "pending_payment_and_cc",
+    "send_mode": "bank_paid_invoice",
     "school_cc": [
       "contact@esf-courchevel.com",
       "direction@esf-courchevel.com"
     ],
-    "note": "Saisie Mollard 04/11. Email candidat + paiement à confirmer Paula."
+    "note": "VIR INST 22/10 +45 € « MATER Hugo » (réf. 2629585I40074284). Facture acquittée 26-27.14345."
   },
   {
     "key": "ethan-catarino",
     "name": "Ethan Catarino",
-    "email": null,
+    "email": "ethancatarino77@gmail.com",
     "school": "ESF COURCHEVEL 1550",
     "sponsor_type": "esf",
     "carte": null,
     "profession": "moniteur",
-    "test_at": "2026-11-04T10:00:00+01:00",
+    "test_at": "2026-11-04T17:30:00+01:00",
     "previous_test": false,
-    "payment": "pending_clarify",
+    "payment": "stripe",
+    "payment_date": "2026-11-02",
+    "stripe_charge": "ch_3UXRPLQBleN6FLtS07KdARnG",
+    "stripe_pi": "pi_3UXRPLQBleN6FLtS0iW4cKZZ",
+    "invoice_number": "26-27.14346",
+    "invoice_seq": 14346,
     "scores": [0, 0, 0, 0, 0.5, 0.5],
     "cecrl": "A1+",
     "instructor_first_name": "Carole",
@@ -79,12 +87,12 @@
     "points": "Apprenez à utiliser SINCE suivi d'un point de départ et FOR suivi d'une durée. Ex. : « I've worked there since 2020, for 2 years ». Utilisez le PRESENT -ing pour parler de ce qui se déroule maintenant ou temporairement. Utilisez le PRESENT SIMPLE pour parler des vérités permanentes, de votre routine, des règles de sécurité, etc. Apprenez à utiliser les temps du passé PRETERIT (action datée/terminée) et PRESENT PERFECT (l'action continue dans le présent). Revoyez MUST et HAVE TO pour exprimer l'obligation. Revoyez CAN et TO BE ABLE TO pour exprimer la capacité au présent et au futur. Ex. : I can ski but I'll be able to ski even better at the end of the day!",
     "concl": "En conclusion vous avez quelques notions dans la langue mais en travaillant vous pouvez arriver à progresser et à combler progressivement vos lacunes grammaticales, lexicales et de compréhension. Cela vous permettra de vous sentir plus à l'aise sur le terrain.",
     "pdf_habillage": "esf",
-    "send_mode": "pending_payment_and_cc",
+    "send_mode": "stripe_paid_invoice",
     "school_cc": [
       "contact@esf-courchevel.com",
       "direction@esf-courchevel.com"
     ],
-    "note": "Saisie Mollard 06/11. Email candidat + paiement à confirmer Paula."
+    "note": "Stripe 02/11 ch_3UXRPLQBleN6FLtS07KdARnG (45 €). Facture acquittée 26-27.14346."
   },
   {
     "key": "andy-hulot",
@@ -94,9 +102,12 @@
     "sponsor_type": "esf",
     "carte": null,
     "profession": "moniteur",
-    "test_at": "2026-11-04T11:00:00+01:00",
+    "test_at": "2026-11-04T14:00:00+01:00",
     "previous_test": false,
-    "payment": "pending_clarify",
+    "payment": "bank_1410",
+    "payment_date": "2026-10-14",
+    "invoice_number": "26-27.14347",
+    "invoice_seq": 14347,
     "scores": [1.5, 1, 0.5, 1, 1, 1],
     "cecrl": "A2",
     "instructor_first_name": "Carole",
@@ -108,24 +119,29 @@
     "points": "Apprenez à utiliser SINCE suivi d'un point de départ et FOR suivi d'une durée. Ex. : « I've worked there since 2020, for 2 years ». Utilisez le PRESENT -ing pour parler de ce qui se déroule maintenant ou temporairement. Utilisez le PRESENT SIMPLE pour parler des vérités permanentes, de votre routine, des règles de sécurité, etc. Apprenez à utiliser les temps du passé PRETERIT (action datée/terminée) et PRESENT PERFECT (l'action continue dans le présent). Revoyez MUST et HAVE TO pour exprimer l'obligation. Revoyez CAN et TO BE ABLE TO pour exprimer la capacité au présent et au futur. Ex. : I can ski but I'll be able to ski even better at the end of the day!",
     "concl": "En conclusion vous avez quelques notions dans la langue mais en travaillant vous pouvez arriver à progresser et à combler progressivement vos lacunes grammaticales, lexicales et de compréhension. Cela vous permettra de vous sentir plus à l'aise sur le terrain.",
     "pdf_habillage": "esf",
-    "send_mode": "pending_payment",
+    "send_mode": "bank_paid_invoice",
     "school_cc": [
       "contact@esf-courchevel.com",
       "direction@esf-courchevel.com"
     ],
-    "note": "Saisie Mollard 06/11. Email connu (hulotandy@yahoo.com — déjà vu sur renvoi Gabin). Paiement à confirmer Paula."
+    "note": "VIR INST 14/10 +45 € « HULOT ANDY - Test langue ESF » (réf. 2628785I40119655). Facture acquittée 26-27.14347."
   },
   {
     "key": "tristan-blancfene",
     "name": "Tristan Blancfene",
-    "email": null,
+    "email": "777.addictoride@gmail.com",
     "school": "ESF VAL D ISERE",
     "sponsor_type": "esf",
     "carte": "32558",
     "profession": "moniteur",
-    "test_at": "2026-11-09T10:00:00+01:00",
+    "test_at": "2026-11-09T11:30:00+01:00",
     "previous_test": false,
-    "payment": "pending_clarify",
+    "payment": "stripe",
+    "payment_date": "2026-11-06",
+    "stripe_charge": "ch_3UYiYuQBleN6FLtS1HcmX7ql",
+    "stripe_pi": "pi_3UYiYuQBleN6FLtS1OyFqQDG",
+    "invoice_number": "26-27.14348",
+    "invoice_seq": 14348,
     "scores": [2, 2.5, 2.5, 2.5, 2.5, 2.5],
     "cecrl": "B1+",
     "instructor_first_name": "Carole",
@@ -137,11 +153,11 @@
     "points": "Revoyez MUST et HAVE TO pour exprimer l'obligation. Revoyez CAN et TO BE ABLE TO pour exprimer la capacité au présent et au futur. Ex. : I can ski but I'll be able to ski even better at the end of the day!",
     "concl": "Vous pouvez communiquer et donner des explications techniques mais pouvez améliorer la fluidité et la justesse en revoyant les points cités.",
     "pdf_habillage": "esf",
-    "send_mode": "pending_payment_and_cc",
+    "send_mode": "stripe_paid_invoice",
     "school_cc": [
       "contact@esfvaldisere.com",
       "direction@esfvaldisere.com"
     ],
-    "note": "Saisie Mollard 09/11. Carte 32558. Email candidat + paiement à confirmer Paula."
+    "note": "Stripe 06/11 ch_3UYiYuQBleN6FLtS1HcmX7ql (45 €). Réservation carte « 2658973 » ; saisie Mollard carte 32558. Facture acquittée 26-27.14348."
   }
 ]

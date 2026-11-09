@@ -161,6 +161,7 @@ async function buildPaidInvoicePdf(opts: {
   invoiceDate: string;
   paymentDate: string;
   languageLabel: string;
+  paymentMethod?: string;
 }): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   doc.registerFontkit(fontkit);
@@ -306,7 +307,12 @@ async function buildPaidInvoicePdf(opts: {
   draw("RÈGLEMENT", left, y, { size: 8, color: MUTED, bold: true });
   draw("Facture acquittée", left, y - 14, { bold: true, size: 11, color: GREEN });
   draw(`Date : ${formatFr(opts.paymentDate)}`, left, y - 28, { size: 9 });
-  draw("Moyen : Carte bancaire en ligne (Stripe)", left, y - 40, { size: 9 });
+  draw(
+    `Moyen : ${opts.paymentMethod ?? "Carte bancaire en ligne (Stripe)"}`,
+    left,
+    y - 40,
+    { size: 9 }
+  );
   draw(`SIRET: ${FLI.siret}`, right - 160, y - 14, { size: 9, color: MUTED });
   draw(`N° TVA: ${FLI.tvaNumber}`, right - 160, y - 28, { size: 9, color: MUTED });
 
@@ -435,13 +441,21 @@ async function main() {
     }
 
     let invoiceName: string | null = null;
-    if (r.send_mode === "stripe_paid_invoice" && r.invoice_number && r.payment_date) {
+    if (
+      (r.send_mode === "stripe_paid_invoice" || r.send_mode === "bank_paid_invoice") &&
+      r.invoice_number &&
+      r.payment_date
+    ) {
       const invBytes = await buildPaidInvoicePdf({
         clientName: r.name,
         invoiceNumber: r.invoice_number,
         invoiceDate: r.test_at.slice(0, 10),
         paymentDate: r.payment_date,
         languageLabel: "anglais",
+        paymentMethod:
+          r.send_mode === "bank_paid_invoice"
+            ? "Virement bancaire"
+            : "Carte bancaire en ligne (Stripe)",
       });
       invoiceName = `Facture-${r.invoice_number}-${r.key}-acquittee.pdf`;
       await writeFile(join(OUT, "invoices", invoiceName), invBytes);
