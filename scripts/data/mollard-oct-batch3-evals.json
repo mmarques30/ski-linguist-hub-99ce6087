@@ -119,6 +119,9 @@
     "test_at": "2026-10-29T11:00:00+01:00",
     "previous_test": true,
     "payment": "bank_2210",
+    "payment_date": "2026-10-22",
+    "invoice_number": "26-27.14344",
+    "invoice_seq": 14344,
     "scores": [
       2.5,
       2.5,
@@ -137,12 +140,12 @@
     "points": "Apprenez à utiliser SINCE suivi d'un point de départ et FOR suivi d'une durée. Ex. : « I've worked there since 2020, for 2 years ». Apprenez le passé de : to go, to bend, to know (went, bent, knew).",
     "concl": "Vous avez un niveau autonome qui demande à être amélioré sur le plan de la grammaire.",
     "pdf_habillage": "esf",
-    "send_mode": "school_billed_no_invoice",
+    "send_mode": "bank_paid_invoice",
     "school_cc": [
       "ski@esfcourchevel.com",
       "sebdame@esfcourchevel.com"
     ],
-    "note": "Nouveau test 29/10. Virement 45 € 22/10/2026 confirmé Paula (VIR INST — VIREMENT TEST … 29 OCTOBRE). Envoi différé le 03/11 ; brouillon relance 09/11 via scripts/send-sasha-gonin-b1plus.mts (attendre OK Paula)."
+    "note": "Nouveau test 29/10. VIR INST 45 € 22/10 confirmé. Envoi différé 03/11. Brouillon 09/11 : résultat B1+ + facture acquittée 26-27.14344 (attendre OK Paula)."
   },
   {
     "key": "pierre-boes",
