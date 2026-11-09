@@ -116,9 +116,9 @@ export const NAV_SECTIONS: NavSection[] = [
       },
       {
         id: "evaluations",
-        label: L["/formateur/evaluations"],
+        label: L["/tests-oraux"],
         icon: ClipboardCheck,
-        href: "/formateur/evaluations",
+        href: "/tests-oraux",
         routeKey: "evaluations",
       },
     ],
@@ -462,6 +462,12 @@ export function isPathActive(pathname: string, path: string): boolean {
   }
   if (path === "/finance/charges-fixes") {
     return pathname.startsWith("/finance/charges-fixes");
+  }
+  if (path === "/tests-oraux") {
+    return (
+      pathname.startsWith("/tests-oraux") ||
+      pathname.startsWith("/formateur/evaluation")
+    );
   }
   if (path === "/formateur/evaluations") {
     return pathname.startsWith("/formateur/");

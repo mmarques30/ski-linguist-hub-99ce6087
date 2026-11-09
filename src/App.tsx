@@ -63,6 +63,7 @@ import FormateurBilans from "./pages/formateur/FormateurBilans";
 import FormateurBilanFormPage from "./pages/formateur/FormateurBilanFormPage";
 import PublicRegistrationRoute from "./pages/register/PublicRegistrationRoute";
 import BookTest from "./pages/test/BookTest";
+import TestsOrauxPage from "./pages/tests-oraux/TestsOrauxPage";
 import SalonDirecteursPage from "./pages/salon/Index";
 import { PaymentSuccessPage, PaymentCancelPage } from "./pages/register/PaymentReturn";
 import SatisfactionSurvey from "./pages/survey/SatisfactionSurvey";
@@ -166,6 +167,14 @@ const App = () => (
               }
             />
             <Route path="/tests" element={<ProtectedRoute><PlacementTests /></ProtectedRoute>} />
+            <Route
+              path="/tests-oraux"
+              element={
+                <ProtectedRoute routeKey="evaluations">
+                  <TestsOrauxPage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/classes" element={<Navigate to="/formation/sessions" replace />} />
             <Route path="/formation/sessions" element={<ProtectedRoute><Sessions /></ProtectedRoute>} />
             <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
