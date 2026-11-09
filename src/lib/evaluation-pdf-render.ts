@@ -837,14 +837,15 @@ function drawEsfMeta(
 
 function drawEsfSkillsTable(cursor: Cursor, fonts: Fonts, model: EvaluationPdfModel) {
   const tableW = Math.min(ESF_SKILLS_W, cursor.width);
-  const col1 = tableW * (3402 / (3402 + 1701));
+  // Colonne note un peu plus large pour « 2,5 - B1+ ».
+  const col1 = tableW * (3100 / (3100 + 2003));
   const col2 = tableW - col1;
   const tableX = cursor.bounds.left + (cursor.width - tableW) / 2;
   drawTable(
     cursor,
     fonts,
     [
-      ["", "Niveau de 0 à 5"],
+      ["", "Note / CECRL"],
       ...model.skillRows.map((row) => [row.label, row.value]),
     ],
     [col1, col2],

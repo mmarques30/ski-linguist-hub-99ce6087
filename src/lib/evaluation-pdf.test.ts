@@ -321,12 +321,12 @@ describe("blocs C.2/C.3 et note méthodologique", () => {
       esfLabels
     );
     expect(buildEvaluationPdfModel(sample("esf")).skillRows.map((r) => r.value)).toEqual([
-      "3",
-      "3",
-      "3",
-      "3",
-      "3,5",
-      "3",
+      "3 - B2",
+      "3 - B2",
+      "3 - B2",
+      "3 - B2",
+      "3,5 - B2+",
+      "3 - B2",
     ]);
     for (const sponsor of ["ecole_ski", "dsf"] as const) {
       expect(buildEvaluationPdfModel(sample(sponsor)).skillRows.map((r) => r.label)).toEqual(
@@ -387,9 +387,13 @@ describe("octets PDF", () => {
       expect(ascii).not.toContain("EVALUATION EN LANGUE VIVANTE");
       expect(ascii).not.toContain("Note m");
       expect(ascii).toContain("Structures de la langue");
-      expect(ascii).toContain("Expression technique et sp");
+      // Libellé peut revenir à la ligne (« Expression technique et » / « spécifique »)
+      // quand la colonne note affiche « N - CECRL ».
+      expect(ascii).toContain("Expression technique et");
       expect(ascii).toContain("Appr");
       expect(ascii).toContain("saison 2025 / 2026");
+      expect(ascii).toMatch(/3 - B2/);
+      expect(ascii).toMatch(/3,5 - B2\+/);
       await writeFile(join(PROOF_DIR, `c5-preuve-${sponsor}.pdf`), bytes);
       if (sponsor === "dsf") {
         expect(doc.getPageCount()).toBe(1);

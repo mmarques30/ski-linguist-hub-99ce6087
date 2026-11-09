@@ -491,10 +491,8 @@ function skillRowsFor(
 ): SkillRow[] {
   return SKILL_ORDER.map(({ key, label }) => {
     const rowLabel = habillage === "esf" && key === "general" ? ESF_GENERAL_SKILL_LABEL : label;
-    if (habillage === "esf") {
-      // .dotx : colonne « Niveau de 0 à 5 » = note seule (pas de CECRL dans la cellule).
-      return { label: rowLabel, value: formatScoreFr(asScoreNumber(scores[key])) };
-    }
+    // Paula 09/11/2026 : toujours afficher « note - CECRL » (ex. 2 - B1 / 2,5 - B1+),
+    // y compris sur l'habillage ESF (plus la note seule du .dotx).
     const hint = key === "general" ? cecrlGeneral : resolveLevel(scores[key], scale).cecrl;
     return {
       label: rowLabel,
