@@ -38,6 +38,7 @@ import {
   resolveFifplReglementDocument,
 } from "../_shared/ski-monitor-welcome-documents.ts";
 import { AGEFICE_DOCUMENT_FILES } from "../_shared/agefice-funding.ts";
+import { fillAgeficeDemandePdf } from "../_shared/agefice-demande-pdf.ts";
 import { ORGANIZATION_IDENTITY_KEY } from "../_shared/organization-identity.ts";
 import {
   dossierEmailSlugsForFunding,
@@ -246,6 +247,7 @@ Deno.serve(async (req) => {
             funding_organization,
             funding_details,
             payment_method,
+            formateur,
             observations,
             documents_sent_at,
             student_id,
@@ -481,10 +483,87 @@ Deno.serve(async (req) => {
           } else {
             const meta = staticMetaFor(type);
             const idx = needsStatic.indexOf(type);
+            let bytes = staticBytes[idx];
+            if (type === "AGEFICE_DEMANDE") {
+              const identity =
+                identityRow?.value && typeof identityRow.value === "object"
+                  ? (identityRow.value as Record<string, unknown>)
+                  : null;
+              bytes = await fillAgeficeDemandePdf({
+                templatePdfBytes: bytes,
+                student: student as {
+                  civility?: string | null;
+                  first_name?: string | null;
+                  last_name?: string | null;
+                  street_address?: string | null;
+                  postal_code?: string | null;
+                  city?: string | null;
+                  email?: string | null;
+                  phone?: string | null;
+                  company?: string | null;
+                },
+                inscription: {
+                  code: typeof inscription.code === "string" ? inscription.code : null,
+                  language:
+                    typeof inscription.language === "string" ? inscription.language : null,
+                  course_location:
+                    typeof inscription.course_location === "string"
+                      ? inscription.course_location
+                      : null,
+                  start_date:
+                    typeof inscription.start_date === "string"
+                      ? inscription.start_date
+                      : null,
+                  end_date:
+                    typeof inscription.end_date === "string" ? inscription.end_date : null,
+                  price:
+                    typeof inscription.price === "number" ? inscription.price : null,
+                  duration_hours:
+                    typeof inscription.duration_hours === "number"
+                      ? inscription.duration_hours
+                      : null,
+                  modality:
+                    typeof inscription.modality === "string" ? inscription.modality : null,
+                  formateur:
+                    typeof (inscription as { formateur?: string | null }).formateur ===
+                    "string"
+                      ? (inscription as { formateur?: string | null }).formateur
+                      : null,
+                },
+                organization: identity
+                  ? {
+                      legal_name:
+                        typeof identity.legal_name === "string"
+                          ? identity.legal_name
+                          : null,
+                      address_line:
+                        typeof identity.address_line === "string"
+                          ? identity.address_line
+                          : null,
+                      postal_code:
+                        typeof identity.postal_code === "string"
+                          ? identity.postal_code
+                          : null,
+                      city: typeof identity.city === "string" ? identity.city : null,
+                      phone: typeof identity.phone === "string" ? identity.phone : null,
+                      email: typeof identity.email === "string" ? identity.email : null,
+                      siret: typeof identity.siret === "string" ? identity.siret : null,
+                      activity_number:
+                        typeof identity.activity_number === "string"
+                          ? identity.activity_number
+                          : null,
+                      representative:
+                        typeof identity.representative === "string"
+                          ? identity.representative
+                          : null,
+                    }
+                  : null,
+              });
+            }
             packFiles.push({
               type,
               filename: meta.filename,
-              bytes: staticBytes[idx],
+              bytes,
             });
           }
         }
