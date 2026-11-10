@@ -12,9 +12,14 @@ const SPEC_PICKS = [
     why: "Logo du menu, déjà utilisé dans l’application",
   },
   {
-    role: "Photo de tête de page (provisoire)",
-    file: "fli_personagem_01.png + fli-auth-bg.png",
-    why: "Photo professionnelle à fournir — illustration temporaire",
+    role: "Mascotte — tête de page",
+    file: "fli_mascot_wave.png",
+    why: "Accueil — pose « salut »",
+  },
+  {
+    role: "Mascotte — méthode / stages / FAQ",
+    file: "notes · map · think",
+    why: "Une pose par section pour guider le parcours",
   },
   {
     role: "Badges flottants",
@@ -90,24 +95,21 @@ export default function AssetValidationMockupPage() {
               <img src={RECOMMENDED.navLogo} alt="" className="mx-auto h-12 object-contain" />
               <figcaption className="mt-2 text-xs text-white/50">Navigation</figcaption>
             </figure>
-            <figure className="text-center">
-              <img
-                src={RECOMMENDED.heroCharacter}
-                alt=""
-                className="mx-auto h-28 object-contain"
-              />
-              <figcaption className="mt-2 text-xs text-white/50">Illustration de tête de page</figcaption>
-            </figure>
-            <figure className="text-center">
-              <img
-                src={RECOMMENDED.platformCharacter}
-                alt=""
-                className="mx-auto h-28 object-contain"
-              />
-              <figcaption className="mt-2 text-xs text-white/50">
-                Disponible, non utilisée en tête de page
-              </figcaption>
-            </figure>
+            {(
+              [
+                ["Hero", RECOMMENDED.heroCharacter],
+                ["Méthode", RECOMMENDED.methodCharacter],
+                ["Formations", RECOMMENDED.formationsCharacter],
+                ["CTA", RECOMMENDED.ctaCharacter],
+                ["Stages", RECOMMENDED.stagesCharacter],
+                ["FAQ", RECOMMENDED.faqCharacter],
+              ] as const
+            ).map(([label, src]) => (
+              <figure key={label} className="text-center">
+                <img src={src} alt="" className="mx-auto h-28 object-contain" />
+                <figcaption className="mt-2 text-xs text-white/50">{label}</figcaption>
+              </figure>
+            ))}
           </div>
         </section>
 
