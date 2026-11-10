@@ -62,9 +62,10 @@ async function deleteNewStudent(
   }
 }
 
+/** Aligné sur `REGISTRATION_LANGUAGE_MAP` (`src/lib/registration-utils.ts`). */
 const LANGUAGE_MAP: Record<string, string> = {
   english: "Anglais",
-  portuguese: "Portugais",
+  portuguese: "Portugais brésilien",
   russian: "Russe",
   dutch: "Néerlandais",
   german: "Allemand",

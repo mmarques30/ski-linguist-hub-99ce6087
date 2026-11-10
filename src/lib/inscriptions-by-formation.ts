@@ -4,7 +4,12 @@
  * Une formation = même lieu, langue, modalités et dates (début / fin).
  * Pas de FK catalogue aujourd'hui : on déduit la clé des colonnes
  * dénormalisées sur `inscriptions` / `inscriptions_complete`.
+ *
+ * Langue : « Portugais » et « Portugais brésilien » sont la même formation
+ * (libellé canonique via `displayLanguageLabel`).
  */
+
+import { displayLanguageLabel } from "@/lib/taught-languages";
 
 export const FORMATION_NO_LOCATION_LABEL = "Sans lieu";
 
@@ -44,11 +49,18 @@ export function formationLocationLabel(
  * « dates à planifier » (un souhait de date n'est pas encore une session
  * confirmée — on ne le mélange pas avec les dossiers calés).
  */
+/** Libellé langue pour clé / carte — unifie les variantes portugais. */
+export function formationLanguageLabel(
+  language: string | null | undefined
+): string {
+  return displayLanguageLabel(language) || (language ?? "").trim();
+}
+
 export function formationGroupKey(row: FormationInscriptionRow): string {
   return [
     row.start_date,
     row.end_date,
-    row.language,
+    formationLanguageLabel(row.language),
     formationLocationLabel(row.course_location),
     (row.modality ?? "").trim(),
     row.dates_to_confirm ? "1" : "0",
@@ -75,7 +87,7 @@ export function groupInscriptionsByFormation<T extends FormationInscriptionRow>(
     if (!group) {
       group = {
         key,
-        language: row.language,
+        language: formationLanguageLabel(row.language),
         location: formationLocationLabel(row.course_location),
         startDate: row.start_date,
         endDate: row.end_date,
