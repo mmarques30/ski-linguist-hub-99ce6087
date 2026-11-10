@@ -7,6 +7,7 @@ import {
   verifierConformiteRgpd,
 } from "../_shared/outreach-freeze.ts";
 import { isFliPlaceholderEmail } from "../_shared/email-guards.ts";
+import { redactEmail } from "../_shared/log-redact.ts";
 
 const corsHeaders = adminCorsHeaders;
 
@@ -54,7 +55,7 @@ async function sendEmail(
   html: string
 ): Promise<boolean> {
   if (isFliPlaceholderEmail(to)) {
-    console.error("Adresse @fli.placeholder exclue de tout envoi:", to);
+    console.error("Adresse @fli.placeholder exclue de tout envoi");
     return false;
   }
   const toNormalized = to.trim().toLowerCase();
@@ -80,7 +81,7 @@ async function sendEmail(
 
   if (!response.ok) {
     const text = await response.text();
-    console.error("Resend error:", to, text);
+    console.error("Resend error:", redactEmail(to), text.slice(0, 200));
   }
 
   return response.ok;

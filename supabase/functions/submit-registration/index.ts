@@ -1293,10 +1293,10 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     const described = describeCaughtError(error);
+    // Ne pas journaliser l'objet error brut (peut contenir le body d'inscription / PII).
     console.error("submit-registration error:", {
       message: described.message,
       code: described.code,
-      error,
     });
     return new Response(
       JSON.stringify({
