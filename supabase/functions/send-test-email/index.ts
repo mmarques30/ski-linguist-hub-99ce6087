@@ -8,9 +8,9 @@ import { isFliPlaceholderEmail } from "../_shared/email-guards.ts";
 
 /**
  * Envoi de test des modèles actifs.
- * Body optionnel :
- *   { "slugs": ["…"], "recipients": ["a@b.c", …], "to": "…" }
- * Sans recipients/to → info@fli.fr. Sans slugs → tous les actifs.
+ * Body optionnel : { "slugs": ["…"] }
+ * Destinataire forcé : info@fli.fr (AGENTS.md — jamais d'adresse client en test).
+ * Sans slugs → tous les actifs.
  * Sans RESEND_API_KEY : refuse proprement, n'appelle pas Resend.
  */
 const TEST_VARIABLES: Record<string, string> = {
@@ -49,8 +49,6 @@ const TEST_VARIABLES: Record<string, string> = {
   payment_label: "Virement",
 };
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: adminCorsHeaders });
@@ -76,7 +74,8 @@ Deno.serve(async (req) => {
     }
 
     let requestedSlugs: string[] | null = null;
-    let recipients: string[] = [FLI_TEST_RECIPIENT];
+    // Forcé : jamais d'adresse hors info@fli.fr pour un contrôle technique.
+    const recipients: string[] = [FLI_TEST_RECIPIENT];
     try {
       const raw = await req.text();
       if (raw.trim()) {
@@ -96,17 +95,24 @@ Deno.serve(async (req) => {
           const cleaned = rawRecipients
             .filter((s: unknown) => typeof s === "string")
             .map((s: string) => s.trim().toLowerCase())
-            .filter((s: string) => EMAIL_RE.test(s) && !isFliPlaceholderEmail(s));
-          if (!cleaned.length) {
+            .filter((s: string) => s.length > 0 && !isFliPlaceholderEmail(s));
+          const disallowed = cleaned.filter((s) => s !== FLI_TEST_RECIPIENT);
+          if (disallowed.length) {
             return new Response(
               JSON.stringify({
                 success: false,
-                error: "Aucun destinataire valide dans recipients / to.",
+                error:
+                  "Les e-mails de test ne peuvent être envoyés qu'à info@fli.fr.",
               }),
-              { status: 400, headers: { ...adminCorsHeaders, "Content-Type": "application/json" } }
+              {
+                status: 400,
+                headers: {
+                  ...adminCorsHeaders,
+                  "Content-Type": "application/json",
+                },
+              }
             );
           }
-          recipients = [...new Set(cleaned)];
         }
       }
     } catch {
