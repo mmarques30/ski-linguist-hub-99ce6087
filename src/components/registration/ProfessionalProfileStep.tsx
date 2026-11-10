@@ -32,6 +32,7 @@ import {
   formatPartnerConditionalPriceHint,
   formatPriceEUR,
   getSessionFundingMode,
+  hasAlumniPrice,
   isPartnerPricePending,
   isPartnerSchool,
   resolveOfferingPrice,
@@ -109,7 +110,9 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
       }
       return;
     }
-    const nextPrice = resolveOfferingPrice(selectedOffering, code);
+    const nextPrice = resolveOfferingPrice(selectedOffering, code, {
+      isAlumni: Boolean(data.isLocationAlumni),
+    });
     if (nextPrice == null) return;
     if (data.price !== nextPrice || data.pricePending) {
       onUpdate({
@@ -123,6 +126,7 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
     data.skiSchoolCode,
     data.isCustomFormat,
     data.profession,
+    data.isLocationAlumni,
     network,
     data.stationOrValley,
     data.skiSchoolOther,
@@ -167,7 +171,9 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
       !!selectedOffering && !data.isCustomFormat && isPartnerPricePending(selectedOffering, code);
     const price =
       selectedOffering && !data.isCustomFormat && !pending
-        ? resolveOfferingPrice(selectedOffering, code) ?? undefined
+        ? resolveOfferingPrice(selectedOffering, code, {
+            isAlumni: Boolean(data.isLocationAlumni),
+          }) ?? undefined
         : pending
           ? undefined
           : data.price;
@@ -186,9 +192,11 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
     schoolReadyForPrice && selectedOffering && !data.isCustomFormat
       ? resolveOfferingPrice(
           selectedOffering,
-          data.skiSchoolCode === OTHER_SCHOOL_OPTION ? null : data.skiSchoolCode
+          data.skiSchoolCode === OTHER_SCHOOL_OPTION ? null : data.skiSchoolCode,
+          { isAlumni: Boolean(data.isLocationAlumni) }
         )
       : undefined;
+  const alumniEligible = !!selectedOffering && hasAlumniPrice(selectedOffering);
   const partnerPending =
     schoolReadyForPrice &&
     !!selectedOffering &&
@@ -463,6 +471,30 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
         </p>
       )}
 
+      {alumniEligible && selectedOffering && (
+        <label className="flex items-start gap-3 rounded-[var(--radius)] border border-border p-3 text-sm">
+          <Checkbox
+            checked={Boolean(data.isLocationAlumni)}
+            onCheckedChange={(checked) =>
+              onUpdate({ isLocationAlumni: Boolean(checked) })
+            }
+            className="mt-0.5"
+          />
+          <span className="min-w-0 space-y-1">
+            <span className="block font-medium text-foreground">
+              J&apos;ai déjà suivi une formation FLI à {selectedOffering.location_label}
+            </span>
+            <span className="block text-muted-foreground">
+              Tarif ancien stagiaire :{" "}
+              {formatPriceEUR(Number(selectedOffering.alumni_price))}
+              {Number(selectedOffering.base_price) !== Number(selectedOffering.alumni_price)
+                ? ` (au lieu de ${formatPriceEUR(Number(selectedOffering.base_price))})`
+                : ""}
+            </span>
+          </span>
+        </label>
+      )}
+
       {partnerPending && selectedOffering && (
         <Alert className="border-primary/20 bg-[hsl(var(--surface-sunken))]">
           <Euro className="h-4 w-4" />
@@ -489,6 +521,8 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
             </StatusPill>
             {partnerApplied ? (
               <span className="text-sm text-muted-foreground">— tarif école partenaire</span>
+            ) : data.isLocationAlumni && alumniEligible ? (
+              <span className="text-sm text-muted-foreground">— tarif ancien stagiaire FLI</span>
             ) : (selectedOffering.partner_school_codes?.length ?? 0) > 0 ? (
               <span className="text-sm text-muted-foreground">— tarif autres écoles</span>
             ) : null}

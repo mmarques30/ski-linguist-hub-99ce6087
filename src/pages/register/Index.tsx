@@ -60,6 +60,11 @@ export interface RegistrationData {
   price?: number;
   /** Tarif partenaire non définitif → inscription sans paiement. */
   pricePending?: boolean;
+  /**
+   * Ancien stagiaire FLI sur le lieu de la session choisie
+   * (tarif `alumni_price`, ex. Saint-Jean 900 €).
+   */
+  isLocationAlumni?: boolean;
   /** Mode financement de la session catalogue. */
   sessionFundingMode?: import("@/lib/registration-offerings").SessionFundingMode;
   isCustomFormat?: boolean;

@@ -2911,6 +2911,7 @@ export type Database = {
           partner_price_alt: number | null
           partner_price_pending: boolean
           partner_school_codes: string[]
+          alumni_price: number | null
           season_id: string | null
           session_code: string | null
           sort_order: number
@@ -2940,6 +2941,7 @@ export type Database = {
           partner_price_alt?: number | null
           partner_price_pending?: boolean
           partner_school_codes?: string[]
+          alumni_price?: number | null
           season_id?: string | null
           session_code?: string | null
           sort_order?: number
@@ -2969,6 +2971,7 @@ export type Database = {
           partner_price_alt?: number | null
           partner_price_pending?: boolean
           partner_school_codes?: string[]
+          alumni_price?: number | null
           season_id?: string | null
           session_code?: string | null
           sort_order?: number
