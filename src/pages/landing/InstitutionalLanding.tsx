@@ -248,8 +248,21 @@ export default function InstitutionalLanding() {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-6px); }
         }
+        @keyframes lp-rise {
+          from { opacity: 0; transform: translateY(18px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes lp-bob {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50% { transform: translateY(-8px) rotate(-1.2deg); }
+        }
         .lp-float { animation: lp-float 4.5s ease-in-out infinite; }
         .lp-float-delay { animation-delay: 1.2s; }
+        .lp-rise { animation: lp-rise 0.7s ease-out both; }
+        .lp-bob { animation: lp-bob 5.5s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) {
+          .lp-float, .lp-bob, .lp-rise { animation: none; }
+        }
       `}</style>
 
       {/* —— Menu fixe —— */}
@@ -371,11 +384,17 @@ export default function InstitutionalLanding() {
             </div>
 
             <div className="relative mx-auto flex w-full max-w-md justify-center lg:max-w-none">
-              <img
-                src={RECOMMENDED.heroCharacter}
-                alt="Moniteur de ski en formation FLI"
-                className="relative z-10 max-h-[min(70vh,560px)] w-auto object-contain"
+              <div
+                aria-hidden
+                className="pointer-events-none absolute bottom-6 left-1/2 h-24 w-[70%] -translate-x-1/2 rounded-[100%] bg-[hsl(var(--fli-yellow)/0.22)] blur-2xl"
               />
+              <div className="lp-rise relative z-10">
+                <img
+                  src={RECOMMENDED.heroCharacter}
+                  alt="Mascotte FLI — moniteur de ski qui vous accueille"
+                  className="lp-bob max-h-[min(70vh,560px)] w-auto object-contain drop-shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
+                />
+              </div>
 
               <div className="lp-float absolute left-0 top-10 z-20 rounded-full bg-white px-3.5 py-2 text-xs font-semibold text-[hsl(var(--fli-navy))] shadow-lg sm:text-sm">
                 {BADGES[0]}
@@ -407,23 +426,31 @@ export default function InstitutionalLanding() {
         {/* —— Section 2 : méthode / vidéo —— */}
         <section id="metodo" className="scroll-mt-24 bg-[hsl(var(--surface-raised))]">
           <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:items-center lg:py-20">
-            <div>
+            <div className="relative">
               <h2 className="lp-display text-3xl text-[hsl(var(--fli-navy))] sm:text-4xl">
                 Découvrez comment se déroule votre formation
               </h2>
               <p className="mt-4 text-base text-muted-foreground sm:text-lg">
                 Un parcours structuré, testé sur plus de 500 sessions.
               </p>
-              <ol className="mt-8 space-y-3">
-                {METHOD_STEPS.map((step, i) => (
-                  <li key={step} className="flex gap-3 text-sm sm:text-base">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--fli-yellow))] text-xs font-bold text-[hsl(var(--fli-navy))]">
-                      {i + 1}
-                    </span>
-                    <span className="pt-0.5 text-foreground/90">{step}</span>
-                  </li>
-                ))}
-              </ol>
+              <div className="mt-8 flex flex-col gap-6 sm:flex-row sm:items-end">
+                <ol className="flex-1 space-y-3">
+                  {METHOD_STEPS.map((step, i) => (
+                    <li key={step} className="flex gap-3 text-sm sm:text-base">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--fli-yellow))] text-xs font-bold text-[hsl(var(--fli-navy))]">
+                        {i + 1}
+                      </span>
+                      <span className="pt-0.5 text-foreground/90">{step}</span>
+                    </li>
+                  ))}
+                </ol>
+                <img
+                  src={RECOMMENDED.methodCharacter}
+                  alt=""
+                  aria-hidden
+                  className="lp-float mx-auto hidden h-44 w-auto object-contain sm:mx-0 sm:block sm:h-52 lg:h-56"
+                />
+              </div>
               <button
                 type="button"
                 onClick={() => setVideoReady(true)}
@@ -472,14 +499,22 @@ export default function InstitutionalLanding() {
         {/* —— Section formations —— */}
         <section id="formacoes" className="scroll-mt-24 bg-[hsl(var(--surface-page))]">
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
-            <div className="max-w-2xl">
-              <h2 className="lp-display text-3xl text-[hsl(var(--fli-navy))] sm:text-4xl">
-                Des formations pensées pour votre métier
-              </h2>
-              <p className="mt-3 text-muted-foreground">
-                Six différenciateurs qui structurent l&apos;expérience FLI, du premier test au
-                suivi post-stage.
-              </p>
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-2xl">
+                <h2 className="lp-display text-3xl text-[hsl(var(--fli-navy))] sm:text-4xl">
+                  Des formations pensées pour votre métier
+                </h2>
+                <p className="mt-3 text-muted-foreground">
+                  Six différenciateurs qui structurent l&apos;expérience FLI, du premier test au
+                  suivi post-stage.
+                </p>
+              </div>
+              <img
+                src={RECOMMENDED.formationsCharacter}
+                alt=""
+                aria-hidden
+                className="lp-float mx-auto hidden h-36 w-auto object-contain lg:mx-0 lg:block lg:h-44"
+              />
             </div>
 
             <ul className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -500,14 +535,20 @@ export default function InstitutionalLanding() {
             </ul>
 
             {/* Bandeau CTA */}
-            <div className="mt-14 overflow-hidden rounded-[var(--radius-panel)] bg-[hsl(var(--fli-yellow))] px-6 py-10 text-[hsl(var(--fli-navy))] sm:px-10 sm:py-12 lg:flex lg:items-center lg:justify-between lg:gap-8">
-              <div className="max-w-xl">
+            <div className="relative mt-14 overflow-hidden rounded-[var(--radius-panel)] bg-[hsl(var(--fli-yellow))] px-6 py-10 text-[hsl(var(--fli-navy))] sm:px-10 sm:py-12 lg:flex lg:items-center lg:justify-between lg:gap-8">
+              <img
+                src={RECOMMENDED.ctaCharacter}
+                alt=""
+                aria-hidden
+                className="pointer-events-none absolute -bottom-4 right-2 hidden h-44 w-auto object-contain opacity-95 lg:block xl:right-6 xl:h-52"
+              />
+              <div className="relative z-10 max-w-xl">
                 <h3 className="lp-display text-2xl text-[hsl(var(--fli-navy))] sm:text-3xl">
                   Organisez la formation linguistique de votre équipe, sans complexité
                   administrative
                 </h3>
               </div>
-              <div className="mt-6 flex flex-wrap gap-3 lg:mt-0 lg:shrink-0">
+              <div className="relative z-10 mt-6 flex flex-wrap gap-3 lg:mt-0 lg:mr-36 lg:shrink-0 xl:mr-44">
                 <Link
                   to="/register"
                   className="inline-flex items-center gap-2 rounded-full bg-[hsl(var(--fli-navy))] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[hsl(219_52%_22%)]"
@@ -530,15 +571,23 @@ export default function InstitutionalLanding() {
         {/* —— Section stages : par langue, lieux et dates, catalogue public /register */}
         <section id="stages" className="scroll-mt-24 bg-[hsl(var(--surface-raised))]">
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
-            <div className="max-w-2xl">
-              <h2 className="lp-display text-3xl text-[hsl(var(--fli-navy))] sm:text-4xl">
-                Nos prochains stages, par langue
-              </h2>
-              <p className="mt-3 text-muted-foreground">
-                Lieux et dates des sessions ouvertes à l&apos;inscription cette saison. Le
-                catalogue complet, avec les tarifs selon votre école, est disponible sur le
-                formulaire d&apos;inscription.
-              </p>
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+              <div className="max-w-2xl">
+                <h2 className="lp-display text-3xl text-[hsl(var(--fli-navy))] sm:text-4xl">
+                  Nos prochains stages, par langue
+                </h2>
+                <p className="mt-3 text-muted-foreground">
+                  Lieux et dates des sessions ouvertes à l&apos;inscription cette saison. Le
+                  catalogue complet, avec les tarifs selon votre école, est disponible sur le
+                  formulaire d&apos;inscription.
+                </p>
+              </div>
+              <img
+                src={RECOMMENDED.stagesCharacter}
+                alt=""
+                aria-hidden
+                className="lp-float mx-auto h-36 w-auto object-contain sm:mx-0 sm:h-40 lg:h-48"
+              />
             </div>
 
             {offeringsLoading ? (
@@ -609,9 +658,17 @@ export default function InstitutionalLanding() {
         <section id="faq" className="scroll-mt-24 bg-[hsl(var(--surface-raised))]">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[0.85fr_1.15fr] lg:py-20">
           <div>
-            <h2 className="lp-display text-3xl text-[hsl(var(--fli-navy))] sm:text-4xl">
-              Une question ?
-            </h2>
+            <div className="flex items-end gap-4">
+              <h2 className="lp-display text-3xl text-[hsl(var(--fli-navy))] sm:text-4xl">
+                Une question ?
+              </h2>
+              <img
+                src={RECOMMENDED.faqCharacter}
+                alt=""
+                aria-hidden
+                className="lp-float hidden h-28 w-auto object-contain sm:block lg:h-32"
+              />
+            </div>
             <div className="mt-8 rounded-[var(--radius-card)] border border-border bg-[hsl(var(--surface-page))] p-6">
               <p className="font-semibold text-[hsl(var(--fli-navy))]">
                 Vous n&apos;avez pas trouvé votre réponse ?

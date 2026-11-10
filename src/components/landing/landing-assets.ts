@@ -23,6 +23,14 @@ import personagem01 from "@/assets/fli_personagem_01.png";
 import personagem02 from "@/assets/fli_personagem_02p.png";
 import personagem03 from "@/assets/fli_personagem_03.png";
 import personagem04 from "@/assets/fli_personagem_04.png";
+import mascotWave from "@/assets/fli_mascot_wave.png";
+import mascotNotes from "@/assets/fli_mascot_notes.png";
+import mascotPresent from "@/assets/fli_mascot_present.png";
+import mascotPoint from "@/assets/fli_mascot_point.png";
+import mascotMap from "@/assets/fli_mascot_map.png";
+import mascotThink from "@/assets/fli_mascot_think.png";
+import mascotThumbs from "@/assets/fli_mascot_thumbs.png";
+import mascotCelebrate from "@/assets/fli_mascot_celebrate.png";
 import authBg from "@/assets/fli-auth-bg.png";
 
 export type LandingAsset = {
@@ -147,28 +155,76 @@ export const LOGO_CANDIDATES: LandingAsset[] = [
 
 export const CHARACTER_CANDIDATES: LandingAsset[] = [
   {
+    id: "wave",
+    src: mascotWave,
+    label: "fli_mascot_wave",
+    usage: "Tête de page — accueil",
+  },
+  {
+    id: "notes",
+    src: mascotNotes,
+    label: "fli_mascot_notes",
+    usage: "Méthode — carnet / parcours",
+  },
+  {
+    id: "present",
+    src: mascotPresent,
+    label: "fli_mascot_present",
+    usage: "Formations — présentation des différenciateurs",
+  },
+  {
+    id: "point",
+    src: mascotPoint,
+    label: "fli_mascot_point",
+    usage: "Bandeau CTA — pointe vers l'action",
+  },
+  {
+    id: "map",
+    src: mascotMap,
+    label: "fli_mascot_map",
+    usage: "Stages — plan des stations",
+  },
+  {
+    id: "think",
+    src: mascotThink,
+    label: "fli_mascot_think",
+    usage: "FAQ — une question ?",
+  },
+  {
+    id: "thumbs",
+    src: mascotThumbs,
+    label: "fli_mascot_thumbs",
+    usage: "Variante positive / validation",
+  },
+  {
+    id: "celebrate",
+    src: mascotCelebrate,
+    label: "fli_mascot_celebrate",
+    usage: "Variante succès / fin de parcours",
+  },
+  {
     id: "p01",
     src: personagem01,
     label: "fli_personagem_01",
-    usage: "Tête de page — moniteur de ski",
+    usage: "Archive — moniteur skis à l'épaule",
   },
   {
     id: "p02",
     src: personagem02,
     label: "fli_personagem_02p",
-    usage: "Accès à la plateforme — écran FLI",
+    usage: "Archive — écran FLI",
   },
   {
     id: "p03",
     src: personagem03,
     label: "fli_personagem_03",
-    usage: "Section secondaire — ambiance détente",
+    usage: "Archive — ambiance détente",
   },
   {
     id: "p04",
     src: personagem04,
     label: "fli_personagem_04",
-    usage: "Section formations / snowboard",
+    usage: "Archive — snowboard",
   },
 ];
 
@@ -176,9 +232,13 @@ export const CHARACTER_CANDIDATES: LandingAsset[] = [
 export const RECOMMENDED = {
   navLogo: logoMarcaYellow,
   heroLogo: logo2026_3,
-  heroCharacter: personagem01,
+  heroCharacter: mascotWave,
+  methodCharacter: mascotNotes,
+  formationsCharacter: mascotPresent,
+  ctaCharacter: mascotPoint,
+  stagesCharacter: mascotMap,
+  faqCharacter: mascotThink,
   platformCharacter: personagem02,
-  formationsCharacter: personagem04,
   atmosphereBg: authBg,
   markIcon: logo2026_18,
 } as const;
