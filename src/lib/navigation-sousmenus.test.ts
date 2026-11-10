@@ -119,7 +119,8 @@ describe("état actif — chemins et paramètres d'URL", () => {
 
   it("active évaluations sur les sous-pages formateur", () => {
     expect(isItemActive(item("evaluations"), "/formateur/evaluation/abc", "")).toBe(true);
-    expect(isItemActive(item("evaluations"), "/formateur/evaluations", "")).toBe(true);
+    expect(isItemActive(item("evaluations"), "/tests-oraux", "")).toBe(true);
+    expect(isItemActive(item("evaluations"), "/formateur/evaluation/abc", "")).toBe(true);
     expect(isItemActive(item("tests"), "/tests", "")).toBe(true);
   });
 

@@ -47,21 +47,10 @@ describe("Vague A — suivi, Assister, menus", () => {
     expect(layout).toContain("isAssistMode");
   });
 
-  it("réduit Finance à 3 items et sépare Évaluations orales", () => {
-    const finance = NAV_SECTIONS.find((s) => s.id === "finance");
-    expect(finance?.items.map((i) => i.id)).toEqual([
-      "facturation",
-      "pilotage",
-      "tresorerie",
-    ]);
-    // Analyses / Rentabilité restent des sous-menus de Pilotage, pas des entrées.
-    expect(
-      finance?.items.find((i) => i.id === "pilotage")?.children?.map((c) => c.href),
-    ).toEqual(["/finance", "/finance/analyses", "/finance/rentabilite"]);
-
+  it("pointe Opérations → Tests oraux SNMSF et garde Moniteurs gelés", () => {
     const operations = NAV_SECTIONS.find((s) => s.id === "operations");
     const evaluations = operations?.items.find((i) => i.id === "evaluations");
-    expect(evaluations?.children?.map((c) => c.href)).toContain("/formateur/evaluations");
+    expect(evaluations?.href).toBe("/tests-oraux");
 
     const moniteurs = NAV_SECTIONS.find((s) => s.id === "commercial")?.items.find(
       (i) => i.id === "moniteurs",

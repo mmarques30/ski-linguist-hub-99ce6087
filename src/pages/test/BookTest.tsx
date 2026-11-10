@@ -105,7 +105,8 @@ export default function BookTest() {
                 Demande enregistrée
               </h1>
               <p className="text-sm text-muted-foreground">
-                Demande enregistrée. FLI vous confirmera le créneau.
+                Demande enregistrée. FLI vous confirmera le créneau par e-mail
+                ou SMS.
               </p>
             </div>
           </SurfaceCard>
