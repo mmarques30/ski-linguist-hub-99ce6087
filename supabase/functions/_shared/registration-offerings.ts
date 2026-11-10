@@ -1,4 +1,4 @@
-/** Aligné sur src/lib/registration-offerings.ts — résolution tarif partenaire. */
+/** Aligné sur src/lib/registration-offerings.ts — résolution tarif partenaire / anciens. */
 
 export type EnrollmentStatus = "open" | "waitlist";
 
@@ -13,14 +13,64 @@ export interface RegistrationOfferingPriceFields {
   partner_price_alt?: number | null;
   partner_price_pending?: boolean | null;
   partner_school_codes?: string[] | null;
+  alumni_price?: number | null;
   funding_mode?: SessionFundingMode | null;
   enrollment_status?: EnrollmentStatus | null;
 }
 
-/** Tarif appliqué selon l'école (SESSIONS §3.1). */
+export type ResolveOfferingPriceOptions = {
+  isAlumni?: boolean;
+};
+
+export function normalizeLocationToken(value: string | null | undefined): string {
+  if (!value) return "";
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+export function isAlumniLocationMatch(
+  courseLocation: string | null | undefined,
+  locationKey?: string | null,
+  locationLabel?: string | null
+): boolean {
+  const course = normalizeLocationToken(courseLocation);
+  if (!course) return false;
+  const key = normalizeLocationToken((locationKey || "").replace(/-/g, " "));
+  const label = normalizeLocationToken(locationLabel);
+  if (label && (course === label || course.includes(label) || label.includes(course))) {
+    return true;
+  }
+  if (key && (course === key || course.includes(key) || key.includes(course))) {
+    return true;
+  }
+  if (
+    (key.includes("saintjean") || label.includes("saintjean")) &&
+    course.includes("saintjean") &&
+    course.includes("maurienne")
+  ) {
+    return true;
+  }
+  return false;
+}
+
+export function hasAlumniPrice(
+  offering: Pick<RegistrationOfferingPriceFields, "alumni_price" | "base_price">
+): boolean {
+  return (
+    offering.alumni_price != null &&
+    Number.isFinite(Number(offering.alumni_price)) &&
+    Number(offering.alumni_price) > 0
+  );
+}
+
+/** Tarif appliqué selon l'école (SESSIONS §3.1) et le statut ancien stagiaire. */
 export function resolveOfferingPrice(
   offering: RegistrationOfferingPriceFields,
-  skiSchoolCode?: string | null
+  skiSchoolCode?: string | null,
+  options?: ResolveOfferingPriceOptions
 ): number | null {
   const codes = offering.partner_school_codes ?? [];
   const isPartner =
@@ -35,6 +85,9 @@ export function resolveOfferingPrice(
   const partner = offering.partner_price;
   if (isPartner && partner != null) {
     return Number(partner);
+  }
+  if (options?.isAlumni && hasAlumniPrice(offering)) {
+    return Number(offering.alumni_price);
   }
   return Number(offering.base_price);
 }

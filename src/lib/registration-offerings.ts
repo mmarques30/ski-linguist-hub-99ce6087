@@ -31,10 +31,20 @@ export interface RegistrationOffering {
   /** Tarif partenaire non définitif → inscription sans paiement. */
   partner_price_pending?: boolean | null;
   partner_school_codes?: string[] | null;
+  /**
+   * Tarif anciens stagiaires FLI de ce lieu (ex. Saint-Jean 900 €).
+   * Appliqué si `isAlumni` à la résolution — sinon `base_price` / partenaire.
+   */
+  alumni_price?: number | null;
   funding_mode?: SessionFundingMode | null;
   enrollment_status?: EnrollmentStatus | null;
   sort_order: number;
 }
+
+export type ResolveOfferingPriceOptions = {
+  /** Ancien stagiaire FLI sur ce lieu (déclaré ou vérifié serveur). */
+  isAlumni?: boolean;
+};
 
 export interface LocationOption {
   key: string;
@@ -49,13 +59,65 @@ export interface DateOption {
   end_date: string | null;
 }
 
-/** Tarif appliqué selon l'école (SESSIONS §3.1). */
+/** Normalise un libellé de lieu pour comparer catalogue ↔ inscriptions historiques. */
+export function normalizeLocationToken(value: string | null | undefined): string {
+  if (!value) return "";
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+/** L'inscription historique correspond-elle au lieu catalogue (ex. Saint-Jean) ? */
+export function isAlumniLocationMatch(
+  courseLocation: string | null | undefined,
+  locationKey?: string | null,
+  locationLabel?: string | null
+): boolean {
+  const course = normalizeLocationToken(courseLocation);
+  if (!course) return false;
+  const key = normalizeLocationToken((locationKey || "").replace(/-/g, " "));
+  const label = normalizeLocationToken(locationLabel);
+  if (label && (course === label || course.includes(label) || label.includes(course))) {
+    return true;
+  }
+  if (key && (course === key || course.includes(key) || key.includes(course))) {
+    return true;
+  }
+  // Saint-Jean-de-Maurienne ↔ « Saint Jean de Maurienne »
+  if (
+    (key.includes("saintjean") || label.includes("saintjean")) &&
+    course.includes("saintjean") &&
+    course.includes("maurienne")
+  ) {
+    return true;
+  }
+  return false;
+}
+
+export function hasAlumniPrice(
+  offering: Pick<RegistrationOffering, "alumni_price" | "base_price">
+): boolean {
+  return (
+    offering.alumni_price != null &&
+    Number.isFinite(Number(offering.alumni_price)) &&
+    Number(offering.alumni_price) > 0
+  );
+}
+
+/** Tarif appliqué selon l'école (SESSIONS §3.1) et le statut ancien stagiaire. */
 export function resolveOfferingPrice(
   offering: Pick<
     RegistrationOffering,
-    "base_price" | "partner_price" | "partner_school_codes" | "partner_price_pending"
+    | "base_price"
+    | "partner_price"
+    | "partner_school_codes"
+    | "partner_price_pending"
+    | "alumni_price"
   >,
-  skiSchoolCode?: string | null
+  skiSchoolCode?: string | null,
+  options?: ResolveOfferingPriceOptions
 ): number | null {
   const codes = offering.partner_school_codes ?? [];
   const isPartner =
@@ -71,6 +133,9 @@ export function resolveOfferingPrice(
   const partner = offering.partner_price;
   if (isPartner && partner != null) {
     return Number(partner);
+  }
+  if (options?.isAlumni && hasAlumniPrice(offering)) {
+    return Number(offering.alumni_price);
   }
   return Number(offering.base_price);
 }
@@ -153,16 +218,30 @@ export function formatOfferingPriceHint(
     | "partner_price_alt"
     | "partner_price_pending"
     | "partner_school_codes"
+    | "alumni_price"
   >
 ): string {
   const base = Number(offering.base_price);
   const partner = offering.partner_price != null ? Number(offering.partner_price) : base;
   const hasPartnerList = (offering.partner_school_codes ?? []).length > 0;
+  const alumni =
+    hasAlumniPrice(offering) && Number(offering.alumni_price) !== base
+      ? Number(offering.alumni_price)
+      : null;
   if (offering.partner_price_pending && hasPartnerList) {
-    return `${formatPartnerConditionalPriceHint(offering)} · ${formatPriceEUR(base)} autres`;
+    const core = `${formatPartnerConditionalPriceHint(offering)} · ${formatPriceEUR(base)} autres`;
+    return alumni != null
+      ? `${core} · ${formatPriceEUR(alumni)} anciens stagiaires FLI`
+      : core;
   }
   if (hasPartnerList && partner !== base) {
-    return `${formatPriceEUR(partner)} école partenaire · ${formatPriceEUR(base)} autres`;
+    const core = `${formatPriceEUR(partner)} école partenaire · ${formatPriceEUR(base)} autres`;
+    return alumni != null
+      ? `${core} · ${formatPriceEUR(alumni)} anciens stagiaires FLI`
+      : core;
+  }
+  if (alumni != null) {
+    return `${formatPriceEUR(base)} · ${formatPriceEUR(alumni)} anciens stagiaires FLI`;
   }
   return formatPriceEUR(base);
 }

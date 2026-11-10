@@ -33,7 +33,9 @@ import {
 } from "../_shared/registration-admin-notify.ts";
 import {
   getSessionFundingMode,
+  hasAlumniPrice,
   hidesDepositPaymentOptions,
+  isAlumniLocationMatch,
   isWaitlistOffering,
   resolveOfferingPrice,
 } from "../_shared/registration-offerings.ts";
@@ -181,6 +183,8 @@ interface RegistrationPayload {
   /** BL-029 : date souhaitée quand l'offre n'a pas de session datée. */
   requestedStartDate?: string;
   price?: number;
+  /** Ancien stagiaire FLI sur le lieu (tarif alumni_price) — vérifié serveur. */
+  isLocationAlumni?: boolean;
   isCustomFormat?: boolean;
   customFormatDetails?: string;
   hasBeenEvaluated: boolean;
@@ -614,7 +618,7 @@ Deno.serve(async (req) => {
       const { data: offering } = await supabase
         .from("registration_offerings")
         .select(
-          "base_price, partner_price, partner_price_alt, partner_price_pending, partner_school_codes, enrollment_status, is_active, funding_mode, location_key, location_label"
+          "base_price, partner_price, partner_price_alt, partner_price_pending, partner_school_codes, alumni_price, enrollment_status, is_active, funding_mode, location_key, location_label, start_date"
         )
         .eq("id", registration.offeringId)
         .maybeSingle();
@@ -654,7 +658,55 @@ Deno.serve(async (req) => {
             validatedPartnerCode = directorySchool.code;
           }
         }
-        const resolved = resolveOfferingPrice(offering, validatedPartnerCode);
+
+        // Ancien stagiaire : déclaration client + historique vérifié (e-mail).
+        let isAlumni = false;
+        if (hasAlumniPrice(offering)) {
+          const email = (registration.email || "").trim().toLowerCase();
+          if (email) {
+            const { data: priorStudents } = await supabase
+              .from("students")
+              .select("id")
+              .ilike("email", email)
+              .limit(5);
+            const studentIds = (priorStudents || []).map((s) => s.id).filter(Boolean);
+            if (studentIds.length > 0) {
+              const { data: priorInscriptions } = await supabase
+                .from("inscriptions")
+                .select("id, course_location, start_date, status")
+                .in("student_id", studentIds)
+                .limit(50);
+              const sessionStart =
+                typeof offering.start_date === "string" ? offering.start_date : null;
+              isAlumni = (priorInscriptions || []).some((row) => {
+                const st = (row.status || "").toLowerCase();
+                if (st.includes("annul") || st.includes("cancel")) return false;
+                if (
+                  sessionStart &&
+                  row.start_date &&
+                  String(row.start_date) >= sessionStart
+                ) {
+                  return false;
+                }
+                return isAlumniLocationMatch(
+                  row.course_location,
+                  offering.location_key,
+                  offering.location_label
+                );
+              });
+            }
+          }
+          // Si le stagiaire coche la case mais n'a pas encore d'historique
+          // retrouvé (e-mail différent), on applique quand même le tarif
+          // alumni — Paula valide / corrige ensuite.
+          if (!isAlumni && registration.isLocationAlumni === true) {
+            isAlumni = true;
+          }
+        }
+
+        const resolved = resolveOfferingPrice(offering, validatedPartnerCode, {
+          isAlumni,
+        });
         if (resolved == null) {
           pricePending = true;
           price = null;

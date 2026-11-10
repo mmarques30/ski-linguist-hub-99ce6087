@@ -9,7 +9,9 @@ import {
   formatOfferingPriceHint,
   formatPartnerConditionalPriceHint,
   getSessionFundingMode,
+  hasAlumniPrice,
   hidesDepositPaymentOptions,
+  isAlumniLocationMatch,
   isOpenOffering,
   isPartnerPricePending,
   isPartnerSchool,
@@ -122,6 +124,29 @@ describe("resolveOfferingPrice — tarif selon école", () => {
     expect(requiresMandatoryFifplEstimate("fifpl_stagiaire_solde_ecole")).toBe(true);
     expect(requiresMandatoryFifplEstimate("individuel")).toBe(false);
   });
+
+  it("Saint-Jean : 900 € anciens stagiaires FLI, 950 € sinon", () => {
+    const saintJean = {
+      base_price: 950,
+      partner_price: 950,
+      partner_school_codes: [] as string[],
+      alumni_price: 900,
+      enrollment_status: "open" as const,
+    };
+    expect(hasAlumniPrice(saintJean)).toBe(true);
+    expect(resolveOfferingPrice(saintJean, null)).toBe(950);
+    expect(resolveOfferingPrice(saintJean, null, { isAlumni: true })).toBe(900);
+    expect(formatOfferingPriceHint(saintJean)).toContain("950");
+    expect(formatOfferingPriceHint(saintJean)).toContain("900");
+    expect(formatOfferingPriceHint(saintJean)).toMatch(/anciens stagiaires FLI/i);
+    expect(
+      isAlumniLocationMatch(
+        "Saint Jean de Maurienne",
+        "saint-jean-de-maurienne",
+        "Saint-Jean-de-Maurienne"
+      )
+    ).toBe(true);
+  });
 });
 
 describe("copie Deno registration-offerings", () => {
@@ -132,9 +157,12 @@ describe("copie Deno registration-offerings", () => {
     expect(deno).toContain("export function isOpenOffering");
     expect(deno).toContain("export function isPartnerPricePending");
     expect(deno).toContain("export function hidesDepositPaymentOptions");
+    expect(deno).toContain("export function hasAlumniPrice");
+    expect(deno).toContain("export function isAlumniLocationMatch");
     expect(deno).toContain('skiSchoolCode !== "__autre__"');
     expect(deno).toContain("codes.includes(skiSchoolCode)");
     expect(deno).toContain("partner_price_pending");
+    expect(deno).toContain("alumni_price");
   });
 });
 
