@@ -38,6 +38,11 @@ export const CHROME_NAV: Record<string, Translations> = {
     "pt-BR": "Avaliações orais",
     en: "Oral evaluations",
   },
+  "/tests-oraux": {
+    fr: "Tests oraux SNMSF",
+    "pt-BR": "Testes orais SNMSF",
+    en: "SNMSF oral tests",
+  },
   "/formateur/emargement": {
     fr: "Émargement",
     "pt-BR": "Assinatura de presença",

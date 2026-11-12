@@ -64,9 +64,10 @@ async function deleteNewStudent(
   }
 }
 
+/** Aligné sur `REGISTRATION_LANGUAGE_MAP` (`src/lib/registration-utils.ts`). */
 const LANGUAGE_MAP: Record<string, string> = {
   english: "Anglais",
-  portuguese: "Portugais",
+  portuguese: "Portugais brésilien",
   russian: "Russe",
   dutch: "Néerlandais",
   german: "Allemand",
@@ -1292,10 +1293,10 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     const described = describeCaughtError(error);
+    // Ne pas journaliser l'objet error brut (peut contenir le body d'inscription / PII).
     console.error("submit-registration error:", {
       message: described.message,
       code: described.code,
-      error,
     });
     return new Response(
       JSON.stringify({

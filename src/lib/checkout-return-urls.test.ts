@@ -8,7 +8,7 @@ function source(relatif: string): string {
 }
 
 describe("isAllowedStripeCheckoutReturnUrl", () => {
-  it("accepte les origines FLI / Lovable / localhost:8080", () => {
+  it("accepte les origines FLI / Lovable publié / localhost:8080", () => {
     expect(
       isAllowedStripeCheckoutReturnUrl(
         "https://plateforme.fli.fr/register?paid=1&session_id={CHECKOUT_SESSION_ID}"
@@ -29,7 +29,7 @@ describe("isAllowedStripeCheckoutReturnUrl", () => {
     ).toBe(true);
     expect(
       isAllowedStripeCheckoutReturnUrl(
-        "https://id-preview--abc.lovable.app/register"
+        "https://id-preview--34e71e1a-49f7-433e-bb36-fc4d26e86f8e.lovable.app/register"
       )
     ).toBe(true);
     expect(
@@ -37,7 +37,17 @@ describe("isAllowedStripeCheckoutReturnUrl", () => {
     ).toBe(true);
   });
 
-  it("refuse les origines hors allowlist", () => {
+  it("refuse les previews Lovable arbitraires et origines hors allowlist", () => {
+    expect(
+      isAllowedStripeCheckoutReturnUrl(
+        "https://id-preview--abc.lovable.app/register"
+      )
+    ).toBe(false);
+    expect(
+      isAllowedStripeCheckoutReturnUrl(
+        "https://evil-project.lovable.app/register"
+      )
+    ).toBe(false);
     expect(
       isAllowedStripeCheckoutReturnUrl("https://evil.example/phish")
     ).toBe(false);
@@ -62,9 +72,11 @@ describe("isAllowedStripeCheckoutReturnUrl", () => {
     );
     const origines = (texte: string) => {
       const debut = texte.indexOf("const EXACT_ORIGINS");
-      const fin = texte.indexOf("function isLovablePreviewHost");
+      const fin = texte.indexOf("export function isAllowedStripeCheckoutReturnUrl");
       return texte.slice(debut, fin);
     };
     expect(origines(deno)).toBe(origines(front));
+    expect(front).not.toContain('endsWith(".lovable.app")');
+    expect(deno).not.toContain('endsWith(".lovable.app")');
   });
 });

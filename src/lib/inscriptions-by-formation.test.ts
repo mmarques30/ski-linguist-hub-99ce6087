@@ -34,6 +34,21 @@ describe("clé de formation", () => {
     expect(a).not.toBe(b);
   });
 
+  it("traite Portugais et Portugais brésilien comme la même formation", () => {
+    const base = {
+      id: "1",
+      start_date: "2026-11-30",
+      end_date: "2026-12-11",
+      course_location: "ESF La Rosière",
+      modality: "Présentiel",
+    };
+    expect(
+      formationGroupKey({ ...base, language: "Portugais" })
+    ).toBe(
+      formationGroupKey({ ...base, language: "Portugais brésilien" })
+    );
+  });
+
   it("isole les dossiers à dates encore à planifier", () => {
     const confirmed = formationGroupKey({
       id: "1",
@@ -121,6 +136,35 @@ describe("regroupement par formation", () => {
     expect(valEng?.inscriptions.map((i) => i.student_name)).toEqual([
       "Alice",
       "Zoe",
+    ]);
+  });
+
+  it("regroupe Portugais et Portugais brésilien (La Rosière)", () => {
+    const groups = groupInscriptionsByFormation([
+      {
+        id: "julian",
+        language: "Portugais brésilien",
+        start_date: "2026-11-30",
+        end_date: "2026-12-11",
+        course_location: "ESF La Rosière",
+        modality: "Présentiel",
+        student_name: "Julian Sanchez",
+      },
+      {
+        id: "christelle",
+        language: "Portugais",
+        start_date: "2026-11-30",
+        end_date: "2026-12-11",
+        course_location: "ESF La Rosière",
+        modality: "Présentiel",
+        student_name: "Christelle Gaidet",
+      },
+    ]);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].language).toBe("Portugais brésilien");
+    expect(groups[0].inscriptions.map((i) => i.id)).toEqual([
+      "christelle",
+      "julian",
     ]);
   });
 });

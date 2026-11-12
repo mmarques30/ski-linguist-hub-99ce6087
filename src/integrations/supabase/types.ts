@@ -4416,6 +4416,19 @@ export type Database = {
         }
         Returns: string
       }
+      create_test_booking_from_candidate: {
+        Args: {
+          p_candidate_id: string
+          p_datetime: string
+          p_instructor_id: string
+          p_language: string
+          p_payment_type?: string
+          p_previous_result?: string
+          p_previous_test?: boolean
+          p_sponsor_type: string
+        }
+        Returns: string
+      }
       dispatch_edge_function: {
         Args: {
           p_body?: Json

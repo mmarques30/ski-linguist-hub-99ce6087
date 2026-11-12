@@ -57,6 +57,18 @@ describe("Edge cron/admin auth — refuse anon JWT", () => {
     expect(edge).toContain("requireServiceRoleOrStaff");
     expect(edge).toContain('ownerSegment = "register"');
     expect(edge).toContain("requestedStudentId");
+    expect(edge).toContain("allowPublicUpload");
+    expect(edge).toContain("matchesDeclaredType");
+    expect(edge).toContain("status: 429");
+  });
+
+  it("send-test-email force info@fli.fr (pas d'adresse client)", () => {
+    const edge = source("supabase/functions/send-test-email/index.ts");
+    expect(edge).toContain("FLI_TEST_RECIPIENT");
+    expect(edge).toContain(
+      "Les e-mails de test ne peuvent être envoyés qu'à info@fli.fr."
+    );
+    expect(edge).toContain("const recipients: string[] = [FLI_TEST_RECIPIENT]");
   });
 
   it("config.toml déclare verify_jwt sur les fonctions cron concernées", () => {
