@@ -66,6 +66,14 @@ This is a single-package **Vite + React 18 + TypeScript** SPA (Lovable-generated
   qui contient un lien Stripe/checkout doit aussi afficher les coordonnées bancaires
   (`FLI_BANK_DETAILS` / `buildPaymentLinkWithBankDetailsEmailHtml` dans
   `registration-payments.ts`). Alternative virement avec la référence d’inscription.
+- **Fiche stagiaires → formateur** (Paula, 2026-11-12) : dès qu’une formation passe
+  **en cours** / à la **mise en relation** formateur, envoyer à chaque formateur une
+  fiche de ses stagiaires (un mail par formateur) avec au minimum :
+  - attentes du stagiaire (`inscriptions.expectations` / auto-diagnostic Q10) ;
+  - réponses / résultats du test en ligne (`placement_tests` lié via `entry_test_id` :
+    pistes, vocabulaire, auto-diagnostic).
+  Tutoiement formateur, BCC `info@fli.fr`. Ne pas attendre une relance Paula pour les
+  nouveaux lancements ; pour un stock déjà en cours, envoi groupé sur demande.
 
 ### Git / docs (Paula, 2026-09-11)
 - Do **not** modify `docs/BACKLOG.md` or `docs/ETAT_APP_*.md` on working branches.
