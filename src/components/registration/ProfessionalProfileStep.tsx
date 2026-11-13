@@ -511,7 +511,21 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
         </Alert>
       )}
 
-      {resolvedPrice != null && selectedOffering && !data.isCustomFormat && !partnerPending && (
+      {data.studentPaymentRequired === false && selectedOffering && !data.isCustomFormat && (
+        <Alert className="border-primary/20 bg-[hsl(var(--surface-sunken))]">
+          <Euro className="h-4 w-4" />
+          <AlertDescription>
+            Aucun règlement n&apos;est demandé de votre part pour cette session (prise en charge
+            école). Poursuivez avec le test de positionnement.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {resolvedPrice != null &&
+        selectedOffering &&
+        !data.isCustomFormat &&
+        !partnerPending &&
+        data.studentPaymentRequired !== false && (
         <Alert className="border-primary/20 bg-[hsl(var(--surface-sunken))]">
           <Euro className="h-4 w-4" />
           <AlertDescription className="flex flex-wrap items-center gap-2">

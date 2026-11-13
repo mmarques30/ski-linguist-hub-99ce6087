@@ -136,7 +136,13 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
   );
   const coursePrice = data.price ?? 0;
   const pricePending = Boolean(data.pricePending);
-  const hasPaymentStep = !isCustomFormat && coursePrice > 0 && !isOpco && !pricePending;
+  const skipsStudentPayment = data.studentPaymentRequired === false;
+  const hasPaymentStep =
+    !isCustomFormat &&
+    coursePrice > 0 &&
+    !isOpco &&
+    !pricePending &&
+    !skipsStudentPayment;
   // Décision Paula : aucun mode de règlement coché par défaut, donc aucun repli ici.
   const paymentOption = data.paymentOption ?? null;
   const paymentMissing = hasPaymentStep && !paymentOption;
@@ -271,11 +277,13 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                       : " Un email de confirmation vous a été envoyé."
                   : isOpco
                     ? " Aucun règlement n'est demandé pour l'instant : nous analysons votre dossier OPCO et vous recontacterons."
-                    : pricePending
-                      ? " Votre inscription est enregistrée hors paiement : le tarif partenaire sera confirmé, puis nous vous enverrons le lien de règlement et vos documents."
-                      : result.emailSent
-                        ? " Un email de confirmation vous a été envoyé."
-                        : " Notre équipe vous contactera prochainement."}
+                    : skipsStudentPayment
+                      ? " Aucun règlement n'est demandé de votre part : l'ESF prend en charge cette session. Nous vous enverrons les groupes et horaires dès que les tests de positionnement seront analysés."
+                      : pricePending
+                        ? " Votre inscription est enregistrée hors paiement : le tarif partenaire sera confirmé, puis nous vous enverrons le lien de règlement et vos documents."
+                        : result.emailSent
+                          ? " Un email de confirmation vous a été envoyé."
+                          : " Notre équipe vous contactera prochainement."}
             </p>
             <StatusPill tone="warning" className="px-4 py-1.5 text-base">
               Code : {result.inscriptionCode}
@@ -402,6 +410,15 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
               <AlertDescription>
                 En attente tarif : aucun paiement ni convention à l&apos;inscription. Le lien de
                 paiement et vos documents suivront dès fixation du tarif.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {skipsStudentPayment && (
+            <Alert>
+              <AlertDescription>
+                Pas de paiement en ligne : l&apos;école règle le forfait. Les groupes et horaires
+                vous seront communiqués après analyse des tests de positionnement.
               </AlertDescription>
             </Alert>
           )}

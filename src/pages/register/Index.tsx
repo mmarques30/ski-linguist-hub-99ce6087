@@ -14,6 +14,10 @@ import { PaymentStep } from "@/components/registration/PaymentStep";
 import { ConfirmationStep } from "@/components/registration/ConfirmationStep";
 import { isRegistrationLanguageKey } from "@/lib/registration-languages";
 import type { RegistrationPaymentOption } from "@/lib/registration-payments";
+import {
+  nextRegistrationStepId,
+  prevRegistrationStepId,
+} from "@/lib/registration-invite";
 
 export interface RegistrationData {
   // Informations personnelles — civility non demandée (langage inclusif)
@@ -67,6 +71,13 @@ export interface RegistrationData {
   isLocationAlumni?: boolean;
   /** Mode financement de la session catalogue. */
   sessionFundingMode?: import("@/lib/registration-offerings").SessionFundingMode;
+  /**
+   * false = pas d'étape paiement (invite / forfait école qui règle tout).
+   * Défaut true si non renseigné.
+   */
+  studentPaymentRequired?: boolean;
+  /** Session catalogue invite_only (lien ?session=). */
+  inviteOnly?: boolean;
   isCustomFormat?: boolean;
   customFormatDetails?: string;
 
@@ -159,7 +170,16 @@ export default function Register() {
 
   /** Moniteurs : pas de certification → on saute l’étape 5 (attentes déjà dans l’auto-diag). */
   const skipCertificationStep = formData.profession === "ski_instructor";
-  const steps = ALL_STEPS.filter((s) => !(skipCertificationStep && s.id === 5));
+  /** Forfait ESF / invite : pas d’étape paiement. */
+  const skipPaymentStep = formData.studentPaymentRequired === false;
+  const stepSkipOpts = {
+    skipCertification: skipCertificationStep,
+    skipPayment: skipPaymentStep,
+  };
+  const steps = ALL_STEPS.filter(
+    (s) =>
+      !(skipCertificationStep && s.id === 5) && !(skipPaymentStep && s.id === 6)
+  );
   const progress = (steps.findIndex((s) => s.id === currentStep) + 1) / steps.length * 100;
 
   const updateFormData = (data: Partial<RegistrationData>) => {
@@ -167,26 +187,14 @@ export default function Register() {
   };
 
   const nextStep = () => {
-    if (currentStep === 4 && skipCertificationStep) {
-      if (formData.certification !== "none") {
-        updateFormData({ certification: "none" });
-      }
-      setCurrentStep(6);
-      return;
+    if (currentStep === 4 && skipCertificationStep && formData.certification !== "none") {
+      updateFormData({ certification: "none" });
     }
-    if (currentStep < ALL_STEPS.length) {
-      setCurrentStep(currentStep + 1);
-    }
+    setCurrentStep(nextRegistrationStepId(currentStep, stepSkipOpts));
   };
 
   const prevStep = () => {
-    if (currentStep === 6 && skipCertificationStep) {
-      setCurrentStep(4);
-      return;
-    }
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
+    setCurrentStep(prevRegistrationStepId(currentStep, stepSkipOpts));
   };
 
   const renderStep = () => {
@@ -295,9 +303,13 @@ export default function Register() {
             {steps.map((step, index) => {
               const isCurrent = step.id === currentStep;
               const visuallyDone =
-                skipCertificationStep && currentStep >= 6
+                skipCertificationStep && skipPaymentStep && currentStep >= 7
                   ? step.id <= 4 || step.id < currentStep
-                  : step.id < currentStep;
+                  : skipCertificationStep && currentStep >= 6
+                    ? step.id <= 4 || step.id < currentStep
+                    : skipPaymentStep && currentStep >= 7
+                      ? step.id <= 5 || step.id < currentStep
+                      : step.id < currentStep;
               return (
                 <li key={step.id}>
                   <button
