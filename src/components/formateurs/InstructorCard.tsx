@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CheckCircle2, Pencil, Star } from "lucide-react";
 import type { Instructor } from "@/hooks/useInstructors";
+import { formatNameLastFirst } from "@/lib/person-name";
 import { displayLanguageLabel } from "@/lib/taught-languages";
 import { candidatActivationGaps } from "@/lib/instructor-candidat";
 import { StatusPill, SurfaceCard } from "@/components/ui-kit";
@@ -63,7 +64,7 @@ export function InstructorCard({ instructor, onClick, onEdit, onActivate }: Prop
           onClick();
         }
       }}
-      aria-label={`Ouvrir la fiche de ${instructor.first_name} ${instructor.last_name}`}
+      aria-label={`Ouvrir la fiche de ${formatNameLastFirst(instructor)}`}
       className="cursor-pointer rounded-[var(--radius-card)]"
     >
       <SurfaceCard interactive bodyClassName="flex items-start gap-4">
@@ -75,7 +76,7 @@ export function InstructorCard({ instructor, onClick, onEdit, onActivate }: Prop
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex items-start justify-between gap-2">
             <h3 className="truncate font-semibold">
-              {instructor.first_name} {instructor.last_name}
+              {formatNameLastFirst(instructor)}
             </h3>
             <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
               {instructor.status && (

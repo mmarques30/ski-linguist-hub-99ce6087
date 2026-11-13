@@ -33,6 +33,7 @@ import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { formatNameLastFirst, sortByLastName } from "@/lib/person-name";
 import { toast } from "sonner";
 
 const translations = {
@@ -116,8 +117,9 @@ export default function Sessions() {
         .from("instructors")
         .select("id, first_name, last_name")
         .eq("status", "actif")
-        .order("last_name");
-      return data || [];
+        .order("last_name")
+        .order("first_name");
+      return sortByLastName(data || []);
     },
   });
 
@@ -168,7 +170,7 @@ export default function Sessions() {
 
   const instructorLabel = (id: string) => {
     const hit = instructors?.find((i) => i.id === id);
-    return hit ? `${hit.first_name} ${hit.last_name}` : id;
+    return hit ? formatNameLastFirst(hit) : id;
   };
 
   /** Rappel des filtres actifs, effaçables un à un. */
@@ -286,7 +288,7 @@ export default function Sessions() {
                           <SelectContent>
                             <SelectItem value="all">{t(translations.allInstructors)}</SelectItem>
                             {instructors?.map((i) => (
-                              <SelectItem key={i.id} value={i.id}>{i.first_name} {i.last_name}</SelectItem>
+                              <SelectItem key={i.id} value={i.id}>{formatNameLastFirst(i)}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>

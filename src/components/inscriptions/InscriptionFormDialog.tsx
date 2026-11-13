@@ -42,6 +42,7 @@ import { describeCaughtError } from "@/lib/supabase-error";
 import { studentEmailLabel } from "@/lib/email-guards";
 import { buildStudentSearchFilter } from "@/hooks/useStudents";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
+import { formatNameLastFirst, sortByLastName } from "@/lib/person-name";
 import { FUNDING_ORGANIZATION_OPTIONS } from "@/lib/opco-funding";
 import {
   PISTE_ENTRY_OPTIONS,
@@ -382,9 +383,10 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
         .from("instructors")
         .select("id, first_name, last_name, email")
         .eq("status", "actif")
-        .order("last_name");
+        .order("last_name")
+        .order("first_name");
       if (error) throw error;
-      return data;
+      return sortByLastName(data || []);
     },
     enabled: open,
   });
@@ -614,7 +616,7 @@ export function InscriptionFormDialog({ open, onOpenChange, inscription }: Inscr
                         <SelectItem value="none">{t(translations.none)}</SelectItem>
                         {instructors?.map((instructor) => (
                           <SelectItem key={instructor.id} value={instructor.id}>
-                            {instructor.first_name} {instructor.last_name}
+                            {formatNameLastFirst(instructor)}
                           </SelectItem>
                         ))}
                       </SelectContent>

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { sortByLastName } from "@/lib/person-name";
 import { languagesInclude } from "@/lib/taught-languages";
 
 export interface Instructor {
@@ -74,7 +75,11 @@ export function useInstructors(filters?: InstructorFilters) {
   return useQuery({
     queryKey: ["instructors", filters],
     queryFn: async () => {
-      let query = supabase.from("instructors").select("*").order("last_name");
+      let query = supabase
+        .from("instructors")
+        .select("*")
+        .order("last_name")
+        .order("first_name");
 
       const statusFilter = filters?.status ?? "actif";
       if (statusFilter !== "all") {
@@ -97,7 +102,7 @@ export function useInstructors(filters?: InstructorFilters) {
       if (filters?.language) {
         results = results.filter((i) => languagesInclude(i.languages, filters.language!));
       }
-      return results;
+      return sortByLastName(results);
     },
   });
 }
