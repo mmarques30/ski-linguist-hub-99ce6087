@@ -4,8 +4,11 @@ import { join } from "node:path";
 import {
   buildExitTestLink,
   exitTestBlocksEndPack,
+  exitTestFormationKind,
   isExitTestCompleted,
   isExitTestInvited,
+  shouldAutoInviteCollectiveOnLastDay,
+  shouldAutoInviteIndividualOnFinished,
 } from "./exit-test";
 
 describe("exit-test gates", () => {
@@ -65,10 +68,98 @@ describe("exit-test gates", () => {
       "utf8"
     );
     expect(edge).toContain("exit_test_invite");
-    expect(edge).toContain("exit_test_link");
-    expect(edge).toContain("obligatoire");
+    expect(edge).toContain("inviteExitTestForInscription");
+
+    const batch = readFileSync(
+      join(
+        process.cwd(),
+        "supabase/functions/process-exit-test-invites/index.ts"
+      ),
+      "utf8"
+    );
+    expect(batch).toContain("parisTodayYmd");
+    expect(batch).toContain("collective");
 
     const app = readFileSync(join(process.cwd(), "src/App.tsx"), "utf8");
     expect(app).toContain("/exit-test/:token");
+  });
+
+  it("discrimine collectif / individuel et les déclencheurs auto", () => {
+    expect(
+      exitTestFormationKind({ courseType: "Collectif", modality: "presentiel" })
+    ).toBe("collective");
+    expect(
+      exitTestFormationKind({
+        courseType: "Individuel",
+        modality: "en_ligne_individuel",
+      })
+    ).toBe("individuelle");
+
+    expect(
+      shouldAutoInviteCollectiveOnLastDay({
+        courseType: "Collectif",
+        endDate: "2026-11-13",
+        todayParis: "2026-11-13",
+        status: "en_cours",
+      })
+    ).toBe(true);
+    expect(
+      shouldAutoInviteCollectiveOnLastDay({
+        courseType: "Collectif",
+        endDate: "2026-11-12",
+        todayParis: "2026-11-13",
+        status: "en_cours",
+      })
+    ).toBe(false);
+    expect(
+      shouldAutoInviteCollectiveOnLastDay({
+        courseType: "Individuel",
+        endDate: "2026-11-13",
+        todayParis: "2026-11-13",
+        status: "en_cours",
+      })
+    ).toBe(false);
+
+    expect(
+      shouldAutoInviteIndividualOnFinished({
+        courseType: "Individuel",
+        status: "en_cours",
+        exit_form_completed_at: "2026-11-13T10:00:00Z",
+      })
+    ).toBe(true);
+    expect(
+      shouldAutoInviteIndividualOnFinished({
+        courseType: "Individuel",
+        status: "terminee",
+      })
+    ).toBe(true);
+    expect(
+      shouldAutoInviteIndividualOnFinished({
+        courseType: "Collectif",
+        status: "terminee",
+        exit_form_completed_at: "2026-11-13T10:00:00Z",
+      })
+    ).toBe(false);
+    expect(
+      shouldAutoInviteIndividualOnFinished({
+        courseType: "Individuel",
+        status: "en_cours",
+        exit_form_completed_at: "2026-11-13T10:00:00Z",
+        exit_test_invited_at: "2026-11-13T10:05:00Z",
+      })
+    ).toBe(false);
+  });
+
+  it("la migration auto-invite active le modèle et le cron", () => {
+    const sql = readFileSync(
+      join(
+        process.cwd(),
+        "supabase/migrations/20261113093000_exit_test_auto_invite.sql"
+      ),
+      "utf8"
+    );
+    expect(sql).toContain("process-exit-test-invites");
+    expect(sql).toContain("exit_test_invite_individuelle");
+    expect(sql).toContain("is_active = true");
   });
 });

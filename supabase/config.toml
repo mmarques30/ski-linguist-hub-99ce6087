@@ -25,6 +25,9 @@ verify_jwt = true
 [functions.send-exit-test-invite]
 verify_jwt = true
 
+[functions.process-exit-test-invites]
+verify_jwt = true
+
 [functions.create-user]
 verify_jwt = false
 
