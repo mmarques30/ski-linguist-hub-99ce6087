@@ -1,20 +1,21 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, Info, CalendarRange, CalendarClock } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, Info, CalendarRange, CalendarClock, RefreshCw } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSeasonFilter } from "@/contexts/SeasonContext";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
-import { useSessions, type Session } from "@/hooks/useSessions";
+import { useSessions, useSyncPlanningSessions, type Session } from "@/hooks/useSessions";
 import { SessionFormDialog } from "@/components/sessions/SessionFormDialog";
 import { SessionDetailPanel } from "@/components/sessions/SessionDetailPanel";
 import { UnassignedSidebar } from "@/components/sessions/UnassignedSidebar";
 import { LANGUAGE_BLOCK_CLASS, toneForLanguage } from "@/components/sessions/session-tints";
 import { LANGUAGE_LABELS } from "@/lib/language-catalog";
+import { isCohortSession, sessionCoversLocalDay } from "@/lib/planning-sessions";
 import {
   FilterBar,
   PageHeader,
@@ -32,6 +33,7 @@ import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const translations = {
   title: { fr: "Planning des sessions", "pt-BR": "Planejamento de sessões", en: "Session Planning" },
@@ -50,7 +52,8 @@ export default function Sessions() {
   const { t } = useLanguage();
   const { seasonId, seasonStart, seasonEnd } = useSeasonFilter();
   const { canEdit } = useUserPermissions();
-  const editable = canEdit("classes");
+  const editable = canEdit("inscriptions");
+  const syncPlanning = useSyncPlanningSessions();
 
   const [viewMode, setViewMode] = useState<"week" | "month">("week");
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -60,6 +63,31 @@ export default function Sessions() {
   const [editSession, setEditSession] = useState<Session | null>(null);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [clickedSlot, setClickedSlot] = useState<Date | null>(null);
+  const [didAutoSync, setDidAutoSync] = useState(false);
+
+  // Une fois par visite : aligne le calendrier sur le catalogue /register.
+  useEffect(() => {
+    if (didAutoSync || syncPlanning.isPending) return;
+    setDidAutoSync(true);
+    syncPlanning.mutate(undefined, {
+      onError: (err) => {
+        console.error("sync_planning_sessions_from_offerings", err);
+      },
+    });
+  }, [didAutoSync, syncPlanning]);
+
+  const handleManualSync = () => {
+    syncPlanning.mutate(undefined, {
+      onSuccess: (result) => {
+        toast.success(
+          `Planning synchronisé — ${result.sessions_upserted ?? 0} session(s) catalogue`
+        );
+      },
+      onError: (err: Error) => {
+        toast.error(err.message || "Synchronisation impossible");
+      },
+    });
+  };
 
   // Date range
   const rangeStart = viewMode === "week"
@@ -122,17 +150,17 @@ export default function Sessions() {
     }
   };
 
-  // Group sessions by day for week view
+  // Cohortes multi-jours : présentes sur chaque jour civil couvert.
   const sessionsByDay = useMemo(() => {
     const map = new Map<string, Session[]>();
-    (sessions || []).forEach((s) => {
-      const key = format(new Date(s.start_datetime), "yyyy-MM-dd");
-      const arr = map.get(key) || [];
-      arr.push(s);
-      map.set(key, arr);
-    });
+    const list = sessions || [];
+    for (const day of days) {
+      const key = format(day, "yyyy-MM-dd");
+      const daySessions = list.filter((s) => sessionCoversLocalDay(s, key));
+      if (daySessions.length) map.set(key, daySessions);
+    }
     return map;
-  }, [sessions]);
+  }, [sessions, days]);
 
   const headerLabel = viewMode === "week"
     ? `${format(rangeStart, "d MMM", { locale: fr })} — ${format(rangeEnd, "d MMM yyyy", { locale: fr })}`
@@ -168,11 +196,23 @@ export default function Sessions() {
           icon={CalendarDays}
           tone="blue"
           actions={
-            editable ? (
-              <Button onClick={() => { setEditSession(null); setClickedSlot(null); setFormOpen(true); }}>
-                <Plus className="h-4 w-4 mr-2" />{t(translations.newSession)}
-              </Button>
-            ) : undefined
+            <div className="flex flex-wrap items-center gap-2">
+              {editable ? (
+                <Button
+                  variant="outline"
+                  onClick={handleManualSync}
+                  disabled={syncPlanning.isPending}
+                >
+                  <RefreshCw className={cn("h-4 w-4 mr-2", syncPlanning.isPending && "animate-spin")} />
+                  Sync catalogue
+                </Button>
+              ) : null}
+              {editable ? (
+                <Button onClick={() => { setEditSession(null); setClickedSlot(null); setFormOpen(true); }}>
+                  <Plus className="h-4 w-4 mr-2" />{t(translations.newSession)}
+                </Button>
+              ) : null}
+            </div>
           }
         />
 
@@ -182,16 +222,16 @@ export default function Sessions() {
           className="lg:grid-cols-[minmax(0,1fr)_320px]"
           main={
             <>
-              {(sessions?.length ?? 0) === 0 && (
+              {(sessions?.length ?? 0) === 0 && !syncPlanning.isPending && (
                 <Alert>
                   <Info className="h-4 w-4" />
                   <AlertTitle>Aucune session sur cette période</AlertTitle>
                   <AlertDescription>
-                    Le planning est vide pour les dates affichées
+                    Aucune cohorte catalogue ni créneau manuel pour les dates affichées
                     {filterLang !== "all" || filterInstructor !== "all"
                       ? " (avec les filtres actifs)"
                       : ""}
-                    . Ce n&apos;est pas un bug : créez une session ou changez de semaine / mois.
+                    . Changez de semaine / mois, ou lancez « Sync catalogue ».
                   </AlertDescription>
                 </Alert>
               )}
@@ -335,13 +375,18 @@ function WeekView({
   onSessionClick: (s: Session) => void;
   selectedSessionId?: string;
 }) {
+  const weekDays = days.slice(0, 7);
+  const hasCohorts = weekDays.some((day) =>
+    (sessionsByDay.get(format(day, "yyyy-MM-dd")) || []).some(isCohortSession)
+  );
+
   return (
     <div className="overflow-x-auto scrollbar-thin">
       <div className="min-w-[640px]">
         {/* Day headers */}
         <div className="grid grid-cols-[52px_repeat(7,1fr)] border-y border-border bg-[hsl(var(--surface-sunken))]">
           <div className="p-2" />
-          {days.slice(0, 7).map((day) => (
+          {weekDays.map((day) => (
             <div
               key={day.toISOString()}
               className={cn(
@@ -357,17 +402,61 @@ function WeekView({
           ))}
         </div>
 
-        {/* Time grid */}
+        {/* Bande cohortes catalogue (semaine / stage) */}
+        {hasCohorts ? (
+          <div className="grid grid-cols-[52px_repeat(7,1fr)] border-b border-border">
+            <div className="flex items-center justify-end p-1.5 pr-2 text-2xs text-muted-foreground">
+              Stage
+            </div>
+            {weekDays.map((day) => {
+              const key = format(day, "yyyy-MM-dd");
+              const cohorts = (sessionsByDay.get(key) || []).filter(isCohortSession);
+              return (
+                <div
+                  key={`cohort-${key}`}
+                  className={cn(
+                    "min-h-[4.5rem] space-y-0.5 border-l border-border p-1",
+                    isToday(day) && "bg-primary/[0.03]"
+                  )}
+                >
+                  {cohorts.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      className={cn(
+                        "w-full truncate rounded-sm border px-1 py-0.5 text-left text-2xs leading-tight",
+                        LANGUAGE_BLOCK_CLASS[toneForLanguage(s.language)],
+                        selectedSessionId === s.id && "ring-2 ring-primary"
+                      )}
+                      onClick={() => onSessionClick(s)}
+                    >
+                      <div className="truncate font-semibold">{s.title}</div>
+                      <div className="truncate tabular opacity-80">
+                        {s.current_students}/{s.max_students}
+                        {s.instructor_last_name
+                          ? ` · ${s.instructor_first_name} ${s.instructor_last_name}`
+                          : ""}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {/* Time grid — créneaux manuels uniquement */}
         <div className="grid max-h-[600px] grid-cols-[52px_repeat(7,1fr)] overflow-y-auto scrollbar-thin">
           {HOURS.map((hour) => (
             <div key={hour} className="contents">
               <div className="flex h-14 items-start justify-end border-t border-border p-1.5 pr-2 text-2xs tabular text-muted-foreground">
                 {hour}:00
               </div>
-              {days.slice(0, 7).map((day) => {
+              {weekDays.map((day) => {
                 const key = format(day, "yyyy-MM-dd");
                 const daySessions = sessionsByDay.get(key) || [];
                 const hourSessions = daySessions.filter((s) => {
+                  if (isCohortSession(s)) return false;
                   const h = new Date(s.start_datetime).getHours();
                   return h === hour;
                 });
@@ -479,7 +568,9 @@ function MonthView({
                       )}
                       onClick={(e) => { e.stopPropagation(); onSessionClick(s); }}
                     >
-                      {format(new Date(s.start_datetime), "HH:mm")} {s.title}
+                      {isCohortSession(s)
+                        ? s.title
+                        : `${format(new Date(s.start_datetime), "HH:mm")} ${s.title}`}
                     </div>
                   ))}
                   {daySessions.length > 3 && (

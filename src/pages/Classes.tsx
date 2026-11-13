@@ -162,7 +162,7 @@ const timeLabels = {
 export default function Classes() {
   const { t } = useLanguage();
   const { canEdit } = useUserPermissions();
-  const editable = canEdit("classes");
+  const editable = canEdit("inscriptions");
 
   const statusLabels = {
     upcoming: t(translations.statusUpcoming),

@@ -6,6 +6,7 @@ import { fr } from "date-fns/locale";
 import { toast } from "sonner";
 import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import { LANGUAGE_DOT_CLASS, SESSION_STATUS_TONE, toneForLanguage } from "@/components/sessions/session-tints";
+import { isCohortSession } from "@/lib/planning-sessions";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -96,7 +97,9 @@ export function SessionDetailPanel({ session, onClose, onEdit }: Props) {
           <div className="flex items-center gap-2 text-muted-foreground">
             <Clock className="h-3.5 w-3.5 shrink-0" />
             <span className="min-w-0 truncate tabular">
-              {format(new Date(session.start_datetime), "dd/MM HH:mm", { locale: fr })} — {format(new Date(session.end_datetime), "HH:mm")}
+              {isCohortSession(session)
+                ? `${format(new Date(session.start_datetime), "dd/MM/yyyy", { locale: fr })} — ${format(new Date(session.end_datetime), "dd/MM/yyyy", { locale: fr })}`
+                : `${format(new Date(session.start_datetime), "dd/MM HH:mm", { locale: fr })} — ${format(new Date(session.end_datetime), "HH:mm")}`}
             </span>
           </div>
           {session.location && (
