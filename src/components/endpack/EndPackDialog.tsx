@@ -27,8 +27,14 @@ import {
 } from "lucide-react";
 import { useGenerateEndPack } from "@/hooks/useEndPack";
 import { useSendTrainingCompletionPack } from "@/hooks/useSendTrainingCompletionPack";
+import { useSendExitTestInvite } from "@/hooks/useExitTest";
 import { useInscriptionProgression } from "@/hooks/useInscriptionProgression";
 import { useAttendanceRate } from "@/hooks/useAttendance";
+import {
+  exitTestBlocksEndPack,
+  isExitTestCompleted,
+} from "@/lib/exit-test";
+import { useQuery } from "@tanstack/react-query";
 import {
   canIssueCertificate,
   OBJECTIF_ATTEINT_LABELS,
@@ -78,6 +84,8 @@ interface EndPackDialogProps {
     course_type?: string | null;
     student_email?: string | null;
     student_city?: string | null;
+    exit_test_id?: string | null;
+    exit_test_invited_at?: string | null;
   };
   onSuccess?: () => void;
 }
@@ -93,7 +101,6 @@ export function EndPackDialog({
   const [generateInvoice, setGenerateInvoice] = useState(true);
   const [generateCertificate, setGenerateCertificate] = useState(true);
   const [generateAttestation, setGenerateAttestation] = useState(true);
-  const [sendSurvey, setSendSurvey] = useState(true);
   const [result, setResult] = useState<{
     invoiceId?: string;
     invoiceNumber?: string | null;
@@ -110,11 +117,45 @@ export function EndPackDialog({
 
   const generateEndPack = useGenerateEndPack();
   const sendPack = useSendTrainingCompletionPack();
+  const sendExitTest = useSendExitTestInvite();
   const { data: progression, isLoading: progressionLoading } =
     useInscriptionProgression(open ? inscription.id : undefined);
   const { data: computedAttendance } = useAttendanceRate(
     open ? inscription.id : undefined
   );
+
+  const exitTestId =
+    inscription.exit_test_id ??
+    (progression as { exit_test_id?: string | null } | undefined)?.exit_test_id ??
+    null;
+  const exitTestInvitedAt =
+    inscription.exit_test_invited_at ??
+    (progression as { exit_test_invited_at?: string | null } | undefined)
+      ?.exit_test_invited_at ??
+    null;
+
+  const { data: exitTestRow } = useQuery({
+    queryKey: ["exit-test-status", exitTestId],
+    queryFn: async () => {
+      if (!exitTestId) return null;
+      const { data, error } = await supabase
+        .from("placement_tests")
+        .select("id, completed_at, invite_token")
+        .eq("id", exitTestId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: open && !!exitTestId,
+  });
+
+  const exitTestSnapshot = {
+    exit_test_id: exitTestId,
+    exit_test_invited_at: exitTestInvitedAt,
+    exit_test_completed_at: exitTestRow?.completed_at ?? null,
+  };
+  const exitTestReady = isExitTestCompleted(exitTestSnapshot);
+  const exitTestBlockReason = exitTestBlocksEndPack(exitTestSnapshot);
 
   const merged = useMemo(
     () => ({
@@ -226,7 +267,9 @@ export function EndPackDialog({
       generateInvoice,
       generateCertificate: generateCertificate && exitReady,
       generateAttestation,
-      sendSurvey,
+      exitTestId,
+      exitTestInvitedAt,
+      exitTestCompletedAt: exitTestRow?.completed_at ?? null,
       forceRegenerate: true,
       fundingOrganization: inscription.funding_organization ?? "FIFPL",
       pedagogicalAmount: merged.price ?? inscription.price ?? null,
@@ -313,6 +356,47 @@ export function EndPackDialog({
                 </StatusPill>
               )}
             </div>
+
+            {!exitTestReady && (
+              <Alert variant="destructive" className="mb-3">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="space-y-3">
+                  <p>
+                    {exitTestBlockReason ||
+                      "Test de fin de formation obligatoire avant le dossier."}
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => sendExitTest.mutate(merged.id)}
+                    disabled={sendExitTest.isPending}
+                  >
+                    {sendExitTest.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Envoi du test…
+                      </>
+                    ) : (
+                      <>
+                        <Send className="mr-2 h-4 w-4" />
+                        {exitTestId
+                          ? "Renvoyer le test de fin"
+                          : "Envoyer le test de fin (obligatoire)"}
+                      </>
+                    )}
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {exitTestReady && (
+              <Alert className="mb-3">
+                <CheckCircle2 className="h-4 w-4" />
+                <AlertDescription>
+                  Test de fin de formation complété — le pack peut être généré.
+                </AlertDescription>
+              </Alert>
+            )}
 
             {clotureBloquee ? (
               <Alert variant="destructive">
@@ -475,20 +559,15 @@ export function EndPackDialog({
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3 p-3 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))]">
-                  <Checkbox
-                    id="survey"
-                    checked={sendSurvey}
-                    onCheckedChange={(checked) => setSendSurvey(!!checked)}
-                  />
+                <div className="flex items-center space-x-3 p-3 rounded-[var(--radius)] border border-[hsl(var(--tint-teal-ring))] bg-[hsl(var(--tint-teal-bg))]">
+                  <ClipboardCheck className="h-4 w-4 text-[hsl(var(--tint-teal-fg))] shrink-0" />
                   <div className="flex-1">
-                    <label
-                      htmlFor="survey"
-                      className="flex items-center gap-2 font-medium cursor-pointer"
-                    >
-                      <ClipboardCheck className="h-4 w-4 text-[hsl(var(--tint-teal-fg))]" />
+                    <p className="font-medium text-sm">
                       Questionnaire de satisfaction
-                    </label>
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Toujours inclus — le lien part avec l&apos;e-mail du pack
+                    </p>
                   </div>
                 </div>
               </div>
@@ -504,10 +583,10 @@ export function EndPackDialog({
                   generateEndPack.isPending ||
                   progressionLoading ||
                   !canGenerate ||
+                  !exitTestReady ||
                   (!generateInvoice &&
                     !(generateCertificate && exitReady) &&
-                    !generateAttestation &&
-                    !sendSurvey)
+                    !generateAttestation)
                 }
               >
                 {generateEndPack.isPending ? (
@@ -537,8 +616,8 @@ export function EndPackDialog({
               </h3>
               <p className="text-sm text-muted-foreground mb-4">
                 {emailSent
-                  ? "L'e-mail a été envoyé au stagiaire (copie info@fli.fr)."
-                  : "Vérifiez les pièces dans Documents de l'inscription, puis envoyez."}
+                  ? "Pack + questionnaire envoyés au stagiaire (copie info@fli.fr)."
+                  : "Vérifiez les pièces, puis envoyez — le lien questionnaire part avec le pack."}
               </p>
               <div className="space-y-3 text-left max-w-sm mx-auto">
                 {result.invoiceId && (
@@ -612,7 +691,7 @@ export function EndPackDialog({
                 ) : (
                   <>
                     <Send className="mr-2 h-4 w-4" />
-                    {emailSent ? "Envoyé" : "Envoyer"}
+                    {emailSent ? "Envoyé" : "Envoyer pack + questionnaire"}
                   </>
                 )}
               </Button>

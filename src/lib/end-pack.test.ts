@@ -71,6 +71,9 @@ function input(overrides: Partial<EndPackInput> = {}): EndPackInput {
     generateCertificate: true,
     generateAttestation: true,
     sendSurvey: true,
+    exitTestId: "exit-test-1",
+    exitTestInvitedAt: "2026-01-15T10:00:00Z",
+    exitTestCompletedAt: "2026-01-16T10:00:00Z",
     certificatePdfBlob: new Blob(["pdf"], { type: "application/pdf" }),
     attestationPdfBlob: new Blob(["attestation"], { type: "application/pdf" }),
     invoicePdfBlob: new Blob(["invoice"], { type: "application/pdf" }),
@@ -296,6 +299,17 @@ describe("describeEndPackRollback", () => {
 });
 
 describe("generateEndPack — ordre et compensation", () => {
+  it("refuse le pack sans test de fin complété", async () => {
+    const memory = createMemoryStore();
+    await expect(
+      generateEndPack(
+        memory.store,
+        input({ exitTestId: null, exitTestCompletedAt: null })
+      )
+    ).rejects.toThrow(/test de fin/i);
+    expect(memory.inscription.status).toBe("en_cours");
+  });
+
   it("crée facture, certificat, attestation et enquête avant de passer à Terminée", async () => {
     const memory = createMemoryStore();
     const result = await generateEndPack(memory.store, input());
@@ -443,7 +457,6 @@ describe("generateEndPack — ordre et compensation", () => {
       input({
         generateCertificate: false,
         generateAttestation: false,
-        sendSurvey: false,
         invoicePdfContext: {
           status: "paid",
           paymentDate: "2026-01-17",
@@ -459,6 +472,22 @@ describe("generateEndPack — ordre et compensation", () => {
     expect(memory.invoices[0].payment_date).toBe("2026-01-17");
     expect(result.invoiceId).toBe("inv-draft");
     expect(result.invoicePath).toBeTruthy();
+    expect(result.surveyToken).toBeTruthy();
+  });
+
+  it("crée toujours le questionnaire même si sendSurvey est false (déprécié)", async () => {
+    const memory = createMemoryStore();
+    const result = await generateEndPack(
+      memory.store,
+      input({
+        generateCertificate: false,
+        generateAttestation: false,
+        sendSurvey: false,
+      })
+    );
+    expect(result.surveyToken).toBeTruthy();
+    expect(memory.surveys).toHaveLength(1);
+    expect(memory.calls).toContain("insertSurvey");
   });
 
   it("génère le pack sans certificat si generateCertificate est false", async () => {
@@ -502,7 +531,6 @@ describe("generateEndPack — ordre et compensation", () => {
       input({
         generateCertificate: false,
         generateAttestation: false,
-        sendSurvey: false,
       })
     );
     expect(inserted).toEqual({ amount_ht: 150, payment_type: "saldo" });

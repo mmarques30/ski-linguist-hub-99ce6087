@@ -1298,6 +1298,11 @@ export default function InscriptionDetails() {
               funding_organization:
                 (inscription as { funding_organization?: string | null })
                   .funding_organization ?? null,
+              exit_test_id:
+                (inscription as { exit_test_id?: string | null }).exit_test_id ?? null,
+              exit_test_invited_at:
+                (inscription as { exit_test_invited_at?: string | null })
+                  .exit_test_invited_at ?? null,
             }}
           />
 

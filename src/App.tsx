@@ -67,6 +67,7 @@ import TestsOrauxPage from "./pages/tests-oraux/TestsOrauxPage";
 import SalonDirecteursPage from "./pages/salon/Index";
 import { PaymentSuccessPage, PaymentCancelPage } from "./pages/register/PaymentReturn";
 import SatisfactionSurvey from "./pages/survey/SatisfactionSurvey";
+import ExitTest from "./pages/exit-test/ExitTest";
 import ContinuousImprovement from "./pages/ContinuousImprovement";
 import SatisfactionStats from "./pages/SatisfactionStats";
 import PortalStudentPicker from "./pages/portails/PortalStudentPicker";
@@ -128,6 +129,7 @@ const App = () => (
             <Route path="/register/payment-success" element={<PaymentSuccessPage />} />
             <Route path="/register/payment-cancel" element={<PaymentCancelPage />} />
             <Route path="/survey/:token" element={<SatisfactionSurvey />} />
+            <Route path="/exit-test/:token" element={<ExitTest />} />
             <Route path="/suivi/:token" element={<InscriptionSuiviPage />} />
             <Route path="/emarger/:token" element={<EmargerPage />} />
             <Route path="/conditions-generales" element={<ConditionsGenerales />} />

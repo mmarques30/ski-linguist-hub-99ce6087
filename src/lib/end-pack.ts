@@ -26,6 +26,7 @@ import {
   buildInvoicePdfPath,
   type InvoicePdfInput,
 } from "@/lib/invoice-pdf";
+import { exitTestBlocksEndPack } from "@/lib/exit-test";
 
 export type EndPackStep =
   | "invoice"
@@ -73,7 +74,15 @@ export interface EndPackInput {
   generateCertificate: boolean;
   /** Attestation de présence FIF-PL (dossier de remboursement). */
   generateAttestation: boolean;
-  sendSurvey: boolean;
+  /**
+   * @deprecated Le questionnaire est toujours créé (lien dans l'e-mail pack).
+   * Conservé pour compatibilité des scripts / appels existants.
+   */
+  sendSurvey?: boolean;
+  /** Test de fin complété (gate) — obligatoire avant clôture. */
+  exitTestCompletedAt?: string | null;
+  exitTestId?: string | null;
+  exitTestInvitedAt?: string | null;
   /**
    * Régénère les PDF même s'ils existent déjà (tampon/signature, facture
    * officielle, etc.). Les lignes DB (facture, certificat, enquête) sont
@@ -362,6 +371,15 @@ export async function generateEndPack(
     objectif_atteint: data.objectifAtteint ?? null,
     commentaire_sortie: data.commentaireSortie ?? null,
   };
+
+  const exitTestBlock = exitTestBlocksEndPack({
+    exit_test_id: data.exitTestId,
+    exit_test_invited_at: data.exitTestInvitedAt,
+    exit_test_completed_at: data.exitTestCompletedAt,
+  });
+  if (exitTestBlock) {
+    throw new Error(exitTestBlock);
+  }
 
   if (data.generateCertificate && !canIssueCertificate(exitFields)) {
     throw new Error(
@@ -687,19 +705,19 @@ export async function generateEndPack(
       }
     }
 
-    if (data.sendSurvey) {
-      step = "survey";
-      const existingSurvey = await store.findExistingSurvey(data.inscriptionId);
-      if (existingSurvey) {
-        result.surveyToken = existingSurvey.token;
-      } else {
-        const survey = await store.insertSurvey({
-          inscription_id: data.inscriptionId,
-          student_id: data.studentId,
-        });
-        created.surveyId = survey.id;
-        result.surveyToken = survey.token;
-      }
+    // Questionnaire toujours créé : le pack fin l'inclut systématiquement
+    // (lien {{survey_link}} dans training_completion_pack_student).
+    step = "survey";
+    const existingSurvey = await store.findExistingSurvey(data.inscriptionId);
+    if (existingSurvey) {
+      result.surveyToken = existingSurvey.token;
+    } else {
+      const survey = await store.insertSurvey({
+        inscription_id: data.inscriptionId,
+        student_id: data.studentId,
+      });
+      created.surveyId = survey.id;
+      result.surveyToken = survey.token;
     }
 
     step = "close";

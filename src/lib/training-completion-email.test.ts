@@ -52,4 +52,20 @@ describe("stripCertificateMentionsFromCompletionEmail", () => {
       /Certificat PDF manquant — générez d'abord le pack/
     );
   });
+
+  it("l'edge crée le questionnaire s'il manque et expose survey_link", () => {
+    const edge = readFileSync(
+      join(
+        process.cwd(),
+        "supabase/functions/send-training-completion-pack/index.ts"
+      ),
+      "utf8"
+    );
+    expect(edge).toContain('from("satisfaction_surveys")');
+    expect(edge).toContain(".insert({");
+    expect(edge).toContain("survey_link:");
+    expect(edge).not.toMatch(
+      /Questionnaire de satisfaction manquant — générez d'abord le pack/
+    );
+  });
 });

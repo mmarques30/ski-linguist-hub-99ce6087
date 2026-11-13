@@ -1244,6 +1244,7 @@ export type Database = {
           exit_form_completed_at: string | null
           exit_level: string | null
           exit_test_id: string | null
+          exit_test_invited_at: string | null
           expectations: string | null
           final_general_level: string | null
           final_specific_level: string | null
@@ -1330,6 +1331,7 @@ export type Database = {
           exit_form_completed_at?: string | null
           exit_level?: string | null
           exit_test_id?: string | null
+          exit_test_invited_at?: string | null
           expectations?: string | null
           final_general_level?: string | null
           final_specific_level?: string | null
@@ -1416,6 +1418,7 @@ export type Database = {
           exit_form_completed_at?: string | null
           exit_level?: string | null
           exit_test_id?: string | null
+          exit_test_invited_at?: string | null
           expectations?: string | null
           final_general_level?: string | null
           final_specific_level?: string | null
@@ -2635,6 +2638,7 @@ export type Database = {
           determined_level: string | null
           id: string
           inscription_id: string | null
+          invite_token: string
           language: string
           score_percentage: number | null
           status: string | null
@@ -2649,6 +2653,7 @@ export type Database = {
           determined_level?: string | null
           id?: string
           inscription_id?: string | null
+          invite_token?: string
           language: string
           score_percentage?: number | null
           status?: string | null
@@ -2663,6 +2668,7 @@ export type Database = {
           determined_level?: string | null
           id?: string
           inscription_id?: string | null
+          invite_token?: string
           language?: string
           score_percentage?: number | null
           status?: string | null
@@ -4549,6 +4555,10 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_exit_test_context: {
+        Args: { p_token: string }
+        Returns: Json
+      }
       get_my_instructor_id: { Args: never; Returns: string }
       get_my_student_id: { Args: never; Returns: string }
       get_satisfaction_survey_context: {
@@ -4632,6 +4642,10 @@ export type Database = {
       storage_object_belongs_to_me: {
         Args: { _name: string }
         Returns: boolean
+      }
+      submit_exit_test_by_token: {
+        Args: { p_data: Json; p_token: string }
+        Returns: undefined
       }
       submit_salon_demo_test: {
         Args: {

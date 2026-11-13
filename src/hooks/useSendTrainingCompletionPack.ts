@@ -21,9 +21,10 @@ export type SendTrainingCompletionPackResult = {
 };
 
 /**
- * Envoi manuel du pack fin (certificat + attestation + facture) via l'edge
- * `send-training-completion-pack`. Les crons sont fermés — Paula déclenche
- * depuis l'UI après avoir validé les documents générés.
+ * Envoi manuel du pack fin (certificat + attestation + facture + lien
+ * questionnaire) via l'edge `send-training-completion-pack`. Les crons sont
+ * fermés — Paula déclenche depuis l'UI après avoir validé les documents.
+ * L'edge crée le questionnaire s'il manque encore.
  */
 export function useSendTrainingCompletionPack() {
   const queryClient = useQueryClient();
@@ -62,8 +63,8 @@ export function useSendTrainingCompletionPack() {
       });
       toast.success(
         data.to
-          ? `Pack fin envoyé à ${data.to}`
-          : "Pack fin de formation envoyé"
+          ? `Pack fin + questionnaire envoyés à ${data.to}`
+          : "Pack fin + questionnaire envoyés"
       );
     },
     onError: (error: Error) => {
