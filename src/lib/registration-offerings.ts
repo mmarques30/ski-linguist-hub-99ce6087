@@ -1,4 +1,4 @@
-export type EnrollmentStatus = "open" | "waitlist";
+export type EnrollmentStatus = "open" | "waitlist" | "invite_only";
 
 /** Mode de financement session (SESSIONS §3). */
 export type SessionFundingMode =
@@ -38,6 +38,11 @@ export interface RegistrationOffering {
   alumni_price?: number | null;
   funding_mode?: SessionFundingMode | null;
   enrollment_status?: EnrollmentStatus | null;
+  /**
+   * false = pas d'étape paiement dans /register (forfait école / liste invitée).
+   * Défaut catalogue : true.
+   */
+  student_payment_required?: boolean | null;
   sort_order: number;
 }
 
@@ -203,11 +208,37 @@ export function isWaitlistOffering(
   return offering.enrollment_status === "waitlist";
 }
 
+export function isInviteOnlyOffering(
+  offering: Pick<RegistrationOffering, "enrollment_status">
+): boolean {
+  return offering.enrollment_status === "invite_only";
+}
+
 export function isOpenOffering(
   offering: Pick<RegistrationOffering, "enrollment_status">
 ): boolean {
   return (offering.enrollment_status ?? "open") === "open";
 }
+
+/** Ouverte au parcours (libre ou sur invitation) — pas waitlist. */
+export function isEnrollableOffering(
+  offering: Pick<RegistrationOffering, "enrollment_status">
+): boolean {
+  return isOpenOffering(offering) || isInviteOnlyOffering(offering);
+}
+
+/** false catalogue → pas de paiement stagiaire (Samoëns PT, etc.). */
+export function requiresStudentPayment(
+  offering: Pick<RegistrationOffering, "student_payment_required"> | null | undefined
+): boolean {
+  return offering?.student_payment_required !== false;
+}
+
+export const INVITE_ONLY_MESSAGE =
+  "Cette session est réservée aux personnes invitée·s par FLI / l'ESF. Utilisez le lien reçu par e-mail, puis l'adresse e-mail de l'invitation.";
+
+export const INVITE_ONLY_SCHOOL_PAYS_MESSAGE =
+  "L'ESF prend en charge le règlement de cette session. Votre formulaire porte uniquement sur vos coordonnées, le test de positionnement et vos attentes — aucun paiement en ligne.";
 
 /** Libellé tarif avant connaissance de l'école. */
 export function formatOfferingPriceHint(

@@ -1,6 +1,6 @@
 /** Aligné sur src/lib/registration-offerings.ts — résolution tarif partenaire / anciens. */
 
-export type EnrollmentStatus = "open" | "waitlist";
+export type EnrollmentStatus = "open" | "waitlist" | "invite_only";
 
 export type SessionFundingMode =
   | "individuel"
@@ -16,6 +16,7 @@ export interface RegistrationOfferingPriceFields {
   alumni_price?: number | null;
   funding_mode?: SessionFundingMode | null;
   enrollment_status?: EnrollmentStatus | null;
+  student_payment_required?: boolean | null;
 }
 
 export type ResolveOfferingPriceOptions = {
@@ -134,8 +135,26 @@ export function isWaitlistOffering(
   return offering.enrollment_status === "waitlist";
 }
 
+export function isInviteOnlyOffering(
+  offering: Pick<RegistrationOfferingPriceFields, "enrollment_status">
+): boolean {
+  return offering.enrollment_status === "invite_only";
+}
+
 export function isOpenOffering(
   offering: Pick<RegistrationOfferingPriceFields, "enrollment_status">
 ): boolean {
   return (offering.enrollment_status ?? "open") === "open";
+}
+
+export function isEnrollableOffering(
+  offering: Pick<RegistrationOfferingPriceFields, "enrollment_status">
+): boolean {
+  return isOpenOffering(offering) || isInviteOnlyOffering(offering);
+}
+
+export function requiresStudentPayment(
+  offering: Pick<RegistrationOfferingPriceFields, "student_payment_required"> | null | undefined
+): boolean {
+  return offering?.student_payment_required !== false;
 }
