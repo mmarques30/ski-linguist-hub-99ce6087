@@ -2,7 +2,7 @@ slug: inscription_documents_fifpl
 titre: Dossier de formation — FIF-PL
 sujet: Votre dossier de formation {{language}} (FIF-PL) — {{inscription_code}}
 destinataire: Stagiaire (financement FIFPL)
-declencheur: Après confirmation des 150 € / paiement intégral (+30 min via scheduled_reminders DOCUMENT). Pack PJ : convention, programme, critères FIF-PL, tutoriel FIF-PL.
+declencheur: Après confirmation des 150 € / paiement intégral (+30 min via scheduled_reminders DOCUMENT). Pack PJ : convention (= devis FIF-PL), programme, critères FIF-PL, tutoriel FIF-PL. Précise aussi HT = TTC (formations non assujetties à la TVA).
 variables: language, inscription_code, student_name
 syntaxe: {{variable}}
 expediteur: FLI — France Langues International <noreply@fli.fr>
