@@ -15,6 +15,11 @@ export const REGISTRATION_PAYMENT_OPTIONS = {
   STRIPE_KLARNA_3X: "stripe_klarna_3x",
   VIREMENT_FULL: "virement_full",
   SCHOOL_FIFPL_CHEQUE: "school_fifpl_cheque",
+  /**
+   * Forfait école (Méribel…) : aucun règlement stagiaire — l'ESF prend tout
+   * (droits FIF-PL épuisés ou non utilisés).
+   */
+  SCHOOL_FULL_FUNDING: "school_full_funding",
 } as const;
 
 export type RegistrationPaymentOption =
@@ -189,6 +194,18 @@ export function getInscriptionPaymentFields(
   virementAmount: number;
 } {
   const option = normalizePaymentOption(paymentOption);
+
+  if (option === REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FULL_FUNDING) {
+    return {
+      paymentMethod: "ecole_integrale",
+      balanceAfterDeposit: 0,
+      depositAmount: null,
+      paymentFlow: "none",
+      paymentType: "total",
+      stripeAmount: 0,
+      virementAmount: 0,
+    };
+  }
 
   if (option === REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE) {
     return {

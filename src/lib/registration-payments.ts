@@ -22,6 +22,11 @@ export const REGISTRATION_PAYMENT_OPTIONS = {
   VIREMENT_FULL: "virement_full",
   /** Méribel / La Rosière : chèque FIF-PL envoyé à FLI (Montmélian), encaissé après la formation. */
   SCHOOL_FIFPL_CHEQUE: "school_fifpl_cheque",
+  /**
+   * Forfait école (Méribel…) : aucun règlement stagiaire — l'ESF prend tout
+   * (droits FIF-PL épuisés ou non utilisés).
+   */
+  SCHOOL_FULL_FUNDING: "school_full_funding",
 } as const;
 
 export type RegistrationPaymentOption =
@@ -142,10 +147,12 @@ export function getAvailablePaymentOptions(
 
   if (hidesDepositPaymentOptions(fundingMode)) {
     // Pas de Klarna pour ESF / forfait école (B2B) — OPCO ou échéancier virement.
+    // SCHOOL_FULL_FUNDING : moniteur sans droits FIF-PL restants (ex. Tom Boniface).
     return [
       REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL,
       REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL,
       REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE,
+      REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FULL_FUNDING,
     ];
   }
   return withKlarna3x([
@@ -178,6 +185,16 @@ export function getRegistrationPaymentSummary(
   option: RegistrationPaymentOption,
   options?: { studentShareEur?: number | null }
 ): RegistrationPaymentSummary {
+  if (option === REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FULL_FUNDING) {
+    return {
+      coursePrice,
+      dossierFee: 0,
+      balanceAfterDossier: 0,
+      amountDueNow: 0,
+      amountDueNowLabel: "Aucun règlement — financement intégral par mon ESF",
+    };
+  }
+
   if (option === REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE) {
     const studentShare = resolveSchoolFifplStudentShareEur(
       coursePrice,
@@ -238,6 +255,9 @@ export const CHEQUE_BALANCE_INSTRUCTION =
 export const SCHOOL_FIFPL_CHEQUE_INSTRUCTION =
   "Envoyez le chèque FIF-PL (votre part) à l'ordre de France Langues International, à : France Langues International — 25 avenue de la Gare, 73800 Montmélian. Il sera encaissé après la formation ; l'ESF règle le solde de son côté.";
 
+export const SCHOOL_FULL_FUNDING_INSTRUCTION =
+  "Aucun règlement de votre part : votre ESF prend en charge la totalité via le forfait école (cas typique si vos droits FIF-PL sont déjà utilisés). FLI facture l'ESF ; vous n'avez ni acompte ni chèque à envoyer.";
+
 export const PAYMENT_OPTION_LABELS: Record<RegistrationPaymentOption, string> = {
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]:
     "150 € paiement sécurisé en ligne + solde par chèque avant le début de la formation",
@@ -250,6 +270,8 @@ export const PAYMENT_OPTION_LABELS: Record<RegistrationPaymentOption, string> = 
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]: "Paiement intégral par virement bancaire",
   [REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE]:
     "Chèque FIF-PL à envoyer à FLI (Montmélian)",
+  [REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FULL_FUNDING]:
+    "Financement intégral par mon ESF",
 };
 
 export const PAYMENT_OPTION_DESCRIPTIONS: Record<RegistrationPaymentOption, string> = {
@@ -264,6 +286,7 @@ export const PAYMENT_OPTION_DESCRIPTIONS: Record<RegistrationPaymentOption, stri
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]:
     "Effectuez un virement bancaire pour le montant total de votre part.",
   [REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE]: SCHOOL_FIFPL_CHEQUE_INSTRUCTION,
+  [REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FULL_FUNDING]: SCHOOL_FULL_FUNDING_INSTRUCTION,
 };
 
 export function formatPaymentBreakdown(summary: RegistrationPaymentSummary): string {
@@ -347,4 +370,9 @@ export function hasChequeBalance(option: MaybePaymentOption): boolean {
 
 export function isSchoolFifplCheque(option: MaybePaymentOption): boolean {
   return option === REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE;
+}
+
+/** Forfait école : prise en charge 100 % ESF, zéro règlement stagiaire. */
+export function isSchoolFullFunding(option: MaybePaymentOption): boolean {
+  return option === REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FULL_FUNDING;
 }

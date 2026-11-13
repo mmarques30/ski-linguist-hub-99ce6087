@@ -140,6 +140,9 @@ function normalizeCivility(value: string | null | undefined): string {
 
 function paymentMethodLabelFr(method: string | null | undefined): string {
   const m = (method || "").toLowerCase();
+  if (m.includes("ecole_integrale") || m.includes("school_full")) {
+    return "financement intégral par l'ESF";
+  }
   if (m.includes("virement")) return "virement bancaire";
   // Avant « cheque » : stripe_deposit_cheque contient les deux tokens.
   if (m.includes("stripe_deposit") || m === "stripe" || m.includes("carte")) {

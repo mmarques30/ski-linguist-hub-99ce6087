@@ -181,7 +181,8 @@ describe("modes de règlement /register", () => {
       ...deno.matchAll(/depositAmount:\s*([^,\n]+)/g),
     ].map((m) => m[1].trim());
     expect(matches.filter((v) => v === "FRAIS_DOSSIER_EUR")).toHaveLength(2);
-    expect(matches.filter((v) => v === "null")).toHaveLength(3);
+    // null : stripe full / klarna / virement full / school cheque / school full funding
+    expect(matches.filter((v) => v === "null")).toHaveLength(4);
   });
 
   it("garde la copie Deno d'accord avec Klarna 3× (pas Alma)", () => {
@@ -288,10 +289,11 @@ describe("modes de règlement /register", () => {
     }
   });
 
-  it("masque l'acompte 150 € pour Méribel / La Rosière et propose intégral en ligne + chèque FLI", () => {
+  it("masque l'acompte 150 € pour Méribel / La Rosière et propose intégral en ligne + chèque FLI + ESF intégrale", () => {
     const schoolModes = getAvailablePaymentOptions("forfait_ecole");
     expect(schoolModes).toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL);
     expect(schoolModes).toContain(REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE);
+    expect(schoolModes).toContain(REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FULL_FUNDING);
     expect(schoolModes).toContain(REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL);
     expect(schoolModes).not.toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE);
     expect(schoolModes).not.toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X);
@@ -299,6 +301,18 @@ describe("modes de règlement /register", () => {
     const individual = getAvailablePaymentOptions("individuel");
     expect(individual).toContain(REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE);
     expect(individual).not.toContain(REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE);
+    expect(individual).not.toContain(REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FULL_FUNDING);
+
+    const esfFull = getRegistrationPaymentSummary(
+      900,
+      REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FULL_FUNDING
+    );
+    expect(esfFull.amountDueNow).toBe(0);
+    expect(esfFull.balanceAfterDossier).toBe(0);
+    expect(esfFull.amountDueNowLabel).toMatch(/intégral par mon ESF/i);
+    expect(PAYMENT_OPTION_LABELS[REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FULL_FUNDING]).toMatch(
+      /Financement intégral par mon ESF/i
+    );
 
     const cheque = getRegistrationPaymentSummary(
       900,
@@ -332,6 +346,9 @@ describe("modes de règlement /register", () => {
     expect(front).toContain("resolveSchoolFifplStudentShareEur");
     expect(deno).toContain("resolveSchoolFifplStudentShareEur");
     expect(deno).toContain("options?.studentShareEur");
+    expect(front).toContain("SCHOOL_FULL_FUNDING");
+    expect(deno).toContain("SCHOOL_FULL_FUNDING");
+    expect(deno).toContain('paymentMethod: "ecole_integrale"');
   });
 
   it("stocke stripe_deposit_cheque (pas cheque nu) pour l'acompte Stripe + solde chèque", () => {
@@ -361,6 +378,9 @@ describe("modes de règlement /register", () => {
     expect(submit).not.toContain("studentShareEur: schoolFifplStudentShareEur");
     expect(submit).toContain("coveredOnCourseEur");
     expect(submit).toContain("pendingStaffValidation");
+    expect(submit).toContain("SCHOOL_FULL_FUNDING");
+    expect(submit).toContain("Financement intégral par mon ESF");
+    expect(submit).toContain("ecole_integrale");
   });
 
   it("passe le montant payable à getAvailablePaymentOptions dans PaymentStep", () => {
