@@ -97,7 +97,9 @@ export function SessionDetailPanel({ session, onClose, onEdit }: Props) {
           <div className="flex items-center gap-2 text-muted-foreground">
             <Clock className="h-3.5 w-3.5 shrink-0" />
             <span className="min-w-0 truncate tabular">
-              {format(new Date(session.start_datetime), "dd/MM HH:mm", { locale: fr })} — {format(new Date(session.end_datetime), "HH:mm")}
+              {isCohortSession(session)
+                ? `${format(new Date(session.start_datetime), "dd/MM/yyyy", { locale: fr })} — ${format(new Date(session.end_datetime), "dd/MM/yyyy", { locale: fr })}`
+                : `${format(new Date(session.start_datetime), "dd/MM HH:mm", { locale: fr })} — ${format(new Date(session.end_datetime), "HH:mm")}`}
             </span>
           </div>
           {session.location && (
