@@ -4,7 +4,8 @@
  * POST JSON `{ "inscriptionId": "uuid" }`
  * Staff ou service_role. Pièces jointes : attestation FIF-PL, facture
  * acquittée, et certificat s'il a été généré. Modèle
- * `training_completion_pack_student`. BCC info@fli.fr via sendFliEmail.
+ * `training_completion_pack_student` (lien questionnaire systématique).
+ * Crée le questionnaire s'il manque. BCC info@fli.fr via sendFliEmail.
  */
 
 import {
@@ -130,15 +131,35 @@ Deno.serve(async (req) => {
       row.student_name ||
       "Stagiaire";
 
-    const { data: survey } = await adminClient
-      .from("satisfaction_surveys")
-      .select("token")
-      .eq("inscription_id", inscriptionId)
-      .maybeSingle();
-    if (!survey?.token) {
-      return json(400, {
+    // Questionnaire systématique : créer le jeton s'il manque encore
+    // (ex. anciens packs générés sans case « survey », ou envoi seul).
+    let surveyToken: string | null = null;
+    {
+      const { data: existingSurvey, error: surveyReadErr } = await adminClient
+        .from("satisfaction_surveys")
+        .select("id, token")
+        .eq("inscription_id", inscriptionId)
+        .maybeSingle();
+      if (surveyReadErr) throw surveyReadErr;
+      if (existingSurvey?.token) {
+        surveyToken = existingSurvey.token;
+      } else {
+        const { data: createdSurvey, error: surveyInsertErr } = await adminClient
+          .from("satisfaction_surveys")
+          .insert({
+            inscription_id: inscriptionId,
+            student_id: row.student_id,
+          })
+          .select("token")
+          .single();
+        if (surveyInsertErr) throw surveyInsertErr;
+        surveyToken = createdSurvey?.token ?? null;
+      }
+    }
+    if (!surveyToken) {
+      return json(500, {
         success: false,
-        error: "Questionnaire de satisfaction manquant — générez d'abord le pack.",
+        error: "Impossible de créer le questionnaire de satisfaction.",
       });
     }
 
@@ -202,7 +223,7 @@ Deno.serve(async (req) => {
       inscription_code: (row.code || "").trim() || "dossier FIF-PL",
       end_date: formatFr(row.end_date),
       invoice_number: invoiceNumber,
-      survey_link: `${APP_URL.replace(/\/$/, "")}/survey/${survey.token}`,
+      survey_link: `${APP_URL.replace(/\/$/, "")}/survey/${surveyToken}`,
     };
     let rendered = renderEmailTemplate(template, variables);
     const includeCertificate = Boolean(cert?.pdf_url);
@@ -287,6 +308,7 @@ Deno.serve(async (req) => {
       subject: rendered.subject,
       attachments: attachments.map((a) => a.filename),
       certificate_included: includeCertificate,
+      survey_link: variables.survey_link,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

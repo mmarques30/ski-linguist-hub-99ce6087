@@ -73,7 +73,11 @@ export interface EndPackInput {
   generateCertificate: boolean;
   /** Attestation de présence FIF-PL (dossier de remboursement). */
   generateAttestation: boolean;
-  sendSurvey: boolean;
+  /**
+   * @deprecated Le questionnaire est toujours créé (lien dans l'e-mail pack).
+   * Conservé pour compatibilité des scripts / appels existants.
+   */
+  sendSurvey?: boolean;
   /**
    * Régénère les PDF même s'ils existent déjà (tampon/signature, facture
    * officielle, etc.). Les lignes DB (facture, certificat, enquête) sont
@@ -687,19 +691,19 @@ export async function generateEndPack(
       }
     }
 
-    if (data.sendSurvey) {
-      step = "survey";
-      const existingSurvey = await store.findExistingSurvey(data.inscriptionId);
-      if (existingSurvey) {
-        result.surveyToken = existingSurvey.token;
-      } else {
-        const survey = await store.insertSurvey({
-          inscription_id: data.inscriptionId,
-          student_id: data.studentId,
-        });
-        created.surveyId = survey.id;
-        result.surveyToken = survey.token;
-      }
+    // Questionnaire toujours créé : le pack fin l'inclut systématiquement
+    // (lien {{survey_link}} dans training_completion_pack_student).
+    step = "survey";
+    const existingSurvey = await store.findExistingSurvey(data.inscriptionId);
+    if (existingSurvey) {
+      result.surveyToken = existingSurvey.token;
+    } else {
+      const survey = await store.insertSurvey({
+        inscription_id: data.inscriptionId,
+        student_id: data.studentId,
+      });
+      created.surveyId = survey.id;
+      result.surveyToken = survey.token;
     }
 
     step = "close";

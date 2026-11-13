@@ -93,7 +93,6 @@ export function EndPackDialog({
   const [generateInvoice, setGenerateInvoice] = useState(true);
   const [generateCertificate, setGenerateCertificate] = useState(true);
   const [generateAttestation, setGenerateAttestation] = useState(true);
-  const [sendSurvey, setSendSurvey] = useState(true);
   const [result, setResult] = useState<{
     invoiceId?: string;
     invoiceNumber?: string | null;
@@ -226,7 +225,6 @@ export function EndPackDialog({
       generateInvoice,
       generateCertificate: generateCertificate && exitReady,
       generateAttestation,
-      sendSurvey,
       forceRegenerate: true,
       fundingOrganization: inscription.funding_organization ?? "FIFPL",
       pedagogicalAmount: merged.price ?? inscription.price ?? null,
@@ -475,20 +473,15 @@ export function EndPackDialog({
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3 p-3 rounded-[var(--radius)] border border-border bg-[hsl(var(--surface-sunken))]">
-                  <Checkbox
-                    id="survey"
-                    checked={sendSurvey}
-                    onCheckedChange={(checked) => setSendSurvey(!!checked)}
-                  />
+                <div className="flex items-center space-x-3 p-3 rounded-[var(--radius)] border border-[hsl(var(--tint-teal-ring))] bg-[hsl(var(--tint-teal-bg))]">
+                  <ClipboardCheck className="h-4 w-4 text-[hsl(var(--tint-teal-fg))] shrink-0" />
                   <div className="flex-1">
-                    <label
-                      htmlFor="survey"
-                      className="flex items-center gap-2 font-medium cursor-pointer"
-                    >
-                      <ClipboardCheck className="h-4 w-4 text-[hsl(var(--tint-teal-fg))]" />
+                    <p className="font-medium text-sm">
                       Questionnaire de satisfaction
-                    </label>
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Toujours inclus — le lien part avec l&apos;e-mail du pack
+                    </p>
                   </div>
                 </div>
               </div>
@@ -506,8 +499,7 @@ export function EndPackDialog({
                   !canGenerate ||
                   (!generateInvoice &&
                     !(generateCertificate && exitReady) &&
-                    !generateAttestation &&
-                    !sendSurvey)
+                    !generateAttestation)
                 }
               >
                 {generateEndPack.isPending ? (
@@ -537,8 +529,8 @@ export function EndPackDialog({
               </h3>
               <p className="text-sm text-muted-foreground mb-4">
                 {emailSent
-                  ? "L'e-mail a été envoyé au stagiaire (copie info@fli.fr)."
-                  : "Vérifiez les pièces dans Documents de l'inscription, puis envoyez."}
+                  ? "Pack + questionnaire envoyés au stagiaire (copie info@fli.fr)."
+                  : "Vérifiez les pièces, puis envoyez — le lien questionnaire part avec le pack."}
               </p>
               <div className="space-y-3 text-left max-w-sm mx-auto">
                 {result.invoiceId && (
@@ -612,7 +604,7 @@ export function EndPackDialog({
                 ) : (
                   <>
                     <Send className="mr-2 h-4 w-4" />
-                    {emailSent ? "Envoyé" : "Envoyer"}
+                    {emailSent ? "Envoyé" : "Envoyer pack + questionnaire"}
                   </>
                 )}
               </Button>
