@@ -11,6 +11,11 @@
 // sont pas des retards : elles quittent le flux J-10.
 
 import { SCHEDULE_ASSIGNMENT_DAYS_BEFORE } from '@/lib/placement-test-engine';
+import {
+  FORMATION_NO_LOCATION_LABEL,
+  formationLocationLabel,
+} from '@/lib/inscriptions-by-formation';
+import { displayLanguageLabel } from '@/lib/taught-languages';
 
 export const SCHEDULE_PENDING = 'pending';
 
@@ -77,18 +82,40 @@ export interface PendingScheduleRow {
   id: string;
   start_date: string;
   language: string;
+  /** Lieu de stage — obligatoire pour ne pas mélanger Val d'Isère et Sainte-Foy. */
+  course_location?: string | null;
 }
 
 export interface PendingScheduleGroupOf<T extends PendingScheduleRow> {
   startDate: string;
   language: string;
+  location: string;
   deadline: ScheduleDeadline;
   inscriptions: T[];
 }
 
+/** Langue canonique pour clé / carte (Portugais → Portugais brésilien). */
+export function scheduleLanguageLabel(language: string | null | undefined): string {
+  return displayLanguageLabel(language) || (language ?? '').trim();
+}
+
+export function scheduleLocationLabel(
+  courseLocation: string | null | undefined
+): string {
+  return formationLocationLabel(courseLocation);
+}
+
+/** Titre de carte : lieu · langue (comme la vue par formation). */
+export function scheduleGroupTitle(group: {
+  location: string;
+  language: string;
+}): string {
+  return `${group.location} · ${group.language}`;
+}
+
 /**
- * Regroupe par date de début et langue, retards d'abord (du plus ancien au
- * plus récent), puis les échéances à venir.
+ * Regroupe par date de début, langue (canonique) et lieu.
+ * Retards d'abord (du plus ancien au plus récent), puis les échéances à venir.
  */
 export function groupPendingSchedules<T extends PendingScheduleRow>(
   rows: T[],
@@ -97,7 +124,9 @@ export function groupPendingSchedules<T extends PendingScheduleRow>(
   const groups = new Map<string, PendingScheduleGroupOf<T>>();
 
   for (const row of rows) {
-    const key = `${row.start_date}::${row.language}`;
+    const language = scheduleLanguageLabel(row.language);
+    const location = scheduleLocationLabel(row.course_location);
+    const key = `${row.start_date}::${language}::${location}`;
     const existing = groups.get(key);
     if (existing) {
       existing.inscriptions.push(row);
@@ -105,7 +134,8 @@ export function groupPendingSchedules<T extends PendingScheduleRow>(
     }
     groups.set(key, {
       startDate: row.start_date,
-      language: row.language,
+      language,
+      location,
       deadline: scheduleDeadline(row.start_date, today),
       inscriptions: [row],
     });
@@ -114,6 +144,11 @@ export function groupPendingSchedules<T extends PendingScheduleRow>(
   return Array.from(groups.values()).sort((a, b) => {
     if (a.deadline.late !== b.deadline.late) return a.deadline.late ? -1 : 1;
     const parDate = a.startDate.localeCompare(b.startDate);
-    return parDate !== 0 ? parDate : a.language.localeCompare(b.language);
+    if (parDate !== 0) return parDate;
+    const parLoc = a.location.localeCompare(b.location, 'fr', { sensitivity: 'base' });
+    if (parLoc !== 0) return parLoc;
+    return a.language.localeCompare(b.language, 'fr', { sensitivity: 'base' });
   });
 }
+
+export { FORMATION_NO_LOCATION_LABEL as SCHEDULE_NO_LOCATION_LABEL };

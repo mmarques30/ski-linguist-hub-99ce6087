@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  SCHEDULE_NO_LOCATION_LABEL,
   SCHEDULE_OUT_OF_SCOPE_STATUSES,
   addDaysKey,
   daysBetween,
   groupPendingSchedules,
   scheduleDeadline,
+  scheduleGroupTitle,
   scheduleHorizonKey,
   todayKey,
 } from '@/lib/schedule-validation';
@@ -59,20 +61,79 @@ describe('échéance affichée', () => {
 
 describe('regroupement', () => {
   const rows = [
-    { id: 'a', start_date: '2026-09-18', language: 'Anglais' },
-    { id: 'b', start_date: '2026-09-18', language: 'Anglais' },
-    { id: 'c', start_date: '2026-09-18', language: 'Italien' },
-    { id: 'd', start_date: '2026-09-20', language: 'Anglais' },
-    { id: 'e', start_date: '2024-07-18', language: 'Anglais' },
+    { id: 'a', start_date: '2026-09-18', language: 'Anglais', course_location: "ESF Val d'Isère" },
+    { id: 'b', start_date: '2026-09-18', language: 'Anglais', course_location: "ESF Val d'Isère" },
+    { id: 'c', start_date: '2026-09-18', language: 'Italien', course_location: "ESF Val d'Isère" },
+    { id: 'd', start_date: '2026-09-20', language: 'Anglais', course_location: "ESF Val d'Isère" },
+    { id: 'e', start_date: '2024-07-18', language: 'Anglais', course_location: "ESF Val d'Isère" },
   ];
 
-  it('groupe par date de début et langue', () => {
+  it('groupe par date de début, langue et lieu', () => {
     const groupes = groupPendingSchedules(rows, '2026-09-15');
     const anglais18 = groupes.find(
-      (g) => g.startDate === '2026-09-18' && g.language === 'Anglais'
+      (g) =>
+        g.startDate === '2026-09-18' &&
+        g.language === 'Anglais' &&
+        g.location === "ESF Val d'Isère"
     );
     expect(anglais18?.inscriptions.map((i) => i.id)).toEqual(['a', 'b']);
     expect(groupes).toHaveLength(4);
+  });
+
+  it('sépare Val d’Isère et Sainte-Foy à mêmes dates / langue', () => {
+    const groupes = groupPendingSchedules(
+      [
+        {
+          id: 'theo',
+          start_date: '2026-11-23',
+          language: 'Portugais brésilien',
+          course_location: "ESF Val d'Isère",
+        },
+        {
+          id: 'carole',
+          start_date: '2026-11-23',
+          language: 'Portugais brésilien',
+          course_location: 'Sainte-Foy-Tarentaise',
+        },
+      ],
+      '2026-11-13'
+    );
+    expect(groupes).toHaveLength(2);
+    expect(groupes.map((g) => g.location).sort()).toEqual([
+      "ESF Val d'Isère",
+      'Sainte-Foy-Tarentaise',
+    ]);
+  });
+
+  it('unifie Portugais et Portugais brésilien dans le même groupe (même lieu)', () => {
+    const groupes = groupPendingSchedules(
+      [
+        {
+          id: 'theo',
+          start_date: '2026-11-23',
+          language: 'Portugais',
+          course_location: "ESF Val d'Isère",
+        },
+        {
+          id: 'julie',
+          start_date: '2026-11-23',
+          language: 'Portugais brésilien',
+          course_location: "ESF Val d'Isère",
+        },
+      ],
+      '2026-11-13'
+    );
+    expect(groupes).toHaveLength(1);
+    expect(groupes[0].language).toBe('Portugais brésilien');
+    expect(groupes[0].inscriptions.map((i) => i.id).sort()).toEqual(['julie', 'theo']);
+  });
+
+  it('étiquette Sans lieu quand course_location est vide', () => {
+    const groupes = groupPendingSchedules(
+      [{ id: 'x', start_date: '2026-11-23', language: 'Anglais', course_location: null }],
+      '2026-11-13'
+    );
+    expect(groupes[0].location).toBe(SCHEDULE_NO_LOCATION_LABEL);
   });
 
   it('remonte les retards en premier', () => {
@@ -82,12 +143,17 @@ describe('regroupement', () => {
     expect(groupes.slice(1).every((g) => !g.deadline.late)).toBe(true);
   });
 
-  it('classe ensuite par date puis par langue', () => {
+  it('classe ensuite par date, lieu, puis langue', () => {
     const groupes = groupPendingSchedules(rows, '2026-09-15').slice(1);
-    expect(groupes.map((g) => `${g.startDate} ${g.language}`)).toEqual([
-      '2026-09-18 Anglais',
-      '2026-09-18 Italien',
-      '2026-09-20 Anglais',
+    expect(groupes.map((g) => scheduleGroupTitle(g))).toEqual([
+      "ESF Val d'Isère · Anglais",
+      "ESF Val d'Isère · Italien",
+      "ESF Val d'Isère · Anglais",
+    ]);
+    expect(groupes.map((g) => g.startDate)).toEqual([
+      '2026-09-18',
+      '2026-09-18',
+      '2026-09-20',
     ]);
   });
 
