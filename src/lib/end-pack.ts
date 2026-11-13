@@ -26,6 +26,7 @@ import {
   buildInvoicePdfPath,
   type InvoicePdfInput,
 } from "@/lib/invoice-pdf";
+import { exitTestBlocksEndPack } from "@/lib/exit-test";
 
 export type EndPackStep =
   | "invoice"
@@ -78,6 +79,10 @@ export interface EndPackInput {
    * Conservé pour compatibilité des scripts / appels existants.
    */
   sendSurvey?: boolean;
+  /** Test de fin complété (gate) — obligatoire avant clôture. */
+  exitTestCompletedAt?: string | null;
+  exitTestId?: string | null;
+  exitTestInvitedAt?: string | null;
   /**
    * Régénère les PDF même s'ils existent déjà (tampon/signature, facture
    * officielle, etc.). Les lignes DB (facture, certificat, enquête) sont
@@ -366,6 +371,15 @@ export async function generateEndPack(
     objectif_atteint: data.objectifAtteint ?? null,
     commentaire_sortie: data.commentaireSortie ?? null,
   };
+
+  const exitTestBlock = exitTestBlocksEndPack({
+    exit_test_id: data.exitTestId,
+    exit_test_invited_at: data.exitTestInvitedAt,
+    exit_test_completed_at: data.exitTestCompletedAt,
+  });
+  if (exitTestBlock) {
+    throw new Error(exitTestBlock);
+  }
 
   if (data.generateCertificate && !canIssueCertificate(exitFields)) {
     throw new Error(

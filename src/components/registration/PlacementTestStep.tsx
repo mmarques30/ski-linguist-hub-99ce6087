@@ -57,9 +57,14 @@ interface PlacementTestStepProps {
   data: Partial<RegistrationData>;
   onUpdate: (data: Partial<RegistrationData>) => void;
   onNext: () => void;
-  /** Salon des directeurs : pas d'auto-diagnostic, CTA de fin dédié. */
-  variant?: "register" | "salon";
+  /**
+   * - salon : pas d'auto-diagnostic, 3 Q/piste
+   * - exit : test de fin (même banque que l'entrée, sans auto-diagnostic)
+   */
+  variant?: "register" | "salon" | "exit";
   finishLabel?: string;
+  /** Appelé à l'affichage des résultats (variante exit surtout). */
+  onComplete?: (result: AdaptiveTestResult) => void;
 }
 
 export function PlacementTestStep({
@@ -68,9 +73,13 @@ export function PlacementTestStep({
   onNext,
   variant = "register",
   finishLabel,
+  onComplete,
 }: PlacementTestStepProps) {
   const isSalon = variant === "salon";
-  const isStationGroup = !isSalon && expectsStationGroupAssignment(data.modality);
+  const isExit = variant === "exit";
+  const skipAutoDiagnostic = isSalon || isExit;
+  const isStationGroup =
+    !isSalon && !isExit && expectsStationGroupAssignment(data.modality);
   const [phase, setPhase] = useState<Phase>("intro");
   const [currentSlope, setCurrentSlope] = useState<SlopeLevel>("verte");
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -144,8 +153,10 @@ export function PlacementTestStep({
         presentationText: testResult.presentationText,
         startedAt: startedAtRef.current,
         completedAt,
+        ...(isExit ? { exitTest: true } : {}),
       },
     });
+    onComplete?.(testResult);
     setPhase("results");
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot bank fallback
   }, [phase, presentationQuestion]);
@@ -179,7 +190,7 @@ export function PlacementTestStep({
 
   const startMcq = () => {
     if (scoredQuestions.length === 0) return;
-    if (!isSalon && !data.autoDiagnostic) {
+    if (!skipAutoDiagnostic && !data.autoDiagnostic) {
       setPhase("auto_diagnostic");
       return;
     }
@@ -227,8 +238,10 @@ export function PlacementTestStep({
         startedAt: startedAtRef.current,
         completedAt,
         ...(isSalon ? { salonShort: true } : {}),
+        ...(isExit ? { exitTest: true } : {}),
       },
     });
+    onComplete?.(testResult);
     setPhase("results");
   };
 
@@ -348,9 +361,11 @@ export function PlacementTestStep({
             </span>
           }
           description={
-            isSalon
-              ? "Estimation rapide (version salon) — piste indicative"
-              : "Votre parcours adaptatif FLI est enregistré"
+            isExit
+              ? "Merci — votre test de fin est enregistré. FLI pourra maintenant préparer votre dossier de fin de formation."
+              : isSalon
+                ? "Estimation rapide (version salon) — piste indicative"
+                : "Votre parcours adaptatif FLI est enregistré"
           }
         >
           <div className="space-y-6">
@@ -386,13 +401,19 @@ export function PlacementTestStep({
         </StepCard>
 
         <StepActions>
-          <Button type="submit" className="h-12 w-full text-base sm:w-auto">
-            {finishLabel
-              ? finishLabel
-              : data.profession === "ski_instructor"
-                ? "Continuer vers le paiement"
-                : "Continuer vers la certification"}
-          </Button>
+          {isExit ? (
+            <p className="w-full text-center text-sm text-muted-foreground">
+              Vous pouvez fermer cette page.
+            </p>
+          ) : (
+            <Button type="submit" className="h-12 w-full text-base sm:w-auto">
+              {finishLabel
+                ? finishLabel
+                : data.profession === "ski_instructor"
+                  ? "Continuer vers le paiement"
+                  : "Continuer vers la certification"}
+            </Button>
+          )}
         </StepActions>
       </form>
     );
@@ -516,11 +537,19 @@ export function PlacementTestStep({
 
   return (
     <StepCard
-      title={isSalon ? "Test de niveau FLI — version salon" : "Test de niveau obligatoire"}
+      title={
+        isExit
+          ? "Test de fin de formation — obligatoire"
+          : isSalon
+            ? "Test de niveau FLI — version salon"
+            : "Test de niveau obligatoire"
+      }
       description={
-        isSalon
-          ? `Adaptatif 4 pistes, ${SALON_QUESTIONS_PER_SLOPE} questions chacune (seuil ${SALON_PASS_THRESHOLD}/${SALON_QUESTIONS_PER_SLOPE})`
-          : "D’abord un auto-diagnostic, puis le parcours adaptatif par pistes de ski"
+        isExit
+          ? "Même parcours que le test d’entrée — obligatoire avant votre dossier de fin"
+          : isSalon
+            ? `Adaptatif 4 pistes, ${SALON_QUESTIONS_PER_SLOPE} questions chacune (seuil ${SALON_PASS_THRESHOLD}/${SALON_QUESTIONS_PER_SLOPE})`
+            : "D’abord un auto-diagnostic, puis le parcours adaptatif par pistes de ski"
       }
       icon={Mountain}
     >
@@ -528,7 +557,7 @@ export function PlacementTestStep({
         <Alert>
           <Mountain className="h-4 w-4" />
           <AlertDescription className="space-y-3">
-            {!isSalon && (
+            {!skipAutoDiagnostic && (
               <p>
                 <strong className="font-medium text-foreground">1. Auto-diagnostic</strong> — vos
                 besoins, votre parcours et votre aisance. Il prépare l’équipe FLI et ne remplace pas
@@ -553,8 +582,10 @@ export function PlacementTestStep({
             ) : (
               <>
                 <p>
-                  <strong className="font-medium text-foreground">2. Test de niveau</strong> — où vous
-                  commencez en{" "}
+                  <strong className="font-medium text-foreground">
+                    {isExit ? "Test de fin" : "2. Test de niveau"}
+                  </strong>{" "}
+                  — vous commencez en{" "}
                   <strong className="font-medium text-foreground">piste verte</strong>, puis{" "}
                   <strong className="font-medium text-foreground">bleue</strong>,{" "}
                   <strong className="font-medium text-foreground">rouge</strong> et{" "}
@@ -562,10 +593,12 @@ export function PlacementTestStep({
                   étape ({PASS_THRESHOLD} bonnes réponses sur {QUESTIONS_PER_SLOPE}).
                 </p>
                 <p>
-                  Ensuite, tous les stagiaires passent le{" "}
+                  Ensuite, le{" "}
                   <strong className="font-medium text-foreground">Vocabulaire du ski</strong> (score
-                  séparé), puis une présentation facultative. Comment ça fonctionne : comme les pistes
-                  de ski.
+                  séparé), puis une présentation facultative.
+                  {isExit
+                    ? " Sans ce test, FLI ne peut pas déclencher votre dossier de fin de formation."
+                    : " Comment ça fonctionne : comme les pistes de ski."}
                 </p>
               </>
             )}
@@ -592,7 +625,7 @@ export function PlacementTestStep({
               contacter FLI à info@fli.fr.
             </AlertDescription>
           </Alert>
-        ) : isSalon ? (
+        ) : skipAutoDiagnostic ? (
           <Button type="button" onClick={startMcq} className="h-12 w-full text-base">
             Commencer le test (piste verte)
           </Button>
