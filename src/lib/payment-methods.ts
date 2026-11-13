@@ -64,6 +64,13 @@ export function paymentMethodLabel(raw: string | null | undefined): string {
   const value = canonicalPaymentMethod(raw);
   if (!value) return "—";
   if (value === HISTORICAL_PAYMENT_METHOD) return "Non renseigné (historique)";
+  const folded = value.trim().toLowerCase();
+  if (folded === "ecole_integrale" || folded === "school_full_funding") {
+    return "Financement intégral ESF";
+  }
+  if (folded === "cheque_fifpl_ecole" || folded === "school_fifpl_cheque") {
+    return "Chèque FIF-PL (école)";
+  }
   return PAYMENT_METHODS.find((m) => m.value === value)?.label ?? value;
 }
 

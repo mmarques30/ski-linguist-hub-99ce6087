@@ -36,6 +36,8 @@ import {
   FLI_BANK_DETAILS,
   getRegistrationPaymentSummary,
   hasChequeBalance,
+  isSchoolFullFunding,
+  PAYMENT_OPTION_DESCRIPTIONS,
   PAYMENT_OPTION_LABELS,
   REGISTRATION_PAYMENT_OPTIONS,
   requiresStripeCheckout,
@@ -398,6 +400,19 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
               </Alert>
             )}
 
+          {result.paymentOption &&
+            isSchoolFullFunding(result.paymentOption as RegistrationPaymentOption) && (
+              <Alert>
+                <AlertDescription className="text-left text-sm">
+                  {
+                    PAYMENT_OPTION_DESCRIPTIONS[
+                      REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FULL_FUNDING
+                    ]
+                  }
+                </AlertDescription>
+              </Alert>
+            )}
+
           {isOpco && (
             <Alert>
               <Phone className="h-4 w-4" />
@@ -622,7 +637,8 @@ export function ConfirmationStep({ data }: ConfirmationStepProps) {
                   <SummaryRow
                     label="À régler maintenant"
                     value={
-                      paymentOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X
+                      paymentOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X ||
+                      isSchoolFullFunding(paymentOption)
                         ? paymentSummary.amountDueNowLabel
                         : formatPriceEUR(paymentSummary.amountDueNow)
                     }

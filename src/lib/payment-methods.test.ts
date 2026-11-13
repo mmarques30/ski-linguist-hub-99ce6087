@@ -19,6 +19,8 @@ describe("payment-methods", () => {
   it("affiche les libellés métier, jamais les codes bruts connus", () => {
     expect(paymentMethodLabel("cb")).toBe("Carte");
     expect(paymentMethodLabel("historique")).toBe("Non renseigné (historique)");
+    expect(paymentMethodLabel("ecole_integrale")).toBe("Financement intégral ESF");
+    expect(paymentMethodLabel("cheque_fifpl_ecole")).toBe("Chèque FIF-PL (école)");
     expect(invoiceStatusLabel("draft")).toBe("Brouillon");
     expect(invoiceStatusLabel("a_verifier")).toBe("À vérifier");
     expect(chequeStatusLabel("encaisse")).toBe("Encaissé");

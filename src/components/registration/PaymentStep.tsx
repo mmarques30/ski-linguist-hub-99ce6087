@@ -3,7 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CalendarClock, CreditCard, Landmark, Receipt, Wallet, FileText } from "lucide-react";
+import {
+  Building2,
+  CalendarClock,
+  CreditCard,
+  Landmark,
+  Receipt,
+  Wallet,
+  FileText,
+} from "lucide-react";
 import type { RegistrationData } from "@/pages/register/Index";
 import {
   CHEQUE_BALANCE_INSTRUCTION,
@@ -14,6 +22,7 @@ import {
   getRegistrationPaymentSummary,
   hasChequeBalance,
   isSchoolFifplCheque,
+  isSchoolFullFunding,
   PAYMENT_OPTION_DESCRIPTIONS,
   PAYMENT_OPTION_LABELS,
   REGISTRATION_PAYMENT_OPTIONS,
@@ -66,6 +75,7 @@ const PAYMENT_OPTION_ICONS: Record<
   [REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X]: CalendarClock,
   [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]: Landmark,
   [REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE]: FileText,
+  [REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FULL_FUNDING]: Building2,
 };
 
 export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
@@ -546,11 +556,18 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
                 value={formatPriceEUR(payableAmount)}
               />
             )}
+            {isSchoolFullFunding(selectedOption) && (
+              <SummaryRow
+                label="À votre charge"
+                value={formatPriceEUR(0)}
+              />
+            )}
             <SummaryRow
               label="À régler maintenant"
               value={
                 summary
-                  ? selectedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X
+                  ? selectedOption === REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X ||
+                    isSchoolFullFunding(selectedOption)
                     ? summary.amountDueNowLabel
                     : formatPriceEUR(summary.amountDueNow)
                   : "selon le mode choisi"
@@ -616,6 +633,15 @@ export function PaymentStep({ data, onUpdate, onNext }: PaymentStepProps) {
               <FileText className="h-4 w-4" />
               <AlertDescription className="text-sm">
                 {PAYMENT_OPTION_DESCRIPTIONS[REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE]}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isSchoolFullFunding(selectedOption) && (
+            <Alert>
+              <Building2 className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                {PAYMENT_OPTION_DESCRIPTIONS[REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FULL_FUNDING]}
               </AlertDescription>
             </Alert>
           )}

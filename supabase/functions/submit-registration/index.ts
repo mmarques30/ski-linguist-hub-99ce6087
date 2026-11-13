@@ -918,6 +918,8 @@ Deno.serve(async (req) => {
       [REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL]: "Paiement intégral virement",
       [REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE]:
         "Chèque FIF-PL à envoyer à FLI (Montmélian)",
+      [REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FULL_FUNDING]:
+        "Financement intégral par mon ESF",
       virement:
         "150 € virement + solde chèque avant le début de la formation",
     };
@@ -981,18 +983,20 @@ Deno.serve(async (req) => {
           omitDossierFee
             ? "Aucun acompte 150 € (forfait école Méribel / La Rosière)"
             : null,
-          paymentFields &&
-          paymentFields.balanceAfterDeposit > 0 &&
-          paymentFields.paymentMethod === "cheque_fifpl_ecole"
-            ? `Chèque FIF-PL à envoyer à FLI (part stagiaire) : ${paymentFields.balanceAfterDeposit} € — encaissement après la formation`
+          paymentFields && paymentFields.paymentMethod === "ecole_integrale"
+            ? "Financement intégral par l'ESF — aucun règlement stagiaire (droits FIF-PL épuisés ou non utilisés)"
             : paymentFields &&
                 paymentFields.balanceAfterDeposit > 0 &&
-                paymentFields.depositAmount
-              ? `Frais de dossier: ${FRAIS_DOSSIER_EUR} € · Solde chèque: ${paymentFields.balanceAfterDeposit} € (avant le début de la formation)`
-              : paymentFields?.paymentType === "total" &&
-                  paymentFields.paymentFlow === "virement"
-                ? `Paiement intégral par virement: ${price} €`
-                : null,
+                paymentFields.paymentMethod === "cheque_fifpl_ecole"
+              ? `Chèque FIF-PL à envoyer à FLI (part stagiaire) : ${paymentFields.balanceAfterDeposit} € — encaissement après la formation`
+              : paymentFields &&
+                  paymentFields.balanceAfterDeposit > 0 &&
+                  paymentFields.depositAmount
+                ? `Frais de dossier: ${FRAIS_DOSSIER_EUR} € · Solde chèque: ${paymentFields.balanceAfterDeposit} € (avant le début de la formation)`
+                : paymentFields?.paymentType === "total" &&
+                    paymentFields.paymentFlow === "virement"
+                  ? `Paiement intégral par virement: ${price} €`
+                  : null,
         ]
           .filter(Boolean)
           .join("\n"),
@@ -1244,12 +1248,14 @@ Deno.serve(async (req) => {
       // OPCO / Entreprise : pas d'enfilement auto (funding-flows).
       const fundingOrganization =
         FUNDING_MAP[registration.fundingType] || registration.fundingType || null;
-      const schoolChequeAtSubmit =
+      const schoolCoveredAtSubmit =
         omitDossierFee &&
-        registration.paymentOption ===
-          REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE;
+        (registration.paymentOption ===
+          REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FIFPL_CHEQUE ||
+          registration.paymentOption ===
+            REGISTRATION_PAYMENT_OPTIONS.SCHOOL_FULL_FUNDING);
       if (
-        schoolChequeAtSubmit ||
+        schoolCoveredAtSubmit ||
         (!paymentFields &&
           shouldEnqueueDocumentsAtSubmitWithoutPayment(fundingOrganization))
       ) {
