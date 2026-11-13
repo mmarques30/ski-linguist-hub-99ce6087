@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { LANGUAGE_LABELS } from "@/lib/evaluation-utils";
+import { formatNameLastFirst, sortByLastName } from "@/lib/person-name";
 import {
   useCreateBookingFromDemande,
   type TestDemandRow,
@@ -97,9 +98,10 @@ export function CreateBookingFromDemandeDialog({
         .from("instructors")
         .select("id, first_name, last_name")
         .eq("is_active", true)
-        .order("last_name");
+        .order("last_name")
+        .order("first_name");
       if (error) throw error;
-      return data ?? [];
+      return sortByLastName(data ?? []);
     },
     enabled: open,
   });
@@ -194,7 +196,7 @@ export function CreateBookingFromDemandeDialog({
               <SelectContent>
                 {(instructorsQuery.data ?? []).map((ins) => (
                   <SelectItem key={ins.id} value={ins.id}>
-                    {ins.last_name} {ins.first_name}
+                    {formatNameLastFirst(ins)}
                   </SelectItem>
                 ))}
               </SelectContent>

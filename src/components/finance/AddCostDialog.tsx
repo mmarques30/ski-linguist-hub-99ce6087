@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCreateFormationCost } from "@/hooks/useFinancialDashboard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { formatNameLastFirst, sortByLastName } from "@/lib/person-name";
 
 interface AddCostDialogProps {
   open: boolean;
@@ -63,8 +64,9 @@ export function AddCostDialog({ open, onOpenChange, inscriptionId }: AddCostDial
         .from('instructors')
         .select('id, first_name, last_name')
         .eq('status', 'actif')
-        .order('last_name');
-      return data || [];
+        .order('last_name')
+        .order('first_name');
+      return sortByLastName(data || []);
     },
   });
 
@@ -156,7 +158,7 @@ export function AddCostDialog({ open, onOpenChange, inscriptionId }: AddCostDial
                 <SelectContent>
                   {instructors?.map((inst) => (
                     <SelectItem key={inst.id} value={inst.id}>
-                      {inst.first_name} {inst.last_name}
+                      {formatNameLastFirst(inst)}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -4,6 +4,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { useInstructors } from "@/hooks/useInstructors";
 import { formateurAssistPath } from "@/lib/client-links";
+import { formatNameLastFirst } from "@/lib/person-name";
 import {
   CardList,
   CardListItem,
@@ -56,7 +57,7 @@ export default function PortalFormateurPicker() {
                   key={i.id}
                   title={
                     <Link to={`/formateurs/${i.id}`} className="hover:underline">
-                      {i.first_name} {i.last_name}
+                      {formatNameLastFirst(i)}
                     </Link>
                   }
                   subtitle={i.email}

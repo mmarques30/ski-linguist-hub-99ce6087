@@ -22,6 +22,7 @@ import {
 } from "./UserPermissionsEditor";
 import { ALL_ROUTE_KEYS } from "@/lib/route-permissions";
 import { useInstructors } from "@/hooks/useInstructors";
+import { formatNameLastFirst } from "@/lib/person-name";
 import { UserPlus } from "lucide-react";
 
 type StaffRole = "admin" | "user" | "formateur";
@@ -163,7 +164,7 @@ export function UserFormDialog({ open, onOpenChange, onSubmit, loading }: Props)
                   ) : (
                     availableInstructors.map((i) => (
                       <SelectItem key={i.id} value={i.id}>
-                        {[i.last_name, i.first_name].filter(Boolean).join(" ")}
+                        {formatNameLastFirst(i)}
                       </SelectItem>
                     ))
                   )}

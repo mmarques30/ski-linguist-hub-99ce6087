@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { format } from "date-fns";
 import { useConfirmAction } from "@/hooks/useConfirmAction";
+import { formatNameLastFirst, sortByLastName } from "@/lib/person-name";
 
 const LANGUAGES = ["Anglais", "Portugais brésilien", "Italien", "Allemand", "Espagnol", "Russe", "Néerlandais"];
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
@@ -69,8 +70,9 @@ export function SessionFormDialog({ open, onOpenChange, session, defaultStart }:
         .from("instructors")
         .select("id, first_name, last_name")
         .eq("status", "actif")
-        .order("last_name");
-      return data || [];
+        .order("last_name")
+        .order("first_name");
+      return sortByLastName(data || []);
     },
     enabled: open,
   });
@@ -287,7 +289,7 @@ export function SessionFormDialog({ open, onOpenChange, session, defaultStart }:
                     <SelectContent>
                       <SelectItem value="none">Aucun</SelectItem>
                       {instructors?.map((i) => (
-                        <SelectItem key={i.id} value={i.id}>{i.first_name} {i.last_name}</SelectItem>
+                        <SelectItem key={i.id} value={i.id}>{formatNameLastFirst(i)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

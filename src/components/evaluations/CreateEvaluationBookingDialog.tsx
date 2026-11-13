@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { formatNameLastFirst, sortByLastName } from "@/lib/person-name";
 import {
   LANGUAGE_LABELS,
   PROFESSION_LABELS,
@@ -109,9 +110,10 @@ export function CreateEvaluationBookingDialog({
         .from("instructors")
         .select("id, first_name, last_name")
         .eq("is_active", true)
-        .order("last_name");
+        .order("last_name")
+        .order("first_name");
       if (error) throw error;
-      return data ?? [];
+      return sortByLastName(data ?? []);
     },
     enabled: open && requireInstructorPick,
   });
@@ -222,7 +224,7 @@ export function CreateEvaluationBookingDialog({
                 <SelectContent>
                   {instructors.map((i) => (
                     <SelectItem key={i.id} value={i.id}>
-                      {[i.first_name, i.last_name].filter(Boolean).join(" ")}
+                      {formatNameLastFirst(i)}
                     </SelectItem>
                   ))}
                 </SelectContent>
