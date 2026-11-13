@@ -6,6 +6,7 @@ import { fr } from "date-fns/locale";
 import { toast } from "sonner";
 import { StatusPill, SurfaceCard } from "@/components/ui-kit";
 import { LANGUAGE_DOT_CLASS, SESSION_STATUS_TONE, toneForLanguage } from "@/components/sessions/session-tints";
+import { isCohortSession } from "@/lib/planning-sessions";
 import { cn } from "@/lib/utils";
 
 interface Props {

@@ -1275,6 +1275,7 @@ export type Database = {
           niveau_technique_sortie: string | null
           objectif_atteint: string | null
           observations: string | null
+          offering_id: string | null
           partner_id: string | null
           payment_method: string | null
           pedagogical_cost: number | null
@@ -1361,6 +1362,7 @@ export type Database = {
           niveau_technique_sortie?: string | null
           objectif_atteint?: string | null
           observations?: string | null
+          offering_id?: string | null
           partner_id?: string | null
           payment_method?: string | null
           pedagogical_cost?: number | null
@@ -1447,6 +1449,7 @@ export type Database = {
           niveau_technique_sortie?: string | null
           objectif_atteint?: string | null
           observations?: string | null
+          offering_id?: string | null
           partner_id?: string | null
           payment_method?: string | null
           pedagogical_cost?: number | null
@@ -1482,6 +1485,13 @@ export type Database = {
             columns: ["intake_id"]
             isOneToOne: false
             referencedRelation: "course_intakes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inscriptions_offering_id_fkey"
+            columns: ["offering_id"]
+            isOneToOne: false
+            referencedRelation: "registration_offerings"
             referencedColumns: ["id"]
           },
           {
@@ -3434,6 +3444,7 @@ export type Database = {
           max_students: number
           modality: string
           notes: string | null
+          offering_id: string | null
           recurrence: string | null
           room: string | null
           season_id: string | null
@@ -3454,6 +3465,7 @@ export type Database = {
           max_students?: number
           modality?: string
           notes?: string | null
+          offering_id?: string | null
           recurrence?: string | null
           room?: string | null
           season_id?: string | null
@@ -3474,6 +3486,7 @@ export type Database = {
           max_students?: number
           modality?: string
           notes?: string | null
+          offering_id?: string | null
           recurrence?: string | null
           room?: string | null
           season_id?: string | null
@@ -3488,6 +3501,13 @@ export type Database = {
             columns: ["instructor_id"]
             isOneToOne: false
             referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_offering_id_fkey"
+            columns: ["offering_id"]
+            isOneToOne: true
+            referencedRelation: "registration_offerings"
             referencedColumns: ["id"]
           },
           {
@@ -4434,6 +4454,11 @@ export type Database = {
         Args: { _dry_run?: boolean }
         Returns: Json
       }
+      increment_session_students: {
+        Args: { p_session_id: string }
+        Returns: undefined
+      }
+      sync_planning_sessions_from_offerings: { Args: never; Returns: Json }
       cecrl_label_from_score: { Args: { _score: number }; Returns: string }
       check_registration_invite: {
         Args: { p_email: string; p_offering_id: string }

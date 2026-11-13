@@ -617,12 +617,13 @@ Deno.serve(async (req) => {
     let offeringFundingMode: string | null = null;
     let offeringLocationKey: string | null = registration.location || null;
     let skipsStudentPayment = false;
+    let offeringInstructorId: string | null = null;
 
     if (registration.offeringId) {
       const { data: offering } = await supabase
         .from("registration_offerings")
         .select(
-          "base_price, partner_price, partner_price_alt, partner_price_pending, partner_school_codes, alumni_price, enrollment_status, is_active, funding_mode, location_key, location_label, start_date, student_payment_required, session_code"
+          "base_price, partner_price, partner_price_alt, partner_price_pending, partner_school_codes, alumni_price, enrollment_status, is_active, funding_mode, location_key, location_label, start_date, student_payment_required, session_code, instructor_id"
         )
         .eq("id", registration.offeringId)
         .maybeSingle();
@@ -674,6 +675,8 @@ Deno.serve(async (req) => {
           typeof offering.funding_mode === "string" ? offering.funding_mode : null;
         offeringLocationKey =
           typeof offering.location_key === "string" ? offering.location_key : offeringLocationKey;
+        offeringInstructorId =
+          typeof offering.instructor_id === "string" ? offering.instructor_id : null;
         const skiCode =
           registration.skiSchoolCode && registration.skiSchoolCode !== "__autre__"
             ? registration.skiSchoolCode
@@ -920,6 +923,8 @@ Deno.serve(async (req) => {
         payment_method: paymentFields?.paymentMethod ?? null,
         deposit_amount: paymentFields?.depositAmount ?? null,
         balance_after_deposit: paymentFields?.balanceAfterDeposit ?? null,
+        offering_id: registration.offeringId || null,
+        instructor_id: offeringInstructorId,
         observations: [
           isCustomFormat
             ? `📋 DEVIS DEMANDÉ — Format personnalisé:\n${registration.customFormatDetails || "(non renseigné)"}`

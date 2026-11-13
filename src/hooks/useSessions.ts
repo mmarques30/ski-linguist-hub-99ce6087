@@ -6,6 +6,7 @@ export interface Session {
   title: string;
   season_id: string | null;
   instructor_id: string | null;
+  offering_id: string | null;
   language: string;
   level: string;
   modality: string;
@@ -23,6 +24,32 @@ export interface Session {
   // Joined fields
   instructor_first_name?: string | null;
   instructor_last_name?: string | null;
+}
+
+export type SyncPlanningResult = {
+  sessions_upserted?: number;
+  enrollments_linked_by_offering_id?: number;
+  enrollments_linked_heuristic?: number;
+  offerings_skipped_no_dates_or_individual?: number;
+};
+
+/** Matérialise le catalogue → sessions + enrollments (RPC staff). */
+export function useSyncPlanningSessions() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc(
+        "sync_planning_sessions_from_offerings"
+      );
+      if (error) throw error;
+      return (data ?? {}) as SyncPlanningResult;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sessions"] });
+      qc.invalidateQueries({ queryKey: ["session-enrollments"] });
+      qc.invalidateQueries({ queryKey: ["unassigned-inscriptions"] });
+    },
+  });
 }
 
 export interface SessionEnrollment {
@@ -56,16 +83,18 @@ export function useSessions(filters?: {
         .select("*, instructors(first_name, last_name)")
         .order("start_datetime", { ascending: true });
 
-      if (filters?.startDate) {
-        query = query.gte("start_datetime", filters.startDate);
-      }
+      // Chevauchement de période (cohortes multi-jours) :
+      // start < rangeEnd AND end > rangeStart
       if (filters?.endDate) {
-        query = query.lte("start_datetime", filters.endDate);
+        query = query.lt("start_datetime", filters.endDate);
+      }
+      if (filters?.startDate) {
+        query = query.gt("end_datetime", filters.startDate);
       }
       if (filters?.seasonStart && filters?.seasonEnd) {
         query = query
-          .gte("start_datetime", filters.seasonStart)
-          .lte("start_datetime", `${filters.seasonEnd}T23:59:59`);
+          .lt("start_datetime", `${filters.seasonEnd}T23:59:59`)
+          .gt("end_datetime", filters.seasonStart);
       } else if (filters?.seasonId) {
         query = query.eq("season_id", filters.seasonId);
       }
@@ -112,7 +141,18 @@ export function useSessionEnrollments(sessionId: string | undefined) {
 export function useCreateSession() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (session: Omit<Session, "id" | "created_at" | "updated_at" | "current_students" | "instructor_first_name" | "instructor_last_name">) => {
+    mutationFn: async (
+      session: Omit<
+        Session,
+        | "id"
+        | "created_at"
+        | "updated_at"
+        | "current_students"
+        | "instructor_first_name"
+        | "instructor_last_name"
+        | "offering_id"
+      > & { offering_id?: string | null }
+    ) => {
       const { data, error } = await supabase
         .from("sessions")
         .insert(session)
@@ -202,8 +242,10 @@ export function useEnrollStudent() {
         .single();
       if (error) throw error;
 
-      // Increment current_students
-      await supabase.rpc("increment_session_students" as any, { p_session_id: enrollment.session_id });
+      // Recount current_students (trigger + RPC)
+      await supabase.rpc("increment_session_students", {
+        p_session_id: enrollment.session_id,
+      });
 
       return data;
     },
