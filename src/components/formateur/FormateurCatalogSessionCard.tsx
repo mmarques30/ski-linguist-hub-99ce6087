@@ -23,13 +23,19 @@ export function FormateurCatalogSessionCard({
       : session.date_label || "Dates à préciser";
 
   const enrollmentTone =
-    session.enrollment_status === "waitlist" ? "warning" : "success";
+    session.enrollment_status === "waitlist"
+      ? "warning"
+      : session.enrollment_status === "invite_only"
+        ? "info"
+        : "success";
   const enrollmentLabel =
     session.enrollment_status === "waitlist"
       ? "Liste d'attente"
-      : session.enrollment_status === "open"
-        ? "Inscriptions ouvertes"
-        : "Session planifiée";
+      : session.enrollment_status === "invite_only"
+        ? "Sur invitation"
+        : session.enrollment_status === "open"
+          ? "Inscriptions ouvertes"
+          : "Session planifiée";
 
   return (
     <li

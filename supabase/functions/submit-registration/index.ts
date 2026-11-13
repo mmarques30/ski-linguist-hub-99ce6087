@@ -36,7 +36,9 @@ import {
   hasAlumniPrice,
   hidesDepositPaymentOptions,
   isAlumniLocationMatch,
+  isInviteOnlyOffering,
   isWaitlistOffering,
+  requiresStudentPayment,
   resolveOfferingPrice,
 } from "../_shared/registration-offerings.ts";
 import {
@@ -614,12 +616,13 @@ Deno.serve(async (req) => {
     let pricePending = false;
     let offeringFundingMode: string | null = null;
     let offeringLocationKey: string | null = registration.location || null;
+    let skipsStudentPayment = false;
 
     if (registration.offeringId) {
       const { data: offering } = await supabase
         .from("registration_offerings")
         .select(
-          "base_price, partner_price, partner_price_alt, partner_price_pending, partner_school_codes, alumni_price, enrollment_status, is_active, funding_mode, location_key, location_label, start_date"
+          "base_price, partner_price, partner_price_alt, partner_price_pending, partner_school_codes, alumni_price, enrollment_status, is_active, funding_mode, location_key, location_label, start_date, student_payment_required, session_code"
         )
         .eq("id", registration.offeringId)
         .maybeSingle();
@@ -635,7 +638,38 @@ Deno.serve(async (req) => {
         );
       }
 
+      if (offering && isInviteOnlyOffering(offering)) {
+        const { data: inviteOk, error: inviteError } = await supabase.rpc(
+          "check_registration_invite",
+          {
+            p_offering_id: registration.offeringId,
+            p_email: email,
+          }
+        );
+        if (inviteError) {
+          console.error("check_registration_invite:", inviteError);
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: "Vérification de l'invitation impossible. Réessayez ou contactez FLI.",
+            }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (!inviteOk) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error:
+                "Cette adresse e-mail n'est pas autorisée pour cette session sur invitation. Utilisez l'e-mail de l'invitation FLI.",
+            }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+
       if (offering) {
+        skipsStudentPayment = !requiresStudentPayment(offering);
         offeringFundingMode =
           typeof offering.funding_mode === "string" ? offering.funding_mode : null;
         offeringLocationKey =
@@ -740,7 +774,13 @@ Deno.serve(async (req) => {
       pricePending = true;
     }
 
-    if (!isCustomFormat && !isOpco && !pricePending && (price ?? 0) > 0) {
+    if (
+      !isCustomFormat &&
+      !isOpco &&
+      !pricePending &&
+      !skipsStudentPayment &&
+      (price ?? 0) > 0
+    ) {
       if (!registration.paymentOption || !isValidPaymentOption(registration.paymentOption)) {
         return new Response(
           JSON.stringify({ success: false, error: "Veuillez choisir un mode de paiement" }),
@@ -823,6 +863,7 @@ Deno.serve(async (req) => {
       !isCustomFormat &&
       !isOpco &&
       !pricePending &&
+      !skipsStudentPayment &&
       price != null &&
       price > 0 &&
       registration.paymentOption &&
@@ -885,6 +926,9 @@ Deno.serve(async (req) => {
             : null,
           pricePending
             ? "⏳ EN ATTENTE TARIF — partenaire (tarif à confirmer). Pas de paiement ni convention tant que le tarif n'est pas fixé."
+            : null,
+          skipsStudentPayment
+            ? "🏫 SANS PAIEMENT STAGIAIRE — forfait / liste invitée (ex. ESF Samoëns PT). Groupes & horaires après analyse des tests."
             : null,
           registration.dateLabel || registration.dates
             ? `Dates: ${registration.dateLabel || registration.dates}`

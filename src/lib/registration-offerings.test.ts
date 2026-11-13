@@ -15,7 +15,10 @@ import {
   isOpenOffering,
   isPartnerPricePending,
   isPartnerSchool,
+  isEnrollableOffering,
+  isInviteOnlyOffering,
   isWaitlistOffering,
+  requiresStudentPayment,
   requiresMandatoryFifplEstimate,
   resolveOfferingPrice,
   sortOfferingsByDateThenLocation,
@@ -116,6 +119,12 @@ describe("resolveOfferingPrice — tarif selon école", () => {
     expect(WAITLIST_MESSAGE.toLowerCase()).toContain("attente de confirmation");
   });
 
+  it("reconnaît invite_only et student_payment_required", () => {
+    expect(isInviteOnlyOffering({ enrollment_status: "invite_only" })).toBe(true);
+    expect(isEnrollableOffering({ enrollment_status: "invite_only" })).toBe(true);
+    expect(requiresStudentPayment({ student_payment_required: false })).toBe(false);
+  });
+
   it("mode financement Méribel / La Rosière", () => {
     expect(getSessionFundingMode({ funding_mode: "forfait_ecole" })).toBe("forfait_ecole");
     expect(hidesDepositPaymentOptions("forfait_ecole")).toBe(true);
@@ -155,6 +164,9 @@ describe("copie Deno registration-offerings", () => {
     expect(deno).toContain("export function resolveOfferingPrice");
     expect(deno).toContain("export function isWaitlistOffering");
     expect(deno).toContain("export function isOpenOffering");
+    expect(deno).toContain("export function isInviteOnlyOffering");
+    expect(deno).toContain("export function isEnrollableOffering");
+    expect(deno).toContain("export function requiresStudentPayment");
     expect(deno).toContain("export function isPartnerPricePending");
     expect(deno).toContain("export function hidesDepositPaymentOptions");
     expect(deno).toContain("export function hasAlumniPrice");

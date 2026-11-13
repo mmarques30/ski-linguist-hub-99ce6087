@@ -2916,6 +2916,7 @@ export type Database = {
           session_code: string | null
           sort_order: number
           start_date: string | null
+          student_payment_required: boolean
           updated_at: string
         }
         Insert: {
@@ -2946,6 +2947,7 @@ export type Database = {
           session_code?: string | null
           sort_order?: number
           start_date?: string | null
+          student_payment_required?: boolean
           updated_at?: string
         }
         Update: {
@@ -2976,6 +2978,7 @@ export type Database = {
           session_code?: string | null
           sort_order?: number
           start_date?: string | null
+          student_payment_required?: boolean
           updated_at?: string
         }
         Relationships: [
@@ -2991,6 +2994,47 @@ export type Database = {
             columns: ["season_id"]
             isOneToOne: false
             referencedRelation: "seasons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      registration_offering_invites: {
+        Row: {
+          civility: string | null
+          created_at: string
+          email: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          notes: string | null
+          offering_id: string
+        }
+        Insert: {
+          civility?: string | null
+          created_at?: string
+          email: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          notes?: string | null
+          offering_id: string
+        }
+        Update: {
+          civility?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          notes?: string | null
+          offering_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registration_offering_invites_offering_id_fkey"
+            columns: ["offering_id"]
+            isOneToOne: false
+            referencedRelation: "registration_offerings"
             referencedColumns: ["id"]
           },
         ]
@@ -4391,7 +4435,21 @@ export type Database = {
         Returns: Json
       }
       cecrl_label_from_score: { Args: { _score: number }; Returns: string }
+      check_registration_invite: {
+        Args: { p_email: string; p_offering_id: string }
+        Returns: boolean
+      }
       classify_entry_level_source: { Args: { _raw: string }; Returns: string }
+      get_registration_invite_profile: {
+        Args: { p_email: string; p_offering_id: string }
+        Returns: {
+          civility: string | null
+          email: string
+          first_name: string | null
+          last_name: string | null
+          notes: string | null
+        }[]
+      }
       cleanup_zztest_data: { Args: { _dry_run?: boolean }; Returns: Json }
       compute_attendance_rate: {
         Args: { p_inscription_id: string }

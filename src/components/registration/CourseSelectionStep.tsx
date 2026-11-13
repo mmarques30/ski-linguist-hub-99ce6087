@@ -1,4 +1,5 @@
 import { useMemo, useEffect, useState } from "react";
+import { useSearchParams } from "react-router";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -14,15 +15,19 @@ import type { RegistrationData } from "@/pages/register/Index";
 import { useRegistrationOfferings } from "@/hooks/useRegistrationOfferings";
 import {
   CUSTOM_FORMAT_DURATION,
+  INVITE_ONLY_MESSAGE,
+  INVITE_ONLY_SCHOOL_PAYS_MESSAGE,
   WAITLIST_MESSAGE,
   filterByLanguage,
   filterInPersonSessions,
   filterOnlineGroupSessions,
   filterOnlineIndividual,
   isCustomFormatDuration,
-  isOpenOffering,
+  isEnrollableOffering,
+  isInviteOnlyOffering,
   isWaitlistOffering,
   offeringDateKey,
+  requiresStudentPayment,
   sortOfferingsByDateThenLocation,
   uniqueDurations,
   uniqueLanguages,
@@ -59,6 +64,15 @@ function sessionScheduleLine(o: RegistrationOffering): string {
 }
 
 export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionStepProps) {
+  const [searchParams] = useSearchParams();
+  const invitedSessionCode = (
+    searchParams.get("session") ||
+    searchParams.get("invite") ||
+    ""
+  )
+    .trim()
+    .toUpperCase();
+
   const { data: offerings = [], isLoading, isError } = useRegistrationOfferings();
   const [pathMode, setPathMode] = useState<PathMode | "">("");
   const [onlineKind, setOnlineKind] = useState<OnlineKind | "">("");
@@ -70,10 +84,40 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
   });
   const [waitlistSending, setWaitlistSending] = useState(false);
   const [waitlistDone, setWaitlistDone] = useState(false);
+  const [inviteApplied, setInviteApplied] = useState(false);
 
-  const inPerson = useMemo(() => filterInPersonSessions(offerings), [offerings]);
-  const onlineGroup = useMemo(() => filterOnlineGroupSessions(offerings), [offerings]);
-  const onlineIndividual = useMemo(() => filterOnlineIndividual(offerings), [offerings]);
+  /** Invite_only hors lien ?session= : invisible dans le catalogue public. */
+  const catalogueOfferings = useMemo(() => {
+    return offerings.filter((o) => {
+      if (!isInviteOnlyOffering(o)) return true;
+      const code = (o.session_code || "").toUpperCase();
+      return Boolean(invitedSessionCode) && code === invitedSessionCode;
+    });
+  }, [offerings, invitedSessionCode]);
+
+  const invitedOffering = useMemo(() => {
+    if (!invitedSessionCode) return null;
+    return (
+      offerings.find(
+        (o) =>
+          isInviteOnlyOffering(o) &&
+          (o.session_code || "").toUpperCase() === invitedSessionCode
+      ) || null
+    );
+  }, [offerings, invitedSessionCode]);
+
+  const inPerson = useMemo(
+    () => filterInPersonSessions(catalogueOfferings),
+    [catalogueOfferings]
+  );
+  const onlineGroup = useMemo(
+    () => filterOnlineGroupSessions(catalogueOfferings),
+    [catalogueOfferings]
+  );
+  const onlineIndividual = useMemo(
+    () => filterOnlineIndividual(catalogueOfferings),
+    [catalogueOfferings]
+  );
 
   // Restaure le chemin si l'utilisateur revient sur l'étape
   useEffect(() => {
@@ -93,6 +137,15 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
     if (!data.offeringId) return null;
     return offerings.find((o) => o.id === data.offeringId) || null;
   }, [offerings, data.offeringId]);
+
+  const selectedIsInviteOnly = selectedOffering
+    ? isInviteOnlyOffering(selectedOffering)
+    : Boolean(invitedOffering);
+  const selectedSkipsPayment = selectedOffering
+    ? !requiresStudentPayment(selectedOffering)
+    : invitedOffering
+      ? !requiresStudentPayment(invitedOffering)
+      : false;
 
   const individualLanguages = useMemo(
     () => uniqueLanguages(onlineIndividual),
@@ -154,18 +207,24 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
       !requestedStartDateError &&
       (data.customFormatDetails?.trim().length ?? 0) >= 20
     : !!selectedOffering &&
-      isOpenOffering(selectedOffering) &&
+      isEnrollableOffering(selectedOffering) &&
       !!data.fundingType &&
       !requestedStartDateError;
 
   const applyOffering = (offering: RegistrationOffering) => {
     setWaitlistDone(false);
+    const inviteOnly = isInviteOnlyOffering(offering);
+    const pays = requiresStudentPayment(offering);
     // Tarif volontairement non fixé ici : affiché seulement après l'école (étape profil).
     onUpdate({
       offeringId: offering.id,
       price: undefined,
       pricePending: false,
       sessionFundingMode: offering.funding_mode ?? "individuel",
+      studentPaymentRequired: pays,
+      inviteOnly,
+      // Forfait école / invite sans paiement stagiaire → financement « entreprise ».
+      fundingType: inviteOnly || !pays ? "company" : data.fundingType,
       duration: String(offering.duration_hours),
       dates: offering.date_label || undefined,
       startDate: offering.start_date || undefined,
@@ -182,6 +241,17 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
     });
   };
 
+  // Lien d'invitation : préremplit la session et le mode financement école.
+  useEffect(() => {
+    if (inviteApplied || !invitedOffering) return;
+    setPathMode(invitedOffering.modality_key === "in_person" ? "in_person" : "online");
+    if (invitedOffering.modality_key === "online_group") setOnlineKind("group");
+    if (invitedOffering.modality_key === "online_individual") setOnlineKind("individual");
+    applyOffering(invitedOffering);
+    setInviteApplied(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- apply once when offering loads
+  }, [invitedOffering, inviteApplied]);
+
   const resetCourseFields = (extra: Partial<RegistrationData> = {}) => {
     setWaitlistDone(false);
     onUpdate({
@@ -189,6 +259,8 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
       price: undefined,
       pricePending: false,
       sessionFundingMode: undefined,
+      studentPaymentRequired: undefined,
+      inviteOnly: undefined,
       duration: "",
       dateKey: "",
       dates: undefined,
@@ -321,11 +393,43 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <StepCard
-        title="Choisir une formation"
-        description="D’abord la modalité (présentiel ou en ligne), puis la session. Les tarifs s’affichent après le choix de votre école."
+        title={
+          selectedIsInviteOnly || invitedOffering
+            ? "Session sur invitation"
+            : "Choisir une formation"
+        }
+        description={
+          selectedIsInviteOnly || invitedOffering
+            ? "Session réservée aux personnes invitée·s. Ensuite : coordonnées, test de niveau et attentes."
+            : "D’abord la modalité (présentiel ou en ligne), puis la session. Les tarifs s’affichent après le choix de votre école."
+        }
         icon={Calendar}
       >
         <div className="space-y-6">
+          {(selectedIsInviteOnly || invitedOffering) && (
+            <Alert>
+              <AlertDescription className="space-y-2">
+                <p>{INVITE_ONLY_MESSAGE}</p>
+                {selectedSkipsPayment && <p>{INVITE_ONLY_SCHOOL_PAYS_MESSAGE}</p>}
+                {invitedOffering && (
+                  <p className="font-medium text-foreground">
+                    {invitedOffering.location_label} · {invitedOffering.language_label}
+                    {invitedOffering.date_label ? ` · ${invitedOffering.date_label}` : ""}
+                  </p>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {invitedSessionCode && !invitedOffering && !isLoading && (
+            <Alert variant="destructive">
+              <AlertDescription>
+                Aucune session invitée ne correspond au code « {invitedSessionCode} ». Vérifiez le
+                lien reçu par e-mail ou contactez FLI.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* 1. Modalité — distincte des lieux / sessions */}
           <div className="space-y-3">
             <Label>Modalité *</Label>
@@ -420,6 +524,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                   >
                     {inPersonForLanguage.map((o) => {
                       const waitlist = isWaitlistOffering(o);
+                      const inviteOnly = isInviteOnlyOffering(o);
                       return (
                         <OptionCard key={o.id} selected={data.offeringId === o.id}>
                           <Label
@@ -435,6 +540,8 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                                   </span>
                                   {waitlist ? (
                                     <StatusPill tone="warning">En attente de confirmation</StatusPill>
+                                  ) : inviteOnly ? (
+                                    <StatusPill tone="info">Sur invitation</StatusPill>
                                   ) : (
                                     <StatusPill tone="success">Inscriptions ouvertes</StatusPill>
                                   )}
@@ -543,6 +650,7 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                   >
                     {onlineGroupForLanguage.map((o) => {
                       const waitlist = isWaitlistOffering(o);
+                      const inviteOnly = isInviteOnlyOffering(o);
                       return (
                         <OptionCard key={o.id} selected={data.offeringId === o.id}>
                           <Label
@@ -556,6 +664,8 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
                                   <span className="font-medium">{sessionScheduleLine(o)}</span>
                                   {waitlist ? (
                                     <StatusPill tone="warning">En attente de confirmation</StatusPill>
+                                  ) : inviteOnly ? (
+                                    <StatusPill tone="info">Sur invitation</StatusPill>
                                   ) : (
                                     <StatusPill tone="success">Inscriptions ouvertes</StatusPill>
                                   )}
@@ -806,8 +916,12 @@ export function CourseSelectionStep({ data, onUpdate, onNext }: CourseSelectionS
             </div>
           )}
 
-          {/* Financement — sessions ouvertes uniquement */}
-          {selectedOffering && !selectedIsWaitlist && !isCustomFormat && (
+          {/* Financement — masqué pour invite / forfait école sans paiement stagiaire */}
+          {selectedOffering &&
+            !selectedIsWaitlist &&
+            !isCustomFormat &&
+            !selectedIsInviteOnly &&
+            !selectedSkipsPayment && (
             <div className="animate-in fade-in slide-in-from-top-2 space-y-3 border-t border-border pt-6">
               <Label>Mode de financement *</Label>
               <RadioGroup
