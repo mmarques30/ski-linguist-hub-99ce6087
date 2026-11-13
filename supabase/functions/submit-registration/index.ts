@@ -638,33 +638,56 @@ Deno.serve(async (req) => {
         );
       }
 
-      if (offering && isInviteOnlyOffering(offering)) {
-        const { data: inviteOk, error: inviteError } = await supabase.rpc(
-          "check_registration_invite",
-          {
-            p_offering_id: registration.offeringId,
-            p_email: email,
+      // Whitelist : invite_only OU offre qui a des invites (ex. S21 temporairement
+      // en « open » le temps que le front www.fli.fr soit redéployé).
+      if (offering && registration.offeringId) {
+        const { count: inviteCount } = await supabase
+          .from("registration_offering_invites")
+          .select("id", { count: "exact", head: true })
+          .eq("offering_id", registration.offeringId);
+        const mustCheckInvite =
+          isInviteOnlyOffering(offering) || (inviteCount != null && inviteCount > 0);
+        if (mustCheckInvite) {
+          const { data: inviteOk, error: inviteError } = await supabase.rpc(
+            "check_registration_invite",
+            {
+              p_offering_id: registration.offeringId,
+              p_email: email,
+            }
+          );
+          // Si l'offre est open mais a des invites, check_registration_invite
+          // renvoie true pour tout le monde (statut ≠ invite_only). On force
+          // alors une vérif directe sur la table.
+          let allowed = Boolean(inviteOk);
+          if (!isInviteOnlyOffering(offering) && inviteCount! > 0) {
+            const { data: row } = await supabase
+              .from("registration_offering_invites")
+              .select("id")
+              .eq("offering_id", registration.offeringId)
+              .ilike("email", email)
+              .maybeSingle();
+            allowed = Boolean(row?.id);
           }
-        );
-        if (inviteError) {
-          console.error("check_registration_invite:", inviteError);
-          return new Response(
-            JSON.stringify({
-              success: false,
-              error: "Vérification de l'invitation impossible. Réessayez ou contactez FLI.",
-            }),
-            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        if (!inviteOk) {
-          return new Response(
-            JSON.stringify({
-              success: false,
-              error:
-                "Cette adresse e-mail n'est pas autorisée pour cette session sur invitation. Utilisez l'e-mail de l'invitation FLI.",
-            }),
-            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
+          if (inviteError) {
+            console.error("check_registration_invite:", inviteError);
+            return new Response(
+              JSON.stringify({
+                success: false,
+                error: "Vérification de l'invitation impossible. Réessayez ou contactez FLI.",
+              }),
+              { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          if (!allowed) {
+            return new Response(
+              JSON.stringify({
+                success: false,
+                error:
+                  "Cette adresse e-mail n'est pas autorisée pour cette session sur invitation. Utilisez l'e-mail de l'invitation FLI.",
+              }),
+              { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
         }
       }
 
