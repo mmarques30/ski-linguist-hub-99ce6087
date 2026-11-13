@@ -27,6 +27,7 @@ import {
   SurfaceCard,
   TableEmpty,
 } from "@/components/ui-kit";
+import { scheduleGroupTitle } from "@/lib/schedule-validation";
 
 export default function ScheduleValidation() {
   const { data, isLoading, isError } = usePendingSchedules();
@@ -155,8 +156,8 @@ export default function ScheduleValidation() {
 
           return (
             <SurfaceCard
-              key={`${group.startDate}-${group.language}`}
-              title={group.language}
+              key={`${group.startDate}-${group.location}-${group.language}`}
+              title={scheduleGroupTitle(group)}
               description={`Début le ${format(new Date(group.startDate), "EEEE d MMMM yyyy", {
                 locale: fr,
               })}`}
@@ -179,10 +180,10 @@ export default function ScheduleValidation() {
                   onCheckedChange={(checked) =>
                     toggleInGroup(groupIds, checked === true)
                   }
-                  id={`group-${group.startDate}-${group.language}`}
+                  id={`group-${group.startDate}-${group.location}-${group.language}`}
                 />
                 <label
-                  htmlFor={`group-${group.startDate}-${group.language}`}
+                  htmlFor={`group-${group.startDate}-${group.location}-${group.language}`}
                   className="text-sm cursor-pointer"
                 >
                   Sélectionner tout le groupe

@@ -16,6 +16,7 @@ export interface PendingScheduleInscription {
   code: string | null;
   language: string;
   start_date: string;
+  course_location: string | null;
   /** BL-029 : start_date n'est que le début souhaité par le stagiaire. */
   dates_to_confirm: boolean;
   entry_level: string | null;
@@ -54,6 +55,7 @@ export function usePendingSchedules() {
           code,
           language,
           start_date,
+          course_location,
           dates_to_confirm,
           entry_level,
           schedule,
@@ -86,6 +88,7 @@ export function usePendingSchedules() {
             code: row.code,
             language: row.language,
             start_date: row.start_date,
+            course_location: row.course_location ?? null,
             dates_to_confirm: row.dates_to_confirm ?? false,
             entry_level: row.entry_level,
             schedule: row.schedule,
