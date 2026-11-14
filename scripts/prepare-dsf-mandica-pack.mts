@@ -61,10 +61,10 @@ const FLI = {
   phone: "04 79 28 21 09",
   email: "info@fli.fr",
   siret: "484 772 041 00048",
-  tvaNumber: "FR 44 484772041",
+  tvaNumber: "FR 82 484772041",
   iban: FLI_BANK_DETAILS.iban,
   bic: FLI_BANK_DETAILS.bic,
-  activity: "82 73 01 366 73",
+  activity: "82 73 01366 73",
 } as const;
 
 const CLIENT = {

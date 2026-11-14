@@ -7,6 +7,7 @@
  */
 import { PDFDocument, StandardFonts, rgb, type PDFFont } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
+import { FLI_ACTIVITY_NUMBER } from "@/lib/organization-identity";
 import { FLI_BANK_DETAILS } from "@/lib/registration-payments";
 
 export const INVOICE_LOGO_PUBLIC_PATH =
@@ -58,7 +59,7 @@ const FLI = {
   siret: "484 772 041 00048",
   iban: FLI_BANK_DETAILS.iban,
   bic: FLI_BANK_DETAILS.bic,
-  activity: "82 73 01 366 73",
+  activity: FLI_ACTIVITY_NUMBER,
 } as const;
 
 function formatFr(iso: string | null | undefined): string {

@@ -21,7 +21,7 @@ describe("certificate-pdf (modèle Word 2024, pdf-lib RGB)", () => {
   it("expose logo/org + pied FLI Version 2", () => {
     expect(CERTIFICATE_ORG.name).toBe("France Langues International");
     expect(CERTIFICATE_ORG.siret).toContain("484 772 041");
-    expect(CERTIFICATE_ORG.activityNumber).toBe("82 73 01 366 73");
+    expect(CERTIFICATE_ORG.activityNumber).toBe("82 73 01366 73");
     expect(CERTIFICATE_FLI_FOOTER_LINES.at(-1)).toContain("Version 2");
     expect(CERTIFICATE_ASSET_FILES.letterhead).toContain("entete-cert");
   });

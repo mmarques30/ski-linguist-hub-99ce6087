@@ -80,6 +80,16 @@ export const EMPTY_ORGANIZATION_IDENTITY: OrganizationIdentity = {
   logo_url: "",
 };
 
+/**
+ * NDA officiel (format XX XX XXXXX XX) — certificat Qualiopi FLI.
+ * Les 11 chiffres 82730136673 sont inchangés ; l'ancien découpage
+ * « 82 73 01 366 73 » était incorrect et signalé par une stagiaire.
+ */
+export const FLI_ACTIVITY_NUMBER = "82 73 01366 73";
+
+/** TVA intracommunautaire : clé 82 (= (12 + 3×(SIREN%97))%97), pas 44. */
+export const FLI_TVA_NUMBER = "FR82484772041";
+
 const FLI_INVOICE_DEFAULTS = {
   name: "France Langues International",
   address: "25 avenue de la gare",
@@ -224,7 +234,7 @@ export function organizationLegalMentions(identity: OrganizationIdentity): strin
 export const FLI_DOCUMENT_FOOTER_V4_LINES = [
   "Formation Professionnelle Continue : Langues Étrangères",
   "SARL au capital de 5000 euros. 25 avenue de la gare, 73800 Montmélian",
-  "Siret : 484 772 041 00048- RCS Chambéry – NAF : 8559A Organisme de formation n° 82 73 01 366 73",
+  `Siret : 484 772 041 00048- RCS Chambéry – NAF : 8559A Organisme de formation n° ${FLI_ACTIVITY_NUMBER}`,
   "Version 4 du 24 septembre 2026",
 ] as const;
 
@@ -235,7 +245,7 @@ export const FLI_DOCUMENT_FOOTER_V4_LINES = [
 export const FLI_DOCUMENT_FOOTER_V2_LINES = [
   "Formation Professionnelle Continue : Langues Étrangères",
   "SARL au capital de 5000 euros. 25 avenue de la gare, 73800 Montmélian",
-  "Siret : 484 772 041 00048- RCS Chambéry – NAF : 8559A Organisme de formation n° 82 73 01 366 73",
+  `Siret : 484 772 041 00048- RCS Chambéry – NAF : 8559A Organisme de formation n° ${FLI_ACTIVITY_NUMBER}`,
   "Version 2 du 24 septembre 2026",
 ] as const;
 

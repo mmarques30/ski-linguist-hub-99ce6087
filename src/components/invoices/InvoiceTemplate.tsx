@@ -5,6 +5,8 @@ import factureAcquitteeStamp from "@/assets/facture-acquittee-stamp.png";
 import { useOrganizationIdentity } from "@/hooks/useOrganizationIdentity";
 import {
   EMPTY_ORGANIZATION_IDENTITY,
+  FLI_ACTIVITY_NUMBER,
+  FLI_TVA_NUMBER,
   organizationInvoiceHeader,
 } from "@/lib/organization-identity";
 import { paymentMethodLabel } from "@/lib/payment-methods";
@@ -84,7 +86,7 @@ const FLI_INFO = {
   phone: "04 79 28 21 09",
   email: "info@fli.fr",
   siret: "484 772 041 00048",
-  tvaNumber: "FR 44 484772041",
+  tvaNumber: FLI_TVA_NUMBER.replace(/^(FR)(\d{2})(\d+)$/, "$1 $2 $3"),
   iban: FLI_BANK_DETAILS.iban,
   bic: FLI_BANK_DETAILS.bic,
 };
@@ -369,7 +371,7 @@ export function InvoiceTemplate({ data, className = "" }: InvoiceTemplateProps) 
         <p>SARL au capital de 5000 euros</p>
         <p>25 avenue de la gare, 73800 Montmélian</p>
         <p>Siret : 484 772 041 00048 - RCS Chambéry - NAF : 8559A</p>
-        <p>Organisme de formation n° 82 73 01 366 73</p>
+        <p>Organisme de formation n° {FLI_ACTIVITY_NUMBER}</p>
         <p className="italic">Version 5 du 10 janvier 2026</p>
       </div>
     </div>

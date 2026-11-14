@@ -46,7 +46,7 @@ async function main() {
 
   // —— Organisme de formation FLI ——
   setText("Raison Sociale ( OF)", "France Langues International");
-  setText("NDA (OF)", "82 73 01 366 73");
+  setText("NDA (OF)", "82 73 01366 73");
   setText("N° SIRET (OF)", "484 772 041 00048");
   setText("Adresse (OF)", "25 avenue de la Gare");
   setText("Code Postal (OF)", "73800");

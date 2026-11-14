@@ -3,6 +3,7 @@
  * Signature organisme : cachet FLI + signature Paula (`fli-signature-cachet.png`).
  */
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
+import { FLI_ACTIVITY_NUMBER } from "@/lib/organization-identity";
 
 export const FORMATEUR_CONTRACT_SIGNATURE_ASSET =
   "formateur-contracts/fli-signature-cachet.png" as const;
@@ -102,7 +103,7 @@ export async function buildInstructorContractPdf(
   y -= 6;
   line("Entre les soussignés :", 10, bold);
   para(
-    "France Langues International (F.L.I.), SARL au capital de 5 000 euros, 25 avenue de la Gare, 73800 Montmélian — SIRET 484 772 041 00048 — RCS Chambéry — Organisme de formation n° 82 73 01 366 73, représentée par Paula Rangel-Halbwachs, gérante, ci-après « l'Organisme »,",
+    `France Langues International (F.L.I.), SARL au capital de 5 000 euros, 25 avenue de la Gare, 73800 Montmélian — SIRET 484 772 041 00048 — RCS Chambéry — Organisme de formation n° ${FLI_ACTIVITY_NUMBER}, représentée par Paula Rangel-Halbwachs, gérante, ci-après « l'Organisme »,`,
   );
   para(
     `Et ${input.prestataireLine}, ci-après « le Prestataire »,`,

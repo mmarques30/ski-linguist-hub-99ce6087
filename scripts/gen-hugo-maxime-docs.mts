@@ -25,7 +25,7 @@ const BOTTOM_RESERVE_H = LEGAL_FOOTER_H + SIGNATURE_CONTENT_H + 4;
 const FLI_PRESENCE_FOOTER_LINES = [
   "Formation Professionnelle Continue : Langues Etrangères",
   "SARL au capital de 5000 euros. F.L.I. 25 avenue de la gare, 73800 Montmélian",
-  "Siret : 484 772 041 00048- RCS Chambéry – NAF : 8559A - Organisme de formation n° 82 73 01 366 73",
+  "Siret : 484 772 041 00048- RCS Chambéry – NAF : 8559A - Organisme de formation n° 82 73 01366 73",
 ] as const;
 
 function formatPresenceDate(iso: string | null | undefined): string {
@@ -266,7 +266,7 @@ async function buildContractPdf(): Promise<Uint8Array> {
   y -= 6;
   line("Entre les soussignés :", 10, bold);
   para(
-    "France Langues International (F.L.I.), SARL au capital de 5 000 euros, 25 avenue de la Gare, 73800 Montmélian — SIRET 484 772 041 00048 — RCS Chambéry — Organisme de formation n° 82 73 01 366 73, représentée par Paula Rangel-Halbwachs, gérante, ci-après « l'Organisme »,",
+    "France Langues International (F.L.I.), SARL au capital de 5 000 euros, 25 avenue de la Gare, 73800 Montmélian — SIRET 484 772 041 00048 — RCS Chambéry — Organisme de formation n° 82 73 01366 73, représentée par Paula Rangel-Halbwachs, gérante, ci-après « l'Organisme »,",
   );
   para(
     "Et Monsieur Maxime Goy, auto-entrepreneur, SIRET 930 409 925 00029, 2232 route du col des Aravis, 73590 La Giettaz — maxime.goy12@gmail.com — 06 58 41 11 46, ci-après « le Prestataire »,",

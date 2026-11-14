@@ -38,7 +38,7 @@ const IDENTITY = {
   phone: "04 79 28 21 09",
   email: "info@fli.fr",
   siret: "484 772 041 00048",
-  activity_number: "82 73 01 366 73",
+  activity_number: "82 73 01366 73",
   activity_authority: "préfet de région Auvergne-Rhône-Alpes",
   representative: "Paula Rangel-Halbwachs",
   website: "https://fli.fr",

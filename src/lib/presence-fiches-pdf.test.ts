@@ -49,6 +49,6 @@ describe("FLI_PRESENCE_FOOTER_LINES", () => {
     expect(FLI_PRESENCE_FOOTER_LINES[1]).toContain("F.L.I.");
     expect(FLI_PRESENCE_FOOTER_LINES[1]).toContain("Montmélian");
     expect(FLI_PRESENCE_FOOTER_LINES[2]).toContain("484 772 041 00048");
-    expect(FLI_PRESENCE_FOOTER_LINES[2]).toContain("82 73 01 366 73");
+    expect(FLI_PRESENCE_FOOTER_LINES[2]).toContain("82 73 01366 73");
   });
 });

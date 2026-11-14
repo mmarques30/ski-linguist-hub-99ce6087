@@ -10,6 +10,7 @@ import {
   type CertificateBilanData,
   type ObjectifAtteint,
 } from "@/lib/certificate-progression";
+import { FLI_ACTIVITY_NUMBER } from "@/lib/organization-identity";
 
 const PAGE = { width: 595.28, height: 841.89 };
 const MARGIN = 48;
@@ -28,7 +29,7 @@ export const CERTIFICATE_ORG = {
   phone: "04 79 28 21 09",
   email: "info@fli.fr",
   siret: "484 772 041 00048",
-  activityNumber: "82 73 01 366 73",
+  activityNumber: FLI_ACTIVITY_NUMBER,
   representative: "Paula Rangel Halbwachs",
   signatory: "Paula RANGEL-HALBWACHS",
 } as const;
@@ -40,7 +41,7 @@ export const CERTIFICATE_ORG = {
 export const CERTIFICATE_FLI_FOOTER_LINES = [
   "Formation Professionnelle Continue : Langues Etrangères",
   "SARL au capital de 5000 euros. 25 avenue de la gare, 73800 Montmélian",
-  "Siret : 484 772 041 00048- RCS Chambéry – NAF : 8559A Organisme de formation n° 82 73 01 366 73",
+  `Siret : 484 772 041 00048- RCS Chambéry – NAF : 8559A Organisme de formation n° ${FLI_ACTIVITY_NUMBER}`,
   "Version 2 du 8 septembre 2021",
 ] as const;
 

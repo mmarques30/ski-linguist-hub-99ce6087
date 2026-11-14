@@ -2,6 +2,7 @@
  * Devis de formation (PDF simple) — dossier FAFCEA / parcours individualisé.
  */
 import { PDFDocument, StandardFonts, rgb, type PDFFont } from "pdf-lib";
+import { FLI_ACTIVITY_NUMBER } from "@/lib/organization-identity";
 
 export type DevisFormationPdfInput = {
   devisNumber: string;
@@ -34,7 +35,7 @@ const FLI = {
   phone: "04 79 28 21 09",
   email: "info@fli.fr",
   siret: "484 772 041 00048",
-  activity: "82 73 01 366 73",
+  activity: FLI_ACTIVITY_NUMBER,
 } as const;
 
 function formatEuro(amount: number): string {

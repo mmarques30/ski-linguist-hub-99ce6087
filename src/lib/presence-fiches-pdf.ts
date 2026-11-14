@@ -7,6 +7,7 @@
  */
 
 import jsPDF from "jspdf";
+import { FLI_ACTIVITY_NUMBER } from "@/lib/organization-identity";
 
 export type PresenceFicheKind = "formateur" | "stagiaire";
 
@@ -43,7 +44,7 @@ const BOTTOM_RESERVE_H = LEGAL_FOOTER_H + SIGNATURE_CONTENT_H + 4;
 export const FLI_PRESENCE_FOOTER_LINES = [
   "Formation Professionnelle Continue : Langues Etrangères",
   "SARL au capital de 5000 euros. F.L.I. 25 avenue de la gare, 73800 Montmélian",
-  "Siret : 484 772 041 00048- RCS Chambéry – NAF : 8559A - Organisme de formation n° 82 73 01 366 73",
+  `Siret : 484 772 041 00048- RCS Chambéry – NAF : 8559A - Organisme de formation n° ${FLI_ACTIVITY_NUMBER}`,
 ] as const;
 
 export function formatPresenceDate(iso: string | null | undefined): string {

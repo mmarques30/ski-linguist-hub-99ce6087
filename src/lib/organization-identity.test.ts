@@ -3,6 +3,10 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   EMPTY_ORGANIZATION_IDENTITY,
+  FLI_ACTIVITY_NUMBER,
+  FLI_DOCUMENT_FOOTER_V2_LINES,
+  FLI_DOCUMENT_FOOTER_V4_LINES,
+  FLI_TVA_NUMBER,
   formatOrganizationAddress,
   buildOrganizationEmailFooterHtml,
   isOrganizationIdentityComplete,
@@ -35,6 +39,29 @@ describe("identité de l'organisation", () => {
     expect(ORGANIZATION_IDENTITY_KEY).toBe("fli_identity");
   });
 
+  it("fixe le NDA au format officiel Qualiopi (XX XX XXXXX XX)", () => {
+    expect(FLI_ACTIVITY_NUMBER).toBe("82 73 01366 73");
+    expect(FLI_ACTIVITY_NUMBER.replace(/\s/g, "")).toBe("82730136673");
+    expect(FLI_ACTIVITY_NUMBER).not.toBe("82 73 01 366 73");
+    for (const line of [...FLI_DOCUMENT_FOOTER_V4_LINES, ...FLI_DOCUMENT_FOOTER_V2_LINES]) {
+      expect(line).not.toContain("82 73 01 366 73");
+      if (line.includes("Organisme de formation")) {
+        expect(line).toContain(FLI_ACTIVITY_NUMBER);
+      }
+    }
+  });
+
+  it("fixe la TVA intracommunautaire (clé 82, pas 44)", () => {
+    expect(FLI_TVA_NUMBER).toBe("FR82484772041");
+    expect(FLI_TVA_NUMBER).not.toMatch(/FR44|FR 44/);
+    const invoiceTpl = readFileSync(
+      join(process.cwd(), "src/components/invoices/InvoiceTemplate.tsx"),
+      "utf8"
+    );
+    expect(invoiceTpl).toContain("FLI_TVA_NUMBER");
+    expect(invoiceTpl).not.toContain("FR 82 484772041");
+  });
+
   it("relit l'identité déjà en base sans rien perdre", () => {
     const identity = parseOrganizationIdentity(IDENTITE_LIVE);
     expect(identity.legal_name).toBe("France Langues International");
@@ -47,7 +74,7 @@ describe("identité de l'organisation", () => {
     const identity = parseOrganizationIdentity({
       ...IDENTITE_LIVE,
       siret: "484 772 041 00048",
-      activity_number: "82 73 01 366 73",
+      activity_number: "82 73 01366 73",
     });
     const pourPdf = parseFliIdentity(identity);
     expect(pourPdf).not.toBeNull();

@@ -83,7 +83,7 @@ async function buildPaidInvoicePdf(input: {
   line("73800 Montmélian", { size: 9, color: muted });
   line("Tél. 04 79 28 21 09 · info@fli.fr", { size: 9, color: muted });
   line("SIRET 484 772 041 00048", { size: 9, color: muted });
-  line("Organisme de formation n° 82 73 01 366 73", { size: 9, color: muted });
+  line("Organisme de formation n° 82 73 01366 73", { size: 9, color: muted });
   y -= 4;
   page.drawRectangle({ x: left, y: y + 2, width: 500, height: 2.5, color: yellow });
   y -= 18;
@@ -154,7 +154,7 @@ async function buildPaidInvoicePdf(input: {
   for (const t of [
     "France Langues International - organisme de formation",
     "SARL au capital de 5000 euros — 25 avenue de la gare, 73800 Montmélian",
-    "Siret : 484 772 041 00048 - RCS Chambéry - NAF : 8559A — Organisme n° 82 73 01 366 73",
+    "Siret : 484 772 041 00048 - RCS Chambéry - NAF : 8559A — Organisme n° 82 73 01366 73",
   ]) {
     page.drawText(t, {
       x: left,

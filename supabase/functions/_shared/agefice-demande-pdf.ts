@@ -4,6 +4,7 @@
  * Ne pas aplatir le formulaire : le stagiaire / FLI doivent pouvoir éditer.
  */
 import { PDFDocument } from "https://esm.sh/pdf-lib@1.17.1";
+import { FLI_ACTIVITY_NUMBER } from "./organization-identity.ts";
 
 export type AgeficeDemandeStudent = {
   civility?: string | null;
@@ -50,7 +51,7 @@ export const AGEFICE_FLI_OF_DEFAULTS = {
   phone: "0479282109",
   email: "info@fli.fr",
   siret: "484 772 041 00048",
-  activity_number: "82 73 01 366 73",
+  activity_number: FLI_ACTIVITY_NUMBER,
   representative_last_name: "Rangel Halbwachs",
   representative_first_name: "Paula",
 } as const;
