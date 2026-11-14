@@ -98,6 +98,8 @@ import DashboardGestaoMockupPage from "./pages/mockup/DashboardGestaoMockup";
 import ConditionsGenerales from "./pages/legal/ConditionsGenerales";
 import PolitiqueConfidentialite from "./pages/legal/PolitiqueConfidentialite";
 import { CookieConsentBanner } from "./components/legal/CookieConsentBanner";
+import { CanonicalHostRedirect } from "./components/seo/CanonicalHostRedirect";
+import { PublicSiteHead } from "./components/seo/PublicSiteHead";
 import InstitutionalLanding from "./pages/landing/InstitutionalLanding";
 import AssetValidationMockupPage from "./pages/landing/AssetValidationMockup";
 
@@ -117,6 +119,8 @@ const App = () => (
       <TooltipProvider>
         <Sonner />
         <BrowserRouter>
+          <CanonicalHostRedirect />
+          <PublicSiteHead />
           <CookieConsentBanner />
           <Routes>
             {/* Public routes */}

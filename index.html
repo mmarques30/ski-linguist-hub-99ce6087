@@ -3,16 +3,30 @@
   <head>
     <meta charset="UTF-8" />
     <!--
-      Lien public déjà envoyé : https://plateforme.fli.fr/register
-      doit ouvrir https://www.fli.fr/register (Paula, 14/10/2026).
-      Exécuté avant React. /register/payment-success et payment-cancel restent ici.
+      Canonique Search Console : www.fli.fr.
+      - Alias multi-domaine Lovable (fli.fr, stages-langues.fr) → www.fli.fr
+      - plateforme.fli.fr/register → www.fli.fr/register (Paula, 14/10/2026)
+      Exécuté avant React. Les autres routes plateforme restent ici.
+      Meta google-site-verification : injectée au runtime si
+      VITE_GOOGLE_SITE_VERIFICATION est renseigné (DNS domaine déjà OK).
     -->
     <script>
       (function () {
-        if (location.hostname !== "plateforme.fli.fr") return;
+        var host = location.hostname.toLowerCase();
         var path = location.pathname.replace(/\/+$/, "") || "/";
-        if (path !== "/register") return;
-        location.replace("https://www.fli.fr/register" + location.search + location.hash);
+        var suffix = location.search + location.hash;
+        var aliasHosts = {
+          "fli.fr": true,
+          "stages-langues.fr": true,
+          "www.stages-langues.fr": true
+        };
+        if (aliasHosts[host]) {
+          location.replace("https://www.fli.fr" + path + suffix);
+          return;
+        }
+        if (host === "plateforme.fli.fr" && path === "/register") {
+          location.replace("https://www.fli.fr/register" + suffix);
+        }
       })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -20,12 +34,7 @@
     <meta name="description" content="Formez-vous dans la langue de votre métier, sans sacrifier votre saison. Formations linguistiques sur mesure pour moniteur·rices de ski et professionnels de la montagne — France Langues International.">
     <meta name="author" content="France Langues International" />
     <link rel="canonical" href="https://www.fli.fr/" />
-    <!--
-      Search Console : propriété domaine fli.fr déjà vérifiée en DNS
-      (TXT google-site-verification=0ioKo7qd…). Pour une propriété préfixe URL
-      (méthode balise HTML), renseigner VITE_GOOGLE_SITE_VERIFICATION.
-    -->
-    <meta name="google-site-verification" content="%VITE_GOOGLE_SITE_VERIFICATION%" />
+    <meta name="robots" content="index,follow" />
 
     <!-- Consent Mode v2 : refus analytique par défaut, avant tout script Google. -->
     <script>

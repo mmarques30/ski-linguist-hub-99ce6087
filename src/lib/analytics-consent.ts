@@ -6,6 +6,8 @@
  * - Sans `VITE_GA_MEASUREMENT_ID`, aucune balise Google n'est chargée.
  */
 
+import { publicAbsoluteUrl } from "@/lib/public-site";
+
 export const COOKIE_CONSENT_STORAGE_KEY = "fli-cookie-consent-v1";
 
 export type CookieConsentChoice = "accepted" | "rejected";
@@ -131,13 +133,60 @@ export function loadGoogleAnalytics(measurementId: string): void {
   window.gtag!("js", new Date());
   window.gtag!("config", measurementId, {
     anonymize_ip: true,
-    send_page_view: true,
+    // Les vues SPA sont envoyées via `trackSpaPageView` (évite le double comptage).
+    send_page_view: false,
   });
 }
 
 /**
- * Applique un choix déjà stocké (ou les défauts), puis charge GA si accepté
- * et si un Measurement ID est configuré.
+ * Page view SPA (React Router). Sans Measurement ID ou sans gtag, no-op.
+ */
+export function trackSpaPageView(pathname: string, search = ""): void {
+  const measurementId = getGaMeasurementId();
+  if (!measurementId || typeof window === "undefined") return;
+  ensureGtagStub();
+  if (typeof window.gtag !== "function") return;
+
+  const path = `${pathname}${search}`;
+  window.gtag!("event", "page_view", {
+    page_path: path,
+    page_location: `${publicAbsoluteUrl(pathname)}${search}`,
+    page_title: typeof document !== "undefined" ? document.title : undefined,
+    send_to: measurementId,
+  });
+}
+
+/**
+ * Injecte / retire la meta Search Console (méthode balise HTML) selon l'env.
+ * La propriété domaine `fli.fr` est déjà vérifiée en DNS — cette meta n'est
+ * utile que pour une propriété préfixe URL.
+ */
+export function syncGoogleSiteVerificationMeta(): void {
+  if (typeof document === "undefined") return;
+  const token = getGoogleSiteVerification();
+  const existing = document.querySelector<HTMLMetaElement>(
+    'meta[name="google-site-verification"]',
+  );
+
+  if (!token) {
+    existing?.remove();
+    return;
+  }
+
+  if (existing) {
+    existing.content = token;
+    return;
+  }
+
+  const meta = document.createElement("meta");
+  meta.name = "google-site-verification";
+  meta.content = token;
+  document.head.appendChild(meta);
+}
+
+/**
+ * Applique un choix déjà stocké (ou les défauts), puis charge GA si un
+ * Measurement ID est configuré (Consent Mode : balise OK même en denied).
  */
 export function syncAnalyticsWithConsent(choice: CookieConsentChoice | null): void {
   if (choice) {
