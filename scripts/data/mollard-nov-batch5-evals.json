@@ -9,7 +9,9 @@
     "profession": "moniteur",
     "test_at": "2026-11-10T14:00:00+01:00",
     "previous_test": false,
-    "payment": "pending_unpaid",
+    "payment": "bank_1910",
+    "payment_date": "2026-10-19",
+    "bank_ref": "2629285I40045599",
     "scores": [
       3.5,
       3.5,
@@ -28,13 +30,13 @@
     "points": "Vous dites « Did you heard » au lieu de « Did you hear? ».",
     "concl": "En conclusion vous avez un niveau opérationnel qui vous permet de vous exprimer de façon satisfaisante avec des anglophones. Continuez toutefois d'enrichir votre vocabulaire et de travailler sur les points de grammaire qui nécessitent d'être améliorés afin d'être encore plus précis dans votre travail.",
     "pdf_habillage": "esf",
-    "send_mode": "pending_payment",
+    "send_mode": "bank_paid_invoice",
     "school_cc": [
       "info@esfsamoens.com",
       "direction@esfsamoens.com"
     ],
     "invoice_number": "26-27.14349",
     "invoice_seq": 14349,
-    "note": "À ENVOYER après confirmation paiement. Notes Mollard +0,5 (Paula — Carole trop dure) : [3, 3, 2.5, 3, 2.5, 3] B2 → [3.5, 3.5, 3, 3.5, 3, 3.5] B2+. Réservation 19/10 — déclare « paiement par virement » ; pièces jointes = CNI + photo (pas de preuve virement). Aucun Stripe / aucun mail banque trouvé pour FRISON/Flavie. Facture proposée 26-27.14349 une fois le virement confirmé. CC ESF Samoëns."
+    "note": "Paiement confirmé Paula 16/11 — VIR INST 19/10 +45 € « MADAME FRISON-ROCHE F » / libellé « frison roche flavie 42454 » (réf. 2629285I40045599). Notes Mollard +0,5 : [3, 3, 2.5, 3, 2.5, 3] B2 → [3.5, 3.5, 3, 3.5, 3, 3.5] B2+. Facture acquittée 26-27.14349. Envoi en attente OK Paula."
   }
 ]
