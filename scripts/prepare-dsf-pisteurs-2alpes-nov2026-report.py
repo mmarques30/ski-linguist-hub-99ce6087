@@ -99,18 +99,18 @@ def build_report() -> Path:
     )
     add_body(
         doc,
-        "Anglais appliqué spécifique pisteurs · Les 2 Alpes · 11–13 novembre 2026",
+        "Anglais appliqué spécifique Pisteurs secouristes · Les 2 Alpes · 11–13 novembre 2026",
         12,
         bold=True,
     )
     add_body(
         doc,
-        "Groupe PS1-2ALPES · 12 stagiaires · 21 heures · Formatrice : Michèle Looten",
+        "Contrat de prestation n° 26 290 · Groupe PS1-2ALPES · 12 stagiaires · 21 heures · Formatrice : Michèle Looten",
         10,
     )
     add_body(
         doc,
-        "Lieu : Les 2 Alpes — Le Chalet des Glaciers",
+        "Lieu : Le Chalet des Glaciers — 1 Route du Petit Plan",
         10,
     )
 

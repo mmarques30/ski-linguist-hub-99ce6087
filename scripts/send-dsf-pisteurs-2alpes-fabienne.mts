@@ -19,17 +19,19 @@ const INVOICE_NUMBER = "26-27.14344";
 const ATTACHMENTS = [
   "Facture-26-27.14344-DSF-Pisteurs-2Alpes.pdf",
   "Rapport-niveaux-appreciation-DSF-Pisteurs-2Alpes-nov2026.docx",
+  "Contrat-26-290-PS1-2ALPES.pdf",
 ] as const;
 
 const BODY_TEXT = `Bonjour Fabienne,
 
-la formation d'anglais appliqué spécifique pisteurs aux 2 Alpes (11–13 novembre 2026) est terminée — 12 stagiaires, groupe PS1-2ALPES, animée par Michèle Looten.
+la formation d'anglais appliqué spécifique pisteurs secouristes aux 2 Alpes (11–13 novembre 2026) est terminée — 12 stagiaires, groupe PS1-2ALPES, animée par Michèle Looten (contrat de prestation n° 26 290).
 
 Je joins :
-- la facture n° ${INVOICE_NUMBER} (1 992 € HT / 2 390,40 € TTC) à régler — échéance 16/12/2026 ;
-- le rapport de fin de formation : niveaux d'entrée et de sortie, progression, et appréciation de Michèle.
+- la facture n° ${INVOICE_NUMBER} (1 980 € HT / 2 376,00 € TTC) à régler — échéance 16/12/2026 ;
+- le rapport de fin de formation : niveaux d'entrée et de sortie, progression, et appréciation de Michèle ;
+- pour mémoire, le contrat de prestation n° 26 290.
 
-Coordonnées bancaires FLI sur la facture (réf. à indiquer : ${INVOICE_NUMBER}).
+Coordonnées bancaires FLI sur la facture (réf. à indiquer : ${INVOICE_NUMBER} / Contrat 26 290).
 
 À bientôt,
 Paula

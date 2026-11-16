@@ -16,10 +16,12 @@ import { FLI_BANK_DETAILS } from "../src/lib/registration-payments.ts";
 
 const OUT = "/opt/cursor/artifacts/dsf-pisteurs-2alpes-nov2026";
 
-/** Tarif historique encadrement pisteurs 2 Alpes (sans IK — pratique 2025). */
-const AMOUNT_HT = 1992;
+/** Tarif contrat DSF n° 26 290 (11/09/2026) — 1 980 € HT. */
+const AMOUNT_HT = 1980;
 const TVA_RATE = 20;
 const AMOUNT_TTC = AMOUNT_HT * (1 + TVA_RATE / 100);
+const CONTRACT_NUMBER = "26 290";
+const CONTRACT_SIGNED = "2026-09-11";
 
 /** Remplacé après INSERT DB si le numéro diffère. */
 const INVOICE_NUMBER_PLACEHOLDER = "26-27.14344";
@@ -28,7 +30,8 @@ const DUE_DATE = "2026-12-16";
 const COURSE_START = "2026-11-11";
 const COURSE_END = "2026-11-13";
 const DURATION_HOURS = 21;
-const LOCATION = "Les 2 Alpes — Le Chalet des Glaciers";
+const LOCATION = "Le Chalet des Glaciers — 1 Route du Petit Plan";
+const SESSION_TITLE = "Anglais appliqué spécifique Pisteurs secouristes";
 const INSCRIPTION_CLIENT_ID = "70b56f77-cddd-4ae7-a5c4-2fe4c7ae18f7";
 
 const YELLOW = rgb(252 / 255, 175 / 255, 23 / 255);
@@ -230,11 +233,13 @@ export async function buildInvoicePdf(
   });
   y -= 18;
   draw("Encadrement d'une formation en", left, y, { size: 10 });
-  draw("Anglais appliqué spécifique Pisteurs — 2 Alpes", left, y - 12, {
-    size: 10,
+  draw(SESSION_TITLE, left, y - 12, { size: 10 });
+  draw(`Contrat de prestation n° ${CONTRACT_NUMBER} — ${formatFr(CONTRACT_SIGNED)}`, left, y - 24, {
+    size: 8,
+    color: MUTED,
   });
-  draw(`Lieu : ${LOCATION}`, left, y - 24, { size: 8, color: MUTED });
-  draw("Formateur : Michèle Looten · groupe PS1-2ALPES", left, y - 36, {
+  draw(`Lieu : ${LOCATION}`, left, y - 36, { size: 8, color: MUTED });
+  draw("Formateur : Michèle Looten · groupe PS1-2ALPES · Les 2 Alpes", left, y - 48, {
     size: 8,
     color: MUTED,
   });
@@ -244,7 +249,7 @@ export async function buildInvoicePdf(
     bold: true,
     size: 10,
   });
-  y -= 56;
+  y -= 68;
 
   const boxX = right - 220;
   const row = (
@@ -293,7 +298,12 @@ export async function buildInvoicePdf(
   draw("COORDONNÉES BANCAIRES", left, y, { size: 8, color: MUTED, bold: true });
   draw(`IBAN: ${FLI.iban}`, left, y - 14, { size: 9 });
   draw(`BIC: ${FLI.bic}`, left, y - 28, { size: 9 });
-  draw(`Réf. à indiquer : ${invoiceNumber}`, left, y - 42, { size: 9 });
+  draw(
+    `Réf. à indiquer : ${invoiceNumber} / Contrat ${CONTRACT_NUMBER}`,
+    left,
+    y - 42,
+    { size: 9 }
+  );
   draw(`SIRET: ${FLI.siret}`, right - 160, y - 14, { size: 9, color: MUTED });
   draw(`N° TVA: ${FLI.tvaNumber}`, right - 160, y - 28, {
     size: 9,
@@ -341,14 +351,16 @@ async function main() {
     courseEnd: COURSE_END,
     durationHours: DURATION_HOURS,
     location: LOCATION,
-    designation:
-      "Encadrement d'une formation en Anglais appliqué spécifique Pisteurs 2 Alpes",
+    contractNumber: CONTRACT_NUMBER,
+    contractSigned: CONTRACT_SIGNED,
+    designation: `Encadrement d'une formation en ${SESSION_TITLE} — 2 Alpes`,
     notes: [
-      "DSF Formation — Encadrement d'une formation en Anglais appliqué spécifique Pisteurs  2 Alpes",
+      `DSF Formation — Encadrement d'une formation en ${SESSION_TITLE} — 2 Alpes`,
+      `Contrat de prestation n° ${CONTRACT_NUMBER} — ${formatFr(CONTRACT_SIGNED)}`,
       `Groupe PS1-2ALPES · ${DURATION_HOURS} h · ${formatFr(COURSE_START)} → ${formatFr(COURSE_END)}`,
+      `Lieu : ${LOCATION}`,
       "Formateur : Michèle Looten",
-      "Tarif historique encadrement 1 992 € HT (sans IK — même pratique que facture 25-26.14081).",
-      "Fiche client app (FLI-260130) affichait 1 980 € : alignée sur 1 992 € pour cette facture.",
+      `${AMOUNT_HT} € HT (tarif contrat ${CONTRACT_NUMBER})`,
     ].join("\n"),
     pdf: invName,
   };
