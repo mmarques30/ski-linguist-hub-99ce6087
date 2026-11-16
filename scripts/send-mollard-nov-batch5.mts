@@ -29,11 +29,19 @@ type ManifestItem = {
   attachments: string[];
   blocked: boolean;
   note?: string | null;
+  html_extra?: string | null;
 };
 
 function emailHtml(item: ManifestItem): string {
   const invoiceLine = item.invoice_number
     ? `<p style="margin:0 0 16px">La facture acquittée n°&nbsp;${item.invoice_number} est jointe.</p>`
+    : "";
+  const extra = item.html_extra?.trim()
+    ? `<p style="margin:0 0 16px">${item.html_extra
+        .trim()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")}</p>`
     : "";
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f6f6">
 <tr><td align="center" style="padding:24px 12px">
@@ -41,6 +49,7 @@ function emailHtml(item: ManifestItem): string {
 <tr><td style="padding:28px 24px 24px;font-size:15px;line-height:1.55;font-family:Georgia,'Times New Roman',serif;color:#111">
 <p style="margin:0 0 16px">Bonjour,</p>
 <p style="margin:0 0 16px">veuillez trouver ci-joint le résultat de votre test d'anglais (${item.cecrl}).</p>
+${extra}
 <p style="margin:0 0 16px">Une copie est adressée à votre école de ski.</p>
 ${invoiceLine}
 <p style="margin:0 0 4px">Cordialement,</p>

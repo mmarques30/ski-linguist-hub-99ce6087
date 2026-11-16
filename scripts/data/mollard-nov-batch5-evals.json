@@ -7,6 +7,7 @@
     "sponsor_type": "esf",
     "carte": "42454",
     "profession": "moniteur",
+    "training_cycle": "Titulaire du DE",
     "test_at": "2026-11-10T14:00:00+01:00",
     "previous_test": false,
     "payment": "bank_1910",
@@ -30,13 +31,15 @@
     "points": "Vous dites « Did you heard » au lieu de « Did you hear? ».",
     "concl": "En conclusion vous avez un niveau opérationnel qui vous permet de vous exprimer de façon satisfaisante avec des anglophones. Continuez toutefois d'enrichir votre vocabulaire et de travailler sur les points de grammaire qui nécessitent d'être améliorés afin d'être encore plus précis dans votre travail.",
     "pdf_habillage": "esf",
-    "send_mode": "bank_paid_invoice",
+    "send_mode": "correction_pdf_only",
     "school_cc": [
       "info@esfsamoens.com",
       "direction@esfsamoens.com"
     ],
     "invoice_number": "26-27.14349",
     "invoice_seq": 14349,
-    "note": "Envoyé 16/11 Resend 01a1e580-e080-7832-bfbf-cc6ec21e0935 — résultat B2+ + facture 26-27.14349 (TO flavie.fr@gmail.com, CC info@esfsamoens.com, direction@esfsamoens.com, BCC info@fli.fr). Notes Mollard +0,5 : [3, 3, 2.5, 3, 2.5, 3] B2 → [3.5, 3.5, 3, 3.5, 3, 3.5] B2+. VIR INST 19/10 +45 € « MADAME FRISON-ROCHE F » / libellé « frison roche flavie 42454 » (réf. 2629285I40045599). Facture acquittée 26-27.14349."
+    "subject": "Correction — Résultat de votre test de langue — Flavie Frison-Roche",
+    "email_body_extra": "Suite à votre message : nous avons corrigé le niveau de formation — vous êtes bien titulaire du DE (et non 1er cycle). Veuillez trouver ci-joint le compte-rendu mis à jour.",
+    "note": "Envoyé 16/11 Resend 01a1e580-e080-7832-bfbf-cc6ec21e0935 — résultat B2+ + facture 26-27.14349. Correction DE demandée par Flavie 16/11 19:05 : PDF régénéré (Titulaire du DE). Renvoi corrigé (PDF seul, sans refacturer) en attente OK Paula."
   }
 ]

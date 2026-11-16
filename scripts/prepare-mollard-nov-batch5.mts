@@ -71,6 +71,7 @@ type Row = {
   school: string;
   carte: string | null;
   profession: string;
+  training_cycle?: string | null;
   test_at: string;
   scores: number[];
   cecrl: string;
@@ -96,6 +97,7 @@ type Row = {
   invoice_seq?: number;
   note?: string;
   email_body_extra?: string | null;
+  subject?: string | null;
 };
 
 function slugName(name: string, language: string, key: string): string {
@@ -407,7 +409,7 @@ async function main() {
         candidateName: r.name,
         candidateProfession: r.profession,
         skiDiscipline: "alpin",
-        trainingCycle: "1",
+        trainingCycle: r.training_cycle?.trim() || "1",
         carteSyndicale: r.carte,
         language: "anglais",
         previousTest: !!r.previous_test,
@@ -441,11 +443,9 @@ async function main() {
     }
 
     let invoiceName: string | null = null;
-    if (
-      (r.send_mode === "stripe_paid_invoice" || r.send_mode === "bank_paid_invoice") &&
-      r.invoice_number &&
-      r.payment_date
-    ) {
+    const attachInvoice =
+      r.send_mode === "stripe_paid_invoice" || r.send_mode === "bank_paid_invoice";
+    if (attachInvoice && r.invoice_number && r.payment_date) {
       const invBytes = await buildPaidInvoicePdf({
         clientName: r.name,
         invoiceNumber: r.invoice_number,
@@ -473,9 +473,11 @@ async function main() {
         ? "administration@esf-saintgervais.com"
         : r.school_cc[0] || "info@fli.fr");
     const cc = r.email ? r.school_cc : r.school_cc.slice(1);
-    const subject = r.email
-      ? `Résultat de votre test de langue — ${r.name}`
-      : `Résultat test de langue — ${r.name} (${r.school})`;
+    const subject =
+      r.subject?.trim() ||
+      (r.email
+        ? `Résultat de votre test de langue — ${r.name}`
+        : `Résultat test de langue — ${r.name} (${r.school})`);
     const body = r.email ? emailBody(r, !!invoiceName) : schoolOnlyBody(r);
     const attachments = [pdfName, invoiceName].filter(Boolean) as string[];
     const sendLabel = paymentBlocked
@@ -483,7 +485,9 @@ async function main() {
       : r.email
         ? invoiceName
           ? "TO candidat + facture"
-          : "TO candidat · sans facture"
+          : r.send_mode === "correction_pdf_only"
+            ? "TO candidat · correction PDF seul"
+            : "TO candidat · sans facture"
         : "TO école seule (pas d'email)";
 
     draftLines.push(
@@ -507,12 +511,13 @@ async function main() {
       bcc: BCC,
       subject,
       body,
+      html_extra: r.email_body_extra?.trim() || null,
       attachments,
       send_mode: r.send_mode,
       payment: r.payment,
       stripe_charge: r.stripe_charge ?? null,
       stripe_pi: r.stripe_pi ?? null,
-      invoice_number: r.invoice_number ?? null,
+      invoice_number: attachInvoice ? r.invoice_number ?? null : null,
       note: r.note ?? null,
       blocked: !r.email || paymentBlocked,
     });
