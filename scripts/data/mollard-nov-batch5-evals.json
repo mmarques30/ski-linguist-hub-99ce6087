@@ -1,0 +1,40 @@
+[
+  {
+    "key": "flavie-frison-roche",
+    "name": "Flavie Frison-Roche",
+    "email": "flavie.fr@gmail.com",
+    "school": "ESF SAMOENS - SIXT",
+    "sponsor_type": "esf",
+    "carte": "42454",
+    "profession": "moniteur",
+    "test_at": "2026-11-10T14:00:00+01:00",
+    "previous_test": false,
+    "payment": "pending_unpaid",
+    "scores": [
+      3.5,
+      3.5,
+      3,
+      3.5,
+      3,
+      3.5
+    ],
+    "cecrl": "B2+",
+    "instructor_first_name": "Carole",
+    "instructor_last_name": "Mollard",
+    "intro": "Vous vous exprimez d'une façon assez claire et autonome. Vous pouvez gérer une situation, donner des explications techniques et soutenir une conversation avec un client.",
+    "comp": "Vous avez très bien compris le texte audio. Votre niveau de compréhension permet une interaction fluide et agréable.",
+    "grammar": "Dans l'ensemble, vous avez une bonne maîtrise des structures simples et complexes mais faites également quelques maladresses ou inexactitudes. Cependant, ces erreurs ne gênent pas la communication.",
+    "tech": "Vous avez su utiliser un vocabulaire technique plutôt approprié lors de l'explication du mouvement technique et avez pris le temps d'en préciser les différentes étapes.",
+    "points": "Vous dites « Did you heard » au lieu de « Did you hear? ».",
+    "concl": "En conclusion vous avez un niveau opérationnel qui vous permet de vous exprimer de façon satisfaisante avec des anglophones. Continuez toutefois d'enrichir votre vocabulaire et de travailler sur les points de grammaire qui nécessitent d'être améliorés afin d'être encore plus précis dans votre travail.",
+    "pdf_habillage": "esf",
+    "send_mode": "pending_payment",
+    "school_cc": [
+      "info@esfsamoens.com",
+      "direction@esfsamoens.com"
+    ],
+    "invoice_number": "26-27.14349",
+    "invoice_seq": 14349,
+    "note": "À ENVOYER après confirmation paiement. Notes Mollard +0,5 (Paula — Carole trop dure) : [3, 3, 2.5, 3, 2.5, 3] B2 → [3.5, 3.5, 3, 3.5, 3, 3.5] B2+. Réservation 19/10 — déclare « paiement par virement » ; pièces jointes = CNI + photo (pas de preuve virement). Aucun Stripe / aucun mail banque trouvé pour FRISON/Flavie. Facture proposée 26-27.14349 une fois le virement confirmé. CC ESF Samoëns."
+  }
+]
