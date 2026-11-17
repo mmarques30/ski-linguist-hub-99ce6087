@@ -2,9 +2,10 @@
  * PDF contrat de prestation formateur.
  * - Individuel en ligne (défaut)
  * - Stage en station / collectif présentiel
+ * En-tête : papier à en-tête FLI (`fli-entete.png`, même asset que les conventions).
  * Signature organisme : cachet FLI + signature Paula (`fli-signature-cachet.png`).
  */
-import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFImage, type PDFPage } from "pdf-lib";
 
 export const FORMATEUR_CONTRACT_SIGNATURE_ASSET =
   "formateur-contracts/fli-signature-cachet.png" as const;
@@ -12,6 +13,18 @@ export const FORMATEUR_CONTRACT_SIGNATURE_ASSET =
 /** Même fichier que les conventions stagiaire (copie canonique inscription-documents). */
 export const FORMATEUR_CONTRACT_SIGNATURE_FALLBACK =
   "inscription-documents/fli-signature-cachet.png" as const;
+
+/** En-tête FLI — même fichier que les conventions / devis. */
+export const FORMATEUR_CONTRACT_LETTERHEAD_ASSET =
+  "inscription-documents/fli-entete.png" as const;
+
+const PAGE = { width: 595.28, height: 841.89 };
+const MARGIN = 50;
+/** Zone réservée à l'en-tête (bandeau + logo + filet). */
+const HEADER_HEIGHT = 64;
+const NAVY = rgb(0.07, 0.18, 0.38);
+const RULE = rgb(0.75, 0.78, 0.82);
+const INK = rgb(0.07, 0.07, 0.07);
 
 export type InstructorContractModality =
   | "online_individual"
@@ -42,6 +55,8 @@ export type InstructorContractPdfInput = {
   locationLabel?: string | null;
   /** PNG bytes du cachet + signature organisme */
   organismSignaturePng: Uint8Array;
+  /** PNG papier à en-tête FLI (logo) — recommandé ; sinon titre texte FLI. */
+  letterheadPng?: Uint8Array | null;
   /** Date d’émission affichée (défaut : aujourd’hui fr-FR) */
   issuedAtLabel?: string | null;
 };
@@ -68,6 +83,73 @@ export function instructorContractFilename(
   return `Contrat-${contractNumber}-${who}.pdf`;
 }
 
+function drawFitted(
+  page: PDFPage,
+  image: PDFImage,
+  box: { x: number; y: number; width: number; height: number },
+) {
+  const scale = Math.min(box.width / image.width, box.height / image.height);
+  const width = image.width * scale;
+  const height = image.height * scale;
+  const x = box.x + (box.width - width) / 2;
+  const y = box.y + (box.height - height) / 2;
+  page.drawImage(image, { x, y, width, height });
+}
+
+/** En-tête FLI (bandeau + logo + filet) — même langage que les conventions. */
+async function drawPageHeader(
+  page: PDFPage,
+  bold: PDFFont,
+  letterheadPng: Uint8Array | null | undefined,
+): Promise<number> {
+  page.drawRectangle({
+    x: 0,
+    y: PAGE.height - 6,
+    width: PAGE.width,
+    height: 6,
+    color: NAVY,
+  });
+
+  const bandY = PAGE.height - HEADER_HEIGHT;
+  const bandH = HEADER_HEIGHT - 10;
+
+  let letterhead: PDFImage | null = null;
+  if (letterheadPng?.length) {
+    try {
+      letterhead = await page.doc.embedPng(letterheadPng);
+    } catch {
+      letterhead = null;
+    }
+  }
+
+  if (letterhead) {
+    drawFitted(page, letterhead, {
+      x: MARGIN,
+      y: bandY,
+      width: PAGE.width - MARGIN * 2,
+      height: bandH,
+    });
+  } else {
+    page.drawText("France Langues International", {
+      x: MARGIN,
+      y: bandY + bandH / 2 - 6,
+      size: 14,
+      font: bold,
+      color: NAVY,
+    });
+  }
+
+  page.drawLine({
+    start: { x: MARGIN, y: bandY - 2 },
+    end: { x: PAGE.width - MARGIN, y: bandY - 2 },
+    thickness: 0.6,
+    color: RULE,
+  });
+
+  // Contenu commence sous le filet
+  return bandY - 16;
+}
+
 export async function buildInstructorContractPdf(
   input: InstructorContractPdfInput,
 ): Promise<Uint8Array> {
@@ -87,16 +169,15 @@ export async function buildInstructorContractPdf(
   const lang = input.languageLabel.trim().toLowerCase();
 
   const doc = await PDFDocument.create();
-  const page = doc.addPage([595.28, 841.89]);
+  const page = doc.addPage([PAGE.width, PAGE.height]);
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
-  const black = rgb(0.07, 0.07, 0.07);
-  let y = 800;
-  const left = 50;
-  const width = 495;
+  let y = await drawPageHeader(page, bold, input.letterheadPng);
+  const left = MARGIN;
+  const width = PAGE.width - MARGIN * 2;
 
   const line = (text: string, size = 10, f: PDFFont = font) => {
-    page.drawText(text, { x: left, y, size, font: f, color: black });
+    page.drawText(text, { x: left, y, size, font: f, color: INK });
     y -= size + 4;
   };
   const para = (text: string, size = 9.5) => {
@@ -105,13 +186,13 @@ export async function buildInstructorContractPdf(
     for (const w of words) {
       const trial = row ? `${row} ${w}` : w;
       if (font.widthOfTextAtSize(trial, size) > width) {
-        page.drawText(row, { x: left, y, size, font, color: black });
+        page.drawText(row, { x: left, y, size, font, color: INK });
         y -= size + 3;
         row = w;
       } else row = trial;
     }
     if (row) {
-      page.drawText(row, { x: left, y, size, font, color: black });
+      page.drawText(row, { x: left, y, size, font, color: INK });
       y -= size + 3;
     }
     y -= 4;
@@ -188,11 +269,11 @@ export async function buildInstructorContractPdf(
   para(`Fait à Montmélian, le ${issued}.`);
   y -= 10;
 
-  page.drawText("Pour l'Organisme", { x: left, y, size: 9, font: bold, color: black });
-  page.drawText("Le Prestataire", { x: 320, y, size: 9, font: bold, color: black });
+  page.drawText("Pour l'Organisme", { x: left, y, size: 9, font: bold, color: INK });
+  page.drawText("Le Prestataire", { x: 320, y, size: 9, font: bold, color: INK });
   y -= 14;
-  page.drawText("Paula Rangel-Halbwachs", { x: left, y, size: 9, font, color: black });
-  page.drawText("Lu et approuvé", { x: 320, y, size: 8, font, color: black });
+  page.drawText("Paula Rangel-Halbwachs", { x: left, y, size: 9, font, color: INK });
+  page.drawText("Lu et approuvé", { x: 320, y, size: 8, font, color: INK });
   y -= 6;
 
   await drawOrganismSignature(page, input.organismSignaturePng, left, y);

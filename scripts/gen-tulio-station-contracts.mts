@@ -5,6 +5,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  FORMATEUR_CONTRACT_LETTERHEAD_ASSET,
   FORMATEUR_CONTRACT_SIGNATURE_ASSET,
   FORMATEUR_CONTRACT_SIGNATURE_FALLBACK,
   buildInstructorContractPdf,
@@ -32,6 +33,12 @@ function loadSignature(): Uint8Array {
       ),
     );
   }
+}
+
+function loadLetterhead(): Uint8Array {
+  return new Uint8Array(
+    readFileSync(join(process.cwd(), "public", FORMATEUR_CONTRACT_LETTERHEAD_ASSET)),
+  );
 }
 
 const missions = [
@@ -70,6 +77,7 @@ const missions = [
 
 async function main() {
   const sig = loadSignature();
+  const letterhead = loadLetterhead();
   const meta = [];
   for (const m of missions) {
     const pdf = await buildInstructorContractPdf({
@@ -85,6 +93,7 @@ async function main() {
       endDate: m.endDate,
       locationLabel: m.locationLabel,
       organismSignaturePng: sig,
+      letterheadPng: letterhead,
       issuedAtLabel: ISSUED,
     });
     const filename = instructorContractFilename(m.contractNumber, "Tulio-Rezende");
