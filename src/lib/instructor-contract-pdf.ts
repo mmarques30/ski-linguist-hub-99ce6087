@@ -1,5 +1,7 @@
 /**
- * PDF contrat de prestation formateur (individuel en ligne).
+ * PDF contrat de prestation formateur.
+ * - Individuel en ligne (défaut)
+ * - Stage en station / collectif présentiel
  * Signature organisme : cachet FLI + signature Paula (`fli-signature-cachet.png`).
  */
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
@@ -11,16 +13,27 @@ export const FORMATEUR_CONTRACT_SIGNATURE_ASSET =
 export const FORMATEUR_CONTRACT_SIGNATURE_FALLBACK =
   "inscription-documents/fli-signature-cachet.png" as const;
 
+export type InstructorContractModality =
+  | "online_individual"
+  | "station_group";
+
 export type InstructorContractPdfInput = {
   contractNumber: string;
   /** Ex. « Madame Tatiana Samoilova-Magnier » / « Monsieur Tulio … » */
   prestataireLine: string;
   /** Ex. « russe », « portugais » */
   languageLabel: string;
-  studentFullName: string;
-  studentEmail: string;
+  /** Défaut : individuel en ligne */
+  modality?: InstructorContractModality;
+  /** Individuel en ligne */
+  studentFullName?: string | null;
+  studentEmail?: string | null;
   studentPhone?: string | null;
-  inscriptionCode: string;
+  inscriptionCode?: string | null;
+  /** Stage station : ex. « Stage Portugais Brésilien — ESF Val d'Isère » */
+  missionLabel?: string | null;
+  /** Précision volume (ex. « 2 groupes — 24 h stagiaires : … ») */
+  volumeNote?: string | null;
   durationHours: number;
   hourlyRate: number;
   /** ISO yyyy-mm-dd */
@@ -61,10 +74,17 @@ export async function buildInstructorContractPdf(
   const hours = Number(input.durationHours);
   const rate = Number(input.hourlyRate);
   const total = hours * rate;
-  const location = (input.locationLabel || "En ligne (Google Meet)").trim();
+  const modality: InstructorContractModality =
+    input.modality || "online_individual";
+  const isStation = modality === "station_group";
+  const location = (
+    input.locationLabel ||
+    (isStation ? "Présentiel" : "En ligne (Google Meet)")
+  ).trim();
   const issued =
     input.issuedAtLabel?.trim() ||
     new Date().toLocaleDateString("fr-FR");
+  const lang = input.languageLabel.trim().toLowerCase();
 
   const doc = await PDFDocument.create();
   const page = doc.addPage([595.28, 841.89]);
@@ -109,28 +129,57 @@ export async function buildInstructorContractPdf(
   );
   para("Il a été convenu ce qui suit :");
   line("Article 1 — Objet", 10, bold);
-  para(
-    `Le Prestataire s'engage à assurer une formation individualisée de ${input.languageLabel.trim().toLowerCase()} en ligne (${location}) pour le compte de l'Organisme.`,
-  );
-  line("Article 2 — Stagiaire et volume", 10, bold);
-  const phone = input.studentPhone?.trim()
-    ? ` — ${input.studentPhone.trim()}`
-    : "";
-  para(
-    `Stagiaire : ${input.studentFullName} (${input.studentEmail}${phone}). Dossier ${input.inscriptionCode}. Volume : ${hours} heures. Période : du ${formatContractDateFr(input.startDate)} au ${formatContractDateFr(input.endDate)} (créneaux à convenir). Les créneaux sont convenus directement entre le Prestataire et le stagiaire.`,
-  );
+  if (isStation) {
+    para(
+      `Le Prestataire s'engage à assurer une formation collective de ${lang} en présentiel (${location}) pour le compte de l'Organisme.`,
+    );
+  } else {
+    para(
+      `Le Prestataire s'engage à assurer une formation individualisée de ${lang} en ligne (${location}) pour le compte de l'Organisme.`,
+    );
+  }
+  line(isStation ? "Article 2 — Mission et volume" : "Article 2 — Stagiaire et volume", 10, bold);
+  if (isStation) {
+    const mission =
+      (input.missionLabel || "").trim() ||
+      `Stage de ${lang} — ${location}`;
+    const note = (input.volumeNote || "").trim();
+    const volumeExtra = note ? ` (${note})` : "";
+    para(
+      `Mission : ${mission}. Volume formateur : ${hours} heures${volumeExtra}. Période : du ${formatContractDateFr(input.startDate)} au ${formatContractDateFr(input.endDate)}.`,
+    );
+  } else {
+    const phone = input.studentPhone?.trim()
+      ? ` — ${input.studentPhone.trim()}`
+      : "";
+    para(
+      `Stagiaire : ${input.studentFullName} (${input.studentEmail}${phone}). Dossier ${input.inscriptionCode}. Volume : ${hours} heures. Période : du ${formatContractDateFr(input.startDate)} au ${formatContractDateFr(input.endDate)} (créneaux à convenir). Les créneaux sont convenus directement entre le Prestataire et le stagiaire.`,
+    );
+  }
   line("Article 3 — Rémunération", 10, bold);
   para(
     `Rémunération : ${rate} € HT par heure, soit ${hours} h × ${rate} € = ${total} € HT. Le Prestataire adressera sa facture à l'Organisme en fin de mission, accompagnée de la fiche de présence FORMATEUR signée.`,
   );
   line("Article 4 — Exécution", 10, bold);
-  para(
-    "Le Prestataire contacte le stagiaire pour organiser les cours, fait signer la fiche de présence à chaque séance, et renvoie la fiche signée à info@fli.fr en fin de formation.",
-  );
+  if (isStation) {
+    para(
+      "Le Prestataire assure les cours sur place selon le planning convenu, fait signer les fiches de présence à chaque séance, et renvoie les fiches signées à info@fli.fr en fin de formation.",
+    );
+  } else {
+    para(
+      "Le Prestataire contacte le stagiaire pour organiser les cours, fait signer la fiche de présence à chaque séance, et renvoie la fiche signée à info@fli.fr en fin de formation.",
+    );
+  }
   line("Article 5 — Annulation / absence", 10, bold);
-  para(
-    "Toute séance annulée par le stagiaire moins de 24 h à l'avance, ou toute absence non justifiée, reste due au Prestataire.",
-  );
+  if (isStation) {
+    para(
+      "FLI se réserve le droit d'annuler ou de reporter la session jusqu'à 4 jours avant le début pour insuffisance de participants ou toute autre cause ne permettant pas le déroulement conforme. Les séances dues au Prestataire restent facturables selon les heures effectivement réalisées, sauf accord contraire.",
+    );
+  } else {
+    para(
+      "Toute séance annulée par le stagiaire moins de 24 h à l'avance, ou toute absence non justifiée, reste due au Prestataire.",
+    );
+  }
   line("Article 6 — Statut", 10, bold);
   para(
     "Le Prestataire agit en toute indépendance. Le présent contrat ne crée aucun lien de subordination. Il est seul responsable de ses obligations fiscales et sociales.",
