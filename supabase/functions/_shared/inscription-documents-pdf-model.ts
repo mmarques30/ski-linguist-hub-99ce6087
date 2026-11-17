@@ -246,10 +246,19 @@ function buildPaymentTermsLabel(input: {
   if (schoolStationTerms) {
     const moniteurShare =
       input.balanceLabel !== "—" ? input.balanceLabel : input.priceLabel;
-    const parts = [
-      `Coût pédagogique total : ${input.priceLabel}.`,
-      `Votre part : ${moniteurShare} — règlement au choix : (1) règlement intégral en ligne ; (2) chèque FIF-PL à l'ordre de France Langues International, à envoyer à : France Langues International — 25 avenue de la Gare, 73800 Montmélian (encaissé après la formation).`,
-    ];
+    const moniteurShareZero = /^0([.,]0+)?\s*€/.test(
+      (moniteurShare || "").replace(/\u00a0/g, " ").trim()
+    );
+    const parts = [`Coût pédagogique total : ${input.priceLabel}.`];
+    if (moniteurShareZero) {
+      parts.push(
+        `Votre part : ${moniteurShare} — aucun règlement demandé au moniteur (uniquement à hauteur des droits FIF-PL restants).`
+      );
+    } else {
+      parts.push(
+        `Votre part : ${moniteurShare} (uniquement à hauteur de vos droits FIF-PL restants) — règlement au choix : (1) règlement intégral en ligne ; (2) chèque FIF-PL à l'ordre de France Langues International, à envoyer à : France Langues International — 25 avenue de la Gare, 73800 Montmélian (le chèque n'est pas encaissé avant votre remboursement FIF-PL).`
+      );
+    }
     if (input.schoolShareLabel && input.schoolShareLabel !== "—") {
       parts.push(
         `Prise en charge ESF : ${input.schoolShareLabel} — facturé à l'ESF (convention école).`

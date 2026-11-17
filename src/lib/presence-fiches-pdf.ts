@@ -6,7 +6,7 @@
  * à FLI en fin de séances. Génération BO uniquement (pas de signature en ligne).
  */
 
-import jsPDF from "jspdf";
+import { jsPDF } from "jspdf";
 
 export type PresenceFicheKind = "formateur" | "stagiaire";
 
