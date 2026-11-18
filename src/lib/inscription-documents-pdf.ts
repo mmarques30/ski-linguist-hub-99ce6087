@@ -294,6 +294,20 @@ function buildPaymentTermsLabel(input: {
   }
 
   const method = paymentMethodLabelFr(input.payment_method);
+  const depositZero = /^0([.,]0+)?\s*€/.test(
+    (input.depositLabel || "").replace(/\u00a0/g, " ").trim()
+  );
+
+  if (depositZero) {
+    const parts = [
+      `Coût pédagogique total : ${input.priceLabel}.`,
+      `Règlement intégral : ${input.priceLabel} — par virement ou carte bancaire.`,
+    ];
+    if (input.fundingLabel && input.fundingLabel !== "—") {
+      parts.push(`Financement : ${input.fundingLabel}.`);
+    }
+    return parts.join(" ");
+  }
 
   const parts = [
     `Coût pédagogique total : ${input.priceLabel}.`,
@@ -355,6 +369,12 @@ export function buildOnlineConventionSections(input: {
   const price = input.priceLabel !== "—" ? input.priceLabel : "—";
   const deposit = input.depositLabel !== "—" ? input.depositLabel : "—";
   const balance = input.balanceLabel !== "—" ? input.balanceLabel : "—";
+  const depositZero = /^0([.,]0+)?\s*€/.test(
+    (deposit || "").replace(/\u00a0/g, " ").trim()
+  );
+  const financialParagraph = depositZero
+    ? `En contrepartie de la présente convention, l'entreprise/stagiaire signataire s'engage à acquitter la somme de : ${price} nets* à l'ordre de F.L.I., correspondant au coût pédagogique de la formation. Le règlement de la formation s'effectuera en une seule fois : ${price} par virement ou carte bancaire. (* organisme exonéré de TVA — formulaire 3511)`
+    : `En contrepartie de la présente convention, l'entreprise/stagiaire signataire s'engage à acquitter la somme de : ${price} nets* à l'ordre de F.L.I., correspondant au coût pédagogique de la formation. Le règlement de la formation s'effectuera en deux fois : ${deposit} par virement ou carte bancaire lors de l'inscription et le restant (${balance}) par chèque avant le début des cours. Vous avez la possibilité de demander un délai pour l'encaissement du chèque. (* organisme exonéré de TVA — formulaire 3511)`;
 
   return [
     {
@@ -431,9 +451,7 @@ export function buildOnlineConventionSections(input: {
     },
     {
       title: "Article VI : Dispositions financières",
-      paragraphs: [
-        `En contrepartie de la présente convention, l'entreprise/stagiaire signataire s'engage à acquitter la somme de : ${price} nets* à l'ordre de F.L.I., correspondant au coût pédagogique de la formation. Le règlement de la formation s'effectuera en deux fois : ${deposit} par virement ou carte bancaire lors de l'inscription et le restant (${balance}) par chèque avant le début des cours. Vous avez la possibilité de demander un délai pour l'encaissement du chèque. (* organisme exonéré de TVA — formulaire 3511)`,
-      ],
+      paragraphs: [financialParagraph],
     },
     {
       title: "Article VII : Interruption de la formation",

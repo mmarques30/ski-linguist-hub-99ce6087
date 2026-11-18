@@ -252,6 +252,26 @@ describe("PDF dossier inscription", () => {
     ).toBe(true);
   });
 
+  it("Article VI : règlement intégral si acompte à 0 €", () => {
+    const sections = buildOnlineConventionSections({
+      language: "Russe",
+      datesLabel: "du 05/12/2026 au 05/06/2027",
+      durationHoursLabel: "18 heures",
+      groupSizeLabel: "1",
+      studentAddressLines: [],
+      pedagogicalContact: "Paula Rangel-Halbwachs",
+      priceLabel: "900,00 €",
+      depositLabel: "0,00 €",
+      balanceLabel: "900,00 €",
+    });
+    const financial = sections.find((s) =>
+      s.title.includes("Dispositions financières")
+    );
+    expect(financial?.paragraphs[0]).toMatch(/en une seule fois/);
+    expect(financial?.paragraphs[0]).toMatch(/virement ou carte bancaire/);
+    expect(financial?.paragraphs[0]).not.toMatch(/par chèque/);
+  });
+
   it("renseigne dates à planifier et montants depuis les strings Supabase", async () => {
     const model = buildConventionPdfModel({
       inscription: {
