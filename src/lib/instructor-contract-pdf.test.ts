@@ -33,7 +33,7 @@ describe("instructor-contract-pdf", () => {
     );
   });
 
-  it("génère un PDF non vide avec signature organisme", async () => {
+  it("génère un PDF individuel en ligne avec signature organisme", async () => {
     const pdf = await buildInstructorContractPdf({
       contractNumber: "CTR-2026-0011",
       prestataireLine:
@@ -53,5 +53,44 @@ describe("instructor-contract-pdf", () => {
     });
     expect(pdf.byteLength).toBeGreaterThan(2000);
     expect(Buffer.from(pdf).subarray(0, 4).toString("ascii")).toBe("%PDF");
+  });
+
+  it("génère un PDF stage en station (présentiel collectif) avec signature", async () => {
+    const online = await buildInstructorContractPdf({
+      contractNumber: "CTR-2026-0011",
+      prestataireLine:
+        "Monsieur Tulio Rezende Ferreira Moura, auto-entrepreneur, SIRET 993 150 960 00017, 25 avenue de la Gare, 73800 Montmélian — tuliorfmoura@gmail.com — 07 45 19 75 89",
+      languageLabel: "portugais",
+      studentFullName: "Jay Deleglise",
+      studentEmail: "jay.deleglise@gmail.com",
+      inscriptionCode: "FLI-260048",
+      durationHours: 12,
+      hourlyRate: 30,
+      startDate: "2026-11-16",
+      endDate: "2027-03-16",
+      organismSignaturePng: loadSignature(),
+      issuedAtLabel: "09/11/2026",
+    });
+    const station = await buildInstructorContractPdf({
+      contractNumber: "CTR-2026-0017",
+      prestataireLine:
+        "Monsieur Tulio Rezende Ferreira Moura, auto-entrepreneur, SIRET 993 150 960 00017, 25 avenue de la Gare, 73800 Montmélian — tuliorfmoura@gmail.com — 07 45 19 75 89",
+      languageLabel: "portugais",
+      modality: "station_group",
+      missionLabel: "Stage Portugais Bresilien — ESF Val d'Isere",
+      volumeNote:
+        "2 groupes — 24 h stagiaires : 16 h lun.–jeu. + 8 h vendredi",
+      durationHours: 40,
+      hourlyRate: 30,
+      startDate: "2026-11-23",
+      endDate: "2026-11-27",
+      locationLabel: "Val d'Isere",
+      organismSignaturePng: loadSignature(),
+      issuedAtLabel: "17/11/2026",
+    });
+    expect(station.byteLength).toBeGreaterThan(2000);
+    expect(Buffer.from(station).subarray(0, 4).toString("ascii")).toBe("%PDF");
+    // Contenu distinct du modèle en ligne (heures / total différents)
+    expect(Buffer.from(station).equals(Buffer.from(online))).toBe(false);
   });
 });
