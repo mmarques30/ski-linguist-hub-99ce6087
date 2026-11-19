@@ -103,4 +103,12 @@ describe("référentiel écoles — câblage", () => {
     expect(edge).toContain("ski_school_code");
     expect(edge).toContain("carte_syndicale");
   });
+
+  it("explique le bouton inactif quand la carte syndicale ESF manque", () => {
+    const step = source("src/components/registration/ProfessionalProfileStep.tsx");
+    expect(step).toContain("carteBlocking");
+    expect(step).toContain("showCarteHint");
+    expect(step).toContain("Bouton inactif");
+    expect(step).toContain("Je n&apos;ai pas encore");
+  });
 });

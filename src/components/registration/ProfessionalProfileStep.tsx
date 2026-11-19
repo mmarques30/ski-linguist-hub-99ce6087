@@ -133,6 +133,12 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
     schoolReadyForPrice,
   ]);
 
+  /** ESF : 5 chiffres ou case « pas encore » — sans ça le bouton reste gris. */
+  const carteBlocking =
+    data.profession === "ski_instructor" &&
+    network === "ESF" &&
+    !isValidCarteSyndicale(data.carteSyndicale, cartePending);
+
   const canContinue = (() => {
     if (!data.profession) return false;
     if (data.profession === "other") return true;
@@ -147,11 +153,12 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
     if (!isDirectoryNetwork(network)) return false;
     if (!selectedCode) return false;
     if (isOtherSchool && !data.skiSchoolOther?.trim()) return false;
-    if (network === "ESF" && !isValidCarteSyndicale(data.carteSyndicale, cartePending)) {
-      return false;
-    }
+    if (carteBlocking) return false;
     return true;
   })();
+
+  /** Afficher l'aide carte dès qu'une école ESF est choisie (évite le piège bouton gris). */
+  const showCarteHint = carteBlocking && schoolReadyForPrice;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -300,9 +307,20 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
               </div>
 
               {network === "ESF" && (
-                <div className="space-y-3 rounded-[var(--radius)] border border-border p-3">
+                <div
+                  id="carte-syndicale-block"
+                  className={cn(
+                    "space-y-3 rounded-[var(--radius)] border p-3",
+                    showCarteHint
+                      ? "border-[hsl(var(--status-warning))] bg-[hsl(var(--status-warning)/0.08)]"
+                      : "border-border"
+                  )}
+                >
                   <div className="space-y-2">
-                    <Label htmlFor="carteSyndicale">Carte syndicale (5 chiffres)</Label>
+                    <Label htmlFor="carteSyndicale">
+                      Carte syndicale (5 chiffres){" "}
+                      <span className="font-normal text-muted-foreground">— obligatoire</span>
+                    </Label>
                     <Input
                       id="carteSyndicale"
                       inputMode="numeric"
@@ -317,6 +335,8 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
                       }
                       placeholder="12345"
                       className="h-11 tabular"
+                      aria-invalid={showCarteHint}
+                      aria-describedby={showCarteHint ? "carte-syndicale-hint" : undefined}
                     />
                   </div>
                   <label className="flex items-start gap-2 text-sm">
@@ -331,6 +351,13 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
                     />
                     <span>Je n&apos;ai pas encore ma carte syndicale</span>
                   </label>
+                  {showCarteHint ? (
+                    <p id="carte-syndicale-hint" className="text-sm text-foreground" role="status">
+                      Pour continuer : saisissez vos 5 chiffres, ou cochez « Je n&apos;ai pas encore
+                      ma carte syndicale ». L&apos;école est bien enregistrée — il manque seulement
+                      cette information.
+                    </p>
+                  ) : null}
                 </div>
               )}
 
@@ -545,9 +572,16 @@ export function ProfessionalProfileStep({ data, onUpdate, onNext }: Professional
       )}
 
       <StepActions>
-        <Button type="submit" className="h-12 w-full text-base sm:w-auto" disabled={!canContinue}>
-          Continuer vers le test de niveau
-        </Button>
+        <div className="flex w-full flex-col items-stretch gap-2 sm:items-end">
+          {showCarteHint ? (
+            <p className="text-sm text-muted-foreground sm:text-right">
+              Bouton inactif : renseignez la carte syndicale (ou cochez « pas encore ») plus haut.
+            </p>
+          ) : null}
+          <Button type="submit" className="h-12 w-full text-base sm:w-auto" disabled={!canContinue}>
+            Continuer vers le test de niveau
+          </Button>
+        </div>
       </StepActions>
     </form>
   );

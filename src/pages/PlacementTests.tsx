@@ -14,9 +14,13 @@ import {
   Target,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { format } from "date-fns";
+import { fr as frLocale } from "date-fns/locale";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { REGISTRATION_LANGUAGES } from "@/lib/registration-languages";
 import { NIVEAU_NON_RENSEIGNE, usePlacementTestStats } from "@/hooks/usePlacementTestStats";
+import { useSalonDemoTests } from "@/hooks/useSalonDemoTests";
+import { formatNameLastFirst } from "@/lib/person-name";
 import { Link } from "react-router";
 import {
   CardGrid,
@@ -199,10 +203,15 @@ function pisteColor(level: string): string {
   return seriesColor(index === -1 ? PISTE_SERIES_ORDER.length - 1 : index);
 }
 
+function languageLabelForKey(key: string): string {
+  return REGISTRATION_LANGUAGES.find((l) => l.value === key)?.label ?? key;
+}
+
 export default function PlacementTests() {
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
   const { t } = useLanguage();
   const { data: testStats = [], isLoading } = usePlacementTestStats();
+  const { data: salonTests = [], isLoading: salonLoading } = useSalonDemoTests(50);
 
   /**
    * Synthèse inter-langues — recomposée à partir des mêmes lignes que les
@@ -375,8 +384,8 @@ export default function PlacementTests() {
         </div>
 
         <SurfaceCard
-          title="Salon des directeurs"
-          description="Formulaire léger (nom, prénom, école ESF, test) — lien pour QR code stand."
+          title="Test isolé (/salon)"
+          description="Sans inscription ni carte syndicale — stand directeurs, ou moniteur bloqué sur /register. Ensuite : Nouvelle inscription + niveau ci-dessous."
           icon={Mountain}
           actions={
             <div className="flex gap-2">
@@ -396,10 +405,59 @@ export default function PlacementTests() {
             </div>
           }
         >
-          <p className="text-sm text-muted-foreground">
-            URL publique : <code className="text-foreground">/salon</code> — résultats stockés dans{" "}
-            <code className="text-foreground">salon_demo_tests</code> (hors inscriptions).
+          <p className="mb-3 text-sm text-muted-foreground">
+            Lien public :{" "}
+            <code className="text-foreground">https://www.fli.fr/salon</code> (ou{" "}
+            <code className="text-foreground">/salon</code> sur la plateforme).
           </p>
+          {salonLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-2/3" />
+            </div>
+          ) : salonTests.length === 0 ? (
+            <TableEmpty
+              icon={Mountain}
+              title="Aucun passage /salon pour l’instant"
+              description="Dès qu’un moniteur termine le test isolé, la piste apparaît ici."
+            />
+          ) : (
+            <ul className="divide-y divide-border rounded-[var(--radius)] border border-border">
+              {salonTests.map((row) => (
+                <li
+                  key={row.id}
+                  className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0 space-y-0.5">
+                    <p className="font-medium">
+                      {formatNameLastFirst({
+                        first_name: row.first_name,
+                        last_name: row.last_name,
+                      })}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">{row.email}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {row.ski_school_name} · {languageLabelForKey(row.language)}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 flex-wrap items-center gap-2 sm:flex-col sm:items-end">
+                    <StatusPill
+                      tone={levelTones[row.determined_level || ""] ?? "neutral"}
+                      size="sm"
+                    >
+                      {row.determined_level || "—"}
+                    </StatusPill>
+                    <span className="text-xs text-muted-foreground tabular">
+                      {format(new Date(row.created_at), "dd/MM/yyyy HH:mm", {
+                        locale: frLocale,
+                      })}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </SurfaceCard>
 
         <SurfaceCard

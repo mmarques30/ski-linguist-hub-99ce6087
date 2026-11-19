@@ -61,4 +61,13 @@ describe("Salon des directeurs — /salon", () => {
     expect(contactMigration).toContain("p_email text");
     expect(contactMigration).toContain("p_phone text");
   });
+
+  it("liste les résultats salon sur /tests pour l'inscription manuelle", () => {
+    const testsPage = source("src/pages/PlacementTests.tsx");
+    const hook = source("src/hooks/useSalonDemoTests.ts");
+    expect(testsPage).toContain("useSalonDemoTests");
+    expect(testsPage).toContain("Test isolé (/salon)");
+    expect(hook).toContain("salon_demo_tests");
+    expect(hook).toContain("determined_level");
+  });
 });
