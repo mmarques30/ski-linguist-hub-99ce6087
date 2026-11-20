@@ -1,0 +1,38 @@
+[
+  {
+    "key": "iban-escala",
+    "name": "Iban Escala",
+    "email": "iban.escala@orange.fr",
+    "school": "ESF AIME LA PLAGNE",
+    "sponsor_type": "esf",
+    "carte": "52532",
+    "profession": "moniteur",
+    "training_cycle": "1",
+    "language": "espagnol",
+    "test_at": "2026-11-17T18:00:00+01:00",
+    "previous_test": false,
+    "payment": "stripe",
+    "payment_date": "2026-11-17",
+    "stripe_charge": "ch_3UckDMQBleN6FLtS1IoCk3hQ",
+    "stripe_pi": "pi_3UckDMQBleN6FLtS1Daw0dqE",
+    "invoice_number": "26-27.14351",
+    "invoice_seq": 14351,
+    "scores": [2, 1.8, 1.5, 2, 1.8, 1.8],
+    "cecrl": "B1",
+    "instructor_first_name": "Erika",
+    "instructor_last_name": "Cadena Acosta",
+    "intro": "Vous présentez un niveau intermédiaire en espagnol, qui vous permet de comprendre et de participer à une conversation dans un contexte professionnel. Lors de l'entretien, l'échange a été dynamique et agréable. Vous avez montré un bon niveau de compréhension et vous maîtrisez déjà une partie du vocabulaire technique lié à votre domaine d'activité.",
+    "comp": "Certaines difficultés persistent toutefois dans l'expression orale, notamment au niveau de la conjugaison et de la construction des phrases. Si vous parvenez à faire passer vos idées et à soutenir la conversation, votre expression manque encore parfois de fluidité et de spontanéité. Ces points méritent d'être consolidés pour gagner en précision et en aisance.",
+    "grammar": "",
+    "tech": "Dans le cadre de votre projet professionnel à la station de ski de La Plagne, la pratique régulière de l'espagnol sera un véritable atout. N'hésitez pas à multiplier les occasions d'échanger avec une clientèle hispanophone afin de renforcer vos acquis, d'enrichir votre vocabulaire et de gagner progressivement en fluidité.",
+    "points": null,
+    "concl": "Niveau B1.",
+    "pdf_habillage": "esf",
+    "send_mode": "stripe_paid_invoice",
+    "school_cc": [
+      "info@esfplagneaime2000.com",
+      "christophe@esfplagneaime2000.com"
+    ],
+    "note": "Source ESCALA IBAN.docx (Erika Cadena Acosta, 17/11). Notes brutes 2 / 1,8 / 1,5 / 2 / 1,8 → gén. 1,8 B1. Stripe 17/11 ch_3UckDMQBleN6FLtS1IoCk3hQ (45 €) — paiement vérifié. Facture proposée 26-27.14351. Habillage ESF. Envoi en attente OK Paula."
+  }
+]
