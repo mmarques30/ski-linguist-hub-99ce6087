@@ -790,6 +790,15 @@ export default function InscriptionDetails() {
               </div>
             )}
 
+            {/* Auto-éval sur l’onglet Général : c’est ici qu’on constitue les groupes,
+                pas seulement dans Formation. */}
+            <PlacementTestSummaryCard
+              testId={(inscription as { entry_test_id?: string | null }).entry_test_id}
+              fallbackScore={inscription.entry_test_score}
+              editable={editable}
+              inscriptionEntryLevel={inscription.entry_level}
+            />
+
             {/* Meta info */}
             <SurfaceCard>
               <DefinitionList
