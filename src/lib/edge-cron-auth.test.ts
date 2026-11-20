@@ -207,14 +207,14 @@ describe(" hardening checkout / partenaire / FIF-PL (scan 14/10/2026)", () => {
     expect(edge).toContain("URL de retour Stripe non autorisée");
   });
 
-  it("submit-registration valide l'école partenaire et n'applique pas le FIF-PL déclaré", () => {
+  it("submit-registration valide l'école partenaire et plafonne la part aux droits FIF-PL (Rosière/Méribel)", () => {
     const edge = source("supabase/functions/submit-registration/index.ts");
     expect(edge).toContain("ski_school_directory");
     expect(edge).toContain("validatedPartnerCode");
     expect(edge).toContain("pendingStaffValidation");
-    expect(edge).toContain("pendingStaffValidation");
-    expect(edge).not.toMatch(
-      /getInscriptionPaymentFields\(\s*price,\s*normalizePaymentOption\([^)]+\),\s*\{\s*studentShareEur:/
+    expect(edge).toContain("schoolFifplStudentShareEur");
+    expect(edge).toMatch(
+      /getInscriptionPaymentFields\(\s*price,\s*normalizePaymentOption\([^)]+\),\s*\{\s*studentShareEur:\s*schoolFifplStudentShareEur\s*\}/
     );
   });
 });

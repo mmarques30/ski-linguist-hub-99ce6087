@@ -342,8 +342,9 @@ function buildFifplFundingDetails(
         coveredOnCourseEur: coveredOnCourse,
         remainingChargeEur: remainingCharge,
         hasCfpAttestation: hasAttestation,
-        // Estimation déclarative uniquement — n'impacte pas le montant encaissé.
-        doesNotReduceChargedAmount: true,
+        // Stations forfait école (La Rosière / Méribel) : la part moniteur
+        // est plafonnée aux droits (coveredOnCourseEur) à la soumission.
+        doesNotReduceChargedAmount: false,
       },
     },
   });
@@ -882,9 +883,37 @@ Deno.serve(async (req) => {
       registration.location ||
       null;
 
-    // FIF-PL déclaré par le stagiaire : estimation dans funding_details seulement.
-    // On ne réduit PAS le solde / montant tant que le staff n'a pas validé
-    // (scan 14/10/2026) — part = tarif catalogue (pas de studentShareEur client).
+    const sessionFundingMode = getSessionFundingMode({
+      funding_mode: offeringFundingMode,
+    });
+    const omitDossierFee = hidesDepositPaymentOptions(sessionFundingMode);
+
+    // La Rosière / Méribel (forfait école) : part moniteur = droits FIF-PL estimés
+    // côté serveur (Paula : JAMAIS plus que les droits). Pas un montant client.
+    let schoolFifplStudentShareEur: number | null = null;
+    if (
+      omitDossierFee &&
+      !pricePending &&
+      price != null &&
+      price > 0 &&
+      isFifplFunding(registration.fundingType)
+    ) {
+      const detailsJson = buildFifplFundingDetails(registration, price);
+      if (detailsJson) {
+        try {
+          const parsed = JSON.parse(detailsJson) as {
+            fifpl?: { estimatedRights?: { coveredOnCourseEur?: number | null } };
+          };
+          const covered = parsed?.fifpl?.estimatedRights?.coveredOnCourseEur;
+          if (covered != null && Number.isFinite(Number(covered))) {
+            schoolFifplStudentShareEur = Math.round(Number(covered));
+          }
+        } catch {
+          // ignore JSON parse — part reste null → tarif catalogue
+        }
+      }
+    }
+
     const paymentFields =
       !isCustomFormat &&
       !isOpco &&
@@ -896,15 +925,12 @@ Deno.serve(async (req) => {
       isValidPaymentOption(registration.paymentOption)
         ? getInscriptionPaymentFields(
             price,
-            normalizePaymentOption(registration.paymentOption)
+            normalizePaymentOption(registration.paymentOption),
+            { studentShareEur: schoolFifplStudentShareEur }
           )
         : null;
 
     const paymentFlow = paymentFields?.paymentFlow ?? "none";
-    const sessionFundingMode = getSessionFundingMode({
-      funding_mode: offeringFundingMode,
-    });
-    const omitDossierFee = hidesDepositPaymentOptions(sessionFundingMode);
 
     const paymentLabels: Record<string, string> = {
       [REGISTRATION_PAYMENT_OPTIONS.STRIPE_DEPOSIT_CHEQUE]:
@@ -1030,7 +1056,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (paymentFields && paymentFields.balanceAfterDeposit > 0) {
+    // Solde / part chèque uniquement — pas pour Stripe/virement intégral
+    // (où balance_after_deposit peut porter la part moniteur Rosière/Méribel).
+    const shouldCreatePendingCheque =
+      paymentFields &&
+      paymentFields.balanceAfterDeposit > 0 &&
+      (paymentFields.paymentMethod === "cheque_fifpl_ecole" ||
+        paymentFields.paymentMethod === "stripe_deposit_cheque" ||
+        (paymentFields.paymentMethod === "virement" &&
+          paymentFields.depositAmount != null));
+    if (shouldCreatePendingCheque && paymentFields) {
       await supabase.from("payments").insert({
         inscription_id: inscription.id,
         amount: paymentFields.balanceAfterDeposit,

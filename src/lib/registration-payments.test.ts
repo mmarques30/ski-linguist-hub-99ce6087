@@ -172,6 +172,29 @@ describe("modes de règlement /register", () => {
     ).toBe(1500);
   });
 
+  it("plafonne le récap Stripe intégral à la part moniteur (La Rosière)", () => {
+    const goni = getRegistrationPaymentSummary(
+      1500,
+      REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL,
+      { studentShareEur: 720 }
+    );
+    expect(goni.amountDueNow).toBe(720);
+    expect(goni.coursePrice).toBe(720);
+
+    const full = getRegistrationPaymentSummary(
+      1500,
+      REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL
+    );
+    expect(full.amountDueNow).toBe(1500);
+
+    const deno = readFileSync(
+      join(process.cwd(), "supabase/functions/_shared/registration-payments.ts"),
+      "utf8"
+    );
+    expect(deno).toContain("chargeSchoolShare");
+    expect(deno).toContain("part moniteur");
+  });
+
   it("renseigne depositAmount = 150 € sur les flux acompte (copie Deno)", () => {
     const deno = readFileSync(
       join(process.cwd(), "supabase/functions/_shared/registration-payments.ts"),
@@ -374,13 +397,14 @@ describe("modes de règlement /register", () => {
     expect(submit).toContain("deposit_amount: paymentFields?.depositAmount ?? null");
     expect(submit).toContain("STRIPE_KLARNA_3X");
     expect(submit).toContain("Payez en 3 fois avec Klarna");
-    // Scan 14/10/2026 : FIF-PL déclaré ne réduit plus le montant à la soumission.
-    expect(submit).not.toContain("studentShareEur: schoolFifplStudentShareEur");
+    // La Rosière / Méribel : part moniteur = droits FIF-PL (jamais le forfait).
+    expect(submit).toContain("studentShareEur: schoolFifplStudentShareEur");
     expect(submit).toContain("coveredOnCourseEur");
     expect(submit).toContain("pendingStaffValidation");
     expect(submit).toContain("SCHOOL_FULL_FUNDING");
     expect(submit).toContain("Financement intégral par mon ESF");
     expect(submit).toContain("ecole_integrale");
+    expect(submit).toContain("shouldCreatePendingCheque");
   });
 
   it("passe le montant payable à getAvailablePaymentOptions dans PaymentStep", () => {

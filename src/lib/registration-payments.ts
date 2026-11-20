@@ -213,12 +213,23 @@ export function getRegistrationPaymentSummary(
   const balanceAfterDossier = Math.max(coursePrice - dossierFee, 0);
 
   if (option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_KLARNA_3X) {
-    return {
+    const share = resolveSchoolFifplStudentShareEur(
       coursePrice,
+      options?.studentShareEur
+    );
+    const chargeSchoolShare =
+      options?.studentShareEur != null &&
+      Number.isFinite(Number(options.studentShareEur)) &&
+      Number(options.studentShareEur) > 0 &&
+      share > 0 &&
+      share < coursePrice;
+    const due = chargeSchoolShare ? share : coursePrice;
+    return {
+      coursePrice: due,
       dossierFee: 0,
       balanceAfterDossier: 0,
-      amountDueNow: coursePrice,
-      amountDueNowLabel: `3 échéances Klarna — total ${formatPriceEUR(coursePrice)}`,
+      amountDueNow: due,
+      amountDueNowLabel: `3 échéances Klarna — total ${formatPriceEUR(due)}`,
     };
   }
 
@@ -226,12 +237,26 @@ export function getRegistrationPaymentSummary(
     option === REGISTRATION_PAYMENT_OPTIONS.STRIPE_FULL ||
     option === REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL
   ) {
-    return {
+    // La Rosière / Méribel : afficher la part moniteur (droits), pas le forfait école.
+    const share = resolveSchoolFifplStudentShareEur(
       coursePrice,
+      options?.studentShareEur
+    );
+    const chargeSchoolShare =
+      options?.studentShareEur != null &&
+      Number.isFinite(Number(options.studentShareEur)) &&
+      Number(options.studentShareEur) > 0 &&
+      share > 0 &&
+      share < coursePrice;
+    const due = chargeSchoolShare ? share : coursePrice;
+    return {
+      coursePrice: due,
       dossierFee: 0,
       balanceAfterDossier: 0,
-      amountDueNow: coursePrice,
-      amountDueNowLabel: "Paiement intégral",
+      amountDueNow: due,
+      amountDueNowLabel: chargeSchoolShare
+        ? `Paiement de votre part (${due.toLocaleString("fr-FR")} €)`
+        : "Paiement intégral",
     };
   }
 

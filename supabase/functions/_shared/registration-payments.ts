@@ -223,26 +223,48 @@ export function getInscriptionPaymentFields(
   }
 
   if (isStripeTotalSettlement(option)) {
+    // La Rosière / Méribel : part moniteur = droits FIF-PL (jamais le forfait école).
+    const share = resolveSchoolFifplStudentShareEur(
+      coursePrice,
+      options?.studentShareEur
+    );
+    const chargeSchoolShare =
+      options?.studentShareEur != null &&
+      Number.isFinite(Number(options.studentShareEur)) &&
+      Number(options.studentShareEur) > 0 &&
+      share > 0 &&
+      share < coursePrice;
     return {
       paymentMethod: "stripe",
-      balanceAfterDeposit: 0,
+      // balance_after_deposit = part moniteur (montant Stripe), pas un solde chèque.
+      balanceAfterDeposit: chargeSchoolShare ? share : 0,
       depositAmount: null,
       paymentFlow: "stripe",
       paymentType: "total",
-      stripeAmount: coursePrice,
+      stripeAmount: chargeSchoolShare ? share : coursePrice,
       virementAmount: 0,
     };
   }
 
   if (option === REGISTRATION_PAYMENT_OPTIONS.VIREMENT_FULL) {
+    const share = resolveSchoolFifplStudentShareEur(
+      coursePrice,
+      options?.studentShareEur
+    );
+    const chargeSchoolShare =
+      options?.studentShareEur != null &&
+      Number.isFinite(Number(options.studentShareEur)) &&
+      Number(options.studentShareEur) > 0 &&
+      share > 0 &&
+      share < coursePrice;
     return {
       paymentMethod: "virement",
-      balanceAfterDeposit: 0,
+      balanceAfterDeposit: chargeSchoolShare ? share : 0,
       depositAmount: null,
       paymentFlow: "virement",
       paymentType: "total",
       stripeAmount: 0,
-      virementAmount: coursePrice,
+      virementAmount: chargeSchoolShare ? share : coursePrice,
     };
   }
 
