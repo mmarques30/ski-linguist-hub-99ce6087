@@ -1,6 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  autoDiagnosticAnswersFromPlacementPayload,
+  autoDiagnosticGroupingFields,
+  type AutoDiagnosticGroupingFields,
+} from "@/lib/auto-diagnostic";
+import {
   SCHEDULE_OUT_OF_SCOPE_STATUSES,
   SCHEDULE_PENDING,
   groupPendingSchedules,
@@ -20,6 +25,10 @@ export interface PendingScheduleInscription {
   /** BL-029 : start_date n'est que le début souhaité par le stagiaire. */
   dates_to_confirm: boolean;
   entry_level: string | null;
+  entry_test_id: string | null;
+  expectations: string | null;
+  /** Synthèse auto-diagnostic (Q5/Q7/Q9/Q10/Q11) pour constituer les groupes. */
+  autoDiagnostic: AutoDiagnosticGroupingFields | null;
   /** Horaire repris du fichier d'import, quand il existe. */
   schedule: string | null;
   schedule_status: string;
@@ -58,6 +67,8 @@ export function usePendingSchedules() {
           course_location,
           dates_to_confirm,
           entry_level,
+          entry_test_id,
+          expectations,
           schedule,
           schedule_status,
           schedule_reminder_sent_at,
@@ -75,36 +86,67 @@ export function usePendingSchedules() {
 
       if (error) throw error;
 
-      const inscriptions: PendingScheduleInscription[] = (data || [])
-        .filter((row) => needsMorningAfternoonGroup(row.modality, row.course_type))
-        .map((row) => {
-          const student = row.students as {
-            first_name: string;
-            last_name: string;
-            email: string | null;
-          } | null;
-          return {
-            id: row.id,
-            code: row.code,
-            language: row.language,
-            start_date: row.start_date,
-            course_location: row.course_location ?? null,
-            dates_to_confirm: row.dates_to_confirm ?? false,
-            entry_level: row.entry_level,
-            schedule: row.schedule,
-            schedule_status: row.schedule_status,
-            schedule_reminder_sent_at: row.schedule_reminder_sent_at,
-            status: row.status,
-            modality: row.modality,
-            course_type: row.course_type,
-            student_id: row.student_id,
-            student_name: student
-              ? `${student.first_name} ${student.last_name}`.trim()
-              : "—",
-            student_email: student?.email ?? null,
-            late: scheduleDeadline(row.start_date, today).late,
-          };
-        });
+      const filtered = (data || []).filter((row) =>
+        needsMorningAfternoonGroup(row.modality, row.course_type)
+      );
+
+      const testIds = [
+        ...new Set(
+          filtered
+            .map((row) => row.entry_test_id)
+            .filter((id): id is string => typeof id === "string" && id.length > 0)
+        ),
+      ];
+
+      const autoByTestId = new Map<string, AutoDiagnosticGroupingFields>();
+      const TEST_CHUNK = 100;
+      for (let i = 0; i < testIds.length; i += TEST_CHUNK) {
+        const chunk = testIds.slice(i, i + TEST_CHUNK);
+        const { data: tests, error: testsError } = await supabase
+          .from("placement_tests")
+          .select("id, answers")
+          .in("id", chunk);
+        if (testsError) throw testsError;
+        for (const test of tests || []) {
+          const answers = autoDiagnosticAnswersFromPlacementPayload(test.answers);
+          autoByTestId.set(test.id, autoDiagnosticGroupingFields(answers));
+        }
+      }
+
+      const inscriptions: PendingScheduleInscription[] = filtered.map((row) => {
+        const student = row.students as {
+          first_name: string;
+          last_name: string;
+          email: string | null;
+        } | null;
+        const autoDiagnostic = row.entry_test_id
+          ? autoByTestId.get(row.entry_test_id) ?? null
+          : null;
+        return {
+          id: row.id,
+          code: row.code,
+          language: row.language,
+          start_date: row.start_date,
+          course_location: row.course_location ?? null,
+          dates_to_confirm: row.dates_to_confirm ?? false,
+          entry_level: row.entry_level,
+          entry_test_id: row.entry_test_id ?? null,
+          expectations: row.expectations ?? autoDiagnostic?.expectations ?? null,
+          autoDiagnostic,
+          schedule: row.schedule,
+          schedule_status: row.schedule_status,
+          schedule_reminder_sent_at: row.schedule_reminder_sent_at,
+          status: row.status,
+          modality: row.modality,
+          course_type: row.course_type,
+          student_id: row.student_id,
+          student_name: student
+            ? `${student.first_name} ${student.last_name}`.trim()
+            : "—",
+          student_email: student?.email ?? null,
+          late: scheduleDeadline(row.start_date, today).late,
+        };
+      });
 
       const groups = groupPendingSchedules(inscriptions, today);
 

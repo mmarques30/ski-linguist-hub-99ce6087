@@ -21,6 +21,8 @@ export interface InscriptionComplete {
   price: number | null;
   entry_level: string | null;
   entry_test_id?: string | null;
+  entry_test_score?: string | null;
+  expectations?: string | null;
   dates_to_confirm?: boolean | null;
   exit_level?: string | null;
   course_location?: string | null;
