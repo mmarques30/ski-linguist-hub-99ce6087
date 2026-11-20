@@ -99,7 +99,11 @@ export function PlacementTestSummaryCard({
 
   if (isLoading) {
     return (
-      <SurfaceCard title="Test adaptatif (pistes)" icon={Mountain}>
+      <SurfaceCard
+        title="Auto-évaluation & test de niveau"
+        description="Réponses du formulaire + parcours pistes"
+        icon={Mountain}
+      >
         <div className="space-y-3">
           <Skeleton className="h-8 w-40" />
           <Skeleton className="h-8 w-56" />
@@ -153,7 +157,8 @@ export function PlacementTestSummaryCard({
 
   return (
     <SurfaceCard
-      title="Test adaptatif (pistes)"
+      title="Auto-évaluation & test de niveau"
+      description="Réponses du formulaire (auto-diagnostic) puis scores par piste"
       icon={Mountain}
       bodyClassName="space-y-4"
     >
@@ -239,7 +244,7 @@ export function PlacementTestSummaryCard({
           </div>
         )}
 
-        {autoAnswers && Object.keys(autoAnswers).length > 0 && (
+        {autoAnswers && Object.keys(autoAnswers).length > 0 ? (
           <div className="space-y-2">
             <p className="text-sm font-medium text-foreground">
               Auto-diagnostic (réponses du formulaire)
@@ -269,7 +274,12 @@ export function PlacementTestSummaryCard({
               </pre>
             </details>
           </div>
-        )}
+        ) : testId ? (
+          <p className="text-sm text-muted-foreground italic">
+            Pas de réponses d&apos;auto-diagnostic enregistrées sur ce test (ancien
+            parcours ou import sans formulaire).
+          </p>
+        ) : null}
 
         {slopeOnly.length > 0 && (
           <div className="space-y-2">

@@ -122,6 +122,19 @@ describe("Fiche stagiaire & constitution des groupes — auto-éval visible", ()
     expect(page).toContain("autoDiagnostic?.aisance");
     expect(page).toContain("Attentes");
   });
+
+  it("montre PlacementTestSummaryCard aussi sur l’onglet Général de l’inscription", () => {
+    const page = readFileSync(
+      join(process.cwd(), "src/pages/inscriptions/InscriptionDetails.tsx"),
+      "utf8"
+    );
+    const generalBlock = page.slice(
+      page.indexOf('activeTab === "general"'),
+      page.indexOf('activeTab === "training"')
+    );
+    expect(generalBlock).toContain("PlacementTestSummaryCard");
+    expect(generalBlock).toContain("entry_test_id");
+  });
 });
 
 describe("PlacementTestStep — auto-diagnostic avant QCM", () => {
