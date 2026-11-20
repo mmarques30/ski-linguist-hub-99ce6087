@@ -239,6 +239,38 @@ export function PlacementTestSummaryCard({
           </div>
         )}
 
+        {autoAnswers && Object.keys(autoAnswers).length > 0 && (
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">
+              Auto-diagnostic (réponses du formulaire)
+            </p>
+            <ul className="space-y-2 text-sm">
+              {AUTO_DIAGNOSTIC_QUESTIONS.map((q) => {
+                const raw = autoAnswers[String(q.order_index)];
+                if (raw == null || raw === "" || (Array.isArray(raw) && !raw.length)) {
+                  return null;
+                }
+                return (
+                  <li key={q.order_index} className="border-b border-border pb-2 last:border-0">
+                    <p className="text-muted-foreground">
+                      {substituteLanguagePlaceholder(q.question, test?.language)}
+                    </p>
+                    <p className="font-medium">
+                      {Array.isArray(raw) ? raw.join(" · ") : raw}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+            <details className="text-xs text-muted-foreground">
+              <summary>Résumé texte</summary>
+              <pre className="mt-1 whitespace-pre-wrap">
+                {formatAutoDiagnosticSummary(autoAnswers, test?.language)}
+              </pre>
+            </details>
+          </div>
+        )}
+
         {slopeOnly.length > 0 && (
           <div className="space-y-2">
             <p className="text-sm font-medium text-foreground">Scores par piste</p>
@@ -304,36 +336,6 @@ export function PlacementTestSummaryCard({
             ) : (
               <p className="text-sm text-muted-foreground">Non renseignée</p>
             )}
-          </div>
-        )}
-
-        {autoAnswers && Object.keys(autoAnswers).length > 0 && (
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-foreground">Auto-diagnostic</p>
-            <ul className="space-y-2 text-sm">
-              {AUTO_DIAGNOSTIC_QUESTIONS.map((q) => {
-                const raw = autoAnswers[String(q.order_index)];
-                if (raw == null || raw === "" || (Array.isArray(raw) && !raw.length)) {
-                  return null;
-                }
-                return (
-                  <li key={q.order_index} className="border-b border-border pb-2 last:border-0">
-                    <p className="text-muted-foreground">
-                      {substituteLanguagePlaceholder(q.question, test?.language)}
-                    </p>
-                    <p className="font-medium">
-                      {Array.isArray(raw) ? raw.join(" · ") : raw}
-                    </p>
-                  </li>
-                );
-              })}
-            </ul>
-            <details className="text-xs text-muted-foreground">
-              <summary>Résumé texte</summary>
-              <pre className="mt-1 whitespace-pre-wrap">
-                {formatAutoDiagnosticSummary(autoAnswers, test?.language)}
-              </pre>
-            </details>
           </div>
         )}
 

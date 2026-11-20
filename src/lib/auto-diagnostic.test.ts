@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   AUTO_DIAGNOSTIC_QUESTIONS,
+  autoDiagnosticAnswersFromPlacementPayload,
+  autoDiagnosticGroupingFields,
   expectationsFromAutoDiagnostic,
   isAutoDiagnosticQuestionVisible,
   substituteLanguagePlaceholder,
@@ -66,6 +68,59 @@ describe("auto-diagnostic — modèle Excel 2026", () => {
     };
     expect(validateAutoDiagnostic(complete)).toBeNull();
     expect(expectationsFromAutoDiagnostic(complete)).toBe("Améliorer mon oral");
+  });
+
+  it("résume les champs utiles pour constituer les groupes", () => {
+    const fields = autoDiagnosticGroupingFields({
+      "5": ["Donner des consignes techniques", "Cours avec des enfants"],
+      "7": ["Parler", "Vocabulaire du ski"],
+      "9": "passez vite par les gestes ou une autre langue",
+      "10": "Être à l’aise avec tout type de client",
+      "11": "Oui",
+      "12": "Brésil",
+    });
+    expect(fields.hasAnswers).toBe(true);
+    expect(fields.expectations).toMatch(/aise/i);
+    expect(fields.aisance).toMatch(/gestes/i);
+    expect(fields.priorities).toContain("Parler");
+    expect(fields.situations).toMatch(/consignes/i);
+    expect(fields.stayedAbroad).toBe("Oui — Brésil");
+  });
+
+  it("extrait autoDiagnostic depuis le payload placement_tests.answers", () => {
+    expect(autoDiagnosticAnswersFromPlacementPayload(null)).toBeNull();
+    expect(
+      autoDiagnosticAnswersFromPlacementPayload({
+        autoDiagnostic: { answers: { "10": "Progresser" }, version: 1 },
+      })
+    ).toEqual({ "10": "Progresser" });
+  });
+});
+
+describe("Fiche stagiaire & constitution des groupes — auto-éval visible", () => {
+  it("monte PlacementTestSummaryCard sur la fiche stagiaire", () => {
+    const page = readFileSync(
+      join(process.cwd(), "src/pages/students/StudentDetails.tsx"),
+      "utf8"
+    );
+    expect(page).toContain("PlacementTestSummaryCard");
+    expect(page).toContain("Auto-évaluation & test de niveau");
+    expect(page).toContain("inscriptionsWithForm");
+  });
+
+  it("affiche attentes / aisance / priorités sur Constitution des groupes", () => {
+    const page = readFileSync(
+      join(process.cwd(), "src/pages/inscriptions/ScheduleValidation.tsx"),
+      "utf8"
+    );
+    const hook = readFileSync(
+      join(process.cwd(), "src/hooks/usePendingSchedules.ts"),
+      "utf8"
+    );
+    expect(hook).toContain("autoDiagnosticGroupingFields");
+    expect(hook).toContain("entry_test_id");
+    expect(page).toContain("autoDiagnostic?.aisance");
+    expect(page).toContain("Attentes");
   });
 });
 

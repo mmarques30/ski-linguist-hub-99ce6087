@@ -119,10 +119,12 @@ export default function ScheduleValidation() {
         )}
 
         <Alert>
-          <AlertTitle>Analysez par langue avant de valider</AlertTitle>
+          <AlertTitle>Analysez par langue et auto-évaluation avant de valider</AlertTitle>
           <AlertDescription>
             Sélectionnez plusieurs inscriptions d&apos;un même groupe, puis validez matin ou
-            après-midi en lot. Vous pouvez aussi ouvrir chaque fiche pour un cas particulier.
+            après-midi en lot. Les attentes et l&apos;auto-diagnostic (aisance, priorités,
+            situations) s&apos;affichent sous chaque stagiaire pour constituer les groupes
+            homogènes. Ouvrez la fiche pour le détail complet du test.
           </AlertDescription>
         </Alert>
 
@@ -207,7 +209,7 @@ export default function ScheduleValidation() {
                         });
                       }}
                     />
-                    <div className="flex-1 min-w-[200px]">
+                    <div className="flex-1 min-w-[200px] space-y-1">
                       {inscription.student_id ? (
                         <Link
                           to={`/students/${inscription.student_id}`}
@@ -226,6 +228,36 @@ export default function ScheduleValidation() {
                       {inscription.schedule && (
                         <p className="text-muted-foreground text-xs">
                           Horaire prévu : {inscription.schedule}
+                        </p>
+                      )}
+                      {(inscription.expectations ||
+                        inscription.autoDiagnostic?.expectations) && (
+                        <p className="text-xs">
+                          <span className="text-muted-foreground">Attentes : </span>
+                          {inscription.expectations ||
+                            inscription.autoDiagnostic?.expectations}
+                        </p>
+                      )}
+                      {inscription.autoDiagnostic?.aisance && (
+                        <p className="text-xs">
+                          <span className="text-muted-foreground">Aisance : </span>
+                          {inscription.autoDiagnostic.aisance}
+                        </p>
+                      )}
+                      {inscription.autoDiagnostic?.priorities && (
+                        <p className="text-xs">
+                          <span className="text-muted-foreground">Priorités : </span>
+                          {inscription.autoDiagnostic.priorities}
+                        </p>
+                      )}
+                      {inscription.autoDiagnostic?.situations && (
+                        <p className="text-xs text-muted-foreground">
+                          Situations : {inscription.autoDiagnostic.situations}
+                        </p>
+                      )}
+                      {!inscription.entry_test_id && !inscription.expectations && (
+                        <p className="text-xs text-muted-foreground italic">
+                          Pas d&apos;auto-évaluation en base
                         </p>
                       )}
                       {/* BL-029 : cette date n'est qu'un souhait, la caler en

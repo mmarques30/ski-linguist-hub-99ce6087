@@ -17,6 +17,7 @@ import {
   Languages,
   Pencil,
   PieChart,
+  Mountain,
 } from "lucide-react";
 import { useState } from "react";
 import type { ReactNode } from "react";
@@ -62,6 +63,7 @@ import {
   displayPisteLabel,
   pistePillTone,
 } from "@/lib/placement-test-engine";
+import { PlacementTestSummaryCard } from "@/components/inscriptions/PlacementTestSummaryCard";
 
 type HistoryTab = "all" | "completed" | "certifications";
 
@@ -194,6 +196,13 @@ export default function StudentDetails() {
       : historyTab === "certifications"
         ? certifiedInscriptions
         : student.inscriptions;
+
+  /** Inscriptions avec test / attentes — pour constituer les groupes depuis la fiche. */
+  const inscriptionsWithForm = student.inscriptions.filter(
+    (i) =>
+      i.status !== "annulee" &&
+      (Boolean(i.entry_test_id) || Boolean(i.expectations?.trim()))
+  );
 
   /**
    * Répartitions calculées sur les inscriptions déjà chargées par
@@ -382,6 +391,66 @@ export default function StudentDetails() {
           email={student.email}
           authUserId={student.auth_user_id}
         />
+
+        {inscriptionsWithForm.length > 0 && (
+          <div className="space-y-4">
+            <SurfaceCard
+              title="Auto-évaluation & test de niveau"
+              description="Réponses du formulaire d’inscription (auto-diagnostic, pistes, vocabulaire, présentation) — utiles pour constituer les groupes"
+              icon={Mountain}
+            >
+              <p className="text-sm text-muted-foreground">
+                {inscriptionsWithForm.length} inscription
+                {inscriptionsWithForm.length > 1 ? "s" : ""} avec formulaire ou test
+              </p>
+            </SurfaceCard>
+            {inscriptionsWithForm.map((inscription) => (
+              <div key={inscription.id} className="space-y-3">
+                <div className="flex flex-wrap items-center gap-2 px-1">
+                  <Link
+                    to={`/inscriptions/${inscription.id}`}
+                    className="text-sm font-medium text-[hsl(var(--tint-blue-fg))] hover:underline"
+                  >
+                    {inscription.code || "Inscription"}
+                  </Link>
+                  <StatusPill tone="neutral" size="sm">
+                    {inscription.language}
+                  </StatusPill>
+                  <StatusPill tone={toneForStatus(inscription.status)} size="sm">
+                    {getStatusLabel(inscription.status, "fr")}
+                  </StatusPill>
+                  {inscription.start_date && (
+                    <span className="text-xs text-muted-foreground">
+                      {formatDate(inscription.start_date)}
+                      {inscription.end_date ? ` – ${formatDate(inscription.end_date)}` : ""}
+                      {inscription.course_location
+                        ? ` · ${inscription.course_location}`
+                        : ""}
+                    </span>
+                  )}
+                </div>
+                {inscription.expectations?.trim() ? (
+                  <SurfaceCard title="Attentes (auto-diagnostic Q10)">
+                    <p className="whitespace-pre-wrap text-sm">
+                      {inscription.expectations}
+                    </p>
+                  </SurfaceCard>
+                ) : null}
+                {inscription.entry_test_id || inscription.entry_test_score ? (
+                  <PlacementTestSummaryCard
+                    testId={inscription.entry_test_id}
+                    fallbackScore={inscription.entry_test_score}
+                    inscriptionEntryLevel={inscription.entry_level}
+                  />
+                ) : (
+                  <p className="px-1 text-sm text-muted-foreground italic">
+                    Pas de test de niveau lié — seules les attentes sont enregistrées.
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Compteurs — chacun ouvre l'onglet correspondant de l'historique. */}
         <StatTileGrid cols={4}>

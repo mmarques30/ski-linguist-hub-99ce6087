@@ -132,6 +132,70 @@ export function expectationsFromAutoDiagnostic(answers: AutoDiagnosticAnswers): 
   return typeof v === "string" ? v.trim() : "";
 }
 
+function displayAnswer(value: string | string[] | undefined): string | null {
+  if (value == null || value === "") return null;
+  if (Array.isArray(value)) {
+    const joined = value.map((v) => String(v).trim()).filter(Boolean).join(" · ");
+    return joined || null;
+  }
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
+/**
+ * Champs utiles pour constituer les groupes (fiche stagiaire / horaires J-10)
+ * sans ouvrir le détail complet du test.
+ */
+export interface AutoDiagnosticGroupingFields {
+  expectations: string | null;
+  aisance: string | null;
+  priorities: string | null;
+  situations: string | null;
+  stayedAbroad: string | null;
+  hasAnswers: boolean;
+}
+
+export function autoDiagnosticGroupingFields(
+  answers: AutoDiagnosticAnswers | null | undefined
+): AutoDiagnosticGroupingFields {
+  if (!answers || Object.keys(answers).length === 0) {
+    return {
+      expectations: null,
+      aisance: null,
+      priorities: null,
+      situations: null,
+      stayedAbroad: null,
+      hasAnswers: false,
+    };
+  }
+  const stayed = displayAnswer(answers[answerKey(11)]);
+  const where = displayAnswer(answers[answerKey(12)]);
+  return {
+    expectations: displayAnswer(answers[answerKey(10)]),
+    aisance: displayAnswer(answers[answerKey(9)]),
+    priorities: displayAnswer(answers[answerKey(7)]),
+    situations: displayAnswer(answers[answerKey(5)]),
+    stayedAbroad:
+      stayed == null
+        ? null
+        : where
+          ? `${stayed} — ${where}`
+          : stayed,
+    hasAnswers: true,
+  };
+}
+
+/** Extrait les réponses auto-diagnostic depuis `placement_tests.answers` (jsonb). */
+export function autoDiagnosticAnswersFromPlacementPayload(
+  answers: unknown
+): AutoDiagnosticAnswers | null {
+  if (!answers || typeof answers !== "object") return null;
+  const auto = (answers as { autoDiagnostic?: { answers?: AutoDiagnosticAnswers } })
+    .autoDiagnostic;
+  if (!auto?.answers || typeof auto.answers !== "object") return null;
+  return auto.answers;
+}
+
 export function buildAutoDiagnosticPayload(
   answers: AutoDiagnosticAnswers
 ): AutoDiagnosticPayload {
