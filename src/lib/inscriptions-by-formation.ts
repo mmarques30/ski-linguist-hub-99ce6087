@@ -8,11 +8,16 @@
  * Langue : « Portugais » et « Portugais brésilien » sont la même formation
  * (libellé canonique via `displayLanguageLabel`).
  *
- * Mode « groupe » : scinde en plus par `group_name` (ex. Groupe 1 / Groupe 2).
- * Sans libellé de groupe, l'horaire (`schedule`) sert de repli pour séparer
- * matin et après-midi.
+ * Mode « groupe » : scinde en Matin / Après-midi (créneau FLI) quand on peut
+ * l'inférer ; sinon `group_name`, sinon l'horaire libre, sinon « Sans groupe ».
+ * « Groupe matin » et « de 8h30 à 12h30 » fusionnent donc en « Matin ».
  */
 
+import {
+  FLI_SCHEDULE_SLOT_LABELS,
+  inferSlotFromSchedule,
+  type FliScheduleSlot,
+} from "@/lib/fli-schedule-slots";
 import { displayLanguageLabel } from "@/lib/taught-languages";
 
 export const FORMATION_NO_LOCATION_LABEL = "Sans lieu";
@@ -32,6 +37,7 @@ export interface FormationInscriptionRow {
   status?: string | null;
   group_name?: string | null;
   schedule?: string | null;
+  schedule_status?: string | null;
 }
 
 export interface FormationGroupOf<T extends FormationInscriptionRow> {
@@ -55,14 +61,41 @@ export function formationLocationLabel(
   return trimmed ? trimmed : FORMATION_NO_LOCATION_LABEL;
 }
 
+/** Créneau FLI depuis un libellé de groupe (« Groupe matin », « Après-midi »…). */
+export function inferSlotFromGroupName(
+  groupName: string | null | undefined
+): FliScheduleSlot | null {
+  if (!groupName) return null;
+  const normalized = groupName
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replace(/\s+/g, " ");
+  if (/\bapres[- ]?midi\b/.test(normalized)) return "apres-midi";
+  if (/\bmatin\b/.test(normalized)) return "matin";
+  return null;
+}
+
 /**
- * Libellé de groupe pédagogique : `group_name` en priorité, sinon l'horaire
- * (matin / après-midi sans nom de groupe), sinon « Sans groupe ».
+ * Libellé de groupe pédagogique canonique.
+ * Priorité : créneau Matin / Après-midi (status, horaire FLI, ou nom de groupe),
+ * puis `group_name`, puis horaire libre, puis « Sans groupe ».
  */
 export function formationGroupNameLabel(
   groupName: string | null | undefined,
-  schedule?: string | null
+  schedule?: string | null,
+  scheduleStatus?: string | null
 ): string {
+  const status = scheduleStatus?.trim().toLowerCase();
+  let slot: FliScheduleSlot | null =
+    status === "matin" || status === "apres-midi"
+      ? (status as FliScheduleSlot)
+      : null;
+  if (!slot) slot = inferSlotFromSchedule(schedule);
+  if (!slot) slot = inferSlotFromGroupName(groupName);
+  if (slot) return FLI_SCHEDULE_SLOT_LABELS[slot];
+
   const name = groupName?.trim();
   if (name) return name;
   const hours = schedule?.trim();
@@ -96,7 +129,11 @@ export function formationGroupKey(
   ].join("::");
 
   if (mode !== "groupe") return base;
-  return `${base}::${formationGroupNameLabel(row.group_name, row.schedule)}`;
+  return `${base}::${formationGroupNameLabel(
+    row.group_name,
+    row.schedule,
+    row.schedule_status
+  )}`;
 }
 
 function compareText(a: string, b: string): number {
@@ -128,7 +165,11 @@ export function groupInscriptionsByFormation<T extends FormationInscriptionRow>(
         datesToConfirm: Boolean(row.dates_to_confirm),
         groupLabel:
           mode === "groupe"
-            ? formationGroupNameLabel(row.group_name, row.schedule)
+            ? formationGroupNameLabel(
+                row.group_name,
+                row.schedule,
+                row.schedule_status
+              )
             : null,
         inscriptions: [],
       };

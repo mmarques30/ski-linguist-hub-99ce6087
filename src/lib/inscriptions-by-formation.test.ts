@@ -23,21 +23,82 @@ describe("libellé de lieu", () => {
 });
 
 describe("libellé de groupe", () => {
-  it("préfère group_name à l'horaire", () => {
-    expect(
-      formationGroupNameLabel("Groupe 1", "de 8h30 à 12h30")
-    ).toBe("Groupe 1");
+  it("unifie Groupe matin et la plage 8h30–12h30 en Matin", () => {
+    expect(formationGroupNameLabel("Groupe matin", "de 8h30 à 12h30")).toBe(
+      "Matin"
+    );
+    expect(formationGroupNameLabel(null, "de 8h30 à 12h30")).toBe("Matin");
+    expect(formationGroupNameLabel(null, null, "matin")).toBe("Matin");
   });
 
-  it("replie sur l'horaire si pas de nom de groupe", () => {
+  it("unifie après-midi (libellé ou plage) en Après-midi", () => {
+    expect(
+      formationGroupNameLabel("Groupe après-midi", "de 13h30 à 17h30")
+    ).toBe("Après-midi");
     expect(formationGroupNameLabel(null, "de 13h30 à 17h30")).toBe(
-      "de 13h30 à 17h30"
+      "Après-midi"
     );
+  });
+
+  it("conserve un group_name hors créneau FLI", () => {
+    expect(formationGroupNameLabel("Groupe 1", null)).toBe("Groupe 1");
+    expect(formationGroupNameLabel("Individuel", null)).toBe("Individuel");
   });
 
   it("remplace l'absence totale", () => {
     expect(formationGroupNameLabel(null, null)).toBe(FORMATION_NO_GROUP_LABEL);
     expect(formationGroupNameLabel("  ", "  ")).toBe(FORMATION_NO_GROUP_LABEL);
+  });
+});
+
+describe("fusion Val d'Isère matin", () => {
+  it("ne scinde plus Groupe matin et plage 8h30–12h30", () => {
+    const groups = groupInscriptionsByFormation(
+      [
+        {
+          id: "a",
+          language: "Portugais brésilien",
+          start_date: "2026-11-23",
+          end_date: "2026-11-27",
+          course_location: "ESF Val d'Isère",
+          modality: "Présentiel",
+          group_name: "Groupe matin",
+          schedule: "de 8h30 à 12h30",
+          student_name: "Lucas",
+        },
+        {
+          id: "b",
+          language: "Portugais brésilien",
+          start_date: "2026-11-23",
+          end_date: "2026-11-27",
+          course_location: "ESF Val d'Isère",
+          modality: "Présentiel",
+          group_name: null,
+          schedule: "de 8h30 à 12h30",
+          student_name: "Alix",
+        },
+        {
+          id: "c",
+          language: "Portugais brésilien",
+          start_date: "2026-11-23",
+          end_date: "2026-11-27",
+          course_location: "ESF Val d'Isère",
+          modality: "Présentiel",
+          group_name: null,
+          schedule: "de 13h30 à 17h30",
+          student_name: "Barbara",
+        },
+      ],
+      "groupe"
+    );
+    expect(groups).toHaveLength(2);
+    expect(groups.map((g) => g.groupLabel).sort()).toEqual([
+      "Après-midi",
+      "Matin",
+    ]);
+    expect(
+      groups.find((g) => g.groupLabel === "Matin")?.inscriptions.map((i) => i.id)
+    ).toEqual(["b", "a"]);
   });
 });
 
