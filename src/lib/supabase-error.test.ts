@@ -12,6 +12,18 @@ describe("describeCaughtError", () => {
     expect(described.message).toBe("Ce code d'inscription existe déjà. Réessayez.");
   });
 
+  it("signale le doublon stagiaire sur e-mail + identité (pas e-mail seul)", () => {
+    const described = describeCaughtError({
+      code: "23505",
+      message:
+        'duplicate key value violates unique constraint "students_email_firstname_lastname_uidx"',
+      details: "Key (email)=(a@b.fr) already exists.",
+    });
+    expect(described.message).toBe(
+      "Un stagiaire avec le même e-mail, prénom et nom existe déjà.",
+    );
+  });
+
   it("ne masque plus une erreur objet en Erreur interne", () => {
     expect(
       describeCaughtError({ message: "column season_id does not exist", code: "42703" }).message
