@@ -182,6 +182,28 @@ export const DEFAULT_FILTER_STATUSES: InscriptionStatus[] = LIST_FILTER_STATUSES
   (status) => status !== 'annulee'
 );
 
+/**
+ * Défaut vue Par formation / Par groupe : portefeuille vivant
+ * (hors terminées, facturées et annulées).
+ */
+export const FORMATION_VIEW_DEFAULT_FILTER_STATUSES: InscriptionStatus[] =
+  LIST_FILTER_STATUSES.filter(
+    (status) =>
+      status !== 'annulee' && status !== 'terminee' && status !== 'facturee'
+  );
+
+export const DEFAULT_STATUS_FILTER_LABELS = {
+  fr: 'Tous sauf annulés',
+  'pt-BR': 'Todos exceto cancelados',
+  en: 'All except cancelled',
+} as const;
+
+export const FORMATION_VIEW_DEFAULT_FILTER_LABELS = {
+  fr: 'Hors terminées / facturées',
+  'pt-BR': 'Exceto concluídas / faturadas',
+  en: 'Except completed / billed',
+} as const;
+
 function sortedUniqueStatuses(statuses: readonly string[]): InscriptionStatus[] {
   const allowed = new Set<string>(LIST_FILTER_STATUSES);
   const unique = new Set<InscriptionStatus>();
@@ -201,8 +223,11 @@ export function sameStatusSet(
   return left.every((status) => rightSet.has(status));
 }
 
-export function isDefaultStatusFilter(statuses: readonly string[]): boolean {
-  return sameStatusSet(statuses, DEFAULT_FILTER_STATUSES);
+export function isDefaultStatusFilter(
+  statuses: readonly string[],
+  defaultStatuses: readonly InscriptionStatus[] = DEFAULT_FILTER_STATUSES
+): boolean {
+  return sameStatusSet(statuses, defaultStatuses);
 }
 
 export function isAllStatusFilter(statuses: readonly string[]): boolean {
@@ -210,23 +235,29 @@ export function isAllStatusFilter(statuses: readonly string[]): boolean {
 }
 
 /**
- * Lit `?status=` : absent → défaut (sauf annulée) ; `all` → tous ;
+ * Lit `?status=` : absent → défaut ; `all` → tous ;
  * une valeur ou une liste CSV → intersection avec les statuts connus.
  */
-export function parseStatusFilterParam(raw: string | null | undefined): InscriptionStatus[] {
-  if (raw == null || raw === '') return [...DEFAULT_FILTER_STATUSES];
+export function parseStatusFilterParam(
+  raw: string | null | undefined,
+  defaultStatuses: readonly InscriptionStatus[] = DEFAULT_FILTER_STATUSES
+): InscriptionStatus[] {
+  if (raw == null || raw === '') return [...defaultStatuses];
   if (raw === 'all') return [...LIST_FILTER_STATUSES];
   const parsed = sortedUniqueStatuses(raw.split(','));
-  return parsed.length > 0 ? parsed : [...DEFAULT_FILTER_STATUSES];
+  return parsed.length > 0 ? parsed : [...defaultStatuses];
 }
 
 /**
  * Sérialise pour l'URL : `null` si défaut (paramètre omis), `all` si tous,
  * sinon CSV ordonné.
  */
-export function serializeStatusFilterParam(statuses: readonly string[]): string | null {
+export function serializeStatusFilterParam(
+  statuses: readonly string[],
+  defaultStatuses: readonly InscriptionStatus[] = DEFAULT_FILTER_STATUSES
+): string | null {
   const normalized = sortedUniqueStatuses(statuses);
-  if (isDefaultStatusFilter(normalized)) return null;
+  if (isDefaultStatusFilter(normalized, defaultStatuses)) return null;
   if (isAllStatusFilter(normalized)) return 'all';
   return normalized.join(',');
 }
@@ -246,17 +277,19 @@ export function toggleStatusInFilter(
  */
 export function describeStatusFilter(
   statuses: readonly string[],
-  lang: 'fr' | 'pt-BR' | 'en'
+  lang: 'fr' | 'pt-BR' | 'en',
+  options?: {
+    defaultStatuses?: readonly InscriptionStatus[];
+    defaultLabel?: Record<'fr' | 'pt-BR' | 'en', string>;
+  }
 ): string {
   if (isAllStatusFilter(statuses)) {
     return lang === 'pt-BR' ? 'Todos os status' : lang === 'en' ? 'All statuses' : 'Tous les statuts';
   }
-  if (isDefaultStatusFilter(statuses)) {
-    return lang === 'pt-BR'
-      ? 'Todos exceto cancelados'
-      : lang === 'en'
-        ? 'All except cancelled'
-        : 'Tous sauf annulés';
+  const defaultStatuses = options?.defaultStatuses ?? DEFAULT_FILTER_STATUSES;
+  if (isDefaultStatusFilter(statuses, defaultStatuses)) {
+    const labels = options?.defaultLabel ?? DEFAULT_STATUS_FILTER_LABELS;
+    return labels[lang];
   }
   if (statuses.length === 0) {
     return lang === 'pt-BR' ? 'Nenhum status' : lang === 'en' ? 'No status' : 'Aucun statut';

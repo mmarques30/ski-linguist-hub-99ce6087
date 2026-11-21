@@ -44,6 +44,8 @@ export interface InscriptionComplete {
   student_company: string | null;
   instructor_name: string | null;
   ski_school_name: string | null;
+  group_name?: string | null;
+  schedule?: string | null;
 }
 
 /** Découpe les `.in(...)` PostgREST (URL / payload) pour la vue par formation. */

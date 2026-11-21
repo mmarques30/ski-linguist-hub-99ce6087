@@ -25,6 +25,7 @@ import {
   FilterBar,
   PageHeader,
   PageShell,
+  SegmentedControl,
   StatTile,
   StatTileGrid,
   StatusPill,
@@ -37,7 +38,8 @@ import { useSeasonFilter } from "@/contexts/SeasonContext";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { LANGUAGE_LABELS } from "@/lib/language-catalog";
 import {
-  DEFAULT_FILTER_STATUSES,
+  FORMATION_VIEW_DEFAULT_FILTER_LABELS,
+  FORMATION_VIEW_DEFAULT_FILTER_STATUSES,
   describeStatusFilter,
   isAllStatusFilter,
   isDefaultStatusFilter,
@@ -53,6 +55,7 @@ import {
 import {
   formationGroupTitle,
   groupInscriptionsByFormation,
+  type FormationViewMode,
 } from "@/lib/inscriptions-by-formation";
 import {
   DOCS_SENT_LABELS,
@@ -68,9 +71,9 @@ const translations = {
     en: "Enrollments by training",
   },
   subtitle: {
-    fr: "Stagiaires regroupés par lieu, langue et dates de formation",
-    "pt-BR": "Alunos agrupados por local, idioma e datas da formação",
-    en: "Students grouped by location, language and training dates",
+    fr: "Stagiaires regroupés par lieu, langue, dates — et par groupe pédagogique",
+    "pt-BR": "Alunos agrupados por local, idioma, datas — e por grupo pedagógico",
+    en: "Students grouped by location, language, dates — and teaching group",
   },
   searchPlaceholder: {
     fr: "Rechercher par nom, email ou code...",
@@ -97,6 +100,11 @@ const translations = {
     "pt-BR": "Formações",
     en: "Trainings",
   },
+  groups: {
+    fr: "Groupes",
+    "pt-BR": "Grupos",
+    en: "Groups",
+  },
   inscriptions: {
     fr: "Inscriptions",
     "pt-BR": "Inscrições",
@@ -106,6 +114,26 @@ const translations = {
     fr: "Moyenne / formation",
     "pt-BR": "Média / formação",
     en: "Average / training",
+  },
+  avgPerGroup: {
+    fr: "Moyenne / groupe",
+    "pt-BR": "Média / grupo",
+    en: "Average / group",
+  },
+  viewFormation: {
+    fr: "Par formation",
+    "pt-BR": "Por formação",
+    en: "By training",
+  },
+  viewGroup: {
+    fr: "Par groupe",
+    "pt-BR": "Por grupo",
+    en: "By group",
+  },
+  viewAria: {
+    fr: "Mode d'affichage",
+    "pt-BR": "Modo de exibição",
+    en: "Display mode",
   },
   emptyTitle: {
     fr: "Aucune inscription pour ces filtres",
@@ -134,15 +162,23 @@ const translations = {
   },
 };
 
+function parseViewMode(raw: string | null): FormationViewMode {
+  return raw === "formation" ? "formation" : "groupe";
+}
+
 export default function InscriptionsByFormation() {
   const [searchParams, setSearchParams] = useSearchParams();
   const statusFromUrl = searchParams.get("status");
   const languageFromUrl = searchParams.get("language");
+  const viewFromUrl = searchParams.get("view");
   const [statusFilters, setStatusFilters] = useState<InscriptionStatus[]>(() =>
-    parseStatusFilterParam(statusFromUrl)
+    parseStatusFilterParam(statusFromUrl, FORMATION_VIEW_DEFAULT_FILTER_STATUSES)
   );
   const [languageFilter, setLanguageFilter] = useState(
     () => languageFromUrl || "all"
+  );
+  const [viewMode, setViewMode] = useState<FormationViewMode>(() =>
+    parseViewMode(viewFromUrl)
   );
   const [search, setSearch] = useState("");
   const { language, t } = useLanguage();
@@ -153,19 +189,37 @@ export default function InscriptionsByFormation() {
   const applyStatusFilters = (next: InscriptionStatus[]) => {
     setStatusFilters(next);
     const params = new URLSearchParams(searchParams);
-    const serialized = serializeStatusFilterParam(next);
+    const serialized = serializeStatusFilterParam(
+      next,
+      FORMATION_VIEW_DEFAULT_FILTER_STATUSES
+    );
     if (serialized == null) params.delete("status");
     else params.set("status", serialized);
     setSearchParams(params, { replace: true });
   };
 
+  const applyViewMode = (next: FormationViewMode) => {
+    setViewMode(next);
+    const params = new URLSearchParams(searchParams);
+    // Défaut = groupe : on n'écrit `view` que pour « formation ».
+    if (next === "groupe") params.delete("view");
+    else params.set("view", next);
+    setSearchParams(params, { replace: true });
+  };
+
   useEffect(() => {
-    setStatusFilters(parseStatusFilterParam(statusFromUrl));
+    setStatusFilters(
+      parseStatusFilterParam(statusFromUrl, FORMATION_VIEW_DEFAULT_FILTER_STATUSES)
+    );
   }, [statusFromUrl]);
 
   useEffect(() => {
     if (languageFromUrl) setLanguageFilter(languageFromUrl);
   }, [languageFromUrl]);
+
+  useEffect(() => {
+    setViewMode(parseViewMode(viewFromUrl));
+  }, [viewFromUrl]);
 
   const queryStatuses = isAllStatusFilter(statusFilters)
     ? undefined
@@ -203,8 +257,8 @@ export default function InscriptionsByFormation() {
   };
 
   const groups = useMemo(
-    () => groupInscriptionsByFormation(inscriptions ?? []),
-    [inscriptions]
+    () => groupInscriptionsByFormation(inscriptions ?? [], viewMode),
+    [inscriptions, viewMode]
   );
 
   const stats = useMemo(() => {
@@ -216,11 +270,14 @@ export default function InscriptionsByFormation() {
   }, [inscriptions, groups]);
 
   const activeFilters: Array<{ key: string; label: string; onRemove: () => void }> = [];
-  if (!isDefaultStatusFilter(statusFilters)) {
+  if (!isDefaultStatusFilter(statusFilters, FORMATION_VIEW_DEFAULT_FILTER_STATUSES)) {
     activeFilters.push({
       key: "status",
-      label: `${t(translations.status)} : ${describeStatusFilter(statusFilters, language)}`,
-      onRemove: () => applyStatusFilters([...DEFAULT_FILTER_STATUSES]),
+      label: `${t(translations.status)} : ${describeStatusFilter(statusFilters, language, {
+        defaultStatuses: FORMATION_VIEW_DEFAULT_FILTER_STATUSES,
+        defaultLabel: FORMATION_VIEW_DEFAULT_FILTER_LABELS,
+      })}`,
+      onRemove: () => applyStatusFilters([...FORMATION_VIEW_DEFAULT_FILTER_STATUSES]),
     });
   }
   if (languageFilter !== "all") {
@@ -254,7 +311,11 @@ export default function InscriptionsByFormation() {
 
         <StatTileGrid cols={3}>
           <StatTile
-            label={t(translations.formations)}
+            label={
+              viewMode === "groupe"
+                ? t(translations.groups)
+                : t(translations.formations)
+            }
             value={stats.totalFormations}
             icon={Layers}
             tone="gold"
@@ -268,7 +329,11 @@ export default function InscriptionsByFormation() {
             loading={isLoading}
           />
           <StatTile
-            label={t(translations.avgPerFormation)}
+            label={
+              viewMode === "groupe"
+                ? t(translations.avgPerGroup)
+                : t(translations.avgPerFormation)
+            }
             value={stats.average}
             icon={MapPin}
             tone="teal"
@@ -287,10 +352,22 @@ export default function InscriptionsByFormation() {
               }}
               filters={
                 <>
+                  <SegmentedControl
+                    ariaLabel={t(translations.viewAria)}
+                    size="sm"
+                    value={viewMode}
+                    onChange={applyViewMode}
+                    options={[
+                      { value: "groupe", label: t(translations.viewGroup) },
+                      { value: "formation", label: t(translations.viewFormation) },
+                    ]}
+                  />
                   <InscriptionStatusFilter
                     value={statusFilters}
                     onChange={applyStatusFilters}
                     language={language}
+                    defaultStatuses={FORMATION_VIEW_DEFAULT_FILTER_STATUSES}
+                    defaultPresetLabel={FORMATION_VIEW_DEFAULT_FILTER_LABELS}
                   />
                   <Select value={languageFilter} onValueChange={setLanguageFilter}>
                     <SelectTrigger className="w-[160px]">
@@ -311,7 +388,7 @@ export default function InscriptionsByFormation() {
               onClearAll={
                 activeFilters.length > 0
                   ? () => {
-                      applyStatusFilters([...DEFAULT_FILTER_STATUSES]);
+                      applyStatusFilters([...FORMATION_VIEW_DEFAULT_FILTER_STATUSES]);
                       setLanguageFilter("all");
                       setSearch("");
                     }

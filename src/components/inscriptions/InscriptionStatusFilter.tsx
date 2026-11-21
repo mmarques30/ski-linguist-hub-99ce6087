@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/popover";
 import {
   DEFAULT_FILTER_STATUSES,
+  DEFAULT_STATUS_FILTER_LABELS,
   LIST_FILTER_STATUSES,
   describeStatusFilter,
   getStatusLabel,
@@ -21,11 +22,6 @@ import { cn } from "@/lib/utils";
 type Lang = "fr" | "pt-BR" | "en";
 
 const copy = {
-  presetDefault: {
-    fr: "Tous sauf annulés",
-    "pt-BR": "Todos exceto cancelados",
-    en: "All except cancelled",
-  },
   presetAll: {
     fr: "Tous",
     "pt-BR": "Todos",
@@ -47,6 +43,10 @@ interface InscriptionStatusFilterProps {
   onChange: (next: InscriptionStatus[]) => void;
   language: Lang;
   className?: string;
+  /** Statuts du preset « défaut » (liste dossiers ou vue formation). */
+  defaultStatuses?: readonly InscriptionStatus[];
+  /** Libellé du preset défaut (FR / PT / EN). */
+  defaultPresetLabel?: Record<Lang, string>;
 }
 
 export function InscriptionStatusFilter({
@@ -54,9 +54,14 @@ export function InscriptionStatusFilter({
   onChange,
   language,
   className,
+  defaultStatuses = DEFAULT_FILTER_STATUSES,
+  defaultPresetLabel = DEFAULT_STATUS_FILTER_LABELS,
 }: InscriptionStatusFilterProps) {
-  const label = describeStatusFilter(value, language);
-  const defaultActive = isDefaultStatusFilter(value);
+  const label = describeStatusFilter(value, language, {
+    defaultStatuses,
+    defaultLabel: defaultPresetLabel,
+  });
+  const defaultActive = isDefaultStatusFilter(value, defaultStatuses);
   const allActive = isAllStatusFilter(value);
 
   return (
@@ -83,10 +88,10 @@ export function InscriptionStatusFilter({
             size="xs"
             variant={defaultActive ? "default" : "outline"}
             className="flex-1"
-            onClick={() => onChange([...DEFAULT_FILTER_STATUSES])}
+            onClick={() => onChange([...defaultStatuses])}
           >
             {defaultActive && <Check className="h-3.5 w-3.5" />}
-            {t(language, "presetDefault")}
+            {defaultPresetLabel[language]}
           </Button>
           <Button
             type="button"
