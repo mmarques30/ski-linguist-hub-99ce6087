@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_FILTER_STATUSES,
+  FORMATION_VIEW_DEFAULT_FILTER_LABELS,
+  FORMATION_VIEW_DEFAULT_FILTER_STATUSES,
   INSCRIPTION_STATUSES,
   LIST_FILTER_STATUSES,
   STATUS_TRANSITIONS,
@@ -196,5 +198,55 @@ describe('filtre multi-statuts (liste dossiers)', () => {
     expect(describeStatusFilter(['en_attente', 'confirmee', 'en_cours'], 'fr')).toBe(
       '3 statuts'
     );
+  });
+});
+
+describe('filtre multi-statuts (vue par formation)', () => {
+  it('exclut terminée, facturée et annulée du défaut', () => {
+    expect(FORMATION_VIEW_DEFAULT_FILTER_STATUSES).toEqual([
+      'brouillon',
+      'en_attente',
+      'confirmee',
+      'en_cours',
+    ]);
+    expect(
+      isDefaultStatusFilter(
+        FORMATION_VIEW_DEFAULT_FILTER_STATUSES,
+        FORMATION_VIEW_DEFAULT_FILTER_STATUSES
+      )
+    ).toBe(true);
+    expect(
+      isDefaultStatusFilter(
+        DEFAULT_FILTER_STATUSES,
+        FORMATION_VIEW_DEFAULT_FILTER_STATUSES
+      )
+    ).toBe(false);
+  });
+
+  it('parse et sérialise avec le défaut formation', () => {
+    expect(
+      parseStatusFilterParam(null, FORMATION_VIEW_DEFAULT_FILTER_STATUSES)
+    ).toEqual(FORMATION_VIEW_DEFAULT_FILTER_STATUSES);
+    expect(
+      serializeStatusFilterParam(
+        FORMATION_VIEW_DEFAULT_FILTER_STATUSES,
+        FORMATION_VIEW_DEFAULT_FILTER_STATUSES
+      )
+    ).toBeNull();
+    expect(
+      serializeStatusFilterParam(
+        DEFAULT_FILTER_STATUSES,
+        FORMATION_VIEW_DEFAULT_FILTER_STATUSES
+      )
+    ).toBe('brouillon,en_attente,confirmee,en_cours,terminee,facturee');
+  });
+
+  it('libellé compact du preset formation', () => {
+    expect(
+      describeStatusFilter(FORMATION_VIEW_DEFAULT_FILTER_STATUSES, 'fr', {
+        defaultStatuses: FORMATION_VIEW_DEFAULT_FILTER_STATUSES,
+        defaultLabel: FORMATION_VIEW_DEFAULT_FILTER_LABELS,
+      })
+    ).toBe('Hors terminées / facturées');
   });
 });

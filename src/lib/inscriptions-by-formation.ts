@@ -7,11 +7,18 @@
  *
  * Langue : « Portugais » et « Portugais brésilien » sont la même formation
  * (libellé canonique via `displayLanguageLabel`).
+ *
+ * Mode « groupe » : scinde en plus par `group_name` (ex. Groupe 1 / Groupe 2).
+ * Sans libellé de groupe, l'horaire (`schedule`) sert de repli pour séparer
+ * matin et après-midi.
  */
 
 import { displayLanguageLabel } from "@/lib/taught-languages";
 
 export const FORMATION_NO_LOCATION_LABEL = "Sans lieu";
+export const FORMATION_NO_GROUP_LABEL = "Sans groupe";
+
+export type FormationViewMode = "formation" | "groupe";
 
 export interface FormationInscriptionRow {
   id: string;
@@ -23,6 +30,8 @@ export interface FormationInscriptionRow {
   dates_to_confirm?: boolean | null;
   student_name?: string | null;
   status?: string | null;
+  group_name?: string | null;
+  schedule?: string | null;
 }
 
 export interface FormationGroupOf<T extends FormationInscriptionRow> {
@@ -33,6 +42,8 @@ export interface FormationGroupOf<T extends FormationInscriptionRow> {
   endDate: string;
   modality: string | null;
   datesToConfirm: boolean;
+  /** Présent en mode groupe ; null en mode formation. */
+  groupLabel: string | null;
   inscriptions: T[];
 }
 
@@ -42,6 +53,21 @@ export function formationLocationLabel(
 ): string {
   const trimmed = courseLocation?.trim();
   return trimmed ? trimmed : FORMATION_NO_LOCATION_LABEL;
+}
+
+/**
+ * Libellé de groupe pédagogique : `group_name` en priorité, sinon l'horaire
+ * (matin / après-midi sans nom de groupe), sinon « Sans groupe ».
+ */
+export function formationGroupNameLabel(
+  groupName: string | null | undefined,
+  schedule?: string | null
+): string {
+  const name = groupName?.trim();
+  if (name) return name;
+  const hours = schedule?.trim();
+  if (hours) return hours;
+  return FORMATION_NO_GROUP_LABEL;
 }
 
 /**
@@ -56,8 +82,11 @@ export function formationLanguageLabel(
   return displayLanguageLabel(language) || (language ?? "").trim();
 }
 
-export function formationGroupKey(row: FormationInscriptionRow): string {
-  return [
+export function formationGroupKey(
+  row: FormationInscriptionRow,
+  mode: FormationViewMode = "formation"
+): string {
+  const base = [
     row.start_date,
     row.end_date,
     formationLanguageLabel(row.language),
@@ -65,6 +94,9 @@ export function formationGroupKey(row: FormationInscriptionRow): string {
     (row.modality ?? "").trim(),
     row.dates_to_confirm ? "1" : "0",
   ].join("::");
+
+  if (mode !== "groupe") return base;
+  return `${base}::${formationGroupNameLabel(row.group_name, row.schedule)}`;
 }
 
 function compareText(a: string, b: string): number {
@@ -72,17 +104,18 @@ function compareText(a: string, b: string): number {
 }
 
 /**
- * Regroupe les inscriptions par formation.
- * Ordre des groupes : date de début croissante, puis langue, puis lieu.
- * Dans un groupe : nom de stagiaire, puis id.
+ * Regroupe les inscriptions par formation (ou par groupe pédagogique).
+ * Ordre des groupes : date de début croissante, puis langue, puis lieu,
+ * puis libellé de groupe. Dans un groupe : nom de stagiaire, puis id.
  */
 export function groupInscriptionsByFormation<T extends FormationInscriptionRow>(
-  rows: T[]
+  rows: T[],
+  mode: FormationViewMode = "formation"
 ): FormationGroupOf<T>[] {
   const groups = new Map<string, FormationGroupOf<T>>();
 
   for (const row of rows) {
-    const key = formationGroupKey(row);
+    const key = formationGroupKey(row, mode);
     let group = groups.get(key);
     if (!group) {
       group = {
@@ -93,6 +126,10 @@ export function groupInscriptionsByFormation<T extends FormationInscriptionRow>(
         endDate: row.end_date,
         modality: row.modality?.trim() || null,
         datesToConfirm: Boolean(row.dates_to_confirm),
+        groupLabel:
+          mode === "groupe"
+            ? formationGroupNameLabel(row.group_name, row.schedule)
+            : null,
         inscriptions: [],
       };
       groups.set(key, group);
@@ -116,16 +153,21 @@ export function groupInscriptionsByFormation<T extends FormationInscriptionRow>(
     if (byLang !== 0) return byLang;
     const byLoc = compareText(a.location, b.location);
     if (byLoc !== 0) return byLoc;
-    return compareText(a.modality ?? "", b.modality ?? "");
+    const byMod = compareText(a.modality ?? "", b.modality ?? "");
+    if (byMod !== 0) return byMod;
+    return compareText(a.groupLabel ?? "", b.groupLabel ?? "");
   });
 
   return result;
 }
 
-/** Titre carte : « Val d'Isère · Anglais » (lieu d'abord, signal métier). */
+/** Titre carte : « Val d'Isère · Anglais » (+ « · Groupe 1 » en mode groupe). */
 export function formationGroupTitle(group: {
   location: string;
   language: string;
+  groupLabel?: string | null;
 }): string {
-  return `${group.location} · ${group.language}`;
+  const base = `${group.location} · ${group.language}`;
+  const groupLabel = group.groupLabel?.trim();
+  return groupLabel ? `${base} · ${groupLabel}` : base;
 }
