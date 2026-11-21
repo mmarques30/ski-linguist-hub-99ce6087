@@ -815,11 +815,30 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { data: existingStudent } = await supabase
+    // Paula 2026-11-21 : un même e-mail peut servir à plusieurs stagiaires
+    // (foyer / couple — ex. Julie & Philippe Vatinel). On ne réutilise une fiche
+    // que si e-mail + prénom + nom correspondent (casse / accents ignorés).
+    const normalizePersonKey = (value: string | null | undefined): string =>
+      (value || "")
+        .normalize("NFD")
+        .replace(/\p{M}/gu, "")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, " ");
+
+    const { data: studentsWithEmail, error: studentsLookupError } = await supabase
       .from("students")
-      .select("id")
-      .eq("email", email)
-      .maybeSingle();
+      .select("id, first_name, last_name")
+      .eq("email", email);
+    if (studentsLookupError) throw studentsLookupError;
+
+    const registrationFirst = normalizePersonKey(registration.firstName);
+    const registrationLast = normalizePersonKey(registration.lastName);
+    const existingStudent = (studentsWithEmail || []).find(
+      (row) =>
+        normalizePersonKey(row.first_name) === registrationFirst &&
+        normalizePersonKey(row.last_name) === registrationLast,
+    );
 
     let studentId = existingStudent?.id;
     let createdStudent = false;
@@ -845,9 +864,8 @@ Deno.serve(async (req) => {
     };
 
     if (studentId) {
-      // Finding #10 : e-mail déjà connu — on rattache la nouvelle inscription
-      // sans écraser les coordonnées (pas de vérification de boîte mail ici).
-      // Le staff met à jour la fiche stagiaire depuis le back-office si besoin.
+      // Même personne (e-mail + identité) — on rattache sans écraser la fiche.
+      // Le staff met à jour les coordonnées depuis le back-office si besoin.
     } else {
       const { data: newStudent, error: studentError } = await supabase
         .from("students")

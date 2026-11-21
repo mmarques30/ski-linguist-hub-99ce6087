@@ -28,7 +28,12 @@ export function describeCaughtError(error: unknown): DescribedError {
   if (code === "23505") {
     const blob = `${raw ?? ""} ${firstString(rec?.details) ?? ""}`.toLowerCase();
     if (blob.includes("students") && blob.includes("email")) {
-      return { message: "Un stagiaire avec cet e-mail existe déjà.", code };
+      // Unicité = e-mail + prénom + nom (plusieurs stagiaires peuvent partager un e-mail).
+      return {
+        message:
+          "Un stagiaire avec le même e-mail, prénom et nom existe déjà.",
+        code,
+      };
     }
     if (blob.includes("inscription") || blob.includes("code")) {
       return {
